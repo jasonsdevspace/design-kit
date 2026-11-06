@@ -3,7 +3,8 @@
  * page's own rules. Each is styled by its class and the markup the package README gives for it,
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
- * classes and the focus rule carry weight.
+ * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields
+ * and callouts.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -123,6 +124,275 @@
         .dk-strip-tools {
             flex-basis: 100%;
             padding-block: 0 var(--dk-space-2);
+        }
+    }
+
+    /*
+     * Every rule for a button, a field or a callout sits in one :where(), the resting look
+     * included. Each weighs nothing, so a state written after the resting look, such as pressed or
+     * off, wins over it by coming later, and a page's own rule outside a layer wins over them all.
+     * A button's states come in the order they win, at rest, pointed at, the accent, pressed and
+     * off, and a control's at rest, invalid and off, so off is last for each.
+     */
+
+    /*
+     * A button stands as tall as a field, so the two sit level in a row, and is never narrower
+     * than it is tall. It has no ground of its own, so it takes the ground of whatever it sits on,
+     * a callout or a raised panel included. A link that wears the class looks the same.
+     */
+    :where(.dk-button) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--dk-space-2);
+        min-height: var(--dk-field-height);
+        min-width: var(--dk-field-height);
+        padding: 0 var(--dk-space-3);
+        border: 1px solid var(--dk-control);
+        border-radius: var(--dk-radius);
+        background: transparent;
+        color: var(--dk-fg);
+        font-size: var(--dk-text-small);
+        line-height: var(--dk-leading-tight);
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+            border-color var(--dk-duration-short),
+            background-color var(--dk-duration-short);
+    }
+
+    /*
+     * Pointed at, the edge turns to the accent. Only where a pointer can rest over a button, since
+     * on a phone the look would stay after a tap, and a toggle tapped off would look pressed.
+     */
+    @media (hover: hover) {
+        :where(.dk-button:hover) {
+            border-color: var(--dk-accent);
+        }
+    }
+
+    /*
+     * The one action a view leads with, filled in the accent. Its edge is already the accent, so
+     * a pointer over it underlines the words instead.
+     */
+    :where(.dk-button-accent) {
+        border-color: var(--dk-accent);
+        background: var(--dk-accent);
+        color: var(--dk-on-accent);
+        font-weight: var(--dk-weight-strong);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-accent:hover) {
+            text-decoration: underline;
+        }
+    }
+
+    /*
+     * A toggle that is on, and a button whose panel is open, on the highlight with an edge twice
+     * as thick in the accent and its words in the page's text, the accent button's included. The
+     * highlight alone is close to the page's own ground, so the thicker edge is what tells the
+     * state at a glance.
+     */
+    :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+        border-color: var(--dk-accent);
+        background: var(--dk-highlight);
+        box-shadow: inset 0 0 0 1px var(--dk-accent);
+        color: var(--dk-fg);
+    }
+
+    /*
+     * Off, drawn the same whether the button is disabled or marked aria-disabled, which keeps it
+     * in the tab order. The accent is dropped too, so the muted words never sit on the accent.
+     * Off has colors of its own rather than a fade, so its words keep a ratio that is measured.
+     */
+    :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
+        border-color: var(--dk-line);
+        background: transparent;
+        box-shadow: none;
+        color: var(--dk-muted);
+        font-weight: var(--dk-weight-normal);
+        text-decoration: none;
+        cursor: default;
+    }
+
+    /* An off toggle that is on keeps its thicker edge, in the line's color, so it still tells. */
+    :where(
+        .dk-button[aria-pressed='true']:disabled,
+        .dk-button[aria-pressed='true'][aria-disabled='true']
+    ) {
+        box-shadow: inset 0 0 0 1px var(--dk-line);
+    }
+
+    /*
+     * A field: its label, a hint when it has one, an error when it has one, and then the control.
+     * The error sits above the control, so a phone's keyboard or an open list never covers it, and
+     * the hint stays while the error shows, since it often says how to put the error right.
+     */
+    :where(.dk-field) {
+        display: grid;
+        gap: var(--dk-space-1);
+    }
+
+    :where(.dk-field > *) {
+        margin: 0;
+    }
+
+    :where(.dk-field-label) {
+        font-size: var(--dk-text-small);
+        font-weight: var(--dk-weight-medium);
+    }
+
+    :where(.dk-field-hint, .dk-field-error) {
+        font-size: var(--dk-text-caption);
+    }
+
+    :where(.dk-field-hint) {
+        color: var(--dk-muted);
+    }
+
+    :where(.dk-field-error) {
+        color: var(--dk-danger);
+        font-weight: var(--dk-weight-medium);
+    }
+
+    /*
+     * A control a visitor types into or picks from, on the page's own ground, so it reads as a
+     * well on a card or a raised panel. Its text is never under 16px, in px since it is the size
+     * at which a phone stops zooming the page when the field is tapped.
+     */
+    :where(.dk-input, .dk-select) {
+        min-width: 0;
+        max-width: 100%;
+        min-height: var(--dk-field-height);
+        padding: var(--dk-space-1) var(--dk-field-inline);
+        border: 1px solid var(--dk-control);
+        border-radius: var(--dk-radius);
+        background-color: var(--dk-bg);
+        color: var(--dk-fg);
+        font-size: max(var(--dk-text-body), 16px);
+    }
+
+    /*
+     * The browser's own list opens, but the closed select is drawn here, so its caret is in the
+     * muted text and sits as far from the right edge as the text does from the left. The padding
+     * keeps a long value short of the caret, cut off with an ellipsis where the browser draws one.
+     * A select that shows its options as a list, with multiple or a size, is left as the browser
+     * draws it.
+     */
+    :where(.dk-select:not([multiple], [size])) {
+        appearance: none;
+        padding-inline-end: calc(var(--dk-field-inline) * 2 + var(--dk-space-3));
+        text-overflow: ellipsis;
+        background-image:
+            linear-gradient(45deg, transparent 50%, var(--dk-muted) 50%),
+            linear-gradient(135deg, var(--dk-muted) 50%, transparent 50%);
+        background-repeat: no-repeat;
+        background-position:
+            right calc(var(--dk-field-inline) + var(--dk-space-3) / 2) center,
+            right var(--dk-field-inline) center;
+        background-size: calc(var(--dk-space-3) / 2) calc(var(--dk-space-3) / 2);
+        cursor: pointer;
+    }
+
+    /* A control with an error shown, its edge in the danger color, beside the error's words. */
+    :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
+        border-color: var(--dk-danger);
+    }
+
+    :where(.dk-input:disabled, .dk-select:disabled) {
+        border-color: var(--dk-line);
+        background-color: var(--dk-surface);
+        color: var(--dk-muted);
+        cursor: default;
+    }
+
+    /*
+     * A message set apart from the page, on the highlight for news, or on a ground of its own for
+     * something that went right or wrong. Its words stay in the page's own color in every tone,
+     * and say the tone themselves, so color is never the only sign of it. The edge draws nothing
+     * until forced colors drop the ground, and then it marks where the callout starts and ends.
+     */
+    :where(.dk-callout) {
+        display: grid;
+        gap: var(--dk-space-2);
+        padding: var(--dk-space-2) var(--dk-space-3);
+        border: 1px solid transparent;
+        border-radius: var(--dk-radius);
+        background: var(--dk-highlight);
+        color: var(--dk-fg);
+        font-size: var(--dk-text-small);
+    }
+
+    :where(.dk-callout-success) {
+        background: var(--dk-success-bg);
+    }
+
+    :where(.dk-callout-danger) {
+        background: var(--dk-danger-bg);
+    }
+
+    :where(.dk-callout-title) {
+        margin: 0;
+        font-size: inherit;
+        font-weight: var(--dk-weight-strong);
+    }
+
+    :where(.dk-callout-body) {
+        display: grid;
+        gap: var(--dk-space-2);
+    }
+
+    :where(.dk-callout-body > *) {
+        margin: 0;
+    }
+
+    :where(.dk-callout-actions) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dk-space-2);
+    }
+
+    /* On a phone a button and a field grow to the target a thumb presses, and stay level. */
+    @media (max-width: 48rem) {
+        :where(.dk-button, .dk-input, .dk-select) {
+            min-height: var(--dk-target);
+        }
+
+        :where(.dk-button) {
+            min-width: var(--dk-target);
+        }
+    }
+
+    /*
+     * In forced colors the page's own grounds and shadows are gone, so a pressed toggle takes the
+     * system's highlight, an off button the system's gray on the page's ground as a disabled one
+     * does, an off toggle that is on an edge in the highlight, and the select the browser's own
+     * arrow, since the drawn caret is a background.
+     */
+    @media (forced-colors: active) {
+        :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+            background: Highlight;
+            color: HighlightText;
+        }
+
+        :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
+            border-color: GrayText;
+            background: Canvas;
+            color: GrayText;
+        }
+
+        :where(
+            .dk-button[aria-pressed='true']:disabled,
+            .dk-button[aria-pressed='true'][aria-disabled='true']
+        ) {
+            border-color: Highlight;
+        }
+
+        :where(.dk-select) {
+            appearance: auto;
+            padding-inline-end: var(--dk-field-inline);
+            background-image: none;
         }
     }
 }

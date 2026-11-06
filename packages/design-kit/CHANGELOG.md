@@ -7,6 +7,37 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## Unreleased
+
+The page chrome every demo draws, and buttons, text fields, selects and callouts, styled by
+`components.css` and drawn by the components in `./react`, with the state of each control carried
+by a native or ARIA attribute.
+
+- **Page chrome.** `SkipLink`, `PortfolioStrip` and `DemoFooter` draw the skip link, the strip
+  above the page that says whose demo it is, and the footer below it, and `PORTFOLIO_URL`,
+  `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL` are the links they share. The components draw
+  markup alone, so a page loads `components.css` itself.
+- **Buttons.** `Button` draws `.dk-button`, a plain `type="button"` unless a page gives another
+  type, with `.dk-button-accent` for the one action a view leads with. A toggle carries
+  `aria-pressed`, and a button whose panel is open `aria-expanded`, drawn alike. `off` marks a
+  button `aria-disabled` rather than `disabled`, so it keeps its place in the tab order, and a press
+  of it runs no click handler of the page's and submits no form. A button and a field's control
+  stand 2.25rem tall, and 2.75rem at 48rem wide or less.
+- **Fields.** `InputField` and `SelectField` draw `.dk-field`, its label, a hint and an error when
+  given, and the control, `.dk-input` or a native `.dk-select`. The error sits above the control,
+  starts with a hidden "Error: " and marks the control `aria-invalid`. A control's text is never
+  under 16px.
+- **Callouts.** `Callout` draws `.dk-callout` in the info tone on the highlight, or
+  `.dk-callout-success` or `.dk-callout-danger`, with a hidden word that says the tone. It takes a
+  role only when the page passes `live`.
+- **Weight.** Every rule for these pieces, the resting look included, sits in one `:where()`, so a
+  state wins over the resting look by its order in the sheet, and a page's own rule outside a layer
+  wins over both.
+- **Tokens.** The dark value of `--dk-control` is `#7d7d7d`, from `#7a7a7a`. A button or field
+  inside an info callout drew its edge at 2.99 to 1 on the highlight in the dark theme, under the 3
+  to 1 a control's edge needs. The accent on the success and danger grounds, and a control's edge
+  on the highlight and on each callout's ground, are now measured as well.
+
 ## 0.1.0-next.1
 
 Nothing in the code, the styles or the types changed. This is the first version the release workflow

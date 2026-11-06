@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
  * The kit loads beside a demo's own styles, so what it styles is held to what it means to. Every
  * rule sits in one of the kit's layers, so a page's own rule outside a layer wins over the kit's,
  * and a page that names its layers sets where the kit's go among them. Inside its layers, a sheet
- * styles the kit's own classes, and otherwise only inside one :where() followed at most by a plain
- * pseudo-class, so only those classes and pseudo-classes carry any weight.
+ * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
+ * pseudo-class, so only those classes and the focus rules carry any weight.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -147,6 +147,25 @@ describe('what the sheets style', () => {
             ':where(a[href], [tabindex]:not([tabindex="-1"])):focus-visible',
             ':where(:root[data-theme="dark"])',
         ]);
+    });
+
+    it('draws every button, field and callout rule in a :where(), so each state wins by order', () => {
+        // A resting look written as a bare class would outweigh every state written in :where()
+        // after it, so pressed, invalid and off would never show. Only the page chrome, which has
+        // no state but focus, styles a bare class of its own.
+        const chrome = [
+            '.dk-skip',
+            '.dk-strip',
+            '.dk-strip-links',
+            '.dk-strip-tools',
+            '.dk-footer',
+        ];
+        const css = readFileSync(new URL('components.css', folder), 'utf8');
+        expect(
+            selectorsOf(css)
+                .flatMap(split)
+                .filter((selector) => selector.startsWith('.') && !chrome.includes(selector))
+        ).toEqual([]);
     });
 
     it('declares custom properties only in the tokens', () => {

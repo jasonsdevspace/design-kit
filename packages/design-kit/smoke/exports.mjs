@@ -5,11 +5,15 @@
  */
 export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/react': [
+        'Button',
+        'Callout',
         'DemoFooter',
         'GITHUB_PROFILE_URL',
+        'InputField',
         'PORTFOLIO_URL',
         'PORTFOLIO_WORK_URL',
         'PortfolioStrip',
+        'SelectField',
         'SkipLink',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEMES', 'THEME_KEY', 'themeScript'],

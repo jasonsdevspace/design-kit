@@ -1,0 +1,345 @@
+import { readFileSync } from 'node:fs';
+
+import AxeBuilder from '@axe-core/playwright';
+import { expect, type Locator, type Page, test } from '@playwright/test';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import { Button, Callout, InputField, SelectField } from '../src/react.js';
+
+/*
+ * The buttons, fields and callouts as a browser draws them, from the markup the components draw
+ * and the kit's own sheets: each state told apart by more than its color, forced colors included,
+ * a field and a button level at the target size on a phone and at the field's height on a wide
+ * screen, an off button the keyboard still reaches, the field's label, hint and error read as its
+ * name and description, and no audit findings for any state in either theme.
+ */
+
+const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
+const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
+
+/** Every state of each piece, and a button and a field inside each callout tone. */
+const STATES = renderToStaticMarkup(
+    <main>
+        <h1>Controls</h1>
+        <div>
+            <Button>Filters</Button>
+            <Button accent>Save rule</Button>
+            <Button pressed>Member</Button>
+            <Button pressed={false}>Guest</Button>
+            <Button off>Previous</Button>
+            <button type="button" className="dk-button" disabled>
+                Next
+            </button>
+            <Button>I</Button>
+            <Button accent aria-expanded>
+                Menu
+            </Button>
+            <Button pressed off>
+                Locked on
+            </Button>
+            <Button pressed={false} off>
+                Locked off
+            </Button>
+        </div>
+        <fieldset disabled>
+            <legend>Closed</legend>
+            <Button>Join</Button>
+        </fieldset>
+        <form>
+            <InputField id="words" label="Search words" hint="Separate alternatives with commas" />
+            <InputField
+                id="email"
+                label="Email"
+                hint="Where the receipt goes"
+                error="Enter an email address, like name@example.com"
+            />
+            <InputField id="off" label="Store" disabled defaultValue="Closed" />
+            <SelectField id="sort" label="Sort by">
+                <option value="">Choose an order</option>
+                <option value="price">Price</option>
+            </SelectField>
+            <SelectField id="brand" label="Brand" error="Pick a brand">
+                <option value="">Choose a brand</option>
+            </SelectField>
+            <SelectField id="tags" label="Tags" multiple>
+                <option value="new">New</option>
+                <option value="sale">Sale</option>
+            </SelectField>
+        </form>
+        {(['info', 'success', 'danger'] as const).map((tone) => (
+            <Callout
+                key={tone}
+                tone={tone}
+                title={`The ${tone} tone`}
+                actions={<Button>Try again</Button>}
+            >
+                <p>
+                    A message with <a href="#more">a link</a> in it.
+                </p>
+                <InputField id={`in-${tone}`} label={`Name in ${tone}`} hint="A hint" />
+            </Callout>
+        ))}
+    </main>
+);
+
+const open = async (
+    page: Page,
+    { width = 1280, theme = 'light' }: { width?: number; theme?: 'light' | 'dark' } = {}
+) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Controls</title>` +
+            `<style>${KIT}</style></head><body>${STATES}</body></html>`
+    );
+};
+
+const style = (locator: Locator, ...names: string[]) =>
+    locator.evaluate(
+        (element, wanted) =>
+            Object.fromEntries(
+                wanted.map((name) => [name, getComputedStyle(element).getPropertyValue(name)])
+            ),
+        names
+    );
+
+const height = async (locator: Locator) => Math.round((await locator.boundingBox())?.height ?? 0);
+
+test('sets a button and a field level, at the field height wide and the target on a phone', async ({
+    page,
+}) => {
+    for (const [width, tall] of [
+        [1280, 36],
+        [360, 44],
+    ] as const) {
+        await open(page, { width });
+        expect(await height(page.getByRole('button', { name: 'Filters' }))).toBe(tall);
+        expect(await height(page.getByLabel('Search words'))).toBe(tall);
+        expect(await height(page.getByLabel('Sort by'))).toBe(tall);
+        // A label of one character never makes a button narrower than it is tall.
+        const one = await page.getByRole('button', { name: 'I', exact: true }).boundingBox();
+        expect(Math.round(one?.width ?? 0)).toBeGreaterThanOrEqual(tall);
+    }
+});
+
+test('draws text in a field at 16px or more on a phone, so tapping it does not zoom', async ({
+    page,
+}) => {
+    await open(page, { width: 360 });
+    for (const name of ['Search words', 'Sort by']) {
+        const size = (await style(page.getByLabel(name), 'font-size'))['font-size'] ?? '';
+        expect(parseFloat(size)).toBeGreaterThanOrEqual(16);
+    }
+});
+
+test('fits a phone 320px wide without scrolling the page sideways', async ({ page }) => {
+    await open(page, { width: 320 });
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBe(0);
+});
+
+test('keeps an off button in the tab order, and skips a disabled one, drawn alike', async ({
+    page,
+}) => {
+    await open(page);
+    const off = page.getByRole('button', { name: 'Previous' });
+    const disabled = page.getByRole('button', { name: 'Next' });
+    await page.getByRole('button', { name: 'Guest' }).focus();
+    await page.keyboard.press('Tab');
+    await expect(off).toBeFocused();
+    await expect(off).toBeDisabled();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'I', exact: true })).toBeFocused();
+    const look = ['color', 'background-color', 'border-top-color', 'cursor'];
+    expect(await style(off, ...look)).toEqual(await style(disabled, ...look));
+    // Both would match the disabled button if the resting look won, so the words are held to the
+    // muted text.
+    expect((await style(off, 'color')).color).toBe('rgb(92, 92, 92)');
+});
+
+test('draws a button in a disabled fieldset as off, and keeps the keyboard off it', async ({
+    page,
+}) => {
+    await open(page);
+    const look = ['color', 'background-color', 'border-top-color', 'cursor'];
+    const inside = page.getByRole('button', { name: 'Join' });
+    expect(await style(inside, ...look)).toEqual(
+        await style(page.getByRole('button', { name: 'Next' }), ...look)
+    );
+    expect((await style(inside, 'color')).color).toBe('rgb(92, 92, 92)');
+    await expect(inside).toBeDisabled();
+});
+
+test('turns the edge to the accent under a pointer, and underlines the accent instead', async ({
+    page,
+}) => {
+    await open(page);
+    // The edge's color eases in over the short duration, so it is read once it has settled.
+    const edge = (name: string) => async () =>
+        (await style(page.getByRole('button', { name }), 'border-top-color'))['border-top-color'];
+    await page.getByRole('button', { name: 'Filters' }).hover();
+    await expect.poll(edge('Filters')).toBe('rgb(31, 79, 216)');
+    const accent = page.getByRole('button', { name: 'Save rule' });
+    await accent.hover();
+    expect((await style(accent, 'text-decoration-line'))['text-decoration-line']).toBe('underline');
+    // Off takes no hover, so it never looks as though a press would do something.
+    await page.getByRole('button', { name: 'Previous' }).hover();
+    await page.waitForTimeout(300);
+    expect(await edge('Previous')()).toBe('rgb(217, 217, 217)');
+});
+
+test("tells a pressed toggle by its edge as well as its color, and keeps the toggle's name", async ({
+    page,
+}) => {
+    await open(page);
+    const pressed = page.getByRole('button', { name: 'Member', pressed: true });
+    const unpressed = page.getByRole('button', { name: 'Guest', pressed: false });
+    await expect(pressed).toBeVisible();
+    await expect(unpressed).toBeVisible();
+    expect((await style(pressed, 'box-shadow'))['box-shadow']).toMatch(/inset/);
+    expect((await style(pressed, 'background-color'))['background-color']).toBe(
+        'rgb(227, 234, 251)'
+    );
+    expect((await style(unpressed, 'box-shadow'))['box-shadow']).toBe('none');
+});
+
+test('draws an open accent button in the page text on the highlight, so its words stay read', async ({
+    page,
+}) => {
+    await open(page);
+    const menu = page.getByRole('button', { name: 'Menu' });
+    expect(await style(menu, 'color', 'background-color')).toEqual({
+        color: 'rgb(26, 26, 26)',
+        'background-color': 'rgb(227, 234, 251)',
+    });
+});
+
+test('keeps a pressed toggle that is off told apart from one that is not pressed', async ({
+    page,
+}) => {
+    await open(page);
+    const on = await style(page.getByRole('button', { name: 'Locked on' }), 'box-shadow');
+    const off = await style(page.getByRole('button', { name: 'Locked off' }), 'box-shadow');
+    expect(on['box-shadow']).toMatch(/inset/);
+    expect(off['box-shadow']).toBe('none');
+});
+
+test('draws a list that shows its options as the browser does, with no caret', async ({ page }) => {
+    await open(page);
+    const tags = await style(page.getByLabel('Tags'), 'appearance', 'background-image');
+    expect(tags).toEqual({ appearance: 'auto', 'background-image': 'none' });
+});
+
+test('draws the focus ring after the keyboard, on the accent and in every callout', async ({
+    page,
+}) => {
+    await open(page);
+    const ring = (locator: Locator) => style(locator, 'outline-style', 'outline-width');
+    const accent = page.getByRole('button', { name: 'Save rule' });
+    await accent.click();
+    expect((await ring(accent))['outline-style']).toBe('none');
+    await page.getByRole('button', { name: 'Filters' }).focus();
+    await page.keyboard.press('Tab');
+    await expect(accent).toBeFocused();
+    expect(await ring(accent)).toEqual({ 'outline-style': 'solid', 'outline-width': '2px' });
+    for (const tone of ['info', 'success', 'danger']) {
+        await page.getByLabel(`Name in ${tone}`).focus();
+        await page.keyboard.press('Tab');
+        const again = page
+            .locator('.dk-callout-actions button')
+            .nth(['info', 'success', 'danger'].indexOf(tone));
+        await expect(again).toBeFocused();
+        expect(await ring(again)).toEqual({ 'outline-style': 'solid', 'outline-width': '2px' });
+    }
+});
+
+test('reads a field by its label, and describes it by its hint and then its error', async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByText('Search words').click();
+    await expect(page.getByLabel('Search words')).toBeFocused();
+    await expect(page.getByLabel('Search words')).toHaveAccessibleDescription(
+        'Separate alternatives with commas'
+    );
+    await expect(page.getByLabel('Search words')).not.toHaveAttribute('aria-invalid');
+    const email = page.getByRole('textbox', { name: 'Email' });
+    await expect(email).toHaveAccessibleDescription(
+        'Where the receipt goes Error: Enter an email address, like name@example.com'
+    );
+    await expect(email).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('');
+    await expect(page.getByRole('combobox', { name: 'Brand' })).toHaveAccessibleDescription(
+        'Error: Pick a brand'
+    );
+});
+
+test('draws an invalid control in the danger color, and the error beside the hint', async ({
+    page,
+}) => {
+    await open(page);
+    const edge = async (name: string) =>
+        (await style(page.getByLabel(name), 'border-top-color'))['border-top-color'];
+    expect(await edge('Email')).toBe('rgb(179, 38, 30)');
+    expect(await edge('Search words')).not.toBe(await edge('Email'));
+    // The hidden word is read, and drawn at one pixel.
+    const word = page.locator('.dk-field-error .dk-visually-hidden').first();
+    expect(await word.boundingBox()).toMatchObject({ width: 1, height: 1 });
+});
+
+test.describe('in forced colors', () => {
+    test.use({ forcedColors: 'active' });
+
+    test('keeps every state in sight where the page loses its own colors', async ({ page }) => {
+        await open(page);
+        const pressed = await style(
+            page.getByRole('button', { name: 'Member' }),
+            'background-color'
+        );
+        const unpressed = await style(
+            page.getByRole('button', { name: 'Guest' }),
+            'background-color'
+        );
+        expect(pressed).not.toEqual(unpressed);
+        // An off button is drawn in GrayText, as the browser draws a disabled one by itself.
+        const look = ['color', 'border-top-color'];
+        expect(await style(page.getByRole('button', { name: 'Previous' }), ...look)).toEqual(
+            await style(page.getByRole('button', { name: 'Next' }), ...look)
+        );
+        // An off toggle that is pressed keeps its gray words off the system's highlight, and is
+        // told from one that is not by its edge.
+        const locked = page.getByRole('button', { name: 'Locked on' });
+        const loose = page.getByRole('button', { name: 'Locked off' });
+        expect(await style(locked, 'background-color')).toEqual(
+            await style(loose, 'background-color')
+        );
+        expect(await style(locked, 'border-top-color')).not.toEqual(
+            await style(loose, 'border-top-color')
+        );
+        // The select's own arrow comes back, since the drawn one is a background.
+        expect((await style(page.getByLabel('Sort by'), 'appearance')).appearance).toBe('auto');
+        // Each callout's ground is gone, so its edge marks where it starts and ends.
+        for (const callout of await page.locator('.dk-callout').all()) {
+            const { 'border-top-style': line, 'border-top-color': color } = await style(
+                callout,
+                'border-top-style',
+                'border-top-color'
+            );
+            expect(line).toBe('solid');
+            expect(color).not.toBe('rgba(0, 0, 0, 0)');
+        }
+    });
+});
+
+for (const theme of ['light', 'dark'] as const) {
+    test(`has no audit findings for any state in the ${theme} theme, wide and on a phone`, async ({
+        page,
+    }) => {
+        for (const width of [1280, 360]) {
+            await open(page, { width, theme });
+            const results = await new AxeBuilder({ page }).analyze();
+            expect(results.violations.map((violation) => violation.id)).toEqual([]);
+        }
+    });
+}
