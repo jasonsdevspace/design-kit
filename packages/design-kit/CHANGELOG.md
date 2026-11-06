@@ -21,11 +21,12 @@ by a native or ARIA attribute.
   type, with `.dk-button-accent` for the one action a view leads with. A toggle carries
   `aria-pressed`, and a button whose panel is open `aria-expanded`, drawn alike. `off` marks a
   button `aria-disabled` rather than `disabled`, so it keeps its place in the tab order, and a press
-  of it runs nothing and submits no form.
+  of it runs no click handler of the page's and submits no form. A button and a field's control
+  stand 2.25rem tall, and 2.75rem at 48rem wide or less.
 - **Fields.** `InputField` and `SelectField` draw `.dk-field`, its label, a hint and an error when
   given, and the control, `.dk-input` or a native `.dk-select`. The error sits above the control,
-  starts with a hidden "Error: " and marks the control `aria-invalid`. Buttons and controls stand
-  2.25rem tall, and 2.75rem at 48rem wide or less, and a control's text is never under 16px.
+  starts with a hidden "Error: " and marks the control `aria-invalid`. A control's text is never
+  under 16px.
 - **Callouts.** `Callout` draws `.dk-callout` in the info tone on the highlight, or
   `.dk-callout-success` or `.dk-callout-danger`, with a hidden word that says the tone. It takes a
   role only when the page passes `live`.

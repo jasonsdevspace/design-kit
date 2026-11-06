@@ -213,7 +213,8 @@ has focus drops it, and leaves the tab order, while an aria-disabled one stays w
 can reach it and find out why. The attribute does nothing by itself, so a page that writes this
 markup makes its own click handler check `aria-disabled` and return early, calling
 `preventDefault()` so a submit button does not submit. The sheet draws a `disabled` button, and one
-inside a disabled fieldset, the same as an off one. Say why a button is off in text beside it. A
+inside a disabled fieldset, the same as an off one, and an accent button that is off keeps its
+class and is drawn as any off button is. A page says why a button is off in text beside it. A
 form's submit button is better left on while the form is incomplete, so a press shows the errors
 rather than doing nothing.
 
@@ -221,10 +222,12 @@ A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, 
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
 takes the ground of whatever it sits on, a callout included. A link with the class looks the same.
 Where a pointer can hover, the edge turns to the accent under it, and the accent button underlines
-its words instead. Pressed is the highlight with an edge twice as thick in the accent. Off is the
-muted text on no ground with an edge in the line color, rather than a fade, so its words keep a
-ratio the palette measures. In forced colors a pressed button takes the system's `Highlight`, and
-an off one `GrayText`, accent or not.
+its words instead. Pressed is the highlight with an edge twice as thick in the accent, and its words
+in the page's text, an accent button's included. Off is the muted text on no ground with an edge in
+the line color, rather than a fade, so its words keep a ratio the palette measures, and an off
+toggle that is on keeps the thicker edge, in the line color. In forced colors a pressed button
+takes the system's `Highlight`, an off one `GrayText` on the page's ground, accent or not, and an
+off toggle that is on an edge in `Highlight`.
 
 ### Fields
 
@@ -271,16 +274,19 @@ not zoom the page when the field is tapped. It sits on the page's own ground, so
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
 invalid control's edge in the danger color too. A disabled control is drawn on the surface ground
 in the muted text. The select is a native `<select>`, its caret drawn as a background, and in forced
-colors the browser's own arrow comes back.
+colors the browser's own arrow comes back. A select that shows its options as a list, with
+`multiple` or a `size`, is left as the browser draws it, with no caret.
 
 ### Callouts
 
 ```html
 <div class="dk-callout dk-callout-danger">
-    <p class="dk-callout-title">
-        <span class="dk-visually-hidden">Error: </span>The products could not be loaded
-    </p>
-    <div class="dk-callout-body">Check the file, then load it again.</div>
+    <div class="dk-callout-body">
+        <p class="dk-callout-title">
+            <span class="dk-visually-hidden">Error: </span>The products could not be loaded
+        </p>
+        <p>Check the file, then load it again.</p>
+    </div>
     <div class="dk-callout-actions">
         <button type="button" class="dk-button">Try again</button>
     </div>
@@ -292,15 +298,19 @@ A callout is `dk-callout` alone for news, on the highlight, or adds `dk-callout-
 stay in the page's text color in every tone. A success or danger callout starts its title, or its
 message when it has no title, with a visually hidden "Success: " or "Error: ", so the tone is not
 told by color alone. The title is a paragraph, or a heading from `h2` to `h6` where the callout is a
-section a visitor would jump to. The actions, when there are some, follow the message.
+section a visitor would jump to, and opens `.dk-callout-body`, the message. The actions, when there
+are some, follow the message, outside it.
 
 A callout has no role unless the page gives it one, whatever its tone. A message on the page when it
-loads gets none, since some screen readers read an alert created with its text already in it, some
-read it twice and some say nothing, and it interrupts the reading of the page's title. A message
-that arrives after the page has loaded takes `role="status"`, read when the screen reader is next
-idle, or `role="alert"`, read at once, on `.dk-callout-body` alone, so the actions are not read with
-it. The page puts a live callout on the page empty first and fills it after, which is when a screen
-reader reads it.
+loads gets none, since a live region created with its text already in it is read unreliably across
+screen readers and interrupts the reading of the page's title. A message that arrives after the page
+has loaded takes `role="status"`, read when the screen reader is next idle, or `role="alert"`, read
+at once, on `.dk-callout-body`, so the title and the tone's word are read with the message and the
+actions are not. The page puts a live callout on the page empty first and fills it after, which is
+when a screen reader reads it. A page filling a success or danger callout puts the hidden word in
+with the message, as `<span class="dk-visually-hidden">Success: </span>Saved.`, since the word is
+part of what is read. An empty live callout still draws its ground and padding, so a page places it
+where an empty band reads as space, or leaves it out of the layout's flow until it is filled.
 
 A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
 the edge marks where the callout starts and ends.
@@ -342,17 +352,18 @@ export const Checkout = ({ error, saved }: Props) => {
   `dk-button-accent`. `pressed` writes `aria-pressed`, `false` included, and left undefined makes
   the button an action. The types refuse `accent` and `pressed` together. `off` writes
   `aria-disabled="true"` and puts a click handler that calls `preventDefault()` in place of
-  `onClick`, so nothing the page passed runs and a submit button does not submit. A `className`
-  follows the kit's classes.
+  `onClick`, so the page's click handler does not run and a submit button does not submit. Any
+  other handler the page passes, for keys or a pointer, still runs, and checks `off` itself. A
+  `className` follows the kit's classes.
 - `InputField` takes `label`, and `hint` and `error`, each drawn only when given, an empty string,
   null or false drawing nothing. `id` is the control's, made with React's `useId` unless given, and
   a page gives one when something links to the field, such as an error summary. Every other prop
   goes to the `<input>` but `style` and `aria-invalid`. A `className` follows `dk-input`, and an
   `aria-describedby` of the page's own is listed after the hint and the error.
 - `SelectField` takes the same props, with its children as the options of the `<select>`.
-- `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn as a
-  paragraph or, with `headingLevel` from 2 to 6, as that heading. `actions` are drawn after the
-  message. `prefix` is the word read before the title or the message, the tone's own unless given,
+- `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn at the
+  start of the message as a paragraph or, with `headingLevel` from 2 to 6, as that heading, and as
+  a paragraph for any other level. `actions` are drawn after the message. `prefix` is the word read before the title or the message, the tone's own unless given,
   and an empty string drops it. `live`, `status` or `alert`, puts that role on the message and draws
   the message even when it is empty. A callout takes no other props, so a page that needs a class
   or an id on one puts it on an element around it.
@@ -391,11 +402,12 @@ color in both themes.
 The default palette is measured in both themes, against the pairings it is meant for. Text, muted
 text, the accent, and the success and danger colors pass 4.5 to 1 on the page, a card and anything
 raised, and a control's edge passes 3 to 1 on each of those. Text on the accent passes 4.5 to 1.
-Text, muted text and the accent pass 4.5 to 1 on the highlight and on the success and danger
-grounds as well, and a control's edge passes 3 to 1 on them, so a button or a field keeps its edge
-inside a callout of any tone. The success and danger colors pass 4.5 to 1 on their own grounds. The
-focus ring is drawn in the accent, so it is held as a link is. A pairing outside that list, such as a line against its ground, carries no
-ratio, and a page that sets its own palette answers for its own pairings.
+Text, muted text and the accent pass 4.5 to 1 on the highlight and on the success and danger grounds
+as well, and a control's edge passes 3 to 1 on them, so a button or a field keeps its edge inside a
+callout of any tone. The success and danger colors pass 4.5 to 1 on their own grounds. The focus
+ring is drawn in the accent, so it is held as a link is. A pairing outside that list, such as a line
+against its ground, carries no ratio, and a page that sets its own palette answers for its own
+pairings.
 
 ## The theme contract
 

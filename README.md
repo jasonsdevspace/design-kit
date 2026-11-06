@@ -2,8 +2,8 @@
 
 `@jasonsdevspace/design-kit` holds the design tokens, base styles, theme script, page chrome, and
 the buttons, fields and callouts the demos on [jasonsdevspace.com](https://jasonsdevspace.com) are
-meant to share. Each version from
-`0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
+meant to share. Each version from `0.1.0-next.1` on is staged on npm from a tag, and goes live when
+it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
 inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
@@ -31,8 +31,9 @@ control, a `.dk-visually-hidden` class, and less motion for a visitor who asks f
 components sheet styles the page chrome a demo draws around its page, a skip link, a strip above
 the page that says whose demo it is and a footer below it, and the buttons, text fields, selects
 and callouts on the page itself. A control's state is the attribute a screen reader already reads,
-such as `aria-pressed` or `aria-invalid`, and every rule for a control weighs nothing, so a state
-wins over the resting look by its order in the sheet and a page's own rule wins over both.
+such as `aria-pressed` or `aria-invalid`, and every rule for a button, a field or a callout weighs
+nothing, so a state wins over the resting look by its order in the sheet and a page's own rule
+outside a layer wins over both.
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
 with a placeholder.
@@ -169,49 +170,49 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                        | Where it is tested                          |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| A page's own rule outside a layer wins, however little it weighs                              | `packages/design-kit/e2e/sheets.spec.ts`    |
-| A page's layers placed before the kit's lose to it unless they name `dk` first                | `packages/design-kit/e2e/sheets.spec.ts`    |
-| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight    | `packages/design-kit/src/scope.test.ts`     |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit         | `packages/design-kit/e2e/sheets.spec.ts`    |
-| A palette set on a container restyles only what is inside it                                  | `packages/design-kit/e2e/sheets.spec.ts`    |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to        | `packages/design-kit/e2e/sheets.spec.ts`    |
-| A label hidden from the eye is still read by a screen reader                                  | `packages/design-kit/e2e/sheets.spec.ts`    |
-| Every measured pairing passes its WCAG ratio in both themes                                   | `packages/design-kit/src/tokens.test.ts`    |
-| Text, the accent and a control's edge pass on the highlight and each callout's ground         | `packages/design-kit/src/tokens.test.ts`    |
-| Nothing saved, `system`, an unknown value and refused storage follow the system               | `packages/design-kit/e2e/theme.spec.ts`     |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs  | `packages/design-kit/e2e/theme.spec.ts`     |
-| The theme is set before the body is parsed                                                    | `packages/design-kit/e2e/theme.spec.ts`     |
-| The theme follows the system as it changes, while nothing is saved                            | `packages/design-kit/e2e/theme.spec.ts`     |
-| A choice saved in another tab, or storage cleared there, reaches the page                     | `packages/design-kit/e2e/theme.spec.ts`     |
-| The key and themes are the portfolio's, and the tokens have a rule for each                   | `packages/design-kit/src/theme.test.ts`     |
-| The script holds nothing that would end its element, and compiles                             | `packages/design-kit/src/theme.test.ts`     |
-| A page with no placeholder, or with two, fails the build                                      | `packages/design-kit/src/vite.test.ts`      |
-| The hash is of the script exactly as the plugin writes it                                     | `packages/design-kit/src/vite.test.ts`      |
-| The chrome draws the markup a page without React writes, and opens no link in a new tab       | `packages/design-kit/src/react.test.tsx`    |
-| A button never submits unless a page says so, and an off one calls nothing                    | `packages/design-kit/src/react.test.tsx`    |
-| A toggle has `aria-pressed` whether on or off, and an action has none                         | `packages/design-kit/src/react.test.tsx`    |
-| A field lists only what it draws in `aria-describedby`, and is invalid only with an error     | `packages/design-kit/src/react.test.tsx`    |
-| A callout has a role only when the page asks, and its actions sit outside the message         | `packages/design-kit/src/react.test.tsx`    |
-| A live callout is drawn empty, and success and danger say their tone in words                 | `packages/design-kit/src/react.test.tsx`    |
-| The strip is one row over its rule on a wide screen, and rows of links on a phone             | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone   | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| The skip link is out of sight until the keyboard reaches it, and lands on the content         | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| The footer's rule spans the page, and its text and the strip's links line up in the column    | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| The chrome has no axe findings in either theme, on a wide screen and on a phone               | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| The chrome draws with no inline style, under a policy that allows styles only from its origin | `packages/design-kit/e2e/chrome.spec.tsx`   |
-| A button and a field stand level, at the field height wide and the target on a phone          | `packages/design-kit/e2e/controls.spec.tsx` |
-| Field text is 16px or more on a phone, and every control fits 320px wide                      | `packages/design-kit/e2e/controls.spec.tsx` |
-| An off button stays in the tab order, and is drawn as a disabled one is                       | `packages/design-kit/e2e/controls.spec.tsx` |
-| A pressed toggle has a thicker edge as well as a ground, and keeps its name                   | `packages/design-kit/e2e/controls.spec.tsx` |
-| A field is named by its label, and described by its hint and then its error                   | `packages/design-kit/e2e/controls.spec.tsx` |
-| The focus ring follows the keyboard, on the accent button and inside every callout            | `packages/design-kit/e2e/controls.spec.tsx` |
-| Every state stays in sight in forced colors, and the select's own arrow comes back            | `packages/design-kit/e2e/controls.spec.tsx` |
-| The controls have no axe findings in any state, in either theme, wide and on a phone          | `packages/design-kit/e2e/controls.spec.tsx` |
-| Each sheet resolves and each module loads from the packed package, on the oldest Node         | `packages/design-kit/smoke/consumer.mjs`    |
-| The strip draws its markup from the packed package, with the React a page has                 | `packages/design-kit/smoke/consumer.mjs`    |
-| A field makes its ids with `useId` in a server render of the packed package                   | `packages/design-kit/smoke/consumer.mjs`    |
+| Gotcha                                                                                                | Where it is tested                          |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs                                      | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                        | `packages/design-kit/e2e/sheets.spec.ts`    |
+| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight            | `packages/design-kit/src/scope.test.ts`     |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit                 | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A palette set on a container restyles only what is inside it                                          | `packages/design-kit/e2e/sheets.spec.ts`    |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A label hidden from the eye is still read by a screen reader                                          | `packages/design-kit/e2e/sheets.spec.ts`    |
+| Every measured pairing passes its WCAG ratio in both themes                                           | `packages/design-kit/src/tokens.test.ts`    |
+| Text, the accent and a control's edge pass on the highlight and each callout's ground                 | `packages/design-kit/src/tokens.test.ts`    |
+| Nothing saved, `system`, an unknown value and refused storage follow the system                       | `packages/design-kit/e2e/theme.spec.ts`     |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs          | `packages/design-kit/e2e/theme.spec.ts`     |
+| The theme is set before the body is parsed                                                            | `packages/design-kit/e2e/theme.spec.ts`     |
+| The theme follows the system as it changes, while nothing is saved                                    | `packages/design-kit/e2e/theme.spec.ts`     |
+| A choice saved in another tab, or storage cleared there, reaches the page                             | `packages/design-kit/e2e/theme.spec.ts`     |
+| The key and themes are the portfolio's, and the tokens have a rule for each                           | `packages/design-kit/src/theme.test.ts`     |
+| The script holds nothing that would end its element, and compiles                                     | `packages/design-kit/src/theme.test.ts`     |
+| A page with no placeholder, or with two, fails the build                                              | `packages/design-kit/src/vite.test.ts`      |
+| The hash is of the script exactly as the plugin writes it                                             | `packages/design-kit/src/vite.test.ts`      |
+| The chrome draws the markup a page without React writes, and opens no link in a new tab               | `packages/design-kit/src/react.test.tsx`    |
+| A button never submits unless a page says so, and an off one runs no click handler                    | `packages/design-kit/src/react.test.tsx`    |
+| A toggle has `aria-pressed` whether on or off, and an action has none                                 | `packages/design-kit/src/react.test.tsx`    |
+| A field lists only what it draws in `aria-describedby`, and is invalid only with an error             | `packages/design-kit/src/react.test.tsx`    |
+| A callout has a role only when the page asks, and its actions sit outside the message                 | `packages/design-kit/src/react.test.tsx`    |
+| A live callout is drawn empty, and success and danger say their tone in words                         | `packages/design-kit/src/react.test.tsx`    |
+| The strip is one row over its rule on a wide screen, and rows of links on a phone                     | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone           | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The skip link is out of sight until the keyboard reaches it, and lands on the content                 | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The footer's rule spans the page, and its text and the strip's links line up in the column            | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The chrome has no axe findings in either theme, on a wide screen and on a phone                       | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The chrome draws with no inline style, under a policy that allows styles only from its origin         | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| A button and a field stand level, at the field height wide and the target on a phone                  | `packages/design-kit/e2e/controls.spec.tsx` |
+| Field text is 16px or more on a phone, and every control fits 320px wide                              | `packages/design-kit/e2e/controls.spec.tsx` |
+| An off button stays in the tab order, and is drawn as a disabled one is                               | `packages/design-kit/e2e/controls.spec.tsx` |
+| A pressed toggle has a thicker edge as well as a ground, and keeps its name                           | `packages/design-kit/e2e/controls.spec.tsx` |
+| A field is named by its label, and described by its hint and then its error                           | `packages/design-kit/e2e/controls.spec.tsx` |
+| The focus ring follows the keyboard, on the accent button and inside every callout                    | `packages/design-kit/e2e/controls.spec.tsx` |
+| Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | `packages/design-kit/e2e/controls.spec.tsx` |
+| The controls have no axe findings in any state, in either theme, wide and on a phone                  | `packages/design-kit/e2e/controls.spec.tsx` |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node                 | `packages/design-kit/smoke/consumer.mjs`    |
+| The strip draws its markup from the packed package, with the React a page has                         | `packages/design-kit/smoke/consumer.mjs`    |
+| A field makes its ids with `useId` in a server render of the packed package                           | `packages/design-kit/smoke/consumer.mjs`    |
 
 ## Decisions
 

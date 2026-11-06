@@ -120,8 +120,11 @@ export const DemoFooter = ({
 /** Whether a slot holds words to draw, an empty string being none. */
 const filled = (node: ReactNode): boolean => drawn(node) && node !== '';
 
-/** The class list a component draws, its own classes first and a page's after them. */
-const classes = (...names: readonly (string | false | undefined)[]): string =>
+/**
+ * A list of names an attribute holds, such as the classes a component draws, its own first and a
+ * page's after them, or the ids that describe a control, with any left out or empty dropped.
+ */
+const spaced = (...names: readonly (string | false | undefined)[]): string =>
     names.filter((name) => typeof name === 'string' && name !== '').join(' ');
 
 type NativeButton = Omit<
@@ -140,7 +143,7 @@ export type ButtonProps = NativeButton & {
         | { readonly accent: true; readonly pressed?: never }
         | {
               readonly accent?: false;
-              /** On or off, as a toggle says it whichever it is. Undefined makes it an action. */
+              /** Whether the toggle is on. False still marks it a toggle, undefined an action. */
               readonly pressed?: boolean;
           }
     );
@@ -148,7 +151,8 @@ export type ButtonProps = NativeButton & {
 /**
  * A button, of type button unless a page gives another, so it never submits a form by surprise.
  * Off, it is marked aria-disabled rather than disabled, since a disabled button that has focus
- * drops it, and a press of it calls nothing and stops the form it would submit.
+ * drops it, and a press of it runs no click handler of the page's and stops the form it would
+ * submit. The page's other handlers, for keys or a pointer, still run, and check `off` themselves.
  */
 export const Button = ({
     accent,
@@ -163,7 +167,7 @@ export const Button = ({
     <button
         {...native}
         type={type}
-        className={classes('dk-button', accent === true && 'dk-button-accent', className)}
+        className={spaced('dk-button', accent === true && 'dk-button-accent', className)}
         aria-pressed={pressed}
         aria-disabled={off ? true : undefined}
         onClick={
@@ -186,7 +190,7 @@ type FieldParts = {
     readonly hint?: ReactNode;
     /** What is wrong with the value, drawn only when given, which marks the control invalid. */
     readonly error?: ReactNode;
-    /** The control's id, made for it unless a page gives one, as a link to it would need. */
+    /** The control's id, made with useId unless a page gives one, as it does for a link to it. */
     readonly id?: string;
 };
 
@@ -201,15 +205,18 @@ const useField = (
     readonly id: string;
     readonly hint: boolean;
     readonly error: boolean;
-    readonly wired: object;
+    readonly wired: {
+        readonly id: string;
+        readonly 'aria-describedby': string | undefined;
+        readonly 'aria-invalid': true | undefined;
+    };
 } => {
     const made = useId();
-    const control = id ?? made;
+    // An empty id would tie nothing, so it is made as one left out is.
+    const control = id === undefined || id === '' ? made : id;
     const hinted = filled(hint);
     const wrong = filled(error);
-    const describedBy = [hinted && `${control}-hint`, wrong && `${control}-error`, own]
-        .filter((part) => typeof part === 'string' && part !== '')
-        .join(' ');
+    const describedBy = spaced(hinted && `${control}-hint`, wrong && `${control}-error`, own);
     return {
         id: control,
         hint: hinted,
@@ -266,7 +273,7 @@ export const InputField = (props: InputFieldProps) => {
     const field = useField(props, own);
     return (
         <Field parts={props} field={field}>
-            <input className={classes('dk-input', className)} {...native} {...field.wired} />
+            <input className={spaced('dk-input', className)} {...native} {...field.wired} />
         </Field>
     );
 };
@@ -281,7 +288,7 @@ export const SelectField = (props: SelectFieldProps) => {
     const field = useField(props, own);
     return (
         <Field parts={props} field={field}>
-            <select className={classes('dk-select', className)} {...native} {...field.wired}>
+            <select className={spaced('dk-select', className)} {...native} {...field.wired}>
                 {children}
             </select>
         </Field>
@@ -302,11 +309,12 @@ const TONE_WORDS: Readonly<Record<CalloutTone, string>> = {
 const HEADINGS = { 2: 'h2', 3: 'h3', 4: 'h4', 5: 'h5', 6: 'h6' } as const;
 
 /**
- * A message set apart from the page, with an optional title and actions after it. It has no role
- * unless the page gives `live`, whatever its tone, since a message on the page when it loads is
- * read in its place. A live message is drawn even when empty, so the page can mount it first and
- * fill it after, which is when a screen reader reads it, and the role sits on the message alone,
- * so its actions are not read with it.
+ * A message set apart from the page, with an optional title before it and actions after it. It has
+ * no role unless the page gives `live`, whatever its tone, since a message on the page when it
+ * loads is read in its place. A live message is drawn even when empty, so the page can mount it
+ * first and fill it after, which is when a screen reader reads it. The role sits on the message,
+ * which holds the title and the tone's word too, so they are read with it, and the actions are
+ * not.
  */
 export const Callout = ({
     tone = 'info',
@@ -330,20 +338,21 @@ export const Callout = ({
     readonly actions?: ReactNode;
     readonly children?: ReactNode;
 }) => {
-    const Title = headingLevel === undefined ? 'p' : HEADINGS[headingLevel];
+    // A level the types refuse, as a page in plain JavaScript can pass, draws a paragraph.
+    const Title = (headingLevel === undefined ? undefined : HEADINGS[headingLevel]) ?? 'p';
     const titled = filled(title);
     const said = filled(children);
     const word = prefix === '' ? null : <span className="dk-visually-hidden">{prefix}</span>;
     return (
-        <div className={classes('dk-callout', tone !== 'info' && `dk-callout-${tone}`)}>
-            {titled ? (
-                <Title className="dk-callout-title">
-                    {word}
-                    {title}
-                </Title>
-            ) : null}
-            {said || live !== undefined ? (
+        <div className={spaced('dk-callout', tone !== 'info' && `dk-callout-${tone}`)}>
+            {titled || said || live !== undefined ? (
                 <div className="dk-callout-body" role={live}>
+                    {titled ? (
+                        <Title className="dk-callout-title">
+                            {word}
+                            {title}
+                        </Title>
+                    ) : null}
                     {!titled && said ? word : null}
                     {said ? children : null}
                 </div>

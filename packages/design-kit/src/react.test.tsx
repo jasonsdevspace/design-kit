@@ -294,6 +294,13 @@ describe('a field', () => {
         }
     });
 
+    it('makes an id of its own when the page gives an empty one', () => {
+        const drawn = renderToStaticMarkup(
+            <InputField id="" label="Email" hint="For the receipt" />
+        );
+        expect(drawn).not.toMatch(/id=""|for=""|"-hint"/);
+    });
+
     it("passes the control's own attributes through", () => {
         expect(
             renderToStaticMarkup(<InputField id="q" label="Search" type="search" required />)
@@ -388,9 +395,10 @@ describe('a callout', () => {
                 </Callout>
             )
         ).toBe(
-            '<div class="dk-callout dk-callout-danger"><p class="dk-callout-title">' +
+            '<div class="dk-callout dk-callout-danger"><div class="dk-callout-body">' +
+                '<p class="dk-callout-title">' +
                 '<span class="dk-visually-hidden">Error: </span>The products could not be loaded' +
-                '</p><div class="dk-callout-body">Check the file.</div></div>'
+                '</p>Check the file.</div></div>'
         );
         expect(
             renderToStaticMarkup(
@@ -399,6 +407,29 @@ describe('a callout', () => {
                 </Callout>
             )
         ).toContain('<h2 class="dk-callout-title">Store closed</h2>');
+        // A page in plain JavaScript can pass a level the types refuse, and gets a paragraph.
+        const level = 1 as unknown as 2;
+        expect(
+            renderToStaticMarkup(
+                <Callout title="Store closed" headingLevel={level}>
+                    Back soon.
+                </Callout>
+            )
+        ).toContain('<p class="dk-callout-title">Store closed</p>');
+    });
+
+    it('reads its title and its tone word with a live message, since both are in it', () => {
+        expect(
+            renderToStaticMarkup(
+                <Callout tone="danger" live="alert" title="Not loaded">
+                    Check the file.
+                </Callout>
+            )
+        ).toBe(
+            '<div class="dk-callout dk-callout-danger"><div class="dk-callout-body" role="alert">' +
+                '<p class="dk-callout-title"><span class="dk-visually-hidden">Error: </span>' +
+                'Not loaded</p>Check the file.</div></div>'
+        );
     });
 
     it('keeps its actions outside the message, so a live message reads only its words', () => {

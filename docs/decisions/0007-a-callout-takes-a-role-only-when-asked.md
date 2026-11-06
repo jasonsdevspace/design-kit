@@ -7,9 +7,9 @@
 A callout sets a message apart from the page, as news, as something that went right or as
 something that went wrong. Some of those messages are on the page when it loads, such as a notice
 that a store is closed or an error the server drew. Others arrive after something the visitor did,
-such as a save that worked. A screen reader reads a message that arrives only from a live region,
-`role="status"` to be read when it is next idle or `role="alert"` to be read at once, and only when
-the text changes after the region is on the page. An alert created with its text already in it is
+such as a save that worked. A screen reader reads a message that arrives after the page loads only
+when it sits in a live region, `role="status"` to be read when the reader is next idle or
+`role="alert"` to be read at once, and only when the text changes after the region is on the page. An alert created with its text already in it is
 read by some screen readers, read twice by some and not read by others, and it interrupts the
 reading of the page's title.
 
@@ -26,7 +26,8 @@ is about, not whether it just arrived.
 ## Decision
 
 Option B. `Callout` draws no role in any tone unless the page passes `live`. The role goes on
-`.dk-callout-body`, the message alone, so the actions after it are not read with it. A live callout
+`.dk-callout-body`, the message, which holds the title too, so the title and the tone's word are
+read with it and the actions after it are not. A live callout
 is drawn even when it is empty, so a page mounts it first and fills it after, which is when a
 screen reader reads it. The tone is told by a visually hidden "Success: " or "Error: " before the
 title, or before the message when there is no title, rather than by a role or by color alone.

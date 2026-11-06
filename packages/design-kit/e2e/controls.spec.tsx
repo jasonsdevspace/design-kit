@@ -31,6 +31,15 @@ const STATES = renderToStaticMarkup(
                 Next
             </button>
             <Button>I</Button>
+            <Button accent aria-expanded>
+                Menu
+            </Button>
+            <Button pressed off>
+                Locked on
+            </Button>
+            <Button pressed={false} off>
+                Locked off
+            </Button>
         </div>
         <fieldset disabled>
             <legend>Closed</legend>
@@ -51,6 +60,10 @@ const STATES = renderToStaticMarkup(
             </SelectField>
             <SelectField id="brand" label="Brand" error="Pick a brand">
                 <option value="">Choose a brand</option>
+            </SelectField>
+            <SelectField id="tags" label="Tags" multiple>
+                <option value="new">New</option>
+                <option value="sale">Sale</option>
             </SelectField>
         </form>
         {(['info', 'success', 'danger'] as const).map((tone) => (
@@ -140,7 +153,8 @@ test('keeps an off button in the tab order, and skips a disabled one, drawn alik
     await expect(page.getByRole('button', { name: 'I', exact: true })).toBeFocused();
     const look = ['color', 'background-color', 'border-top-color', 'cursor'];
     expect(await style(off, ...look)).toEqual(await style(disabled, ...look));
-    // In the muted text, so the state wins over the resting look rather than only matching it.
+    // Both would match the disabled button if the resting look won, so the words are held to the
+    // muted text.
     expect((await style(off, 'color')).color).toBe('rgb(92, 92, 92)');
 });
 
@@ -188,6 +202,33 @@ test("tells a pressed toggle by its edge as well as its color, and keeps the tog
         'rgb(227, 234, 251)'
     );
     expect((await style(unpressed, 'box-shadow'))['box-shadow']).toBe('none');
+});
+
+test('draws an open accent button in the page text on the highlight, so its words stay read', async ({
+    page,
+}) => {
+    await open(page);
+    const menu = page.getByRole('button', { name: 'Menu' });
+    expect(await style(menu, 'color', 'background-color')).toEqual({
+        color: 'rgb(26, 26, 26)',
+        'background-color': 'rgb(227, 234, 251)',
+    });
+});
+
+test('keeps a pressed toggle that is off told apart from one that is not pressed', async ({
+    page,
+}) => {
+    await open(page);
+    const on = await style(page.getByRole('button', { name: 'Locked on' }), 'box-shadow');
+    const off = await style(page.getByRole('button', { name: 'Locked off' }), 'box-shadow');
+    expect(on['box-shadow']).toMatch(/inset/);
+    expect(off['box-shadow']).toBe('none');
+});
+
+test('draws a list that shows its options as the browser does, with no caret', async ({ page }) => {
+    await open(page);
+    const tags = await style(page.getByLabel('Tags'), 'appearance', 'background-image');
+    expect(tags).toEqual({ appearance: 'auto', 'background-image': 'none' });
 });
 
 test('draws the focus ring after the keyboard, on the accent and in every callout', async ({
@@ -261,10 +302,20 @@ test.describe('in forced colors', () => {
             'background-color'
         );
         expect(pressed).not.toEqual(unpressed);
-        // An off button is drawn as a disabled one is, which the browser does by itself.
+        // An off button is drawn in GrayText, as the browser draws a disabled one by itself.
         const look = ['color', 'border-top-color'];
         expect(await style(page.getByRole('button', { name: 'Previous' }), ...look)).toEqual(
             await style(page.getByRole('button', { name: 'Next' }), ...look)
+        );
+        // An off toggle that is pressed keeps its gray words off the system's highlight, and is
+        // told from one that is not by its edge.
+        const locked = page.getByRole('button', { name: 'Locked on' });
+        const loose = page.getByRole('button', { name: 'Locked off' });
+        expect(await style(locked, 'background-color')).toEqual(
+            await style(loose, 'background-color')
+        );
+        expect(await style(locked, 'border-top-color')).not.toEqual(
+            await style(loose, 'border-top-color')
         );
         // The select's own arrow comes back, since the drawn one is a background.
         expect((await style(page.getByLabel('Sort by'), 'appearance')).appearance).toBe('auto');

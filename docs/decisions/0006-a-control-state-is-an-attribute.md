@@ -40,8 +40,9 @@ is a class, `dk-button-accent`, since it is a kind of button rather than a state
 
 The resting look sits in `:where()` because a bare `.dk-button` would weigh a class, and outweigh
 every state written in `:where()` after it, so pressed and off would never show. With every rule at
-no weight, a state wins by its order in the sheet: at rest, pointed at, the accent, pressed, invalid
-and off, last of all, so off wins over the accent and over pressed.
+no weight, a state wins by its order in the sheet. A button runs at rest, pointed at, the accent,
+pressed and off, and a field's control runs at rest, invalid and off, so off comes last for each and
+wins over every other state.
 
 ## Consequences
 

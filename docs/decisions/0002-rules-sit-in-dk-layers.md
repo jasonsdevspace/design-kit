@@ -60,7 +60,7 @@ The paths are in `packages/design-kit`.
 
 - `src/scope.test.ts` reads each sheet and holds the layer order to the first statement of the
   tokens and nowhere else, every block to the layer its sheet is named for, every selector to the
-  kit's own class or one `:where()` followed only by plain pseudo-classes, and custom properties to
+  kit's own class or one `:where()` followed at most by a focus pseudo-class, and custom properties to
   the tokens.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its
