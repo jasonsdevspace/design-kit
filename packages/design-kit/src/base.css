@@ -3,8 +3,9 @@
  * every link and control, and motion cut short for a visitor who asks for less. Every rule sits
  * in the kit's base layer, so a demo's own rule outside a layer wins over the kit's however little
  * it weighs, and every rule but the visually hidden class also sits inside :where(). The cut to
- * motion is the exception, held with !important, which a layer earlier than a page's own rules
- * makes win over them, since it is the visitor's choice and not the demo's.
+ * motion is the exception to a demo's rule winning. It is held with !important, so it wins over
+ * every normal rule a page writes, and the layer makes it win over a page's important rule outside
+ * a layer too, since the visitor's choice outranks the demo's.
  *
  * Load tokens.css first, since everything here is drawn from it.
  */

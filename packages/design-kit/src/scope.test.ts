@@ -5,23 +5,27 @@ import { describe, expect, it } from 'vitest';
 /*
  * The kit loads beside a demo's own styles, so what it styles is held to what it means to. Every
  * rule sits in one of the kit's layers, so a page's own rule outside a layer wins over the kit's,
- * and a page with layers of its own sets where the kit's go among them. Inside its layers, a sheet
+ * and a page that names its layers sets where the kit's go among them. Inside its layers, a sheet
  * styles the kit's own classes, and otherwise only inside one :where(), so the kit's rules stay
  * flat against each other.
  */
 
-/** The kit's layers, in the order the tokens declare them, and the layer each sheet fills. */
+/** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
 const LAYERS = ['dk.tokens', 'dk.base', 'dk.components'];
-const LAYER_OF: Record<string, string> = { 'tokens.css': 'dk.tokens', 'base.css': 'dk.base' };
+const layerOf = (sheet: string) => `dk.${sheet.replace(/\.css$/, '')}`;
+const ORDER = `@layer ${LAYERS.join(', ')};`;
 
 const withoutComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-/** What a sheet holds at its top level: each statement, and each block's header. */
+/**
+ * What a sheet holds at its top level: each statement, and each block's header. A quoted string is
+ * read as empty first, so a brace or a semicolon inside one is text, not structure.
+ */
 const topLevel = (css: string): string[] => {
     const found: string[] = [];
     let depth = 0;
     let text = '';
-    for (const character of withoutComments(css)) {
+    for (const character of withoutComments(css).replace(/"[^"]*"|'[^']*'/g, "''")) {
         if (depth === 0 && (character === '{' || character === ';')) {
             found.push(`${text.replace(/\s+/g, ' ').trim()}${character === ';' ? ';' : ''}`);
             text = '';
@@ -85,19 +89,32 @@ describe('what the sheets style', () => {
         expect(sheets).toEqual(expect.arrayContaining(['tokens.css', 'base.css']));
     });
 
-    it("declares the order of the kit's layers before any rule, in the tokens", () => {
+    it("declares the order of the kit's layers before any rule, in the tokens alone", () => {
         const tokens = readFileSync(new URL('tokens.css', folder), 'utf8');
-        expect(topLevel(tokens)[0]).toBe(`@layer ${LAYERS.join(', ')};`);
+        expect(topLevel(tokens)[0]).toBe(ORDER);
+        // Any other statement at a sheet's top level, a layer order or an import, would bring in
+        // rules or an order the kit does not mean.
+        const statements = sheets.flatMap((name) =>
+            topLevel(readFileSync(new URL(name, folder), 'utf8'))
+                .filter((part) => part.endsWith(';'))
+                .map((part) => `${name}: ${part}`)
+        );
+        expect(statements).toEqual([`tokens.css: ${ORDER}`]);
+    });
+
+    it('reads a brace or a semicolon inside a quoted string as text', () => {
+        expect(
+            topLevel('@layer dk.base { a::after { content: \'}\' } } b { content: ";" }')
+        ).toEqual(['@layer dk.base', 'b']);
     });
 
     for (const name of sheets) {
         it(`puts every rule in ${name} in its own layer of the kit's`, () => {
+            expect(LAYERS).toContain(layerOf(name));
             const css = readFileSync(new URL(name, folder), 'utf8');
             const blocks = topLevel(css).filter((part) => !part.endsWith(';'));
             expect(blocks.length).toBeGreaterThan(0);
-            expect(blocks.filter((header) => header !== `@layer ${LAYER_OF[name] ?? '?'}`)).toEqual(
-                []
-            );
+            expect(blocks.filter((header) => header !== `@layer ${layerOf(name)}`)).toEqual([]);
         });
 
         it(`styles in ${name} only its own classes and what it wraps in :where()`, () => {

@@ -4,21 +4,30 @@ import { expect, type Page, test } from '@playwright/test';
 
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
- * saved none, picks the page's background and text, a demo's own palette and its rule on an
- * element win over the kit's, and the focus ring lands where it should in both themes.
+ * saved none, picks the page's background and text, a demo's own palette and rules win over the
+ * kit's wherever its sheets load, the order of a page's own layers places the kit's, and the focus
+ * ring lands where it should in both themes.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = `${sheet('tokens.css')}\n${sheet('base.css')}`;
 
 /**
- * A page with the theme given saved on its root, the markup given, and the kit loaded after the
- * demo's own rules, so a tie goes to the kit and a demo's rule can only win by weight.
+ * A page with the theme given saved on its root, the markup given, and the demo's own rules loaded
+ * before the kit unless they say after. Before is the harder case for the demo outside a layer,
+ * where a tie of weight would go to whichever sheet comes later.
  */
-const open = async (page: Page, saved: 'light' | 'dark' | null, body = '', own = '') => {
+const open = async (
+    page: Page,
+    saved: 'light' | 'dark' | null,
+    body = '',
+    own: string | { readonly css: string; readonly loads: 'before' | 'after' } = ''
+) => {
+    const { css, loads } = typeof own === 'string' ? { css: own, loads: 'before' } : own;
     const theme = saved ? ` data-theme="${saved}"` : '';
+    const styles = loads === 'before' ? `${css}${KIT}` : `${KIT}${css}`;
     await page.setContent(
-        `<!doctype html><html lang="en"${theme}><head><style>${own}${KIT}</style></head>` +
+        `<!doctype html><html lang="en"${theme}><head><style>${styles}</style></head>` +
             `<body>${body}</body></html>`
     );
 };
@@ -116,26 +125,39 @@ test('hides a visually hidden label from the eye and keeps it for a screen reade
     expect(box).toMatchObject({ width: 1, height: 1 });
 });
 
-for (const [order, winner] of [
-    ['dk, page', 'rgb(1, 2, 3)'],
-    ['page, dk', 'rgb(255, 255, 255)'],
-] as const) {
-    test(`lets a page with layers of its own set where the kit's go, here ${order}`, async ({
-        page,
-    }) => {
-        await open(
-            page,
-            'light',
-            '',
-            `@layer ${order}; @layer page { body { background: rgb(1, 2, 3) } }`
-        );
-        expect((await drawn(page)).background).toBe(winner);
-    });
-}
+const PAGE_LAYER = '@layer page { body { background: rgb(1, 2, 3) } }';
+
+test("lets a page's own layer win when the kit's sheets load first", async ({ page }) => {
+    await open(page, 'light', '', { css: PAGE_LAYER, loads: 'after' });
+    expect((await drawn(page)).background).toBe('rgb(1, 2, 3)');
+});
+
+test('lets a page whose layers load first put its own over the kit by naming dk first', async ({
+    page,
+}) => {
+    await open(page, 'light', '', `@layer dk, page; ${PAGE_LAYER}`);
+    expect((await drawn(page)).background).toBe('rgb(1, 2, 3)');
+});
+
+test('lets a page whose layers load first put the kit over its own by naming dk last', async ({
+    page,
+}) => {
+    await open(page, 'light', '', `@layer page, dk; ${PAGE_LAYER}`);
+    expect((await drawn(page)).background).toBe('rgb(255, 255, 255)');
+});
+
+test('puts the kit over a page whose layers load first without naming dk', async ({ page }) => {
+    // The hazard the README warns of: a layer is placed where its name first appears, so the
+    // kit's layers land after the page's, and a page meaning its own to win names dk first.
+    await open(page, 'light', '', PAGE_LAYER);
+    expect((await drawn(page)).background).toBe('rgb(255, 255, 255)');
+});
 
 test("lets a page's own rule outside a layer win, however little it weighs", async ({ page }) => {
-    await open(page, 'light', '', ':where(body) { background: rgb(1, 2, 3) }');
-    expect((await drawn(page)).background).toBe('rgb(1, 2, 3)');
+    for (const loads of ['before', 'after'] as const) {
+        await open(page, 'light', '', { css: ':where(body) { background: rgb(1, 2, 3) }', loads });
+        expect((await drawn(page)).background).toBe('rgb(1, 2, 3)');
+    }
 });
 
 for (const theme of ['light', 'dark'] as const) {
@@ -145,7 +167,8 @@ for (const theme of ['light', 'dark'] as const) {
         await open(
             page,
             theme,
-            '<a id="outside" href="#">Out</a><div class="other"><a id="inside" href="#">In</a></div>',
+            '<a id="outside" href="#">Out</a>' +
+                '<div class="other"><a id="inside" href="#">In</a></div>',
             '.other { --dk-accent: light-dark(rgb(0, 100, 0), rgb(0, 200, 0)) }'
         );
         const colors = await page.evaluate(() =>
@@ -160,12 +183,22 @@ for (const theme of ['light', 'dark'] as const) {
     });
 }
 
-test("cuts a page's own transition for a visitor who asks for less motion", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await open(page, 'light', '<p class="fade">Fades</p>', '.fade { transition: opacity 2s 1s }');
-    const timing = await page.evaluate(() => {
-        const style = getComputedStyle(document.querySelector('.fade') ?? document.body);
-        return { duration: style.transitionDuration, delay: style.transitionDelay };
+for (const [where, own] of [
+    ['outside a layer', '.fade { transition: opacity 2s 1s !important }'],
+    [
+        'in a layer after the kit',
+        '@layer dk, page; @layer page { .fade { transition: opacity 2s 1s !important } }',
+    ],
+] as const) {
+    test(`cuts a page's important transition ${where} for a visitor who wants less motion`, async ({
+        page,
+    }) => {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await open(page, 'light', '<p class="fade">Fades</p>', own);
+        const timing = await page.evaluate(() => {
+            const style = getComputedStyle(document.querySelector('.fade') ?? document.body);
+            return { duration: style.transitionDuration, delay: style.transitionDelay };
+        });
+        expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
     });
-    expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
-});
+}

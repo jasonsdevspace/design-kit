@@ -9,9 +9,10 @@
  * A demo with its own palette sets the roles again on its root, both values at once.
  *
  * Every rule in the kit sits in one of its layers, declared here in order, so a page's own rule
- * outside a layer wins over the kit's, and a page with layers of its own names where dk goes
- * among them. Inside the layers, every rule sits inside :where(), so the kit's rules stay flat
- * against each other and a demo's own :root wins whichever sheet loads first.
+ * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
+ * dk among layers of its own sets where dk goes. A demo's own :root outside a layer wins the same
+ * way, whichever sheet loads first. Inside the layer, every rule here sits inside :where(), so the
+ * kit's rules stay flat against each other.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
  * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
@@ -91,7 +92,7 @@
 
         /* A field a visitor types into or picks from, and anything a thumb presses on a phone. */
         --dk-field-height: 2.25rem;
-        --dk-field-inline: var(--dk-space-2);
+        --dk-field-inline: 0.5rem;
         --dk-target: 2.75rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
