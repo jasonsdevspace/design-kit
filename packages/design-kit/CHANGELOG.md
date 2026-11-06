@@ -7,7 +7,7 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
-## Unreleased
+## 0.1.0-next.2
 
 The page chrome every demo draws, and buttons, text fields, selects and callouts, styled by
 `components.css` and drawn by the components in `./react`, with the state of each control carried
