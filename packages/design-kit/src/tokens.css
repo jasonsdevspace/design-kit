@@ -6,8 +6,13 @@
  * Each color role holds its light and its dark value in one light-dark(), which picks by the
  * color scheme of the element it is drawn on. The scheme follows data-theme on the root when a
  * page sets it, as the portfolio does with the theme a visitor saved, and the system's otherwise.
- * A demo with its own palette sets the roles again on its root, both values at once. Every rule
- * here sits inside :where(), so a demo's own :root wins whichever sheet loads first.
+ * A demo with its own palette sets the roles again on its root, both values at once.
+ *
+ * Every rule in the kit sits in one of its layers, declared here in order, so a page's own rule
+ * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
+ * dk among layers of its own sets where dk goes. A demo's own :root outside a layer wins the same
+ * way, whichever sheet loads first. Inside the layer, every rule here sits inside :where(), so the
+ * kit's rules stay flat against each other.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
  * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
@@ -16,95 +21,100 @@
  * Which unit goes where: rem for anything that should grow with the visitor's own text size, and
  * px for what must not scale, a border, the focus ring and a shadow.
  */
-:where(:root) {
-    color-scheme: light dark;
 
-    /*
-     * What a page is drawn on: the page itself, a card on it, and what floats over both. In the
-     * dark theme each steps lighter than the last, since a shadow cannot show there.
-     */
-    --dk-bg: light-dark(#ffffff, #121212);
-    --dk-surface: light-dark(#f5f5f5, #1e1e1e);
-    --dk-raised: light-dark(#ffffff, #2a2a2a);
+@layer dk.tokens, dk.base, dk.components;
 
-    /* Text, and the text that steps back. */
-    --dk-fg: light-dark(#1a1a1a, #f0f0f0);
-    --dk-muted: light-dark(#5c5c5c, #a5a5a5);
+@layer dk.tokens {
+    :where(:root) {
+        color-scheme: light dark;
 
-    /* The lines between things, and the stronger edge of a field or button a visitor uses. */
-    --dk-line: light-dark(#d9d9d9, #3a3a3a);
-    --dk-control: light-dark(#858585, #7a7a7a);
+        /*
+         * What a page is drawn on: the page itself, a card on it, and what floats over both. In the
+         * dark theme each steps lighter than the last, since a shadow cannot show there.
+         */
+        --dk-bg: light-dark(#ffffff, #121212);
+        --dk-surface: light-dark(#f5f5f5, #1e1e1e);
+        --dk-raised: light-dark(#ffffff, #2a2a2a);
 
-    /* Links, the focus ring and the one action a page leads with, and the text drawn on it. */
-    --dk-accent: light-dark(#1f4fd8, #8fb0ff);
-    --dk-on-accent: light-dark(#ffffff, #121212);
-    /* What is chosen or pointed at, behind text in the page's own color. */
-    --dk-highlight: light-dark(#e3eafb, #22305a);
+        /* Text, and the text that steps back. */
+        --dk-fg: light-dark(#1a1a1a, #f0f0f0);
+        --dk-muted: light-dark(#5c5c5c, #a5a5a5);
 
-    /* What went right and what went wrong, each with a ground of its own for a callout. */
-    --dk-success: light-dark(#1d7a3e, #5cc28a);
-    --dk-success-bg: light-dark(#e8f5ec, #15301f);
-    --dk-danger: light-dark(#b3261e, #ff8a80);
-    --dk-danger-bg: light-dark(#fbeceb, #3a1f1d);
+        /* The lines between things, and the stronger edge of a field or button a visitor uses. */
+        --dk-line: light-dark(#d9d9d9, #3a3a3a);
+        --dk-control: light-dark(#858585, #7a7a7a);
 
-    /* Space, in steps. */
-    --dk-space-1: 0.25rem;
-    --dk-space-2: 0.5rem;
-    --dk-space-3: 0.75rem;
-    --dk-space-4: 1rem;
-    --dk-space-5: 1.5rem;
-    --dk-space-6: 2rem;
+        /* Links, the focus ring and the one action a page leads with, and the text drawn on it. */
+        --dk-accent: light-dark(#1f4fd8, #8fb0ff);
+        --dk-on-accent: light-dark(#ffffff, #121212);
+        /* What is chosen or pointed at, behind text in the page's own color. */
+        --dk-highlight: light-dark(#e3eafb, #22305a);
 
-    /* Type. */
-    --dk-text-caption: 0.85rem;
-    --dk-text-small: 0.9rem;
-    --dk-text-body: 1rem;
-    --dk-text-lead: 1.1rem;
-    --dk-text-title: 1.25rem;
-    --dk-text-heading: 1.5rem;
-    --dk-text-display: 1.75rem;
-    --dk-leading-tight: 1.2;
-    --dk-leading-body: 1.5;
-    --dk-weight-normal: 400;
-    --dk-weight-medium: 500;
-    /* Every heading's weight. */
-    --dk-weight-strong: 600;
-    --dk-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    --dk-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        /* What went right and what went wrong, each with a ground of its own for a callout. */
+        --dk-success: light-dark(#1d7a3e, #5cc28a);
+        --dk-success-bg: light-dark(#e8f5ec, #15301f);
+        --dk-danger: light-dark(#b3261e, #ff8a80);
+        --dk-danger-bg: light-dark(#fbeceb, #3a1f1d);
 
-    /* Corners. */
-    --dk-radius-small: 0.25rem;
-    --dk-radius: 0.375rem;
-    --dk-radius-large: 0.5rem;
+        /* Space, in steps. */
+        --dk-space-1: 0.25rem;
+        --dk-space-2: 0.5rem;
+        --dk-space-3: 0.75rem;
+        --dk-space-4: 1rem;
+        --dk-space-5: 1.5rem;
+        --dk-space-6: 2rem;
 
-    /* The one focus ring every control draws, in the accent. */
-    --dk-ring-width: 2px;
-    --dk-ring-offset: 2px;
+        /* Type. */
+        --dk-text-caption: 0.85rem;
+        --dk-text-small: 0.9rem;
+        --dk-text-body: 1rem;
+        --dk-text-lead: 1.1rem;
+        --dk-text-title: 1.25rem;
+        --dk-text-heading: 1.5rem;
+        --dk-text-display: 1.75rem;
+        --dk-leading-tight: 1.2;
+        --dk-leading-body: 1.5;
+        --dk-weight-normal: 400;
+        --dk-weight-medium: 500;
+        /* Every heading's weight. */
+        --dk-weight-strong: 600;
+        --dk-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --dk-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-    /* A field a visitor types into or picks from, and anything a thumb presses on a phone. */
-    --dk-field-height: 2.25rem;
-    --dk-field-inline: var(--dk-space-2);
-    --dk-target: 2.75rem;
-    /* The height of the portfolio strip's row, and of each link in it. */
-    --dk-strip: 2.5rem;
+        /* Corners. */
+        --dk-radius-small: 0.25rem;
+        --dk-radius: 0.375rem;
+        --dk-radius-large: 0.5rem;
 
-    /* The width a page of reading holds to, and the widest a page's column grows. */
-    --dk-measure: 42rem;
-    --dk-column: 72rem;
+        /* The one focus ring every control draws, in the accent. */
+        --dk-ring-width: 2px;
+        --dk-ring-offset: 2px;
 
-    /* What floats over the page, and what dims the page behind it, darker on a dark page. */
-    --dk-shadow-raised: 0 6px 24px rgb(0 0 0 / 0.18);
-    --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
+        /* A field a visitor types into or picks from, and anything a thumb presses on a phone. */
+        --dk-field-height: 2.25rem;
+        --dk-field-inline: 0.5rem;
+        --dk-target: 2.75rem;
+        /* The height of the portfolio strip's row, and of each link in it. */
+        --dk-strip: 2.5rem;
 
-    /* How long a small change of state takes to show, such as a hover. */
-    --dk-duration-short: 150ms;
-}
+        /* The width a page of reading holds to, and the widest a page's column grows. */
+        --dk-measure: 42rem;
+        --dk-column: 72rem;
 
-/* A theme set on the root wins over the system's. */
-:where(:root[data-theme='light']) {
-    color-scheme: light;
-}
+        /* What floats over the page, and what dims the page behind it, darker on a dark page. */
+        --dk-shadow-raised: 0 6px 24px rgb(0 0 0 / 0.18);
+        --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
-:where(:root[data-theme='dark']) {
-    color-scheme: dark;
+        /* How long a small change of state takes to show, such as a hover. */
+        --dk-duration-short: 150ms;
+    }
+
+    /* A theme set on the root wins over the system's. */
+    :where(:root[data-theme='light']) {
+        color-scheme: light;
+    }
+
+    :where(:root[data-theme='dark']) {
+        color-scheme: dark;
+    }
 }
