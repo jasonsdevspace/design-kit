@@ -6,6 +6,11 @@ script changes `themeScriptHash`, so a page reads the hash from the installed pa
 keeping a copy. Each version is staged on npm from a tag by the release workflow, with provenance,
 goes live when it is promoted, and has a release on GitHub with the entry below as its notes.
 
+## 0.1.0-next.1
+
+Nothing in the package changed. This is the first version the release workflow stages, through
+npm's trusted publishing with provenance, where `0.1.0-next.0` was published by hand.
+
 ## 0.1.0-next.0
 
 The kit's first prerelease: the tokens, the base and the theme script the demos on
