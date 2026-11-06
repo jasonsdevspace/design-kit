@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
     verify:
-        name: Lint and test
+        name: Lint, test and build
         runs-on: ubuntu-latest
         timeout-minutes: 10
         steps:
@@ -53,6 +53,22 @@ jobs:
 
             - name: Unit tests
               run: npm run test:run
+
+            # The theme module and the plugin are published from their compiled output, so a build
+            # that compiles but packs something broken is caught here.
+            - name: Build
+              run: npm run build
+
+            # Each entry the package exports loads by its published name, from the build.
+            - name: Load the built entries
+              run: |
+                  node --input-type=module -e "
+                      await import('@jasonsdevspace/design-kit/theme');
+                      await import('@jasonsdevspace/design-kit/vite');
+                  "
+
+            - name: Check what would be published
+              run: npm pack --dry-run
 
     browser:
         name: Browser tests

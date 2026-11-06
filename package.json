@@ -2,7 +2,7 @@
     "name": "@jasonsdevspace/design-kit",
     "version": "0.0.0",
     "private": true,
-    "description": "Design tokens and base styles for the demos on jasonsdevspace.com.",
+    "description": "Design tokens, base styles and the theme script for the demos on jasonsdevspace.com.",
     "license": "MIT",
     "author": "Jason Poteet",
     "homepage": "https://github.com/jasonsdevspace/design-kit#readme",
@@ -14,10 +14,19 @@
     "type": "module",
     "exports": {
         "./tokens.css": "./src/tokens.css",
-        "./base.css": "./src/base.css"
+        "./base.css": "./src/base.css",
+        "./theme": {
+            "types": "./dist/theme.d.ts",
+            "default": "./dist/theme.js"
+        },
+        "./vite": {
+            "types": "./dist/vite.d.ts",
+            "default": "./dist/vite.js"
+        }
     },
     "files": [
-        "src/*.css"
+        "src/*.css",
+        "dist"
     ],
     "sideEffects": [
         "*.css"
@@ -37,7 +46,8 @@
         "test:run": "vitest run",
         "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
         "prepare": "husky || true",
-        "e2e": "playwright test"
+        "e2e": "playwright test",
+        "build": "tsc -p tsconfig.build.json"
     },
     "lint-staged": {
         "*.{ts,tsx,js,mjs}": [
@@ -51,6 +61,14 @@
     "allowScripts": {
         "unrs-resolver": true,
         "fsevents": true
+    },
+    "peerDependencies": {
+        "vite": ">=8"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        }
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -66,6 +84,7 @@
         "prettier": "^3.9.10",
         "typescript": "~6.0.3",
         "typescript-eslint": "^8.72.1",
+        "vite": "^8.3.6",
         "vitest": "^5.1.0"
     }
 }
