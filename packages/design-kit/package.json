@@ -5,7 +5,7 @@
     "description": "Design tokens, base styles and the theme script for the demos on jasonsdevspace.com.",
     "license": "MIT",
     "author": "Jason Poteet",
-    "homepage": "https://github.com/jasonsdevspace/design-kit#readme",
+    "homepage": "https://github.com/jasonsdevspace/design-kit/tree/main/packages/design-kit#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/jasonsdevspace/design-kit.git",

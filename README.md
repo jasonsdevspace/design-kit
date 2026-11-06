@@ -1,69 +1,34 @@
 # design-kit
 
-The repository for `@jasonsdevspace/design-kit`, the design tokens, base styles and theme script
-meant to be shared by the demos on [jasonsdevspace.com](https://jasonsdevspace.com). The package
-is marked private and is not published.
+`@jasonsdevspace/design-kit` holds the design tokens, base styles and theme script the demos on
+[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. The package is marked private
+and is not published.
 
-## What it holds
+**Why I built it.** My demos each carried their own copy of the same things. ShelfLens and
+inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
+and sets it before the first paint, the same script line for line, and each names its colors in
+custom properties of its own, such as `--bg` and `--accent`. A change to how a theme is chosen had
+to be made in every repository, and a new demo would have copied it again. I wanted one package a
+demo could load beside the styles it already has, without either side taking the other's names or
+overruling the other's rules, and I wanted each of those promises held by a test, since a
+stylesheet that loses the cascade fails without an error.
 
-- `tokens.css`: the scale a page's styles are drawn from, and the color roles. Every name carries
-  the `--dk-` prefix, so the kit can load beside a page's own styles.
-- `base.css`: the page's type and colors, one focus ring for every link and control, a
-  `.dk-visually-hidden` class, and less motion for a visitor who asks for it.
-- `theme`: the key the portfolio saves a visitor's theme under, the two themes, and the script
-  that sets the saved one before a page paints.
-- `vite`: a Vite plugin that puts that script into each page, and the script's hash for a Content
-  Security Policy.
-
-Every rule in the kit sits in one of its cascade layers, `dk.tokens` and `dk.base`, which the tokens
-declare in that order with `dk.components` after them. A page's own rule outside a layer wins over
-every rule of the kit's but the cut to motion, however little it weighs and wherever its sheet
-loads. A page with layers of its own names where `dk` goes among them. `@layer dk, page;` puts its
-own layer over the kit's wherever it is written. `@layer page, dk;` puts the kit's over its own only
-when written before the kit's sheets, since a layer takes its place where it is first named. So a
-page whose own layers load before the kit's sheets names `dk` first if it means its own to win.
-
-Inside the layers, every rule but the visually hidden class sits inside `:where()`, so the kit's
-rules stay flat against each other. The cut to motion is held with `!important`, since it is the
-visitor's choice. It wins over every normal rule a page writes, and over an important one unless
-the page puts that in a layer it orders before the kit's.
+## Using it in a demo
 
 A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
-Vite:
+Vite.
 
 ```css
 @import '@jasonsdevspace/design-kit/tokens.css';
 @import '@jasonsdevspace/design-kit/base.css';
 ```
 
-## Themes and palettes
+The tokens are the scale a page's styles are drawn from and the color roles, every name with the
+`--dk-` prefix. The base gives the page its type and colors, one focus ring for every link and
+control, a `.dk-visually-hidden` class, and less motion for a visitor who asks for it.
 
-Each color role holds its light and its dark value in one `light-dark()`. A page follows the
-system's color scheme, or the theme set as `data-theme="light"` or `data-theme="dark"` on its root.
-A page with its own palette sets the roles again on `:root`, both values at once, and wins whichever
-sheet loads first, as long as that rule sits outside a layer or in one after the kit's. A page can
-also set them on one container, which restyles only what is inside it, in both themes:
-
-```css
-:root {
-    --dk-accent: light-dark(#2f5bd3, #7b9cff);
-}
-```
-
-The default palette passes WCAG's 4.5 to 1 for every text pairing in both themes, the accent and so
-the focus ring included, and 3 to 1 for a control's edge. `packages/design-kit/src/tokens.test.ts`
-holds it there, and a page that sets its own palette is responsible for its own pairings.
-
-## The theme a visitor saved
-
-The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark`
-or `system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
-`THEMES`, and `themeScript`, the script a page runs inline in its head to set `data-theme` before
-anything paints. The script follows the system's theme when `system` or nothing usable is saved,
-and sets the theme again when the system's changes or the portfolio saves a choice in another tab.
-
-A page built with Vite puts the script in with the plugin from `@jasonsdevspace/design-kit/vite`,
-where its head holds `<!-- theme-script -->`. A page without that comment fails the build.
+A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
+with a placeholder.
 
 ```ts
 import { themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
@@ -72,22 +37,159 @@ import { defineConfig } from 'vite';
 export default defineConfig({ plugins: [themeScriptPlugin()] });
 ```
 
-The same module exports `themeScriptHash`, the script's hash as a Content Security Policy source,
-for a page whose policy allows inline script only by its hash.
+```html
+<head>
+    <!-- theme-script -->
+</head>
+```
+
+The plugin puts the script inline in place of the comment. A page with no placeholder fails the
+build, since without the script it would draw the system's theme rather than the visitor's, and so
+does a page with two. Vite 8 or later is an optional peer of the package, needed only by a page that
+uses the plugin.
+
+A page built some other way writes the script into its head itself, inside a `<script>` element
+before the body, from `@jasonsdevspace/design-kit/theme`.
+
+```ts
+import { themeScript } from '@jasonsdevspace/design-kit/theme';
+
+const head = `<script>${themeScript}</script>`;
+```
+
+## Themes and palettes
+
+Each color role holds its light and its dark value in one `light-dark()`. A page follows the
+system's color scheme, or the theme set as `data-theme="light"` or `data-theme="dark"` on its root.
+A page with its own palette sets the roles again on `:root`, both values at once, and wins whichever
+sheet loads first, as long as that rule sits outside a layer or in one after the kit's. A page can
+also set them on one container, which restyles only what is inside it, in both themes.
+
+```css
+:root {
+    --dk-accent: light-dark(#2f5bd3, #7b9cff);
+}
+```
+
+`packages/design-kit/src/tokens.test.ts` measures the default palette in both themes, against the
+pairings it is meant for. Text, muted text, the accent, and the success and danger colors pass 4.5
+to 1 on the page, a card and anything raised, and a control's edge passes 3 to 1 on each of those.
+Text on the accent passes 4.5 to 1, as do text and muted text on the highlight and on each callout's
+ground, the accent on the highlight, and the success and danger colors on their own grounds. The
+focus ring is drawn in the accent, so it is held as a link is. A pairing outside that list, such as
+a line against its ground, carries no ratio, and a page that sets its own palette answers for its
+own pairings.
+
+## Layers, and how a page's own styles win
+
+Every rule in the kit sits in one of its cascade layers, `dk.tokens` and `dk.base`, which the tokens
+declare in that order with `dk.components` after them. A page's own rule outside a layer wins over
+every rule of the kit's but the cut to motion, however little it weighs and wherever its sheet
+loads. Inside the layers, every rule but the visually hidden class sits inside `:where()`, so the
+kit's rules stay flat against each other.
+
+A page with layers of its own names where `dk` goes among them, and this is where load order bites.
+A layer takes its place in the order where its name first appears. A page whose own layers load
+before the kit's sheets, without naming `dk`, has put its layers first, and the kit's rules then win
+over its own. `@layer dk, page;` puts the page's layer over the kit's wherever it is written.
+`@layer page, dk;` puts the kit's over the page's only when written before the kit's sheets. So a
+page whose own layers load first names `dk` first if it means its own to win.
+
+The cut to motion is held with `!important`, since it is the visitor's choice. It wins over every
+normal rule a page writes, and over an important one outside a layer or in a layer after the kit's.
+An important rule in a layer the page orders before the kit's still wins over it.
+
+## The theme a visitor saved
+
+The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark`
+or `system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
+`THEMES`, and `themeScript`, the script that sets `data-theme` on the root before anything paints.
+It follows the system's theme when nothing is saved, when `system` or any value but the two themes
+is saved, and when the browser refuses the page its storage, as the portfolio's own script does. It
+sets the theme again when the system's changes, and when the portfolio saves a choice or clears it
+in another tab.
+
+Storage belongs to an origin, so the script reads what the portfolio saved only on the portfolio's
+own origin, where each demo is served under a path of jasonsdevspace.com. A demo served anywhere
+else, a dev server on localhost included, finds nothing saved and follows the system.
+
+`@jasonsdevspace/design-kit/vite` also exports `themeScriptHash`, the script's hash as a Content
+Security Policy source, for a page whose policy allows inline script only by its hash. It holds
+while nothing after the plugin rewrites the inline script, as a minifier of a page's HTML would,
+and it is the hash of the script in the installed version, so a policy reads it from the package
+rather than keeping a copy.
+
+## Browser support
+
+The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
+120 and Safari 17.5. Cascade layers and `:where()` are older than that. The browser tests run only
+in Chromium, so the other engines are held to the floor by what they document, not by a test here.
+
+## The gotchas, and the test behind each
+
+| Gotcha                                                                                | Where it is tested                               |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| A page's own rule outside a layer wins, however little it weighs                      | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A page's layers placed before the kit's lose to it unless they name `dk` first        | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every rule sits in its own dk layer, and only the kit's own class adds weight         | `packages/design-kit/src/scope.test.ts`          |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A palette set on a container restyles only what is inside it                          | `packages/design-kit/e2e/sheets.spec.ts`         |
+| The focus ring is drawn in the accent, and not on a section focused by script         | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A label hidden from the eye is still read by a screen reader                          | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every measured pairing passes its WCAG ratio in both themes                           | `packages/design-kit/src/tokens.test.ts`         |
+| Nothing saved, `system`, an unknown value and refused storage follow the system       | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme is set before the body is parsed                                            | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme follows the system as it changes, while nothing is saved                    | `packages/design-kit/e2e/theme.spec.ts`          |
+| A choice saved in another tab, or storage cleared there, reaches the page             | `packages/design-kit/e2e/theme.spec.ts`          |
+| The key and themes are the portfolio's, and the tokens have a rule for each           | `packages/design-kit/src/theme.test.ts`          |
+| The script holds nothing that would end its element, and compiles                     | `packages/design-kit/src/theme.test.ts`          |
+| A page with no placeholder, or with two, fails the build                              | `packages/design-kit/src/vite.test.ts`           |
+| The hash is of the script exactly as the plugin writes it                             | `packages/design-kit/src/vite.test.ts`           |
+| Each entry loads from the packed package with install scripts off                     | the packed install in `.github/workflows/ci.yml` |
+
+## Decisions
+
+Each choice with a real alternative is a record in [docs/decisions](docs/decisions), with the
+options rejected, what the choice costs, and the test behind it.
+
+1. [The kit is a workspace, built on pack and installed from npm](docs/decisions/0001-a-workspace-built-on-pack.md).
+   A demo installs what npm packs, with no script of the kit's to run, rather than building the kit
+   from git with every tool the repository checks itself with.
+2. [The kit's rules sit in dk layers, with a prefix and no weight](docs/decisions/0002-rules-sit-in-dk-layers.md).
+   A page's own rule wins however plain it is, at the cost of a load order a page with layers of
+   its own has to get right.
+3. [Each color holds both themes in one light-dark()](docs/decisions/0003-one-light-dark-per-color.md).
+   A palette is set in one place for both themes, at the cost of a browser floor and of anything
+   but a color varying by theme.
+4. [One theme contract with the portfolio, set before the first paint](docs/decisions/0004-one-theme-contract.md).
+   The key, the themes and the script live in the kit, and a page that forgets the script fails its
+   build, at the cost of a contract that holds only on the portfolio's origin.
 
 ## Dev setup
 
-`npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests,
-as CI's first job does before it builds. `npm run build` compiles the theme module and the plugin
-into the package's `dist`, beside a copy of each sheet, which is what the package's entries load
-from. Packing the package builds it first. `npm run e2e` runs the browser tests CI's browser job
-runs, after `npx playwright install chromium` the first time. All need the Node 24 that `.nvmrc`
-names.
+You need [Node.js 24](https://nodejs.org/) and Git. The version is in `.nvmrc`, so `nvm use`
+picks it.
 
-```sh
+```bash
+git clone https://github.com/jasonsdevspace/design-kit.git
+cd design-kit
 npm ci
 npm run verify
+```
+
+`npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
+CI runs the same checks in one job, then packs the package and installs it into an empty project
+with install scripts off, where each sheet must resolve and each module must load by the name a
+demo imports it by. The browser tests run in a job of their own, at the same time.
+
+`npm run build` compiles the theme module and the plugin into the package's `dist`, beside a copy
+of each sheet, which is what the package's entries load from. Packing the package builds it first.
+`npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
+time.
+
+```bash
 npm run build
+npx playwright install chromium
 npm run e2e
 ```
 
@@ -96,12 +198,20 @@ message.
 
 ## Project layout
 
-- `packages/design-kit/`: the package.
-    - `src/`: the sheets, the theme script and its Vite plugin, and their tests.
-    - `e2e/`: browser tests of the sheets and of the theme script as Chromium runs them.
-- `scripts/`: the prose, Node and commit message checks, the tests of those and of the lint rules
-  and workflows, and the helper that runs each check in a throwaway repository.
+```
+packages/
+└── design-kit/       the package, with its own README for npm
+    ├── src/          tokens.css, base.css, theme.ts (the contract and the script),
+    │                 vite.ts (the plugin and the hash), and their tests
+    └── e2e/          the sheets and the theme script as Chromium runs them
+scripts/              the prose, Node and commit message checks, the tests of those, of the
+                      license and of the lint rules and workflows, and the helper that runs each
+                      check in a throwaway repository
+docs/
+└── decisions/        the decision records
+.github/workflows/    CI, and the check of a pull request's title and body
+```
 
 ## License
 
-MIT, in [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
