@@ -1,0 +1,55 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    # Every pull request, not only those into main, so a PR stacked on
+    # another's branch is checked before it is merged down.
+    pull_request:
+
+permissions:
+    contents: read
+
+# A newer push to a pull request supersedes the run in progress. Runs on main
+# wait their turn.
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    verify:
+        name: Lint and test
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Type-check
+              run: npm run type-check
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Format check
+              run: npm run format:check
+
+            - name: Prose check
+              run: npm run prose
+
+            - name: Node version check
+              run: npm run node-check
+
+            - name: Unit tests
+              run: npm run test:run
