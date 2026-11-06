@@ -15,3 +15,9 @@ costs, and the test behind it.
 5. [The components carry no stylesheet of their own](0005-components-carry-no-stylesheet.md): one
    `components.css` a page loads itself, and markup alone from the React components, which is the
    contract a page without React writes by hand.
+6. [A control's state is an attribute, and its rules weigh nothing](0006-a-control-state-is-an-attribute.md):
+   pressed, open, invalid and off drawn from the attributes a screen reader reads, off as
+   `aria-disabled` so it keeps its focus, and every rule in `:where()` so a state wins by order.
+7. [A callout takes a role only when a page asks for one](0007-a-callout-takes-a-role-only-when-asked.md):
+   no role from the tone, so a message on the page at load is not read out of turn, and a live
+   message's role on the message alone.

@@ -100,4 +100,16 @@ assert.match(
     'the strip draws its markup'
 );
 
+// A field makes its own ids with React's useId, which has to work in a server render too.
+const { InputField } = await import('@jasonsdevspace/design-kit/react');
+const field = renderToStaticMarkup(
+    createElement(InputField, { label: 'Email', hint: 'For the receipt' })
+);
+const [, made] = /<input class="dk-input" id="([^"]+)"/.exec(field) ?? [];
+assert.ok(made, 'the field draws its input with an id');
+assert.ok(
+    field.includes(`aria-describedby="${made}-hint"`),
+    'the field ties its hint to the input'
+);
+
 console.log(`design-kit works on Node ${process.version}`);

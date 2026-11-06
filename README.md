@@ -1,7 +1,8 @@
 # design-kit
 
-`@jasonsdevspace/design-kit` holds the design tokens, base styles, theme script and page chrome the
-demos on [jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version from
+`@jasonsdevspace/design-kit` holds the design tokens, base styles, theme script, page chrome, and
+the buttons, fields and callouts the demos on [jasonsdevspace.com](https://jasonsdevspace.com) are
+meant to share. Each version from
 `0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
@@ -27,8 +28,11 @@ Vite.
 The tokens are the scale a page's styles are drawn from and the color roles, every name with the
 `--dk-` prefix. The base gives the page its type and colors, one focus ring for every link and
 control, a `.dk-visually-hidden` class, and less motion for a visitor who asks for it. The
-components sheet styles the page chrome a demo draws around its page: a skip link, a strip above
-the page that says whose demo it is, and a footer below it.
+components sheet styles the page chrome a demo draws around its page, a skip link, a strip above
+the page that says whose demo it is and a footer below it, and the buttons, text fields, selects
+and callouts on the page itself. A control's state is the attribute a screen reader already reads,
+such as `aria-pressed` or `aria-invalid`, and every rule for a control weighs nothing, so a state
+wins over the resting look by its order in the sheet and a page's own rule wins over both.
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
 with a placeholder.
@@ -60,10 +64,11 @@ import { themeScript } from '@jasonsdevspace/design-kit/theme';
 const head = `<script>${themeScript}</script>`;
 ```
 
-A page with React draws the chrome from `@jasonsdevspace/design-kit/react`, and a page without it
-writes the same markup by hand, as the [package README](packages/design-kit/README.md#page-chrome)
-gives it. React `^19.3.0` is an optional peer of the package, needed only by a page that imports
-`./react`.
+A page with React draws the chrome and the controls from `@jasonsdevspace/design-kit/react`, and a
+page without it writes the same markup by hand, as the package README gives it for
+[the chrome](packages/design-kit/README.md#page-chrome) and for
+[buttons, fields and callouts](packages/design-kit/README.md#buttons-fields-and-callouts). React
+`^19.3.0` is an optional peer of the package, needed only by a page that imports `./react`.
 
 ```tsx
 import { DemoFooter, PortfolioStrip, SkipLink } from '@jasonsdevspace/design-kit/react';
@@ -106,11 +111,12 @@ also set them on one container, which restyles only what is inside it, in both t
 `packages/design-kit/src/tokens.test.ts` measures the default palette in both themes, against the
 pairings it is meant for. Text, muted text, the accent, and the success and danger colors pass 4.5
 to 1 on the page, a card and anything raised, and a control's edge passes 3 to 1 on each of those.
-Text on the accent passes 4.5 to 1, as do text and muted text on the highlight and on each callout's
-ground, the accent on the highlight, and the success and danger colors on their own grounds. The
-focus ring is drawn in the accent, so it is held as a link is. A pairing outside that list, such as
-a line against its ground, carries no ratio, and a page that sets its own palette answers for its
-own pairings.
+Text on the accent passes 4.5 to 1. Text, muted text and the accent pass 4.5 to 1 on the highlight
+and on the success and danger grounds as well, and a control's edge passes 3 to 1 on them, so a
+button or a field keeps its edge inside a callout of any tone. The success and danger colors pass
+4.5 to 1 on their own grounds. The focus ring is drawn in the accent, so it is held as a link is. A
+pairing outside that list, such as a line against its ground, carries no ratio, and a page that
+sets its own palette answers for its own pairings.
 
 ## Layers, and how a page's own styles win
 
@@ -163,34 +169,49 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                        | Where it is tested                        |
-| --------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| A page's own rule outside a layer wins, however little it weighs                              | `packages/design-kit/e2e/sheets.spec.ts`  |
-| A page's layers placed before the kit's lose to it unless they name `dk` first                | `packages/design-kit/e2e/sheets.spec.ts`  |
-| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight    | `packages/design-kit/src/scope.test.ts`   |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit         | `packages/design-kit/e2e/sheets.spec.ts`  |
-| A palette set on a container restyles only what is inside it                                  | `packages/design-kit/e2e/sheets.spec.ts`  |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to        | `packages/design-kit/e2e/sheets.spec.ts`  |
-| A label hidden from the eye is still read by a screen reader                                  | `packages/design-kit/e2e/sheets.spec.ts`  |
-| Every measured pairing passes its WCAG ratio in both themes                                   | `packages/design-kit/src/tokens.test.ts`  |
-| Nothing saved, `system`, an unknown value and refused storage follow the system               | `packages/design-kit/e2e/theme.spec.ts`   |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs  | `packages/design-kit/e2e/theme.spec.ts`   |
-| The theme is set before the body is parsed                                                    | `packages/design-kit/e2e/theme.spec.ts`   |
-| The theme follows the system as it changes, while nothing is saved                            | `packages/design-kit/e2e/theme.spec.ts`   |
-| A choice saved in another tab, or storage cleared there, reaches the page                     | `packages/design-kit/e2e/theme.spec.ts`   |
-| The key and themes are the portfolio's, and the tokens have a rule for each                   | `packages/design-kit/src/theme.test.ts`   |
-| The script holds nothing that would end its element, and compiles                             | `packages/design-kit/src/theme.test.ts`   |
-| A page with no placeholder, or with two, fails the build                                      | `packages/design-kit/src/vite.test.ts`    |
-| The hash is of the script exactly as the plugin writes it                                     | `packages/design-kit/src/vite.test.ts`    |
-| The chrome draws the markup a page without React writes, and opens no link in a new tab       | `packages/design-kit/src/react.test.tsx`  |
-| The strip is one row over its rule on a wide screen, and rows of links on a phone             | `packages/design-kit/e2e/chrome.spec.tsx` |
-| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone   | `packages/design-kit/e2e/chrome.spec.tsx` |
-| The skip link is out of sight until the keyboard reaches it, and lands on the content         | `packages/design-kit/e2e/chrome.spec.tsx` |
-| The footer's rule spans the page, and its text and the strip's links line up in the column    | `packages/design-kit/e2e/chrome.spec.tsx` |
-| The chrome has no axe findings in either theme, on a wide screen and on a phone               | `packages/design-kit/e2e/chrome.spec.tsx` |
-| The chrome draws with no inline style, under a policy that allows styles only from its origin | `packages/design-kit/e2e/chrome.spec.tsx` |
-| Each sheet resolves and each module loads from the packed package, on the oldest Node         | `packages/design-kit/smoke/consumer.mjs`  |
-| The strip draws its markup from the packed package, with the React a page has                 | `packages/design-kit/smoke/consumer.mjs`  |
+| Gotcha                                                                                        | Where it is tested                          |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs                              | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                | `packages/design-kit/e2e/sheets.spec.ts`    |
+| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight    | `packages/design-kit/src/scope.test.ts`     |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit         | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A palette set on a container restyles only what is inside it                                  | `packages/design-kit/e2e/sheets.spec.ts`    |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to        | `packages/design-kit/e2e/sheets.spec.ts`    |
+| A label hidden from the eye is still read by a screen reader                                  | `packages/design-kit/e2e/sheets.spec.ts`    |
+| Every measured pairing passes its WCAG ratio in both themes                                   | `packages/design-kit/src/tokens.test.ts`    |
+| Text, the accent and a control's edge pass on the highlight and each callout's ground         | `packages/design-kit/src/tokens.test.ts`    |
+| Nothing saved, `system`, an unknown value and refused storage follow the system               | `packages/design-kit/e2e/theme.spec.ts`     |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs  | `packages/design-kit/e2e/theme.spec.ts`     |
+| The theme is set before the body is parsed                                                    | `packages/design-kit/e2e/theme.spec.ts`     |
+| The theme follows the system as it changes, while nothing is saved                            | `packages/design-kit/e2e/theme.spec.ts`     |
+| A choice saved in another tab, or storage cleared there, reaches the page                     | `packages/design-kit/e2e/theme.spec.ts`     |
+| The key and themes are the portfolio's, and the tokens have a rule for each                   | `packages/design-kit/src/theme.test.ts`     |
+| The script holds nothing that would end its element, and compiles                             | `packages/design-kit/src/theme.test.ts`     |
+| A page with no placeholder, or with two, fails the build                                      | `packages/design-kit/src/vite.test.ts`      |
+| The hash is of the script exactly as the plugin writes it                                     | `packages/design-kit/src/vite.test.ts`      |
+| The chrome draws the markup a page without React writes, and opens no link in a new tab       | `packages/design-kit/src/react.test.tsx`    |
+| A button never submits unless a page says so, and an off one calls nothing                    | `packages/design-kit/src/react.test.tsx`    |
+| A toggle has `aria-pressed` whether on or off, and an action has none                         | `packages/design-kit/src/react.test.tsx`    |
+| A field lists only what it draws in `aria-describedby`, and is invalid only with an error     | `packages/design-kit/src/react.test.tsx`    |
+| A callout has a role only when the page asks, and its actions sit outside the message         | `packages/design-kit/src/react.test.tsx`    |
+| A live callout is drawn empty, and success and danger say their tone in words                 | `packages/design-kit/src/react.test.tsx`    |
+| The strip is one row over its rule on a wide screen, and rows of links on a phone             | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone   | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The skip link is out of sight until the keyboard reaches it, and lands on the content         | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The footer's rule spans the page, and its text and the strip's links line up in the column    | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The chrome has no axe findings in either theme, on a wide screen and on a phone               | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| The chrome draws with no inline style, under a policy that allows styles only from its origin | `packages/design-kit/e2e/chrome.spec.tsx`   |
+| A button and a field stand level, at the field height wide and the target on a phone          | `packages/design-kit/e2e/controls.spec.tsx` |
+| Field text is 16px or more on a phone, and every control fits 320px wide                      | `packages/design-kit/e2e/controls.spec.tsx` |
+| An off button stays in the tab order, and is drawn as a disabled one is                       | `packages/design-kit/e2e/controls.spec.tsx` |
+| A pressed toggle has a thicker edge as well as a ground, and keeps its name                   | `packages/design-kit/e2e/controls.spec.tsx` |
+| A field is named by its label, and described by its hint and then its error                   | `packages/design-kit/e2e/controls.spec.tsx` |
+| The focus ring follows the keyboard, on the accent button and inside every callout            | `packages/design-kit/e2e/controls.spec.tsx` |
+| Every state stays in sight in forced colors, and the select's own arrow comes back            | `packages/design-kit/e2e/controls.spec.tsx` |
+| The controls have no axe findings in any state, in either theme, wide and on a phone          | `packages/design-kit/e2e/controls.spec.tsx` |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node         | `packages/design-kit/smoke/consumer.mjs`    |
+| The strip draws its markup from the packed package, with the React a page has                 | `packages/design-kit/smoke/consumer.mjs`    |
+| A field makes its ids with `useId` in a server render of the packed package                   | `packages/design-kit/smoke/consumer.mjs`    |
 
 ## Decisions
 
@@ -213,6 +234,12 @@ options rejected, what the choice costs, and the test behind it.
    The components draw markup and nothing else, so they load in plain Node and draw under
    `style-src 'self'`, at the cost of a sheet each page loads itself and markup a page without
    React has to keep to.
+6. [A control's state is an attribute, and its rules weigh nothing](docs/decisions/0006-a-control-state-is-an-attribute.md).
+   What a visitor sees and what a screen reader hears come from one attribute, and an off button
+   keeps its focus, at the cost of a click handler a page without React has to write itself.
+7. [A callout takes a role only when a page asks for one](docs/decisions/0007-a-callout-takes-a-role-only-when-asked.md).
+   A message on the page when it loads is never read out of turn, at the cost of a page deciding
+   for each message whether it is live.
 
 ## Dev setup
 
@@ -270,9 +297,10 @@ with "Re-run failed jobs", which keeps the staging and runs only what failed.
 packages/
 └── design-kit/       the package, with its own README written for its npm page
     ├── src/          tokens.css, base.css, components.css, theme.ts (the contract and the
-    │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome),
-    │                 and their tests
-    ├── e2e/          the sheets, the theme script and the page chrome as Chromium runs them
+    │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome,
+    │                 the buttons, the fields and the callouts), and their tests
+    ├── e2e/          the sheets, the theme script, the page chrome and the controls as
+    │                 Chromium runs them
     └── smoke/        the packed package as a page installs it, on the oldest Node
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each

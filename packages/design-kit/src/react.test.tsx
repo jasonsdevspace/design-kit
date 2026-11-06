@@ -2,19 +2,23 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import {
+    Button,
+    Callout,
     DemoFooter,
     GITHUB_PROFILE_URL,
+    InputField,
     PORTFOLIO_URL,
     PORTFOLIO_WORK_URL,
     PortfolioStrip,
+    SelectField,
     SkipLink,
 } from './react.js';
 
 /*
- * The markup each piece of page chrome draws, which is the contract a page without React writes by
- * hand and components.css styles. Rendered to a string, with no browser, which is enough to hold
- * the elements, their classes, the landmarks and the links. How a browser lays them out is held by
- * e2e/chrome.spec.tsx.
+ * The markup each component draws, which is the contract a page without React writes by hand and
+ * components.css styles. Rendered to a string, with no browser, which is enough to hold the
+ * elements, their classes, the landmarks, the links and the attributes that carry a control's
+ * state. How a browser lays them out is held by e2e/chrome.spec.tsx and e2e/controls.spec.tsx.
  */
 
 const SOURCE = 'https://github.com/jasonsdevspace/example';
@@ -138,5 +142,277 @@ describe('the chrome', () => {
             </>
         );
         expect(chrome).not.toContain('target=');
+    });
+});
+
+describe('the button', () => {
+    it('is a plain button unless a page says otherwise, never a form submit by default', () => {
+        expect(renderToStaticMarkup(<Button>Filters</Button>)).toBe(
+            '<button type="button" class="dk-button">Filters</button>'
+        );
+        expect(renderToStaticMarkup(<Button type="submit">Save</Button>)).toContain(
+            'type="submit"'
+        );
+    });
+
+    it('marks the one action a view leads with by a class, and keeps a page class after it', () => {
+        expect(
+            renderToStaticMarkup(
+                <Button accent className="wide">
+                    Save rule
+                </Button>
+            )
+        ).toBe('<button type="button" class="dk-button dk-button-accent wide">Save rule</button>');
+    });
+
+    it('says a toggle is a toggle whether it is pressed or not, and leaves an action alone', () => {
+        expect(renderToStaticMarkup(<Button pressed>Member</Button>)).toContain(
+            'aria-pressed="true"'
+        );
+        expect(renderToStaticMarkup(<Button pressed={false}>Member</Button>)).toContain(
+            'aria-pressed="false"'
+        );
+        expect(renderToStaticMarkup(<Button>Member</Button>)).not.toContain('aria-pressed');
+    });
+
+    it('stays in the tab order when off, rather than dropping focus as disabled does', () => {
+        const off = renderToStaticMarkup(<Button off>Previous</Button>);
+        expect(off).toBe(
+            '<button type="button" class="dk-button" aria-disabled="true">Previous</button>'
+        );
+        expect(renderToStaticMarkup(<Button off={false}>Previous</Button>)).not.toContain(
+            'aria-disabled'
+        );
+    });
+
+    it("calls nothing when pressed while off, and stops a form's submit", () => {
+        const calls: string[] = [];
+        const press = (off: boolean) => {
+            const drawn = Button({ off, onClick: () => calls.push('pressed'), children: 'Go' });
+            const props = drawn.props as {
+                onClick?: (event: { preventDefault: () => void }) => void;
+            };
+            props.onClick?.({ preventDefault: () => calls.push('prevented') });
+        };
+        press(true);
+        expect(calls).toEqual(['prevented']);
+        press(false);
+        expect(calls).toEqual(['prevented', 'pressed']);
+    });
+
+    it('takes neither a style nor accent and pressed together', () => {
+        // @ts-expect-error The kit draws markup alone, so a page styles a button by its classes.
+        expect(renderToStaticMarkup(<Button style={{ color: 'red' }}>Go</Button>)).toBeTruthy();
+        // @ts-expect-error The one action a view leads with is not a switch.
+        const both = <Button accent pressed children="Go" />;
+        expect(renderToStaticMarkup(both)).toBeTruthy();
+    });
+});
+
+describe('a field', () => {
+    it('ties a label to the control, and draws nothing it was not given', () => {
+        expect(renderToStaticMarkup(<InputField id="email" label="Email" />)).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+                '<input class="dk-input" id="email"/></div>'
+        );
+    });
+
+    it('describes the control by its hint, then its error, and marks it invalid only with one', () => {
+        const hinted = renderToStaticMarkup(
+            <InputField id="email" label="Email" hint="Where the receipt goes" />
+        );
+        expect(hinted).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+                '<p class="dk-field-hint" id="email-hint">Where the receipt goes</p>' +
+                '<input class="dk-input" id="email" aria-describedby="email-hint"/></div>'
+        );
+        const wrong = renderToStaticMarkup(
+            <InputField
+                id="email"
+                label="Email"
+                hint="Where the receipt goes"
+                error="Enter an email"
+            />
+        );
+        expect(wrong).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+                '<p class="dk-field-hint" id="email-hint">Where the receipt goes</p>' +
+                '<p class="dk-field-error" id="email-error">' +
+                '<span class="dk-visually-hidden">Error: </span>Enter an email</p>' +
+                '<input class="dk-input" id="email" aria-describedby="email-hint email-error"' +
+                ' aria-invalid="true"/></div>'
+        );
+    });
+
+    it("keeps a page's own description after the field's, and draws an empty slot as none", () => {
+        for (const nothing of [null, false, '']) {
+            const drawn = renderToStaticMarkup(
+                <InputField
+                    id="email"
+                    label="Email"
+                    hint={nothing}
+                    error={nothing}
+                    aria-describedby="moved"
+                />
+            );
+            expect(drawn).toContain('aria-describedby="moved"');
+            expect(drawn).not.toContain('aria-invalid');
+            expect(drawn).not.toContain('dk-field-hint');
+        }
+        expect(
+            renderToStaticMarkup(
+                <InputField
+                    id="email"
+                    label="Email"
+                    error="Enter an email"
+                    aria-describedby="moved"
+                />
+            )
+        ).toContain('aria-describedby="email-error moved"');
+    });
+
+    it('announces nothing itself, since the page says when an error appears', () => {
+        const wrong = renderToStaticMarkup(
+            <InputField id="e" label="Email" error="Enter an email" />
+        );
+        expect(wrong).not.toMatch(/role=|aria-live/);
+    });
+
+    it('gives each field on a page an id of its own when the page gives none', () => {
+        const page = renderToStaticMarkup(
+            <>
+                <InputField label="First" hint="One" />
+                <InputField label="Second" hint="Two" />
+            </>
+        );
+        const ids = [...page.matchAll(/<input class="dk-input" id="([^"]+)"/g)].map(([, id]) => id);
+        expect(ids).toHaveLength(2);
+        expect(new Set(ids).size).toBe(2);
+        for (const id of ids) {
+            expect(page).toContain(`for="${String(id)}"`);
+            expect(page).toContain(`aria-describedby="${String(id)}-hint"`);
+        }
+    });
+
+    it("passes the control's own attributes through", () => {
+        expect(
+            renderToStaticMarkup(<InputField id="q" label="Search" type="search" required />)
+        ).toContain('<input class="dk-input" type="search" required="" id="q"/>');
+    });
+
+    it('draws a native select with its options, wired the same way', () => {
+        expect(
+            renderToStaticMarkup(
+                <SelectField id="sort" label="Sort by" error="Pick one">
+                    <option value="">Choose an order</option>
+                    <option value="price">Price</option>
+                </SelectField>
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="sort">Sort by</label>' +
+                '<p class="dk-field-error" id="sort-error">' +
+                '<span class="dk-visually-hidden">Error: </span>Pick one</p>' +
+                '<select class="dk-select" id="sort" aria-describedby="sort-error"' +
+                ' aria-invalid="true"><option value="">Choose an order</option>' +
+                '<option value="price">Price</option></select></div>'
+        );
+    });
+});
+
+describe('a callout', () => {
+    it('draws the info tone by default, with no role, so nothing reads it out of turn', () => {
+        expect(renderToStaticMarkup(<Callout>Your edited rules are in effect.</Callout>)).toBe(
+            '<div class="dk-callout"><div class="dk-callout-body">Your edited rules are in effect.' +
+                '</div></div>'
+        );
+    });
+
+    it('says its tone in words a screen reader reads, as well as in color', () => {
+        expect(renderToStaticMarkup(<Callout tone="success">Saved.</Callout>)).toBe(
+            '<div class="dk-callout dk-callout-success"><div class="dk-callout-body">' +
+                '<span class="dk-visually-hidden">Success: </span>Saved.</div></div>'
+        );
+        expect(renderToStaticMarkup(<Callout tone="danger">Not loaded.</Callout>)).toContain(
+            '<span class="dk-visually-hidden">Error: </span>Not loaded.'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Callout tone="danger" prefix="Warning: ">
+                    This removes every product.
+                </Callout>
+            )
+        ).toContain('<span class="dk-visually-hidden">Warning: </span>This removes');
+        expect(
+            renderToStaticMarkup(
+                <Callout tone="danger" prefix="">
+                    Not loaded.
+                </Callout>
+            )
+        ).not.toContain('dk-visually-hidden');
+    });
+
+    it('takes a role only when the page asks for one, whatever its tone', () => {
+        for (const tone of ['info', 'success', 'danger'] as const) {
+            expect(renderToStaticMarkup(<Callout tone={tone}>Text</Callout>)).not.toMatch(
+                /role=|aria-live/
+            );
+            for (const live of ['status', 'alert'] as const) {
+                expect(
+                    renderToStaticMarkup(
+                        <Callout tone={tone} live={live}>
+                            Text
+                        </Callout>
+                    )
+                ).toContain(`<div class="dk-callout-body" role="${live}">`);
+            }
+        }
+    });
+
+    it('draws a live message empty, so the page can fill it once it is on the page', () => {
+        for (const nothing of [null, false, undefined]) {
+            expect(renderToStaticMarkup(<Callout live="status">{nothing}</Callout>)).toBe(
+                '<div class="dk-callout"><div class="dk-callout-body" role="status"></div></div>'
+            );
+        }
+        expect(renderToStaticMarkup(<Callout tone="danger" live="alert" />)).toBe(
+            '<div class="dk-callout dk-callout-danger">' +
+                '<div class="dk-callout-body" role="alert"></div></div>'
+        );
+    });
+
+    it('puts its title before the message, as a heading at the level the page gives', () => {
+        expect(
+            renderToStaticMarkup(
+                <Callout tone="danger" title="The products could not be loaded">
+                    Check the file.
+                </Callout>
+            )
+        ).toBe(
+            '<div class="dk-callout dk-callout-danger"><p class="dk-callout-title">' +
+                '<span class="dk-visually-hidden">Error: </span>The products could not be loaded' +
+                '</p><div class="dk-callout-body">Check the file.</div></div>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Callout title="Store closed" headingLevel={2}>
+                    Back soon.
+                </Callout>
+            )
+        ).toContain('<h2 class="dk-callout-title">Store closed</h2>');
+    });
+
+    it('keeps its actions outside the message, so a live message reads only its words', () => {
+        expect(
+            renderToStaticMarkup(
+                <Callout tone="danger" live="alert" actions={<Button>Try again</Button>}>
+                    Not loaded.
+                </Callout>
+            )
+        ).toBe(
+            '<div class="dk-callout dk-callout-danger"><div class="dk-callout-body" role="alert">' +
+                '<span class="dk-visually-hidden">Error: </span>Not loaded.</div>' +
+                '<div class="dk-callout-actions">' +
+                '<button type="button" class="dk-button">Try again</button></div></div>'
+        );
     });
 });

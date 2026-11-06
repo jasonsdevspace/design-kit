@@ -149,6 +149,25 @@ describe('what the sheets style', () => {
         ]);
     });
 
+    it('draws every button, field and callout rule in a :where(), so each state wins by order', () => {
+        // A resting look written as a bare class would outweigh every state written in :where()
+        // after it, so pressed, invalid and off would never show. Only the page chrome, which has
+        // no state but focus, styles a bare class of its own.
+        const chrome = [
+            '.dk-skip',
+            '.dk-strip',
+            '.dk-strip-links',
+            '.dk-strip-tools',
+            '.dk-footer',
+        ];
+        const css = readFileSync(new URL('components.css', folder), 'utf8');
+        expect(
+            selectorsOf(css)
+                .flatMap(split)
+                .filter((selector) => selector.startsWith('.') && !chrome.includes(selector))
+        ).toEqual([]);
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

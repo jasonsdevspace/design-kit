@@ -77,12 +77,14 @@ const PAIRS: readonly (readonly [string, string, number])[] = [
         ['control', ground, 3] as const,
     ]),
     ['on-accent', 'accent', 4.5],
-    // A callout's own ground, and what is chosen, carry text and its quieter line too.
+    // A callout's own ground, and what is chosen, carry text, its quieter line, a link and the
+    // edge of a button or field drawn inside the callout.
     ...['highlight', 'success-bg', 'danger-bg'].flatMap((ground) => [
         ['fg', ground, 4.5] as const,
         ['muted', ground, 4.5] as const,
+        ['accent', ground, 4.5] as const,
+        ['control', ground, 3] as const,
     ]),
-    ['accent', 'highlight', 4.5],
     ['success', 'success-bg', 4.5],
     ['danger', 'danger-bg', 4.5],
 ];

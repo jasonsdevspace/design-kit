@@ -1,12 +1,13 @@
 # @jasonsdevspace/design-kit
 
-Design tokens, base styles, a theme script and the page chrome for the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits in a cascade layer of the kit's
-own, so a page's own rule outside a layer wins over every rule of the kit's but the cut to motion,
-without any extra weight. A page with layers of its own has to name where the kit's go among them,
-in the order the section on layers below gives. The script sets the theme a visitor chose on the
-portfolio before the page paints. The page chrome a demo draws around its page is a skip link, a
-strip and a footer, as markup a sheet styles and as React components that draw it.
+Design tokens, base styles, a theme script, the page chrome, and buttons, fields and callouts for
+the demos on [jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits in a cascade layer
+of the kit's own, so a page's own rule outside a layer wins over every rule of the kit's but the
+cut to motion, without any extra weight. A page with layers of its own has to name where the kit's
+go among them, in the order the section on layers below gives. The script sets the theme a visitor
+chose on the portfolio before the page paints. The components are the page chrome a demo draws
+around its page, a skip link, a strip and a footer, and the buttons, text fields, selects and
+callouts on the page itself, as markup a sheet styles and as React components that draw it.
 
 ```sh
 npm install @jasonsdevspace/design-kit
@@ -57,15 +58,18 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   label a screen reader reads and the eye does not, and less motion for a visitor who asks for it.
   It loads after the tokens, since the tokens' first statement declares the kit's layer order.
 - `@jasonsdevspace/design-kit/components.css` styles the page chrome, the skip link, the strip and
-  the footer, by the classes in the markup the section on page chrome below gives. It loads after
-  the tokens too.
+  the footer, and the buttons, fields and callouts, by the classes in the markup the sections below
+  give. It loads after the tokens too.
 - `@jasonsdevspace/design-kit/theme` exports `THEME_KEY`, the storage key the portfolio saves a
   visitor's theme under, `THEMES`, the two themes the script sets, their type `Theme`, and
   `themeScript`, the script itself as a string to put inline.
 - `@jasonsdevspace/design-kit/react` exports `SkipLink`, `PortfolioStrip` and `DemoFooter`, which
-  draw that markup, and `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`, the
-  portfolio, its list of work and the GitHub profile the chrome links to. It takes React `^19.3.0`
-  as an optional peer, which a page that writes the markup itself never needs.
+  draw the chrome's markup, and `Button`, `InputField`, `SelectField` and `Callout`, which draw the
+  markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
+  `SelectFieldProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
+  `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub profile the chrome links to.
+  It takes React `^19.3.0` as an optional peer, which a page that writes the markup itself never
+  needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -177,6 +181,182 @@ export const Page = () => (
   sentence, `MIT license` unless given. Its children follow the license, and children that are
   undefined, null or false add nothing.
 
+## Buttons, fields and callouts
+
+`components.css` styles a button, a text field, a select and a callout by the markup below, which a
+page without React writes by hand and the components in `./react` draw. A control's state is the
+native or ARIA attribute a screen reader already reads, such as `aria-pressed` or `aria-invalid`,
+never a class of the kit's, so what a visitor sees and what a screen reader says come from one
+attribute. Every rule for these pieces sits in one `:where()`, the resting look included, so each
+weighs nothing and a state wins over the resting look by coming after it in the sheet. A resting
+look written as a bare class would outweigh every state. A page's own rule outside a layer still
+wins over all of them.
+
+### Buttons
+
+```html
+<button type="button" class="dk-button">Filters</button>
+<button type="button" class="dk-button dk-button-accent">Save rule</button>
+<button type="button" class="dk-button" aria-pressed="true">Members only</button>
+<button type="button" class="dk-button" aria-disabled="true">Previous</button>
+```
+
+A button is `type="button"` unless the page gives it another type, so it never submits a form by
+surprise. `dk-button-accent` fills the one action a view leads with in the accent. It is a
+class, since it is a kind of button rather than a state, and an accent button is never a toggle. A
+toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label in
+both states, since the attribute already says which it is. An action carries no `aria-pressed` at
+all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
+
+A button that is off carries `aria-disabled="true"` rather than `disabled`. A disabled button that
+has focus drops it, and leaves the tab order, while an aria-disabled one stays where the keyboard
+can reach it and find out why. The attribute does nothing by itself, so a page that writes this
+markup makes its own click handler check `aria-disabled` and return early, calling
+`preventDefault()` so a submit button does not submit. The sheet draws a `disabled` button, and one
+inside a disabled fieldset, the same as an off one. Say why a button is off in text beside it. A
+form's submit button is better left on while the form is incomplete, so a press shows the errors
+rather than doing nothing.
+
+A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
+48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
+takes the ground of whatever it sits on, a callout included. A link with the class looks the same.
+Where a pointer can hover, the edge turns to the accent under it, and the accent button underlines
+its words instead. Pressed is the highlight with an edge twice as thick in the accent. Off is the
+muted text on no ground with an edge in the line color, rather than a fade, so its words keep a
+ratio the palette measures. In forced colors a pressed button takes the system's `Highlight`, and
+an off one `GrayText`, accent or not.
+
+### Fields
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="email">Email</label>
+    <p class="dk-field-hint" id="email-hint">Where the receipt goes</p>
+    <p class="dk-field-error" id="email-error">
+        <span class="dk-visually-hidden">Error: </span>Enter an email address
+    </p>
+    <input
+        class="dk-input"
+        id="email"
+        type="email"
+        aria-describedby="email-hint email-error"
+        aria-invalid="true"
+    />
+</div>
+
+<div class="dk-field">
+    <label class="dk-field-label" for="sort">Sort by</label>
+    <select class="dk-select" id="sort">
+        <option value="">Choose an order</option>
+        <option value="price">Price</option>
+    </select>
+</div>
+```
+
+A field is its label, a hint when it has one, an error when it has one, and then the control,
+`.dk-input` or `.dk-select`. The error sits above the control, so a phone's keyboard or an open list
+never covers it, and the hint stays while the error shows, since it often says how to put the error
+right. The error starts with a visually hidden "Error: ", so it is told from the hint by more than
+its color. `aria-describedby` lists only what is drawn, the hint and then the error, followed by any
+description of the page's own, and is left off when there is none. `aria-invalid="true"` is there
+only while an error is drawn.
+
+The error is not live, since a form that fails in several fields at once would speak over itself.
+The page says when errors appear, and on a submit that fails it moves focus to the first invalid
+control or to an error summary. The kit does no validation, so the page decides when to show an
+error, best after a submit is tried rather than while someone is typing.
+
+A control is as tall as a button, at both widths, and its text is never under 16px, so a phone does
+not zoom the page when the field is tapped. It sits on the page's own ground, so it reads as a well
+on a card. The hint and the error are in the caption size, the error in the danger color, and an
+invalid control's edge in the danger color too. A disabled control is drawn on the surface ground
+in the muted text. The select is a native `<select>`, its caret drawn as a background, and in forced
+colors the browser's own arrow comes back.
+
+### Callouts
+
+```html
+<div class="dk-callout dk-callout-danger">
+    <p class="dk-callout-title">
+        <span class="dk-visually-hidden">Error: </span>The products could not be loaded
+    </p>
+    <div class="dk-callout-body">Check the file, then load it again.</div>
+    <div class="dk-callout-actions">
+        <button type="button" class="dk-button">Try again</button>
+    </div>
+</div>
+```
+
+A callout is `dk-callout` alone for news, on the highlight, or adds `dk-callout-success` or
+`dk-callout-danger` for something that went right or wrong, on that color's own ground. The words
+stay in the page's text color in every tone. A success or danger callout starts its title, or its
+message when it has no title, with a visually hidden "Success: " or "Error: ", so the tone is not
+told by color alone. The title is a paragraph, or a heading from `h2` to `h6` where the callout is a
+section a visitor would jump to. The actions, when there are some, follow the message.
+
+A callout has no role unless the page gives it one, whatever its tone. A message on the page when it
+loads gets none, since some screen readers read an alert created with its text already in it, some
+read it twice and some say nothing, and it interrupts the reading of the page's title. A message
+that arrives after the page has loaded takes `role="status"`, read when the screen reader is next
+idle, or `role="alert"`, read at once, on `.dk-callout-body` alone, so the actions are not read with
+it. The page puts a live callout on the page empty first and fills it after, which is when a screen
+reader reads it.
+
+A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
+the edge marks where the callout starts and ends.
+
+### From React
+
+```tsx
+import { useState } from 'react';
+
+import { Button, Callout, InputField, SelectField } from '@jasonsdevspace/design-kit/react';
+
+type Props = { readonly error?: string; readonly saved?: string };
+
+export const Checkout = ({ error, saved }: Props) => {
+    const [gift, setGift] = useState(false);
+    return (
+        <form>
+            <InputField label="Email" hint="Where the receipt goes" error={error} type="email" />
+            <SelectField label="Delivery">
+                <option value="standard">Standard</option>
+                <option value="express">Express</option>
+            </SelectField>
+            <Button pressed={gift} onClick={() => setGift(!gift)}>
+                Gift wrap
+            </Button>
+            <Button type="submit" accent>
+                Place order
+            </Button>
+            <Callout tone="success" live="status">
+                {saved}
+            </Callout>
+        </form>
+    );
+};
+```
+
+- `Button` takes the props of a `<button>` but `style`, `disabled`, `aria-disabled` and
+  `aria-pressed`, and is `type="button"` unless `type` says otherwise. `accent` adds
+  `dk-button-accent`. `pressed` writes `aria-pressed`, `false` included, and left undefined makes
+  the button an action. The types refuse `accent` and `pressed` together. `off` writes
+  `aria-disabled="true"` and puts a click handler that calls `preventDefault()` in place of
+  `onClick`, so nothing the page passed runs and a submit button does not submit. A `className`
+  follows the kit's classes.
+- `InputField` takes `label`, and `hint` and `error`, each drawn only when given, an empty string,
+  null or false drawing nothing. `id` is the control's, made with React's `useId` unless given, and
+  a page gives one when something links to the field, such as an error summary. Every other prop
+  goes to the `<input>` but `style` and `aria-invalid`. A `className` follows `dk-input`, and an
+  `aria-describedby` of the page's own is listed after the hint and the error.
+- `SelectField` takes the same props, with its children as the options of the `<select>`.
+- `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn as a
+  paragraph or, with `headingLevel` from 2 to 6, as that heading. `actions` are drawn after the
+  message. `prefix` is the word read before the title or the message, the tone's own unless given,
+  and an empty string drops it. `live`, `status` or `alert`, puts that role on the message and draws
+  the message even when it is empty. A callout takes no other props, so a page that needs a class
+  or an id on one puts it on an element around it.
+
 ## Layers and palettes
 
 The tokens declare `dk.tokens`, `dk.base` and `dk.components`, in that order, and each sheet fills
@@ -210,10 +390,11 @@ color in both themes.
 
 The default palette is measured in both themes, against the pairings it is meant for. Text, muted
 text, the accent, and the success and danger colors pass 4.5 to 1 on the page, a card and anything
-raised, and a control's edge passes 3 to 1 on each of those. Text on the accent passes 4.5 to 1, as
-do text and muted text on the highlight and on each callout's ground, the accent on the highlight,
-and the success and danger colors on their own grounds. The focus ring is drawn in the accent, so
-it is held as a link is. A pairing outside that list, such as a line against its ground, carries no
+raised, and a control's edge passes 3 to 1 on each of those. Text on the accent passes 4.5 to 1.
+Text, muted text and the accent pass 4.5 to 1 on the highlight and on the success and danger
+grounds as well, and a control's edge passes 3 to 1 on them, so a button or a field keeps its edge
+inside a callout of any tone. The success and danger colors pass 4.5 to 1 on their own grounds. The
+focus ring is drawn in the accent, so it is held as a link is. A pairing outside that list, such as a line against its ground, carries no
 ratio, and a page that sets its own palette answers for its own pairings.
 
 ## The theme contract
