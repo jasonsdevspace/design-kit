@@ -1,27 +1,30 @@
 # @jasonsdevspace/design-kit
 
-Design tokens, base styles and a theme script for the demos on
+Design tokens, base styles, a theme script and the page chrome for the demos on
 [jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits in a cascade layer of the kit's
 own, so a page's own rule outside a layer wins over every rule of the kit's but the cut to motion,
 without any extra weight. A page with layers of its own has to name where the kit's go among them,
 in the order the section on layers below gives. The script sets the theme a visitor chose on the
-portfolio before the page paints.
+portfolio before the page paints. The chrome is the skip link, the strip and the footer every demo
+draws, as markup a sheet styles and as React components that draw it.
 
 ```sh
 npm install @jasonsdevspace/design-kit
 ```
 
-The package loads on Node 22.12 or later, the lowest Node 22 that Vite 8 runs on, and takes Vite 8
-or later as an optional peer for its plugin. Prereleases are under npm's `next` tag, as
-`@jasonsdevspace/design-kit@next`. What changed in each version is in
+The package loads on Node 22.12 or later, the lowest Node 22 that Vite 8 runs on. It takes Vite 8
+or later as an optional peer for its plugin, and React `^19.3.0` as an optional peer for its
+components. Prereleases are under npm's `next` tag, as `@jasonsdevspace/design-kit@next`. What
+changed in each version is in
 [CHANGELOG.md](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
 
-A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
+A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite.
 
 ```css
 @import '@jasonsdevspace/design-kit/tokens.css';
 @import '@jasonsdevspace/design-kit/base.css';
+@import '@jasonsdevspace/design-kit/components.css';
 ```
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head.
@@ -53,9 +56,16 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   accent for every link and control the keyboard reaches, the `.dk-visually-hidden` class for a
   label a screen reader reads and the eye does not, and less motion for a visitor who asks for it.
   It loads after the tokens, since the tokens' first statement declares the kit's layer order.
+- `@jasonsdevspace/design-kit/components.css` styles the page chrome, the skip link, the strip and
+  the footer, by the classes in the markup the section on page chrome below gives. It loads after
+  the tokens too.
 - `@jasonsdevspace/design-kit/theme` exports `THEME_KEY`, the storage key the portfolio saves a
   visitor's theme under, `THEMES`, the two themes the script sets, their type `Theme`, and
   `themeScript`, the script itself as a string to put inline.
+- `@jasonsdevspace/design-kit/react` exports `SkipLink`, `PortfolioStrip` and `DemoFooter`, which
+  draw that markup, and `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`, the
+  portfolio, its list of work and the GitHub profile the chrome links to. It takes React `^19.3.0`
+  as an optional peer, which a page that writes the markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -71,12 +81,104 @@ import { themeScript } from '@jasonsdevspace/design-kit/theme';
 const head = `<script>${themeScript}</script>`;
 ```
 
+## Page chrome
+
+Every demo draws the same chrome: a skip link, a strip above the page that says whose demo it is,
+and a footer below it. `components.css` styles the markup below, which a page without React writes
+by hand and the components in `./react` draw. The components ship no stylesheet and set no `style`
+attribute, so a page loads `components.css` itself, and a page whose policy allows styles only from
+its own origin, `style-src 'self'`, still draws them.
+
+The skip link is the keyboard's first stop, out of sight until it takes focus. It leads to the
+page's main content, which has a tabindex of -1 so it can take focus.
+
+```html
+<a class="dk-skip" href="#main-content">Skip to content</a>
+<main id="main-content" tabindex="-1">...</main>
+```
+
+The strip holds a navigation landmark named Portfolio, with three links in this order: whose demo
+it is, how it works and the source. The strip on the demo's explainer marks the explainer's link
+with `aria-current="page"`. A demo with switches of its own puts them in a section after the links,
+named for them, and a demo with none leaves the section out.
+
+```html
+<div class="dk-strip">
+    <nav class="dk-strip-links" aria-label="Portfolio">
+        <a href="https://jasonsdevspace.com/#work">A demo by Jason Poteet</a>
+        <a href="./about/">How it works</a>
+        <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
+    </nav>
+    <section class="dk-strip-tools" aria-label="Demo">
+        <button type="button" aria-pressed="false">Tour</button>
+    </section>
+</div>
+```
+
+On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text, with its links
+1.5rem apart and the switches on the right. At 48rem wide or less the text steps down to the
+caption size, the links close to 1rem apart and wrap where they must, and the switches take a row
+of their own below them.
+
+The footer is one paragraph that says whose project the demo is and links how it works, the source,
+the rest of the work and the license. Anything the demo adds follows the license, as sentences of
+its own. Its links keep their underline, since their color is the sentence's.
+
+```html
+<footer class="dk-footer">
+    <p>
+        Example is a portfolio project by <a href="https://jasonsdevspace.com/">Jason Poteet</a>.
+        <a href="./about/">How it works</a>, in plain words. The
+        <a href="https://github.com/jasonsdevspace/example">source</a> and
+        <a href="https://github.com/jasonsdevspace">more work</a> are on GitHub, under the
+        <a href="https://github.com/jasonsdevspace/example/blob/main/LICENSE">MIT license</a>.
+    </p>
+</footer>
+```
+
+The strip and the footer run their rules the width of the page and line their content up with the
+page's column, `--dk-column`, 72rem wide by default and centered, inset by 1rem. A page whose column
+is another width sets `--dk-column` to it, as it sets a color role.
+
+A page with React draws the same markup from the components.
+
+```tsx
+import { DemoFooter, PortfolioStrip, SkipLink } from '@jasonsdevspace/design-kit/react';
+
+const source = 'https://github.com/jasonsdevspace/example';
+
+export const Page = () => (
+    <>
+        <SkipLink />
+        <PortfolioStrip
+            about="./about/"
+            source={source}
+            tools={<button type="button">Tour</button>}
+        />
+        <main id="main-content" tabIndex={-1}>
+            <h1>Example</h1>
+        </main>
+        <DemoFooter name="Example" about="./about/" source={source} />
+    </>
+);
+```
+
+- `SkipLink` leads to `main-content` unless `target` names another id, and its children replace
+  the words "Skip to content".
+- `PortfolioStrip` takes `about`, the demo's explainer, and `source`, its repository. `current`
+  set to `about` marks the explainer's link as the current page. `tools` holds the demo's own
+  switches, and `toolsLabel` names their landmark, `Demo` unless given.
+- `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
+  `license` is the repository's `LICENSE` on main unless given, and its children follow the
+  license.
+
 ## Layers and palettes
 
 The tokens declare `dk.tokens`, `dk.base` and `dk.components`, in that order, and each sheet fills
 its own. A page's own rule outside a layer wins over every rule of the kit's but the cut to motion,
-however little it weighs and wherever its sheet loads. Inside the layers, every selector but the
-visually hidden class is one `:where()`, followed at most by a focus pseudo-class.
+however little it weighs and wherever its sheet loads. Inside the layers, every selector is either
+one of the kit's own classes, such as `.dk-strip` or `.dk-visually-hidden`, or one `:where()`,
+followed at most by a focus pseudo-class.
 
 A page with layers of its own names where `dk` goes among them. A layer takes its place where its
 name first appears, so a page whose layers load before the kit's sheets, without naming `dk`, puts

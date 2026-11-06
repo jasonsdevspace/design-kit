@@ -1,7 +1,7 @@
 # design-kit
 
-`@jasonsdevspace/design-kit` holds the design tokens, base styles and theme script the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version from
+`@jasonsdevspace/design-kit` holds the design tokens, base styles, theme script and page chrome the
+demos on [jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version from
 `0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
@@ -15,17 +15,20 @@ stylesheet that loses the cascade fails without an error.
 
 ## Using it in a demo
 
-A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
+A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite.
 
 ```css
 @import '@jasonsdevspace/design-kit/tokens.css';
 @import '@jasonsdevspace/design-kit/base.css';
+@import '@jasonsdevspace/design-kit/components.css';
 ```
 
 The tokens are the scale a page's styles are drawn from and the color roles, every name with the
 `--dk-` prefix. The base gives the page its type and colors, one focus ring for every link and
-control, a `.dk-visually-hidden` class, and less motion for a visitor who asks for it.
+control, a `.dk-visually-hidden` class, and less motion for a visitor who asks for it. The
+components sheet styles the page chrome every demo draws: a skip link, a strip above the page that
+says whose demo it is, and a footer below it.
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
 with a placeholder.
@@ -57,6 +60,35 @@ import { themeScript } from '@jasonsdevspace/design-kit/theme';
 const head = `<script>${themeScript}</script>`;
 ```
 
+A page with React draws the chrome from `@jasonsdevspace/design-kit/react`, and a page without it
+writes the same markup by hand, as the [package README](packages/design-kit/README.md#page-chrome)
+gives it. React `^19.3.0` is an optional peer of the package, needed only by a page that imports
+`./react`.
+
+```tsx
+import { DemoFooter, PortfolioStrip, SkipLink } from '@jasonsdevspace/design-kit/react';
+
+export const Page = () => (
+    <>
+        <SkipLink />
+        <PortfolioStrip about="./about/" source="https://github.com/jasonsdevspace/example" />
+        <main id="main-content" tabIndex={-1}>
+            <h1>Example</h1>
+        </main>
+        <DemoFooter
+            name="Example"
+            about="./about/"
+            source="https://github.com/jasonsdevspace/example"
+        />
+    </>
+);
+```
+
+The components ship no stylesheet and set no `style` attribute, so a page loads `components.css`
+itself, and a page whose policy allows styles only from its own origin still draws them. The strip
+and the footer line their content up with the page's column, `--dk-column`, which a page whose
+column is another width sets to it.
+
 ## Themes and palettes
 
 Each color role holds its light and its dark value in one `light-dark()`. A page follows the
@@ -82,11 +114,12 @@ own pairings.
 
 ## Layers, and how a page's own styles win
 
-Every rule in the kit sits in one of its cascade layers, `dk.tokens` and `dk.base`, which the tokens
-declare in that order with `dk.components` after them. A page's own rule outside a layer wins over
-every rule of the kit's but the cut to motion, however little it weighs and wherever its sheet
-loads. Inside the layers, every selector but the visually hidden class is one `:where()`, followed
-at most by a focus pseudo-class, so only that class and the focus rules carry any weight.
+Every rule in the kit sits in one of its cascade layers, `dk.tokens`, `dk.base` and `dk.components`,
+which the tokens declare in that order, and each sheet fills its own. A page's own rule outside a
+layer wins over every rule of the kit's but the cut to motion, however little it weighs and
+wherever its sheet loads. Inside the layers, every selector is either one of the kit's own classes,
+such as `.dk-strip` or `.dk-visually-hidden`, or one `:where()`, followed at most by a focus
+pseudo-class, so only those classes and the focus rules carry any weight.
 
 A page with layers of its own names where `dk` goes among them, and this is where load order bites.
 A layer takes its place in the order where its name first appears. A page whose own layers load
@@ -130,26 +163,34 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                       | Where it is tested                       |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| A page's own rule outside a layer wins, however little it weighs                             | `packages/design-kit/e2e/sheets.spec.ts` |
-| A page's layers placed before the kit's lose to it unless they name `dk` first               | `packages/design-kit/e2e/sheets.spec.ts` |
-| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight     | `packages/design-kit/src/scope.test.ts`  |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit        | `packages/design-kit/e2e/sheets.spec.ts` |
-| A palette set on a container restyles only what is inside it                                 | `packages/design-kit/e2e/sheets.spec.ts` |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to       | `packages/design-kit/e2e/sheets.spec.ts` |
-| A label hidden from the eye is still read by a screen reader                                 | `packages/design-kit/e2e/sheets.spec.ts` |
-| Every measured pairing passes its WCAG ratio in both themes                                  | `packages/design-kit/src/tokens.test.ts` |
-| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts`  |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts`  |
-| The theme is set before the body is parsed                                                   | `packages/design-kit/e2e/theme.spec.ts`  |
-| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts`  |
-| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts`  |
-| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts`  |
-| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts`  |
-| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`   |
-| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`   |
-| Each sheet resolves and each module loads from the packed package, on the oldest Node        | `packages/design-kit/smoke/consumer.mjs` |
+| Gotcha                                                                                        | Where it is tested                        |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs                              | `packages/design-kit/e2e/sheets.spec.ts`  |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                | `packages/design-kit/e2e/sheets.spec.ts`  |
+| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight    | `packages/design-kit/src/scope.test.ts`   |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit         | `packages/design-kit/e2e/sheets.spec.ts`  |
+| A palette set on a container restyles only what is inside it                                  | `packages/design-kit/e2e/sheets.spec.ts`  |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to        | `packages/design-kit/e2e/sheets.spec.ts`  |
+| A label hidden from the eye is still read by a screen reader                                  | `packages/design-kit/e2e/sheets.spec.ts`  |
+| Every measured pairing passes its WCAG ratio in both themes                                   | `packages/design-kit/src/tokens.test.ts`  |
+| Nothing saved, `system`, an unknown value and refused storage follow the system               | `packages/design-kit/e2e/theme.spec.ts`   |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs  | `packages/design-kit/e2e/theme.spec.ts`   |
+| The theme is set before the body is parsed                                                    | `packages/design-kit/e2e/theme.spec.ts`   |
+| The theme follows the system as it changes, while nothing is saved                            | `packages/design-kit/e2e/theme.spec.ts`   |
+| A choice saved in another tab, or storage cleared there, reaches the page                     | `packages/design-kit/e2e/theme.spec.ts`   |
+| The key and themes are the portfolio's, and the tokens have a rule for each                   | `packages/design-kit/src/theme.test.ts`   |
+| The script holds nothing that would end its element, and compiles                             | `packages/design-kit/src/theme.test.ts`   |
+| A page with no placeholder, or with two, fails the build                                      | `packages/design-kit/src/vite.test.ts`    |
+| The hash is of the script exactly as the plugin writes it                                     | `packages/design-kit/src/vite.test.ts`    |
+| The chrome draws the markup a page without React writes, and opens no link in a new tab       | `packages/design-kit/src/react.test.tsx`  |
+| The strip is one row over its rule on a wide screen, and rows of links on a phone             | `packages/design-kit/e2e/chrome.spec.tsx` |
+| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone   | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The skip link is out of sight until the keyboard reaches it, and lands on the content         | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The footer's rule spans the page, and its text and the strip's links line up in the column    | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The chrome has no axe findings in either theme, on a wide screen and on a phone               | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The chrome draws with no inline style, under a policy that allows styles only from its origin | `packages/design-kit/e2e/chrome.spec.tsx` |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node         | `packages/design-kit/smoke/consumer.mjs`  |
+| The components draw their markup from the packed package, with the React a page has           | `packages/design-kit/smoke/consumer.mjs`  |
 
 ## Decisions
 
@@ -168,6 +209,10 @@ options rejected, what the choice costs, and the test behind it.
 4. [One theme contract with the portfolio, set before the first paint](docs/decisions/0004-one-theme-contract.md).
    The key, the themes and the script live in the kit, and a page that forgets the script fails its
    build, at the cost of a contract that holds only on the portfolio's origin.
+5. [The components carry no stylesheet of their own](docs/decisions/0005-components-carry-no-stylesheet.md).
+   The components draw markup and nothing else, so they load in plain Node and draw under
+   `style-src 'self'`, at the cost of a sheet each page loads itself and markup a page without
+   React has to keep to.
 
 ## Dev setup
 
@@ -184,14 +229,15 @@ npm run verify
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
 CI runs the same checks and the build in one job. A second packs the package, checks its manifest
 with publint, and installs it into an empty project on the lowest Node its engines field admits,
-with install scripts off and no Vite, where each sheet must resolve and each module must load by
-the name a demo imports it by, and then type-checks a page's use of it as Node and as a bundler
-resolve it. The browser tests run in a job of their own. The jobs run at the same time.
+with install scripts off, no Vite and the React a page that draws the components has, where each
+sheet must resolve and each module must load by the name a demo imports it by, and then type-checks
+a page's use of it as Node and as a bundler resolve it. The browser tests run in a job of their own.
+The jobs run at the same time.
 
-`npm run build` compiles the theme module and the plugin into the package's `dist`, beside a copy
-of each sheet, which is what the package's entries load from. Packing the package builds it first.
-`npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
-time. They read the sources, so they need no build.
+`npm run build` compiles the theme module, the plugin and the components into the package's `dist`,
+beside a copy of each sheet, which is what the package's entries load from. Packing the package
+builds it first. `npm run e2e` runs the browser tests in Chromium, after `npx playwright install
+chromium` the first time. They read the sources, so they need no build.
 
 ```bash
 npx playwright install chromium
@@ -217,9 +263,10 @@ on GitHub with the changelog entry as its notes.
 ```
 packages/
 └── design-kit/       the package, with its own README written for its npm page
-    ├── src/          tokens.css, base.css, theme.ts (the contract and the script),
-    │                 vite.ts (the plugin and the hash), and their tests
-    ├── e2e/          the sheets and the theme script as Chromium runs them
+    ├── src/          tokens.css, base.css, components.css, theme.ts (the contract and the
+    │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome),
+    │                 and their tests
+    ├── e2e/          the sheets, the theme script and the page chrome as Chromium runs them
     └── smoke/        the packed package as a page installs it, on the oldest Node
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each

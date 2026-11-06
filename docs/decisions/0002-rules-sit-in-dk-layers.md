@@ -31,8 +31,8 @@ focus pseudo-class.
 Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order
 of the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for.
 Every custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every
-selector but `.dk-visually-hidden` is one `:where()`, followed at most by a focus pseudo-class, so
-only that class and the focus rules carry any weight.
+selector is one of the kit's own classes or one `:where()`, followed at most by a focus
+pseudo-class, so only those classes and the focus rules carry any weight.
 
 ## Consequences
 

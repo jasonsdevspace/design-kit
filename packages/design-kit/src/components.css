@@ -1,0 +1,121 @@
+/*
+ * The kit's components, in the kit's components layer, so they sit over the base and under a
+ * page's own rules. Each is styled by its class and the markup README.md gives for it, which the
+ * React components draw and a page without React writes by hand. A selector beyond a single class
+ * sits inside :where(), so the kit's rules stay flat against each other.
+ *
+ * Load it after tokens.css, whose first statement declares the order of the kit's layers.
+ */
+
+@layer dk.components {
+    /* Skip to content, out of sight until it takes focus, and then over the strip at its inset. */
+    .dk-skip {
+        position: absolute;
+        left: var(--dk-space-4);
+        top: -10rem;
+        padding: var(--dk-space-2) var(--dk-space-4);
+        border-radius: var(--dk-radius);
+        background: var(--dk-accent);
+        color: var(--dk-on-accent);
+        z-index: 10;
+    }
+
+    :where(.dk-skip):focus-visible {
+        top: var(--dk-space-4);
+    }
+
+    /*
+     * The strip and the footer run their rules the width of the page and line their content up
+     * with the column below, so the page reads as one column from the strip to the footer.
+     */
+    :where(.dk-strip, .dk-footer) {
+        padding-inline: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
+    }
+
+    /*
+     * Whose demo this is, one row over its rule on a wide screen: the links together on the left,
+     * and the demo's own switches, when it has some, on the right.
+     */
+    .dk-strip {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0 var(--dk-space-5);
+        border-bottom: 1px solid var(--dk-line);
+        font-size: var(--dk-text-small);
+    }
+
+    .dk-strip-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--dk-space-5);
+    }
+
+    /* The whole row's height is the target, not the one line of small text. */
+    :where(.dk-strip-links a) {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--dk-strip);
+    }
+
+    /* The switches wrap where larger text leaves no room, each row as tall as the links' row. */
+    .dk-strip-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--dk-space-3);
+        min-height: var(--dk-strip);
+    }
+
+    /* The exit after a long scroll, its rule the width of the page and its text in the column. */
+    .dk-footer {
+        margin-top: var(--dk-space-6);
+        padding-block: var(--dk-space-4);
+        border-top: 1px solid var(--dk-line);
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    :where(.dk-footer p) {
+        margin: 0;
+    }
+
+    /*
+     * The chrome's links step back in the muted text, and come forward to the page's text when
+     * pointed at or focused. A link in the footer's sentence keeps its underline, since its color
+     * is the sentence's.
+     */
+    :where(.dk-strip-links a, .dk-footer a) {
+        color: var(--dk-muted);
+    }
+
+    :where(
+        .dk-strip-links a:hover,
+        .dk-strip-links a:focus-visible,
+        .dk-footer a:hover,
+        .dk-footer a:focus-visible
+    ) {
+        color: var(--dk-fg);
+    }
+
+    /*
+     * On a phone the links are smaller and closer, and wrap to rows of their own where they must,
+     * with the switches on a row below them.
+     */
+    @media (max-width: 48rem) {
+        .dk-strip {
+            font-size: var(--dk-text-caption);
+        }
+
+        .dk-strip-links {
+            gap: 0 var(--dk-space-4);
+        }
+
+        .dk-strip-tools {
+            flex-basis: 100%;
+            padding-block: 0 var(--dk-space-2);
+        }
+    }
+}

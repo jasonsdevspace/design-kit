@@ -182,21 +182,25 @@ jobs:
                   cd "$RUNNER_TEMP/consumer"
                   npm init -y
                   npm pkg set type=module
-                  npm install --engine-strict --ignore-scripts "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz
+                  react="$(node -p "require('$GITHUB_WORKSPACE/node_modules/react/package.json').version")"
+                  npm install --engine-strict --ignore-scripts "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz "react@$react" "react-dom@$react"
                   smoke="$GITHUB_WORKSPACE/packages/design-kit/smoke"
                   cp "$smoke"/consumer.mjs "$smoke"/exports.mjs "$smoke"/types.ts "$smoke"/tsconfig.nodenext.json "$smoke"/tsconfig.bundler.json .
 
-            # With no Vite installed, which the plugin takes only as an optional peer.
+            # With no Vite installed, which the plugin takes only as an optional peer, and with the
+            # React a page that draws the components has.
             - name: Use the package on that Node
               working-directory: ${{ runner.temp }}/consumer
               run: node consumer.mjs
 
-            # As Node and as a bundler resolve them. The plugin's types name Vite's, so Vite is
-            # installed for this step, as a page that uses the plugin has it.
+            # As Node and as a bundler resolve them. The plugin's types name Vite's and the
+            # components' name React's, so both are installed for this step, as a page that uses
+            # them has them.
             - name: Type-check as an installer would
               working-directory: ${{ runner.temp }}/consumer
               run: |
-                  npm install --ignore-scripts --no-save "vite@$(node -p "require('$GITHUB_WORKSPACE/node_modules/vite/package.json').version")"
+                  types="$(node -p "require('$GITHUB_WORKSPACE/node_modules/@types/react/package.json').version")"
+                  npm install --ignore-scripts --no-save "vite@$(node -p "require('$GITHUB_WORKSPACE/node_modules/vite/package.json').version")" "@types/react@$types"
                   node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.nodenext.json
                   node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.bundler.json
 

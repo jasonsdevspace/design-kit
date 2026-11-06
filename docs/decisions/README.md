@@ -12,3 +12,6 @@ costs, and the test behind it.
 4. [One theme contract with the portfolio, set before the first paint](0004-one-theme-contract.md):
    the key, the themes and the script in one place, put inline by a plugin that fails the build of
    a page without it.
+5. [The components carry no stylesheet of their own](0005-components-carry-no-stylesheet.md): one
+   `components.css` a page loads itself, and markup alone from the React components, which is the
+   contract a page without React writes by hand.
