@@ -558,7 +558,9 @@ The tokens declare `dk.tokens`, `dk.base` and `dk.components`, in that order, an
 its own. A page's own rule outside a layer wins over every rule of the kit's but the cut to motion,
 however little it weighs and wherever its sheet loads. Inside the layers, every selector is either
 one of the kit's own classes, such as `.dk-strip` or `.dk-visually-hidden`, or one `:where()`,
-followed at most by a focus pseudo-class.
+followed at most by a focus pseudo-class. The base alone follows a `:where()` with `::before` or
+`::after`, so the border box and the cut to motion reach a page's pseudo-elements too, since a
+pseudo-element inside a `:where()` matches nothing.
 
 A page with layers of its own names where `dk` goes among them. A layer takes its place where its
 name first appears, so a page whose layers load before the kit's sheets, without naming `dk`, puts

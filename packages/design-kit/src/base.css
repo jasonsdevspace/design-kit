@@ -1,17 +1,21 @@
 /*
- * What every page takes before any component: the page's type and colors, one focus ring for
- * every link and control, and motion cut short for a visitor who asks for less. Every rule sits
- * in the kit's base layer, so a demo's own rule outside a layer wins over the kit's however little
- * it weighs. Every selector is the visually hidden class or one :where(), followed at most by a
- * focus pseudo-class. The cut to motion is the exception to a demo's rule winning. It is held with
- * !important, so it wins over every normal rule a page writes, and the layer makes it win over a
- * page's important rule outside a layer too, since the visitor's choice outranks the demo's.
+ * What every page takes before any component: the page's type and colors, one focus ring for every
+ * link and control, and motion cut short for a visitor who asks for less. Every rule sits in the
+ * kit's base layer, so a demo's own rule outside a layer wins over the kit's however little it
+ * weighs. Every selector is the visually hidden class or one :where(), followed at most by a focus
+ * pseudo-class, or by ::before or ::after where a rule for every element has to reach them too,
+ * since a pseudo-element inside a :where() matches nothing. The cut to motion is the exception to a
+ * demo's rule winning. It is held with !important, so it wins over every normal rule a page writes,
+ * and the layer makes it win over a page's important rule outside a layer too, since the visitor's
+ * choice outranks the demo's.
  *
  * Load tokens.css first, since its first statement declares the order of the kit's layers.
  */
 
 @layer dk.base {
-    :where(*, *::before, *::after) {
+    :where(*),
+    :where(*)::before,
+    :where(*)::after {
         box-sizing: border-box;
     }
 
@@ -132,7 +136,9 @@
      * scroll. Marked important, since the visitor's setting outranks a page's own animation.
      */
     @media (prefers-reduced-motion: reduce) {
-        :where(*, *::before, *::after) {
+        :where(*),
+        :where(*)::before,
+        :where(*)::after {
             animation-duration: 0.01ms !important;
             animation-delay: 0s !important;
             animation-iteration-count: 1 !important;

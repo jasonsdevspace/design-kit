@@ -202,3 +202,47 @@ for (const [where, own] of [
         expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
     });
 }
+
+test("gives a page's ::before and ::after the border box, as every element has", async ({
+    page,
+}) => {
+    await open(
+        page,
+        'light',
+        '<p class="mark">Text</p>',
+        '.mark::before { content: "a"; display: inline-block; width: 4rem; padding: 1rem }'
+    );
+    const sizing = await page.evaluate(() =>
+        ['::before', '::after'].map(
+            (pseudo) =>
+                getComputedStyle(document.querySelector('.mark') ?? document.body, pseudo).boxSizing
+        )
+    );
+    expect(sizing).toEqual(['border-box', 'border-box']);
+});
+
+test("cuts a page's animation on ::before and ::after for a visitor who wants less motion", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(
+        page,
+        'light',
+        '<p class="mark">Text</p>',
+        '.mark::before, .mark::after { content: "a"; transition: opacity 2s 1s; animation: spin 3s infinite }' +
+            ' @keyframes spin { to { rotate: 1turn } }'
+    );
+    const timing = await page.evaluate(() =>
+        ['::before', '::after'].map((pseudo) => {
+            const style = getComputedStyle(
+                document.querySelector('.mark') ?? document.body,
+                pseudo
+            );
+            return [style.transitionDuration, style.transitionDelay, style.animationIterationCount];
+        })
+    );
+    expect(timing).toEqual([
+        ['1e-05s', '0s', '1'],
+        ['1e-05s', '0s', '1'],
+    ]);
+});

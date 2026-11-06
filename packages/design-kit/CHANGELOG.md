@@ -41,6 +41,8 @@ is styled too, as markup a page writes by hand.
   so the page never scrolls sideways.
 - **Code in running text.** `base.css` sets `code` at `--dk-text-code`, a step under the text
   around it, and breaks a long name where it must. In a block it takes the block's size.
+- **Base.** The border box and the cut to motion now reach a page's `::before` and `::after`, which
+  they missed before, since a pseudo-element listed inside a `:where()` matches nothing.
 - **Weight.** Every rule for these pieces, the resting look and the explainer's layout included,
   sits in one `:where()`, so a state wins over the resting look by its order in the sheet, and a
   page's own rule outside a layer wins over both.

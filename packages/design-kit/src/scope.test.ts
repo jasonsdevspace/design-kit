@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest';
  * rule sits in one of the kit's layers, so a page's own rule outside a layer wins over the kit's,
  * and a page that names its layers sets where the kit's go among them. Inside its layers, a sheet
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
- * pseudo-class, so only those classes and the focus rules carry any weight.
+ * pseudo-class, so only those classes and the focus rules carry any weight. The base alone may
+ * follow its :where() with ::before or ::after instead, since a pseudo-element inside a :where()
+ * matches nothing, and a rule meant for every element has to reach them too.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -74,14 +76,20 @@ const closing = (text: string, open: number): number => {
 };
 
 /**
- * What a selector may be: the kit's own class alone, or one :where() around anything, followed by
- * at most a focus pseudo-class, so nothing outside it but the focus adds weight.
+ * What a selector may be: the kit's own class alone, or one :where() around anything but a
+ * pseudo-element, followed by at most a focus pseudo-class, so nothing outside it but the focus
+ * adds weight. In the base, ::before or ::after may follow the :where() instead.
  */
-const scoped = (selector: string): boolean => {
+const scoped = (selector: string, sheet = 'components.css'): boolean => {
     if (/^\.dk-[\w-]+$/.test(selector)) return true;
     if (!selector.startsWith(':where(')) return false;
     const end = closing(selector, ':where'.length);
-    return end > 0 && /^(?::focus(?:-visible|-within)?)?$/.test(selector.slice(end + 1));
+    if (end < 0 || selector.slice(0, end).includes('::')) return false;
+    const after =
+        sheet === 'base.css'
+            ? /^(?::focus(?:-visible|-within)?|::before|::after)?$/
+            : /^(?::focus(?:-visible|-within)?)?$/;
+    return after.test(selector.slice(end + 1));
 };
 
 describe('what the sheets style', () => {
@@ -124,7 +132,7 @@ describe('what the sheets style', () => {
             expect(
                 selectorsOf(css)
                     .flatMap(split)
-                    .filter((selector) => !scoped(selector))
+                    .filter((selector) => !scoped(selector, name))
             ).toEqual([]);
         });
     }
@@ -141,12 +149,27 @@ describe('what the sheets style', () => {
                 ':where(a) h1:where(b)',
                 ':where(a',
                 ':where(a):hover',
-            ].filter(scoped)
+            ].filter((selector) => scoped(selector))
         ).toEqual([
             '.dk-visually-hidden',
             ':where(a[href], [tabindex]:not([tabindex="-1"])):focus-visible',
             ':where(:root[data-theme="dark"])',
         ]);
+    });
+
+    it('refuses a pseudo-element inside a :where(), which would match nothing', () => {
+        const candidates = [
+            ':where(*, *::before)',
+            ':where(*)::before',
+            ':where(*)::after',
+            ':where(*)::marker',
+        ];
+        expect(candidates.filter((selector) => scoped(selector, 'base.css'))).toEqual([
+            ':where(*)::before',
+            ':where(*)::after',
+        ]);
+        // A component styles no pseudo-element, so its arrows and marks are elements of their own.
+        expect(candidates.filter((selector) => scoped(selector, 'components.css'))).toEqual([]);
     });
 
     it('draws every rule past the page chrome in a :where(), so the sheet order decides', () => {
