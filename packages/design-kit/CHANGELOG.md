@@ -11,7 +11,8 @@ entry below as its notes.
 
 The page chrome every demo draws, and buttons, text fields, selects and callouts, styled by
 `components.css` and drawn by the components in `./react`, with the state of each control carried
-by a native or ARIA attribute.
+by a native or ARIA attribute. The explainer page, with its steps, panels, tables and code blocks,
+is styled too, as markup a page writes by hand.
 
 - **Page chrome.** `SkipLink`, `PortfolioStrip` and `DemoFooter` draw the skip link, the strip
   above the page that says whose demo it is, and the footer below it, and `PORTFOLIO_URL`,
@@ -30,13 +31,27 @@ by a native or ARIA attribute.
 - **Callouts.** `Callout` draws `.dk-callout` in the info tone on the highlight, or
   `.dk-callout-success` or `.dk-callout-danger`, with a hidden word that says the tone. It takes a
   role only when the page passes `live`.
-- **Weight.** Every rule for these pieces, the resting look included, sits in one `:where()`, so a
-  state wins over the resting look by its order in the sheet, and a page's own rule outside a layer
-  wins over both.
-- **Tokens.** The dark value of `--dk-control` is `#7d7d7d`, from `#7a7a7a`. A button or field
-  inside an info callout drew its edge at 2.99 to 1 on the highlight in the dark theme, under the 3
-  to 1 a control's edge needs. The accent on the success and danger grounds, and a control's edge
-  on the highlight and on each callout's ground, are now measured as well.
+- **Explainer pages.** `.dk-explainer-header` and `.dk-explainer` lay out the page that says how a
+  demo works, its text starting where the strip's links start and held to the measure, in plain
+  sections that open on a rule, a number and a heading a jump leaves in sight. `.dk-steps` draws
+  steps one after another. `./react` draws none of it.
+- **Panels, tables and code.** `.dk-panel` sets a part of a page apart on the card ground, with no
+  tone and no role. A table in `.dk-table-scroll` and a block of `.dk-code` scroll inside
+  themselves, each a region named by the title above it that the keyboard reaches at every width,
+  so the page never scrolls sideways.
+- **Code in running text.** `base.css` sets `code` at `--dk-text-code`, a step under the text
+  around it, and breaks a long name where it must. In a block it takes the block's size.
+- **Weight.** Every rule for these pieces, the resting look and the explainer's layout included,
+  sits in one `:where()`, so a state wins over the resting look by its order in the sheet, and a
+  page's own rule outside a layer wins over both.
+- **Tokens.** `--dk-measure` changes from 42rem to 34rem, for every page that reads it. At 42rem a
+  line of body text ran past 80 characters, the most WCAG 1.4.8 suggests, and at 34rem the browser
+  tests hold a line of the lead and of body text to 80 or fewer. `--dk-text-code` is new, at 0.9em,
+  so code sizes to the text around it. The dark value of `--dk-control` is `#7d7d7d`, from
+  `#7a7a7a`. A button or field inside an info callout drew its edge at 2.99 to 1 on the highlight in
+  the dark theme, under the 3 to 1 a control's edge needs. The accent on the success and danger
+  grounds, and a control's edge on the highlight and on each callout's ground, are now measured as
+  well.
 
 ## 0.1.0-next.1
 

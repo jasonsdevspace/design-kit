@@ -19,8 +19,9 @@
  * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
  * test holds the palette to both.
  *
- * Which unit goes where: rem for anything that should grow with the visitor's own text size, and
- * px for what must not scale, a border, the focus ring and a shadow.
+ * Which unit goes where: rem for anything that should grow with the visitor's own text size, em
+ * for code set in running text, which sizes to the text around it, and px for what must not scale,
+ * a border, the focus ring and a shadow.
  */
 
 @layer dk.tokens, dk.base, dk.components;
@@ -73,6 +74,8 @@
         --dk-text-title: 1.25rem;
         --dk-text-heading: 1.5rem;
         --dk-text-display: 1.75rem;
+        /* Code, a step under the text around it, since mono type looks larger at the same size. */
+        --dk-text-code: 0.9em;
         --dk-leading-tight: 1.2;
         --dk-leading-body: 1.5;
         --dk-weight-normal: 400;
@@ -98,8 +101,11 @@
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
 
-        /* The width a page of reading holds to, and the widest a page's column grows. */
-        --dk-measure: 42rem;
+        /*
+         * The width a page of reading holds to, no more than 80 characters a line in the body size,
+         * and the widest a page's column grows.
+         */
+        --dk-measure: 34rem;
         --dk-column: 72rem;
 
         /* What floats over the page, and what dims the page behind it, darker on a dark page. */

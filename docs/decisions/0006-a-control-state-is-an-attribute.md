@@ -57,8 +57,9 @@ wins over every other state.
 - A page's own rule outside a layer wins over every state as well as the resting look, so a page
   that sets a button's ground with a plain `.dk-button` rule sets it for pressed and off too, and
   writes its own rule for each state it wants to keep.
-- Only the page chrome, which has no state but focus, styles a bare class of the kit's. A new piece
-  with states writes its resting look in `:where()` too, or the scope test fails.
+- Only the page chrome, which has no state but focus, styles a bare class of the kit's. Any new
+  piece writes every rule in `:where()`, its resting look or its layout included, or the scope test
+  fails.
 
 ## How it is tested
 

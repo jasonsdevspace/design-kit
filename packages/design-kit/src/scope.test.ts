@@ -149,10 +149,11 @@ describe('what the sheets style', () => {
         ]);
     });
 
-    it('draws every button, field and callout rule in a :where(), so each state wins by order', () => {
+    it('draws every rule past the page chrome in a :where(), so the sheet order decides', () => {
         // A resting look written as a bare class would outweigh every state written in :where()
-        // after it, so pressed, invalid and off would never show. Only the page chrome, which has
-        // no state but focus, styles a bare class of its own.
+        // after it, so pressed, invalid and off would never show, and a bare layout class would
+        // outweigh the pieces set inside it. Only the page chrome, which has no state but focus,
+        // styles a bare class of its own.
         const chrome = [
             '.dk-skip',
             '.dk-strip',
