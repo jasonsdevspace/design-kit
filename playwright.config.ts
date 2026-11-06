@@ -6,7 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  * browser, and the theme script's serve it from a test origin, from memory.
  */
 export default defineConfig({
-    testDir: 'e2e',
+    testDir: 'packages',
+    testMatch: '*/e2e/*.spec.ts',
     fullyParallel: true,
     forbidOnly: Boolean(process.env['CI']),
     retries: process.env['CI'] ? 1 : 0,

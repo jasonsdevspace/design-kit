@@ -39,8 +39,8 @@ whichever sheet loads first, since every rule in the tokens sits inside `:where(
 ```
 
 The default palette passes WCAG's 4.5 to 1 for every text pairing in both themes, the accent and so
-the focus ring included, and 3 to 1 for a control's edge. `src/tokens.test.ts` holds it there, and
-a page that sets its own palette is responsible for its own pairings.
+the focus ring included, and 3 to 1 for a control's edge. `packages/design-kit/src/tokens.test.ts`
+holds it there, and a page that sets its own palette is responsible for its own pairings.
 
 ## The theme a visitor saved
 
@@ -67,9 +67,10 @@ for a page whose policy allows inline script only by its hash.
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests,
 as CI's first job does before it builds. `npm run build` compiles the theme module and the plugin
-into `dist`, which the `theme` and `vite` entries load from. Installing runs it too, so the entries
-work from a git install. `npm run e2e` runs the browser tests CI runs as its second job, after
-`npx playwright install chromium` the first time. All need the Node 24 that `.nvmrc` names.
+into the package's `dist`, beside a copy of each sheet, which is what the package's entries load
+from. Packing the package builds it first. `npm run e2e` runs the browser tests CI's browser job
+runs, after `npx playwright install chromium` the first time. All need the Node 24 that `.nvmrc`
+names.
 
 ```sh
 npm ci
@@ -83,8 +84,9 @@ message.
 
 ## Project layout
 
-- `src/`: the sheets, the theme script and its Vite plugin, and their tests.
-- `e2e/`: browser tests of the sheets as Chromium draws them, and of the theme script as it runs.
+- `packages/design-kit/`: the package.
+    - `src/`: the sheets, the theme script and its Vite plugin, and their tests.
+    - `e2e/`: browser tests of the sheets and of the theme script as Chromium runs them.
 - `scripts/`: the prose, Node and commit message checks, the tests of those and of the lint rules
   and workflows, and the helper that runs each check in a throwaway repository.
 
