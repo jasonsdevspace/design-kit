@@ -1,7 +1,7 @@
 {
     "name": "design-kit",
     "private": true,
-    "description": "The repository for @jasonsdevspace/design-kit and its showcase.",
+    "description": "The repository for @jasonsdevspace/design-kit.",
     "license": "MIT",
     "type": "module",
     "engines": {
@@ -12,7 +12,7 @@
     ],
     "scripts": {
         "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e",
-        "build": "npm run build --workspaces",
+        "build": "npm run build --workspaces --if-present",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",

@@ -54,13 +54,8 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The package exports the theme module and the plugin from their compiled output, so
-            # the build runs here and the next step loads each entry from it.
-            - name: Build
-              run: npm run build
-
-            # The package as npm packs it, installed into an empty project, where each sheet is
-            # found and each module loads by the name a consumer imports it by.
+            # The package as npm packs it, which builds it first, installed into an empty project,
+            # where each sheet is found and each module loads by the name a consumer imports it by.
             - name: Install the packed package and load each entry
               run: |
                   npm pack --workspace packages/design-kit --pack-destination "$RUNNER_TEMP"
