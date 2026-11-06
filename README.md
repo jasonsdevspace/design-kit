@@ -103,13 +103,14 @@ important rule in a layer the page orders before the kit's.
 
 ## The theme a visitor saved
 
-The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark`
-or `system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
+The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark` or
+`system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
 `THEMES`, and `themeScript`, the script that sets `data-theme` on the root before anything paints.
 It follows the system's theme when nothing is saved, when `system` or any value but the two themes
 is saved, and when the browser refuses the page its storage, as the portfolio's own script does. It
 sets the theme again when the system's changes, and when the portfolio saves a choice or clears it
-in another tab.
+in another tab. A browser that cannot report the system's scheme reads it as light, as the
+portfolio's own script does, so a saved theme still applies there.
 
 Storage belongs to an origin, so the script reads what the portfolio saved only on the portfolio's
 own origin, where each demo is served under a path of jasonsdevspace.com. A demo served anywhere
@@ -140,6 +141,7 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | A label hidden from the eye is still read by a screen reader                                | `packages/design-kit/e2e/sheets.spec.ts`         |
 | Every measured pairing passes its WCAG ratio in both themes                                 | `packages/design-kit/src/tokens.test.ts`         |
 | Nothing saved, `system`, an unknown value and refused storage follow the system             | `packages/design-kit/e2e/theme.spec.ts`          |
+| A browser that cannot report the system's scheme draws light, or the saved theme            | `packages/design-kit/e2e/theme.spec.ts`          |
 | The theme is set before the body is parsed                                                  | `packages/design-kit/e2e/theme.spec.ts`          |
 | The theme follows the system as it changes, while nothing is saved                          | `packages/design-kit/e2e/theme.spec.ts`          |
 | A choice saved in another tab, or storage cleared there, reaches the page                   | `packages/design-kit/e2e/theme.spec.ts`          |

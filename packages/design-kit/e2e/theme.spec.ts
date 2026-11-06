@@ -108,3 +108,44 @@ test('follows the system where the browser refuses the page its storage', async 
     expect(await themeOf(await tab(context))).toBe('dark');
     await context.close();
 });
+
+for (const [how, takeAway] of [
+    ['has no matchMedia', 'missing'],
+    ['throws from matchMedia', 'throwing'],
+] as const) {
+    test(`draws light, or the saved theme, where the browser ${how}`, async ({ browser }) => {
+        for (const [saved, expected] of [
+            [null, 'light'],
+            ['dark', 'dark'],
+        ] as const) {
+            const context = await browser.newContext({ colorScheme: 'dark' });
+            await context.addInitScript((kind) => {
+                Object.defineProperty(window, 'matchMedia', {
+                    value:
+                        kind === 'missing'
+                            ? undefined
+                            : () => {
+                                  throw new Error('no media queries');
+                              },
+                });
+            }, takeAway);
+            expect(await themeOf(await savedThen(context, saved))).toBe(expected);
+            await context.close();
+        }
+    });
+}
+
+test('still takes a choice saved in another tab where the browser has no matchMedia', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+        Object.defineProperty(window, 'matchMedia', { value: undefined });
+    });
+    const demo = await tab(context);
+    const portfolio = await context.newPage();
+    await portfolio.goto(`${ORIGIN}/`);
+    await portfolio.evaluate((key) => localStorage.setItem(key, 'dark'), THEME_KEY);
+    await expect.poll(() => themeOf(demo)).toBe('dark');
+    await context.close();
+});

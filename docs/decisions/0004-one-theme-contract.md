@@ -40,7 +40,9 @@ head itself.
   system.
 - `system` and any value but the two themes read as nothing saved, so the page follows the system.
 - Where the browser refuses the page its storage, the script follows the system, as the
-  portfolio's own script does.
+  portfolio's own script does. Where it cannot report the system's scheme, with no `matchMedia` or
+  one that throws, the script reads it as light, as the portfolio's does too, so a saved theme
+  still applies there and a choice made in another tab is still heard.
 - `themeScriptHash` holds only while nothing rewrites the script after the plugin, as a minifier of
   a page's HTML would, and it changes whenever the script does, so a policy reads it from the
   installed package.
