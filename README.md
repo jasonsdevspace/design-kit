@@ -12,6 +12,10 @@ is marked private and is not published.
   `.dk-visually-hidden` class, and less motion for a visitor who asks for it. Every rule but that
   class sits inside `:where()`, so a page's rule on the same element wins over the kit's. The cut
   to motion is the exception, since it is the visitor's choice.
+- `theme`: the key the portfolio saves a visitor's theme under, the two themes, and the script
+  that sets the saved one before a page paints.
+- `vite`: a Vite plugin that puts that script into each page, and the script's hash for a Content
+  Security Policy.
 
 A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
 Vite:
@@ -40,17 +44,18 @@ a page that sets its own palette is responsible for its own pairings.
 
 ## The theme a visitor saved
 
-The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light` or `dark`.
-`@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the values as `THEMES`, and
-`themeScript`, the script a page runs inline in its head to set `data-theme` before anything
-paints. The script follows the system's theme when nothing usable is saved, and sets the theme
-again when the system's changes or the portfolio saves a choice in another tab.
+The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark`
+or `system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
+`THEMES`, and `themeScript`, the script a page runs inline in its head to set `data-theme` before
+anything paints. The script follows the system's theme when `system` or nothing usable is saved,
+and sets the theme again when the system's changes or the portfolio saves a choice in another tab.
 
 A page built with Vite puts the script in with the plugin from `@jasonsdevspace/design-kit/vite`,
 where its head holds `<!-- theme-script -->`. A page without that comment fails the build.
 
 ```ts
 import { themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig({ plugins: [themeScriptPlugin()] });
 ```
@@ -61,13 +66,15 @@ for a page whose policy allows inline script only by its hash.
 ## Dev setup
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests,
-as CI's first job does on every pull request before it builds. `npm run build` compiles the theme
-module and the plugin into `dist`. `npm run e2e` runs the browser tests CI runs as its second job,
-after `npx playwright install chromium` the first time. All need the Node 24 that `.nvmrc` names.
+as CI's first job does before it builds. `npm run build` compiles the theme module and the plugin
+into `dist`, which the `theme` and `vite` entries load from. Installing runs it too, so the entries
+work from a git install. `npm run e2e` runs the browser tests CI runs as its second job, after
+`npx playwright install chromium` the first time. All need the Node 24 that `.nvmrc` names.
 
 ```sh
 npm ci
 npm run verify
+npm run build
 npm run e2e
 ```
 

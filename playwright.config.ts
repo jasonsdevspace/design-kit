@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /*
- * The sheets in a real browser, since only a browser resolves light-dark() and draws the focus
- * ring. Each test writes its page from the sheets themselves, so nothing is served.
+ * The sheets and the theme script in a real browser, since only a browser resolves light-dark(),
+ * draws the focus ring and gives a page its storage. The sheets' tests write their page into the
+ * browser, and the theme script's serve it from a test origin, from memory.
  */
 export default defineConfig({
     testDir: 'e2e',

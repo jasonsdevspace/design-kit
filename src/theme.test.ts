@@ -7,11 +7,12 @@ import { THEME_KEY, THEMES, themeScript } from './theme.js';
 
 /*
  * The contract between the portfolio and every demo: the storage key the portfolio saves a
- * visitor's theme under, and its two values, which the script sets on the root as data-theme and
- * the tokens read there. How the script behaves in a browser is held by e2e/theme.spec.ts.
+ * visitor's theme under, and the two themes it saves there, which the script sets on the root as
+ * data-theme, where the tokens read it. How the script behaves in a browser, the portfolio's
+ * `system` included, is held by e2e/theme.spec.ts.
  */
 describe('the theme contract', () => {
-    it('is the key and the values the portfolio saves', () => {
+    it('is the key the portfolio saves under and the two themes it saves', () => {
         expect(THEME_KEY).toBe('theme');
         expect(THEMES).toEqual(['light', 'dark']);
     });

@@ -1,10 +1,13 @@
 /**
- * The storage key the portfolio saves a visitor's theme under, which every demo on the same
- * origin reads, so the portfolio and the demos switch together.
+ * The storage key the portfolio saves a visitor's theme under. A page on the same origin that
+ * reads it draws the theme the visitor chose on the portfolio.
  */
 export const THEME_KEY = 'theme';
 
-/** The themes a visitor can save, each set on the root as data-theme and read by the tokens. */
+/**
+ * The two themes the script sets on the root as data-theme, each with a rule in the tokens. The
+ * portfolio also saves `system`, which the script treats as nothing saved.
+ */
 export const THEMES = ['light', 'dark'] as const;
 
 export type Theme = (typeof THEMES)[number];

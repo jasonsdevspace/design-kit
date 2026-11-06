@@ -12,10 +12,10 @@ import { THEME_KEY, themeScript } from '../src/theme.js';
 const ORIGIN = 'https://kit.test';
 const PAGE = `<!doctype html><html lang="en"><head><script>${themeScript}</script></head><body></body></html>`;
 
-/** A tab on the test origin, with the page served from memory. */
-const tab = async (context: BrowserContext): Promise<Page> => {
+/** A tab on the test origin, with the page given served from memory. */
+const tab = async (context: BrowserContext, body = PAGE): Promise<Page> => {
     await context.route(`${ORIGIN}/**`, (route) =>
-        route.fulfill({ body: PAGE, contentType: 'text/html' })
+        route.fulfill({ body, contentType: 'text/html' })
     );
     const page = await context.newPage();
     await page.goto(`${ORIGIN}/`);
@@ -58,17 +58,13 @@ for (const system of ['light', 'dark'] as const) {
 
 test('sets the theme before the body is parsed', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
-    await context.route(`${ORIGIN}/**`, (route) =>
-        route.fulfill({
-            body: PAGE.replace(
-                '<body></body>',
-                '<body><script>window.seen = document.documentElement.dataset.theme</script></body>'
-            ),
-            contentType: 'text/html',
-        })
+    const page = await tab(
+        context,
+        PAGE.replace(
+            '<body></body>',
+            '<body><script>window.seen = document.documentElement.dataset.theme</script></body>'
+        )
     );
-    const page = await context.newPage();
-    await page.goto(`${ORIGIN}/`);
     expect(await page.evaluate(() => (window as { seen?: string }).seen)).toBe('dark');
     await context.close();
 });
@@ -89,7 +85,12 @@ test('takes a choice the portfolio saves in another tab', async ({ browser }) =>
     await portfolio.goto(`${ORIGIN}/`);
     await portfolio.evaluate((key) => localStorage.setItem(key, 'dark'), THEME_KEY);
     await expect.poll(() => themeOf(demo)).toBe('dark');
-    // Cleared there, as when the visitor goes back to following the system.
+    // As when the visitor goes back to following the system there.
+    await portfolio.evaluate((key) => localStorage.setItem(key, 'system'), THEME_KEY);
+    await expect.poll(() => themeOf(demo)).toBe('light');
+    await portfolio.evaluate((key) => localStorage.setItem(key, 'dark'), THEME_KEY);
+    await expect.poll(() => themeOf(demo)).toBe('dark');
+    // Cleared there, which another tab hears as a storage event with no key.
     await portfolio.evaluate(() => localStorage.clear());
     await expect.poll(() => themeOf(demo)).toBe('light');
     await context.close();

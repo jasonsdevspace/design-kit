@@ -18,7 +18,7 @@ const transform = (html: string): string => {
 const PAGE = `<!doctype html><html><head>${THEME_PLACEHOLDER}</head><body></body></html>`;
 
 describe('the theme script plugin', () => {
-    it('puts the script inline where the page says, before the first paint', () => {
+    it('puts the script inline where the page says', () => {
         const page = transform(PAGE);
         expect(page).toContain(`<head><script>${themeScript}</script></head>`);
         expect(page).not.toContain(THEME_PLACEHOLDER);
@@ -27,6 +27,12 @@ describe('the theme script plugin', () => {
     it('refuses a page with no place for the script, rather than leave it to flash', () => {
         expect(() => transform('<!doctype html><html><head></head></html>')).toThrow(
             THEME_PLACEHOLDER
+        );
+    });
+
+    it('refuses a page that asks for the script more than once', () => {
+        expect(() => transform(PAGE.replace('</head>', `${THEME_PLACEHOLDER}</head>`))).toThrow(
+            'more than once'
         );
     });
 

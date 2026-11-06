@@ -54,21 +54,25 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The theme module and the plugin are published from their compiled output, so a build
-            # that compiles but packs something broken is caught here.
+            # The package exports the theme module and the plugin from their compiled output, so
+            # the build runs here and the next step loads each entry from it.
             - name: Build
               run: npm run build
 
-            # Each entry the package exports loads by its published name, from the build.
-            - name: Load the built entries
+            # The package as npm packs it, installed into an empty project, where each sheet is
+            # found and each module loads by the name a consumer imports it by.
+            - name: Install the packed package and load each entry
               run: |
+                  npm pack --pack-destination "$RUNNER_TEMP"
+                  mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer"
+                  npm init -y > /dev/null
+                  npm install --ignore-scripts "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz
+                  test -f node_modules/@jasonsdevspace/design-kit/src/tokens.css
+                  test -f node_modules/@jasonsdevspace/design-kit/src/base.css
                   node --input-type=module -e "
                       await import('@jasonsdevspace/design-kit/theme');
                       await import('@jasonsdevspace/design-kit/vite');
                   "
-
-            - name: Check what would be published
-              run: npm pack --dry-run
 
     browser:
         name: Browser tests
