@@ -11,8 +11,9 @@
  * Every rule in the kit sits in one of its layers, declared here in order, so a page's own rule
  * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
  * dk among layers of its own sets where dk goes. A demo's own :root outside a layer wins the same
- * way, whichever sheet loads first. Inside the layer, every rule here sits inside :where(), so the
- * kit's rules stay flat against each other.
+ * way, whichever sheet loads first. Across the kit, every selector but the visually hidden class is
+ * one :where(), followed at most by a focus pseudo-class, and here each is a :where() alone, so
+ * nothing in the tokens carries weight.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
  * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
