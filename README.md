@@ -1,8 +1,8 @@
 # design-kit
 
-`@jasonsdevspace/design-kit` holds the design tokens, base styles, theme script, page chrome,
-buttons, fields and callouts, and the explainer page with its panels, tables and code blocks the
-demos on [jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version from
+`@jasonsdevspace/design-kit` is what the demos on [jasonsdevspace.com](https://jasonsdevspace.com)
+are meant to share: the design tokens, base styles, theme script, page chrome, buttons, fields and
+callouts, and the explainer page with its steps, panels, tables and code blocks. Each version from
 `0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
@@ -28,14 +28,14 @@ Vite.
 The tokens are the scale a page's styles are drawn from and the color roles, every name with the
 `--dk-` prefix. The base gives the page its type and colors, one focus ring for every link and
 control, a `.dk-visually-hidden` class, code in running text a step under the text around it, and
-less motion for a visitor who asks for it. The components sheet styles the page chrome a demo
-draws around its page, a skip link, a strip above the page that says whose demo it is and a
-footer below it, the buttons, text fields, selects and callouts on the page itself, and the
-explainer, the page that says how a demo works, with the steps, panels, tables and code blocks
-it holds. A control's state is the attribute a screen reader already reads, such as
-`aria-pressed` or `aria-invalid`, and every rule past the page chrome weighs nothing, so a state
-wins over the resting look, and a piece over the layout it sits in, by its order in the sheet,
-and a page's own rule outside a layer wins over all of them.
+less motion for a visitor who asks for it. The components sheet styles the page chrome a demo draws
+around its page, a skip link, a strip above the page that says whose demo it is and a footer below
+it, the buttons, text fields, selects and callouts on the page itself, and the explainer, the page
+that says how a demo works, with the steps, panels, tables and code blocks it holds. A control's
+state is the attribute a screen reader already reads, such as `aria-pressed` or `aria-invalid`, and
+every rule in `components.css` past the page chrome weighs nothing, so a state wins over the resting
+look, and a piece over the layout it sits in, by its order in the sheet, and a page's own rule
+outside a layer wins over all of them.
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
 with a placeholder.

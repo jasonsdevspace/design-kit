@@ -34,7 +34,7 @@ const TABLE =
     '<tr><th scope="row">Hot product, row lock</th><td class="dk-table-number">700</td>' +
     '<td class="dk-table-number">48.5</td><td class="dk-table-number">0</td>' +
     '<td class="dk-table-number">0</td><td class="dk-table-number">1,204</td></tr>' +
-    '<tr><th scope="row">Hot product, <code>SKIP LOCKED</code></th>' +
+    '<tr><th scope="row">Hot product, <code>FOR_UPDATE_SKIP_LOCKED</code></th>' +
     '<td class="dk-table-number">2,310</td><td class="dk-table-number">12.1</td>' +
     '<td class="dk-table-number">31</td><td class="dk-table-number">0</td>' +
     '<td class="dk-table-number">0</td></tr></tbody></table></div>';
@@ -66,6 +66,8 @@ const EXPLAINER =
     '<h3>What usually goes wrong</h3>' +
     `<p>${PITCH} The package <code>@jasonsdevspace/design-kit-with-a-very-long-name</code> is one.</p>` +
     code('lock-title', 'The statement that holds the stock') +
+    `<p>${PITCH}</p>` +
+    '<pre class="dk-code" id="untitled"><code>SELECT 1;</code></pre>' +
     '</section>' +
     '<section>' +
     '<p class="dk-explainer-number" aria-hidden="true">02</p>' +
@@ -193,6 +195,38 @@ test('sets a frame a short step under its title, a table and a code block alike'
         const below = await box(page.locator(frame).first());
         expect(Math.round(below.y - (above.y + above.height)), frame).toBe(8);
     }
+    // A block with no title is spaced from the text above it as any part of a section is.
+    const untitled = await box(page.locator('#untitled'));
+    const before = await box(page.locator('#untitled').locator('xpath=preceding-sibling::p[1]'));
+    expect(Math.round(untitled.y - (before.y + before.height))).toBe(16);
+});
+
+test('sets a title a short step over its frame on any page, not only an explainer', async ({
+    page,
+}) => {
+    await page.setContent(
+        `<!doctype html><html lang="en"><head><title>Demo</title><style>${KIT}</style></head>` +
+            `<body><main>${TABLE}${code('demo-title', 'The snippet')}</main></body></html>`
+    );
+    for (const [title, frame] of [
+        ['.dk-table-title', '.dk-table-scroll'],
+        ['.dk-code-title', '.dk-code'],
+    ] as const) {
+        const above = await box(page.locator(title));
+        const below = await box(page.locator(frame));
+        expect(Math.round(below.y - (above.y + above.height)), frame).toBe(8);
+    }
+});
+
+test('keeps code in a table cell whole, so the frame scrolls rather than the code breaking', async ({
+    page,
+}) => {
+    await open(page, { width: 320 });
+    const inCell = page
+        .getByRole('rowheader', { name: 'Hot product, FOR_UPDATE_SKIP_LOCKED' })
+        .locator('code');
+    // One box on one line, rather than the name broken into pieces.
+    expect(await inCell.evaluate((element) => element.getClientRects().length)).toBe(1);
 });
 
 test('opens each section with its rule, its number, its heading and then its text', async ({
@@ -322,18 +356,21 @@ test('keeps code as it is written, its lines whole, and breaks inline code where
 });
 
 test('lands the skip link on the content, and an in-page link on its section', async ({ page }) => {
-    await open(page);
+    // Room below the last section, so a jump to it is not cut short by the end of the page.
+    await open(page, { extra: '.dk-explainer { padding-block-end: 200vh }' });
     await page.keyboard.press('Tab');
     await page.keyboard.press('Enter');
     await expect(page.locator('main')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Open the demo' })).toBeFocused();
     await page.getByRole('link', { name: 'See the numbers' }).press('Enter');
-    // The jump leaves the section's number in sight above its heading.
-    const number = await box(
-        page.locator('.dk-explainer > section').nth(1).locator('.dk-explainer-number')
-    );
-    expect(number.y).toBeGreaterThanOrEqual(0);
+    // The jump leaves the section's rule and number in sight above its heading, close to the top.
+    const section = page.locator('.dk-explainer > section').nth(1);
+    const rule = await box(section);
+    expect(rule.y).toBeGreaterThanOrEqual(0);
+    expect(rule.y).toBeLessThan(24);
+    const number = await box(section.locator('.dk-explainer-number'));
+    expect(number.y).toBeGreaterThan(rule.y);
     await page.keyboard.press('Tab');
     await expect(
         page.getByRole('region', { name: 'Orders a second under each strategy' })

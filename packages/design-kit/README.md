@@ -73,9 +73,8 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
   `SelectFieldProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
   `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub profile the chrome links to.
-  It has no component for the explainer or the pieces in it, which a page writes by hand.
-  It takes React `^19.3.0` as an optional peer, which a page that writes the markup itself never
-  needs.
+  It has no component for the explainer or the pieces in it, which a page writes by hand. It takes
+  React `^19.3.0` as an optional peer, which a page that writes the markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -411,21 +410,21 @@ starts at the h1. `main` holds the h1, the lead, the one action as an accent but
 the sections. Each section holds its number, hidden from a screen reader since its heading says
 what the section is, then an h2 with an id, then its text, with an h3 for each part of it.
 
-A section is a plain `<section>`, with no `aria-labelledby` or `aria-label`. A named section
-becomes a region landmark, and the page's landmarks stay the strip's navigation, the header, the
-main content, the footer and the frames that scroll. A reader moves between sections by their
-headings. The h2 ids are a contract other pages link to, so a page keeps an id when it rewords
-its heading. An in-page link needs no tabindex on the heading, since a jump to a fragment moves
-where the keyboard goes next. Each h2 has a scroll margin, so a jump stops short of it and leaves
-the section's number and rule in sight above it. The kit draws no table of contents, since an
-explainer is short enough to move through by its headings.
+A section is a plain `<section>`, with no `aria-labelledby` or `aria-label`. A named section becomes
+a region landmark, and the page's landmarks stay the strip's navigation, the demo's switches when it
+has some, the header, the main content, the footer and the frames that scroll. A reader moves
+between sections by their headings. The h2 ids are a contract other pages link to, so a page keeps
+an id when it rewords its heading. An in-page link needs no tabindex on the heading, since a jump to
+a fragment moves where the keyboard goes next. Each h2 has a scroll margin, so a jump stops short of
+it and leaves the section's number and rule in sight above it. The kit draws no table of contents,
+since an explainer is short enough to move through by its headings.
 
-The header and the explainer start their text at the column's inset, where the strip's links
-start, and every part of the page holds to `--dk-measure`, 34rem, no more than 80 characters a
-line in the body size. Each part is spaced from the one before it, so a list, a table, a panel and a
-code block space alike. The h1 is the display size and the lead a step over the body. A section
-opens on a rule in the line color, with 2rem of space above and below it, then its number in the
-muted caption size, its heading in the title size, and its text, with an h3 at the body size.
+The header and the explainer start their text at the column's inset, where the strip's links start,
+and every part of the explainer holds to `--dk-measure`, 34rem, no more than 80 characters a line in
+the body size. Each part is spaced from the one before it, so a list, a table, a panel and a code
+block space alike. The h1 is the display size and the lead a step over the body. A section opens on
+a rule in the line color, with 2rem of space above and below it, then its number in the muted
+caption size, its heading in the title size, and its text, with an h3 at the body size.
 
 ### Steps
 
@@ -443,12 +442,13 @@ muted caption size, its heading in the title size, and its text, with an h3 at t
 </ol>
 ```
 
-Steps a demo takes one after another, each in a box of its own with an edge in the line color
-and large corners, in the small text. A step's title is at medium weight, with its note in the
-muted text on a line below. Every step after the first opens with an arrow, a span holding ↓
-that the sheet sets in the gap above the step, hidden from a screen reader. It is a span because
-a pseudo-element cannot sit inside `:where()`, where every rule of the kit's sits. The list keeps
-`role="list"`, since WebKit with VoiceOver drops a list's meaning when its markers are gone.
+Steps a demo takes one after another, each in a box of its own with an edge in the line color and
+large corners, in the small text. A step's title is at medium weight, with its note in the muted
+text on a line below. Every step after the first opens with an arrow, a span holding ↓ that the
+sheet sets in the gap above the step, hidden from a screen reader. It is a span because the kit's
+selectors allow nothing after a `:where()` but a focus pseudo-class, and a pseudo-element cannot sit
+inside one. The list keeps `role="list"`, since WebKit with VoiceOver drops a list's meaning when
+its markers are gone.
 
 ### Panels
 
@@ -461,10 +461,10 @@ a pseudo-element cannot sit inside `:where()`, where every rule of the kit's sit
 
 A panel sets a part of a page apart on the card ground, `--dk-surface`, with an edge in the line
 color and large corners. The edge is what draws it, since the card ground is close to the page's,
-and it stays in forced colors. A panel is padded 1.5rem, and 1rem at 48rem wide or less, and what
-it holds is spaced from the one before it, as an explainer's parts are. Its title is a paragraph,
-or a heading one level under its section's where a reader would jump to it, and inside an
-explainer it steps down to the body size.
+and it stays in forced colors. A panel is padded 1.5rem, and 1rem at 48rem wide or less, and what it
+holds is spaced 0.75rem from the one before it, a step closer than an explainer's parts. Its title
+is a paragraph, or a heading one level under its section's where a reader would jump to it, and
+inside an explainer it steps down to the body size.
 
 A panel differs from a callout in having no tone, no hidden word and no live role, and in being
 at the body size rather than the small text. It has no role at all. It is not an `aside`, since
@@ -497,11 +497,13 @@ complementary to it. Nor is it a named `section`, which would be a region landma
 ```
 
 The title is a paragraph above the frame, never a `<caption>`, since a caption takes the table's
-width and scrolls off a phone with it. The one title names both the frame and the table. The
-frame is a region with a tabindex of 0 at every width, so a keyboard can reach it and scroll it
-with the arrow keys. A page written by hand cannot tell when its table overflows, which changes
-with zoom and text size, so the frame is a region whether or not it scrolls, which costs one tab
-stop on a wide screen where it does not.
+width and scrolls off a phone with it. The one title names both the frame and the table. Its id is
+unique on the page, and both `aria-labelledby` attributes point to it. The frame is a region with a
+tabindex of 0 at every width, so a keyboard can reach it and scroll it with the arrow keys. A page
+written by hand cannot tell when its table overflows, which changes with zoom and text size, so the
+frame is a region whether or not it scrolls, which costs one tab stop on a wide screen where it does
+not. A frame holds to the measure as the prose does, so a table wider than 34rem scrolls on a wide
+screen too.
 
 A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every
 cell of a numeric column, its header included, is `.dk-table-number`. A table is never stacked
@@ -529,12 +531,13 @@ rather than "p99 ms".
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself, since wrapping would break
-its indentation and show line breaks the code does not have. It is a named region with a tabindex
-of 0, for the same reasons as a table's frame. Its title says what the code is for, such as "Run
-it yourself", rather than naming its language. `translate="no"` keeps a browser's translation of
-the page off the identifiers. A block never takes `lang` for its programming language, since
-`lang` names a human language.
+A block of code keeps its lines as written and scrolls inside itself, since wrapping would break its
+indentation and show line breaks the code does not have. It is a named region with a tabindex of 0,
+for the same reasons as a table's frame. Its title says what the code is for, such as "Run it
+yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
+page off the identifiers. A block never takes `lang` for its programming language, since `lang`
+names a human language. The code starts right after `<code>`, since a line break there shows as a
+blank first line, and a `<` or `&` in it is written `&lt;` or `&amp;`.
 
 A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set
 into what holds it. Its edge is transparent, and shows only in forced colors. The kit ships no

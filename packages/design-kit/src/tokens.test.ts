@@ -103,7 +103,7 @@ describe('the tokens', () => {
     it('declares the scale a component is built from', () => {
         const scale = [
             ...[1, 2, 3, 4, 5, 6].map((step) => `space-${String(step)}`),
-            ...['caption', 'small', 'body', 'lead', 'title', 'heading', 'display'].map(
+            ...['caption', 'small', 'body', 'lead', 'title', 'heading', 'display', 'code'].map(
                 (step) => `text-${step}`
             ),
             'leading-tight',
@@ -121,7 +121,6 @@ describe('the tokens', () => {
             'target',
             'strip',
             'measure',
-            'text-code',
             'column',
             'shadow-raised',
             'scrim',

@@ -4,12 +4,12 @@
 
 ## Context
 
-An explainer holds tables of figures and blocks of code, and either can be wider than its column,
-on a phone or at a larger text size. The page itself must never scroll sideways, so whatever is
-wider scrolls inside a frame of its own. A keyboard can scroll only what it can focus, and axe's
-`scrollable-region-focusable` rule fails a frame that scrolls and cannot be focused. A frame that
-takes focus is announced as the keyboard reaches it, so it needs a name that says what it holds.
-The explainers are hand-written HTML, and the kit ships no script for them.
+An explainer holds tables of figures and blocks of code, and either can be wider than its column, on
+a phone or at a larger text size. The page itself must never scroll sideways, so whatever is wider
+scrolls inside a frame of its own. A keyboard can scroll only what it can focus, and axe's
+`scrollable-region-focusable` rule fails a frame that scrolls when neither it nor anything in it can
+take focus. A frame that takes focus is announced as the keyboard reaches it, so it needs a name
+that says what it holds. The explainers are hand-written HTML, and the kit ships no script for them.
 
 ## Options
 

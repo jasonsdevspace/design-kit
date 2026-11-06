@@ -6,10 +6,10 @@
 
 An explainer is a few sections, each under an h2 whose id other pages link to. A reader with a
 screen reader moves through a long page by its headings first, and uses its landmarks to reach the
-main content or leave it. A `<section>` with a name, from `aria-labelledby` or `aria-label`,
-becomes a region landmark, and one without a name is no landmark at all. The page already has the
-strip's navigation, the header, the main content, the footer, and a region for each frame that
-scrolls, as record 8 sets out.
+main content or leave it. A `<section>` with a name, from `aria-labelledby` or `aria-label`, becomes
+a region landmark, and one without a name is no landmark at all. The page already has the strip's
+navigation, the demo's switches when it has some, the header, the main content, the footer, and a
+region for each frame that scrolls, as record 8 sets out.
 
 ## Options
 
@@ -44,8 +44,8 @@ since an explainer is short enough to move through by its headings.
 The paths are in `packages/design-kit`.
 
 - `e2e/explainer.spec.tsx` finds the page's only regions are its frames, with one main and one
-  banner, and no section among them. It follows the skip link to the main content and finds the
-  next tab stop is the page's one action, not the back link. It follows an in-page link to the
-  second section and finds the section's number still on screen, and the next tab stop the table's
-  frame inside that section. It holds each section to a solid rule with 2rem of space above and
+  banner, and no section among them. It follows the skip link to the main content and finds the next
+  tab stop is the page's one action, not the back link. It follows an in-page link to the second
+  section and finds the section's rule and number still on screen, and the next tab stop the table's
+  frame inside that section. It holds the first section to a solid rule with 2rem of space above and
   below it, and its heading to 0.25rem under its number.

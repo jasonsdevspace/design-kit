@@ -74,7 +74,7 @@
         --dk-text-title: 1.25rem;
         --dk-text-heading: 1.5rem;
         --dk-text-display: 1.75rem;
-        /* Code, a step under the text around it, since a mono face looks larger at one size. */
+        /* Code, a step under the text around it, since mono type looks larger at the same size. */
         --dk-text-code: 0.9em;
         --dk-leading-tight: 1.2;
         --dk-leading-body: 1.5;
