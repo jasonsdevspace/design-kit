@@ -28,14 +28,14 @@ focus pseudo-class.
 
 ## Decision
 
-Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order
-of the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for.
-Every custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every
-selector is one of the kit's own classes or one `:where()`, followed at most by a focus
-pseudo-class, so only those classes and the focus rules carry any weight. A rule in the base that
-has to reach every element writes `:where(*)::before` and `:where(*)::after` beside `:where(*)`,
-since a pseudo-element inside a `:where()` matches nothing. The pseudo-element adds the weight of
-one element, which a page's own rule outside a layer still wins over.
+Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order of
+the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for. Every
+custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every selector
+is one of the kit's own classes or one `:where()`, followed at most by a focus pseudo-class, so only
+those classes and the focus rules carry any weight. A rule in the base that has to reach every part
+of a page follows its `:where()` with each pseudo-element it means, such as `:where(*)::before`
+beside `:where(*)`, since a pseudo-element inside a `:where()` matches nothing. The pseudo-element
+adds the weight of one element, which a page's own rule outside a layer still wins over.
 
 ## Consequences
 
@@ -63,9 +63,8 @@ The paths are in `packages/design-kit`.
 
 - `src/scope.test.ts` reads each sheet and holds the layer order to the first statement of the
   tokens and nowhere else, every block to the layer its sheet is named for, every selector to the
-  kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by
-  `::before` or `::after`, with no pseudo-element inside a `:where()`, and custom properties to the
-  tokens.
+  kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
+  pseudo-element, with no pseudo-element inside a `:where()`, and custom properties to the tokens.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its
   sheets, and finds a plain rule and a weightless one of the page's winning, a page's layer winning

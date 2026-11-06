@@ -210,7 +210,7 @@ test("gives a page's ::before and ::after the border box, as every element has",
         page,
         'light',
         '<p class="mark">Text</p>',
-        '.mark::before { content: "a"; display: inline-block; width: 4rem; padding: 1rem }'
+        '.mark::before, .mark::after { content: "a"; display: inline-block; width: 4rem; padding: 1rem }'
     );
     const sizing = await page.evaluate(() =>
         ['::before', '::after'].map(
@@ -221,28 +221,70 @@ test("gives a page's ::before and ::after the border box, as every element has",
     expect(sizing).toEqual(['border-box', 'border-box']);
 });
 
-test("cuts a page's animation on ::before and ::after for a visitor who wants less motion", async ({
+/** A page's motion on each pseudo-element it is likely to animate, written as `own` gives it. */
+const PSEUDO_MOTION = (important: string) =>
+    `.mark::before, .mark::after, dialog::backdrop { content: "a";` +
+    ` transition: opacity 2s 1s${important}; animation: spin 3s infinite${important} }` +
+    ' @keyframes spin { to { rotate: 1turn } }';
+
+for (const [where, own] of [
+    ['a plain rule', PSEUDO_MOTION('')],
+    ['an important rule outside a layer', PSEUDO_MOTION(' !important')],
+    [
+        'an important rule in a layer after the kit',
+        `@layer dk, page; @layer page { ${PSEUDO_MOTION(' !important')} }`,
+    ],
+] as const) {
+    test(`cuts motion on ::before, ::after and ::backdrop from ${where}, for less motion`, async ({
+        page,
+    }) => {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await open(page, 'light', '<p class="mark">Text</p><dialog>Open</dialog>', own);
+        const timing = await page.evaluate(() => {
+            document.querySelector('dialog')?.showModal();
+            return [
+                ['.mark', '::before'],
+                ['.mark', '::after'],
+                ['dialog', '::backdrop'],
+            ].map(([element = '', pseudo]) => {
+                const style = getComputedStyle(
+                    document.querySelector(element) ?? document.body,
+                    pseudo
+                );
+                return [
+                    style.transitionDuration,
+                    style.transitionDelay,
+                    style.animationIterationCount,
+                ];
+            });
+        });
+        expect(timing).toEqual([
+            ['1e-05s', '0s', '1'],
+            ['1e-05s', '0s', '1'],
+            ['1e-05s', '0s', '1'],
+        ]);
+    });
+}
+
+test("cuts a page's view transition short for a visitor who wants less motion", async ({
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(
         page,
         'light',
-        '<p class="mark">Text</p>',
-        '.mark::before, .mark::after { content: "a"; transition: opacity 2s 1s; animation: spin 3s infinite }' +
-            ' @keyframes spin { to { rotate: 1turn } }'
+        '<p>Text</p>',
+        '::view-transition-group(root) { animation-duration: 2s }'
     );
-    const timing = await page.evaluate(() =>
-        ['::before', '::after'].map((pseudo) => {
-            const style = getComputedStyle(
-                document.querySelector('.mark') ?? document.body,
-                pseudo
-            );
-            return [style.transitionDuration, style.transitionDelay, style.animationIterationCount];
-        })
-    );
-    expect(timing).toEqual([
-        ['1e-05s', '0s', '1'],
-        ['1e-05s', '0s', '1'],
-    ]);
+    const duration = await page.evaluate(async () => {
+        const transition = document.startViewTransition(() => undefined);
+        await transition.ready;
+        const read = getComputedStyle(
+            document.documentElement,
+            '::view-transition-group(root)'
+        ).animationDuration;
+        await transition.finished;
+        return read;
+    });
+    expect(duration).toBe('1e-05s');
 });

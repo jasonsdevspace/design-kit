@@ -8,8 +8,9 @@ import { describe, expect, it } from 'vitest';
  * and a page that names its layers sets where the kit's go among them. Inside its layers, a sheet
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
  * pseudo-class, so only those classes and the focus rules carry any weight. The base alone may
- * follow its :where() with ::before or ::after instead, since a pseudo-element inside a :where()
- * matches nothing, and a rule meant for every element has to reach them too.
+ * follow its :where() with a pseudo-element instead, since a pseudo-element inside a :where()
+ * matches nothing, and a rule meant for every element has to reach it too. That adds the weight of
+ * one element, which a page's own rule outside a layer still wins over.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -78,18 +79,28 @@ const closing = (text: string, open: number): number => {
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
  * pseudo-element, followed by at most a focus pseudo-class, so nothing outside it but the focus
- * adds weight. In the base, ::before or ::after may follow the :where() instead.
+ * adds weight. A sheet whose rules have to reach every part of a page, the base alone, may follow
+ * the :where() with a pseudo-element instead. A quoted string is read as empty first, so a ::
+ * inside one is text.
  */
-const scoped = (selector: string, sheet = 'components.css'): boolean => {
+const scoped = (
+    selector: string,
+    { pseudo = false }: { readonly pseudo?: boolean } = {}
+): boolean => {
     if (/^\.dk-[\w-]+$/.test(selector)) return true;
     if (!selector.startsWith(':where(')) return false;
     const end = closing(selector, ':where'.length);
-    if (end < 0 || selector.slice(0, end).includes('::')) return false;
-    const after =
-        sheet === 'base.css'
-            ? /^(?::focus(?:-visible|-within)?|::before|::after)?$/
-            : /^(?::focus(?:-visible|-within)?)?$/;
-    return after.test(selector.slice(end + 1));
+    if (
+        end < 0 ||
+        selector
+            .slice(0, end)
+            .replace(/"[^"]*"|'[^']*'/g, "''")
+            .includes('::')
+    )
+        return false;
+    const focus = '(?::focus(?:-visible|-within)?)';
+    const after = pseudo ? `(?:${focus}|::[\\w-]+(?:\\([^)]*\\))?)` : focus;
+    return new RegExp(`^${after}?$`).test(selector.slice(end + 1));
 };
 
 describe('what the sheets style', () => {
@@ -132,7 +143,9 @@ describe('what the sheets style', () => {
             expect(
                 selectorsOf(css)
                     .flatMap(split)
-                    .filter((selector) => !scoped(selector, name))
+                    .filter(
+                        (selector) => !scoped(selector, { pseudo: layerOf(name) === 'dk.base' })
+                    )
             ).toEqual([]);
         });
     }
@@ -161,15 +174,19 @@ describe('what the sheets style', () => {
         const candidates = [
             ':where(*, *::before)',
             ':where(*)::before',
-            ':where(*)::after',
-            ':where(*)::marker',
+            ':where(*)::backdrop',
+            ':where(:root)::view-transition-group(*)',
+            ':where(*)::before:hover',
         ];
-        expect(candidates.filter((selector) => scoped(selector, 'base.css'))).toEqual([
+        expect(candidates.filter((selector) => scoped(selector, { pseudo: true }))).toEqual([
             ':where(*)::before',
-            ':where(*)::after',
+            ':where(*)::backdrop',
+            ':where(:root)::view-transition-group(*)',
         ]);
         // A component styles no pseudo-element, so its arrows and marks are elements of their own.
-        expect(candidates.filter((selector) => scoped(selector, 'components.css'))).toEqual([]);
+        expect(candidates.filter((selector) => scoped(selector))).toEqual([]);
+        // A :: inside a quoted value is text, not a pseudo-element.
+        expect(scoped(':where([data-sep="::"])')).toBe(true);
     });
 
     it('draws every rule past the page chrome in a :where(), so the sheet order decides', () => {
