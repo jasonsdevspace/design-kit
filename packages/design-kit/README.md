@@ -106,8 +106,8 @@ The portfolio saves a visitor's theme in `localStorage` under `theme`, as `light
 `system`. The script sets `data-theme` on the root to the theme saved, and follows the system's when
 nothing is saved, when `system` or any other value is, and when the browser refuses the page its
 storage. It sets the theme again when the system's changes, and when the portfolio saves a choice or
-clears it in another tab. A browser that cannot report the system's scheme reads it as light, so a
-saved theme still applies there. Storage belongs to an origin, so a page reads the visitor's choice
+clears it in another tab. Where the browser cannot report the system's scheme, the script reads it
+as light, so a saved theme still applies there. Storage belongs to an origin, so a page reads the visitor's choice
 only on the portfolio's own origin, and anywhere else follows the system.
 
 `themeScriptHash` holds while nothing after the plugin rewrites the inline script, as a minifier of

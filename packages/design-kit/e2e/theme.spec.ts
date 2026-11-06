@@ -109,43 +109,61 @@ test('follows the system where the browser refuses the page its storage', async 
     await context.close();
 });
 
-for (const [how, takeAway] of [
-    ['has no matchMedia', 'missing'],
-    ['throws from matchMedia', 'throwing'],
-] as const) {
-    test(`draws light, or the saved theme, where the browser ${how}`, async ({ browser }) => {
+/**
+ * The ways a browser can fail to report the system's scheme: no matchMedia at all, one that throws,
+ * an older one whose result has no addEventListener, and a result whose matches throws.
+ */
+const BROKEN_SCHEME = {
+    'has no matchMedia': () => {
+        // Defined on the window itself in Chromium, as on the prototype elsewhere.
+        Reflect.deleteProperty(window, 'matchMedia');
+        Reflect.deleteProperty(Window.prototype, 'matchMedia');
+        if ('matchMedia' in window) throw new Error('expected matchMedia to be gone');
+    },
+    'throws from matchMedia': () => {
+        Object.defineProperty(window, 'matchMedia', {
+            value: () => {
+                throw new Error('no media queries');
+            },
+        });
+    },
+    'answers matchMedia as older browsers do, with addListener alone': () => {
+        Object.defineProperty(window, 'matchMedia', {
+            value: () => ({ matches: false, addListener: () => undefined }),
+        });
+    },
+    'throws from matchMedia().matches': () => {
+        Object.defineProperty(window, 'matchMedia', {
+            value: () => ({
+                get matches(): boolean {
+                    throw new Error('no answer');
+                },
+                addEventListener: () => undefined,
+            }),
+        });
+    },
+} as const;
+
+for (const [how, breakIt] of Object.entries(BROKEN_SCHEME)) {
+    test(`draws light, or the saved theme, and hears another tab, where the browser ${how}`, async ({
+        browser,
+    }) => {
         for (const [saved, expected] of [
             [null, 'light'],
             ['dark', 'dark'],
         ] as const) {
             const context = await browser.newContext({ colorScheme: 'dark' });
-            await context.addInitScript((kind) => {
-                Object.defineProperty(window, 'matchMedia', {
-                    value:
-                        kind === 'missing'
-                            ? undefined
-                            : () => {
-                                  throw new Error('no media queries');
-                              },
-                });
-            }, takeAway);
+            await context.addInitScript(breakIt);
             expect(await themeOf(await savedThen(context, saved))).toBe(expected);
             await context.close();
         }
+        const context = await browser.newContext({ colorScheme: 'dark' });
+        await context.addInitScript(breakIt);
+        const demo = await tab(context);
+        const portfolio = await context.newPage();
+        await portfolio.goto(`${ORIGIN}/`);
+        await portfolio.evaluate((key) => localStorage.setItem(key, 'dark'), THEME_KEY);
+        await expect.poll(() => themeOf(demo)).toBe('dark');
+        await context.close();
     });
 }
-
-test('still takes a choice saved in another tab where the browser has no matchMedia', async ({
-    browser,
-}) => {
-    const context = await browser.newContext();
-    await context.addInitScript(() => {
-        Object.defineProperty(window, 'matchMedia', { value: undefined });
-    });
-    const demo = await tab(context);
-    const portfolio = await context.newPage();
-    await portfolio.goto(`${ORIGIN}/`);
-    await portfolio.evaluate((key) => localStorage.setItem(key, 'dark'), THEME_KEY);
-    await expect.poll(() => themeOf(demo)).toBe('dark');
-    await context.close();
-});
