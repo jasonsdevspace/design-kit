@@ -17,5 +17,5 @@
         "skipLibCheck": true,
         "noEmit": true
     },
-    "include": ["src", "eslint.config.js", "vitest.config.ts", "playwright.config.ts"]
+    "include": ["packages/*/src", "eslint.config.js", "vitest.config.ts", "playwright.config.ts"]
 }

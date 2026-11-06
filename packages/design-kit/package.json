@@ -1,0 +1,52 @@
+{
+    "name": "@jasonsdevspace/design-kit",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Design tokens, base styles and the theme script for the demos on jasonsdevspace.com.",
+    "license": "MIT",
+    "author": "Jason Poteet",
+    "homepage": "https://github.com/jasonsdevspace/design-kit#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jasonsdevspace/design-kit.git",
+        "directory": "packages/design-kit"
+    },
+    "bugs": {
+        "url": "https://github.com/jasonsdevspace/design-kit/issues"
+    },
+    "type": "module",
+    "exports": {
+        "./tokens.css": "./dist/tokens.css",
+        "./base.css": "./dist/base.css",
+        "./theme": {
+            "types": "./dist/theme.d.ts",
+            "default": "./dist/theme.js"
+        },
+        "./vite": {
+            "types": "./dist/vite.d.ts",
+            "default": "./dist/vite.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": [
+        "*.css"
+    ],
+    "engines": {
+        "node": ">=24 <25"
+    },
+    "scripts": {
+        "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/*.css dist/",
+        "prepack": "npm run build"
+    },
+    "peerDependencies": {
+        "vite": ">=8"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        }
+    }
+}

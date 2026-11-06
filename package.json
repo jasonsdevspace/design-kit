@@ -1,41 +1,18 @@
 {
-    "name": "@jasonsdevspace/design-kit",
-    "version": "0.0.0",
+    "name": "design-kit",
     "private": true,
-    "description": "Design tokens, base styles and the theme script for the demos on jasonsdevspace.com.",
+    "description": "The repository for @jasonsdevspace/design-kit.",
     "license": "MIT",
-    "author": "Jason Poteet",
-    "homepage": "https://github.com/jasonsdevspace/design-kit#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/jasonsdevspace/design-kit.git"
-    },
-    "bugs": "https://github.com/jasonsdevspace/design-kit/issues",
     "type": "module",
-    "exports": {
-        "./tokens.css": "./src/tokens.css",
-        "./base.css": "./src/base.css",
-        "./theme": {
-            "types": "./dist/theme.d.ts",
-            "default": "./dist/theme.js"
-        },
-        "./vite": {
-            "types": "./dist/vite.d.ts",
-            "default": "./dist/vite.js"
-        }
-    },
-    "files": [
-        "src/*.css",
-        "dist"
-    ],
-    "sideEffects": [
-        "*.css"
-    ],
     "engines": {
         "node": ">=24 <25"
     },
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
-        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p e2e",
+        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e",
+        "build": "npm run build --workspaces --if-present",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
@@ -44,31 +21,9 @@
         "node-check": "node scripts/check-node.mjs",
         "test": "vitest",
         "test:run": "vitest run",
-        "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
-        "prepare": "npm run build && (husky || true)",
         "e2e": "playwright test",
-        "build": "tsc -p tsconfig.build.json"
-    },
-    "lint-staged": {
-        "*.{ts,tsx,js,mjs}": [
-            "eslint --fix",
-            "prettier --write"
-        ],
-        "*.{json,md,yml,yaml,css,html}": [
-            "prettier --write"
-        ]
-    },
-    "allowScripts": {
-        "unrs-resolver": true,
-        "fsevents": true
-    },
-    "peerDependencies": {
-        "vite": ">=8"
-    },
-    "peerDependenciesMeta": {
-        "vite": {
-            "optional": true
-        }
+        "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
+        "prepare": "husky || true"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -86,5 +41,18 @@
         "typescript-eslint": "^8.72.1",
         "vite": "^8.3.6",
         "vitest": "^5.1.0"
+    },
+    "lint-staged": {
+        "*.{ts,tsx,js,mjs}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,md,yml,yaml,css,html}": [
+            "prettier --write"
+        ]
+    },
+    "allowScripts": {
+        "unrs-resolver": true,
+        "fsevents": true
     }
 }
