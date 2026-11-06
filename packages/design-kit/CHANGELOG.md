@@ -7,13 +7,15 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
-## Unreleased
+## 0.1.0-next.2
 
 The page chrome every demo draws, and buttons, text fields, selects and callouts, styled by
 `components.css` and drawn by the components in `./react`, with the state of each control carried
 by a native or ARIA attribute. The explainer page, with its steps, panels, tables and code blocks,
 is styled too, as markup a page writes by hand.
 
+- **React.** `./react` is new, and takes React `^19.3.0` as an optional peer, which a page that
+  writes the markup itself never needs.
 - **Page chrome.** `SkipLink`, `PortfolioStrip` and `DemoFooter` draw the skip link, the strip
   above the page that says whose demo it is, and the footer below it, and `PORTFOLIO_URL`,
   `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL` are the links they share. The components draw
@@ -29,8 +31,8 @@ is styled too, as markup a page writes by hand.
   starts with a hidden "Error: " and marks the control `aria-invalid`. A control's text is never
   under 16px.
 - **Callouts.** `Callout` draws `.dk-callout` in the info tone on the highlight, or
-  `.dk-callout-success` or `.dk-callout-danger`, with a hidden word that says the tone. It takes a
-  role only when the page passes `live`.
+  `.dk-callout-success` or `.dk-callout-danger`, which start with a hidden word that says the tone.
+  It takes a role only when the page passes `live`.
 - **Explainer pages.** `.dk-explainer-header` and `.dk-explainer` lay out the page that says how a
   demo works, its text starting where the strip's links start and held to the measure, in plain
   sections that open on a rule, a number and a heading a jump leaves in sight. `.dk-steps` draws
