@@ -83,7 +83,7 @@ export const DemoFooter = ({
     name,
     about,
     source,
-    license = `${source.replace(/\/+$/, '')}/blob/main/LICENSE`,
+    license = `${source.endsWith('/') ? source.slice(0, -1) : source}/blob/main/LICENSE`,
     licenseName = 'MIT license',
     children,
 }: {
