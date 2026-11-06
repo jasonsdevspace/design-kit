@@ -2,10 +2,11 @@
  * Uses the kit the way a page that installed it from npm does, on the lowest Node its engines
  * field admits.
  *
- * CI packs the kit, installs the tarball into an empty project outside the repository, copies the
- * smoke files in beside it, and runs this on that Node, then again on the Node the project builds
- * on. Only plain Node is used, with no test runner, so it runs on any Node the package could
- * declare, and with no Vite installed, which the plugin takes only as an optional peer. Each
+ * CI packs the kit, installs the tarball into an empty project outside the repository with the
+ * React a page that draws the components has, and copies the smoke files in beside it. The first
+ * run is on that Node, with no Vite installed, which the plugin takes only as an optional peer. The
+ * second is on the Node the project builds on, after the type-check step has installed Vite. Only
+ * plain Node is used, with no test runner, so it runs on any Node the package could declare. Each
  * assertion's message says what it holds.
  *
  * Run by the "Package on oldest Node" job, `floor` in .github/workflows/ci.yml.
@@ -85,5 +86,18 @@ const hook = themeScriptPlugin().transformIndexHtml;
 const page = hook.handler(`<head>${THEME_PLACEHOLDER}</head>`, {});
 assert.equal(page, `<head><script>${themeScript}</script></head>`, 'the plugin writes the script');
 assert.match(themeScriptHash, /^'sha256-[A-Za-z0-9+/]+=*'$/, 'the hash is a policy source');
+
+// The components draw their markup from the installed package, with the React a page has.
+const { createElement } = await import('react');
+const { renderToStaticMarkup } = await import('react-dom/server');
+const { PortfolioStrip } = await import('@jasonsdevspace/design-kit/react');
+const strip = renderToStaticMarkup(
+    createElement(PortfolioStrip, { about: './about/', source: 'https://github.com/example' })
+);
+assert.match(
+    strip,
+    /^<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio">/,
+    'the strip draws its markup'
+);
 
 console.log(`design-kit works on Node ${process.version}`);

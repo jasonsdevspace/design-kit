@@ -1,7 +1,7 @@
 {
     "name": "@jasonsdevspace/design-kit",
     "version": "0.1.0-next.1",
-    "description": "Design tokens, base styles and the theme script for the demos on jasonsdevspace.com.",
+    "description": "Design tokens, base styles, page chrome and the theme script for the demos on jasonsdevspace.com.",
     "keywords": [
         "design-tokens",
         "design-system",
@@ -10,7 +10,8 @@
         "dark-mode",
         "light-dark",
         "theme",
-        "vite-plugin"
+        "vite-plugin",
+        "react"
     ],
     "license": "MIT",
     "author": "Jason Poteet",
@@ -27,9 +28,14 @@
     "exports": {
         "./tokens.css": "./dist/tokens.css",
         "./base.css": "./dist/base.css",
+        "./components.css": "./dist/components.css",
         "./theme": {
             "types": "./dist/theme.d.ts",
             "default": "./dist/theme.js"
+        },
+        "./react": {
+            "types": "./dist/react.d.ts",
+            "default": "./dist/react.js"
         },
         "./vite": {
             "types": "./dist/vite.d.ts",
@@ -55,9 +61,13 @@
         "prepack": "npm run build"
     },
     "peerDependencies": {
+        "react": "^19.3.0",
         "vite": ">=8"
     },
     "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        },
         "vite": {
             "optional": true
         }

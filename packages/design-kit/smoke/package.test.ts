@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import pkg from '../package.json' with { type: 'json' };
+import * as react from '../src/react.js';
 import * as theme from '../src/theme.js';
 import * as vite from '../src/vite.js';
 import { SHEETS, VALUE_EXPORTS } from './exports.mjs';
@@ -39,6 +40,9 @@ const compiledAgainst = (): string[] => {
 
 describe('the published package', () => {
     it('lists every value each module exports in the smoke test', () => {
+        expect(Object.keys(react).sort()).toEqual(
+            [...VALUE_EXPORTS['@jasonsdevspace/design-kit/react']].sort()
+        );
         expect(Object.keys(theme).sort()).toEqual(
             [...VALUE_EXPORTS['@jasonsdevspace/design-kit/theme']].sort()
         );

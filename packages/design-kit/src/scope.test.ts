@@ -75,18 +75,20 @@ const closing = (text: string, open: number): number => {
 
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything, followed by
- * nothing but plain pseudo-classes, so nothing outside it adds weight.
+ * at most a focus pseudo-class, so nothing outside it but the focus adds weight.
  */
 const scoped = (selector: string): boolean => {
     if (/^\.dk-[\w-]+$/.test(selector)) return true;
     if (!selector.startsWith(':where(')) return false;
     const end = closing(selector, ':where'.length);
-    return end > 0 && /^(?::[\w-]+)*$/.test(selector.slice(end + 1));
+    return end > 0 && /^(?::focus(?:-visible|-within)?)?$/.test(selector.slice(end + 1));
 };
 
 describe('what the sheets style', () => {
     it('finds the sheets', () => {
-        expect(sheets).toEqual(expect.arrayContaining(['tokens.css', 'base.css']));
+        expect(sheets).toEqual(
+            expect.arrayContaining(['tokens.css', 'base.css', 'components.css'])
+        );
     });
 
     it("declares the order of the kit's layers before any rule, in the tokens alone", () => {
@@ -138,6 +140,7 @@ describe('what the sheets style', () => {
                 'body',
                 ':where(a) h1:where(b)',
                 ':where(a',
+                ':where(a):hover',
             ].filter(scoped)
         ).toEqual([
             '.dk-visually-hidden',
