@@ -3,13 +3,15 @@
 The kit follows semantic versioning from its first release. Until 1.0.0, a minor version may rename
 a token or change what the theme script reads, and a patch changes neither. A change to the theme
 script changes `themeScriptHash`, so a page reads the hash from the installed package rather than
-keeping a copy. Each version is staged on npm from a tag by the release workflow, with provenance,
-goes live when it is promoted, and has a release on GitHub with the entry below as its notes.
+keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag by the release
+workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
+entry below as its notes.
 
 ## 0.1.0-next.1
 
-Nothing in the package changed. This is the first version the release workflow stages, through
-npm's trusted publishing with provenance, where `0.1.0-next.0` was published by hand.
+Nothing in the code, the styles or the types changed. This is the first version the release workflow
+stages, through npm's trusted publishing with provenance. `0.1.0-next.0` was published by hand,
+since npm adds a trusted publisher only to a package that already exists.
 
 ## 0.1.0-next.0
 

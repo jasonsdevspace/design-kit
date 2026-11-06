@@ -1,8 +1,8 @@
 # design-kit
 
 `@jasonsdevspace/design-kit` holds the design tokens, base styles and theme script the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version is staged on npm
-from a tag, and goes live when it is promoted.
+[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version from
+`0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
 inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
