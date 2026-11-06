@@ -38,7 +38,11 @@ describe('the theme script plugin', () => {
 
     it("gives the hash a page's policy names the script by", () => {
         const page = transform(PAGE);
-        const inline = /<script>([\s\S]*?)<\/script>/.exec(page)?.[1] ?? '';
+        // The plugin writes the element itself, so its text is what sits between the tags it wrote.
+        const inline = page.slice(
+            page.indexOf('<script>') + '<script>'.length,
+            page.indexOf('</script>')
+        );
         const hash = `'sha256-${createHash('sha256').update(inline).digest('base64')}'`;
         expect(themeScriptHash).toBe(hash);
     });
