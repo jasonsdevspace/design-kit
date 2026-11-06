@@ -55,6 +55,27 @@ describe('the workflows', () => {
         expect(installs.filter((step) => !hasOwnTimeLimit(step))).toEqual([]);
     });
 
+    // The publishing job holds the token trusted publishing issues, so what it installs is what
+    // a release trusts most.
+    const publishing = stepsOf(workflows.get('.github/workflows/release.yml') ?? '');
+
+    it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
+        const installs = publishing.filter(({ text }) => /\bnpm install -g\b/.test(text));
+        expect(installs.length).toBeGreaterThan(0);
+        for (const { text } of installs) {
+            expect(text).toMatch(/NPM_INTEGRITY: sha512-[A-Za-z0-9+/]+=*\s*$/m);
+            expect(text).toMatch(/openssl dgst -sha512/);
+            expect(text).toMatch(/npm install -g --offline --ignore-scripts "\$tarball"/);
+            expect(text).not.toMatch(/npm install -g[^\n]*\bnpm@/);
+        }
+    });
+
+    it('leave a version an earlier run staged alone, so a release can be run again whole', () => {
+        const [stage] = publishing.filter(({ text }) => /npm stage publish/.test(text));
+        expect(stage?.text).toMatch(/if ! output=\$\(npm stage publish/);
+        expect(stage?.text).toMatch(/cannot publish over\|previously published/);
+    });
+
     it('read a step the way GitHub does, whatever the step looks like', () => {
         const [step] = stepsOf(
             [

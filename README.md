@@ -258,6 +258,10 @@ version goes live only when it is promoted on the package page. A version with a
 under npm's `next` tag and marked as a prerelease on GitHub. The workflow then creates the release
 on GitHub with the changelog entry as its notes.
 
+The job that stages holds the publish token, so it installs nothing but a pinned npm, from a
+tarball checked against the checksum npm's registry gives for that version, offline. A run can be
+repeated whole after a later step failed: a version already staged or published is left alone.
+
 ## Project layout
 
 ```
