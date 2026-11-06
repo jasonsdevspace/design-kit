@@ -3,10 +3,10 @@
  * field admits.
  *
  * CI packs the kit, installs the tarball into an empty project outside the repository, copies the
- * smoke files it lists in beside it, and runs this on that Node. Only plain Node is used, with no
- * test runner, so it runs on any Node the package could declare, and with no Vite installed, which
- * the plugin takes only as an optional peer. Each assertion names what a page would lose if it
- * failed.
+ * smoke files in beside it, and runs this on that Node, then again on the Node the project builds
+ * on. Only plain Node is used, with no test runner, so it runs on any Node the package could
+ * declare, and with no Vite installed, which the plugin takes only as an optional peer. Each
+ * assertion's message says what it holds.
  *
  * Run by the "Package on oldest Node" job, `floor` in .github/workflows/ci.yml.
  */
@@ -18,10 +18,10 @@ import { fileURLToPath } from 'node:url';
 import { SHEETS, VALUE_EXPORTS } from './exports.mjs';
 
 // The job's setup step can quietly install a newer Node than the one asked for, and then
-// everything below proves nothing about the floor.
+// everything below proves nothing about the Node it names.
 const floor = process.env.FLOOR;
 assert.ok(floor, 'FLOOR names the Node this run is meant to be on');
-assert.equal(process.version, `v${floor}`, 'runs on the lowest Node the package admits');
+assert.equal(process.version, `v${floor}`, 'runs on the Node the job set up');
 
 // Each import resolves from the installed tarball, not from a link back to the repository.
 const theme = import.meta.resolve('@jasonsdevspace/design-kit/theme');
@@ -55,7 +55,15 @@ for (const sheet of SHEETS) {
     assert.ok(existsSync(path), `${sheet} resolves to a file`);
 }
 const tokens = readFileSync(fileURLToPath(import.meta.resolve(SHEETS[0])), 'utf8');
-assert.match(tokens, /@layer dk\.tokens, dk\.base, dk\.components;/, 'declares the kit layers');
+const firstStatement = tokens
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .trim()
+    .split(';')[0];
+assert.equal(
+    firstStatement,
+    '@layer dk.tokens, dk.base, dk.components',
+    'the tokens declare the kit layers before any rule'
+);
 
 // Every module loads, and exports exactly what the smoke test lists.
 for (const [name, values] of Object.entries(VALUE_EXPORTS)) {

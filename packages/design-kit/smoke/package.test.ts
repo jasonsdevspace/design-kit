@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import pkg from '../package.json' with { type: 'json' };
@@ -15,7 +17,25 @@ import { floorOf } from './floor.mjs';
  */
 const EDITION_BY_MAJOR: Readonly<Record<number, number>> = { 20: 2023, 22: 2024, 24: 2025 };
 
-const root = new URL('../../../', import.meta.url);
+/** The target and the language libraries the package's build compiles against, as TypeScript reads its config. */
+const compiledAgainst = (): string[] => {
+    const path = fileURLToPath(new URL('../tsconfig.build.json', import.meta.url));
+    const parsed = ts.getParsedCommandLineOfConfigFile(
+        path,
+        {},
+        {
+            ...ts.sys,
+            onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
+                throw new Error(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+            },
+        }
+    );
+    if (!parsed || parsed.errors.length > 0) throw new Error('the build config could not be read');
+    const target = ts.ScriptTarget[parsed.options.target ?? ts.ScriptTarget.ESNext];
+    // A library such as DOM has no edition, so only the language's own are held to the floor.
+    const libraries = (parsed.options.lib ?? []).filter((name) => /^lib\.es/i.test(name));
+    return [target, ...libraries];
+};
 
 describe('the published package', () => {
     it('lists every value each module exports in the smoke test', () => {
@@ -48,10 +68,7 @@ describe('the published package', () => {
         const floor = Number(lowest?.split('.')[0]);
         const edition = EDITION_BY_MAJOR[floor];
         expect(edition, `add Node ${String(floor)} to the table`).toBeDefined();
-        const config = JSON.parse(readFileSync(new URL('tsconfig.json', root), 'utf8')) as {
-            compilerOptions: { target: string; lib: string[] };
-        };
-        for (const name of [config.compilerOptions.target, ...config.compilerOptions.lib]) {
+        for (const name of compiledAgainst()) {
             const year = Number(/es(\d{4})/i.exec(name)?.[1] ?? Number.POSITIVE_INFINITY);
             expect(year, name).toBeLessThanOrEqual(edition ?? 0);
         }

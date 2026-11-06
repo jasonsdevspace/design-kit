@@ -3,8 +3,8 @@
 The kit follows semantic versioning from its first release. Until 1.0.0, a minor version may rename
 a token or change what the theme script reads, and a patch changes neither. A change to the theme
 script changes `themeScriptHash`, so a page reads the hash from the installed package rather than
-keeping a copy. Each version is published from a tag by the release workflow, with provenance, and
-has a release on GitHub with the entry below as its notes.
+keeping a copy. Each version is staged on npm from a tag by the release workflow, with provenance,
+goes live when it is promoted, and has a release on GitHub with the entry below as its notes.
 
 ## 0.1.0-next.0
 
@@ -23,4 +23,5 @@ jasonsdevspace.com share.
 - **The Vite plugin.** `themeScriptPlugin` writes the script where a page holds
   `<!-- theme-script -->` and fails the build of a page without it or with two, and
   `themeScriptHash` names the script for a Content Security Policy.
-- **Node.** The plugin runs on Node 22 or later, the lowest Node the package is tested on.
+- **Node.** The theme module and the plugin load on Node 22.12 or later, the lowest Node the
+  package is tested on and the lowest Vite 8 runs on on Node 22.

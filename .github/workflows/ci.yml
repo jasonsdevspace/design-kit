@@ -61,8 +61,8 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The package compiles to what it ships, which the oldest Node check then packs and
-            # installs.
+            # The package compiles to what it ships. The oldest Node check builds it again as it
+            # packs, in a job of its own.
             - name: Build
               run: npm run build
 
@@ -191,6 +191,16 @@ jobs:
                   npm install --ignore-scripts --no-save "vite@$(node -p "require('$GITHUB_WORKSPACE/node_modules/vite/package.json').version")"
                   node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.nodenext.json
                   node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.bundler.json
+
+            # The same tarball on the Node the project builds on, which the floor does not cover.
+            - name: Set up the project's Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+
+            - name: Use the package on the project's Node
+              working-directory: ${{ runner.temp }}/consumer
+              run: FLOOR="$(node -p 'process.versions.node')" node consumer.mjs
 
             # The release publishes this tarball, now that it is proven, so the job that holds the
             # publish token never installs or builds anything. Kept on every run, so the hand-off is
