@@ -1,17 +1,21 @@
 /*
  * The kit's components, in the kit's components layer, so they sit over the base and under a
- * page's own rules. Each is styled by its class and the markup README.md gives for it, which the
- * React components draw and a page without React writes by hand. A selector beyond a single class
- * sits inside :where(), so the kit's rules stay flat against each other.
+ * page's own rules. Each is styled by its class and the markup the package README gives for it,
+ * which the React components draw and a page without React writes by hand. A selector beyond a
+ * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
+ * classes and the focus rule carry weight.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
 
 @layer dk.components {
-    /* Skip to content, out of sight until it takes focus, and then over the strip at its inset. */
+    /*
+     * Skip to content, out of sight until it takes focus, and then over the strip at the column's
+     * inset, where the strip's links start.
+     */
     .dk-skip {
         position: absolute;
-        left: var(--dk-space-4);
+        left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
         top: -10rem;
         padding: var(--dk-space-2) var(--dk-space-4);
         border-radius: var(--dk-radius);
@@ -60,7 +64,10 @@
         min-height: var(--dk-strip);
     }
 
-    /* The switches wrap where larger text leaves no room, each row as tall as the links' row. */
+    /*
+     * The switches wrap where larger text leaves no room, and stand at least as tall as the links'
+     * row.
+     */
     .dk-strip-tools {
         display: flex;
         flex-wrap: wrap;
@@ -84,8 +91,8 @@
 
     /*
      * The chrome's links step back in the muted text, and come forward to the page's text when
-     * pointed at or focused. A link in the footer's sentence keeps its underline, since its color
-     * is the sentence's.
+     * pointed at or focused. Every one keeps its underline, which in the footer's sentence is what
+     * tells a link from the text around it.
      */
     :where(.dk-strip-links a, .dk-footer a) {
         color: var(--dk-muted);

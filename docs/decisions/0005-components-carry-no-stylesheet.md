@@ -19,8 +19,9 @@ bundler keeps an import that nothing reads from rests on how it treats side effe
 shaking. Setting the styles inline instead, the way around both, breaks `style-src 'self'`.
 
 **B. A sheet per component.** A `skip.css`, a `strip.css` and a `footer.css`, each exported on its
-own. Rejected, since every demo draws all three, and the choice runs one way. Splitting one sheet
-later only adds exports, while merging sheets later removes exports a page already imports.
+own. Rejected, since ShelfLens and inventory-reservations each draw all three, and the choice runs
+one way. Splitting one sheet later only adds exports, while merging sheets later removes exports a
+page already imports.
 
 **C. One sheet, and markup alone from the components.** One `components.css` in the `dk.components`
 layer styles the chrome by its classes. The components draw that markup and nothing else, and a
@@ -52,15 +53,19 @@ The paths are in `packages/design-kit`.
 - `src/react.test.tsx` renders each component to a string and holds its markup to the contract: the
   elements and their classes, the landmarks and their names, the links in their order,
   `aria-current` on the current page, the switches' section only when there are switches, the
-  footer's links and what a demo adds after them, and no link opening a new tab.
+  footer's markup exactly, with what a demo adds after it, and no link anywhere in the chrome
+  opening a new tab. Switches or footer additions that are null or false draw nothing.
 - `e2e/chrome.spec.tsx` draws that markup with the kit's sheets in Chromium and finds the strip one
   row over its rule on a wide screen and rows of links on a phone, whatever the font, the switches
-  beside the links or on a row below them, the skip link out of sight until the keyboard reaches it
-  and then landing on the content, the footer's rule the width of the page with its text in the
-  column, and no axe findings in either theme, on a wide screen or a phone.
+  beside the links or on a row below them, the skip link out of sight until the keyboard reaches it,
+  then at the column's inset where the strip's links start, and then landing on the content, the
+  footer's rule the width of the page with its text in the column, and no axe findings in either
+  theme, on a wide screen or a phone.
+- The same spec serves that markup and the kit's sheets from an origin of its own under
+  `style-src 'self'`, and finds the strip laid out as before with nothing refused.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to
-  `dk.components`, its selectors to the kit's own classes or one `:where()`, and its custom
-  properties to none.
+  `dk.components`, its selectors to the kit's own classes or one `:where()` followed at most by a
+  focus pseudo-class, and its custom properties to none.
 - The oldest Node job in CI installs the packed package into an empty project with React beside
   it, where `smoke/consumer.mjs` finds `components.css` where its export resolves and draws the
   strip from `./react` in plain Node, and `smoke/types.ts` type-checks the strip's props as Node

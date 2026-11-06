@@ -5,8 +5,8 @@ Design tokens, base styles, a theme script and the page chrome for the demos on
 own, so a page's own rule outside a layer wins over every rule of the kit's but the cut to motion,
 without any extra weight. A page with layers of its own has to name where the kit's go among them,
 in the order the section on layers below gives. The script sets the theme a visitor chose on the
-portfolio before the page paints. The chrome is the skip link, the strip and the footer every demo
-draws, as markup a sheet styles and as React components that draw it.
+portfolio before the page paints. The page chrome a demo draws around its page is a skip link, a
+strip and a footer, as markup a sheet styles and as React components that draw it.
 
 ```sh
 npm install @jasonsdevspace/design-kit
@@ -83,14 +83,15 @@ const head = `<script>${themeScript}</script>`;
 
 ## Page chrome
 
-Every demo draws the same chrome: a skip link, a strip above the page that says whose demo it is,
-and a footer below it. `components.css` styles the markup below, which a page without React writes
-by hand and the components in `./react` draw. The components ship no stylesheet and set no `style`
-attribute, so a page loads `components.css` itself, and a page whose policy allows styles only from
-its own origin, `style-src 'self'`, still draws them.
+The page chrome a demo draws around its page is a skip link, a strip above the page that says whose
+demo it is, and a footer below it. `components.css` styles the markup below, which a page without
+React writes by hand and the components in `./react` draw. The components ship no stylesheet and
+set no `style` attribute, so a page loads `components.css` itself, and a page whose policy allows
+styles only from its own origin, `style-src 'self'`, still draws them.
 
-The skip link is the keyboard's first stop, out of sight until it takes focus. It leads to the
-page's main content, which has a tabindex of -1 so it can take focus.
+The skip link is the keyboard's first stop, out of sight until it takes focus, and then at the
+column's inset, where the strip's links start. Following it moves focus to the page's main content,
+which has a tabindex of -1 so it can take focus.
 
 ```html
 <a class="dk-skip" href="#main-content">Skip to content</a>
@@ -110,7 +111,7 @@ named for them, and a demo with none leaves the section out.
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
     <section class="dk-strip-tools" aria-label="Demo">
-        <button type="button" aria-pressed="false">Tour</button>
+        <button type="button">Tour</button>
     </section>
 </div>
 ```
@@ -120,9 +121,10 @@ On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text,
 caption size, the links close to 1rem apart and wrap where they must, and the switches take a row
 of their own below them.
 
-The footer is one paragraph that says whose project the demo is and links how it works, the source,
-the rest of the work and the license. Anything the demo adds follows the license, as sentences of
-its own. Its links keep their underline, since their color is the sentence's.
+The footer is one paragraph that says whose project the demo is, with the author's name linking the
+portfolio, and links how it works, the source, the rest of the work and the license. Anything the
+demo adds follows the license, as sentences of its own. Every link in the chrome keeps its
+underline, and in the footer's sentence the underline is what tells a link from the text around it.
 
 ```html
 <footer class="dk-footer">
@@ -167,10 +169,13 @@ export const Page = () => (
   the words "Skip to content".
 - `PortfolioStrip` takes `about`, the demo's explainer, and `source`, its repository. `current`
   set to `about` marks the explainer's link as the current page. `tools` holds the demo's own
-  switches, and `toolsLabel` names their landmark, `Demo` unless given.
+  switches, and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined,
+  null or false the strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
-  `license` is the repository's `LICENSE` on main unless given, and its children follow the
-  license.
+  `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
+  any trailing slash on `source` dropped first. `licenseName` is the license's name in the
+  sentence, `MIT license` unless given. Its children follow the license, and children that are
+  undefined, null or false add nothing.
 
 ## Layers and palettes
 

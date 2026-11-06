@@ -2,10 +2,11 @@
  * Uses the kit the way a page that installed it from npm does, on the lowest Node its engines
  * field admits.
  *
- * CI packs the kit, installs the tarball into an empty project outside the repository, copies the
- * smoke files in beside it, and runs this on that Node, then again on the Node the project builds
- * on. Only plain Node is used, with no test runner, so it runs on any Node the package could
- * declare, and with no Vite installed, which the plugin takes only as an optional peer. Each
+ * CI packs the kit, installs the tarball into an empty project outside the repository with the
+ * React a page that draws the components has, and copies the smoke files in beside it. The first
+ * run is on that Node, with no Vite installed, which the plugin takes only as an optional peer. The
+ * second is on the Node the project builds on, after the type-check step has installed Vite. Only
+ * plain Node is used, with no test runner, so it runs on any Node the package could declare. Each
  * assertion's message says what it holds.
  *
  * Run by the "Package on oldest Node" job, `floor` in .github/workflows/ci.yml.

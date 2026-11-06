@@ -27,8 +27,8 @@ Vite.
 The tokens are the scale a page's styles are drawn from and the color roles, every name with the
 `--dk-` prefix. The base gives the page its type and colors, one focus ring for every link and
 control, a `.dk-visually-hidden` class, and less motion for a visitor who asks for it. The
-components sheet styles the page chrome every demo draws: a skip link, a strip above the page that
-says whose demo it is, and a footer below it.
+components sheet styles the page chrome a demo draws around its page: a skip link, a strip above
+the page that says whose demo it is, and a footer below it.
 
 A page built with Vite takes the theme script from the plugin, and marks where it goes in its head
 with a placeholder.
@@ -190,7 +190,7 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | The chrome has no axe findings in either theme, on a wide screen and on a phone               | `packages/design-kit/e2e/chrome.spec.tsx` |
 | The chrome draws with no inline style, under a policy that allows styles only from its origin | `packages/design-kit/e2e/chrome.spec.tsx` |
 | Each sheet resolves and each module loads from the packed package, on the oldest Node         | `packages/design-kit/smoke/consumer.mjs`  |
-| The components draw their markup from the packed package, with the React a page has           | `packages/design-kit/smoke/consumer.mjs`  |
+| The strip draws its markup from the packed package, with the React a page has                 | `packages/design-kit/smoke/consumer.mjs`  |
 
 ## Decisions
 

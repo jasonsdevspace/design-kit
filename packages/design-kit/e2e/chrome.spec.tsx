@@ -10,36 +10,31 @@ import { DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * The page chrome as a browser lays it out, from the markup the components draw and the kit's own
  * sheets: the strip one row over its rule on a wide screen and rows of links on a phone, whatever
  * font the machine running the test has, the demo's switches beside the links or below them, the
- * skip link out of sight until the keyboard reaches it, and no audit findings in either theme.
+ * skip link out of sight until the keyboard reaches it and then at the column's inset, the
+ * footer's rule the width of the page with its text in the column, and no audit findings in either
+ * theme. The same markup is drawn again from an origin of its own under `style-src 'self'`, where
+ * any inline style would be refused.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 const SOURCE = 'https://github.com/jasonsdevspace/example';
 
-/** A demo page with the chrome around a main column, at the width given, in the theme given. */
-const open = async (
-    page: Page,
-    {
-        width,
-        theme = 'light',
-        tools = false,
-    }: { width: number; theme?: 'light' | 'dark'; tools?: boolean }
-) => {
-    await page.setViewportSize({ width, height: 800 });
-    const markup = renderToStaticMarkup(
+/** The chrome around a main column, as a demo draws it, with the demo's switches if asked. */
+const chrome = (tools: boolean) =>
+    renderToStaticMarkup(
         <>
             <SkipLink />
             <PortfolioStrip
                 about="./about/"
                 source={SOURCE}
                 tools={
-                    tools ? (
+                    tools && (
                         <>
                             <button type="button">Shopping as a guest</button>
                             <button type="button">Tour</button>
                         </>
-                    ) : undefined
+                    )
                 }
             />
             <main id="main-content" tabIndex={-1}>
@@ -49,9 +44,20 @@ const open = async (
             <DemoFooter name="Example" about="./about/" source={SOURCE} />
         </>
     );
+
+/** A demo page with the chrome, at the width given, in the theme given. */
+const open = async (
+    page: Page,
+    {
+        width,
+        theme = 'light',
+        tools = false,
+    }: { width: number; theme?: 'light' | 'dark'; tools?: boolean }
+) => {
+    await page.setViewportSize({ width, height: 800 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
-            `<style>${KIT}</style></head><body>${markup}</body></html>`
+            `<style>${KIT}</style></head><body>${chrome(tools)}</body></html>`
     );
 };
 
@@ -69,11 +75,12 @@ const stripLayout = async (page: Page) => {
             (link, i) => box(link, `link ${String(i + 1)}`)
         )
     );
-    const top = (await box(strip, 'the strip')).y;
+    const drawnStrip = await box(strip, 'the strip');
+    const top = drawnStrip.y;
     const first = links[0];
     if (!first) throw new Error('expected the strip to have links');
     return {
-        height: Math.round((await box(strip, 'the strip')).height),
+        height: Math.round(drawnStrip.height),
         inset: Math.round(first.x),
         starts: links.map((link) => Math.round(link.x)),
         tops: links.map((link) => Math.round(link.y - top)),
@@ -149,6 +156,8 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     await expect(skip).toBeInViewport();
+    // At the column's inset, where the strip's links start, rather than at the edge of the page.
+    expect(Math.round((await box(skip, 'the skip link')).x)).toBe((await stripLayout(page)).inset);
     await skip.press('Enter');
     await expect(page.locator('#main-content')).toBeFocused();
 });
@@ -181,20 +190,7 @@ test("draws the chrome under a policy that allows styles only from the page's ow
     // Served from an origin of its own with the policy as a header, and the kit's sheets as a file
     // of that origin, as a demo serves them, so any inline style the chrome drew would be refused.
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-    const markup = renderToStaticMarkup(
-        <>
-            <SkipLink />
-            <PortfolioStrip
-                about="./about/"
-                source={SOURCE}
-                tools={<button type="button">Tour</button>}
-            />
-            <main id="main-content" tabIndex={-1}>
-                <h1>Example</h1>
-            </main>
-            <DemoFooter name="Example" about="./about/" source={SOURCE} />
-        </>
-    );
+    const markup = chrome(true);
     await context.route('https://kit.test/**', (route) => {
         const css = route.request().url().endsWith('/kit.css');
         return route.fulfill({

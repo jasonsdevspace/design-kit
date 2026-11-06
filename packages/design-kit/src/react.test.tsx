@@ -50,16 +50,15 @@ describe('the strip', () => {
         );
     });
 
-    it('holds the demo own switches in a landmark of their own, only when there are some', () => {
+    it("holds the demo's own switches in a landmark of their own, only when there are some", () => {
         expect(strip()).not.toContain('dk-strip-tools');
         expect(strip({ tools: <button type="button">Tour</button> })).toContain(
             '<section class="dk-strip-tools" aria-label="Demo"><button type="button">Tour</button></section>'
         );
         expect(strip({ tools: <span />, toolsLabel: 'Store' })).toContain('aria-label="Store"');
-    });
-
-    it('opens no link in a new tab', () => {
-        expect(strip()).not.toContain('target=');
+        // As a demo writes `hasTour && <Tour />`, which leaves false or null when there is none.
+        for (const nothing of [null, false])
+            expect(strip({ tools: nothing })).not.toContain('dk-strip-tools');
     });
 });
 
@@ -72,6 +71,14 @@ describe('the footer', () => {
         expect(footer).toContain(
             `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>.`
         );
+        expect(footer).toBe(
+            '<footer class="dk-footer"><p>' +
+                `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>. ` +
+                '<a href="./about/">How it works</a>, in plain words. ' +
+                `The <a href="${SOURCE}">source</a> and ` +
+                `<a href="${GITHUB_PROFILE_URL}">more work</a> are on GitHub, under the ` +
+                `<a href="${SOURCE}/blob/main/LICENSE">MIT license</a>.</p></footer>`
+        );
         const hrefs = [...footer.matchAll(/href="([^"]+)"/g)].map(([, href]) => href);
         expect(hrefs).toEqual([
             PORTFOLIO_URL,
@@ -82,7 +89,30 @@ describe('the footer', () => {
         ]);
     });
 
-    it('ends with what a demo adds of its own', () => {
+    it('names the license a demo gives, and builds the default link without a doubled slash', () => {
+        const footer = renderToStaticMarkup(
+            <DemoFooter
+                name="Example"
+                about="./about/"
+                source={`${SOURCE}/`}
+                licenseName="Apache License 2.0"
+            />
+        );
+        expect(footer).toContain(
+            `<a href="${SOURCE}/blob/main/LICENSE">Apache License 2.0</a>.</p>`
+        );
+    });
+
+    it('ends with what a demo adds of its own, and with nothing when it adds nothing', () => {
+        for (const nothing of [null, false]) {
+            expect(
+                renderToStaticMarkup(
+                    <DemoFooter name="Example" about="./about/" source={SOURCE}>
+                        {nothing}
+                    </DemoFooter>
+                )
+            ).toMatch(/MIT license<\/a>\.<\/p><\/footer>$/);
+        }
         const footer = renderToStaticMarkup(
             <DemoFooter name="Example" about="./about/" source={SOURCE}>
                 You can also <a href="./try/">search your own products</a> with it.
@@ -91,5 +121,22 @@ describe('the footer', () => {
         expect(footer).toMatch(
             /MIT license<\/a>\. You can also <a href="\.\/try\/">search your own products<\/a> with it\.<\/p><\/footer>$/
         );
+    });
+});
+
+describe('the chrome', () => {
+    it('opens no link in a new tab', () => {
+        const chrome = renderToStaticMarkup(
+            <>
+                <SkipLink />
+                <PortfolioStrip
+                    about="./about/"
+                    source={SOURCE}
+                    tools={<button type="button">Tour</button>}
+                />
+                <DemoFooter name="Example" about="./about/" source={SOURCE} />
+            </>
+        );
+        expect(chrome).not.toContain('target=');
     });
 });
