@@ -47,7 +47,17 @@ const sizeBudgets = {
 export default tseslint.config(
     // A disable comment whose rule no longer fires fails the lint, so it cannot outlive its reason.
     { linterOptions: { reportUnusedDisableDirectives: 'error' } },
-    { ignores: ['**/coverage', '**/node_modules', '**/dist'] },
+    {
+        ignores: [
+            '**/coverage',
+            '**/node_modules',
+            '**/dist',
+            // Compiled in the oldest Node check's empty project, against the installed package.
+            // Its imports resolve to the package's build, which does not exist yet when the
+            // checks that lint it run.
+            'packages/design-kit/smoke/types.ts',
+        ],
+    },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx,mjs,js}'],

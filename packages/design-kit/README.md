@@ -7,6 +7,15 @@ without any extra weight. A page with layers of its own has to name where the ki
 in the order the section on layers below gives. The script sets the theme a visitor chose on the
 portfolio before the page paints.
 
+```sh
+npm install @jasonsdevspace/design-kit
+```
+
+The package loads on Node 22.12 or later, the lowest Node 22 that Vite 8 runs on, and takes Vite 8
+or later as an optional peer for its plugin. Prereleases are under npm's `next` tag, as
+`@jasonsdevspace/design-kit@next`. What changed in each version is in
+[CHANGELOG.md](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
+
 A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
 Vite.
 
@@ -107,8 +116,8 @@ The portfolio saves a visitor's theme in `localStorage` under `theme`, as `light
 nothing is saved, when `system` or any other value is, and when the browser refuses the page its
 storage. It sets the theme again when the system's changes, and when the portfolio saves a choice or
 clears it in another tab. Where the browser cannot report the system's scheme, the script reads it
-as light, so a saved theme still applies there. Storage belongs to an origin, so a page reads the visitor's choice
-only on the portfolio's own origin, and anywhere else follows the system.
+as light, so a saved theme still applies there. Storage belongs to an origin, so a page reads the
+visitor's choice only on the portfolio's own origin, and anywhere else follows the system.
 
 `themeScriptHash` holds while nothing after the plugin rewrites the inline script, as a minifier of
 a page's HTML would. It is the hash of the script in the installed version, so a policy reads it
