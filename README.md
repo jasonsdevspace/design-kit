@@ -1,8 +1,8 @@
 # design-kit
 
 `@jasonsdevspace/design-kit` holds the design tokens, base styles and theme script the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. The package is marked private
-and is not published.
+[jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. Each version is published to
+npm from a tag, and staged there until it is promoted.
 
 **Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
 inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
@@ -130,26 +130,26 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                       | Where it is tested                               |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| A page's own rule outside a layer wins, however little it weighs                             | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A page's layers placed before the kit's lose to it unless they name `dk` first               | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight     | `packages/design-kit/src/scope.test.ts`          |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit        | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A palette set on a container restyles only what is inside it                                 | `packages/design-kit/e2e/sheets.spec.ts`         |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to       | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A label hidden from the eye is still read by a screen reader                                 | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every measured pairing passes its WCAG ratio in both themes                                  | `packages/design-kit/src/tokens.test.ts`         |
-| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts`          |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme is set before the body is parsed                                                   | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts`          |
-| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts`          |
-| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts`          |
-| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts`          |
-| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`           |
-| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`           |
-| Each sheet resolves and each module loads from the packed package, with install scripts off  | the packed install in `.github/workflows/ci.yml` |
+| Gotcha                                                                                       | Where it is tested                                |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs                             | `packages/design-kit/e2e/sheets.spec.ts`          |
+| A page's layers placed before the kit's lose to it unless they name `dk` first               | `packages/design-kit/e2e/sheets.spec.ts`          |
+| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight     | `packages/design-kit/src/scope.test.ts`           |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit        | `packages/design-kit/e2e/sheets.spec.ts`          |
+| A palette set on a container restyles only what is inside it                                 | `packages/design-kit/e2e/sheets.spec.ts`          |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to       | `packages/design-kit/e2e/sheets.spec.ts`          |
+| A label hidden from the eye is still read by a screen reader                                 | `packages/design-kit/e2e/sheets.spec.ts`          |
+| Every measured pairing passes its WCAG ratio in both themes                                  | `packages/design-kit/src/tokens.test.ts`          |
+| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts`           |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts`           |
+| The theme is set before the body is parsed                                                   | `packages/design-kit/e2e/theme.spec.ts`           |
+| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts`           |
+| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts`           |
+| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts`           |
+| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts`           |
+| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`            |
+| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`            |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node        | the oldest Node job in `.github/workflows/ci.yml` |
 
 ## Decisions
 
@@ -157,7 +157,7 @@ Each choice with a real alternative is a record in [docs/decisions](docs/decisio
 options rejected, what the choice costs, and the test behind it.
 
 1. [The kit is a workspace, built on pack and installed from npm](docs/decisions/0001-a-workspace-built-on-pack.md).
-   A demo is meant to install what npm packs, with no script of the kit's to run, rather than
+   A demo installs what npm packs, with no script of the kit's to run, rather than
    building the kit from git with every tool the repository checks itself with.
 2. [The kit's rules sit in dk layers, with a prefix and no weight](docs/decisions/0002-rules-sit-in-dk-layers.md).
    A page's own rule wins however plain it is, at the cost of a load order a page with layers of
@@ -182,9 +182,11 @@ npm run verify
 ```
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
-CI runs the same checks in one job, then packs the package and installs it into an empty project
-with install scripts off, where each sheet must resolve and each module must load by the name a
-demo imports it by. The browser tests run in a job of their own, at the same time.
+CI runs the same checks and the build in one job. A second packs the package, checks its manifest
+with publint, and installs it into an empty project on the lowest Node its engines field admits,
+with install scripts off and no Vite, where each sheet must resolve and each module must load by
+the name a demo imports it by, and then type-checks a page's use of it as Node and as a bundler
+resolve it. The browser tests run in a job of their own. The three run at the same time.
 
 `npm run build` compiles the theme module and the plugin into the package's `dist`, beside a copy
 of each sheet, which is what the package's entries load from. Packing the package builds it first.
@@ -198,6 +200,17 @@ npm run e2e
 
 Installing also sets up the hooks, which lint and format what is staged and check each commit
 message.
+
+## Releasing
+
+A release is a tag on main named for the package's version, such as `design-kit-v0.1.0`. The tag,
+the version in `packages/design-kit/package.json` and a heading for it in the package's
+`CHANGELOG.md` have to agree, or the release workflow stops. It runs every check CI runs, then
+stages the tarball the oldest Node job proved on npm, with provenance, through npm's trusted
+publishing, so no npm token is stored anywhere. A staged version goes live only when it is
+promoted on the package page. A version with a hyphen is staged under npm's `next` tag and marked
+as a prerelease. The workflow then creates the release on GitHub with the changelog entry as its
+notes.
 
 ## Project layout
 

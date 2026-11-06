@@ -6,6 +6,13 @@ on:
     # Every pull request, not only those into main, so a PR stacked on
     # another's branch is checked before it is merged down.
     pull_request:
+    # The release workflow runs these same checks before it publishes, and publishes only the
+    # packed package whose checksum the oldest Node check reports.
+    workflow_call:
+        outputs:
+            package-sha256:
+                description: The checksum of the packed package the oldest Node check proved.
+                value: ${{ jobs.floor.outputs.sha256 }}
 
 permissions:
     contents: read
@@ -54,24 +61,10 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The package as npm packs it, which builds it first, installed into an empty project,
-            # where each sheet is found and each module loads by the name a consumer imports it by.
-            - name: Install the packed package and load each entry
-              run: |
-                  npm pack --workspace packages/design-kit --pack-destination "$RUNNER_TEMP"
-                  mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer"
-                  npm init -y > /dev/null
-                  npm install --ignore-scripts "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz
-                  node --input-type=module -e "
-                      import { existsSync } from 'node:fs';
-                      import { fileURLToPath } from 'node:url';
-                      for (const sheet of ['tokens.css', 'base.css']) {
-                          const path = fileURLToPath(import.meta.resolve('@jasonsdevspace/design-kit/' + sheet));
-                          if (!existsSync(path)) throw new Error(sheet + ' resolves to nothing');
-                      }
-                      await import('@jasonsdevspace/design-kit/theme');
-                      await import('@jasonsdevspace/design-kit/vite');
-                  "
+            # The package compiles to what it ships, which the oldest Node check then packs and
+            # installs.
+            - name: Build
+              run: npm run build
 
     browser:
         name: Browser tests
@@ -111,3 +104,102 @@ jobs:
                   name: playwright-report
                   path: playwright-report
                   retention-days: 7
+
+    # The package as a page that installs it gets it: packed on the Node the project builds on,
+    # checked as a published manifest, and installed into an empty project on the lowest Node its
+    # engines field admits.
+    floor:
+        name: Package on oldest Node
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        outputs:
+            sha256: ${{ steps.pack.outputs.sha256 }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            # Packing runs the package's build, which is how the published package is made. Its
+            # checksum is a job output, which no other job in the run can change, unlike the
+            # artifact, so the release publishes only this tarball.
+            - name: Pack the package
+              id: pack
+              run: |
+                  npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
+                  tarballs=("$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)
+                  if [ "${#tarballs[@]}" -ne 1 ] || [ ! -f "${tarballs[0]}" ]; then
+                      echo "packing made ${#tarballs[@]} tarballs, not one"
+                      exit 1
+                  fi
+                  sum=$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)
+                  echo "sha256=$sum" >> "$GITHUB_OUTPUT"
+
+            # The standard check of a published package's manifest: that its exports, types and
+            # files point at what the tarball holds.
+            - name: Check the package manifest
+              run: npx publint packages/design-kit
+
+            # Written as an exact version, because setup-node given a range installs the newest
+            # Node in it, the opposite of the oldest. The file is not committed, and its name is
+            # not one the Node check reads.
+            - name: Find the oldest supported Node
+              run: |
+                  node -e "import('./packages/design-kit/smoke/floor.mjs').then(({ floorOf }) => {
+                      const floor = floorOf(require('./packages/design-kit/package.json').engines.node);
+                      if (floor === undefined) throw new Error('engines.node is not a range the oldest Node check can read');
+                      console.log(floor);
+                  })" > package-floor
+                  echo "FLOOR=$(cat package-floor)" >> "$GITHUB_ENV"
+
+            - name: Set up the oldest supported Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: package-floor
+
+            # Outside the repository, so an import cannot resolve through the workspace's own link
+            # to the package, and with install scripts off, as a cautious page installs it.
+            - name: Install the packed package into an empty project
+              run: |
+                  mkdir "$RUNNER_TEMP/consumer"
+                  cd "$RUNNER_TEMP/consumer"
+                  npm init -y
+                  npm pkg set type=module
+                  npm install --engine-strict --ignore-scripts "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz
+                  smoke="$GITHUB_WORKSPACE/packages/design-kit/smoke"
+                  cp "$smoke"/consumer.mjs "$smoke"/exports.mjs "$smoke"/types.ts "$smoke"/tsconfig.nodenext.json "$smoke"/tsconfig.bundler.json .
+
+            # With no Vite installed, which the plugin takes only as an optional peer.
+            - name: Use the package on that Node
+              working-directory: ${{ runner.temp }}/consumer
+              run: node consumer.mjs
+
+            # As Node and as a bundler resolve them. The plugin's types name Vite's, so Vite is
+            # installed for this step, as a page that uses the plugin has it.
+            - name: Type-check as an installer would
+              working-directory: ${{ runner.temp }}/consumer
+              run: |
+                  npm install --ignore-scripts --no-save "vite@$(node -p "require('$GITHUB_WORKSPACE/node_modules/vite/package.json').version")"
+                  node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.nodenext.json
+                  node "$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc" -p tsconfig.bundler.json
+
+            # The release publishes this tarball, now that it is proven, so the job that holds the
+            # publish token never installs or builds anything. Kept on every run, so the hand-off is
+            # exercised before a release needs it.
+            - name: Upload the packed package
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: design-kit-package
+                  path: ${{ runner.temp }}/jasonsdevspace-design-kit-*.tgz
+                  if-no-files-found: error
+                  retention-days: 7
+                  overwrite: true

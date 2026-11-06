@@ -34,8 +34,8 @@ builds `dist` when npm installs it. Rejected on what it measured:
 
 ## Decision
 
-Option A. The kit is the workspace `packages/design-kit`, built by its `prepack`, and it is to reach
-a demo from npm as it was packed, with no script of the kit's to run.
+Option A. The kit is the workspace `packages/design-kit`, built by its `prepack`, and it reaches a
+demo from npm as it was packed, with no script of the kit's to run.
 
 ## Consequences
 
@@ -50,7 +50,9 @@ a demo from npm as it was packed, with no script of the kit's to run.
 
 ## How it is tested
 
-- CI packs the package, which builds it, installs the tarball into an empty project with
-  `--ignore-scripts`, finds each sheet where its export resolves, and imports `./theme` and
-  `./vite` by the names a demo uses, with Vite not installed.
+- The oldest Node job in CI packs the package, which builds it, checks the manifest with publint,
+  installs the tarball into an empty project with `--ignore-scripts` on the lowest Node the
+  package admits, finds each sheet where its export resolves, and imports `./theme` and `./vite`
+  by the names a demo uses, with Vite not installed. `smoke/package.test.ts` holds the list of
+  what it loads to the package's exports.
 - `scripts/license.test.ts` holds each package's `LICENSE` to the one at the root.

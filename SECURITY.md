@@ -8,7 +8,8 @@ rather than in a public issue.
 
 ## Supported versions
 
-The package is not published, so fixes land on main.
+Fixes land in a new version of `@jasonsdevspace/design-kit` on npm. Older versions and
+prereleases are not patched, so upgrade to pick up a fix.
 
 ## What is in scope
 
