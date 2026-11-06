@@ -73,9 +73,9 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            # The runner already has the libraries Chromium needs, so only the browser is
-            # downloaded, within a time of its own, and started once so a library a later runner
-            # image lacks fails this step rather than a test.
+            # Only the browser is downloaded, not the system libraries, within a time of its own,
+            # and started once so a library the runner image lacks fails this step rather than a
+            # test.
             - name: Install Chromium
               timeout-minutes: 3
               run: |

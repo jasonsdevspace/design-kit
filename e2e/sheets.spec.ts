@@ -4,7 +4,8 @@ import { expect, type Page, test } from '@playwright/test';
 
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
- * saved none, picks each color, and a demo's own rule wins over the kit's.
+ * saved none, picks the page's background and text, a demo's own palette and its rule on an
+ * element win over the kit's, and the focus ring lands where it should in both themes.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -12,7 +13,7 @@ const KIT = `${sheet('tokens.css')}\n${sheet('base.css')}`;
 
 /**
  * A page with the theme given saved on its root, the markup given, and the kit loaded after the
- * demo's own rules, so a kit rule that won by weight would win here by order too.
+ * demo's own rules, so a tie goes to the kit and a demo's rule can only win by weight.
  */
 const open = async (page: Page, saved: 'light' | 'dark' | null, body = '', own = '') => {
     const theme = saved ? ` data-theme="${saved}"` : '';
@@ -47,33 +48,52 @@ for (const system of ['light', 'dark'] as const) {
     });
 }
 
-test('rings a link the keyboard reaches in the accent, and not a section focused by script', async ({
-    page,
-}) => {
-    await page.emulateMedia({ colorScheme: 'light' });
+for (const [theme, accent] of [
+    ['light', 'rgb(31, 79, 216)'],
+    ['dark', 'rgb(143, 176, 255)'],
+] as const) {
+    test(`rings a link in the ${theme} accent, and no section focused by script`, async ({
+        page,
+    }) => {
+        await open(
+            page,
+            theme,
+            '<a href="#next">Next</a><section id="next" tabindex="-1">Next</section>'
+        );
+        await page.keyboard.press('Tab');
+        const ring = () =>
+            page.evaluate(() => {
+                const style = getComputedStyle(document.activeElement ?? document.body);
+                return {
+                    style: style.outlineStyle,
+                    color: style.outlineColor,
+                    width: style.outlineWidth,
+                };
+            });
+        expect(await ring()).toEqual({ style: 'solid', color: accent, width: '2px' });
+        // Moved there from the keyboard, as a skip link moves it, so the browser would show focus.
+        await page.keyboard.press('Enter');
+        await expect(page.locator('#next')).toBeFocused();
+        expect((await ring()).style).toBe('none');
+    });
+}
+
+test("takes a demo's own palette whichever sheet loads first", async ({ page }) => {
     await open(
         page,
         'light',
-        '<a href="#next">Next</a><section id="next" tabindex="-1">Next</section>'
+        '<a href="#">Link</a>',
+        ':root { --dk-accent: light-dark(#2f5bd3, #7b9cff) }'
     );
-    await page.keyboard.press('Tab');
-    const ring = () =>
-        page.evaluate(() => {
-            const style = getComputedStyle(document.activeElement ?? document.body);
-            return {
-                style: style.outlineStyle,
-                color: style.outlineColor,
-                width: style.outlineWidth,
-            };
-        });
-    const accent = { style: 'solid', color: 'rgb(31, 79, 216)', width: '2px' };
-    expect(await ring()).toEqual(accent);
-    await page.locator('#next').focus();
-    await expect(page.locator('#next')).toBeFocused();
-    expect(await ring()).not.toEqual(accent);
+    const link = await page.evaluate(
+        () => getComputedStyle(document.querySelector('a') ?? document.body).color
+    );
+    expect(link).toBe('rgb(47, 91, 211)');
 });
 
-test("lets a demo's own rule win over the kit's, however plain its selector", async ({ page }) => {
+test("lets a demo's rule on an element win over the kit's, however plain its selector", async ({
+    page,
+}) => {
     await open(
         page,
         'light',

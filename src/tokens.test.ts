@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 /*
  * The tokens as a page reads them, from the sheet itself. Every color role holds its light and its
- * dark value in one `light-dark()`, so each pairing the kit draws is measured in both themes, at
- * the ratio WCAG asks of it.
+ * dark value in one `light-dark()`, so each pairing the palette is meant for is measured in both
+ * themes, at the ratio WCAG asks of it.
  */
 
 const sheet = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
@@ -63,8 +63,9 @@ const ROLES = [
 const GROUNDS = ['bg', 'surface', 'raised'];
 
 /**
- * Each pairing the kit draws, at its ratio: text at 4.5 to 1, and at 3 to 1 the edges a visitor
- * has to see to use a control and the focus ring, which is drawn in the accent.
+ * Each pairing the palette is meant for, at its ratio: text at 4.5 to 1, and at 3 to 1 the edge a
+ * visitor has to see to use a control. The focus ring is drawn in the accent, which already meets
+ * 4.5 to 1 on each ground as the color of a link.
  */
 const PAIRS: readonly (readonly [string, string, number])[] = [
     ...GROUNDS.flatMap((ground) => [
@@ -76,11 +77,13 @@ const PAIRS: readonly (readonly [string, string, number])[] = [
         ['control', ground, 3] as const,
     ]),
     ['on-accent', 'accent', 4.5],
-    ['fg', 'highlight', 4.5],
+    // A callout's own ground, and what is chosen, carry text and its quieter line too.
+    ...['highlight', 'success-bg', 'danger-bg'].flatMap((ground) => [
+        ['fg', ground, 4.5] as const,
+        ['muted', ground, 4.5] as const,
+    ]),
     ['accent', 'highlight', 4.5],
-    ['fg', 'success-bg', 4.5],
     ['success', 'success-bg', 4.5],
-    ['fg', 'danger-bg', 4.5],
     ['danger', 'danger-bg', 4.5],
 ];
 
@@ -112,10 +115,13 @@ describe('the tokens', () => {
             'ring-width',
             'ring-offset',
             'field-height',
+            'field-inline',
             'target',
+            'strip',
             'measure',
             'column',
             'shadow-raised',
+            'scrim',
             'duration-short',
             'font-sans',
             'font-mono',

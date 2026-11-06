@@ -2,7 +2,7 @@
     "name": "@jasonsdevspace/design-kit",
     "version": "0.0.0",
     "private": true,
-    "description": "Design tokens, base styles and components for the demos on jasonsdevspace.com.",
+    "description": "Design tokens and base styles for the demos on jasonsdevspace.com.",
     "license": "MIT",
     "author": "Jason Poteet",
     "homepage": "https://github.com/jasonsdevspace/design-kit#readme",

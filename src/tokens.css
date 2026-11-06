@@ -1,32 +1,37 @@
 /*
- * The kit's named values: the scale every component is built from, and the color roles a demo
+ * The kit's named values: the scale a page's styles are drawn from, and the color roles a demo
  * fills with its own palette. Every name carries the dk prefix, so a page that loads the kit
  * beside its own styles keeps its own names.
  *
  * Each color role holds its light and its dark value in one light-dark(), which picks by the
- * color scheme of the element it is drawn on. The scheme follows the theme the portfolio saved,
- * set as data-theme on the root before the first paint, or the system's when nothing is saved.
- * A demo with its own palette sets the roles again on its root, both values at once.
+ * color scheme of the element it is drawn on. The scheme follows data-theme on the root when a
+ * page sets it, as the portfolio does with the theme a visitor saved, and the system's otherwise.
+ * A demo with its own palette sets the roles again on its root, both values at once. Every rule
+ * here sits inside :where(), so a demo's own :root wins whichever sheet loads first.
  *
- * Every text pairing the kit draws passes 4.5 to 1 in both themes, and a control's edge and the
- * focus ring 3 to 1 against what they sit on. A test holds the palette to both.
+ * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
+ * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
+ * test holds the palette to both.
  *
  * Which unit goes where: rem for anything that should grow with the visitor's own text size, and
  * px for what must not scale, a border, the focus ring and a shadow.
  */
-:root {
+:where(:root) {
     color-scheme: light dark;
 
-    /* What a page is drawn on: the page itself, a card on it, and what floats over both. */
+    /*
+     * What a page is drawn on: the page itself, a card on it, and what floats over both. In the
+     * dark theme each steps lighter than the last, since a shadow cannot show there.
+     */
     --dk-bg: light-dark(#ffffff, #121212);
-    --dk-surface: light-dark(#f5f5f5, #1a1a1a);
-    --dk-raised: light-dark(#ffffff, #222222);
+    --dk-surface: light-dark(#f5f5f5, #1e1e1e);
+    --dk-raised: light-dark(#ffffff, #2a2a2a);
 
     /* Text, and the text that steps back. */
     --dk-fg: light-dark(#1a1a1a, #f0f0f0);
     --dk-muted: light-dark(#5c5c5c, #a5a5a5);
 
-    /* The lines between things, and the darker edge of a field or button a visitor uses. */
+    /* The lines between things, and the stronger edge of a field or button a visitor uses. */
     --dk-line: light-dark(#d9d9d9, #3a3a3a);
     --dk-control: light-dark(#858585, #7a7a7a);
 
@@ -34,7 +39,7 @@
     --dk-accent: light-dark(#1f4fd8, #8fb0ff);
     --dk-on-accent: light-dark(#ffffff, #121212);
     /* What is chosen or pointed at, behind text in the page's own color. */
-    --dk-highlight: light-dark(#eef2fd, #1e2a4a);
+    --dk-highlight: light-dark(#e3eafb, #22305a);
 
     /* What went right and what went wrong, each with a ground of its own for a callout. */
     --dk-success: light-dark(#1d7a3e, #5cc28a);
@@ -62,7 +67,7 @@
     --dk-leading-body: 1.5;
     --dk-weight-normal: 400;
     --dk-weight-medium: 500;
-    /* Every heading's weight, and every label's that stands out. */
+    /* Every heading's weight. */
     --dk-weight-strong: 600;
     --dk-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --dk-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -78,24 +83,28 @@
 
     /* A field a visitor types into or picks from, and anything a thumb presses on a phone. */
     --dk-field-height: 2.25rem;
+    --dk-field-inline: var(--dk-space-2);
     --dk-target: 2.75rem;
+    /* The height of the portfolio strip's row, and of each link in it. */
+    --dk-strip: 2.5rem;
 
     /* The width a page of reading holds to, and the widest a page's column grows. */
     --dk-measure: 42rem;
     --dk-column: 72rem;
 
-    /* What floats over the page. */
+    /* What floats over the page, and what dims the page behind it, darker on a dark page. */
     --dk-shadow-raised: 0 6px 24px rgb(0 0 0 / 0.18);
+    --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
     /* How long a small change of state takes to show, such as a hover. */
     --dk-duration-short: 150ms;
 }
 
-/* A theme the portfolio saved wins over the system's. */
-:root[data-theme='light'] {
+/* A theme set on the root wins over the system's. */
+:where(:root[data-theme='light']) {
     color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+:where(:root[data-theme='dark']) {
     color-scheme: dark;
 }
