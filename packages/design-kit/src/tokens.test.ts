@@ -121,6 +121,7 @@ describe('the tokens', () => {
             'target',
             'strip',
             'measure',
+            'text-code',
             'column',
             'shadow-raised',
             'scrim',

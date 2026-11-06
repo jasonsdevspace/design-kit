@@ -44,6 +44,21 @@
         font-family: var(--dk-font-mono);
     }
 
+    /*
+     * Code in running text, a step under the text around it, breaks anywhere it must, since a
+     * long name has no spaces to break at and would push a narrow column wider. In a block it
+     * takes the block's size and keeps its lines as written.
+     */
+    :where(code) {
+        font-size: var(--dk-text-code);
+        overflow-wrap: anywhere;
+    }
+
+    :where(pre code) {
+        font-size: inherit;
+        overflow-wrap: normal;
+    }
+
     /* A block of code too wide for a phone scrolls inside itself rather than moving the page. */
     :where(pre) {
         overflow-x: auto;

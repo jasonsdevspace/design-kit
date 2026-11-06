@@ -1,13 +1,15 @@
 # @jasonsdevspace/design-kit
 
-Design tokens, base styles, a theme script, the page chrome, and buttons, fields and callouts for
-the demos on [jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits in a cascade layer
-of the kit's own, so a page's own rule outside a layer wins over every rule of the kit's but the
-cut to motion, without any extra weight. A page with layers of its own has to name where the kit's
-go among them, in the order the section on layers below gives. The script sets the theme a visitor
-chose on the portfolio before the page paints. The components are the page chrome a demo draws
-around its page, a skip link, a strip and a footer, and the buttons, text fields, selects and
-callouts on the page itself, as markup a sheet styles and as React components that draw it.
+Design tokens, base styles, a theme script, the page chrome, buttons, fields and callouts, and the
+explainer page, for the demos on [jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits
+in a cascade layer of the kit's own, so a page's own rule outside a layer wins over every rule of
+the kit's but the cut to motion, without any extra weight. A page with layers of its own has to
+name where the kit's go among them, in the order the section on layers below gives. The script
+sets the theme a visitor chose on the portfolio before the page paints. The components are the
+page chrome a demo draws around its page, a skip link, a strip and a footer, and the buttons,
+text fields, selects and callouts on the page itself, as markup a sheet styles and as React
+components that draw it. The explainer that says how a demo works, with its steps, panels, tables
+and code blocks, is markup a page writes by hand, with no component.
 
 ```sh
 npm install @jasonsdevspace/design-kit
@@ -50,16 +52,19 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   `--dk-surface`, `--dk-raised`, `--dk-fg`, `--dk-muted`, `--dk-line`, `--dk-control`,
   `--dk-accent`, `--dk-on-accent`, `--dk-highlight`, `--dk-success`, `--dk-success-bg`,
   `--dk-danger`, `--dk-danger-bg` and the scrim, `--dk-scrim`. Beside them are steps of space, text
-  size and corners, two line heights, three weights, a sans and a mono font stack, the focus ring's
-  width and offset, a field's height and inline padding, the size of a touch target, the height of
-  the portfolio's strip, the measure and column widths, a shadow and a short duration.
+  size and corners, a code size in em that follows the text around it, two line heights, three
+  weights, a sans and a mono font stack, the focus ring's width and offset, a field's height and
+  inline padding, the size of a touch target, the height of the portfolio's strip, the measure
+  and column widths, a shadow and a short duration.
 - `@jasonsdevspace/design-kit/base.css` gives the page its type and colors, one focus ring in the
-  accent for every link and control the keyboard reaches, the `.dk-visually-hidden` class for a
-  label a screen reader reads and the eye does not, and less motion for a visitor who asks for it.
-  It loads after the tokens, since the tokens' first statement declares the kit's layer order.
+  accent for every link and control the keyboard reaches, code in running text a step under the
+  text around it, the `.dk-visually-hidden` class for a label a screen reader reads and the eye
+  does not, and less motion for a visitor who asks for it. It loads after the tokens, since the
+  tokens' first statement declares the kit's layer order.
 - `@jasonsdevspace/design-kit/components.css` styles the page chrome, the skip link, the strip and
-  the footer, and the buttons, fields and callouts, by the classes in the markup the sections below
-  give. It loads after the tokens too.
+  the footer, the buttons, fields and callouts, and the explainer page with its steps, panels,
+  tables and code blocks, by the classes in the markup the sections below give. It loads after
+  the tokens too.
 - `@jasonsdevspace/design-kit/theme` exports `THEME_KEY`, the storage key the portfolio saves a
   visitor's theme under, `THEMES`, the two themes the script sets, their type `Theme`, and
   `themeScript`, the script itself as a string to put inline.
@@ -68,6 +73,7 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
   `SelectFieldProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
   `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub profile the chrome links to.
+  It has no component for the explainer or the pieces in it, which a page writes by hand.
   It takes React `^19.3.0` as an optional peer, which a page that writes the markup itself never
   needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
@@ -363,10 +369,185 @@ export const Checkout = ({ error, saved }: Props) => {
 - `SelectField` takes the same props, with its children as the options of the `<select>`.
 - `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn at the
   start of the message as a paragraph or, with `headingLevel` from 2 to 6, as that heading, and as
-  a paragraph for any other level. `actions` are drawn after the message. `prefix` is the word read before the title or the message, the tone's own unless given,
-  and an empty string drops it. `live`, `status` or `alert`, puts that role on the message and draws
-  the message even when it is empty. A callout takes no other props, so a page that needs a class
+  a paragraph for any other level. `actions` are drawn after the message. `prefix` is the word
+  read before the title or the message, the tone's own unless given, and an empty string drops it.
+  `live`, `status` or `alert`, puts that role on the message and draws the message even when it is
+  empty. A callout takes no other props, so a page that needs a class
   or an id on one puts it on an element around it.
+
+## Explainer pages
+
+An explainer is the page that says how a demo works, the one the strip's "How it works" link
+leads to. `components.css` styles its layout and the steps, panels, tables and code blocks it
+holds, by the markup below, which every page writes by hand. `./react` draws none of it, since
+none of these pieces has logic to hide. Every rule for them sits in one `:where()`, the layout
+included, so where the layout and a piece set inside it both set something, the later rule in
+the sheet wins, and a page's own rule outside a layer wins over both. A layout written as a bare
+class would outweigh every piece set inside it.
+
+### The page
+
+```html
+<a class="dk-skip" href="#main-content">Skip to content</a>
+<div class="dk-strip">...</div>
+<header class="dk-explainer-header"><a href="../">Example</a></header>
+<main id="main-content" tabindex="-1" class="dk-explainer">
+    <h1>How Example works</h1>
+    <p class="dk-explainer-lead">What the demo does, in a sentence or two.</p>
+    <p><a class="dk-button dk-button-accent" href="../">Open the demo</a></p>
+    <section>
+        <p class="dk-explainer-number" aria-hidden="true">01</p>
+        <h2 id="order">What happens when an order comes in</h2>
+        <p>...</p>
+        <h3>What usually goes wrong</h3>
+        <p>...</p>
+    </section>
+</main>
+<footer class="dk-footer">...</footer>
+```
+
+The header holds a link back to the demo, outside `main`, so the skip link passes it and reading
+starts at the h1. `main` holds the h1, the lead, the one action as an accent button, and then
+the sections. Each section holds its number, hidden from a screen reader since its heading says
+what the section is, then an h2 with an id, then its text, with an h3 for each part of it.
+
+A section is a plain `<section>`, with no `aria-labelledby` or `aria-label`. A named section
+becomes a region landmark, and the page's landmarks stay the strip's navigation, the header, the
+main content, the footer and the frames that scroll. A reader moves between sections by their
+headings. The h2 ids are a contract other pages link to, so a page keeps an id when it rewords
+its heading. An in-page link needs no tabindex on the heading, since a jump to a fragment moves
+where the keyboard goes next. Each h2 has a scroll margin, so a jump stops short of it and leaves
+the section's number and rule in sight above it. The kit draws no table of contents, since an
+explainer is short enough to move through by its headings.
+
+The header and the explainer start their text at the column's inset, where the strip's links
+start, and every part of the page holds to `--dk-measure`, 34rem, no more than 80 characters a
+line in the body size. Each part is spaced from the one before it, so a list, a table, a panel and a
+code block space alike. The h1 is the display size and the lead a step over the body. A section
+opens on a rule in the line color, with 2rem of space above and below it, then its number in the
+muted caption size, its heading in the title size, and its text, with an h3 at the body size.
+
+### Steps
+
+```html
+<ol class="dk-steps" role="list">
+    <li>
+        <strong class="dk-steps-title">The order names a product.</strong>
+        <span class="dk-steps-note">And how many of it.</span>
+    </li>
+    <li>
+        <span class="dk-steps-arrow" aria-hidden="true">↓</span>
+        <strong class="dk-steps-title">It waits its turn.</strong>
+        <span class="dk-steps-note">Behind any order for the same product.</span>
+    </li>
+</ol>
+```
+
+Steps a demo takes one after another, each in a box of its own with an edge in the line color
+and large corners, in the small text. A step's title is at medium weight, with its note in the
+muted text on a line below. Every step after the first opens with an arrow, a span holding ↓
+that the sheet sets in the gap above the step, hidden from a screen reader. It is a span because
+a pseudo-element cannot sit inside `:where()`, where every rule of the kit's sits. The list keeps
+`role="list"`, since WebKit with VoiceOver drops a list's meaning when its markers are gone.
+
+### Panels
+
+```html
+<div class="dk-panel">
+    <p class="dk-panel-title">How the numbers were taken</p>
+    <p>...</p>
+</div>
+```
+
+A panel sets a part of a page apart on the card ground, `--dk-surface`, with an edge in the line
+color and large corners. The edge is what draws it, since the card ground is close to the page's,
+and it stays in forced colors. A panel is padded 1.5rem, and 1rem at 48rem wide or less, and what
+it holds is spaced from the one before it, as an explainer's parts are. Its title is a paragraph,
+or a heading one level under its section's where a reader would jump to it, and inside an
+explainer it steps down to the body size.
+
+A panel differs from a callout in having no tone, no hidden word and no live role, and in being
+at the body size rather than the small text. It has no role at all. It is not an `aside`, since
+inside `main` an aside becomes a complementary landmark, and a box in the reading flow is not
+complementary to it. Nor is it a named `section`, which would be a region landmark, or a
+`figure`.
+
+### Tables
+
+```html
+<p class="dk-table-title" id="bench-title">Orders a second under each strategy</p>
+<div class="dk-table-scroll" role="region" aria-labelledby="bench-title" tabindex="0">
+    <table class="dk-table" aria-labelledby="bench-title">
+        <thead>
+            <tr>
+                <th scope="col">Scenario</th>
+                <th scope="col" class="dk-table-number">Orders a second</th>
+                <th scope="col" class="dk-table-number">Slowest 1%, ms</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">Hot product, row lock</th>
+                <td class="dk-table-number">700</td>
+                <td class="dk-table-number">48.5</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+```
+
+The title is a paragraph above the frame, never a `<caption>`, since a caption takes the table's
+width and scrolls off a phone with it. The one title names both the frame and the table. The
+frame is a region with a tabindex of 0 at every width, so a keyboard can reach it and scroll it
+with the arrow keys. A page written by hand cannot tell when its table overflows, which changes
+with zoom and text size, so the frame is a region whether or not it scrolls, which costs one tab
+stop on a wide screen where it does not.
+
+A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every
+cell of a numeric column, its header included, is `.dk-table-number`. A table is never stacked
+into cards on a phone, since `display: block` on a table's parts drops its table semantics in
+WebKit. It scrolls in its frame instead.
+
+A table is in the small text, with each row ruled in the line color. Its column headers are the
+muted text at medium weight, and a row's header is at medium weight too. The outer cells keep no
+padding on their outer side, so the table's text lines up with the prose around it. Figures sit
+to the right and never wrap, while text in a cell wraps and keeps its first line level with the
+rest of its row. A header gives its unit in words a screen reader says well, "Slowest 1%, ms"
+rather than "p99 ms".
+
+### Code blocks
+
+```html
+<p class="dk-code-title" id="lock-title">The statement that holds the stock</p>
+<pre
+    class="dk-code"
+    role="region"
+    aria-labelledby="lock-title"
+    tabindex="0"
+    translate="no"
+><code>UPDATE stock SET held = held + 1
+WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
+```
+
+A block of code keeps its lines as written and scrolls inside itself, since wrapping would break
+its indentation and show line breaks the code does not have. It is a named region with a tabindex
+of 0, for the same reasons as a table's frame. Its title says what the code is for, such as "Run
+it yourself", rather than naming its language. `translate="no"` keeps a browser's translation of
+the page off the identifiers. A block never takes `lang` for its programming language, since
+`lang` names a human language.
+
+A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set
+into what holds it. Its edge is transparent, and shows only in forced colors. The kit ships no
+script, so a block has no copy button.
+
+### Code in running text
+
+`base.css` sets code in running text on every page, not only an explainer, at `--dk-text-code`,
+0.9em, so it follows the size of the text around it, a step under it since a mono face looks
+larger at the same size. It breaks anywhere it must, with `overflow-wrap: anywhere`, since a long
+name has no spaces to break at and would push a narrow column wider. Inside a `pre` it takes the
+block's size and keeps its lines whole. It has no ground of its own, and in a link it keeps the
+link's underline.
 
 ## Layers and palettes
 
