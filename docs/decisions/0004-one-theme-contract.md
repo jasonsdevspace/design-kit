@@ -40,7 +40,11 @@ head itself.
   system.
 - `system` and any value but the two themes read as nothing saved, so the page follows the system.
 - Where the browser refuses the page its storage, the script follows the system, as the
-  portfolio's own script does.
+  portfolio's own script does. Where it cannot report the system's scheme, with no `matchMedia`,
+  one that throws, or a result whose `matches` throws, the script reads it as light, as the
+  portfolio's does too. A saved theme still applies there. The script listens for another tab's
+  choice first, and for a change of scheme only where `addEventListener` is offered for it, so an
+  older browser whose result has only `addListener` still hears another tab.
 - `themeScriptHash` holds only while nothing rewrites the script after the plugin, as a minifier of
   a page's HTML would, and it changes whenever the script does, so a policy reads it from the
   installed package.
@@ -60,4 +64,6 @@ The paths are in `packages/design-kit`.
 - `e2e/theme.spec.ts` serves the page from an origin of its own in Chromium and finds the saved
   theme drawn whatever the system, the system followed when nothing, `system` or an unknown value
   is saved and when storage is refused, the theme set before the body is parsed, the system
-  followed as it changes, and a choice saved or cleared in another tab taken up.
+  followed as it changes, a choice saved or cleared in another tab taken up, and light or the saved
+  theme drawn, and a choice from another tab still heard, where `matchMedia` is missing, throws,
+  answers with `addListener` alone or gives a `matches` that throws.

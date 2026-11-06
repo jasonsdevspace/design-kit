@@ -103,13 +103,14 @@ important rule in a layer the page orders before the kit's.
 
 ## The theme a visitor saved
 
-The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark`
-or `system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
+The portfolio saves a visitor's theme in `localStorage` under the key `theme`, as `light`, `dark` or
+`system`. `@jasonsdevspace/design-kit/theme` exports that key as `THEME_KEY`, the two themes as
 `THEMES`, and `themeScript`, the script that sets `data-theme` on the root before anything paints.
 It follows the system's theme when nothing is saved, when `system` or any value but the two themes
 is saved, and when the browser refuses the page its storage, as the portfolio's own script does. It
 sets the theme again when the system's changes, and when the portfolio saves a choice or clears it
-in another tab.
+in another tab. Where the browser cannot report the system's scheme, the script reads it as light,
+as the portfolio's does too, so a saved theme still applies there.
 
 Storage belongs to an origin, so the script reads what the portfolio saved only on the portfolio's
 own origin, where each demo is served under a path of jasonsdevspace.com. A demo served anywhere
@@ -129,25 +130,26 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                      | Where it is tested                               |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| A page's own rule outside a layer wins, however little it weighs                            | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A page's layers placed before the kit's lose to it unless they name `dk` first              | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight    | `packages/design-kit/src/scope.test.ts`          |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit       | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A palette set on a container restyles only what is inside it                                | `packages/design-kit/e2e/sheets.spec.ts`         |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to      | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A label hidden from the eye is still read by a screen reader                                | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every measured pairing passes its WCAG ratio in both themes                                 | `packages/design-kit/src/tokens.test.ts`         |
-| Nothing saved, `system`, an unknown value and refused storage follow the system             | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme is set before the body is parsed                                                  | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme follows the system as it changes, while nothing is saved                          | `packages/design-kit/e2e/theme.spec.ts`          |
-| A choice saved in another tab, or storage cleared there, reaches the page                   | `packages/design-kit/e2e/theme.spec.ts`          |
-| The key and themes are the portfolio's, and the tokens have a rule for each                 | `packages/design-kit/src/theme.test.ts`          |
-| The script holds nothing that would end its element, and compiles                           | `packages/design-kit/src/theme.test.ts`          |
-| A page with no placeholder, or with two, fails the build                                    | `packages/design-kit/src/vite.test.ts`           |
-| The hash is of the script exactly as the plugin writes it                                   | `packages/design-kit/src/vite.test.ts`           |
-| Each sheet resolves and each module loads from the packed package, with install scripts off | the packed install in `.github/workflows/ci.yml` |
+| Gotcha                                                                                       | Where it is tested                               |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| A page's own rule outside a layer wins, however little it weighs                             | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A page's layers placed before the kit's lose to it unless they name `dk` first               | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight     | `packages/design-kit/src/scope.test.ts`          |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit        | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A palette set on a container restyles only what is inside it                                 | `packages/design-kit/e2e/sheets.spec.ts`         |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to       | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A label hidden from the eye is still read by a screen reader                                 | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every measured pairing passes its WCAG ratio in both themes                                  | `packages/design-kit/src/tokens.test.ts`         |
+| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts`          |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme is set before the body is parsed                                                   | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts`          |
+| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts`          |
+| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts`          |
+| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts`          |
+| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`           |
+| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`           |
+| Each sheet resolves and each module loads from the packed package, with install scripts off  | the packed install in `.github/workflows/ci.yml` |
 
 ## Decisions
 
