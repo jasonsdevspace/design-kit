@@ -55,6 +55,27 @@ describe('the workflows', () => {
         expect(installs.filter((step) => !hasOwnTimeLimit(step))).toEqual([]);
     });
 
+    // The publishing job holds the token trusted publishing issues, so what it installs is what
+    // a release trusts most.
+    const publishing = stepsOf(workflows.get('.github/workflows/release.yml') ?? '');
+
+    it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
+        const installs = publishing.filter(({ text }) => /\bnpm install -g\b/.test(text));
+        expect(installs.length).toBeGreaterThan(0);
+        for (const { text } of installs) {
+            expect(text).toMatch(/NPM_INTEGRITY: sha512-[A-Za-z0-9+/]+=*\s*$/m);
+            // The digest is compared with the pin, and a mismatch stops the step, before the install.
+            const compared = text.search(
+                /if \[ "\$got" != "\$NPM_INTEGRITY" \]; then\n\s+echo[^\n]*\n\s+exit 1\n/
+            );
+            expect(text.indexOf('openssl dgst -sha512')).toBeGreaterThan(-1);
+            expect(compared).toBeGreaterThan(text.indexOf('openssl dgst -sha512'));
+            expect(compared).toBeLessThan(text.indexOf('npm install -g'));
+            expect(text).toMatch(/npm install -g --offline --ignore-scripts "\$tarball"/);
+            expect(text).not.toMatch(/npm install -g[^\n]*\bnpm@/);
+        }
+    });
+
     it('read a step the way GitHub does, whatever the step looks like', () => {
         const [step] = stepsOf(
             [
