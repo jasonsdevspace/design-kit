@@ -12,11 +12,21 @@
     },
     "bugs": "https://github.com/jasonsdevspace/design-kit/issues",
     "type": "module",
+    "exports": {
+        "./tokens.css": "./src/tokens.css",
+        "./base.css": "./src/base.css"
+    },
+    "files": [
+        "src/*.css"
+    ],
+    "sideEffects": [
+        "*.css"
+    ],
     "engines": {
         "node": ">=24 <25"
     },
     "scripts": {
-        "type-check": "tsc --noEmit && tsc -p scripts",
+        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p e2e",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
@@ -26,7 +36,8 @@
         "test": "vitest",
         "test:run": "vitest run",
         "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
-        "prepare": "husky || true"
+        "prepare": "husky || true",
+        "e2e": "playwright test"
     },
     "lint-staged": {
         "*.{ts,tsx,js,mjs}": [
@@ -43,6 +54,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.64.1",
         "@types/node": "^24.19.2",
         "eslint": "^10.14.0",
         "eslint-plugin-import-x": "^4.17.1",

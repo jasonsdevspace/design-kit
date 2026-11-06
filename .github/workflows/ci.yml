@@ -53,3 +53,42 @@ jobs:
 
             - name: Unit tests
               run: npm run test:run
+
+    browser:
+        name: Browser tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            # The runner already has the libraries Chromium needs, so only the browser is
+            # downloaded, within a time of its own, and started once so a library a later runner
+            # image lacks fails this step rather than a test.
+            - name: Install Chromium
+              timeout-minutes: 3
+              run: |
+                  npx playwright install chromium
+                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
+
+            - name: Browser tests
+              run: npm run e2e
+
+            - name: Keep the report of a failed run
+              if: failure()
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: playwright-report
+                  path: playwright-report
+                  retention-days: 7
