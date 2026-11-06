@@ -28,11 +28,14 @@ focus pseudo-class.
 
 ## Decision
 
-Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order
-of the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for.
-Every custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every
-selector is one of the kit's own classes or one `:where()`, followed at most by a focus
-pseudo-class, so only those classes and the focus rules carry any weight.
+Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order of
+the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for. Every
+custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every selector
+is one of the kit's own classes or one `:where()`, followed at most by a focus pseudo-class. A rule
+in the base that has to reach every part of a page follows its `:where()` with each pseudo-element
+it means instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element inside a
+`:where()` matches nothing. So only the kit's classes, the focus rules and those pseudo-elements
+carry any weight, and that weight counts for nothing against a page's own rule outside a layer.
 
 ## Consequences
 
@@ -53,6 +56,8 @@ pseudo-class, so only those classes and the focus rules carry any weight.
   layer.
 - The visually hidden class carries a class's weight, since a page names it on purpose. It still
   loses to a page's rule outside a layer.
+- The border box reaches a page's `::before` and `::after` too, so one that sets a width or height
+  beside padding or a border draws that size including them, as every element does.
 
 ## How it is tested
 
@@ -60,11 +65,13 @@ The paths are in `packages/design-kit`.
 
 - `src/scope.test.ts` reads each sheet and holds the layer order to the first statement of the
   tokens and nowhere else, every block to the layer its sheet is named for, every selector to the
-  kit's own class or one `:where()` followed at most by a focus pseudo-class, and custom properties to
-  the tokens.
+  kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
+  pseudo-element, with no pseudo-element inside a `:where()`, and custom properties to the tokens.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its
   sheets, and finds a plain rule and a weightless one of the page's winning, a page's layer winning
   when the kit loads first or when the page names `dk` first, the kit winning when the page names
   `dk` last or not at all, and a page's important transition cut short for a visitor who asks for
-  less motion, outside a layer and in a layer after the kit's.
+  less motion, outside a layer and in a layer after the kit's. It finds a page's `::before` and
+  `::after` drawn in the border box, their motion and a dialog's `::backdrop` cut short from a plain
+  rule and from an important one in either place, and a view transition's group cut short too.

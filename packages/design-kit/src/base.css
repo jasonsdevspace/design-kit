@@ -1,17 +1,21 @@
 /*
- * What every page takes before any component: the page's type and colors, one focus ring for
- * every link and control, and motion cut short for a visitor who asks for less. Every rule sits
- * in the kit's base layer, so a demo's own rule outside a layer wins over the kit's however little
- * it weighs. Every selector is the visually hidden class or one :where(), followed at most by a
- * focus pseudo-class. The cut to motion is the exception to a demo's rule winning. It is held with
- * !important, so it wins over every normal rule a page writes, and the layer makes it win over a
- * page's important rule outside a layer too, since the visitor's choice outranks the demo's.
+ * What every page takes before any component: the page's type and colors, one focus ring for every
+ * link and control, and motion cut short for a visitor who asks for less. Every rule sits in the
+ * kit's base layer, so a demo's own rule outside a layer wins over the kit's however little it
+ * weighs. Every selector is the visually hidden class or one :where(), followed at most by a focus
+ * pseudo-class, or by a pseudo-element where a rule for every element has to reach it too, since
+ * a pseudo-element inside a :where() matches nothing. The cut to motion is the exception to a
+ * demo's rule winning. It is held with !important, so it wins over every normal rule a page writes,
+ * and the layer makes it win over a page's important rule outside a layer too, since the visitor's
+ * choice outranks the demo's.
  *
  * Load tokens.css first, since its first statement declares the order of the kit's layers.
  */
 
 @layer dk.base {
-    :where(*, *::before, *::after) {
+    :where(*),
+    :where(*)::before,
+    :where(*)::after {
         box-sizing: border-box;
     }
 
@@ -129,10 +133,20 @@
     /*
      * A visitor who asks for less motion gets every animation played once and every transition cut
      * to a hundredth of a millisecond, with no delay before either, and a jump rather than a smooth
-     * scroll. Marked important, since the visitor's setting outranks a page's own animation.
+     * scroll. That reaches every element, its ::before and ::after, a dialog's ::backdrop and each
+     * part of a view transition. Marked important, since the visitor's setting outranks a page's
+     * own animation.
      */
     @media (prefers-reduced-motion: reduce) {
-        :where(*, *::before, *::after) {
+        :where(*),
+        :where(*)::before,
+        :where(*)::after,
+        :where(*)::backdrop,
+        :where(:root)::view-transition,
+        :where(:root)::view-transition-group(*),
+        :where(:root)::view-transition-image-pair(*),
+        :where(:root)::view-transition-old(*),
+        :where(:root)::view-transition-new(*) {
             animation-duration: 0.01ms !important;
             animation-delay: 0s !important;
             animation-iteration-count: 1 !important;
