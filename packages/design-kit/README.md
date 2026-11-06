@@ -445,10 +445,10 @@ caption size, its heading in the title size, and its text, with an h3 at the bod
 Steps a demo takes one after another, each in a box of its own with an edge in the line color and
 large corners, in the small text. A step's title is at medium weight, with its note in the muted
 text on a line below. Every step after the first opens with an arrow, a span holding ↓ that the
-sheet sets in the gap above the step, hidden from a screen reader. It is a span because the kit's
-selectors allow nothing after a `:where()` but a focus pseudo-class, and a pseudo-element cannot sit
-inside one. The list keeps `role="list"`, since WebKit with VoiceOver drops a list's meaning when
-its markers are gone.
+sheet sets in the gap above the step, hidden from a screen reader. It is a span because a
+component's selectors allow nothing after a `:where()` but a focus pseudo-class, and a
+pseudo-element cannot sit inside one. The list keeps `role="list"`, since WebKit with VoiceOver
+drops a list's meaning when its markers are gone.
 
 ### Panels
 
@@ -561,8 +561,8 @@ one of the kit's own classes, such as `.dk-strip` or `.dk-visually-hidden`, or o
 followed at most by a focus pseudo-class. The base alone follows a `:where()` with a pseudo-element,
 so the border box reaches a page's `::before` and `::after`, and the cut to motion reaches those, a
 dialog's `::backdrop` and each part of a view transition, since a pseudo-element inside a `:where()`
-matches nothing. That adds the weight of one element, which a page's own rule outside a layer still
-wins over.
+matches nothing. That adds the weight of one element, which counts for nothing against a page's own
+rule outside a layer.
 
 A page with layers of its own names where `dk` goes among them. A layer takes its place where its
 name first appears, so a page whose layers load before the kit's sheets, without naming `dk`, puts

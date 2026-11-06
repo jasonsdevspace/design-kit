@@ -7,10 +7,10 @@
 The kit adds buttons, text fields and selects to the page chrome. A button can be a toggle that is
 on or off, the button of a panel that is open, or off for a while, such as Previous on the first
 page of results. A field can hold an error. Each state needs a look, and a screen reader has to hear
-the same state the eye sees. The kit's sheets allow a selector to be a bare class of the kit's or
-one `:where()` followed at most by a focus pseudo-class, as record 2 sets out, so any state written
-as an attribute selector sits in `:where()` and weighs nothing. A button that is off for a while has
-to stay where the keyboard can reach it, so a visitor can find out why it is off.
+the same state the eye sees. The components' sheet allows a selector to be a bare class of the kit's
+or one `:where()` followed at most by a focus pseudo-class, as record 2 sets out, so any state
+written as an attribute selector sits in `:where()` and weighs nothing. A button that is off for a
+while has to stay where the keyboard can reach it, so a visitor can find out why it is off.
 
 ## Options
 

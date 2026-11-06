@@ -1,27 +1,27 @@
 /*
  * The kit's named values: the scale a page's styles are drawn from, and the color roles a demo
- * fills with its own palette. Every name carries the dk prefix, so a page that loads the kit
- * beside its own styles keeps its own names.
+ * fills with its own palette. Every name carries the dk prefix, so a page that loads the kit beside
+ * its own styles keeps its own names.
  *
- * Each color role holds its light and its dark value in one light-dark(), which picks by the
- * color scheme of the element it is drawn on. The scheme follows data-theme on the root when a
- * page sets it, as the portfolio does with the theme a visitor saved, and the system's otherwise.
- * A demo with its own palette sets the roles again on its root, both values at once.
+ * Each color role holds its light and its dark value in one light-dark(), which picks by the color
+ * scheme of the element it is drawn on. The scheme follows data-theme on the root when a page sets
+ * it, as the portfolio does with the theme a visitor saved, and the system's otherwise. A demo with
+ * its own palette sets the roles again on its root, both values at once.
  *
  * Every rule in the kit sits in one of its layers, declared here in order, so a page's own rule
  * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
  * dk among layers of its own sets where dk goes. A demo's own :root outside a layer wins the same
  * way, whichever sheet loads first. Across the kit, every selector is one of the kit's own classes
- * or one :where(), followed at most by a focus pseudo-class, and here each is a :where() alone, so
- * nothing in the tokens carries weight.
+ * or one :where(), followed at most by a focus pseudo-class or, in the base alone, a
+ * pseudo-element, and here each is a :where() alone, so nothing in the tokens carries weight.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
  * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
  * test holds the palette to both.
  *
- * Which unit goes where: rem for anything that should grow with the visitor's own text size, em
- * for code set in running text, which sizes to the text around it, and px for what must not scale,
- * a border, the focus ring and a shadow.
+ * Which unit goes where: rem for anything that should grow with the visitor's own text size, em for
+ * code set in running text, which sizes to the text around it, and px for what must not scale, a
+ * border, the focus ring and a shadow.
  */
 
 @layer dk.tokens, dk.base, dk.components;

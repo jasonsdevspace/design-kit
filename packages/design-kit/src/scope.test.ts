@@ -7,10 +7,10 @@ import { describe, expect, it } from 'vitest';
  * rule sits in one of the kit's layers, so a page's own rule outside a layer wins over the kit's,
  * and a page that names its layers sets where the kit's go among them. Inside its layers, a sheet
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
- * pseudo-class, so only those classes and the focus rules carry any weight. The base alone may
- * follow its :where() with a pseudo-element instead, since a pseudo-element inside a :where()
- * matches nothing, and a rule meant for every element has to reach it too. That adds the weight of
- * one element, which a page's own rule outside a layer still wins over.
+ * pseudo-class. The base alone may follow its :where() with a pseudo-element instead, since a
+ * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
+ * it too. So only those classes, the focus rules and the base's pseudo-elements carry any weight,
+ * and none of it counts against a page's own rule outside a layer.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */

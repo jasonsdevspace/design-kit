@@ -130,10 +130,10 @@ which the tokens declare in that order, and each sheet fills its own. A page's o
 layer wins over every rule of the kit's but the cut to motion, however little it weighs and
 wherever its sheet loads. Inside the layers, every selector is either one of the kit's own classes,
 such as `.dk-strip` or `.dk-visually-hidden`, or one `:where()`, followed at most by a focus
-pseudo-class, so only those classes and the focus rules carry any weight. The base alone follows a
-`:where()` with a pseudo-element, such as `::before` or `::backdrop`, where a rule for every element
-has to reach it too, since a pseudo-element inside a `:where()` matches nothing. That adds the
-weight of one element, which a page's own rule outside a layer still wins over.
+pseudo-class. The base alone follows a `:where()` with a pseudo-element instead, such as `::before`
+or `::backdrop`, where a rule for every element has to reach it too, since a pseudo-element inside
+a `:where()` matches nothing. So only the kit's classes, the focus rules and those pseudo-elements
+carry any weight, and none of that weight counts against a page's own rule outside a layer.
 
 A page with layers of its own names where `dk` goes among them, and this is where load order bites.
 A layer takes its place in the order where its name first appears. A page whose own layers load
@@ -181,9 +181,10 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | ----------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | A page's own rule outside a layer wins, however little it weighs                                      | `packages/design-kit/e2e/sheets.spec.ts`     |
 | A page's layers placed before the kit's lose to it unless they name `dk` first                        | `packages/design-kit/e2e/sheets.spec.ts`     |
-| Every rule sits in its own dk layer, and only the kit's classes and focus rules add weight            | `packages/design-kit/src/scope.test.ts`      |
+| Each rule is in its own dk layer, and only a class, a focus rule or a base pseudo-element adds weight | `packages/design-kit/src/scope.test.ts`      |
 | Every rule past the page chrome sits in a `:where()`, the explainer's layout included                 | `packages/design-kit/src/scope.test.ts`      |
-| A page's pseudo-elements take the border box and the cut to motion                                    | `packages/design-kit/e2e/sheets.spec.ts`     |
+| A page's `::before` and `::after` take the border box                                                 | `packages/design-kit/e2e/sheets.spec.ts`     |
+| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                      | `packages/design-kit/e2e/sheets.spec.ts`     |
 | Reduced motion cuts a page's important transition, unlayered or layered after the kit                 | `packages/design-kit/e2e/sheets.spec.ts`     |
 | A palette set on a container restyles only what is inside it                                          | `packages/design-kit/e2e/sheets.spec.ts`     |
 | The focus ring is drawn in the accent, and not on a section a skip link moves focus to                | `packages/design-kit/e2e/sheets.spec.ts`     |

@@ -479,10 +479,10 @@
 
     /*
      * Steps a demo takes one after another, each in a box of its own with an arrow above it from
-     * the step before. The arrow is a span hidden from a screen reader, since a selector of the
-     * kit's takes nothing after its :where() but a focus pseudo-class, and a pseudo-element cannot
-     * sit inside one. The list keeps role="list" in its markup, since a browser can
-     * drop a list's meaning when its markers are gone.
+     * the step before. The arrow is a span hidden from a screen reader, since a selector in this
+     * sheet takes nothing after its :where() but a focus pseudo-class, and a pseudo-element cannot
+     * sit inside one. The list keeps role="list" in its markup, since a browser can drop a list's
+     * meaning when its markers are gone.
      */
     :where(.dk-steps) {
         display: grid;

@@ -142,6 +142,7 @@
         :where(*)::before,
         :where(*)::after,
         :where(*)::backdrop,
+        :where(:root)::view-transition,
         :where(:root)::view-transition-group(*),
         :where(:root)::view-transition-image-pair(*),
         :where(:root)::view-transition-old(*),
