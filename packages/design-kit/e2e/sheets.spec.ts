@@ -115,3 +115,57 @@ test('hides a visually hidden label from the eye and keeps it for a screen reade
     const box = await page.locator('.dk-visually-hidden').boundingBox();
     expect(box).toMatchObject({ width: 1, height: 1 });
 });
+
+for (const [order, winner] of [
+    ['dk, page', 'rgb(1, 2, 3)'],
+    ['page, dk', 'rgb(255, 255, 255)'],
+] as const) {
+    test(`lets a page with layers of its own set where the kit's go, here ${order}`, async ({
+        page,
+    }) => {
+        await open(
+            page,
+            'light',
+            '',
+            `@layer ${order}; @layer page { body { background: rgb(1, 2, 3) } }`
+        );
+        expect((await drawn(page)).background).toBe(winner);
+    });
+}
+
+test("lets a page's own rule outside a layer win, however little it weighs", async ({ page }) => {
+    await open(page, 'light', '', ':where(body) { background: rgb(1, 2, 3) }');
+    expect((await drawn(page)).background).toBe('rgb(1, 2, 3)');
+});
+
+for (const theme of ['light', 'dark'] as const) {
+    test(`restyles only the container a page sets the tokens on, in the ${theme} theme`, async ({
+        page,
+    }) => {
+        await open(
+            page,
+            theme,
+            '<a id="outside" href="#">Out</a><div class="other"><a id="inside" href="#">In</a></div>',
+            '.other { --dk-accent: light-dark(rgb(0, 100, 0), rgb(0, 200, 0)) }'
+        );
+        const colors = await page.evaluate(() =>
+            ['outside', 'inside'].map(
+                (id) => getComputedStyle(document.getElementById(id) ?? document.body).color
+            )
+        );
+        expect(colors).toEqual([
+            theme === 'light' ? 'rgb(31, 79, 216)' : 'rgb(143, 176, 255)',
+            theme === 'light' ? 'rgb(0, 100, 0)' : 'rgb(0, 200, 0)',
+        ]);
+    });
+}
+
+test("cuts a page's own transition for a visitor who asks for less motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, 'light', '<p class="fade">Fades</p>', '.fade { transition: opacity 2s 1s }');
+    const timing = await page.evaluate(() => {
+        const style = getComputedStyle(document.querySelector('.fade') ?? document.body);
+        return { duration: style.transitionDuration, delay: style.transitionDelay };
+    });
+    expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
+});

@@ -9,13 +9,19 @@ is marked private and is not published.
 - `tokens.css`: the scale a page's styles are drawn from, and the color roles. Every name carries
   the `--dk-` prefix, so the kit can load beside a page's own styles.
 - `base.css`: the page's type and colors, one focus ring for every link and control, a
-  `.dk-visually-hidden` class, and less motion for a visitor who asks for it. Every rule but that
-  class sits inside `:where()`, so a page's rule on the same element wins over the kit's. The cut
-  to motion is the exception, since it is the visitor's choice.
+  `.dk-visually-hidden` class, and less motion for a visitor who asks for it.
 - `theme`: the key the portfolio saves a visitor's theme under, the two themes, and the script
   that sets the saved one before a page paints.
 - `vite`: a Vite plugin that puts that script into each page, and the script's hash for a Content
   Security Policy.
+
+Every rule in the kit sits in one of its cascade layers, `dk.tokens`, `dk.base` and
+`dk.components`, declared in that order by the tokens. A page's own rule outside a layer wins over
+the kit's however little it weighs. A page with layers of its own names where `dk` goes among them,
+so `@layer dk, page;` puts its own layer over the kit's. Inside the layers, every rule but the
+visually hidden class sits inside `:where()`, so the kit's rules stay flat against each other. The
+cut to motion is the one exception, held with `!important`, which wins over a page's own rules
+since it is the visitor's choice.
 
 A page loads both sheets, tokens first, through a bundler that resolves package exports, such as
 Vite:
@@ -30,7 +36,8 @@ Vite:
 Each color role holds its light and its dark value in one `light-dark()`. A page follows the
 system's color scheme, or the theme set as `data-theme="light"` or `data-theme="dark"` on its root.
 A page with its own palette sets the roles again on `:root`, both values at once, and wins
-whichever sheet loads first, since every rule in the tokens sits inside `:where()`:
+whichever sheet loads first. A page can also set them on one container, which restyles only what
+is inside it, in both themes:
 
 ```css
 :root {
