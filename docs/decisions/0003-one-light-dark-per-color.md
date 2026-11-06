@@ -31,15 +31,17 @@ choose.
 
 - `light-dark()` sets the browser floor: Chrome and Edge 123, Firefox 120 and Safari 17.5. The
   browser tests run in Chromium alone.
-- The contrast test reads each role as a `light-dark()` of two six-digit hex colors. A role written
-  any other way, as `rgb()` or a short hex, fails the test, so a new way of writing a color is a
-  change to the test as well.
-- `light-dark()` takes colors, so a value that is not a color, such as the shadow, cannot vary by
-  theme this way and is the same in both.
+- The contrast test reads each role it lists as a `light-dark()` of two six-digit hex colors. A
+  listed role written any other way, as `rgb()` or a short hex, fails the test, so a new way of
+  writing a color is a change to the test as well. The scrim, written in `rgb()`, is not among the
+  roles it lists, so it is not measured.
+- `light-dark()` takes colors, so in a value that is more than a color, such as a shadow, only the
+  color inside it can vary by theme. The kit's shadow does not, and is the same in both.
 - A role a page sets to one color, rather than to a `light-dark()`, draws that color in both
   themes.
-- A page sets its own palette once, on the root or on a container, with both values, and it wins
-  over the kit's whichever sheet loads first.
+- A page sets its own palette once, with both values. Set on the root, it wins over the kit's
+  whichever sheet loads first, as long as the rule sits outside a layer or in one after the kit's.
+  Set on a container, it always wins, since the kit sets the roles on the root alone.
 
 ## How it is tested
 

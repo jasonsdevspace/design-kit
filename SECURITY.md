@@ -23,5 +23,4 @@ The package depends on nothing at run time, and takes Vite as an optional peer f
 which a page that does not use the plugin never installs. Everything the repository installs is a
 tool for checking the code, and none of it ships. Among them, a lint plugin is under the GNU Lesser
 General Public License, and a CSS parser the test runner depends on is under the Mozilla Public
-License. Both are accepted for tools that run only in development. A moderate advisory in a pattern
-matcher that the lint tools depend on waits for those tools to take its fix.
+License. Both are accepted for tools that run only in development.

@@ -9,7 +9,7 @@ but its theme module and its Vite plugin are TypeScript, and a demo imports them
 `dist`, which the repository does not commit. Something has to build `dist` before a demo can load
 `./theme` or `./vite`. The repository also holds the tools that check the kit, its lint, format,
 prose and Node checks, its unit and browser tests and its commit hooks, and none of those belong in
-what a demo installs.
+what a demo is meant to install.
 
 ## Options
 
@@ -34,8 +34,8 @@ builds `dist` when npm installs it. Rejected on what it measured:
 
 ## Decision
 
-Option A. The kit is the workspace `packages/design-kit`, built by its `prepack`, and a demo
-installs it from npm as it was packed, with no script of the kit's to run.
+Option A. The kit is the workspace `packages/design-kit`, built by its `prepack`, and it is to reach
+a demo from npm as it was packed, with no script of the kit's to run.
 
 ## Consequences
 
@@ -45,8 +45,8 @@ installs it from npm as it was packed, with no script of the kit's to run.
   copy of the repository's `LICENSE`, held to the root's by a test.
 - The package keeps a README of its own, written for a reader who never sees the repository, and
   its homepage points at that folder rather than at the root.
-- A demo installs the kit with install scripts off and loses nothing, since the kit has no install
-  script.
+- A demo can install the kit with install scripts off and lose nothing, since the kit has no
+  install script.
 
 ## How it is tested
 

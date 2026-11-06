@@ -4,11 +4,11 @@
 [jasonsdevspace.com](https://jasonsdevspace.com) are meant to share. The package is marked private
 and is not published.
 
-**Why I built it.** My demos each carried their own copy of the same things. ShelfLens and
+**Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
 inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
 and sets it before the first paint, the same script line for line, and each names its colors in
-custom properties of its own, such as `--bg` and `--accent`. A change to how a theme is chosen had
-to be made in every repository, and a new demo would have copied it again. I wanted one package a
+custom properties of its own, such as `--bg` and `--accent`. A change to how a theme is chosen has
+to be made in every repository, and a new demo would copy it again. I wanted one package a
 demo could load beside the styles it already has, without either side taking the other's names or
 overruling the other's rules, and I wanted each of those promises held by a test, since a
 stylesheet that loses the cascade fails without an error.
@@ -85,19 +85,21 @@ own pairings.
 Every rule in the kit sits in one of its cascade layers, `dk.tokens` and `dk.base`, which the tokens
 declare in that order with `dk.components` after them. A page's own rule outside a layer wins over
 every rule of the kit's but the cut to motion, however little it weighs and wherever its sheet
-loads. Inside the layers, every rule but the visually hidden class sits inside `:where()`, so the
-kit's rules stay flat against each other.
+loads. Inside the layers, every selector but the visually hidden class is one `:where()`, followed
+at most by a focus pseudo-class, so only that class and the focus rules carry any weight.
 
 A page with layers of its own names where `dk` goes among them, and this is where load order bites.
 A layer takes its place in the order where its name first appears. A page whose own layers load
 before the kit's sheets, without naming `dk`, has put its layers first, and the kit's rules then win
-over its own. `@layer dk, page;` puts the page's layer over the kit's wherever it is written.
-`@layer page, dk;` puts the kit's over the page's only when written before the kit's sheets. So a
-page whose own layers load first names `dk` first if it means its own to win.
+over its own. `@layer dk, page;` puts the page's layer over the kit's when it is written before
+any rule of the page's layer. `@layer page, dk;` puts the kit's over the page's only when written
+before the kit's sheets. So a page whose own layers load first names `dk` first, before any of
+their rules, if it means its own to win.
 
 The cut to motion is held with `!important`, since it is the visitor's choice. It wins over every
-normal rule a page writes, and over an important one outside a layer or in a layer after the kit's.
-An important rule in a layer the page orders before the kit's still wins over it.
+normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer
+after the kit's. An important declaration in a `style` attribute still wins over it, as does an
+important rule in a layer the page orders before the kit's.
 
 ## The theme a visitor saved
 
@@ -127,25 +129,25 @@ in Chromium, so the other engines are held to the floor by what they document, n
 
 ## The gotchas, and the test behind each
 
-| Gotcha                                                                                | Where it is tested                               |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| A page's own rule outside a layer wins, however little it weighs                      | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A page's layers placed before the kit's lose to it unless they name `dk` first        | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every rule sits in its own dk layer, and only the kit's own class adds weight         | `packages/design-kit/src/scope.test.ts`          |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A palette set on a container restyles only what is inside it                          | `packages/design-kit/e2e/sheets.spec.ts`         |
-| The focus ring is drawn in the accent, and not on a section focused by script         | `packages/design-kit/e2e/sheets.spec.ts`         |
-| A label hidden from the eye is still read by a screen reader                          | `packages/design-kit/e2e/sheets.spec.ts`         |
-| Every measured pairing passes its WCAG ratio in both themes                           | `packages/design-kit/src/tokens.test.ts`         |
-| Nothing saved, `system`, an unknown value and refused storage follow the system       | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme is set before the body is parsed                                            | `packages/design-kit/e2e/theme.spec.ts`          |
-| The theme follows the system as it changes, while nothing is saved                    | `packages/design-kit/e2e/theme.spec.ts`          |
-| A choice saved in another tab, or storage cleared there, reaches the page             | `packages/design-kit/e2e/theme.spec.ts`          |
-| The key and themes are the portfolio's, and the tokens have a rule for each           | `packages/design-kit/src/theme.test.ts`          |
-| The script holds nothing that would end its element, and compiles                     | `packages/design-kit/src/theme.test.ts`          |
-| A page with no placeholder, or with two, fails the build                              | `packages/design-kit/src/vite.test.ts`           |
-| The hash is of the script exactly as the plugin writes it                             | `packages/design-kit/src/vite.test.ts`           |
-| Each entry loads from the packed package with install scripts off                     | the packed install in `.github/workflows/ci.yml` |
+| Gotcha                                                                                      | Where it is tested                               |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| A page's own rule outside a layer wins, however little it weighs                            | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A page's layers placed before the kit's lose to it unless they name `dk` first              | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every rule sits in its own dk layer, and only the kit's class and focus rules add weight    | `packages/design-kit/src/scope.test.ts`          |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit       | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A palette set on a container restyles only what is inside it                                | `packages/design-kit/e2e/sheets.spec.ts`         |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to      | `packages/design-kit/e2e/sheets.spec.ts`         |
+| A label hidden from the eye is still read by a screen reader                                | `packages/design-kit/e2e/sheets.spec.ts`         |
+| Every measured pairing passes its WCAG ratio in both themes                                 | `packages/design-kit/src/tokens.test.ts`         |
+| Nothing saved, `system`, an unknown value and refused storage follow the system             | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme is set before the body is parsed                                                  | `packages/design-kit/e2e/theme.spec.ts`          |
+| The theme follows the system as it changes, while nothing is saved                          | `packages/design-kit/e2e/theme.spec.ts`          |
+| A choice saved in another tab, or storage cleared there, reaches the page                   | `packages/design-kit/e2e/theme.spec.ts`          |
+| The key and themes are the portfolio's, and the tokens have a rule for each                 | `packages/design-kit/src/theme.test.ts`          |
+| The script holds nothing that would end its element, and compiles                           | `packages/design-kit/src/theme.test.ts`          |
+| A page with no placeholder, or with two, fails the build                                    | `packages/design-kit/src/vite.test.ts`           |
+| The hash is of the script exactly as the plugin writes it                                   | `packages/design-kit/src/vite.test.ts`           |
+| Each sheet resolves and each module loads from the packed package, with install scripts off | the packed install in `.github/workflows/ci.yml` |
 
 ## Decisions
 
@@ -153,8 +155,8 @@ Each choice with a real alternative is a record in [docs/decisions](docs/decisio
 options rejected, what the choice costs, and the test behind it.
 
 1. [The kit is a workspace, built on pack and installed from npm](docs/decisions/0001-a-workspace-built-on-pack.md).
-   A demo installs what npm packs, with no script of the kit's to run, rather than building the kit
-   from git with every tool the repository checks itself with.
+   A demo is meant to install what npm packs, with no script of the kit's to run, rather than
+   building the kit from git with every tool the repository checks itself with.
 2. [The kit's rules sit in dk layers, with a prefix and no weight](docs/decisions/0002-rules-sit-in-dk-layers.md).
    A page's own rule wins however plain it is, at the cost of a load order a page with layers of
    its own has to get right.
@@ -185,10 +187,9 @@ demo imports it by. The browser tests run in a job of their own, at the same tim
 `npm run build` compiles the theme module and the plugin into the package's `dist`, beside a copy
 of each sheet, which is what the package's entries load from. Packing the package builds it first.
 `npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
-time.
+time. They read the sources, so they need no build.
 
 ```bash
-npm run build
 npx playwright install chromium
 npm run e2e
 ```
@@ -200,7 +201,7 @@ message.
 
 ```
 packages/
-└── design-kit/       the package, with its own README for npm
+└── design-kit/       the package, with its own README written for its npm page
     ├── src/          tokens.css, base.css, theme.ts (the contract and the script),
     │                 vite.ts (the plugin and the hash), and their tests
     └── e2e/          the sheets and the theme script as Chromium runs them

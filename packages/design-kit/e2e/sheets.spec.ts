@@ -61,7 +61,7 @@ for (const [theme, accent] of [
     ['light', 'rgb(31, 79, 216)'],
     ['dark', 'rgb(143, 176, 255)'],
 ] as const) {
-    test(`rings a link in the ${theme} accent, and no section focused by script`, async ({
+    test(`rings a link in the ${theme} accent, and no section a skip link moves focus to`, async ({
         page,
     }) => {
         await open(

@@ -23,15 +23,16 @@ layered rule whatever its weight, so the portfolio's `@layer base` would lose to
 unlayered rules.
 
 **C. A prefix, dk layers, and `:where()` inside them.** Every name prefixed, every rule in a layer
-of the kit's, and every selector but the kit's own classes inside `:where()`.
+of the kit's, and every selector but the kit's own classes one `:where()`, followed at most by a
+focus pseudo-class.
 
 ## Decision
 
 Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order
 of the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for.
 Every custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every
-selector but `.dk-visually-hidden` sits inside one `:where()`, so the kit's rules stay flat against
-each other.
+selector but `.dk-visually-hidden` is one `:where()`, followed at most by a focus pseudo-class, so
+only that class and the focus rules carry any weight.
 
 ## Consequences
 
@@ -40,11 +41,16 @@ each other.
 - A page with layers of its own has a load order to get right. A layer takes its place in the order
   where its name first appears, so a page whose layers load before the kit's sheets, without naming
   `dk`, has put them first, and the kit's rules then win over its own. `@layer dk, page;` puts the
-  page's layer over the kit's wherever it is written, and the README says so.
+  page's layer over the kit's when it is written before any rule of the page's layer, and the
+  README says so.
 - The cut to motion for a visitor who asks for less is held with `!important`, since it is the
   visitor's choice. Important declarations run the layer order in reverse, so the kit's wins over a
-  page's important rule outside a layer and in a layer after `dk`. An important rule in a layer the
-  page orders before `dk` still wins over it.
+  page's important rule in a sheet, outside a layer and in a layer after `dk`. An important
+  declaration in a `style` attribute still wins over it, as does an important rule in a layer the
+  page orders before `dk`.
+- The focus rules follow their `:where()` with `:focus-visible` or `:focus`, so they carry a
+  pseudo-class's weight, as the scope test allows. They still lose to a page's rule outside a
+  layer.
 - The visually hidden class carries a class's weight, since a page names it on purpose. It still
   loses to a page's rule outside a layer.
 
