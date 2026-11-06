@@ -62,7 +62,7 @@ export default tseslint.config(
                 { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
             ],
             // Every callable is a value, so a file reads top to bottom with no
-            // hoisting surprises. Matches the convention in the portfolio repo.
+            // hoisting surprises.
             'func-style': ['error', 'expression'],
             'prefer-arrow-callback': ['error', { allowNamedFunctions: false }],
             'simple-import-sort/imports': 'error',
@@ -93,19 +93,8 @@ export default tseslint.config(
             '@typescript-eslint/prefer-optional-chain': 'error',
             '@typescript-eslint/no-unnecessary-condition': 'error',
             '@typescript-eslint/prefer-readonly': 'error',
-            // A switch over a union names every case, so a new one fails the build.
+            // A switch over a union names every case, so a new member left out fails the lint.
             '@typescript-eslint/switch-exhaustiveness-check': 'error',
-        },
-    },
-    {
-        // Tests read whatever a result happens to contain.
-        files: ['**/*.test.{ts,tsx}'],
-        rules: {
-            '@typescript-eslint/no-unsafe-assignment': 'off',
-            '@typescript-eslint/no-unsafe-member-access': 'off',
-            '@typescript-eslint/no-unsafe-argument': 'off',
-            'max-params': 'off',
-            'sonarjs/cognitive-complexity': 'off',
         },
     }
 );
