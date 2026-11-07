@@ -14,7 +14,6 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "verbatimModuleSyntax": true,
-        "allowImportingTsExtensions": true,
         "isolatedModules": true,
         "skipLibCheck": true,
         "noEmit": true
@@ -23,7 +22,6 @@
         "packages/*/src",
         "packages/*/examples",
         "packages/site/vite.config.ts",
-        "packages/site/bench",
         "eslint.config.js",
         "vitest.config.ts",
         "playwright.config.ts"

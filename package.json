@@ -11,7 +11,7 @@
         "packages/*"
     ],
     "scripts": {
-        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e && tsc -p packages/design-kit/smoke && tsc -p packages/site/e2e",
+        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e && tsc -p packages/design-kit/smoke && tsc -p packages/site/e2e && tsc -p packages/site/bench",
         "build": "npm run build --workspaces --if-present",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
