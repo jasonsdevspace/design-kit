@@ -4,6 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { SOURCE, steps } from '../examples/examples.js';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 /*
@@ -16,7 +17,6 @@ import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
-const SOURCE = 'https://github.com/jasonsdevspace/example';
 
 const PITCH =
     'Example takes an order for a product and holds the stock for it until the order is paid for, ' +
@@ -56,13 +56,7 @@ const EXPLAINER =
     '<p class="dk-explainer-number" aria-hidden="true">01</p>' +
     '<h2 id="order">What happens when an order comes in</h2>' +
     `<p>${PITCH} <a href="#numbers">See the numbers</a>.</p>` +
-    '<ol class="dk-steps" role="list">' +
-    '<li><strong class="dk-steps-title">The order names a product.</strong>' +
-    '<span class="dk-steps-note">And how many of it.</span></li>' +
-    '<li><span class="dk-steps-arrow" aria-hidden="true">↓</span>' +
-    '<strong class="dk-steps-title">It waits its turn.</strong>' +
-    '<span class="dk-steps-note">Behind any order for the same product.</span></li>' +
-    '</ol>' +
+    renderToStaticMarkup(steps) +
     '<h3>What usually goes wrong</h3>' +
     `<p>${PITCH} The package <code>@jasonsdevspace/design-kit-with-a-very-long-name</code> is one.</p>` +
     code('lock-title', 'The statement that holds the stock') +

@@ -102,6 +102,8 @@ The skip link is the keyboard's first stop, out of sight until it takes focus, a
 column's inset, where the strip's links start. Following it moves focus to the page's main content,
 which has a tabindex of -1 so it can take focus.
 
+<!-- example: skipLink -->
+
 ```html
 <a class="dk-skip" href="#main-content">Skip to content</a>
 <main id="main-content" tabindex="-1">...</main>
@@ -118,6 +120,8 @@ it is, how it works and the source. The strip on the demo's explainer marks the 
 with `aria-current="page"`. A demo with switches of its own puts them in a section after the links,
 named for them, and a demo with none leaves the section out.
 
+<!-- example: strip -->
+
 ```html
 <div class="dk-strip">
     <nav class="dk-strip-links" aria-label="Portfolio">
@@ -125,9 +129,7 @@ named for them, and a demo with none leaves the section out.
         <a href="./about/">How it works</a>
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
-    <section class="dk-strip-tools" aria-label="Demo">
-        <button type="button">Tour</button>
-    </section>
+    <section class="dk-strip-tools" aria-label="Demo"><button type="button">Tour</button></section>
 </div>
 ```
 
@@ -135,6 +137,8 @@ A demo whose switches are still on their way, drawn by a script that has not run
 room so nothing below the strip moves when they come. The section is drawn with no name and holds
 only the room, with no text, so it is no landmark and a screen reader finds nothing in it. When the
 switches come they take the room's place in the same section, and the section takes its name.
+
+<!-- example: stripWaiting -->
 
 ```html
 <section class="dk-strip-tools"><span class="dk-strip-room"></span></section>
@@ -157,6 +161,8 @@ its underline, and in the footer's sentence the underline is what tells a link f
 it. The link marked as the current page, in the strip or the footer, stands in the page's text at
 the heading's weight, so it is told from the links around it by more than its color, in forced
 colors too, and still reads as a link.
+
+<!-- example: footer -->
 
 ```html
 <footer class="dk-footer">
@@ -225,6 +231,8 @@ wins over all of them.
 
 ### Buttons
 
+<!-- example: buttons -->
+
 ```html
 <button type="button" class="dk-button">Filters</button>
 <button type="button" class="dk-button dk-button-accent">Save rule</button>
@@ -262,22 +270,24 @@ off toggle that is on an edge in `Highlight`.
 
 ### Fields
 
+<!-- example: fields -->
+
 ```html
 <div class="dk-field">
     <label class="dk-field-label" for="email">Email</label>
     <p class="dk-field-hint" id="email-hint">Where the receipt goes</p>
     <p class="dk-field-error" id="email-error">
-        <span class="dk-visually-hidden">Error: </span>Enter an email address
+        <span class="dk-visually-hidden">Error: </span>
+        Enter an email address
     </p>
     <input
         class="dk-input"
-        id="email"
         type="email"
+        id="email"
         aria-describedby="email-hint email-error"
         aria-invalid="true"
     />
 </div>
-
 <div class="dk-field">
     <label class="dk-field-label" for="sort">Sort by</label>
     <select class="dk-select" id="sort">
@@ -310,17 +320,18 @@ colors the browser's own arrow comes back. A select that shows its options as a 
 
 ### Callouts
 
+<!-- example: callout -->
+
 ```html
 <div class="dk-callout dk-callout-danger">
     <div class="dk-callout-body">
         <p class="dk-callout-title">
-            <span class="dk-visually-hidden">Error: </span>The products could not be loaded
+            <span class="dk-visually-hidden">Error: </span>
+            The products could not be loaded
         </p>
         <p>Check the file, then load it again.</p>
     </div>
-    <div class="dk-callout-actions">
-        <button type="button" class="dk-button">Try again</button>
-    </div>
+    <div class="dk-callout-actions"><button type="button" class="dk-button">Try again</button></div>
 </div>
 ```
 
@@ -420,6 +431,8 @@ class would outweigh every piece set inside it.
 
 ### The page
 
+<!-- example: explainerPage -->
+
 ```html
 <a class="dk-skip" href="#main-content">Skip to content</a>
 <div class="dk-strip">
@@ -468,6 +481,8 @@ caption size, its heading in the title size, and its text, with an h3 at the bod
 
 ### Steps
 
+<!-- example: steps -->
+
 ```html
 <ol class="dk-steps" role="list">
     <li>
@@ -492,6 +507,8 @@ drops a list's meaning when its markers are gone.
 
 ### Panels
 
+<!-- example: panel -->
+
 ```html
 <div class="dk-panel">
     <p class="dk-panel-title">How the numbers were taken</p>
@@ -513,6 +530,8 @@ complementary to it. Nor is it a named `section`, which would be a region landma
 `figure`.
 
 ### Tables
+
+<!-- example: table -->
 
 ```html
 <p class="dk-table-title" id="bench-title">Orders a second under each strategy</p>
@@ -558,6 +577,8 @@ rest of its row. A header gives its unit in words a screen reader says well, "Sl
 rather than "p99 ms".
 
 ### Code blocks
+
+<!-- example: code -->
 
 ```html
 <p class="dk-code-title" id="lock-title">The statement that holds the stock</p>
