@@ -4,12 +4,12 @@ import { expect, type Page, test } from '@playwright/test';
 import { ROUTES } from '../src/routes.js';
 
 /*
- * The built site as a visitor gets it, from the preview the Playwright config serves under the
- * path GitHub Pages gives it: every page with no audit findings in either theme on a phone and a
- * wide screen, no sideways scroll at any width or at twice the text size, no text cut off under the
- * wider spacing a reader may set, one of each landmark and no id twice, and nothing the page's
- * policy refuses, the theme script included. Every page in the site's routes is checked, so a page
- * added to them is held to all of it.
+ * The built site as a visitor gets it, from the preview the Playwright config serves under the path
+ * GitHub Pages gives it: every page with no audit findings in either theme on a phone and a wide
+ * screen, no sideways scroll at any width or at twice the text size, no text cut off under the
+ * wider spacing a reader may set, one main, one footer and one portfolio navigation outside the
+ * inert copies, no id twice, and nothing the page's policy refuses, the theme script included.
+ * Every page in the site's routes is checked, so a page added to them is held to all of it.
  */
 
 /** Each page, as the path a visitor asks for. */
@@ -277,24 +277,37 @@ test.describe('the page chrome page', () => {
         const copies = page.locator('.site-copy');
         expect(await copies.count()).toBeGreaterThan(0);
         expect(
-            await copies.evaluateAll((all) => all.filter((copy) => !copy.hasAttribute('inert')))
+            await copies.evaluateAll((all) =>
+                all
+                    .filter((copy) => !copy.hasAttribute('inert'))
+                    .map((copy) => copy.textContent.slice(0, 60))
+            )
         ).toEqual([]);
     });
 });
 
+test.describe('the controls page', () => {
+    test('draws a live copy of every state', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        const states = await page.locator('.site-state').count();
+        expect(states).toBeGreaterThan(0);
+        await expect(page.locator('.site-state > .site-copy:not([inert])')).toHaveCount(states);
+    });
+});
+
 test.describe('the explainer pieces page', () => {
-    test("draws each piece live in the visitor's theme, and the page's layout as a picture", async ({
-        page,
-    }) => {
+    test("draws each piece live, and the explainer's layout as a picture", async ({ page }) => {
         await page.goto('/design-kit/explainer-pieces/');
         const live = page.locator('.site-copy:not([inert])');
+        await expect(live.locator('.dk-steps')).toHaveCount(1);
+        await expect(live.locator('.dk-panel')).toHaveCount(1);
         await expect(
             live.getByRole('table', { name: 'Orders a second under each strategy' })
         ).toBeVisible();
         await expect(
             live.getByRole('region', { name: 'The statement that holds the stock' })
         ).toBeVisible();
-        await expect(page.locator('.site-copy:not([inert]) .dk-explainer')).toHaveCount(0);
+        await expect(live.locator('.dk-explainer')).toHaveCount(0);
         await expect(page.locator('.site-copy[inert] .dk-explainer')).toHaveCount(2);
     });
 });

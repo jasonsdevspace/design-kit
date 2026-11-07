@@ -35,8 +35,8 @@ export interface Control {
     readonly states: readonly State[];
     /**
      * Each state is a picture in both themes, which the keyboard and a screen reader pass over,
-     * since a live copy would give the page a second landmark it already has, such as the strip's
-     * navigation.
+     * since a live copy would give the page a second of something it holds once, such as the
+     * strip's navigation or an h1.
      */
     readonly pictured?: true;
 }

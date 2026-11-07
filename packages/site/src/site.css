@@ -56,8 +56,8 @@
 }
 
 /*
- * Each state, live beside its copy in the other theme on a wide screen and above it on a phone,
- * with its name and attribute under both.
+ * Each state, its copy in the visitor's theme beside its copy in the other on a wide screen and
+ * above it on a phone, with its name and attribute under both.
  */
 .site-states {
     display: grid;

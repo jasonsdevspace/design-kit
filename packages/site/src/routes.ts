@@ -37,7 +37,7 @@ export const ROUTES = [
         title: 'Page chrome · The design kit · Jason Poteet',
         nav: 'Page chrome',
         description:
-            'The skip link, strip and footer the design kit draws around every demo, in both themes, with the attribute that draws each state.',
+            'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the attribute that draws it.',
     },
     {
         file: 'explainer-pieces/index.html',

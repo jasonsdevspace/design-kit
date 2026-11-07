@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import * as kit from '../src/react.js';
 import {
     Button,
     Callout,
@@ -200,9 +201,8 @@ export const explainerPage: ReactElement = (
     </>
 );
 
-/** The components the pieces are drawn with, from the sources, and their ids as written. */
+/** Each id a piece names, as written. */
 const asWritten = (name: string) => name;
-const kit = { Button, Callout, DemoFooter, InputField, PortfolioStrip, SelectField };
 
 /** The steps of a flow, each a title and a note, with an arrow from the step before. */
 export const steps: ReactElement = pieces.steps.draw(kit, asWritten);

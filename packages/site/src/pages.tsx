@@ -102,14 +102,10 @@ export const Landing = ({ build }: { readonly build: Build }) => (
  */
 const StateShown = ({ state, pictured }: { readonly state: State; readonly pictured: boolean }) => (
     <li className="site-state">
-        {pictured ? (
-            <div className="site-copy" inert>
-                <p className="site-copy-label">Your theme</p>
-                {state.draw(kit, (name) => `${name}-yours`)}
-            </div>
-        ) : (
-            <div className="site-copy">{state.draw(kit, (name) => name)}</div>
-        )}
+        <div className="site-copy" inert={pictured}>
+            {pictured ? <p className="site-copy-label">Your theme</p> : null}
+            {state.draw(kit, (name) => (pictured ? `${name}-yours` : name))}
+        </div>
         <div className="site-copy site-other" inert>
             <p className="site-copy-label">The other theme</p>
             {state.draw(kit, (name) => `${name}-other`)}
@@ -121,8 +117,8 @@ const StateShown = ({ state, pictured }: { readonly state: State; readonly pictu
 );
 
 /**
- * Each control under its own heading, with each of its states, side by side, or one above the other
- * at the column's full width where the states are `wide`.
+ * Each control under its own heading, with each of its states, its two copies side by side, or one
+ * above the other at the column's full width where `wide` is set.
  */
 const Shown = ({
     controls,
@@ -167,9 +163,10 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="page-chrome/index.html">
         <h1>Page chrome</h1>
         <p className="site-lead">
-            The skip link, strip and footer every demo draws around its page, so a visitor finds the
-            same way in, the same links and the same way out on each one. The ones around this page
-            are the kit&rsquo;s own, drawn live by its components.
+            The skip link, the strip above the page that says whose demo it is, and the footer below
+            it, which a demo draws around its page so a visitor finds the same links in the same
+            places on each one. The ones around this page are the kit&rsquo;s own, drawn by its
+            components as a demo draws them.
         </p>
         <p>
             Below, each state of the strip and the footer is drawn again in your theme and in the
@@ -179,9 +176,9 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         <section>
             <h2 id="skip-link">Skip link</h2>
             <p>
-                The skip link is the first thing the keyboard reaches, out of sight until then.
-                Press Tab at the top of this page to see it. Following it moves focus past the strip
-                to the page&rsquo;s main content.
+                The skip link is the first thing the keyboard reaches, out of sight until then. Load
+                this page and press Tab to see it. Following it moves focus past the strip and the
+                site&rsquo;s own links to the page&rsquo;s main content.
             </p>
         </section>
         <Shown controls={CHROME} wide />
@@ -193,14 +190,16 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="explainer-pieces/index.html">
         <h1>Explainer pieces</h1>
         <p className="site-lead">
-            The pieces of the page that says how a demo works, the one each strip&rsquo;s &ldquo;How
-            it works&rdquo; link leads to. A page writes them by hand, since none has logic for a
-            component to hide, and the kit&rsquo;s sheet draws them.
+            The pieces of the page that says how a demo works, the one the strip&rsquo;s &ldquo;How
+            it works&rdquo; link leads to. A demo writes them by hand in HTML, since none of them
+            does anything a component would have to handle, and the kit&rsquo;s stylesheet styles
+            them.
         </p>
         <p>
-            Each piece is live in your theme, with a copy in the other theme beside it. The
-            page&rsquo;s own layout is drawn as a picture in both, since it holds a heading of the
-            first level, and this page has its own.
+            Steps, panels, tables and code blocks are each live in your theme, with a copy in the
+            other theme beside it and the attribute that draws it below. The explainer&rsquo;s
+            layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
+            heading and this page already has one.
         </p>
         <Shown controls={EXPLAINER} />
     </Page>

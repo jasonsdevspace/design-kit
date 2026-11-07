@@ -3,9 +3,9 @@ import type { Control, State } from './states.js';
 /*
  * The page chrome and an explainer's pieces, named, with the attribute that draws each, for a page
  * that shows them one by one, as `states.tsx` holds the controls. The chrome is drawn by the
- * components a page is given, and the explainer's pieces, which no component draws, as a page
- * writes them by hand. The README draws its blocks for the steps, the panel, the table and the code
- * block from here too, so the two never differ.
+ * components passed in, and the explainer's pieces, which no component draws, are written as a
+ * page writes them by hand. The README's blocks for the steps, the panel, the table and the code
+ * block are drawn from here too, so the two never differ.
  */
 
 /** A demo's repository and its explainer, as the examples name them. */
@@ -24,7 +24,7 @@ export const CHROME: readonly Control[] = [
             },
             {
                 name: "The strip with a demo's switches",
-                attribute: 'class="dk-strip-tools"',
+                attribute: 'aria-label="Demo"',
                 draw: ({ PortfolioStrip }) => (
                     <PortfolioStrip
                         about={ABOUT}

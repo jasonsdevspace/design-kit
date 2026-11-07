@@ -31,13 +31,19 @@ describe('the states a page shows', () => {
     });
 
     it('give each copy ids of its own', () => {
+        // The live copy, the picture in the visitor's theme and the copy in the other theme, as
+        // the site names their ids.
+        const suffixes = ['', '-yours', '-other'];
         for (const state of states) {
-            const ids = (draw: string) =>
-                [...draw.matchAll(/ id="([^"]+)"/g)].map((match) => match[1] ?? '');
-            const one = ids(renderToStaticMarkup(state.draw(kit, (name) => name)));
-            const other = ids(renderToStaticMarkup(state.draw(kit, (name) => `${name}-other`)));
+            const ids = suffixes.flatMap((suffix) =>
+                [
+                    ...renderToStaticMarkup(state.draw(kit, (name) => `${name}${suffix}`)).matchAll(
+                        / id="([^"]+)"/g
+                    ),
+                ].map((match) => match[1] ?? '')
+            );
             expect(
-                one.filter((id) => other.includes(id)),
+                ids.filter((id, index) => ids.indexOf(id) !== index),
                 state.name
             ).toEqual([]);
         }
