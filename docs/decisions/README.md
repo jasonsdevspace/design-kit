@@ -28,5 +28,5 @@ costs, and the test behind it.
    plain sections a reader moves between by their headings, ids other pages link to, and jumps
    that keep a section's number in sight.
 10. [The markup each piece draws lives in one module of examples](0010-one-module-of-examples.md):
-    the README's blocks written from the examples the browser tests draw, rather than kept in step
-    by hand, and why a documentation framework was turned down.
+    the README's blocks written from React elements the browser tests import too, rather than kept
+    in step by hand, and why a documentation framework was turned down.

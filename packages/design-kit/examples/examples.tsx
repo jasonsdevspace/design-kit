@@ -11,11 +11,12 @@ import {
 } from '../src/react.js';
 
 /*
- * The markup each piece of the kit draws, in one place, so the README, the browser tests and the
- * site show the same thing. A piece with a component is drawn by it, so its markup is what a page
- * with React gets, and a piece without one is written as a page without React writes it. The README
- * prints each as HTML, and a test fails when one of its blocks no longer matches. The package ships
- * none of this.
+ * The markup each piece of the kit draws, in one place, so the README prints what the components
+ * draw and the browser tests import it rather than keep copies. A piece is drawn by its component
+ * where the block shows all of what the component draws, and written as a page without React
+ * writes it otherwise. The README prints each example in EXAMPLES as HTML, and a test fails when
+ * one of its blocks no longer matches. The states of every control are drawn by the browser tests
+ * alone. The package ships none of this.
  */
 
 /** A demo's repository, as the examples name it. */
@@ -36,7 +37,7 @@ export const strip: ReactElement = (
     <PortfolioStrip about="./about/" source={SOURCE} tools={<button type="button">Tour</button>} />
 );
 
-/** The strip's section while the demo's switches are still on their way, holding only their room. */
+/** The strip's section while the demo's switches are on their way, holding only their room. */
 export const stripWaiting: ReactElement = (
     <section className="dk-strip-tools">
         <span className="dk-strip-room"></span>
@@ -114,13 +115,13 @@ export const controlStates: ReactElement = (
         <form>
             <InputField id="words" label="Search words" hint="Separate alternatives with commas" />
             <InputField
-                id="email"
+                id="state-email"
                 label="Email"
                 hint="Where the receipt goes"
                 error="Enter an email address, like name@example.com"
             />
             <InputField id="off" label="Store" disabled defaultValue="Closed" />
-            <SelectField id="sort" label="Sort by">
+            <SelectField id="state-sort" label="Sort by">
                 <option value="">Choose an order</option>
                 <option value="price">Price</option>
             </SelectField>

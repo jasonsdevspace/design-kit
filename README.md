@@ -246,7 +246,7 @@ they document, not by a test here.
 | Each sheet resolves and each module loads from the packed package, on the oldest Node                 | `packages/design-kit/smoke/consumer.mjs`      |
 | The strip draws its markup from the packed package, with the React a page has                         | `packages/design-kit/smoke/consumer.mjs`      |
 | A field makes its ids with `useId` in a server render of the packed package                           | `packages/design-kit/smoke/consumer.mjs`      |
-| Each block of markup in the package README is what its example draws                                  | `packages/design-kit/examples/readme.test.ts` |
+| Each block of a piece's markup in the package README is what its example draws                        | `packages/design-kit/examples/readme.test.ts` |
 
 ## Decisions
 
@@ -282,8 +282,8 @@ options rejected, what the choice costs, and the test behind it.
    The page's landmarks stay few and a reader reaches a section by its heading, at the cost of no
    landmark stop at a section.
 10. [The markup each piece draws lives in one module of examples](docs/decisions/0010-one-module-of-examples.md).
-    The README shows what the components draw and the tests hold, at the cost of a command to run
-    after each change to a piece's markup.
+    The package README shows what the components draw, held to them by a unit test, at the cost of
+    a command to run after each change to a piece's markup.
 
 ## Dev setup
 
@@ -315,9 +315,9 @@ npx playwright install chromium
 npm run e2e
 ```
 
-Each block of markup in the package README is written from `packages/design-kit/examples`, and a
-unit test fails when one differs. After a change to a piece's markup, `npm run examples` writes the
-blocks again.
+Each block of a piece's markup in the package README is written from
+`packages/design-kit/examples`, and a unit test fails when one differs. After a change to a piece's
+markup, `npm run examples` writes the blocks again.
 
 ```bash
 npm run examples
@@ -351,8 +351,8 @@ packages/
     ├── src/          tokens.css, base.css, components.css, theme.ts (the contract and the
     │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome,
     │                 the buttons, the fields and the callouts), and their tests
-    ├── examples/     the markup each piece draws, which the README prints and the browser
-    │                 tests draw, and the test that holds the README to it
+    ├── examples/     the markup the README prints and the browser tests import, and the test
+    │                 that holds the README to it
     ├── e2e/          the sheets, the theme script, the page chrome, the controls, the refs a
     │                 button and the fields take, and an explainer page as Chromium runs them
     └── smoke/        the packed package as a page installs it, on the oldest Node

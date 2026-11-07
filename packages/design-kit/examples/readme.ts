@@ -1,42 +1,54 @@
-import { format } from 'prettier';
+import { format, resolveConfig } from 'prettier';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { type ExampleName, EXAMPLES } from './examples.js';
 
 /**
- * The examples whose links sit in a sentence, where a space gained or lost between a link and the
- * words around it changes what is read, so the formatter keeps every space where it is.
+ * The examples with no words beside a tag where a space would be read, so the formatter is free to
+ * start each element on a line of its own, as a page written by hand starts it. Every other example
+ * breaks a line only where a space already is, as a sentence of links needs, so one added later is
+ * laid out tightly rather than wrongly.
  */
-const SENTENCES: ReadonlySet<ExampleName> = new Set(['footer', 'explainerPage']);
+const LAID_OUT: ReadonlySet<ExampleName> = new Set([
+    'skipLink',
+    'strip',
+    'stripWaiting',
+    'buttons',
+    'fields',
+    'callout',
+    'steps',
+    'panel',
+    'table',
+    'code',
+]);
 
 /**
- * A space that ends an element's words, as the hidden "Error: " ends with one, written as a
- * character reference while the markup is formatted, so it is kept rather than trimmed.
+ * A space beside a tag, such as the one that ends the hidden "Error: ", held as a character the
+ * formatter treats as a word while an example is laid out, so it is kept rather than trimmed.
  */
-const KEPT = '&#32;';
+const KEPT = '';
 
-/**
- * An example's markup as a page writes it, laid out as the repository's formatter lays out HTML.
- * React draws no space between tags, so outside a sentence each element is free to start a line of
- * its own, as a page written by hand starts it.
- */
+/** An example's markup as a page writes it, laid out as the repository's formatter lays out. */
 export const htmlOf = async (name: ExampleName): Promise<string> => {
-    const exact = SENTENCES.has(name);
+    const config = (await resolveConfig(import.meta.filename)) ?? {};
+    const free = LAID_OUT.has(name);
     const markup = renderToStaticMarkup(EXAMPLES[name]);
-    const formatted = await format(exact ? markup : markup.replaceAll(/ (?=<\/)/g, KEPT), {
+    if (markup.includes(KEPT))
+        throw new Error(`the ${name} example holds the character kept spaces use`);
+    const formatted = await format(free ? markup.replaceAll(/ (?=<)|(?<=>) /g, KEPT) : markup, {
+        ...config,
         parser: 'html',
-        printWidth: 100,
-        tabWidth: 4,
-        htmlWhitespaceSensitivity: exact ? 'css' : 'ignore',
+        htmlWhitespaceSensitivity: free ? 'ignore' : 'css',
     });
     return formatted.replaceAll(KEPT, ' ').trimEnd();
 };
 
 /**
- * A marker in the README, then the block of HTML it names, which is written from that example. The
- * formatter puts a blank line between the two.
+ * A marker in the README, then the block of HTML it names, up to the fence that closes it at the
+ * start of a line, so an empty block closes where it should. The formatter puts a blank line
+ * between the marker and the block.
  */
-const BLOCK = /(<!-- example: (\w+) -->\n+```html\n)[\s\S]*?(\n```)/g;
+const BLOCK = /(<!-- example: (\w+) -->(?:\r?\n)+```html\r?\n)[\s\S]*?(^```)/gm;
 
 /** The examples the README's blocks are marked with, in the order they appear. */
 export const markedIn = (readme: string): string[] =>
@@ -50,14 +62,18 @@ const isName = (name: string): name is ExampleName => Object.hasOwn(EXAMPLES, na
  */
 export const writtenReadme = async (readme: string): Promise<string> => {
     const names = markedIn(readme);
-    const html = new Map<string, string>();
-    for (const name of names) {
-        if (!isName(name)) throw new Error(`the README marks an example there is none of: ${name}`);
-        html.set(name, await htmlOf(name));
+    const unknown = names.find((name) => !isName(name));
+    if (unknown !== undefined) {
+        throw new Error(`the README marks an example there is none of: ${unknown}`);
     }
-    return readme.replace(
-        BLOCK,
-        (_block, open: string, name: string, close: string) =>
-            `${open}${html.get(name) ?? ''}${close}`
+    const html = new Map(
+        await Promise.all(
+            names.filter(isName).map(async (name) => [name, await htmlOf(name)] as const)
+        )
     );
+    const newline = readme.includes('\r\n') ? '\r\n' : '\n';
+    return readme.replace(BLOCK, (_block, open: string, name: string, close: string) => {
+        const block = (html.get(name as ExampleName) ?? '').replaceAll('\n', newline);
+        return `${open}${block}${newline}${close}`;
+    });
 };
