@@ -7,6 +7,12 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## Unreleased
+
+- **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
+  moves focus to a button, such as the one that opened a panel when the panel closes, uses the
+  kit's component. React 19 already passed the ref through, and only the type refused it.
+
 ## 0.1.0-next.2
 
 The page chrome every demo draws, and buttons, text fields, selects and callouts, styled by

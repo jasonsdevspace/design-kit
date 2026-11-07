@@ -1,11 +1,12 @@
 // Compiled in the same empty project as consumer.mjs, against the installed package, once as Node
 // resolves it and once as a bundler does. It fails if the types do not ship or do not resolve, or
-// if a theme's type, the plugin's or a component's props have quietly become `any`. Declaration files
-// are skipped, since the plugin's types name Vite's, and Vite's own need Node's types and a newer
-// library than this check compiles against.
+// if a theme's type, the plugin's or a component's props have quietly become `any`. Declaration
+// files are skipped, since the plugin's types name Vite's, and Vite's own need Node's types and a
+// newer library than this check compiles against.
 import { Button, Callout, InputField, PortfolioStrip } from '@jasonsdevspace/design-kit/react';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import { themeScriptHash, themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
+import { createRef } from 'react';
 
 export const first: Theme = THEMES[0];
 export const key: string = THEME_KEY;
@@ -26,6 +27,12 @@ export const fieldWithout = InputField({});
 
 // @ts-expect-error The one action a view leads with is not a switch.
 export const accentToggle = Button({ accent: true, pressed: true });
+
+// A page moves focus to a button through its ref, which the props name as the button drawn.
+export const opener = Button({ ref: createRef<HTMLButtonElement>(), children: 'Tour' });
+
+// @ts-expect-error A button's ref is the button drawn, not some other element.
+export const wrongRef = Button({ ref: createRef<HTMLInputElement>(), children: 'Tour' });
 
 // @ts-expect-error A callout's tone is one of three.
 export const loud = Callout({ tone: 'warning' });

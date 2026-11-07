@@ -1,3 +1,4 @@
+import { createRef, type Ref } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -198,6 +199,18 @@ describe('the button', () => {
         expect(calls).toEqual(['prevented']);
         press(false);
         expect(calls).toEqual(['prevented', 'pressed']);
+    });
+
+    it('hands a ref to the button it draws, for a page that moves focus to it', () => {
+        const ref = createRef<HTMLButtonElement>();
+        const button = Button({ ref, children: 'Tour' });
+        expect(button.type).toBe('button');
+        expect((button.props as { ref?: unknown }).ref).toBe(ref);
+        // A page that hands on a ref it may not have been given, as a wrapper does, compiles too.
+        const Opener = ({ ref: handed }: { readonly ref?: Ref<HTMLButtonElement> | undefined }) => (
+            <Button ref={handed}>Tour</Button>
+        );
+        expect(renderToStaticMarkup(<Opener />)).toContain('>Tour</button>');
     });
 
     it('takes neither a style nor accent and pressed together', () => {

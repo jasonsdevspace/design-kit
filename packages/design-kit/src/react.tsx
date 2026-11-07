@@ -1,5 +1,5 @@
 import {
-    type ButtonHTMLAttributes,
+    type ComponentPropsWithRef,
     type InputHTMLAttributes,
     type ReactNode,
     type SelectHTMLAttributes,
@@ -128,13 +128,15 @@ const spaced = (...names: readonly (string | false | undefined)[]): string =>
     names.filter((name) => typeof name === 'string' && name !== '').join(' ');
 
 type NativeButton = Omit<
-    ButtonHTMLAttributes<HTMLButtonElement>,
+    ComponentPropsWithRef<'button'>,
     'style' | 'disabled' | 'aria-disabled' | 'aria-pressed'
 >;
 
 /**
  * A button's own props: the accent for the one action a view leads with, `pressed` for a toggle
- * that stands alone, and `off`. The accent is never a toggle, so the two do not go together.
+ * that stands alone, and `off`, beside a `<button>`'s own, its `ref` among them, which holds the
+ * button drawn for a page that moves focus to it. The accent is never a toggle, so the two do not
+ * go together.
  */
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
