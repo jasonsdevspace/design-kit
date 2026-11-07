@@ -146,8 +146,9 @@ of their own below them.
 The footer is one paragraph that says whose project the demo is, with the author's name linking the
 portfolio, and links how it works, the source, the rest of the work and the license. The footer on
 the demo's explainer marks the link to how it works with `aria-current="page"`, as the strip does.
-Anything the demo adds follows the license, as sentences of its own. Every link in the chrome keeps its
-underline, and in the footer's sentence the underline is what tells a link from the text around it.
+Anything the demo adds follows the license, as sentences of its own. Every link in the chrome keeps
+its underline, and in the footer's sentence the underline is what tells a link from the text around
+it.
 
 ```html
 <footer class="dk-footer">
@@ -197,7 +198,7 @@ export const Page = () => (
   `toolsWaiting` keeps the room of one row of the kit's controls while `tools` draws nothing, for a
   page drawn before the switches can be, in the same section unnamed until they come.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
-  `current` set to `about` marks the explainer's link as the current page, as the strip's does.
+  `current` set to `about` marks the explainer's link as the current page, as on the strip.
   `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
   any trailing slash on `source` dropped first. `licenseName` is the license's name in the
   sentence, `MIT license` unless given. Its children follow the license, and children that are
@@ -406,7 +407,11 @@ class would outweigh every piece set inside it.
 
 ```html
 <a class="dk-skip" href="#main-content">Skip to content</a>
-<div class="dk-strip">...</div>
+<div class="dk-strip">
+    <nav class="dk-strip-links" aria-label="Portfolio">
+        ... <a href="./" aria-current="page">How it works</a> ...
+    </nav>
+</div>
 <header class="dk-explainer-header"><a href="../">Example</a></header>
 <main id="main-content" tabindex="-1" class="dk-explainer">
     <h1>How Example works</h1>

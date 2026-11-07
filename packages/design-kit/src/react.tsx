@@ -42,6 +42,13 @@ export const SkipLink = ({
     </a>
 );
 
+/** A page of the demo's that the chrome links to, and can mark as the one it sits on. */
+type ChromePage = 'about';
+
+/** The mark a link to `page` takes when it is the page the chrome sits on, and none otherwise. */
+const currentAs = (current: ChromePage | undefined, page: ChromePage) =>
+    current === page ? 'page' : undefined;
+
 /**
  * Whose demo this is, above the page, with three links together on the left. It is a navigation
  * landmark in a plain div rather than a header, so the demo's own header stays the page's one
@@ -62,7 +69,7 @@ export const PortfolioStrip = ({
     /** The demo's repository. */
     readonly source: string;
     /** The link that is the page the strip sits on, marked as the current page. */
-    readonly current?: 'about';
+    readonly current?: ChromePage;
     /** The demo's own switches, drawn beside the links. */
     readonly tools?: ReactNode;
     /** The name a screen reader gives the switches' landmark. */
@@ -77,7 +84,7 @@ export const PortfolioStrip = ({
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
             <a href={PORTFOLIO_WORK_URL}>A demo by Jason Poteet</a>
-            <a href={about} aria-current={current === 'about' ? 'page' : undefined}>
+            <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
             </a>
             <a href={source}>Source on GitHub</a>
@@ -113,8 +120,8 @@ export const DemoFooter = ({
     readonly about: string;
     /** The demo's repository. */
     readonly source: string;
-    /** The link that is the page the footer sits on, marked as the current page, as the strip's is. */
-    readonly current?: 'about';
+    /** The link that is the page the footer sits on, marked as the current page. */
+    readonly current?: ChromePage;
     /** The demo's license, the LICENSE file on the repository's main branch unless given. */
     readonly license?: string;
     /** What the license is called, as the footer's sentence names it. */
@@ -125,7 +132,7 @@ export const DemoFooter = ({
     <footer className="dk-footer">
         <p>
             {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>.{' '}
-            <a href={about} aria-current={current === 'about' ? 'page' : undefined}>
+            <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
             </a>
             , in plain words. The <a href={source}>source</a> and{' '}
