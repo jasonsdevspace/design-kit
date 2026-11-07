@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,15 +15,22 @@ import { BASE, ROUTES } from './src/routes.js';
 
 const SITE = fileURLToPath(new URL('.', import.meta.url));
 
-/** Where a page asks for its body, its title and its description, and the element for its policy. */
+/** Where a page asks for its body, its title and its description, and its policy's element. */
 const PAGE = '<!-- page -->';
 const TITLE = '<!-- title -->';
 const DESCRIPTION = '<!-- description -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
-/** The version of the kit the site installed from npm, and the commit it is built at, read once. */
+/**
+ * The version of the kit the site installed from npm, its tokens sheet, and the commit the site is
+ * built at, read once.
+ */
 const BUILD: Build = {
     version: kit.version,
+    tokens: readFileSync(
+        createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
+        'utf8'
+    ),
     commit:
         process.env['GITHUB_SHA'] ??
         execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
@@ -39,9 +48,10 @@ const escaped = (text: string) =>
 
 /**
  * Draws each page's body with React's static render, by the HTML file it is built from, and
- * writes its title, its description and its policy, as the page is built. The pages carry no script of React's, so what a visitor
- * gets is the markup and the kit's sheets. The dev server's own script and styles are not the
- * site's, so a page it serves carries no policy, and the preview the tests open serves the build.
+ * writes its title, its description and its policy, as the page is built. The pages carry no
+ * script of React's, so what a visitor gets is the markup and the kit's sheets. The dev server's
+ * own script and styles are not the site's, so a page it serves carries no policy, and the preview
+ * the tests open serves the build.
  */
 const pagesPlugin = (): Plugin => ({
     name: 'design-kit-site-pages',
@@ -83,10 +93,10 @@ export default defineConfig({
     plugins: [pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
-        // The kit's own browser floor, as record 3 sets it, so the minifier leaves each light-dark()
-        // as it is, resolved by the scheme of the element that uses it. A wider target rewrites it
-        // into variables that resolve where the tokens are set, on the root, so a copy in the other
-        // scheme would keep the page's colors.
+        // The kit's own browser floor, as record 3 sets it, so the minifier leaves each
+        // light-dark() as it is, resolved by the scheme of the element that uses it. A wider target
+        // rewrites it into variables that resolve where the tokens are set, on the root, so a copy
+        // in the other scheme, or a swatch in its column's theme, would keep the page's colors.
         cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
         rollupOptions: {
             input: Object.fromEntries(

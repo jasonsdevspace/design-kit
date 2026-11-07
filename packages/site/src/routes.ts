@@ -16,6 +16,14 @@ export const ROUTES = [
             'The tokens, theme script, page chrome, controls and explainer layout the demos on jasonsdevspace.com are built to share.',
     },
     {
+        file: 'tokens/index.html',
+        path: `${BASE}tokens/`,
+        title: 'Tokens and theme · The design kit · Jason Poteet',
+        nav: 'Tokens and theme',
+        description:
+            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how a page takes the theme a visitor saved.',
+    },
+    {
         file: 'controls/index.html',
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',

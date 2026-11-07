@@ -47,6 +47,10 @@ attribute that draws it. It takes the components it draws with rather than impor
 imports nothing of the kit's but its types, so the site draws the states from the version of the
 kit it pins and the kit's own tests draw them from the sources.
 
+`examples/palette.ts` holds the color roles, each pairing the palette is meant for at its ratio,
+and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the
+sources with it, and the site measures and shows the version it pins.
+
 ## Consequences
 
 - A change to a piece's markup is made once, and `npm run examples` carries it to the README. Until
@@ -59,6 +63,9 @@ kit it pins and the kit's own tests draw them from the sources.
   the README's test holds it to the component.
 - A test that needs more than a block shows, such as a table wide enough to scroll, keeps that piece
   of its own beside the examples it imports.
+- The site measures the sheet of the version it pins with the workspace's pairings, and shows the
+  roles that sheet declares, so a role added to the kit before a release is left off the site, with
+  any pairing that names it, until a version with it is released and the pin moves.
 - The states the site shows are a list of their own in `examples/states.tsx`, beside the states the
   browser tests draw from `controlStates`, since the site draws them from the version it pins. A
   state added to the kit is added to both, and nothing fails when only one has it.
@@ -77,5 +84,7 @@ The paths are in `packages/design-kit`.
   its types.
 - `e2e/controls.spec.tsx` draws the examples' states of every control, `e2e/explainer.spec.tsx`
   draws their steps, and `e2e/chrome.spec.tsx` names the repository they name.
+- `src/tokens.test.ts` measures every pairing in `examples/palette.ts` from the sources, in both
+  themes.
 - The oldest Node job in CI installs the packed package, where `smoke/consumer.mjs` finds no file
   under `examples` in it.
