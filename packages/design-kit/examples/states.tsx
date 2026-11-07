@@ -10,7 +10,10 @@ import type * as React from '../src/react.js';
  */
 
 /** The components a state is drawn with. */
-export type Kit = Pick<typeof React, 'Button' | 'Callout' | 'InputField' | 'SelectField'>;
+export type Kit = Pick<
+    typeof React,
+    'Button' | 'Callout' | 'DemoFooter' | 'InputField' | 'PortfolioStrip' | 'SelectField'
+>;
 
 /**
  * One state: what it is called, the attribute that draws it, a class among them, and how it is
@@ -30,6 +33,12 @@ export interface State {
 export interface Control {
     readonly name: string;
     readonly states: readonly State[];
+    /**
+     * Each state is a picture in both themes, which the keyboard and a screen reader pass over,
+     * since a live copy would give the page a second landmark it already has, such as the strip's
+     * navigation.
+     */
+    readonly pictured?: true;
 }
 
 export const CONTROLS: readonly Control[] = [

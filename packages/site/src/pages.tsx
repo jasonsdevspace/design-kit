@@ -2,7 +2,8 @@ import * as kit from 'design-kit-release/react';
 import type { ReactElement, ReactNode } from 'react';
 
 import { declaredIn } from '../../design-kit/examples/palette.js';
-import { CONTROLS, type State } from '../../design-kit/examples/states.js';
+import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
+import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { type Route, ROUTES } from './routes.js';
 import { Colors, Contrast, Scale } from './tokens.js';
 
@@ -95,12 +96,20 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 /**
  * One state of a control, drawn live in the visitor's theme and again in the other theme beside
  * it. The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are
- * its own, so the page never holds one twice. Under both, the state's name and the attribute that
+ * its own, so the page never holds one twice. A pictured state's copy in the visitor's theme is
+ * inert too, and labeled as the other is. Under both, the state's name and the attribute that
  * draws it.
  */
-const StateShown = ({ state }: { readonly state: State }) => (
+const StateShown = ({ state, pictured }: { readonly state: State; readonly pictured: boolean }) => (
     <li className="site-state">
-        <div className="site-copy">{state.draw(kit, (name) => name)}</div>
+        {pictured ? (
+            <div className="site-copy" inert>
+                <p className="site-copy-label">Your theme</p>
+                {state.draw(kit, (name) => `${name}-yours`)}
+            </div>
+        ) : (
+            <div className="site-copy">{state.draw(kit, (name) => name)}</div>
+        )}
         <div className="site-copy site-other" inert>
             <p className="site-copy-label">The other theme</p>
             {state.draw(kit, (name) => `${name}-other`)}
@@ -110,6 +119,32 @@ const StateShown = ({ state }: { readonly state: State }) => (
         </p>
     </li>
 );
+
+/**
+ * Each control under its own heading, with each of its states, side by side, or one above the other
+ * at the column's full width where the states are `wide`.
+ */
+const Shown = ({
+    controls,
+    wide = false,
+}: {
+    readonly controls: readonly Control[];
+    readonly wide?: boolean;
+}) =>
+    controls.map((control) => (
+        <section key={control.name}>
+            <h2 id={control.name.toLowerCase().replaceAll(' ', '-')}>{control.name}</h2>
+            <ul className={wide ? 'site-states site-states-wide' : 'site-states'} role="list">
+                {control.states.map((state) => (
+                    <StateShown
+                        key={state.name}
+                        state={state}
+                        pictured={control.pictured ?? false}
+                    />
+                ))}
+            </ul>
+        </section>
+    ));
 
 /** Each state of the buttons, fields and callouts. */
 export const Controls = ({ build }: { readonly build: Build }) => (
@@ -123,16 +158,51 @@ export const Controls = ({ build }: { readonly build: Build }) => (
             you see and what a screen reader says come from one place. A kind of control, such as
             the one action a view leads with or a callout&rsquo;s tone, is a class.
         </p>
-        {CONTROLS.map((control) => (
-            <section key={control.name}>
-                <h2 id={control.name.toLowerCase()}>{control.name}</h2>
-                <ul className="site-states" role="list">
-                    {control.states.map((state) => (
-                        <StateShown key={state.name} state={state} />
-                    ))}
-                </ul>
-            </section>
-        ))}
+        <Shown controls={CONTROLS} />
+    </Page>
+);
+
+/** The skip link, and each state of the strip and the footer, as pictures. */
+export const Chrome = ({ build }: { readonly build: Build }) => (
+    <Page build={build} current="page-chrome/index.html">
+        <h1>Page chrome</h1>
+        <p className="site-lead">
+            The skip link, strip and footer every demo draws around its page, so a visitor finds the
+            same way in, the same links and the same way out on each one. The ones around this page
+            are the kit&rsquo;s own, drawn live by its components.
+        </p>
+        <p>
+            Below, each state of the strip and the footer is drawn again in your theme and in the
+            other, as pictures the keyboard and a screen reader pass over. A second live strip would
+            give this page a second portfolio navigation, and a screen reader lists each one.
+        </p>
+        <section>
+            <h2 id="skip-link">Skip link</h2>
+            <p>
+                The skip link is the first thing the keyboard reaches, out of sight until then.
+                Press Tab at the top of this page to see it. Following it moves focus past the strip
+                to the page&rsquo;s main content.
+            </p>
+        </section>
+        <Shown controls={CHROME} wide />
+    </Page>
+);
+
+/** An explainer's layout as a picture, and each piece it holds, live. */
+export const Pieces = ({ build }: { readonly build: Build }) => (
+    <Page build={build} current="explainer-pieces/index.html">
+        <h1>Explainer pieces</h1>
+        <p className="site-lead">
+            The pieces of the page that says how a demo works, the one each strip&rsquo;s &ldquo;How
+            it works&rdquo; link leads to. A page writes them by hand, since none has logic for a
+            component to hide, and the kit&rsquo;s sheet draws them.
+        </p>
+        <p>
+            Each piece is live in your theme, with a copy in the other theme beside it. The
+            page&rsquo;s own layout is drawn as a picture in both, since it holds a heading of the
+            first level, and this page has its own.
+        </p>
+        <Shown controls={EXPLAINER} />
     </Page>
 );
 
@@ -199,4 +269,6 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'index.html': (build) => <Landing build={build} />,
     'tokens/index.html': (build) => <Tokens build={build} />,
     'controls/index.html': (build) => <Controls build={build} />,
+    'page-chrome/index.html': (build) => <Chrome build={build} />,
+    'explainer-pieces/index.html': (build) => <Pieces build={build} />,
 };

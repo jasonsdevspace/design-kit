@@ -31,6 +31,22 @@ export const ROUTES = [
         description:
             'Each state of the design kit’s buttons, fields and callouts, in both themes, with the attribute that draws it.',
     },
+    {
+        file: 'page-chrome/index.html',
+        path: `${BASE}page-chrome/`,
+        title: 'Page chrome · The design kit · Jason Poteet',
+        nav: 'Page chrome',
+        description:
+            'The skip link, strip and footer the design kit draws around every demo, in both themes, with the attribute that draws each state.',
+    },
+    {
+        file: 'explainer-pieces/index.html',
+        path: `${BASE}explainer-pieces/`,
+        title: 'Explainer pieces · The design kit · Jason Poteet',
+        nav: 'Explainer pieces',
+        description:
+            'The layout, steps, panels, tables and code blocks of the page that says how a demo works, in both themes.',
+    },
 ] as const;
 
 export type Route = (typeof ROUTES)[number];

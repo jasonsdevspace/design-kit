@@ -185,10 +185,18 @@ for (const path of PAGES) {
 
     test(`${path} has one of each landmark and no id twice`, async ({ page }) => {
         await page.goto(path);
-        await expect(page.getByRole('main')).toHaveCount(1);
-        await expect(page.getByRole('contentinfo')).toHaveCount(1);
-        await expect(page.getByRole('navigation', { name: 'Portfolio' })).toHaveCount(1);
-        expect(await page.getByRole('banner').count()).toBeLessThanOrEqual(1);
+        // Playwright finds a role inside an inert copy, which the browser leaves out of what a
+        // screen reader is given, so only the landmarks outside every copy are counted.
+        const landmarks = (role: 'banner' | 'contentinfo' | 'main' | 'navigation', name?: string) =>
+            page
+                .getByRole(role, name === undefined ? {} : { name })
+                .evaluateAll(
+                    (all) => all.filter((each) => each.closest('[inert]') === null).length
+                );
+        expect(await landmarks('main')).toBe(1);
+        expect(await landmarks('contentinfo')).toBe(1);
+        expect(await landmarks('navigation', 'Portfolio')).toBe(1);
+        expect(await landmarks('banner')).toBeLessThanOrEqual(1);
         const ids = await page.evaluate(() =>
             [...document.querySelectorAll('[id]')].map((element) => element.id)
         );
@@ -254,5 +262,39 @@ test.describe('the tokens page', () => {
         const margins = rows.map(([needs = 0, ...ratios]) => Math.min(...ratios) / needs);
         expect(margins.every((margin) => margin >= 1)).toBe(true);
         expect(margins).toEqual([...margins].sort((a, b) => a - b));
+    });
+});
+
+test.describe('the page chrome page', () => {
+    test("draws the kit's chrome live around the page, and each state only as a picture", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/page-chrome/');
+        // The page's own skip link, strip and footer are the live ones.
+        await page.keyboard.press('Tab');
+        await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+        await expect(page.locator('body > .dk-strip, body > .dk-footer')).toHaveCount(2);
+        const copies = page.locator('.site-copy');
+        expect(await copies.count()).toBeGreaterThan(0);
+        expect(
+            await copies.evaluateAll((all) => all.filter((copy) => !copy.hasAttribute('inert')))
+        ).toEqual([]);
+    });
+});
+
+test.describe('the explainer pieces page', () => {
+    test("draws each piece live in the visitor's theme, and the page's layout as a picture", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/explainer-pieces/');
+        const live = page.locator('.site-copy:not([inert])');
+        await expect(
+            live.getByRole('table', { name: 'Orders a second under each strategy' })
+        ).toBeVisible();
+        await expect(
+            live.getByRole('region', { name: 'The statement that holds the stock' })
+        ).toBeVisible();
+        await expect(page.locator('.site-copy:not([inert]) .dk-explainer')).toHaveCount(0);
+        await expect(page.locator('.site-copy[inert] .dk-explainer')).toHaveCount(2);
     });
 });

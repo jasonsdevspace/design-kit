@@ -1,0 +1,213 @@
+import type { Control, State } from './states.js';
+
+/*
+ * The page chrome and an explainer's pieces, named, with the attribute that draws each, for a page
+ * that shows them one by one, as `states.tsx` holds the controls. The chrome is drawn by the
+ * components a page is given, and the explainer's pieces, which no component draws, as a page
+ * writes them by hand. The README draws its blocks for the steps, the panel, the table and the code
+ * block from here too, so the two never differ.
+ */
+
+/** A demo's repository and its explainer, as the examples name them. */
+const SOURCE = 'https://github.com/jasonsdevspace/example';
+const ABOUT = './about/';
+
+export const CHROME: readonly Control[] = [
+    {
+        name: 'Strip',
+        pictured: true,
+        states: [
+            {
+                name: "The strip on a demo's page",
+                attribute: 'class="dk-strip"',
+                draw: ({ PortfolioStrip }) => <PortfolioStrip about={ABOUT} source={SOURCE} />,
+            },
+            {
+                name: "The strip with a demo's switches",
+                attribute: 'class="dk-strip-tools"',
+                draw: ({ PortfolioStrip }) => (
+                    <PortfolioStrip
+                        about={ABOUT}
+                        source={SOURCE}
+                        tools={<button type="button">Tour</button>}
+                    />
+                ),
+            },
+            {
+                name: 'The strip while the switches are on their way',
+                attribute: 'class="dk-strip-room"',
+                draw: ({ PortfolioStrip }) => (
+                    <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
+                ),
+            },
+            {
+                name: "The strip on a demo's explainer",
+                attribute: 'aria-current="page"',
+                draw: ({ PortfolioStrip }) => (
+                    <PortfolioStrip about={ABOUT} source={SOURCE} current="about" />
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Footer',
+        pictured: true,
+        states: [
+            {
+                name: "The footer on a demo's page",
+                attribute: 'class="dk-footer"',
+                draw: ({ DemoFooter }) => (
+                    <DemoFooter name="Example" about={ABOUT} source={SOURCE} />
+                ),
+            },
+            {
+                name: "The footer on a demo's explainer",
+                attribute: 'aria-current="page"',
+                draw: ({ DemoFooter }) => (
+                    <DemoFooter name="Example" about={ABOUT} source={SOURCE} current="about" />
+                ),
+            },
+        ],
+    },
+];
+
+/** The steps of a flow, each a title and a note, with an arrow from the step before. */
+export const steps: State = {
+    name: 'The steps of a flow',
+    attribute: 'class="dk-steps"',
+    draw: () => (
+        <ol className="dk-steps" role="list">
+            <li>
+                <strong className="dk-steps-title">The order names a product.</strong>
+                <span className="dk-steps-note">And how many of it.</span>
+            </li>
+            <li>
+                <span className="dk-steps-arrow" aria-hidden="true">
+                    ↓
+                </span>
+                <strong className="dk-steps-title">It waits its turn.</strong>
+                <span className="dk-steps-note">Behind any order for the same product.</span>
+            </li>
+        </ol>
+    ),
+};
+
+/** A panel set apart from the prose, with its title. */
+export const panel: State = {
+    name: 'A panel',
+    attribute: 'class="dk-panel"',
+    draw: () => (
+        <div className="dk-panel">
+            <p className="dk-panel-title">How the numbers were taken</p>
+            <p>...</p>
+        </div>
+    ),
+};
+
+/** A table of figures, titled, in a frame that scrolls inside itself. */
+export const table: State = {
+    name: 'A table of figures',
+    attribute: 'class="dk-table"',
+    draw: (_kit, id) => (
+        <>
+            <p className="dk-table-title" id={id('bench-title')}>
+                Orders a second under each strategy
+            </p>
+            <div
+                className="dk-table-scroll"
+                role="region"
+                aria-labelledby={id('bench-title')}
+                tabIndex={0}
+            >
+                <table className="dk-table" aria-labelledby={id('bench-title')}>
+                    <thead>
+                        <tr>
+                            <th scope="col">Scenario</th>
+                            <th scope="col" className="dk-table-number">
+                                Orders a second
+                            </th>
+                            <th scope="col" className="dk-table-number">
+                                Slowest 1%, ms
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Hot product, row lock</th>
+                            <td className="dk-table-number">700</td>
+                            <td className="dk-table-number">48.5</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </>
+    ),
+};
+
+/** A block of code, titled, that keeps its lines and scrolls inside itself. */
+export const code: State = {
+    name: 'A block of code',
+    attribute: 'class="dk-code"',
+    draw: (_kit, id) => (
+        <>
+            <p className="dk-code-title" id={id('lock-title')}>
+                The statement that holds the stock
+            </p>
+            <pre
+                className="dk-code"
+                role="region"
+                aria-labelledby={id('lock-title')}
+                tabIndex={0}
+                translate="no"
+            >
+                <code>
+                    {'UPDATE stock SET held = held + 1\nWHERE product_id = $1 AND held < on_hand;'}
+                </code>
+            </pre>
+        </>
+    ),
+};
+
+export const EXPLAINER: readonly Control[] = [
+    {
+        name: 'The page',
+        pictured: true,
+        states: [
+            {
+                name: "An explainer's opening and its first section",
+                attribute: 'class="dk-explainer"',
+                // A div rather than main, and a picture, since the page it is shown on has its own
+                // main content and its own h1.
+                draw: () => (
+                    <>
+                        <div className="dk-explainer-header">
+                            <a href="../">Example</a>
+                        </div>
+                        <div className="dk-explainer">
+                            <h1>How Example works</h1>
+                            <p className="dk-explainer-lead">
+                                What the demo does, in a sentence or two.
+                            </p>
+                            <p>
+                                <a className="dk-button dk-button-accent" href="../">
+                                    Open the demo
+                                </a>
+                            </p>
+                            <section>
+                                <p className="dk-explainer-number" aria-hidden="true">
+                                    01
+                                </p>
+                                <h2>What happens when an order comes in</h2>
+                                <p>...</p>
+                            </section>
+                        </div>
+                    </>
+                ),
+            },
+        ],
+    },
+    { name: 'Steps', states: [steps] },
+    { name: 'Panels', states: [panel] },
+    { name: 'Tables', states: [table] },
+    { name: 'Code blocks', states: [code] },
+];

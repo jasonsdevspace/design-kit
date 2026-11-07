@@ -45,7 +45,11 @@ block for the theme script is no piece's markup, and is written by hand.
 `examples/states.tsx` holds each state of each control the site shows one by one, named, with the
 attribute that draws it. It takes the components it draws with rather than importing them, and
 imports nothing of the kit's but its types, so the site draws the states from the version of the
-kit it pins and the kit's own tests draw them from the sources.
+kit it pins and the kit's own tests draw them from the sources. `examples/pieces.tsx` holds the
+states of the page chrome and of an explainer's pieces the same way. The chrome's states are marked
+as pictures, which the site draws inert in both themes, since a live strip would give a page a
+second portfolio navigation. The README's blocks for the steps, the panel, the table and the code
+block are drawn from it, so the README and the site show one markup.
 
 `examples/palette.ts` holds the color roles, each pairing the palette is meant for at its ratio,
 and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the
@@ -79,9 +83,9 @@ The paths are in `packages/design-kit`.
   differs, finds a marker for every example, none twice and each with a block after it, closes an
   empty block at its own fence, keeps the line endings of a checkout that ends lines with a carriage
   return, and refuses a marker that names no example.
-- `examples/states.test.tsx` draws each state from the sources and finds the attribute printed under
-  it, whole, finds each copy's ids its own, and finds the module importing nothing of the kit but
-  its types.
+- `examples/states.test.tsx` draws each state of the controls, the chrome and an explainer's pieces
+  from the sources and finds the attribute printed under it, whole, finds each copy's ids its own,
+  and finds `states.tsx` and `pieces.tsx` importing nothing of the kit but its types.
 - `e2e/controls.spec.tsx` draws the examples' states of every control, `e2e/explainer.spec.tsx`
   draws their steps, and `e2e/chrome.spec.tsx` names the repository they name.
 - `src/tokens.test.ts` measures every pairing in `examples/palette.ts` from the sources, in both

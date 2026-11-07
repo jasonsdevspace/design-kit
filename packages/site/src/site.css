@@ -18,8 +18,13 @@
     margin-top: 0;
 }
 
-.site-lead {
+/* The site's own prose holds to the kit's measure, as an explainer's does. */
+.site-main > p,
+.site-main > section > p {
     max-width: var(--dk-measure);
+}
+
+.site-lead {
     font-size: var(--dk-text-lead);
 }
 
@@ -68,7 +73,20 @@
     gap: var(--dk-space-3);
 }
 
+/*
+ * Chrome that runs the width of a page is shown at the column's full width, one copy above the
+ * other, so it lays out as it does around a page.
+ */
+.site-states-wide .site-state {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * A copy may shrink below what it holds, so a table or a block of code in it scrolls in its own
+ * frame on a narrow screen rather than widening the page.
+ */
 .site-copy {
+    min-width: 0;
     padding: var(--dk-space-4);
     border: 1px solid var(--dk-line);
     border-radius: var(--dk-radius);

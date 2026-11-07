@@ -77,13 +77,15 @@ The paths are in `packages/site`.
 - `e2e/site.spec.ts` opens every page in the site's routes, from the preview the Playwright config
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
-  main, one footer and one portfolio navigation, at most one banner, no id twice, and nothing the
-  page's policy refuses, with the theme script setting the theme only because its hash lets it run.
-  It also finds the keyboard never stopping inside a copy drawn in the other theme, each such copy
-  inert and drawn in a ground and text that differ from the page's, and each state's live copy
-  carrying the attribute printed under it. On the tokens page it finds each swatch drawn in the
+  main, one footer and one portfolio navigation outside the inert copies, at most one banner, no id
+  twice, and nothing the page's policy refuses, with the theme script setting the theme only
+  because its hash lets it run. It also finds the keyboard never stopping inside a copy drawn in the
+  other theme, each such copy inert and drawn in a ground and text that differ from the page's, and
+  each state's copy in the visitor's theme carrying the attribute printed under it. On the tokens page it finds each swatch drawn in the
   value printed beside it, in both themes, and every pairing at or above what it needs, listed
-  tightest first.
+  tightest first. On the page chrome page it finds the page's own skip link, strip and footer live
+  and every copy of a state inert, and on the explainer pieces page each piece live in the
+  visitor's theme and the explainer's layout drawn only as a picture.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.
