@@ -39,8 +39,9 @@ demo from npm as it was packed, with no script of the kit's to run.
 
 ## Consequences
 
-- A clone has no `dist` until `npm run build` or a pack. The unit and browser tests read the
-  sources, so only the packed install exercises `dist`.
+- A clone has no `dist` until `npm run build` or a pack. The kit's unit and browser tests read the
+  sources, so only the packed install, and the site's tests over this commit's packed kit, exercise
+  this commit's `dist`. The site draws the `dist` of the version it pins.
 - npm packs a package's license from the package's own folder, so `packages/design-kit` keeps a
   copy of the repository's `LICENSE`, held to the root's by a test.
 - The package keeps a README of its own, written for a reader who never sees the repository, and
