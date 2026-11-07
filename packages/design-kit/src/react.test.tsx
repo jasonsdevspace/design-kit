@@ -247,6 +247,30 @@ describe('the button', () => {
 });
 
 describe('a field', () => {
+    it('takes a ref typed as the control it draws, and refuses one of another element', () => {
+        // Only a browser attaches a ref, so ref.spec.ts finds focus on the control through it.
+        const name = createRef<HTMLInputElement>();
+        const size = createRef<HTMLSelectElement>();
+        expect(renderToStaticMarkup(<InputField id="name" label="Name" ref={name} />)).toContain(
+            '<input class="dk-input" id="name"/>'
+        );
+        const select = (
+            <SelectField id="size" label="Size" ref={size}>
+                <option>Small</option>
+            </SelectField>
+        );
+        expect(renderToStaticMarkup(select)).toContain('<select class="dk-select" id="size">');
+        // @ts-expect-error An input field's ref is the input drawn, not the select of another.
+        expect(renderToStaticMarkup(<InputField label="Name" ref={size} />)).toBeTruthy();
+        // @ts-expect-error A select field's ref is the select drawn, not the input of another.
+        expect(renderToStaticMarkup(<SelectField label="Size" ref={name} />)).toBeTruthy();
+        // A page that hands on a ref it may not have been given, as a wrapper does, compiles too.
+        const NameField = ({ ref }: { readonly ref?: Ref<HTMLInputElement> | undefined }) => (
+            <InputField label="Name" ref={ref} />
+        );
+        expect(renderToStaticMarkup(<NameField />)).toContain('<input class="dk-input"');
+    });
+
     it('ties a label to the control, and draws nothing it was not given', () => {
         expect(renderToStaticMarkup(<InputField id="email" label="Email" />)).toBe(
             '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +

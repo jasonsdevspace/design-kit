@@ -395,8 +395,10 @@ export const Checkout = ({ error, saved }: Props) => {
   null or false drawing nothing. `id` is the control's, made with React's `useId` unless given, and
   a page gives one when something links to the field, such as an error summary. Every other prop
   goes to the `<input>` but `style` and `aria-invalid`. A `className` follows `dk-input`, and an
-  `aria-describedby` of the page's own is listed after the hint and the error.
-- `SelectField` takes the same props, with its children as the options of the `<select>`.
+  `aria-describedby` of the page's own is listed after the hint and the error. A `ref` holds the
+  `<input>` drawn, for a page that moves focus to the field, such as a form that fails.
+- `SelectField` takes the same props, with its children as the options of the `<select>` and its
+  `ref` holding the `<select>`.
 - `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn at the
   start of the message as a paragraph or, with `headingLevel` from 2 to 6, as that heading, and as a
   paragraph for any other level. `actions` are drawn after the message. `prefix` is the word read

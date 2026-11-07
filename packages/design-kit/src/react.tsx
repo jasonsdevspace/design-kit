@@ -1,10 +1,4 @@
-import {
-    type ComponentPropsWithRef,
-    type InputHTMLAttributes,
-    type ReactNode,
-    type SelectHTMLAttributes,
-    useId,
-} from 'react';
+import { type ComponentPropsWithRef, type ReactNode, useId } from 'react';
 
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says
@@ -291,9 +285,12 @@ const Field = ({
 );
 
 export type InputFieldProps = FieldParts &
-    Omit<InputHTMLAttributes<HTMLInputElement>, 'style' | 'id' | 'aria-invalid' | 'children'>;
+    Omit<ComponentPropsWithRef<'input'>, 'style' | 'id' | 'aria-invalid' | 'children'>;
 
-/** A text input with its label, hint and error, the input taking every other prop given. */
+/**
+ * A text input with its label, hint and error, the input taking every other prop given, its `ref`
+ * among them, which holds the input drawn for a page that moves focus to it.
+ */
 export const InputField = (props: InputFieldProps) => {
     const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;
     const { 'aria-describedby': own, ...native } = rest;
@@ -306,9 +303,13 @@ export const InputField = (props: InputFieldProps) => {
 };
 
 export type SelectFieldProps = FieldParts &
-    Omit<SelectHTMLAttributes<HTMLSelectElement>, 'style' | 'id' | 'aria-invalid'>;
+    Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'>;
 
-/** A native select with its label, hint and error, its children the options. */
+/**
+ * A native select with its label, hint and error, its children the options, and the select taking
+ * every other prop given, its `ref` among them, which holds the select drawn for a page that moves
+ * focus to it.
+ */
 export const SelectField = (props: SelectFieldProps) => {
     const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;
     const { 'aria-describedby': own, children, ...native } = rest;
