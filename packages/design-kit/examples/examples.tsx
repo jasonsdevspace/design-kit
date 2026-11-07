@@ -15,8 +15,9 @@ import {
  * draw and the browser tests import it rather than keep copies. A piece is drawn by its component
  * where the block shows all of what the component draws, and written as a page without React
  * writes it otherwise. The README prints each example in EXAMPLES as HTML, and a test fails when
- * one of its blocks no longer matches. The states of every control are drawn by the browser tests
- * alone. The package ships none of this.
+ * one of its blocks no longer matches. The README prints none of the states of each control,
+ * which the browser tests draw from `controlStates` and the site from `states.tsx`. The package
+ * ships none of this.
  */
 
 /** A demo's repository, as the examples name it. */

@@ -13,8 +13,10 @@ import { BASE, ROUTES } from './src/routes.js';
 
 const SITE = fileURLToPath(new URL('.', import.meta.url));
 
-/** Where a page asks for its body, and the element that carries its policy. */
+/** Where a page asks for its body, its title and its description, and the element for its policy. */
 const PAGE = '<!-- page -->';
+const TITLE = '<!-- title -->';
+const DESCRIPTION = '<!-- description -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /** The version of the kit the site installed from npm, and the commit it is built at, read once. */
@@ -27,9 +29,17 @@ const BUILD: Build = {
 
 const isPage = (file: string): file is keyof typeof PAGES => Object.hasOwn(PAGES, file);
 
+/** Text set into a page's head, with what HTML reads as markup written as character references. */
+const escaped = (text: string) =>
+    text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+
 /**
  * Draws each page's body with React's static render, by the HTML file it is built from, and
- * writes its policy, as the page is built. The pages carry no script of React's, so what a visitor
+ * writes its title, its description and its policy, as the page is built. The pages carry no script of React's, so what a visitor
  * gets is the markup and the kit's sheets. The dev server's own script and styles are not the
  * site's, so a page it serves carries no policy, and the preview the tests open serves the build.
  */
@@ -39,16 +49,26 @@ const pagesPlugin = (): Plugin => ({
         order: 'pre',
         handler: (html, context) => {
             const file = relative(SITE, context.filename).split('\\').join('/');
-            if (!isPage(file)) throw new Error(`the site has no page drawn from ${file}`);
-            if (!html.includes(PAGE) || !POLICY_META.test(html)) {
-                throw new Error(`${file} needs a place for its body and its policy`);
+            const route = ROUTES.find((each) => each.file === file);
+            if (route === undefined || !isPage(file)) {
+                throw new Error(`the site has no page drawn from ${file}`);
+            }
+            if (
+                ![PAGE, TITLE, DESCRIPTION].every((place) => html.includes(place)) ||
+                !POLICY_META.test(html)
+            ) {
+                throw new Error(`${file} needs a place for each part of its page`);
             }
             const body = renderToStaticMarkup(PAGES[file](BUILD));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`
                     : '';
-            return html.replace(POLICY_META, () => policy).replace(PAGE, () => body);
+            return html
+                .replace(POLICY_META, () => policy)
+                .replace(TITLE, () => escaped(route.title))
+                .replace(DESCRIPTION, () => escaped(route.description))
+                .replace(PAGE, () => body);
         },
     },
 });
@@ -63,6 +83,11 @@ export default defineConfig({
     plugins: [pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
+        // The kit's own browser floor, as record 3 sets it, so the minifier leaves each light-dark()
+        // as it is, resolved by the scheme of the element that uses it. A wider target rewrites it
+        // into variables that resolve where the tokens are set, on the root, so a copy in the other
+        // scheme would keep the page's colors.
+        cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
         rollupOptions: {
             input: Object.fromEntries(
                 ROUTES.map(({ file }) => [file, fileURLToPath(new URL(file, import.meta.url))])

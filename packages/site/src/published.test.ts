@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import site from '../package.json' with { type: 'json' };
+import { ROUTES } from './routes.js';
 
 /*
  * The site draws the kit a demo installs, the version npm publishes and the site pins exactly, as
@@ -16,7 +17,7 @@ const ROOT = new URL('../../../', import.meta.url);
 
 /** Every file the site is built, tested or audited from, leaving out what is built or installed. */
 const sources = [
-    'index.html',
+    ...ROUTES.map(({ file }) => file),
     'vite.config.ts',
     ...['src', 'e2e', 'bench'].flatMap((folder) =>
         readdirSync(new URL(folder, SITE), { recursive: true })
@@ -25,8 +26,12 @@ const sources = [
     ),
 ].filter((file) => /\.(tsx?|css|html)$/.test(file) && !file.endsWith('published.test.ts'));
 
-/** The kit by its own name, or a path into the workspace's copy of it. */
-const OTHER_WAY = /@jasonsdevspace\/design-kit\/|\.\.\/design-kit\b|design-kit\/(src|dist)\//;
+/**
+ * The kit by its own name, or a path into the workspace's copy of it, past the states the examples
+ * hold, which import nothing of the kit's but its types and take the components they draw.
+ */
+const OTHER_WAY =
+    /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/states\.js')(?=['"/])|design-kit\/(src|dist)\//;
 
 describe('the site', () => {
     it('pins the published kit to one exact version', () => {
