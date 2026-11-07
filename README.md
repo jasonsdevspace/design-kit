@@ -253,6 +253,7 @@ they document, not by a test here.
 | The site draws under `style-src 'self'`, its one script the theme script by its hash                              | `packages/site/e2e/site.spec.ts`               |
 | The site draws the published kit at one exact version, and nothing from the kit's sources                         | `packages/site/src/published.test.ts`          |
 | A copy of a state in the other theme draws in that theme, and the keyboard never stops inside it                  | `packages/site/e2e/site.spec.ts`               |
+| The tokens page draws each swatch in the value printed beside it, and lists every pairing tightest first          | `packages/site/e2e/site.spec.ts`               |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`            |
 
 ## Decisions
@@ -380,7 +381,8 @@ packages/
 │   │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome,
 │   │                 the buttons, the fields and the callouts), and their tests
 │   ├── examples/     the markup the README prints and the browser tests import, the states
-│   │                 of each control the site shows, and the tests that hold both
+│   │                 of each control the site shows, the palette's pairings and their
+│   │                 measure, and the tests that hold them
 │   ├── e2e/          the sheets, the theme script, the page chrome, the controls, the refs a
 │   │                 button and the fields take, and an explainer page as Chromium runs them
 │   └── smoke/        the packed package as a page installs it, on the oldest Node

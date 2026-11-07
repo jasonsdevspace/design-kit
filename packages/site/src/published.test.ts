@@ -31,7 +31,7 @@ const sources = [
  * hold, which import nothing of the kit's but its types and take the components they draw.
  */
 const OTHER_WAY =
-    /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/states\.js')(?=['"/])|design-kit\/(src|dist)\//;
+    /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/(states|palette)\.js')(?=['"/])|design-kit\/(src|dist)\//;
 
 describe('the site', () => {
     it('pins the published kit to one exact version', () => {

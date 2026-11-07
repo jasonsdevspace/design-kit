@@ -112,3 +112,65 @@
     color: var(--dk-muted);
     font-size: var(--dk-text-small);
 }
+
+/* A swatch of each color role, drawn in the scheme of the column it sits in, and nothing else. */
+.site-light {
+    color-scheme: light;
+}
+
+.site-dark {
+    color-scheme: dark;
+}
+
+.site-swatch {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-end: var(--dk-space-2);
+    border: 1px solid var(--dk-control);
+    border-radius: var(--dk-radius-small);
+    vertical-align: middle;
+}
+
+.site-swatch-bg {
+    background: var(--dk-bg);
+}
+.site-swatch-surface {
+    background: var(--dk-surface);
+}
+.site-swatch-raised {
+    background: var(--dk-raised);
+}
+.site-swatch-fg {
+    background: var(--dk-fg);
+}
+.site-swatch-muted {
+    background: var(--dk-muted);
+}
+.site-swatch-line {
+    background: var(--dk-line);
+}
+.site-swatch-control {
+    background: var(--dk-control);
+}
+.site-swatch-accent {
+    background: var(--dk-accent);
+}
+.site-swatch-on-accent {
+    background: var(--dk-on-accent);
+}
+.site-swatch-highlight {
+    background: var(--dk-highlight);
+}
+.site-swatch-success {
+    background: var(--dk-success);
+}
+.site-swatch-success-bg {
+    background: var(--dk-success-bg);
+}
+.site-swatch-danger {
+    background: var(--dk-danger);
+}
+.site-swatch-danger-bg {
+    background: var(--dk-danger-bg);
+}

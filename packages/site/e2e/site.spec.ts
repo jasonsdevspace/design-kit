@@ -214,3 +214,45 @@ for (const path of PAGES) {
         expect(refused).toEqual([]);
     });
 }
+
+test.describe('the tokens page', () => {
+    test('draws each swatch in the value printed beside it, in its column’s theme', async ({
+        page,
+    }) => {
+        for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme });
+            await page.goto('/design-kit/tokens/');
+            const wrong = await page.evaluate(() => {
+                const hex = (rgb: string) =>
+                    `#${(rgb.match(/\d+/g) ?? [])
+                        .slice(0, 3)
+                        .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+                        .join('')}`;
+                return [...document.querySelectorAll('.site-swatch')].flatMap((swatch) => {
+                    const printed = swatch.nextElementSibling?.textContent ?? '';
+                    const drawn = hex(getComputedStyle(swatch).backgroundColor);
+                    return drawn === printed.toLowerCase() ? [] : [`${printed} drawn as ${drawn}`];
+                });
+            });
+            expect(wrong, colorScheme).toEqual([]);
+        }
+    });
+
+    test('lists every pairing at or above what it needs, the tightest first', async ({ page }) => {
+        await page.goto('/design-kit/tokens/');
+        const rows = await page
+            .getByRole('table', { name: 'The contrast of every pairing, the tightest first' })
+            .locator('tbody tr')
+            .evaluateAll((trs) =>
+                trs.map((tr) =>
+                    [...tr.querySelectorAll('td.dk-table-number')].map((cell) =>
+                        Number.parseFloat(cell.textContent)
+                    )
+                )
+            );
+        expect(rows.length).toBeGreaterThan(0);
+        const margins = rows.map(([needs = 0, ...ratios]) => Math.min(...ratios) / needs);
+        expect(margins.every((margin) => margin >= 1)).toBe(true);
+        expect(margins).toEqual([...margins].sort((a, b) => a - b));
+    });
+});

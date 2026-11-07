@@ -47,6 +47,10 @@ attribute that draws it. It takes the components it draws with rather than impor
 imports nothing of the kit's but its types, so the site draws the states from the version of the
 kit it pins and the kit's own tests draw them from the sources.
 
+`examples/palette.ts` holds the color roles, each pairing the palette is meant for at its ratio,
+and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the
+sources with it, and the site measures and shows the version it pins.
+
 ## Consequences
 
 - A change to a piece's markup is made once, and `npm run examples` carries it to the README. Until
@@ -77,5 +81,7 @@ The paths are in `packages/design-kit`.
   its types.
 - `e2e/controls.spec.tsx` draws the examples' states of every control, `e2e/explainer.spec.tsx`
   draws their steps, and `e2e/chrome.spec.tsx` names the repository they name.
+- `src/tokens.test.ts` measures every pairing in `examples/palette.ts` from the sources, in both
+  themes.
 - The oldest Node job in CI installs the packed package, where `smoke/consumer.mjs` finds no file
   under `examples` in it.
