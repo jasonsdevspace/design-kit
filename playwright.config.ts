@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /*
- * The sheets and the theme script in a real browser, since only a browser resolves light-dark(),
- * draws the focus ring and gives a page its storage. The sheets' tests write their page into the
- * browser, and the theme script's serve it from a test origin, from memory.
+ * The sheets, the theme script and the components in a real browser, since only a browser resolves
+ * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
+ * script's tests serve their page from a test origin, from memory, and the rest write it into the
+ * browser.
  */
 export default defineConfig({
     testDir: 'packages',

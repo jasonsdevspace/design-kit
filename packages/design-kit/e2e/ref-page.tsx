@@ -1,20 +1,39 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Button } from '../src/react.js';
 
 /*
- * A page that moves focus to the kit's button through its ref, as a page does when a panel closes
- * and focus goes back to the button that opened it. Bundled and served by ref.spec.ts.
+ * A page that opens a panel from the kit's button and, when the panel closes, moves focus back to
+ * that button through its ref. The button is drawn again as the panel opens and closes, so the ref
+ * has to hold the button across each drawing. Bundled by ref.spec.ts, which writes it into the
+ * browser.
  */
 const Page = () => {
     const opener = useRef<HTMLButtonElement>(null);
+    const [open, setOpen] = useState(false);
     return (
         <main>
-            <Button ref={opener} aria-expanded={false}>
+            <Button
+                ref={opener}
+                aria-expanded={open}
+                aria-controls="tour"
+                onClick={() => {
+                    setOpen(!open);
+                }}
+            >
                 Tour
             </Button>
-            <Button onClick={() => opener.current?.focus()}>Close</Button>
+            <section id="tour" aria-label="Tour" hidden={!open}>
+                <Button
+                    onClick={() => {
+                        setOpen(false);
+                        opener.current?.focus();
+                    }}
+                >
+                    Close
+                </Button>
+            </section>
         </main>
     );
 };

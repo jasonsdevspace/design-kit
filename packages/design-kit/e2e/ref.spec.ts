@@ -11,6 +11,7 @@ import { build } from 'vite';
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
 
+/** The page and React as one module, since the page is written into a blank document. */
 const bundle = async (): Promise<string> => {
     const output = await build({
         configFile: false,
@@ -18,20 +19,31 @@ const bundle = async (): Promise<string> => {
         define: { 'process.env.NODE_ENV': JSON.stringify('production') },
         build: { write: false, lib: { entry: ENTRY, formats: ['es'], fileName: 'ref-page' } },
     });
-    const results = Array.isArray(output) ? output : [output];
-    for (const result of results) {
-        if (!('output' in result)) continue;
-        for (const chunk of result.output) if (chunk.type === 'chunk') return chunk.code;
-    }
-    throw new Error('the page built no script');
+    const chunks = (Array.isArray(output) ? output : [output])
+        .flatMap((result) => ('output' in result ? result.output : []))
+        .filter((file) => file.type === 'chunk');
+    const [only] = chunks;
+    if (chunks.length !== 1 || !only) throw new Error('the page should build into one script');
+    return only.code;
 };
 
-test('moves focus to the button a ref holds, the one the kit drew', async ({ page }) => {
-    const script = await bundle();
+let script = '';
+
+// Building React into the page takes a while on a slow runner, so it is done once, on its own clock.
+test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    script = await bundle();
+});
+
+test('moves focus back to the button a ref holds when its panel closes', async ({ page }) => {
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: script, type: 'module' });
     const opener = page.getByRole('button', { name: 'Tour' });
     await expect(opener).toHaveClass('dk-button');
+    await opener.click();
+    await expect(opener).toHaveAttribute('aria-expanded', 'true');
     await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeHidden();
+    await expect(opener).toHaveAttribute('aria-expanded', 'false');
     await expect(opener).toBeFocused();
 });

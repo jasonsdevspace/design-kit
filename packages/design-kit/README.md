@@ -359,7 +359,7 @@ export const Checkout = ({ error, saved }: Props) => {
   `aria-disabled="true"` and puts a click handler that calls `preventDefault()` in place of
   `onClick`, so the page's click handler does not run and a submit button does not submit. Any
   other handler the page passes, for keys or a pointer, still runs, and checks `off` itself. A
-  `className` follows the kit's classes. A `ref` is the `<button>` drawn, for a page that moves
+  `className` follows the kit's classes. A `ref` holds the `<button>` drawn, for a page that moves
   focus to it, such as the button that opened a panel when the panel closes.
 - `InputField` takes `label`, and `hint` and `error`, each drawn only when given, an empty string,
   null or false drawing nothing. `id` is the control's, made with React's `useId` unless given, and
