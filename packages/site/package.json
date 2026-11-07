@@ -1,0 +1,11 @@
+{
+    "name": "@jasonsdevspace/design-kit-site",
+    "private": true,
+    "description": "The site at jasonsdevspace.com/design-kit/ that shows the kit at work.",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "preview": "vite preview --port 4180 --strictPort"
+    }
+}

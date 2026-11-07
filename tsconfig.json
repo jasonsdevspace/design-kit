@@ -21,6 +21,8 @@
     "include": [
         "packages/*/src",
         "packages/*/examples",
+        "packages/site/vite.config.ts",
+        "packages/site/bench",
         "eslint.config.js",
         "vitest.config.ts",
         "playwright.config.ts"

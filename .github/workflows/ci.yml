@@ -18,7 +18,8 @@ permissions:
     contents: read
 
 # A newer push to a pull request supersedes the run in progress. Runs on main
-# wait their turn.
+# wait their turn, so a run that has handed the site to Pages is never canceled, which would leave
+# the deployment pending.
 concurrency:
     group: ci-${{ github.ref }}
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -112,6 +113,38 @@ jobs:
                   name: playwright-report
                   path: playwright-report
                   retention-days: 7
+
+    # Lighthouse over the built site, held to the demos' gates: accessibility at a hundred, and on a
+    # first visit as a slow phone makes it, performance at ninety or more, a good largest paint and
+    # no more layout shift than a good visit has.
+    lighthouse:
+        name: Lighthouse audits
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            # The audit drives Playwright's Chromium, installed as the browser tests install it.
+            - name: Install Chromium
+              timeout-minutes: 3
+              run: |
+                  npx playwright install chromium
+                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
+
+            - name: Lighthouse audits
+              run: npm run lighthouse
 
     # The package as a page that installs it gets it: packed on the Node the project builds on,
     # checked as a published manifest, and installed into an empty project on the lowest Node its
@@ -225,3 +258,55 @@ jobs:
                   if-no-files-found: error
                   retention-days: 7
                   overwrite: true
+
+    # The site, published to GitHub Pages at jasonsdevspace.com/design-kit/ once everything above
+    # has passed on main, so a merge that fails a check is never deployed. It is built in a job
+    # with no more than read access, so nothing the build installs or runs can deploy, and the
+    # deploy job runs only GitHub's own Pages actions.
+    site:
+        name: Build the site
+        needs: [verify, browser, lighthouse, floor]
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build the site
+              run: npm run site
+
+            - name: Upload the site
+              uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+              with:
+                  path: packages/site/dist
+
+    deploy:
+        name: Deploy the site
+        needs: site
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Configure Pages
+              uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
