@@ -21,7 +21,7 @@ export const ROUTES = [
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens and theme',
         description:
-            'The design kit\u2019s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how a page takes the theme a visitor saved.',
+            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how a page takes the theme a visitor saved.',
     },
     {
         file: 'controls/index.html',

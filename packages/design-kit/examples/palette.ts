@@ -1,7 +1,8 @@
 /*
  * The palette as a page reads it, from the tokens sheet itself, and each pairing it is meant for,
  * at the ratio WCAG asks of it. The sheet is passed in rather than read here, so the kit's tests
- * measure the sources and the site measures the version it pins, and this module imports nothing.
+ * measure the sources and the site measures the sheet of the version it pins, and this module
+ * imports nothing.
  */
 
 export const THEMES = ['light', 'dark'] as const;
@@ -41,7 +42,10 @@ export const contrast = (a: string, b: string): number => {
     return ((high ?? 0) + 0.05) / ((low ?? 0) + 0.05);
 };
 
-/** Each color role, and what a page draws with it. */
+/**
+ * Each color role a pairing is measured from, and what a page draws with it. The scrim is left out,
+ * since it is a translucent black rather than a color a pairing is measured against.
+ */
 export const ROLES: readonly (readonly [string, string])[] = [
     ['bg', 'The page itself'],
     ['surface', 'A card on the page'],

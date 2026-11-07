@@ -10,20 +10,41 @@ import {
 } from '../../design-kit/examples/palette.js';
 
 /** The custom properties the tokens sheet declares, by name. */
-type Declared = ReturnType<typeof declaredIn>;
+export type Declared = ReturnType<typeof declaredIn>;
 
 const THEME_NAMES = { light: 'Light', dark: 'Dark' } as const;
+
+/** A role's value, a `light-dark()` of two colors, as the palette reads one. */
+const TWO_COLORS = /^light-dark\(\s*#[\da-f]{6}\s*,\s*#[\da-f]{6}\s*\)$/i;
+
+/**
+ * The color roles the sheet itself declares, so the page shows the version it pins even when the
+ * kit's sources have since gained or lost a role, each with what it draws where the palette says.
+ */
+const rolesIn = (declared: Declared) =>
+    [...declared]
+        .filter(([, value]) => TWO_COLORS.test(value))
+        .map(([name]) => {
+            const role = name.replace(/^--dk-/, '');
+            return { role, draws: ROLES.find(([each]) => each === role)?.[1] ?? '' };
+        });
+
+/** A column of a table, and whether it holds figures, which sit to the right. */
+interface Column {
+    readonly name: string;
+    readonly figures?: boolean;
+}
 
 /** A table the kit draws, titled, in a frame that scrolls inside itself on a narrow screen. */
 const Table = ({
     id,
     title,
-    head,
+    columns,
     children,
 }: {
     readonly id: string;
     readonly title: string;
-    readonly head: readonly string[];
+    readonly columns: readonly Column[];
     readonly children: ReactNode;
 }) => (
     <>
@@ -34,15 +55,13 @@ const Table = ({
             <table className="dk-table" aria-labelledby={id}>
                 <thead>
                     <tr>
-                        {head.map((cell, index) => (
+                        {columns.map(({ name, figures = false }) => (
                             <th
-                                key={cell}
+                                key={name}
                                 scope="col"
-                                className={
-                                    index > 1 && head.length === 5 ? 'dk-table-number' : undefined
-                                }
+                                className={figures ? 'dk-table-number' : undefined}
                             >
-                                {cell}
+                                {name}
                             </th>
                         ))}
                     </tr>
@@ -58,9 +77,13 @@ export const Colors = ({ declared }: { readonly declared: Declared }) => (
     <Table
         id="colors-title"
         title="Each color role in both themes"
-        head={['Role', 'Draws', 'Light', 'Dark']}
+        columns={[
+            { name: 'Role' },
+            { name: 'Draws' },
+            ...THEMES.map((theme) => ({ name: THEME_NAMES[theme] })),
+        ]}
     >
-        {ROLES.map(([role, draws]) => (
+        {rolesIn(declared).map(({ role, draws }) => (
             <tr key={role}>
                 <th scope="row">
                     <code>--dk-{role}</code>
@@ -80,27 +103,37 @@ export const Colors = ({ declared }: { readonly declared: Declared }) => (
     </Table>
 );
 
+/** A ratio to the two places the page shows, rounded down, so a pairing is never shown passing. */
+const shown = (ratio: number) => Math.floor(ratio * 100) / 100;
+
 /**
- * A pairing's ratio in each theme, to the two places the page shows, and the lower of the two
- * against what the pairing needs, which is how tight it runs. The order follows the figures shown,
- * so it reads as sorted.
+ * Each pairing whose colors the sheet declares, its ratio in each theme as the page shows it, and
+ * the lower of the two against what the pairing needs, which is how tight it runs. The order
+ * follows the figures shown, so it reads as sorted.
  */
-const measuredIn = (declared: Declared) =>
-    PAIRS.map(([front, back, needs]) => {
-        const ratios = THEMES.map((theme) =>
-            Number(
-                contrast(colorOf(declared, front, theme), colorOf(declared, back, theme)).toFixed(2)
-            )
-        );
-        return { front, back, needs, ratios, margin: Math.min(...ratios) / needs };
-    }).sort((a, b) => a.margin - b.margin);
+const measuredIn = (declared: Declared) => {
+    const roles = new Set(rolesIn(declared).map(({ role }) => role));
+    return PAIRS.filter(([front, back]) => roles.has(front) && roles.has(back))
+        .map(([front, back, needs]) => {
+            const ratios = THEMES.map((theme) =>
+                shown(contrast(colorOf(declared, front, theme), colorOf(declared, back, theme)))
+            );
+            return { front, back, needs, ratios, margin: Math.min(...ratios) / needs };
+        })
+        .sort((a, b) => a.margin - b.margin);
+};
 
 /** Every pairing the palette is meant for, the tightest against what it needs first. */
 export const Contrast = ({ declared }: { readonly declared: Declared }) => (
     <Table
         id="contrast-title"
         title="The contrast of every pairing, the tightest first"
-        head={['Color', 'On', 'Needs', ...THEMES.map((theme) => THEME_NAMES[theme])]}
+        columns={[
+            { name: 'Color' },
+            { name: 'On' },
+            { name: 'Needs', figures: true },
+            ...THEMES.map((theme) => ({ name: THEME_NAMES[theme], figures: true })),
+        ]}
     >
         {measuredIn(declared).map(({ front, back, needs, ratios }) => (
             <tr key={`${front}-${back}`}>
@@ -121,11 +154,15 @@ export const Contrast = ({ declared }: { readonly declared: Declared }) => (
     </Table>
 );
 
-/** Every token that is not a color, by name, with its value as the sheet writes it. */
+/** Every token the color roles leave out, by name, with its value as the sheet writes it. */
 export const Scale = ({ declared }: { readonly declared: Declared }) => (
-    <Table id="scale-title" title="The scale a component is built from" head={['Token', 'Value']}>
+    <Table
+        id="scale-title"
+        title="The scale, and every other token"
+        columns={[{ name: 'Token' }, { name: 'Value' }]}
+    >
         {[...declared]
-            .filter(([, value]) => !value.includes('light-dark('))
+            .filter(([, value]) => !TWO_COLORS.test(value))
             .map(([name, value]) => (
                 <tr key={name}>
                     <th scope="row">

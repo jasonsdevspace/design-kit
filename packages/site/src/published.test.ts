@@ -27,8 +27,9 @@ const sources = [
 ].filter((file) => /\.(tsx?|css|html)$/.test(file) && !file.endsWith('published.test.ts'));
 
 /**
- * The kit by its own name, or a path into the workspace's copy of it, past the states the examples
- * hold, which import nothing of the kit's but its types and take the components they draw.
+ * The kit by its own name, or a path into the workspace's copy of it, past two modules of the
+ * examples that import nothing of the kit's: the states, which take the components they draw, and
+ * the palette, which takes the tokens sheet it measures.
  */
 const OTHER_WAY =
     /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/(states|palette)\.js')(?=['"/])|design-kit\/(src|dist)\//;

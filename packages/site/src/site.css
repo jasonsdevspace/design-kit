@@ -113,7 +113,10 @@
     font-size: var(--dk-text-small);
 }
 
-/* A swatch of each color role, drawn in the scheme of the column it sits in, and nothing else. */
+/*
+ * A swatch of each color role, drawn in the scheme of its column. Only the swatch takes the
+ * scheme, so the value printed beside it stays in the page's colors.
+ */
 .site-light {
     color-scheme: light;
 }

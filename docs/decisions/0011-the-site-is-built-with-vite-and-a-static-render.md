@@ -67,7 +67,8 @@ job that runs only GitHub's Pages actions deploys it.
   nothing.
 - The build's CSS target is the kit's own browser floor. With Vite's wider default, the minifier
   rewrites each `light-dark()` into variables the root sets, so a copy of a piece drawn in the other
-  scheme, as the controls page draws each state, would keep the page's colors.
+  scheme, as the controls page draws each state and the tokens page each swatch, would keep the
+  page's colors.
 
 ## How it is tested
 
@@ -80,7 +81,9 @@ The paths are in `packages/site`.
   page's policy refuses, with the theme script setting the theme only because its hash lets it run.
   It also finds the keyboard never stopping inside a copy drawn in the other theme, each such copy
   inert and drawn in a ground and text that differ from the page's, and each state's live copy
-  carrying the attribute printed under it.
+  carrying the attribute printed under it. On the tokens page it finds each swatch drawn in the
+  value printed beside it, in both themes, and every pairing at or above what it needs, listed
+  tightest first.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.
