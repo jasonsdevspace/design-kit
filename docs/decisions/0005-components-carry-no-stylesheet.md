@@ -59,10 +59,10 @@ The paths are in `packages/design-kit`.
 - `e2e/chrome.spec.tsx` draws that markup with the kit's sheets in Chromium and finds the strip one
   row over its rule on a wide screen and rows of links on a phone, whatever the font, the switches
   beside the links or on a row below them, the room of switches on their way holding the strip at
-  the height they give it, the skip link out of sight until the keyboard reaches it, then at the
-  column's inset where the strip's links start, and then landing on the content, the footer's rule
-  the width of the page with its text in the column, and no axe findings in either theme, on a wide
-  screen or a phone, with the switches or their room.
+  the height they give it, the skip link out of sight until the keyboard reaches it, at the top of a
+  page or inside a box near it, then at the column's inset where the strip's links start, and then
+  landing on the content, the footer's rule the width of the page with its text in the column, and
+  no axe findings in either theme, on a wide screen or a phone, with the switches or their room.
 - The same spec serves that markup and the kit's sheets from an origin of its own under
   `style-src 'self'`, and finds the strip laid out as before with nothing refused.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to

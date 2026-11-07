@@ -9,6 +9,9 @@ entry below as its notes.
 
 ## Unreleased
 
+- **Page chrome.** The skip link waits clipped to nothing in its own place, rather than 10rem above
+  it, so one inside a box that starts high on the page no longer shows over what is above the box
+  or takes its clicks. It shows where it did when a keyboard focuses it.
 - **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
   the link to how it works as the current page, for the footer on a demo's explainer.
 - **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps the room of one row of the

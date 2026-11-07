@@ -107,6 +107,12 @@ which has a tabindex of -1 so it can take focus.
 <main id="main-content" tabindex="-1">...</main>
 ```
 
+A skip link may also sit inside a box of the page's own, such as one at the top of a column of
+filters that leads past them to the results. It waits clipped to nothing in its own place, so it
+draws nothing and takes no click wherever the box starts on the page. A box that is positioned holds
+it, and it shows at the top of that box, inset as it is at the top of a page, when a keyboard
+reaches it.
+
 The strip holds a navigation landmark named Portfolio, with three links in this order: whose demo
 it is, how it works and the source. The strip on the demo's explainer marks the explainer's link
 with `aria-current="page"`. A demo with switches of its own puts them in a section after the links,

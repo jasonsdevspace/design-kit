@@ -12,10 +12,11 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * sheets: the strip one row over its rule on a wide screen and rows of links on a phone, whatever
  * font the machine running the test has, the demo's switches beside the links or below them, the
  * room of switches on their way holding the strip at the height they give it, the skip link out of
- * sight until the keyboard reaches it and then at the column's inset, the footer's rule the width
- * of the page with its text in the column, and no audit findings in either theme, the room
- * included. The same markup is drawn again from an origin of its own under `style-src 'self'`,
- * where any inline style would be refused.
+ * sight until the keyboard reaches it and then at the column's inset, one inside a box near the top
+ * of the page clipped out of sight and out of the way of a click until it takes focus, the footer's
+ * rule the width of the page with its text in the column, and no audit findings in either theme,
+ * the room included. The same markup is drawn again from an origin of its own under `style-src
+ * 'self'`, where any inline style would be refused.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -205,6 +206,47 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     expect(Math.round((await box(skip, 'the skip link')).x)).toBe((await stripLayout(page)).inset);
     await skip.press('Enter');
     await expect(page.locator('#main-content')).toBeFocused();
+});
+
+test('keeps a skip link inside a box near the top out of sight and out of the way of a click', async ({
+    page,
+}) => {
+    // A bar the page draws over a box of its own that starts high on the page, with a skip link
+    // at the box's top, as a demo puts one at the top of a column of filters.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
+            `<style>${KIT}</style></head><body>` +
+            '<header><button type="button" class="bar">Search</button></header>' +
+            '<main><div class="column">' +
+            renderToStaticMarkup(<SkipLink target="results">Skip to results</SkipLink>) +
+            '<p>Filters</p></div><div id="results" tabindex="-1">Results</div></main>' +
+            '</body></html>'
+    );
+    await page.addStyleTag({
+        content:
+            'body { margin: 0 } .bar { display: block; width: 100%; height: 200px } ' +
+            '.column { position: relative; padding-top: 64px }',
+    });
+    const skip = page.getByRole('link', { name: 'Skip to results' });
+    const where = await box(skip, 'the skip link');
+    const column = await box(page.locator('.column'), 'the column');
+    // Out of sight: the pixels where it sits are the same as with no skip link at all.
+    const waiting = await page.screenshot({ clip: where });
+    await page.addStyleTag({ content: '.hide-skip .dk-skip { visibility: hidden }' });
+    await page.evaluate(() => document.body.classList.add('hide-skip'));
+    expect(waiting.equals(await page.screenshot({ clip: where }))).toBe(true);
+    await page.evaluate(() => document.body.classList.remove('hide-skip'));
+    // Out of the way: a click on the bar reaches the bar, wherever the link waits.
+    await page.getByRole('button', { name: 'Search' }).click({ timeout: 2000 });
+    await page.keyboard.press('Tab');
+    await expect(skip).toBeFocused();
+    const shown = await box(skip, 'the focused skip link');
+    // In sight once focused, at the top of its box, inset as it is at the top of a page.
+    expect(waiting.equals(await page.screenshot({ clip: shown }))).toBe(false);
+    expect(Math.round(shown.y - column.y)).toBe(16);
+    await skip.press('Enter');
+    await expect(page.locator('#results')).toBeFocused();
 });
 
 test("runs the footer's rule the width of the page, with its text in the column", async ({

@@ -12,12 +12,14 @@
 @layer dk.components {
     /*
      * Skip to content, out of sight until it takes focus, and then over the strip at the column's
-     * inset, where the strip's links start.
+     * inset, where the strip's links start. It waits in its own place clipped to nothing, rather
+     * than above the page, so one inside a box of the page's own draws nothing and takes no click
+     * wherever the box starts, and shows at the top of that box when a keyboard reaches it.
      */
     .dk-skip {
         position: absolute;
         left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
-        top: -10rem;
+        top: var(--dk-space-4);
         padding: var(--dk-space-2) var(--dk-space-4);
         border-radius: var(--dk-radius);
         background: var(--dk-accent);
@@ -25,8 +27,8 @@
         z-index: 10;
     }
 
-    :where(.dk-skip):focus-visible {
-        top: var(--dk-space-4);
+    :where(.dk-skip:not(:focus-visible)) {
+        clip-path: inset(50%);
     }
 
     /*
