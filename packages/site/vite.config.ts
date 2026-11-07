@@ -13,8 +13,10 @@ import { BASE, ROUTES } from './src/routes.js';
 
 const SITE = fileURLToPath(new URL('.', import.meta.url));
 
-/** Where a page asks for its body, and the element that carries its policy. */
+/** Where a page asks for its body, its title and its description, and the element for its policy. */
 const PAGE = '<!-- page -->';
+const TITLE = '<!-- title -->';
+const DESCRIPTION = '<!-- description -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /** The version of the kit the site installed from npm, and the commit it is built at, read once. */
@@ -40,15 +42,28 @@ const pagesPlugin = (): Plugin => ({
         handler: (html, context) => {
             const file = relative(SITE, context.filename).split('\\').join('/');
             if (!isPage(file)) throw new Error(`the site has no page drawn from ${file}`);
-            if (!html.includes(PAGE) || !POLICY_META.test(html)) {
-                throw new Error(`${file} needs a place for its body and its policy`);
+            const route = ROUTES.find((each) => each.file === file);
+            if (
+                route === undefined ||
+                ![PAGE, TITLE, DESCRIPTION].every((place) => html.includes(place)) ||
+                !POLICY_META.test(html)
+            ) {
+                throw new Error(`${file} needs a route and a place for each part of its page`);
             }
+            const title =
+                route.file === 'index.html'
+                    ? `${route.name} · Jason Poteet`
+                    : `${route.name} · The design kit · Jason Poteet`;
             const body = renderToStaticMarkup(PAGES[file](BUILD));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`
                     : '';
-            return html.replace(POLICY_META, () => policy).replace(PAGE, () => body);
+            return html
+                .replace(POLICY_META, () => policy)
+                .replace(TITLE, () => title)
+                .replace(DESCRIPTION, () => route.description)
+                .replace(PAGE, () => body);
         },
     },
 });
@@ -63,6 +78,10 @@ export default defineConfig({
     plugins: [pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
+        // The kit's own browser floor, so the minifier leaves each light-dark() as it is, worked out
+        // by the scheme of the element it is drawn on, rather than rewriting it into variables the
+        // root sets, which a copy drawn in the other scheme would not change.
+        cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
         rollupOptions: {
             input: Object.fromEntries(
                 ROUTES.map(({ file }) => [file, fileURLToPath(new URL(file, import.meta.url))])

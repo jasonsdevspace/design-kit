@@ -113,6 +113,44 @@ for (const path of PAGES) {
         });
     });
 
+    test(`${path} keeps the keyboard out of every copy in the other theme`, async ({ page }) => {
+        await page.goto(path);
+        const stops = await page.locator('a, button, input, select, textarea, [tabindex]').count();
+        for (let stop = 0; stop <= stops; stop += 1) {
+            await page.keyboard.press('Tab');
+            const inside = await page.evaluate(
+                () => document.activeElement?.closest('[inert]') !== null
+            );
+            expect(inside, `tab stop ${String(stop + 1)}`).toBe(false);
+        }
+    });
+
+    test(`${path} draws each copy in the other theme in the scheme the page is not in`, async ({
+        page,
+    }) => {
+        for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme });
+            await page.goto(path);
+            // What is drawn, not only the scheme asked for: each copy's ground and text are the
+            // other theme's, which differ from the page's own.
+            const drawn = await page.evaluate(() => {
+                const ground = getComputedStyle(document.body);
+                return [...document.querySelectorAll('.site-other')].map((copy) => {
+                    const style = getComputedStyle(copy);
+                    return (
+                        style.backgroundColor !== ground.backgroundColor &&
+                        style.color !== ground.color
+                    );
+                });
+            });
+            expect(drawn.every(Boolean), colorScheme).toBe(true);
+            const inert = await page
+                .locator('.site-other')
+                .evaluateAll((copies) => copies.every((copy) => copy.hasAttribute('inert')));
+            expect(inert).toBe(true);
+        }
+    });
+
     test(`${path} has one of each landmark and no id twice`, async ({ page }) => {
         await page.goto(path);
         await expect(page.getByRole('main')).toHaveCount(1);

@@ -42,6 +42,11 @@ the hidden "Error: ". Every other example, such as the footer's sentence of link
 only where a space already is, so one added later is laid out tightly rather than wrongly. The setup
 block for the theme script is no piece's markup, and is written by hand.
 
+`examples/states.tsx` holds each state of each control the site shows one by one, named, with the
+attribute that draws it. It takes the components it draws with rather than importing them, and
+imports nothing of the kit's but its types, so the site draws the states from the version of the
+kit it pins and the kit's own tests draw them from the sources.
+
 ## Consequences
 
 - A change to a piece's markup is made once, and `npm run examples` carries it to the README. Until
@@ -64,6 +69,8 @@ The paths are in `packages/design-kit`.
   differs, finds a marker for every example, none twice and each with a block after it, closes an
   empty block at its own fence, keeps the line endings of a checkout that ends lines with a carriage
   return, and refuses a marker that names no example.
+- `examples/states.test.tsx` draws each state from the sources and finds the attribute printed under
+  it, finds each copy's ids its own, and finds the module importing nothing of the kit but its types.
 - `e2e/controls.spec.tsx` draws the examples' states of every control, `e2e/explainer.spec.tsx`
   draws their steps, and `e2e/chrome.spec.tsx` names the repository they name.
 - The oldest Node job in CI installs the packed package, where `smoke/consumer.mjs` finds no file

@@ -65,11 +65,16 @@ job that runs only GitHub's Pages actions deploys it.
   page added to it is built, tested and audited alike.
 - Lighthouse is a dependency of the repository's own, for development alone, and the package gains
   nothing.
+- The build's CSS target is the kit's own browser floor. With Vite's wider default, the minifier
+  rewrites each `light-dark()` into variables the root sets, so a copy of a piece drawn in the other
+  scheme, as the controls page draws each state, would keep the page's colors.
 
 ## How it is tested
 
 The paths are in `packages/site`.
 
+- `e2e/site.spec.ts` also finds the keyboard never stopping inside a copy drawn in the other theme,
+  and each such copy drawn in the other theme's ground and text, not the page's.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.

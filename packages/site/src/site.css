@@ -22,3 +22,78 @@
     max-width: var(--dk-measure);
     font-size: var(--dk-text-lead);
 }
+
+/* The site's own pages, in a row under the strip, lined up with the column. */
+.site-nav {
+    max-width: var(--dk-column);
+    margin-inline: auto;
+    padding: var(--dk-space-3) var(--dk-space-4) 0;
+}
+
+.site-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--dk-space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.site-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--dk-target);
+}
+
+.site-nav a[aria-current='page'] {
+    color: var(--dk-fg);
+    font-weight: var(--dk-weight-strong);
+}
+
+/*
+ * Each state, live beside its copy in the other theme on a wide screen and above it on a phone,
+ * with its name and attribute under both.
+ */
+.site-states {
+    display: grid;
+    gap: var(--dk-space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.site-state {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--dk-space-3);
+}
+
+.site-copy {
+    padding: var(--dk-space-4);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius);
+    background: var(--dk-bg);
+    color: var(--dk-fg);
+}
+
+/* The copy in the other theme draws every color for the scheme the page is not in. */
+:root[data-theme='light'] .site-other {
+    color-scheme: dark;
+}
+
+:root[data-theme='dark'] .site-other {
+    color-scheme: light;
+}
+
+.site-copy-label {
+    margin: 0 0 var(--dk-space-3);
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+}
+
+.site-state-name {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--dk-muted);
+    font-size: var(--dk-text-small);
+}
