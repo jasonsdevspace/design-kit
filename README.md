@@ -210,6 +210,7 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | A live callout is drawn empty, and success and danger say their tone in words                         | `packages/design-kit/src/react.test.tsx`     |
 | The strip is one row over its rule on a wide screen, and rows of links on a phone                     | `packages/design-kit/e2e/chrome.spec.tsx`    |
 | A demo's switches sit beside the links on a wide screen, and on a row below them on a phone           | `packages/design-kit/e2e/chrome.spec.tsx`    |
+| The strip keeps the room of switches on their way, at the height they give it at every width          | `packages/design-kit/e2e/chrome.spec.tsx`    |
 | The skip link is out of sight until the keyboard reaches it, and lands on the content                 | `packages/design-kit/e2e/chrome.spec.tsx`    |
 | The footer's rule spans the page, and its text and the strip's links line up in the column            | `packages/design-kit/e2e/chrome.spec.tsx`    |
 | The chrome has no axe findings in either theme, on a wide screen and on a phone                       | `packages/design-kit/e2e/chrome.spec.tsx`    |

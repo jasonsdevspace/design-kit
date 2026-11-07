@@ -4,15 +4,15 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
+import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 /*
  * The page chrome as a browser lays it out, from the markup the components draw and the kit's own
  * sheets: the strip one row over its rule on a wide screen and rows of links on a phone, whatever
  * font the machine running the test has, the demo's switches beside the links or below them, the
- * skip link out of sight until the keyboard reaches it and then at the column's inset, the
- * footer's rule the width of the page with its text in the column, and no audit findings in either
- * theme. The same markup is drawn again from an origin of its own under `style-src 'self'`, where
+ * room of switches on their way holding the strip at the height they give it, the skip link out of
+ * sight until the keyboard reaches it and then at the column's inset, the footer's rule the width
+ * of the page with its text in the column, and no audit findings in either theme. The same markup is drawn again from an origin of its own under `style-src 'self'`, where
  * any inline style would be refused.
  */
 
@@ -20,22 +20,35 @@ const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.me
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 const SOURCE = 'https://github.com/jasonsdevspace/example';
 
-/** The chrome around a main column, as a demo draws it, with the demo's switches if asked. */
-const chrome = (tools: boolean) =>
+/** The demo's switches as a demo draws them: the kit's own buttons, or plain ones. */
+const SWITCHES = {
+    plain: (
+        <>
+            <button type="button">Shopping as a guest</button>
+            <button type="button">Tour</button>
+        </>
+    ),
+    kit: (
+        <>
+            <Button>Shopping as a guest</Button>
+            <Button pressed={false}>Tour</Button>
+        </>
+    ),
+};
+
+/**
+ * The chrome around a main column, as a demo draws it, with the demo's switches if asked, or the
+ * room for them while they are on their way.
+ */
+const chrome = (tools: boolean | 'kit' | 'waiting') =>
     renderToStaticMarkup(
         <>
             <SkipLink />
             <PortfolioStrip
                 about="./about/"
                 source={SOURCE}
-                tools={
-                    tools && (
-                        <>
-                            <button type="button">Shopping as a guest</button>
-                            <button type="button">Tour</button>
-                        </>
-                    )
-                }
+                tools={tools === true ? SWITCHES.plain : tools === 'kit' && SWITCHES.kit}
+                toolsWaiting={tools === 'waiting'}
             />
             <main id="main-content" tabIndex={-1}>
                 <h1>Example</h1>
@@ -52,7 +65,7 @@ const open = async (
         width,
         theme = 'light',
         tools = false,
-    }: { width: number; theme?: 'light' | 'dark'; tools?: boolean }
+    }: { width: number; theme?: 'light' | 'dark'; tools?: boolean | 'kit' | 'waiting' }
 ) => {
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(
@@ -145,6 +158,29 @@ test("puts the demo's switches beside the links on a wide screen and below them 
     ];
     expect(phoneTools.y).toBeGreaterThanOrEqual(phoneLinks.y + phoneLinks.height);
     expect(Math.round(phoneTools.x)).toBe(16);
+});
+
+test('keeps the room of switches on their way, so nothing below the strip moves when they come', async ({
+    page,
+}) => {
+    for (const width of [1280, 760, 412, 360]) {
+        await open(page, { width, tools: 'waiting' });
+        const waiting = await box(page.locator('.dk-strip'), 'the waiting strip');
+        const main = await box(page.locator('main'), 'the content');
+        // The room is no landmark and says nothing, so a screen reader finds the links alone.
+        await expect(page.getByRole('region')).toHaveCount(0);
+        await expect(page.locator('.dk-strip')).toHaveText(
+            'A demo by Jason PoteetHow it worksSource on GitHub'
+        );
+        await open(page, { width, tools: 'kit' });
+        const arrived = await box(page.locator('.dk-strip'), 'the strip with its switches');
+        expect(Math.round(waiting.height), `the strip at ${String(width)}px`).toBe(
+            Math.round(arrived.height)
+        );
+        expect(Math.round((await box(page.locator('main'), 'the content')).y)).toBe(
+            Math.round(main.y)
+        );
+    }
 });
 
 test('keeps the skip link out of sight until the keyboard reaches it, and lands on the content', async ({

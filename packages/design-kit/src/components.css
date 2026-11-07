@@ -78,6 +78,14 @@
         min-height: var(--dk-strip);
     }
 
+    /*
+     * The room of switches on their way stands as tall as one of the kit's controls, so the row
+     * keeps the height the switches give it when they come.
+     */
+    .dk-strip-room {
+        min-height: var(--dk-field-height);
+    }
+
     /* The exit after a long scroll, its rule the width of the page and its text in the column. */
     .dk-footer {
         margin-top: var(--dk-space-6);
@@ -125,6 +133,10 @@
         .dk-strip-tools {
             flex-basis: 100%;
             padding-block: 0 var(--dk-space-2);
+        }
+
+        .dk-strip-room {
+            min-height: var(--dk-target);
         }
     }
 

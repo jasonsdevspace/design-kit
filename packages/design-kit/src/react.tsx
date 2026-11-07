@@ -54,6 +54,7 @@ export const PortfolioStrip = ({
     current,
     tools,
     toolsLabel = 'Demo',
+    toolsWaiting = false,
 }: {
     /** The demo's explainer, relative to the page or absolute. */
     readonly about: string;
@@ -65,6 +66,11 @@ export const PortfolioStrip = ({
     readonly tools?: ReactNode;
     /** The name a screen reader gives the switches' landmark. */
     readonly toolsLabel?: string;
+    /**
+     * The switches are on their way, so the strip keeps the room they take, empty and with no
+     * landmark, until `tools` holds them.
+     */
+    readonly toolsWaiting?: boolean;
 }) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
@@ -74,11 +80,15 @@ export const PortfolioStrip = ({
             </a>
             <a href={source}>Source on GitHub</a>
         </nav>
-        {!drawn(tools) ? null : (
+        {drawn(tools) ? (
             <section className="dk-strip-tools" aria-label={toolsLabel}>
                 {tools}
             </section>
-        )}
+        ) : toolsWaiting ? (
+            <div className="dk-strip-tools">
+                <span className="dk-strip-room" />
+            </div>
+        ) : null}
     </div>
 );
 
