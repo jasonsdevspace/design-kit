@@ -1,26 +1,19 @@
-import { readdirSync } from 'node:fs';
-import { sep } from 'node:path';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
+
+import { ROUTES } from '../src/routes.js';
 
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the
  * path GitHub Pages gives it: every page with no audit findings in either theme on a phone and a
  * wide screen, no sideways scroll at any width or at twice the text size, no text cut off under the
  * wider spacing a reader may set, one of each landmark and no id twice, and nothing the page's
- * policy refuses, the theme script included. Every page the build writes is checked, so a page
- * added later is held to all of it without being listed here.
+ * policy refuses, the theme script included. Every page in the site's routes is checked, so a page
+ * added to them is held to all of it.
  */
 
-const DIST = new URL('../dist/', import.meta.url);
-
-/** Each page the build wrote, as the path a visitor asks for. */
-const PAGES = readdirSync(DIST, { recursive: true })
-    .map(String)
-    .filter((file) => file.endsWith('index.html'))
-    .map((file) => `/design-kit/${file.slice(0, -'index.html'.length).split(sep).join('/')}`)
-    .sort();
+/** Each page, as the path a visitor asks for. */
+const PAGES = ROUTES.map(({ path }) => path);
 
 /** The widths of a small phone, a phone, a tablet and a laptop. */
 const WIDTHS = [320, 390, 768, 1280] as const;
@@ -64,10 +57,6 @@ const clipped = (page: Page) =>
             })
             .map((element) => element.outerHTML.slice(0, 80))
     );
-
-test('builds at least the landing page', () => {
-    expect(PAGES).toContain('/design-kit/');
-});
 
 for (const path of PAGES) {
     test(`${path} has no audit findings in either theme, on a phone and a wide screen`, async ({

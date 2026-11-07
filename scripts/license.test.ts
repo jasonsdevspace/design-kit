@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -12,6 +12,7 @@ const root = new URL('../', import.meta.url);
 const license = readFileSync(new URL('LICENSE', root), 'utf8');
 const packages = readdirSync(new URL('packages/', root)).filter(
     (name) =>
+        existsSync(new URL(`packages/${name}/package.json`, root)) &&
         !(
             JSON.parse(readFileSync(new URL(`packages/${name}/package.json`, root), 'utf8')) as {
                 private?: boolean;

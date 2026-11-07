@@ -18,7 +18,8 @@ export default defineConfig({
     webServer: {
         command: 'npm run site && npm run preview --workspace @jasonsdevspace/design-kit-site',
         url: 'http://localhost:4180/design-kit/',
-        reuseExistingServer: !process.env['CI'],
+        // Built fresh for every run, so a preview left running never serves an older build.
+        reuseExistingServer: false,
         timeout: 120_000,
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

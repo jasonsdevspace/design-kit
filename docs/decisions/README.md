@@ -31,5 +31,5 @@ costs, and the test behind it.
     the README's blocks written from React elements the browser tests import too, rather than kept
     in step by hand, and why a documentation framework was turned down.
 11. [The site is built with Vite and React's static render, with no script of React's](0011-the-site-is-built-with-vite-and-a-static-render.md):
-    static pages drawn from the examples under the policy a demo sets, and why Storybook, docs
-    frameworks and pages written by hand were turned down.
+    static pages drawn from the kit's own components under the policy a demo sets, and why
+    Storybook, docs frameworks and pages written by hand were turned down.

@@ -1,5 +1,3 @@
-import { readdirSync } from 'node:fs';
-import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
@@ -7,22 +5,22 @@ import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
+import { ROUTES } from '../src/routes.ts';
+
 /**
- * Lighthouse over the built site, held to the demos' gates.
+ * Lighthouse over the built site, held to the gates ShelfLens is held to.
  *
  *   npm run lighthouse
  *
- * Builds the site first. Every page the build writes is audited, so a page added later is held
- * to the same gates without being listed here. Accessibility must score a hundred, and on a first
+ * Builds the site first. Every page in the site's routes is audited, so a page added to them is
+ * held to the same gates. Accessibility must score a hundred, and on a first
  * visit as a phone on a slow network makes it, performance at least ninety, the largest paint
- * within the time a visit counts as good, and the layout shift no more than that either. One
- * trace on a shared machine can be slow for reasons of its own, so a page that misses is measured
- * twice more and judged on the middle of the three.
+ * within the time a visit counts as good, and no more layout shift than a good visit has. One
+ * trace on a shared machine can be slow for reasons of its own, so a page that misses on its first
+ * is measured twice more and judged on the middle of the three.
  */
 
 const SITE = fileURLToPath(new URL('..', import.meta.url));
-const DIST = join(SITE, 'dist');
-const BASE = '/design-kit/';
 const PORT = 4181;
 
 /** The lowest performance score a page may have. */
@@ -41,14 +39,6 @@ interface Measure {
     readonly paint: number;
     readonly shift: number;
 }
-
-/** Each page the build wrote, as the path a visitor asks for. */
-const pages = (): string[] =>
-    readdirSync(DIST, { recursive: true })
-        .map(String)
-        .filter((file) => file.endsWith('index.html'))
-        .map((file) => `${BASE}${file.slice(0, -'index.html'.length).split(sep).join('/')}`)
-        .sort();
 
 const measureOf = (report: Report): Measure => ({
     performance: report.categories['performance']?.score ?? 0,
@@ -100,7 +90,7 @@ const main = async () => {
     };
     const failures: string[] = [];
     try {
-        for (const path of pages()) {
+        for (const { path } of ROUTES) {
             const url = `${origin}${path}`;
             const access = await run(url, 'accessibility');
             const score = Math.round((access.categories['accessibility']?.score ?? 0) * 100);
@@ -110,8 +100,10 @@ const main = async () => {
             );
             if (score < 100) failures.push(`${path} (accessibility ${String(score)})`);
             const measures = [measureOf(await run(url, 'performance'))];
-            while (missed(middle(measures)).length > 0 && measures.length < TRACES) {
-                measures.push(measureOf(await run(url, 'performance')));
+            if (missed(middle(measures)).length > 0) {
+                while (measures.length < TRACES) {
+                    measures.push(measureOf(await run(url, 'performance')));
+                }
             }
             const judged = middle(measures);
             console.log(

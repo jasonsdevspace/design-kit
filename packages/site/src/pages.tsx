@@ -1,4 +1,7 @@
+import type { ReactElement } from 'react';
+
 import { DemoFooter, PortfolioStrip, SkipLink } from '../../design-kit/src/react.js';
+import type { Route } from './routes.js';
 
 /** The kit's repository, which the strip and the footer link as the site's source. */
 export const SOURCE = 'https://github.com/jasonsdevspace/design-kit';
@@ -9,7 +12,7 @@ const ABOUT = `${SOURCE}/tree/main/packages/design-kit#readme`;
 /** The package on npm. */
 const NPM = 'https://www.npmjs.com/package/@jasonsdevspace/design-kit';
 
-/** The version of the kit a page is drawn from, and the commit it was built at. */
+/** The version the kit's manifest names, and the commit the site was built at. */
 export interface Build {
     readonly version: string;
     readonly commit: string;
@@ -17,7 +20,7 @@ export interface Build {
 
 /**
  * The landing page: what the kit is, with the kit's own skip link, strip and footer around it,
- * and in the footer the version and commit the page was drawn from.
+ * and in the footer the commit the page was drawn from and the version the package had there.
  */
 export const Landing = ({ build }: { readonly build: Build }) => (
     <>
@@ -26,8 +29,8 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <main id="main-content" tabIndex={-1} className="site-main">
             <h1>The design kit</h1>
             <p className="site-lead">
-                The tokens, theme script, page chrome, controls and explainer layout every demo on
-                jasonsdevspace.com is drawn from, so the demos read as one body of work and a fix to
+                The tokens, theme script, page chrome, controls and explainer layout the demos on
+                jasonsdevspace.com are built to share, so they read as one body of work and a fix to
                 a button is made once.
             </p>
             <p>
@@ -37,11 +40,16 @@ export const Landing = ({ build }: { readonly build: Build }) => (
             </p>
         </main>
         <DemoFooter name="The design kit" about={ABOUT} source={SOURCE}>
-            This page is drawn from version {build.version}, built at commit{' '}
+            This page is drawn from the kit&rsquo;s source at commit{' '}
             <a href={`${SOURCE}/commit/${build.commit}`}>
                 <code>{build.commit.slice(0, 7)}</code>
             </a>
-            .
+            , where the package is version {build.version}.
         </DemoFooter>
     </>
 );
+
+/** What each page draws, by the HTML file it is built from. */
+export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElement>> = {
+    'index.html': (build) => <Landing build={build} />,
+};

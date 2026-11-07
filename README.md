@@ -250,7 +250,7 @@ they document, not by a test here.
 | Every page of the site has no axe findings in either theme, on a phone and a wide screen                          | `packages/site/e2e/site.spec.ts`              |
 | No page of the site scrolls sideways at any width or at twice the text size, or cuts off text under wider spacing | `packages/site/e2e/site.spec.ts`              |
 | The site draws under `style-src 'self'`, its one script the theme script by its hash                              | `packages/site/e2e/site.spec.ts`              |
-| Every page of the site meets the demos' Lighthouse gates                                                          | `packages/site/bench/lighthouse.ts`           |
+| Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`           |
 
 ## Decisions
 
@@ -290,7 +290,7 @@ options rejected, what the choice costs, and the test behind it.
     a command to run after each change to a piece's markup.
 11. [The site is built with Vite and React's static render, with no script of React's](docs/decisions/0011-the-site-is-built-with-vite-and-a-static-render.md).
     The site draws the kit under the policy a demo sets, with no runtime of a framework's, at the
-    cost of a small build plugin of its own.
+    cost of a policy in a meta element, which cannot stop another site framing it.
 
 ## Dev setup
 
@@ -315,9 +315,10 @@ pass on main, a job with read access alone builds the site and uploads it, and a
 GitHub's Pages actions deploys it to jasonsdevspace.com/design-kit/.
 
 `npm run build` compiles the theme module, the plugin and the components into the package's `dist`,
-beside a copy of each sheet, which is what the package's entries load from. Packing the package
-builds it first. `npm run e2e` runs the browser tests in Chromium, after `npx playwright install
-chromium` the first time. They read the sources, so they need no build.
+beside a copy of each sheet, which is what the package's entries load from, and builds the site.
+Packing the package builds it first. `npm run e2e` runs the browser tests in Chromium, after `npx
+playwright install chromium` the first time. The kit's tests read the sources, and the site's tests
+build the site and serve it themselves, so nothing needs building first.
 
 ```bash
 npx playwright install chromium
@@ -325,8 +326,7 @@ npm run e2e
 ```
 
 The site in `packages/site` is built with `npm run site` into its `dist`, served under
-`/design-kit/` as GitHub Pages serves it. The browser tests build it and serve it themselves.
-`npm run lighthouse` builds it and audits every page.
+`/design-kit/` as GitHub Pages serves it. `npm run lighthouse` builds it and audits every page.
 
 ```bash
 npm run site
@@ -381,7 +381,8 @@ scripts/              the prose, Node and commit message checks, the tests of th
                       check in a throwaway repository, and the one that creates a GitHub release
 docs/
 └── decisions/        the decision records
-.github/workflows/    CI, the release from a tag, and the check of a pull request's title and body
+.github/workflows/    CI and the site's deploy from main, the release from a tag, and the check of
+                      a pull request's title and body
 ```
 
 ## License

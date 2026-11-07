@@ -17,9 +17,9 @@ on:
 permissions:
     contents: read
 
-# A newer push to a pull request supersedes the run in progress. Runs on main
-# wait their turn, so a run that has handed the site to Pages is never canceled, which would leave
-# the deployment pending.
+# A newer push to a pull request supersedes the run in progress. Runs on main wait their turn, so a
+# run that has handed the site to Pages is never canceled, which would leave the deployment
+# pending.
 concurrency:
     group: ci-${{ github.ref }}
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -70,8 +70,8 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The package compiles to what it ships. The oldest Node check builds it again as it
-            # packs, in a job of its own.
+            # The package compiles to what it ships, and the site builds. The oldest Node check
+            # builds the package again as it packs, in a job of its own.
             - name: Build
               run: npm run build
 
@@ -114,7 +114,7 @@ jobs:
                   path: playwright-report
                   retention-days: 7
 
-    # Lighthouse over the built site, held to the demos' gates: accessibility at a hundred, and on a
+    # Lighthouse over the built site, held to ShelfLens's gates: accessibility at a hundred, and on a
     # first visit as a slow phone makes it, performance at ninety or more, a good largest paint and
     # no more layout shift than a good visit has.
     lighthouse:
