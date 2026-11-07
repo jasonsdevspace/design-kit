@@ -223,6 +223,7 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | The focus ring follows the keyboard, on the accent button and inside every callout                    | `packages/design-kit/e2e/controls.spec.tsx`  |
 | Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | `packages/design-kit/e2e/controls.spec.tsx`  |
 | The controls have no axe findings in any state, in either theme, wide and on a phone                  | `packages/design-kit/e2e/controls.spec.tsx`  |
+| An explainer marks its link to how it works as the current page in the strip and the footer           | `packages/design-kit/e2e/explainer.spec.tsx` |
 | An explainer's text starts where the strip's links do, and holds to the measure                       | `packages/design-kit/e2e/explainer.spec.tsx` |
 | A line of the lead and of body text runs to 80 characters or fewer on a wide screen                   | `packages/design-kit/e2e/explainer.spec.tsx` |
 | A section opens with its rule, its number, its heading and then its text                              | `packages/design-kit/e2e/explainer.spec.tsx` |
