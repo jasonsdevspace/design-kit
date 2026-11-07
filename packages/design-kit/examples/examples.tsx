@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import * as kit from '../src/react.js';
 import {
     Button,
     Callout,
@@ -9,15 +10,17 @@ import {
     SelectField,
     SkipLink,
 } from '../src/react.js';
+import * as pieces from './pieces.js';
 
 /*
  * The markup each piece of the kit draws, in one place, so the README prints what the components
  * draw and the browser tests import it rather than keep copies. A piece is drawn by its component
  * where the block shows all of what the component draws, and written as a page without React
- * writes it otherwise. The README prints each example in EXAMPLES as HTML, and a test fails when
- * one of its blocks no longer matches. The README prints none of the states of each control,
- * which the browser tests draw from `controlStates` and the site from `states.tsx`. The package
- * ships none of this.
+ * writes it otherwise. An explainer's steps, panel, table and code block come from `pieces.tsx`,
+ * which the site draws them from too. The README prints each example in EXAMPLES as HTML, and a
+ * test fails when one of its blocks no longer matches. The README prints none of the states of
+ * each control, which the browser tests draw from `controlStates` and the site from `states.tsx`.
+ * The package ships none of this.
  */
 
 /** A demo's repository, as the examples name it. */
@@ -198,81 +201,20 @@ export const explainerPage: ReactElement = (
     </>
 );
 
+/** Each id a piece names, as written. */
+const asWritten = (name: string) => name;
+
 /** The steps of a flow, each a title and a note, with an arrow from the step before. */
-export const steps: ReactElement = (
-    <ol className="dk-steps" role="list">
-        <li>
-            <strong className="dk-steps-title">The order names a product.</strong>
-            <span className="dk-steps-note">And how many of it.</span>
-        </li>
-        <li>
-            <span className="dk-steps-arrow" aria-hidden="true">
-                ↓
-            </span>
-            <strong className="dk-steps-title">It waits its turn.</strong>
-            <span className="dk-steps-note">Behind any order for the same product.</span>
-        </li>
-    </ol>
-);
+export const steps: ReactElement = pieces.steps.draw(kit, asWritten);
 
 /** A panel set apart from the prose, with its title. */
-export const panel: ReactElement = (
-    <div className="dk-panel">
-        <p className="dk-panel-title">How the numbers were taken</p>
-        <p>...</p>
-    </div>
-);
+export const panel: ReactElement = pieces.panel.draw(kit, asWritten);
 
 /** A table of figures, titled, in a frame that scrolls inside itself. */
-export const table: ReactElement = (
-    <>
-        <p className="dk-table-title" id="bench-title">
-            Orders a second under each strategy
-        </p>
-        <div className="dk-table-scroll" role="region" aria-labelledby="bench-title" tabIndex={0}>
-            <table className="dk-table" aria-labelledby="bench-title">
-                <thead>
-                    <tr>
-                        <th scope="col">Scenario</th>
-                        <th scope="col" className="dk-table-number">
-                            Orders a second
-                        </th>
-                        <th scope="col" className="dk-table-number">
-                            Slowest 1%, ms
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row">Hot product, row lock</th>
-                        <td className="dk-table-number">700</td>
-                        <td className="dk-table-number">48.5</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </>
-);
+export const table: ReactElement = pieces.table.draw(kit, asWritten);
 
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
-export const code: ReactElement = (
-    <>
-        <p className="dk-code-title" id="lock-title">
-            The statement that holds the stock
-        </p>
-        <pre
-            className="dk-code"
-            role="region"
-            aria-labelledby="lock-title"
-            tabIndex={0}
-            translate="no"
-        >
-            <code>
-                {'UPDATE stock SET held = held + 1\nWHERE product_id = $1 AND held < on_hand;'}
-            </code>
-        </pre>
-    </>
-);
+export const code: ReactElement = pieces.code.draw(kit, asWritten);
 
 /** Every example by the name the README's markers give it. */
 export const EXAMPLES = {

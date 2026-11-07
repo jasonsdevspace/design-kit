@@ -4,17 +4,19 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import * as kit from '../src/react.js';
+import { CHROME, EXPLAINER } from './pieces.js';
 import { CONTROLS } from './states.js';
 
 /*
- * The states a page shows, drawn from the kit's sources: each one draws the attribute the page
- * prints under it, and the module takes its components rather than importing them, so a page can
- * draw the states from the version of the kit it pins.
+ * The states a page shows, of the controls, the page chrome and an explainer's pieces, drawn from
+ * the kit's sources: each one draws the attribute the page prints under it, and the modules take
+ * their components rather than importing them, so a page can draw the states from the version of
+ * the kit it pins.
  */
 
-const states = CONTROLS.flatMap((control) => control.states);
+const states = [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) => control.states);
 
-describe('the states of the controls', () => {
+describe('the states a page shows', () => {
     it('each draw the attribute printed under them', () => {
         expect(states.length).toBeGreaterThan(0);
         for (const state of states) {
@@ -29,24 +31,36 @@ describe('the states of the controls', () => {
     });
 
     it('give each copy ids of its own', () => {
+        // The live copy, the picture in the visitor's theme and the copy in the other theme, as
+        // the site names their ids.
+        const suffixes = ['', '-yours', '-other'];
         for (const state of states) {
-            const ids = (draw: string) =>
-                [...draw.matchAll(/ id="([^"]+)"/g)].map((match) => match[1] ?? '');
-            const one = ids(renderToStaticMarkup(state.draw(kit, (name) => name)));
-            const other = ids(renderToStaticMarkup(state.draw(kit, (name) => `${name}-other`)));
+            const ids = suffixes.flatMap((suffix) =>
+                [
+                    ...renderToStaticMarkup(state.draw(kit, (name) => `${name}${suffix}`)).matchAll(
+                        / id="([^"]+)"/g
+                    ),
+                ].map((match) => match[1] ?? '')
+            );
             expect(
-                one.filter((id) => other.includes(id)),
+                ids.filter((id, index) => ids.indexOf(id) !== index),
                 state.name
             ).toEqual([]);
         }
     });
 
     it('import nothing of the kit but its types', () => {
-        const source = readFileSync(new URL('states.tsx', import.meta.url), 'utf8');
-        // Every import, however it is wrapped: React's types, and the kit's by any path or name.
-        const imports = [...source.matchAll(/^import\s+([\s\S]*?)\s+from\s+'([^']+)';/gm)];
-        const fromKit = imports.filter(([, , from]) => from !== 'react');
-        expect(fromKit.length).toBeGreaterThan(0);
-        expect(fromKit.filter(([, what]) => !what?.startsWith('type '))).toEqual([]);
+        for (const module of ['states.tsx', 'pieces.tsx']) {
+            const source = readFileSync(new URL(module, import.meta.url), 'utf8');
+            // Every import, however it is wrapped: React's types, and the kit's by any path or
+            // name.
+            const imports = [...source.matchAll(/^import\s+([\s\S]*?)\s+from\s+'([^']+)';/gm)];
+            const fromKit = imports.filter(([, , from]) => from !== 'react');
+            expect(fromKit.length, module).toBeGreaterThan(0);
+            expect(
+                fromKit.filter(([, what]) => !what?.startsWith('type ')),
+                module
+            ).toEqual([]);
+        }
     });
 });
