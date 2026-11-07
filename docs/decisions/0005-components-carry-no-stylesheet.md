@@ -62,8 +62,10 @@ The paths are in `packages/design-kit`.
   the height they give it, the skip link out of sight until the keyboard reaches it and then at the
   column's inset where the strip's links start, one inside a positioned box down the page out of
   sight and out of the way of a click until focused and then at the top of its box, each landing on
-  what it skips to, the footer's rule the width of the page with its text in the column, and no axe
-  findings in either theme, on a wide screen or a phone, with the switches or their room.
+  what it skips to, the footer's rule the width of the page with its text in the column, the link
+  to the current page on an explainer drawn apart from the others by its weight in each theme and
+  in forced colors, and no axe findings in either theme, on a wide screen or a phone, with the
+  switches or their room, on a demo or its explainer.
 - The same spec serves that markup and the kit's sheets from an origin of its own under
   `style-src 'self'`, and finds the strip laid out as before with nothing refused.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to

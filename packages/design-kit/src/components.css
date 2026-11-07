@@ -106,8 +106,8 @@
 
     /*
      * The chrome's links step back in the muted text, and come forward to the page's text when
-     * pointed at or focused. Every one keeps its underline, which in the footer's sentence is what
-     * tells a link from the text around it.
+     * pointed at or focused, as the link to the current page always is. Every one keeps its
+     * underline, which in the footer's sentence is what tells a link from the text around it.
      */
     :where(.dk-strip-links a, .dk-footer a) {
         color: var(--dk-muted);
@@ -116,10 +116,21 @@
     :where(
         .dk-strip-links a:hover,
         .dk-strip-links a:focus-visible,
+        .dk-strip-links a[aria-current='page'],
         .dk-footer a:hover,
-        .dk-footer a:focus-visible
+        .dk-footer a:focus-visible,
+        .dk-footer a[aria-current='page']
     ) {
         color: var(--dk-fg);
+    }
+
+    /*
+     * The link to the page a reader is on stands in the page's text, as above, and at the heading's
+     * weight, so it is told from the links around it by more than its color, which forced colors
+     * replace. It keeps its underline, so it still reads as a link.
+     */
+    :where(.dk-strip-links a[aria-current='page'], .dk-footer a[aria-current='page']) {
+        font-weight: var(--dk-weight-strong);
     }
 
     /*
