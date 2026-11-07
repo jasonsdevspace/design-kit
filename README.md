@@ -256,6 +256,8 @@ they document, not by a test here.
 | The tokens page draws each swatch in the value printed beside it, and lists every pairing tightest first          | `packages/site/e2e/site.spec.ts`               |
 | The page chrome page draws each state as a picture, around the kit's own live chrome                              | `packages/site/e2e/site.spec.ts`               |
 | The explainer pieces page draws each piece live, and the explainer's layout as a picture                          | `packages/site/e2e/site.spec.ts`               |
+| The site's explainer is where every page's strip and footer say how the kit works                                 | `packages/site/e2e/site.spec.ts`               |
+| Every link within the site leads to one of its pages, and to an id on it                                          | `packages/site/e2e/site.spec.ts`               |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`            |
 
 ## Decisions

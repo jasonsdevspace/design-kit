@@ -1,7 +1,8 @@
 /**
  * The site's pages, each the HTML file Vite builds it from, relative to the site, the path a
  * visitor asks for under the base GitHub Pages serves the site from, the page's title, the name the
- * site's navigation gives it, and the description a search result shows for it. The build, the
+ * site's navigation gives it, or none for the explainer, which the strip and the footer lead to as
+ * a demo's do, and the description a search result shows for it. The build, the
  * browser tests and the Lighthouse audit all read this one list.
  */
 export const BASE = '/design-kit/';
@@ -46,6 +47,14 @@ export const ROUTES = [
         nav: 'Explainer pieces',
         description:
             'The layout, steps, panels, tables and code blocks of the page that says how a demo works, in both themes.',
+    },
+    {
+        file: 'how-it-works/index.html',
+        path: `${BASE}how-it-works/`,
+        title: 'How the design kit works · Jason Poteet',
+        nav: null,
+        description:
+            'What happens as a page that uses the design kit loads, the mistakes shared styles often make and how the kit avoids each, and what it is built with.',
     },
 ] as const;
 

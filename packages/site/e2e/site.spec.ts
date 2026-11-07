@@ -311,3 +311,72 @@ test.describe('the explainer pieces page', () => {
         await expect(page.locator('.site-copy[inert] .dk-explainer')).toHaveCount(2);
     });
 });
+
+test('every link within the site leads to one of its pages, and to an id on it', async ({
+    page,
+}) => {
+    const broken: string[] = [];
+    for (const path of PAGES) {
+        await page.goto(path);
+        const links = await page
+            .locator('a[href]')
+            .evaluateAll((all) =>
+                all
+                    .filter((link) => link.closest('[inert]') === null)
+                    .map((link) => (link as HTMLAnchorElement).href)
+            );
+        const own = new URL(page.url()).origin;
+        for (const href of new Set(links)) {
+            const url = new URL(href);
+            if (url.origin !== own) continue;
+            if (!(PAGES as readonly string[]).includes(url.pathname)) {
+                broken.push(`${path}: ${href}`);
+                continue;
+            }
+            if (url.hash === '') continue;
+            await page.goto(href);
+            if ((await page.locator(url.hash).count()) !== 1) broken.push(`${path}: ${href}`);
+            await page.goto(path);
+        }
+    }
+    expect(broken).toEqual([]);
+});
+
+test.describe('the explainer', () => {
+    test('marks itself the current page in the strip and the footer, and leads back to the site', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/how-it-works/');
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+            'How the design kit works'
+        );
+        for (const landmark of [
+            page.getByRole('navigation', { name: 'Portfolio' }),
+            page.getByRole('contentinfo'),
+        ]) {
+            await expect(landmark.getByRole('link', { name: 'How it works' })).toHaveAttribute(
+                'aria-current',
+                'page'
+            );
+        }
+        await expect(page.getByRole('banner').getByRole('link')).toHaveAttribute(
+            'href',
+            '/design-kit/'
+        );
+        await expect(page.locator('main.dk-explainer > section > h2:not([id])')).toHaveCount(0);
+    });
+
+    test("is where every other page's strip and footer say how it works", async ({ page }) => {
+        for (const path of PAGES.filter((each) => each !== '/design-kit/how-it-works/')) {
+            await page.goto(path);
+            // The page's own strip and footer, not a picture of them on the page chrome page.
+            const links = page
+                .locator('body > .dk-strip, body > .dk-footer')
+                .getByRole('link', { name: 'How it works' });
+            await expect(links, path).toHaveCount(2);
+            for (const link of await links.all()) {
+                await expect(link, path).toHaveAttribute('href', '/design-kit/how-it-works/');
+            }
+        }
+    });
+});

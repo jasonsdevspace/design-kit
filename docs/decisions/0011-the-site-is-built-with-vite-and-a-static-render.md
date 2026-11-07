@@ -46,7 +46,9 @@ then what a demo installs, and the site's tests and audit hold what ships. Each 
 element for its policy: nothing by default, scripts only by the theme script's hash, styles and
 images only from the site's origin, no base element and no form posts. The footer names the version
 of the kit a page is drawn from and the commit it was built at, so it never names a version npm
-cannot give, and its link to how the kit works leads to the README at that version's tag. CI builds
+cannot give. The strip's and the footer's link to how the kit works leads to the site's own
+explainer, drawn in the kit's explainer layout as a demo's is, which the site's navigation leaves
+out as a demo's pages leave out theirs. CI builds
 and uploads the site from a job with read access alone once every check has passed on main, and a
 job that runs only GitHub's Pages actions deploys it.
 
@@ -86,7 +88,10 @@ The paths are in `packages/site`.
   value printed beside it, in both themes, and every pairing at or above what it needs, listed
   tightest first. On the page chrome page it finds the page's own skip link, strip and footer live
   and every copy of a state inert, and on the explainer pieces page each piece live in the visitor's
-  theme and the explainer's layout drawn only as a picture.
+  theme and the explainer's layout drawn only as a picture. It finds the explainer marked as the
+  current page in its strip and footer, with a header that leads back to the site, every other
+  page's strip and footer leading to it, and every link within the site leading to one of its pages
+  and to an id on it.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.
