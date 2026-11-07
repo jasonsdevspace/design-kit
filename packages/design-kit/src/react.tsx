@@ -46,7 +46,8 @@ export const SkipLink = ({
  * Whose demo this is, above the page, with three links together on the left. It is a navigation
  * landmark in a plain div rather than a header, so the demo's own header stays the page's one
  * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
- * named for them.
+ * named for them, and while they are on their way the strip keeps their room in that section,
+ * unnamed and so no landmark.
  */
 export const PortfolioStrip = ({
     about,
@@ -67,8 +68,9 @@ export const PortfolioStrip = ({
     /** The name a screen reader gives the switches' landmark. */
     readonly toolsLabel?: string;
     /**
-     * The switches are on their way, so the strip keeps the room they take, empty and with no
-     * landmark, until `tools` holds them.
+     * The switches are on their way, so the strip keeps the room of one row of the kit's controls
+     * in their section, empty and unnamed, so no landmark, until `tools` holds them and the section
+     * takes its name.
      */
     readonly toolsWaiting?: boolean;
 }) => (
@@ -85,9 +87,9 @@ export const PortfolioStrip = ({
                 {tools}
             </section>
         ) : toolsWaiting ? (
-            <div className="dk-strip-tools">
+            <section className="dk-strip-tools">
                 <span className="dk-strip-room" />
-            </div>
+            </section>
         ) : null}
     </div>
 );

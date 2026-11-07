@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
@@ -12,16 +13,24 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * font the machine running the test has, the demo's switches beside the links or below them, the
  * room of switches on their way holding the strip at the height they give it, the skip link out of
  * sight until the keyboard reaches it and then at the column's inset, the footer's rule the width
- * of the page with its text in the column, and no audit findings in either theme. The same markup is drawn again from an origin of its own under `style-src 'self'`, where
- * any inline style would be refused.
+ * of the page with its text in the column, and no audit findings in either theme, the room
+ * included. The same markup is drawn again from an origin of its own under `style-src 'self'`,
+ * where any inline style would be refused.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 const SOURCE = 'https://github.com/jasonsdevspace/example';
 
-/** The demo's switches as a demo draws them: the kit's own buttons, or plain ones. */
-const SWITCHES = {
+/**
+ * The demo's switches as a demo draws them, plain buttons or the kit's own, which stand as tall as
+ * the room the strip keeps for them while they are on their way, or none yet.
+ */
+type Tools = 'none' | 'plain' | 'kit' | 'waiting';
+
+const SWITCHES: Readonly<Record<Tools, ReactNode>> = {
+    none: null,
+    waiting: null,
     plain: (
         <>
             <button type="button">Shopping as a guest</button>
@@ -40,14 +49,14 @@ const SWITCHES = {
  * The chrome around a main column, as a demo draws it, with the demo's switches if asked, or the
  * room for them while they are on their way.
  */
-const chrome = (tools: boolean | 'kit' | 'waiting') =>
+const chrome = (tools: Tools) =>
     renderToStaticMarkup(
         <>
             <SkipLink />
             <PortfolioStrip
                 about="./about/"
                 source={SOURCE}
-                tools={tools === true ? SWITCHES.plain : tools === 'kit' && SWITCHES.kit}
+                tools={SWITCHES[tools]}
                 toolsWaiting={tools === 'waiting'}
             />
             <main id="main-content" tabIndex={-1}>
@@ -64,8 +73,8 @@ const open = async (
     {
         width,
         theme = 'light',
-        tools = false,
-    }: { width: number; theme?: 'light' | 'dark'; tools?: boolean | 'kit' | 'waiting' }
+        tools = 'none',
+    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools }
 ) => {
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(
@@ -138,7 +147,7 @@ test('draws the strip on a phone in rows of links 16px apart', async ({ page }) 
 test("puts the demo's switches beside the links on a wide screen and below them on a phone", async ({
     page,
 }) => {
-    await open(page, { width: 1280, tools: true });
+    await open(page, { width: 1280, tools: 'plain' });
     const tools = page.getByRole('region', { name: 'Demo' });
     const links = page.getByRole('navigation', { name: 'Portfolio' });
     const [wideTools, wideLinks] = [
@@ -151,7 +160,7 @@ test("puts the demo's switches beside the links on a wide screen and below them 
 
     // Wide enough for the links and the switches on one row, under the phone breakpoint, so only
     // the phone layout puts the switches on a row of their own.
-    await open(page, { width: 760, tools: true });
+    await open(page, { width: 760, tools: 'plain' });
     const [phoneTools, phoneLinks] = [
         await box(tools, 'the switches'),
         await box(links, 'the links'),
@@ -213,9 +222,11 @@ for (const theme of ['light', 'dark'] as const) {
         page,
     }) => {
         for (const width of [1280, 360]) {
-            await open(page, { width, theme, tools: true });
-            const results = await new AxeBuilder({ page }).analyze();
-            expect(results.violations.map((violation) => violation.id)).toEqual([]);
+            for (const tools of ['plain', 'waiting'] as const) {
+                await open(page, { width, theme, tools });
+                const results = await new AxeBuilder({ page }).analyze();
+                expect(results.violations.map((violation) => violation.id)).toEqual([]);
+            }
         }
     });
 }
@@ -226,7 +237,7 @@ test("draws the chrome under a policy that allows styles only from the page's ow
     // Served from an origin of its own with the policy as a header, and the kit's sheets as a file
     // of that origin, as a demo serves them, so any inline style the chrome drew would be refused.
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-    const markup = chrome(true);
+    const markup = chrome('plain');
     await context.route('https://kit.test/**', (route) => {
         const css = route.request().url().endsWith('/kit.css');
         return route.fulfill({
