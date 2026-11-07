@@ -7,33 +7,37 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
-## Unreleased
+## 0.1.0-next.3
 
-- **Page chrome.** The link in the strip or the footer marked as the current page stands in the
-  page's text at the heading's weight, so a sighted reader on a demo's explainer sees that "How it
-  works" leads where they already are. It keeps its underline, and the weight holds in forced
-  colors, where the color does not.
-- **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
-  no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
-  no longer needs a holder of its own to hide one it mounts before it has words. It reads the
-  message with `:has()`, so in Firefox 120 such a callout still draws its ground.
+The page chrome holds still and shows where a reader is, the controls a page moves focus to take a
+`ref`, and an empty live callout draws nothing. The strip keeps room for a demo's switches before
+they arrive, the footer marks the current page as the strip does, the link to the current page
+stands out by more than its color, and the skip link stays hidden wherever it sits.
+
+- **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps room for one row of the kit's
+  controls while a demo's switches are on their way, so nothing below the strip moves when they
+  arrive. The section that holds the room is left unnamed, so it is no landmark until the switches
+  fill it. A page without React writes `.dk-strip-room` in the unnamed section, and names the
+  section when it fills it.
+- **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
+  the link to how it works as the current page, for the footer on a demo's explainer. In the strip
+  or the footer, the link marked as the current page stands in the page's text at the heading's
+  weight, so a sighted reader sees that "How it works" leads where they already are. It keeps its
+  underline, and the weight holds in forced colors, where the color does not.
 - **Page chrome.** The skip link waits in its own place as the visually hidden class does, one pixel
   clipped to nothing, rather than 10rem above it, so one inside a positioned box lower on the page
   no longer shows over what is above the box or takes its clicks. It shows where it did when a
   keyboard focuses it.
-- **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
-  the link to how it works as the current page, for the footer on a demo's explainer.
-- **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps the room of one row of the
-  kit's controls while a demo's switches are still on their way, in their section left unnamed so
-  it is no landmark, and nothing below the strip moves when they come. A page without React writes
-  `.dk-strip-room` in the unnamed section, and names the section when it fills it.
-- **Fields.** `InputField` and `SelectField` take a `ref`, which holds the `<input>` or the
-  `<select>` drawn, so a page that moves focus to a field, such as a form that fails, uses the kit's
-  component rather than finding the control by its id. React 19 already passed the ref through, and
-  only the type refused it.
 - **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
   moves focus to a button, such as the one that opened a panel when the panel closes, uses the
   kit's component. React 19 already passed the ref through, and only the type refused it.
+- **Fields.** `InputField` and `SelectField` take a `ref` in the same way, which holds the
+  `<input>` or the `<select>` drawn, so a page that moves focus to a field, such as a form that
+  fails, uses the kit's component rather than finding the control by its id.
+- **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
+  no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
+  no longer needs a holder of its own to hide one it mounts before it has words. The rule uses
+  `:has()`, which Firefox has from 121, so in Firefox 120 such a callout still draws its ground.
 
 ## 0.1.0-next.2
 
