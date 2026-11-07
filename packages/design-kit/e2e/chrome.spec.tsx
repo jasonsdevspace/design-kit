@@ -5,6 +5,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 /*
@@ -23,7 +24,6 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
-const SOURCE = 'https://github.com/jasonsdevspace/example';
 
 /**
  * The demo's switches as a demo draws them, plain buttons or the kit's own, which stand as tall as

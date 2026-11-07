@@ -4,7 +4,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { Button, Callout, InputField, SelectField } from '../src/react.js';
+import { controlStates } from '../examples/examples.js';
+import { Callout } from '../src/react.js';
 
 /*
  * The buttons, fields and callouts as a browser draws them, from the markup the components draw
@@ -18,68 +19,11 @@ import { Button, Callout, InputField, SelectField } from '../src/react.js';
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
-/** Every state of each piece, and a button and a field inside each callout tone. */
+/** Every state of each control, on a page of its own. */
 const STATES = renderToStaticMarkup(
     <main>
         <h1>Controls</h1>
-        <div>
-            <Button>Filters</Button>
-            <Button accent>Save rule</Button>
-            <Button pressed>Member</Button>
-            <Button pressed={false}>Guest</Button>
-            <Button off>Previous</Button>
-            <button type="button" className="dk-button" disabled>
-                Next
-            </button>
-            <Button>I</Button>
-            <Button accent aria-expanded>
-                Menu
-            </Button>
-            <Button pressed off>
-                Locked on
-            </Button>
-            <Button pressed={false} off>
-                Locked off
-            </Button>
-        </div>
-        <fieldset disabled>
-            <legend>Closed</legend>
-            <Button>Join</Button>
-        </fieldset>
-        <form>
-            <InputField id="words" label="Search words" hint="Separate alternatives with commas" />
-            <InputField
-                id="email"
-                label="Email"
-                hint="Where the receipt goes"
-                error="Enter an email address, like name@example.com"
-            />
-            <InputField id="off" label="Store" disabled defaultValue="Closed" />
-            <SelectField id="sort" label="Sort by">
-                <option value="">Choose an order</option>
-                <option value="price">Price</option>
-            </SelectField>
-            <SelectField id="brand" label="Brand" error="Pick a brand">
-                <option value="">Choose a brand</option>
-            </SelectField>
-            <SelectField id="tags" label="Tags" multiple>
-                <option value="new">New</option>
-                <option value="sale">Sale</option>
-            </SelectField>
-        </form>
-        {(['info', 'success', 'danger'] as const).map((tone) => (
-            <Callout
-                key={tone}
-                tone={tone}
-                title={`The ${tone} tone`}
-                actions={<Button>Try again</Button>}
-            >
-                <p>
-                    A message with <a href="#more">a link</a> in it.
-                </p>
-                <InputField id={`in-${tone}`} label={`Name in ${tone}`} hint="A hint" />
-            </Callout>
-        ))}
+        {controlStates}
     </main>
 );
 

@@ -33,7 +33,7 @@ assert.match(
 );
 
 // What the tarball holds: the build, its types and the sheets, and none of the sources, the
-// tests or this smoke test.
+// examples, the tests or this smoke test.
 const installed = join(dirname(fileURLToPath(theme)), '..');
 const shipped = readdirSync(installed, { recursive: true }).map(String);
 for (const wanted of [
@@ -45,7 +45,7 @@ for (const wanted of [
 ]) {
     assert.ok(shipped.includes(wanted), `ships ${wanted}`);
 }
-for (const unwanted of [/^src/, /^smoke/, /^e2e/, /\.test\./, /\.tsbuildinfo$/]) {
+for (const unwanted of [/^src/, /^examples/, /^smoke/, /^e2e/, /\.test\./, /\.tsbuildinfo$/]) {
     const found = shipped.filter((path) => unwanted.test(path));
     assert.deepEqual(found, [], `ships nothing matching ${unwanted}`);
 }

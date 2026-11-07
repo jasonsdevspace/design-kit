@@ -1,0 +1,291 @@
+import type { ReactElement } from 'react';
+
+import {
+    Button,
+    Callout,
+    DemoFooter,
+    InputField,
+    PortfolioStrip,
+    SelectField,
+    SkipLink,
+} from '../src/react.js';
+
+/*
+ * The markup each piece of the kit draws, in one place, so the README, the browser tests and the
+ * site show the same thing. A piece with a component is drawn by it, so its markup is what a page
+ * with React gets, and a piece without one is written as a page without React writes it. The README
+ * prints each as HTML, and a test fails when one of its blocks no longer matches. The package ships
+ * none of this.
+ */
+
+/** A demo's repository, as the examples name it. */
+export const SOURCE = 'https://github.com/jasonsdevspace/example';
+
+/** The skip link, and the main content it leads to. */
+export const skipLink: ReactElement = (
+    <>
+        <SkipLink />
+        <main id="main-content" tabIndex={-1}>
+            ...
+        </main>
+    </>
+);
+
+/** The strip, with a demo's switch in its section after the links. */
+export const strip: ReactElement = (
+    <PortfolioStrip about="./about/" source={SOURCE} tools={<button type="button">Tour</button>} />
+);
+
+/** The strip's section while the demo's switches are still on their way, holding only their room. */
+export const stripWaiting: ReactElement = (
+    <section className="dk-strip-tools">
+        <span className="dk-strip-room"></span>
+    </section>
+);
+
+/** The footer. */
+export const footer: ReactElement = <DemoFooter name="Example" about="./about/" source={SOURCE} />;
+
+/** An action, the one action a view leads with, a toggle that is on, and a button that is off. */
+export const buttons: ReactElement = (
+    <>
+        <Button>Filters</Button>
+        <Button accent>Save rule</Button>
+        <Button pressed>Members only</Button>
+        <Button off>Previous</Button>
+    </>
+);
+
+/** A text field with a hint and an error, and a select with neither. */
+export const fields: ReactElement = (
+    <>
+        <InputField
+            id="email"
+            type="email"
+            label="Email"
+            hint="Where the receipt goes"
+            error="Enter an email address"
+        />
+        <SelectField id="sort" label="Sort by">
+            <option value="">Choose an order</option>
+            <option value="price">Price</option>
+        </SelectField>
+    </>
+);
+
+/** A callout for something that went wrong, with a title and an action. */
+export const callout: ReactElement = (
+    <Callout
+        tone="danger"
+        title="The products could not be loaded"
+        actions={<Button>Try again</Button>}
+    >
+        <p>Check the file, then load it again.</p>
+    </Callout>
+);
+
+/** Every state of each control, and a button and a field inside each callout tone. */
+export const controlStates: ReactElement = (
+    <>
+        <div>
+            <Button>Filters</Button>
+            <Button accent>Save rule</Button>
+            <Button pressed>Member</Button>
+            <Button pressed={false}>Guest</Button>
+            <Button off>Previous</Button>
+            <button type="button" className="dk-button" disabled>
+                Next
+            </button>
+            <Button>I</Button>
+            <Button accent aria-expanded>
+                Menu
+            </Button>
+            <Button pressed off>
+                Locked on
+            </Button>
+            <Button pressed={false} off>
+                Locked off
+            </Button>
+        </div>
+        <fieldset disabled>
+            <legend>Closed</legend>
+            <Button>Join</Button>
+        </fieldset>
+        <form>
+            <InputField id="words" label="Search words" hint="Separate alternatives with commas" />
+            <InputField
+                id="email"
+                label="Email"
+                hint="Where the receipt goes"
+                error="Enter an email address, like name@example.com"
+            />
+            <InputField id="off" label="Store" disabled defaultValue="Closed" />
+            <SelectField id="sort" label="Sort by">
+                <option value="">Choose an order</option>
+                <option value="price">Price</option>
+            </SelectField>
+            <SelectField id="brand" label="Brand" error="Pick a brand">
+                <option value="">Choose a brand</option>
+            </SelectField>
+            <SelectField id="tags" label="Tags" multiple>
+                <option value="new">New</option>
+                <option value="sale">Sale</option>
+            </SelectField>
+        </form>
+        {(['info', 'success', 'danger'] as const).map((tone) => (
+            <Callout
+                key={tone}
+                tone={tone}
+                title={`The ${tone} tone`}
+                actions={<Button>Try again</Button>}
+            >
+                <p>
+                    A message with <a href="#more">a link</a> in it.
+                </p>
+                <InputField id={`in-${tone}`} label={`Name in ${tone}`} hint="A hint" />
+            </Callout>
+        ))}
+    </>
+);
+
+/** An explainer page, with the parts a demo fills in left as an ellipsis. */
+export const explainerPage: ReactElement = (
+    <>
+        <a className="dk-skip" href="#main-content">
+            Skip to content
+        </a>
+        <div className="dk-strip">
+            <nav className="dk-strip-links" aria-label="Portfolio">
+                ...{' '}
+                <a href="./" aria-current="page">
+                    How it works
+                </a>{' '}
+                ...
+            </nav>
+        </div>
+        <header className="dk-explainer-header">
+            <a href="../">Example</a>
+        </header>
+        <main id="main-content" tabIndex={-1} className="dk-explainer">
+            <h1>How Example works</h1>
+            <p className="dk-explainer-lead">What the demo does, in a sentence or two.</p>
+            <p>
+                <a className="dk-button dk-button-accent" href="../">
+                    Open the demo
+                </a>
+            </p>
+            <section>
+                <p className="dk-explainer-number" aria-hidden="true">
+                    01
+                </p>
+                <h2 id="order">What happens when an order comes in</h2>
+                <p>...</p>
+                <h3>What usually goes wrong</h3>
+                <p>...</p>
+            </section>
+        </main>
+        <footer className="dk-footer">
+            <p>
+                ...{' '}
+                <a href="./" aria-current="page">
+                    How it works
+                </a>
+                , in plain words. ...
+            </p>
+        </footer>
+    </>
+);
+
+/** The steps of a flow, each a title and a note, with an arrow from the step before. */
+export const steps: ReactElement = (
+    <ol className="dk-steps" role="list">
+        <li>
+            <strong className="dk-steps-title">The order names a product.</strong>
+            <span className="dk-steps-note">And how many of it.</span>
+        </li>
+        <li>
+            <span className="dk-steps-arrow" aria-hidden="true">
+                ↓
+            </span>
+            <strong className="dk-steps-title">It waits its turn.</strong>
+            <span className="dk-steps-note">Behind any order for the same product.</span>
+        </li>
+    </ol>
+);
+
+/** A panel set apart from the prose, with its title. */
+export const panel: ReactElement = (
+    <div className="dk-panel">
+        <p className="dk-panel-title">How the numbers were taken</p>
+        <p>...</p>
+    </div>
+);
+
+/** A table of figures, titled, in a frame that scrolls inside itself. */
+export const table: ReactElement = (
+    <>
+        <p className="dk-table-title" id="bench-title">
+            Orders a second under each strategy
+        </p>
+        <div className="dk-table-scroll" role="region" aria-labelledby="bench-title" tabIndex={0}>
+            <table className="dk-table" aria-labelledby="bench-title">
+                <thead>
+                    <tr>
+                        <th scope="col">Scenario</th>
+                        <th scope="col" className="dk-table-number">
+                            Orders a second
+                        </th>
+                        <th scope="col" className="dk-table-number">
+                            Slowest 1%, ms
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Hot product, row lock</th>
+                        <td className="dk-table-number">700</td>
+                        <td className="dk-table-number">48.5</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </>
+);
+
+/** A block of code, titled, that keeps its lines and scrolls inside itself. */
+export const code: ReactElement = (
+    <>
+        <p className="dk-code-title" id="lock-title">
+            The statement that holds the stock
+        </p>
+        <pre
+            className="dk-code"
+            role="region"
+            aria-labelledby="lock-title"
+            tabIndex={0}
+            translate="no"
+        >
+            <code>
+                {'UPDATE stock SET held = held + 1\nWHERE product_id = $1 AND held < on_hand;'}
+            </code>
+        </pre>
+    </>
+);
+
+/** Every example by the name the README's markers give it. */
+export const EXAMPLES = {
+    skipLink,
+    strip,
+    stripWaiting,
+    footer,
+    buttons,
+    fields,
+    callout,
+    explainerPage,
+    steps,
+    panel,
+    table,
+    code,
+} as const satisfies Readonly<Record<string, ReactElement>>;
+
+export type ExampleName = keyof typeof EXAMPLES;

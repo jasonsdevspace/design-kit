@@ -22,6 +22,7 @@
         "test": "vitest",
         "test:run": "vitest run",
         "e2e": "playwright test",
+        "examples": "vitest run packages/design-kit/examples --update",
         "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
         "prepare": "husky || true"
     },
