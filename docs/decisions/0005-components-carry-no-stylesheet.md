@@ -52,9 +52,10 @@ The paths are in `packages/design-kit`.
 
 - `src/react.test.tsx` renders each component to a string and holds its markup to the contract: the
   elements and their classes, the landmarks and their names, the links in their order,
-  `aria-current` on the current page, the switches' section only when there are switches, and
-  unnamed with only their room in it while they are on their way, the footer's markup exactly,
-  with what a demo adds after it, and no link anywhere in the chrome opening a new tab. Switches or footer additions that are null or false draw nothing.
+  `aria-current` on the current page in the strip and the footer, the switches' section only when
+  there are switches, and unnamed with only their room in it while they are on their way, the
+  footer's markup exactly, with what a demo adds after it, and no link anywhere in the chrome
+  opening a new tab. Switches or footer additions that are null or false draw nothing.
 - `e2e/chrome.spec.tsx` draws that markup with the kit's sheets in Chromium and finds the strip one
   row over its rule on a wide screen and rows of links on a phone, whatever the font, the switches
   beside the links or on a row below them, the room of switches on their way holding the strip at

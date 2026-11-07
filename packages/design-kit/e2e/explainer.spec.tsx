@@ -7,11 +7,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 
 /*
- * An explainer page as a demo writes it by hand, with the kit's sheets: its column lined up with
- * the strip, its prose held to the measure, its sections in one rhythm, and a table and a code
- * block that scroll inside themselves, each a named region the keyboard reaches, so the page itself
- * never scrolls sideways, at any width or text size. A section is not a landmark, and the steps
- * stay a list.
+ * An explainer page as a demo writes it by hand, with the kit's sheets: the link to how it works
+ * marked as the current page in the strip and the footer, its column lined up with the strip, its
+ * prose held to the measure, its sections in one rhythm, and a table and a code block that scroll
+ * inside themselves, each a named region the keyboard reaches, so the page itself never scrolls
+ * sideways, at any width or text size. A section is not a landmark, and the steps stay a list.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -92,7 +92,10 @@ const PAGE = renderToStaticMarkup(
         <SkipLink />
         <PortfolioStrip about="./" source={SOURCE} current="about" />
     </>
-).concat(EXPLAINER, renderToStaticMarkup(<DemoFooter name="Example" about="./" source={SOURCE} />));
+).concat(
+    EXPLAINER,
+    renderToStaticMarkup(<DemoFooter name="Example" about="./" source={SOURCE} current="about" />)
+);
 
 const open = async (
     page: Page,
@@ -136,6 +139,16 @@ const sideways = (page: Page) =>
     page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
+
+test('marks the link to how it works as the current page in the strip and the footer alike', async ({
+    page,
+}) => {
+    await open(page);
+    for (const where of ['navigation', 'contentinfo'] as const) {
+        const link = page.getByRole(where).getByRole('link', { name: 'How it works' });
+        await expect(link).toHaveAttribute('aria-current', 'page');
+    }
+});
 
 test('lines the explainer up with the strip, and holds its prose to the measure', async ({
     page,

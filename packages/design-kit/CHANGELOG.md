@@ -9,6 +9,8 @@ entry below as its notes.
 
 ## Unreleased
 
+- **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
+  the link to how it works as the current page, for the footer on a demo's explainer.
 - **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps the room of one row of the
   kit's controls while a demo's switches are still on their way, in their section left unnamed so
   it is no landmark, and nothing below the strip moves when they come. A page without React writes

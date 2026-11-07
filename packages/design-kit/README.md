@@ -144,8 +144,9 @@ caption size, the links close to 1rem apart and wrap where they must, and the sw
 of their own below them.
 
 The footer is one paragraph that says whose project the demo is, with the author's name linking the
-portfolio, and links how it works, the source, the rest of the work and the license. Anything the
-demo adds follows the license, as sentences of its own. Every link in the chrome keeps its
+portfolio, and links how it works, the source, the rest of the work and the license. The footer on
+the demo's explainer marks the link to how it works with `aria-current="page"`, as the strip does.
+Anything the demo adds follows the license, as sentences of its own. Every link in the chrome keeps its
 underline, and in the footer's sentence the underline is what tells a link from the text around it.
 
 ```html
@@ -196,6 +197,7 @@ export const Page = () => (
   `toolsWaiting` keeps the room of one row of the kit's controls while `tools` draws nothing, for a
   page drawn before the switches can be, in the same section unnamed until they come.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
+  `current` set to `about` marks the explainer's link as the current page, as the strip's does.
   `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
   any trailing slash on `source` dropped first. `licenseName` is the license's name in the
   sentence, `MIT license` unless given. Its children follow the license, and children that are
@@ -418,7 +420,9 @@ class would outweigh every piece set inside it.
         <p>...</p>
     </section>
 </main>
-<footer class="dk-footer">...</footer>
+<footer class="dk-footer">
+    <p>... <a href="./" aria-current="page">How it works</a>, in plain words. ...</p>
+</footer>
 ```
 
 The header holds a link back to the demo, outside `main`, so the skip link passes it and reading

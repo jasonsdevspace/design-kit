@@ -81,6 +81,17 @@ describe('the strip', () => {
 });
 
 describe('the footer', () => {
+    it('marks the explainer as the current page when the footer sits on it, as the strip does', () => {
+        expect(
+            renderToStaticMarkup(
+                <DemoFooter name="Example" about="./" source={SOURCE} current="about" />
+            )
+        ).toContain('<a href="./" aria-current="page">How it works</a>');
+        expect(
+            renderToStaticMarkup(<DemoFooter name="Example" about="./" source={SOURCE} />)
+        ).not.toContain('aria-current');
+    });
+
     it('names the project and its author, and links the explainer, the source, the work and the license', () => {
         const footer = renderToStaticMarkup(
             <DemoFooter name="Example" about="./about/" source={SOURCE} />

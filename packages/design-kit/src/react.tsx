@@ -102,6 +102,7 @@ export const DemoFooter = ({
     name,
     about,
     source,
+    current,
     license = `${source.endsWith('/') ? source.slice(0, -1) : source}/blob/main/LICENSE`,
     licenseName = 'MIT license',
     children,
@@ -112,6 +113,8 @@ export const DemoFooter = ({
     readonly about: string;
     /** The demo's repository. */
     readonly source: string;
+    /** The link that is the page the footer sits on, marked as the current page, as the strip's is. */
+    readonly current?: 'about';
     /** The demo's license, the LICENSE file on the repository's main branch unless given. */
     readonly license?: string;
     /** What the license is called, as the footer's sentence names it. */
@@ -122,7 +125,10 @@ export const DemoFooter = ({
     <footer className="dk-footer">
         <p>
             {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>.{' '}
-            <a href={about}>How it works</a>, in plain words. The <a href={source}>source</a> and{' '}
+            <a href={about} aria-current={current === 'about' ? 'page' : undefined}>
+                How it works
+            </a>
+            , in plain words. The <a href={source}>source</a> and{' '}
             <a href={GITHUB_PROFILE_URL}>more work</a> are on GitHub, under the{' '}
             <a href={license}>{licenseName}</a>.{drawn(children) ? <> {children}</> : null}
         </p>
