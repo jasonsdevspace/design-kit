@@ -12,11 +12,11 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * sheets: the strip one row over its rule on a wide screen and rows of links on a phone, whatever
  * font the machine running the test has, the demo's switches beside the links or below them, the
  * room of switches on their way holding the strip at the height they give it, the skip link out of
- * sight until the keyboard reaches it and then at the column's inset, one inside a box near the top
- * of the page clipped out of sight and out of the way of a click until it takes focus, the footer's
- * rule the width of the page with its text in the column, and no audit findings in either theme,
- * the room included. The same markup is drawn again from an origin of its own under `style-src
- * 'self'`, where any inline style would be refused.
+ * sight until the keyboard reaches it and then at the column's inset, one inside a positioned box
+ * down the page out of sight and out of the way of a click until it takes focus and then at the top
+ * of its box, the footer's rule the width of the page with its text in the column, and no audit
+ * findings in either theme, the room included. The same markup is drawn again from an origin of its
+ * own under `style-src 'self'`, where any inline style would be refused.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -199,6 +199,16 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await open(page, { width: 1280 });
     const skip = page.getByRole('link', { name: 'Skip to content' });
     await expect(skip).not.toBeInViewport();
+    // Waiting over the strip, it takes no click meant for the strip's first link.
+    const first = await box(
+        page.getByRole('link', { name: 'A demo by Jason Poteet' }),
+        "the strip's first link"
+    );
+    const under = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, {
+        x: first.x + 4,
+        y: first.y + first.height / 2,
+    });
+    expect(under).toBe('A demo by Jason Poteet');
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     await expect(skip).toBeInViewport();
@@ -208,11 +218,12 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await expect(page.locator('#main-content')).toBeFocused();
 });
 
-test('keeps a skip link inside a box near the top out of sight and out of the way of a click', async ({
+test('keeps a skip link inside a positioned box out of sight and out of the way of a click', async ({
     page,
 }) => {
-    // A bar the page draws over a box of its own that starts high on the page, with a skip link
-    // at the box's top, as a demo puts one at the top of a column of filters.
+    // A bar above a positioned box of the page's own, far enough down that a link waiting 10rem
+    // above its place would sit over the bar, with a skip link at the box's top, as a demo puts one
+    // at the top of a column of filters.
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
@@ -237,8 +248,17 @@ test('keeps a skip link inside a box near the top out of sight and out of the wa
     await page.evaluate(() => document.body.classList.add('hide-skip'));
     expect(waiting.equals(await page.screenshot({ clip: where }))).toBe(true);
     await page.evaluate(() => document.body.classList.remove('hide-skip'));
-    // Out of the way: a click on the bar reaches the bar, wherever the link waits.
-    await page.getByRole('button', { name: 'Search' }).click({ timeout: 2000 });
+    // Out of the way: nothing at the link's own place is the link, and a click on the bar where a
+    // link waiting 10rem above its place would sit reaches the bar.
+    const hit = await page.evaluate(
+        ({ x, y }) => document.elementFromPoint(x, y)?.closest('.dk-skip') !== null,
+        { x: where.x + where.width / 2, y: where.y + where.height / 2 }
+    );
+    expect(hit).toBe(false);
+    const bar = page.getByRole('button', { name: 'Search' });
+    await bar.click({
+        position: { x: Math.round(where.x) + 8, y: Math.round(column.y) - 160 + 8 },
+    });
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     const shown = await box(skip, 'the focused skip link');
