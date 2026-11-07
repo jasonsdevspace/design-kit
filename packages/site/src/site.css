@@ -76,13 +76,28 @@
     color: var(--dk-fg);
 }
 
-/* The copy in the other theme draws every color for the scheme the page is not in. */
+/*
+ * The copy in the other theme draws every color for the scheme the page is not in: the theme the
+ * script set, or the system's where no script ran.
+ */
 :root[data-theme='light'] .site-other {
     color-scheme: dark;
 }
 
 :root[data-theme='dark'] .site-other {
     color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .site-other {
+        color-scheme: dark;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .site-other {
+        color-scheme: light;
+    }
 }
 
 .site-copy-label {

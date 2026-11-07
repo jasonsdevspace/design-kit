@@ -29,9 +29,17 @@ const BUILD: Build = {
 
 const isPage = (file: string): file is keyof typeof PAGES => Object.hasOwn(PAGES, file);
 
+/** Text set into a page's head, with what HTML reads as markup written as character references. */
+const escaped = (text: string) =>
+    text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+
 /**
  * Draws each page's body with React's static render, by the HTML file it is built from, and
- * writes its policy, as the page is built. The pages carry no script of React's, so what a visitor
+ * writes its title, its description and its policy, as the page is built. The pages carry no script of React's, so what a visitor
  * gets is the markup and the kit's sheets. The dev server's own script and styles are not the
  * site's, so a page it serves carries no policy, and the preview the tests open serves the build.
  */
@@ -41,19 +49,16 @@ const pagesPlugin = (): Plugin => ({
         order: 'pre',
         handler: (html, context) => {
             const file = relative(SITE, context.filename).split('\\').join('/');
-            if (!isPage(file)) throw new Error(`the site has no page drawn from ${file}`);
             const route = ROUTES.find((each) => each.file === file);
+            if (route === undefined || !isPage(file)) {
+                throw new Error(`the site has no page drawn from ${file}`);
+            }
             if (
-                route === undefined ||
                 ![PAGE, TITLE, DESCRIPTION].every((place) => html.includes(place)) ||
                 !POLICY_META.test(html)
             ) {
-                throw new Error(`${file} needs a route and a place for each part of its page`);
+                throw new Error(`${file} needs a place for each part of its page`);
             }
-            const title =
-                route.file === 'index.html'
-                    ? `${route.name} · Jason Poteet`
-                    : `${route.name} · The design kit · Jason Poteet`;
             const body = renderToStaticMarkup(PAGES[file](BUILD));
             const policy =
                 context.server === undefined
@@ -61,8 +66,8 @@ const pagesPlugin = (): Plugin => ({
                     : '';
             return html
                 .replace(POLICY_META, () => policy)
-                .replace(TITLE, () => title)
-                .replace(DESCRIPTION, () => route.description)
+                .replace(TITLE, () => escaped(route.title))
+                .replace(DESCRIPTION, () => escaped(route.description))
                 .replace(PAGE, () => body);
         },
     },
@@ -78,9 +83,10 @@ export default defineConfig({
     plugins: [pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
-        // The kit's own browser floor, so the minifier leaves each light-dark() as it is, worked out
-        // by the scheme of the element it is drawn on, rather than rewriting it into variables the
-        // root sets, which a copy drawn in the other scheme would not change.
+        // The kit's own browser floor, as record 3 sets it, so the minifier leaves each light-dark()
+        // as it is, resolved by the scheme of the element that uses it. A wider target rewrites it
+        // into variables that resolve where the tokens are set, on the root, so a copy in the other
+        // scheme would keep the page's colors.
         cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
         rollupOptions: {
             input: Object.fromEntries(

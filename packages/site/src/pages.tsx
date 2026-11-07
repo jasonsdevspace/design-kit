@@ -29,7 +29,7 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
             {ROUTES.map((route) => (
                 <li key={route.file}>
                     <a href={route.path} aria-current={route.file === current ? 'page' : undefined}>
-                        {route.file === 'index.html' ? 'Home' : route.name}
+                        {route.nav}
                     </a>
                 </li>
             ))}
@@ -111,9 +111,11 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         <h1>Controls</h1>
         <p className="site-lead">
             Each state of the kit&rsquo;s buttons, fields and callouts, live in your theme, with a
-            copy in the other theme beside it and the attribute that draws it below. A state is the
-            attribute a screen reader already reads, never a class of the kit&rsquo;s, so what you
-            see and what a screen reader says come from one place.
+            copy in the other theme beside it and the attribute that draws it below. A toggle, an
+            open panel, a control that is unavailable and a field with an error are each drawn from
+            the attribute a screen reader already reads, never a class of the kit&rsquo;s, so what
+            you see and what a screen reader says come from one place. A kind of control, such as
+            the one action a view leads with or a callout&rsquo;s tone, is a class.
         </p>
         {CONTROLS.map((control) => (
             <section key={control.name}>

@@ -12,7 +12,10 @@ import type * as React from '../src/react.js';
 /** The components a state is drawn with. */
 export type Kit = Pick<typeof React, 'Button' | 'Callout' | 'InputField' | 'SelectField'>;
 
-/** One state: what it is called, the attribute or class that draws it, and how it is drawn. */
+/**
+ * One state: what it is called, the attribute that draws it, a class among them, and how it is
+ * drawn.
+ */
 export interface State {
     readonly name: string;
     readonly attribute: string;
@@ -59,7 +62,7 @@ export const CONTROLS: readonly Control[] = [
                 draw: ({ Button }) => <Button aria-expanded>Filters</Button>,
             },
             {
-                name: 'A button that is off',
+                name: 'A button that is unavailable',
                 attribute: 'aria-disabled="true"',
                 draw: ({ Button }) => <Button off>Previous</Button>,
             },
@@ -70,7 +73,7 @@ export const CONTROLS: readonly Control[] = [
         states: [
             {
                 name: 'A field with a hint',
-                attribute: 'aria-describedby',
+                attribute: 'class="dk-field-hint"',
                 draw: ({ InputField }, id) => (
                     <InputField id={id('email')} label="Email" hint="Where the receipt goes" />
                 ),
@@ -88,7 +91,7 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'A field that is off',
+                name: 'A field that is unavailable',
                 attribute: 'disabled',
                 draw: ({ InputField }, id) => (
                     <InputField id={id('store')} label="Store" disabled defaultValue="Closed" />

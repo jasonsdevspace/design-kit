@@ -151,6 +151,38 @@ for (const path of PAGES) {
         }
     });
 
+    test.describe(() => {
+        // With no script, the theme script never sets a theme, and the page follows the system.
+        test.use({ javaScriptEnabled: false });
+
+        test(`${path} draws each copy in the other theme with no script too`, async ({ page }) => {
+            for (const colorScheme of ['light', 'dark'] as const) {
+                await page.emulateMedia({ colorScheme });
+                await page.goto(path);
+                await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+                const drawn = await page.evaluate(() => {
+                    const ground = getComputedStyle(document.body).backgroundColor;
+                    return [...document.querySelectorAll('.site-other')].every(
+                        (copy) => getComputedStyle(copy).backgroundColor !== ground
+                    );
+                });
+                expect(drawn, colorScheme).toBe(true);
+            }
+        });
+    });
+
+    test(`${path} draws each state with the attribute printed under it`, async ({ page }) => {
+        await page.goto(path);
+        const missing = await page.evaluate(() =>
+            [...document.querySelectorAll('.site-state')].flatMap((state) => {
+                const attribute = state.querySelector('.site-state-name code')?.textContent ?? '';
+                const live = state.querySelector('.site-copy:not(.site-other)');
+                return live?.querySelector(`[${attribute}]`) ? [] : [attribute];
+            })
+        );
+        expect(missing).toEqual([]);
+    });
+
     test(`${path} has one of each landmark and no id twice`, async ({ page }) => {
         await page.goto(path);
         await expect(page.getByRole('main')).toHaveCount(1);

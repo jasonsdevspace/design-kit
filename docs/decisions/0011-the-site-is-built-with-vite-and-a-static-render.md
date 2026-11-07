@@ -73,16 +73,17 @@ job that runs only GitHub's Pages actions deploys it.
 
 The paths are in `packages/site`.
 
-- `e2e/site.spec.ts` also finds the keyboard never stopping inside a copy drawn in the other theme,
-  and each such copy drawn in the other theme's ground and text, not the page's.
-- `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
-  from the registry, and no file the site is built, tested or audited from reaching the kit by any
-  other name or path.
 - `e2e/site.spec.ts` opens every page in the site's routes, from the preview the Playwright config
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
-  main, one footer and one portfolio navigation, at most one banner, no id twice, and nothing the page's policy refuses, with the theme script
-  setting the theme only because its hash lets it run.
-- `bench/lighthouse.ts` audits every page in the site's routes, held to the gates ShelfLens is held to: accessibility
-  at a hundred, and on a first visit, performance at ninety or more, the largest paint within two and
-  a half seconds and a layout shift of no more than a tenth.
+  main, one footer and one portfolio navigation, at most one banner, no id twice, and nothing the
+  page's policy refuses, with the theme script setting the theme only because its hash lets it run.
+  It also finds the keyboard never stopping inside a copy drawn in the other theme, each such copy
+  inert and drawn in a ground and text that differ from the page's, and each state's live copy
+  carrying the attribute printed under it.
+- `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
+  from the registry, and no file the site is built, tested or audited from reaching the kit by any
+  other name or path.
+- `bench/lighthouse.ts` audits every page in the site's routes, held to the gates ShelfLens is held
+  to: accessibility at a hundred, and on a first visit, performance at ninety or more, the largest
+  paint within two and a half seconds and a layout shift of no more than a tenth.

@@ -19,9 +19,12 @@ describe('the states of the controls', () => {
         expect(states.length).toBeGreaterThan(0);
         for (const state of states) {
             const markup = renderToStaticMarkup(state.draw(kit, (name) => name));
-            // A class names the kit's classes the element has, and an attribute its name and value.
-            const wanted = state.attribute.replace(/^class="(.*)"$/, 'class="$1');
-            expect(markup, state.name).toContain(wanted);
+            // An attribute with a value is found whole, its closing quote included, and one with
+            // none by its own name, not as the end of another such as aria-disabled.
+            const drawn = state.attribute.includes('=')
+                ? markup.includes(` ${state.attribute}`)
+                : new RegExp(`(?<![-\\w])${state.attribute}(=""|[\\s/>])`).test(markup);
+            expect(drawn, `${state.name}: ${state.attribute}`).toBe(true);
         }
     });
 
@@ -40,7 +43,9 @@ describe('the states of the controls', () => {
 
     it('import nothing of the kit but its types', () => {
         const source = readFileSync(new URL('states.tsx', import.meta.url), 'utf8');
-        const fromKit = [...source.matchAll(/^import (.*) from '\.\.\/src\/[^']+';$/gm)];
+        // Every import, however it is wrapped: React's types, and the kit's by any path or name.
+        const imports = [...source.matchAll(/^import\s+([\s\S]*?)\s+from\s+'([^']+)';/gm)];
+        const fromKit = imports.filter(([, , from]) => from !== 'react');
         expect(fromKit.length).toBeGreaterThan(0);
         expect(fromKit.filter(([, what]) => !what?.startsWith('type '))).toEqual([]);
     });
