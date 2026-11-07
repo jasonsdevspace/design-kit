@@ -172,8 +172,10 @@ rather than keeping a copy.
 ## Browser support
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
-120 and Safari 17.5. Cascade layers and `:where()` are older than that. The browser tests run only
-in Chromium, so the other engines are held to the floor by what they document, not by a test here.
+120 and Safari 17.5. Cascade layers and `:where()` are older than that. An empty live callout draws
+nothing by `:has()`, which Firefox has from 121, so in Firefox 120 it draws its ground until it is
+filled. The browser tests run only in Chromium, so the other engines are held to the floor by what
+they document, not by a test here.
 
 ## The gotchas, and the test behind each
 

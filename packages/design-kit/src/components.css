@@ -356,8 +356,9 @@
     }
 
     /*
-     * A live callout a page puts on the page before it has words draws nothing, no ground, padding
-     * or edge, and stays in the page so a screen reader reads what fills it. It comes after the
+     * A callout whose message holds nothing, not even a space, and that has no actions draws
+     * nothing, no ground, padding or edge. That is a live callout a page mounts before it has
+     * words, and it stays in the page so a screen reader reads what fills it. It comes after the
      * tones, so it wins over each of them by its order.
      */
     :where(.dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions))) {
