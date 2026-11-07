@@ -250,6 +250,7 @@ they document, not by a test here.
 | Every page of the site has no axe findings in either theme, on a phone and a wide screen                          | `packages/site/e2e/site.spec.ts`              |
 | No page of the site scrolls sideways at any width or at twice the text size, or cuts off text under wider spacing | `packages/site/e2e/site.spec.ts`              |
 | The site draws under `style-src 'self'`, its one script the theme script by its hash                              | `packages/site/e2e/site.spec.ts`              |
+| The site draws the published kit at one exact version, and nothing from the kit's sources                         | `packages/site/src/published.test.ts`         |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`           |
 
 ## Decisions
@@ -289,8 +290,9 @@ options rejected, what the choice costs, and the test behind it.
     The package README shows what the components draw, held to them by a unit test, at the cost of
     a command to run after each change to a piece's markup.
 11. [The site is built with Vite and React's static render, with no script of React's](docs/decisions/0011-the-site-is-built-with-vite-and-a-static-render.md).
-    The site draws the kit under the policy a demo sets, with no runtime of a framework's, at the
-    cost of a policy in a meta element, which cannot stop another site framing it.
+    The site draws the published kit under the policy a demo sets, with no runtime of a framework's,
+    at the cost of a policy in a meta element, which cannot stop another site framing it, and of a
+    change to the kit reaching the site a release later.
 
 ## Dev setup
 
@@ -326,7 +328,10 @@ npm run e2e
 ```
 
 The site in `packages/site` is built with `npm run site` into its `dist`, served under
-`/design-kit/` as GitHub Pages serves it. `npm run lighthouse` builds it and audits every page.
+`/design-kit/` as GitHub Pages serves it. It draws the kit as npm publishes it, at the version its
+`package.json` pins, so a change to the kit reaches the site once it is released and the pin moves.
+CI also runs the site's browser tests over each commit's own kit, so a change that would break the
+site fails before it is released. `npm run lighthouse` builds it and audits every page.
 
 ```bash
 npm run site
@@ -354,6 +359,9 @@ the one that job reported. Trusted publishing means no npm token is stored anywh
 version goes live only when it is promoted on the package page. A version with a hyphen is staged
 under npm's `next` tag and marked as a prerelease on GitHub. The workflow then creates the release
 on GitHub with the changelog entry as its notes.
+
+Once a version is promoted, a pull request moves the site's pin in `packages/site/package.json` to
+it, as a demo's pin moves, and the site shows the new version once that merges.
 
 The job that stages holds the publish token, so it installs nothing but a pinned npm, from a
 tarball checked against the checksum npm's registry gives for that version, and fetches nothing

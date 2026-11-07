@@ -1,18 +1,19 @@
+import { DemoFooter, PortfolioStrip, SkipLink } from 'design-kit-release/react';
 import type { ReactElement } from 'react';
 
-import { DemoFooter, PortfolioStrip, SkipLink } from '../../design-kit/src/react.js';
 import type { Route } from './routes.js';
 
 /** The kit's repository, which the strip and the footer link as the site's source. */
 export const SOURCE = 'https://github.com/jasonsdevspace/design-kit';
 
-/** How the kit works, the package's README on GitHub. */
-const ABOUT = `${SOURCE}/tree/main/packages/design-kit#readme`;
+/** How the kit works, the package's README at the tag of the version a page uses. */
+const aboutOf = (build: Build) =>
+    `${SOURCE}/tree/design-kit-v${build.version}/packages/design-kit#readme`;
 
 /** The package on npm. */
 const NPM = 'https://www.npmjs.com/package/@jasonsdevspace/design-kit';
 
-/** The version the kit's manifest names, and the commit the site was built at. */
+/** The version of the kit the site pins, and the commit the site was built at. */
 export interface Build {
     readonly version: string;
     readonly commit: string;
@@ -20,12 +21,12 @@ export interface Build {
 
 /**
  * The landing page: what the kit is, with the kit's own skip link, strip and footer around it,
- * and in the footer the commit the page was drawn from and the version the package had there.
+ * and in the footer the version of the kit it is drawn from and the commit it was built at.
  */
 export const Landing = ({ build }: { readonly build: Build }) => (
     <>
         <SkipLink />
-        <PortfolioStrip about={ABOUT} source={SOURCE} />
+        <PortfolioStrip about={aboutOf(build)} source={SOURCE} />
         <main id="main-content" tabIndex={-1} className="site-main">
             <h1>The design kit</h1>
             <p className="site-lead">
@@ -39,12 +40,13 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                 <code>style-src &apos;self&apos;</code> draws it, as this one does.
             </p>
         </main>
-        <DemoFooter name="The design kit" about={ABOUT} source={SOURCE}>
-            This page is drawn from the kit&rsquo;s source at commit{' '}
+        <DemoFooter name="The design kit" about={aboutOf(build)} source={SOURCE}>
+            This page uses version {build.version} of the kit, as published on npm, and was built at
+            commit{' '}
             <a href={`${SOURCE}/commit/${build.commit}`}>
                 <code>{build.commit.slice(0, 7)}</code>
             </a>
-            , where the package is version {build.version}.
+            .
         </DemoFooter>
     </>
 );

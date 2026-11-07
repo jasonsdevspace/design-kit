@@ -70,8 +70,8 @@ jobs:
             - name: Unit tests
               run: npm run test:run
 
-            # The package compiles to what it ships, and the site builds. The oldest Node check
-            # builds the package again as it packs, in a job of its own.
+            # The package compiles to what it ships, and the site builds from the version it pins.
+            # The oldest Node check builds the package again as it packs, in a job of its own.
             - name: Build
               run: npm run build
 
@@ -105,6 +105,16 @@ jobs:
 
             - name: Browser tests
               run: npm run e2e
+
+            # The site draws the version of the kit it pins, so a change to the kit is not on the
+            # site until it is released. The site's tests run again over this commit's kit, packed
+            # and installed under the site's alias without saving it, so a change that breaks the
+            # site's audits or its policy fails here, before it is released, not when the pin moves.
+            - name: Site tests over this commit's kit
+              run: |
+                  npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
+                  npm install --no-save --ignore-scripts "design-kit-release@file:$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
+                  npx playwright test packages/site
 
             - name: Keep the report of a failed run
               if: failure()

@@ -38,18 +38,25 @@ built, and writes its policy. No script of React's reaches the browser.
 ## Decision
 
 Option D. `packages/site` is a private workspace, served under `/design-kit/` in the build, the
-preview and the audits alike, so every link the tests follow is the one a visitor follows. Each page
-has a meta element for its policy: nothing by default, scripts only by the theme script's hash,
-styles and images only from the site's origin, no base element and no form posts. The footer names
-the version of the kit a page is drawn from and the commit it was built at. CI builds and uploads the
-site from a job with read access alone once every check has passed on main, and a job that runs only
-GitHub's Pages actions deploys it.
+preview and the audits alike, so every link the tests follow is the one a visitor follows. It
+installs the kit from npm at one exact version, as ShelfLens does, under the alias
+`design-kit-release`, so npm fetches the published package rather than linking the workspace beside
+it, and its sheets, components and theme plugin all come from that version. What a visitor sees is
+then what a demo installs, and the site's tests and audit hold what ships. Each page has a meta
+element for its policy: nothing by default, scripts only by the theme script's hash, styles and
+images only from the site's origin, no base element and no form posts. The footer names the version
+of the kit a page is drawn from and the commit it was built at, so it never names a version npm
+cannot give, and its link to how the kit works leads to the README at that version's tag. CI builds
+and uploads the site from a job with read access alone once every check has passed on main, and a
+job that runs only GitHub's Pages actions deploys it.
 
 ## Consequences
 
-- The site draws the kit from its sources under the policy a demo would set, so a change to the
-  sheets or the components that breaks that promise breaks the site's own tests. The packed package
-  is held to what it ships by the oldest Node job.
+- A change to the kit reaches the site only once it is released and a pull request moves the pin,
+  as it reaches a demo, so the site never shows a piece a demo cannot yet install.
+- The site's browser tests also run over each commit's own kit, packed and installed under the
+  alias without saving it, so a change that breaks the site's audits or its policy fails its own
+  pull request rather than the one that later moves the pin, after the version is on npm.
 - A policy in a meta element cannot say which pages may frame the site, which only a header can, and
   GitHub Pages sends none, so the site can be framed.
 - A script the site adds is refused until the policy names it, and the browser tests fail on
@@ -63,10 +70,13 @@ GitHub's Pages actions deploys it.
 
 The paths are in `packages/site`.
 
+- `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
+  from the registry, and no file the site is built, tested or audited from reaching the kit by any
+  other name or path.
 - `e2e/site.spec.ts` opens every page in the site's routes, from the preview the Playwright config
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
-  main, one footer and one portfolio navigation, at most one banner, and no id twice, and nothing the page's policy refuses, with the theme script
+  main, one footer and one portfolio navigation, at most one banner, no id twice, and nothing the page's policy refuses, with the theme script
   setting the theme only because its hash lets it run.
 - `bench/lighthouse.ts` audits every page in the site's routes, held to the gates ShelfLens is held to: accessibility
   at a hundred, and on a first visit, performance at ninety or more, the largest paint within two and

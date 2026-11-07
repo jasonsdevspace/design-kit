@@ -1,12 +1,12 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import kit from 'design-kit-release/package.json' with { type: 'json' };
+import { themeScriptPlugin } from 'design-kit-release/vite';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { defineConfig, type Plugin } from 'vite';
 
-import { themeScriptPlugin } from '../design-kit/src/vite.js';
 import { type Build, PAGES } from './src/pages.js';
 import { POLICY } from './src/policy.js';
 import { BASE, ROUTES } from './src/routes.js';
@@ -17,13 +17,9 @@ const SITE = fileURLToPath(new URL('.', import.meta.url));
 const PAGE = '<!-- page -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
-/** The version the kit's manifest names, and the commit the site is built at, read once. */
+/** The version of the kit the site installed from npm, and the commit it is built at, read once. */
 const BUILD: Build = {
-    version: (
-        JSON.parse(
-            readFileSync(new URL('../design-kit/package.json', import.meta.url), 'utf8')
-        ) as { version: string }
-    ).version,
+    version: kit.version,
     commit:
         process.env['GITHUB_SHA'] ??
         execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),

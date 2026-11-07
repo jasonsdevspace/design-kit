@@ -1,11 +1,11 @@
 /*
- * The kit's own sheets, in the order a demo loads them, and the little the site adds. The build
- * bundles them into one file the page loads from its own origin, so the page draws under
- * `style-src 'self'` as a demo does.
+ * The kit's own sheets, from the version the site pins, in the order a demo loads them, and the
+ * little the site adds. The build bundles them into one file the page loads from its own origin,
+ * so the page draws under `style-src 'self'` as a demo does.
  */
-@import '../../design-kit/src/tokens.css';
-@import '../../design-kit/src/base.css';
-@import '../../design-kit/src/components.css';
+@import 'design-kit-release/tokens.css';
+@import 'design-kit-release/base.css';
+@import 'design-kit-release/components.css';
 
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
