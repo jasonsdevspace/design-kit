@@ -1,0 +1,24 @@
+/*
+ * The kit's own sheets, in the order a demo loads them, and the little the site adds. The build
+ * bundles them into one file the page loads from its own origin, so the page draws under
+ * `style-src 'self'` as a demo does.
+ */
+@import '../../design-kit/src/tokens.css';
+@import '../../design-kit/src/base.css';
+@import '../../design-kit/src/components.css';
+
+/* The site's page reads as one column from the strip to the footer, as a demo's does. */
+.site-main {
+    max-width: var(--dk-column);
+    margin-inline: auto;
+    padding: var(--dk-space-6) var(--dk-space-4) 0;
+}
+
+.site-main > :first-child {
+    margin-top: 0;
+}
+
+.site-lead {
+    max-width: var(--dk-measure);
+    font-size: var(--dk-text-lead);
+}
