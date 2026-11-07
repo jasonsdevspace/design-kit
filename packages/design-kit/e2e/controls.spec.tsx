@@ -288,6 +288,47 @@ test('draws an invalid control in the danger color, and the error beside the hin
     expect(await word.boundingBox()).toMatchObject({ width: 1, height: 1 });
 });
 
+test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
+    page,
+}) => {
+    const tones = ['info', 'success', 'danger'] as const;
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+            `<style>${KIT}</style></head><body><main>` +
+            renderToStaticMarkup(
+                <>
+                    {tones.map((tone) => (
+                        <Callout key={tone} tone={tone} live="status" />
+                    ))}
+                </>
+            ) +
+            '</main></body></html>'
+    );
+    const callouts = page.locator('.dk-callout');
+    await expect(callouts).toHaveCount(tones.length);
+    for (const callout of await callouts.all()) {
+        expect(await height(callout)).toBe(0);
+        expect(await style(callout, 'background-color', 'border-top-width')).toEqual({
+            'background-color': 'rgba(0, 0, 0, 0)',
+            'border-top-width': '0px',
+        });
+        // Still in the page, so a screen reader reads what fills it.
+        await expect(callout.getByRole('status')).toBeAttached();
+    }
+    // Filled, as a page fills it after a change, each takes the callout's look again.
+    await page.evaluate(() => {
+        for (const body of document.querySelectorAll('.dk-callout-body'))
+            body.textContent = 'Saved.';
+    });
+    for (const callout of await callouts.all()) {
+        expect(await height(callout)).toBeGreaterThan(0);
+        const drawn = await style(callout, 'background-color', 'padding-top');
+        expect(drawn['background-color']).not.toBe('rgba(0, 0, 0, 0)');
+        expect(drawn['padding-top']).not.toBe('0px');
+    }
+});
+
 test.describe('in forced colors', () => {
     test.use({ forcedColors: 'active' });
 

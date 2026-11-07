@@ -27,11 +27,12 @@ is about, not whether it just arrived.
 
 Option B. `Callout` draws no role in any tone unless the page passes `live`. The role goes on
 `.dk-callout-body`, the message, which holds the title too, so the title and the tone's word are
-read with it and the actions after it are not. A live callout
-is drawn even when it is empty, so a page mounts it first and fills it after, which is when a
-screen reader reads it. The tone is told by a visually hidden "Success: " or "Error: " before the
-title, or before the message when there is no title, rather than by a role or by color alone.
-`prefix` gives another word, and an empty string drops it.
+read with it and the actions after it are not. A live callout is drawn even when it is empty, so a
+page mounts it first and fills it after, which is when a screen reader reads it. Until it has words,
+with no actions, it draws no ground, padding or edge, so the page needs no holder of its own to hide
+it. The tone is told by a visually hidden "Success: " or "Error: " before the title, or before the
+message when there is no title, rather than by a role or by color alone. `prefix` gives another
+word, and an empty string drops it.
 
 ## Consequences
 
@@ -57,7 +58,8 @@ The paths are in `packages/design-kit`.
   `headingLevel` names.
 - `e2e/controls.spec.tsx` draws a callout of each tone with a link, a field and a button in it, and
   finds the focus ring on the button in each, the edge drawn in forced colors, and no axe findings
-  in either theme.
+  in either theme. It draws an empty live callout of each tone at no size and on no ground, and
+  finds the callout's ground and padding once it is filled.
 - `src/tokens.test.ts` measures text, muted text and the accent at 4.5 to 1, and a control's edge at
   3 to 1, on the highlight and on each callout's ground, in both themes.
 - `smoke/types.ts` fails to compile a tone outside the three against the packed package.
