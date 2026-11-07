@@ -9,6 +9,10 @@ entry below as its notes.
 
 ## Unreleased
 
+- **Page chrome.** The link in the strip or the footer marked as the current page stands in the
+  page's text at the heading's weight, so a sighted reader on a demo's explainer sees that "How it
+  works" leads where they already are. It keeps its underline, and the weight holds in forced
+  colors, where the color does not.
 - **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
   no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
   no longer needs a holder of its own to hide one it mounts before it has words. It reads the

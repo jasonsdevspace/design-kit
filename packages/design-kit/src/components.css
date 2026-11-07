@@ -123,6 +123,16 @@
     }
 
     /*
+     * The link to the page a reader is on stands in the page's text and the heading's weight, so
+     * it is told from the links around it by more than its color, which forced colors replace. It
+     * keeps its underline, so it still reads as a link.
+     */
+    :where(.dk-strip-links a[aria-current='page'], .dk-footer a[aria-current='page']) {
+        color: var(--dk-fg);
+        font-weight: var(--dk-weight-strong);
+    }
+
+    /*
      * On a phone the links are smaller and closer, and wrap to rows of their own where they must,
      * with the switches on a row below them.
      */

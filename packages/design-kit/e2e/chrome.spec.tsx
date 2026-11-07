@@ -14,8 +14,10 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * room of switches on their way holding the strip at the height they give it, the skip link out of
  * sight until the keyboard reaches it and then at the column's inset, one inside a positioned box
  * down the page out of sight and out of the way of a click until it takes focus and then at the top
- * of its box, the footer's rule the width of the page with its text in the column, and no audit
- * findings in either theme, the room included. The same markup is drawn again from an origin of its
+ * of its box, the footer's rule the width of the page with its text in the column, the link to the
+ * current page on an explainer drawn apart from the others by its weight in each theme and in
+ * forced colors, and no audit findings in either theme, the room and the explainer's chrome
+ * included. The same markup is drawn again from an origin of its
  * own under `style-src 'self'`, where any inline style would be refused.
  */
 
@@ -46,25 +48,34 @@ const SWITCHES: Readonly<Record<Tools, ReactNode>> = {
     ),
 };
 
+/** Where the chrome sits: on a demo, or on its explainer, where it marks the explainer's link. */
+type Where = 'demo' | 'about';
+
 /**
- * The chrome around a main column, as a demo draws it, with the demo's switches if asked, or the
- * room for them while they are on their way.
+ * The chrome around a main column, as a demo or its explainer draws it, with the demo's switches if
+ * asked, or the room for them while they are on their way.
  */
-const chrome = (tools: Tools) =>
+const chrome = (tools: Tools, where: Where = 'demo') =>
     renderToStaticMarkup(
         <>
             <SkipLink />
             <PortfolioStrip
-                about="./about/"
+                about={where === 'about' ? './' : './about/'}
                 source={SOURCE}
                 tools={SWITCHES[tools]}
                 toolsWaiting={tools === 'waiting'}
+                {...(where === 'about' ? { current: 'about' as const } : {})}
             />
             <main id="main-content" tabIndex={-1}>
                 <h1>Example</h1>
                 <p>A demo.</p>
             </main>
-            <DemoFooter name="Example" about="./about/" source={SOURCE} />
+            <DemoFooter
+                name="Example"
+                about={where === 'about' ? './' : './about/'}
+                source={SOURCE}
+                {...(where === 'about' ? { current: 'about' as const } : {})}
+            />
         </>
     );
 
@@ -75,12 +86,13 @@ const open = async (
         width,
         theme = 'light',
         tools = 'none',
-    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools }
+        where = 'demo',
+    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools; where?: Where }
 ) => {
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
-            `<style>${KIT}</style></head><body>${chrome(tools)}</body></html>`
+            `<style>${KIT}</style></head><body>${chrome(tools, where)}</body></html>`
     );
 };
 
@@ -279,15 +291,59 @@ test("runs the footer's rule the width of the page, with its text in the column"
     expect(Math.round(text.x)).toBe((1280 - 1152) / 2 + 16);
 });
 
+/** What sets a link apart from the text and links around it, as the screen draws it. */
+const linkLook = (link: Locator) =>
+    link.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+            weight: style.fontWeight,
+            underline: style.textDecorationLine.includes('underline'),
+        };
+    });
+
+test('draws the link to the current page apart from the others in the strip and the footer', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        for (const forcedColors of ['none', 'active'] as const) {
+            await page.emulateMedia({ forcedColors });
+            await open(page, { width: 1280, theme, where: 'about' });
+            for (const [where, name] of [
+                ['navigation', 'Portfolio'],
+                ['contentinfo', undefined],
+            ] as const) {
+                const area = page.getByRole(where, name === undefined ? {} : { name });
+                const current = area.getByRole('link', { name: 'How it works' });
+                await expect(current).toHaveAttribute('aria-current', 'page');
+                const other = area.getByRole('link', { name: /^source/i });
+                const marked = await linkLook(current);
+                const plain = await linkLook(other);
+                // Apart by its weight, which forced colors keep, and still underlined as a link is.
+                expect(
+                    marked,
+                    `${where} in the ${theme} theme, forced colors ${forcedColors}`
+                ).toEqual({
+                    weight: '600',
+                    underline: true,
+                });
+                expect(plain).toEqual({ weight: '400', underline: true });
+            }
+        }
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
+});
+
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme, on a wide screen and a phone`, async ({
         page,
     }) => {
         for (const width of [1280, 360]) {
             for (const tools of ['plain', 'waiting'] as const) {
-                await open(page, { width, theme, tools });
-                const results = await new AxeBuilder({ page }).analyze();
-                expect(results.violations.map((violation) => violation.id)).toEqual([]);
+                for (const where of ['demo', 'about'] as const) {
+                    await open(page, { width, theme, tools, where });
+                    const results = await new AxeBuilder({ page }).analyze();
+                    expect(results.violations.map((violation) => violation.id)).toEqual([]);
+                }
             }
         }
     });

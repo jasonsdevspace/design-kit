@@ -154,7 +154,9 @@ portfolio, and links how it works, the source, the rest of the work and the lice
 the demo's explainer marks the link to how it works with `aria-current="page"`, as the strip does.
 Anything the demo adds follows the license, as sentences of its own. Every link in the chrome keeps
 its underline, and in the footer's sentence the underline is what tells a link from the text around
-it.
+it. The link marked as the current page, in the strip or the footer, stands in the page's text at
+the heading's weight, so it is told from the links around it by more than its color, in forced
+colors too, and still reads as a link.
 
 ```html
 <footer class="dk-footer">
