@@ -2,6 +2,7 @@ import {
     type ButtonHTMLAttributes,
     type InputHTMLAttributes,
     type ReactNode,
+    type Ref,
     type SelectHTMLAttributes,
     useId,
 } from 'react';
@@ -139,6 +140,8 @@ type NativeButton = Omit<
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
     readonly off?: boolean;
+    /** The button drawn, for a page that moves focus to it, such as when its panel closes. */
+    readonly ref?: Ref<HTMLButtonElement>;
 } & (
         | { readonly accent: true; readonly pressed?: never }
         | {
