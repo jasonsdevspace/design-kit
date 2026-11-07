@@ -7,33 +7,38 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
-## Unreleased
+## 0.1.0-next.3
 
-- **Page chrome.** The link in the strip or the footer marked as the current page stands in the
-  page's text at the heading's weight, so a sighted reader on a demo's explainer sees that "How it
-  works" leads where they already are. It keeps its underline, and the weight holds in forced
-  colors, where the color does not.
-- **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
-  no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
-  no longer needs a holder of its own to hide one it mounts before it has words. It reads the
-  message with `:has()`, so in Firefox 120 such a callout still draws its ground.
-- **Page chrome.** The skip link waits in its own place as the visually hidden class does, one pixel
-  clipped to nothing, rather than 10rem above it, so one inside a positioned box lower on the page
-  no longer shows over what is above the box or takes its clicks. It shows where it did when a
-  keyboard focuses it.
-- **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
-  the link to how it works as the current page, for the footer on a demo's explainer.
+What a page found missing when it first drew from the kit: refs on the controls a page moves focus
+to, a strip that holds still while a demo's switches arrive, a skip link that stays hidden wherever
+it sits, a current page a sighted reader can see, and a live callout that draws nothing until it
+has words.
+
 - **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps the room of one row of the
   kit's controls while a demo's switches are still on their way, in their section left unnamed so
   it is no landmark, and nothing below the strip moves when they come. A page without React writes
   `.dk-strip-room` in the unnamed section, and names the section when it fills it.
+- **Page chrome.** `DemoFooter` takes `current`, as `PortfolioStrip` does, and set to `about` marks
+  the link to how it works as the current page, for the footer on a demo's explainer.
+- **Page chrome.** The link in the strip or the footer marked as the current page stands in the
+  page's text at the heading's weight, so a sighted reader on a demo's explainer sees that "How it
+  works" leads where they already are. It keeps its underline, and the weight holds in forced
+  colors, where the color does not.
+- **Page chrome.** The skip link waits in its own place as the visually hidden class does, one pixel
+  clipped to nothing, rather than 10rem above it, so one inside a positioned box lower on the page
+  no longer shows over what is above the box or takes its clicks. It shows where it did when a
+  keyboard focuses it.
+- **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
+  moves focus to a button, such as the one that opened a panel when the panel closes, uses the
+  kit's component. React 19 already passed the ref through, and only the type refused it.
 - **Fields.** `InputField` and `SelectField` take a `ref`, which holds the `<input>` or the
   `<select>` drawn, so a page that moves focus to a field, such as a form that fails, uses the kit's
   component rather than finding the control by its id. React 19 already passed the ref through, and
   only the type refused it.
-- **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
-  moves focus to a button, such as the one that opened a panel when the panel closes, uses the
-  kit's component. React 19 already passed the ref through, and only the type refused it.
+- **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
+  no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
+  no longer needs a holder of its own to hide one it mounts before it has words. It reads the
+  message with `:has()`, so in Firefox 120 such a callout still draws its ground.
 
 ## 0.1.0-next.2
 
