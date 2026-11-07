@@ -4,9 +4,9 @@ import { expect, test } from '@playwright/test';
 import { build } from 'vite';
 
 /*
- * The kit's button and fields with a ref, drawn by React in a browser, since only a browser attaches a ref
- * and moves focus. The page is bundled from ref-page.tsx with React in it, and written into the
- * browser with the bundle as its one script.
+ * The kit's button and fields with a ref, drawn by React in a browser, since only a browser
+ * attaches a ref and moves focus. The page is bundled from ref-page.tsx with React in it, and
+ * written into the browser with the bundle as its one script.
  */
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
@@ -51,6 +51,7 @@ test('moves focus back to the button a ref holds when its panel closes', async (
 test("moves focus to the control each field's ref holds", async ({ page }) => {
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: script, type: 'module' });
+    await page.getByRole('button', { name: 'Send' }).click();
     await page.getByRole('button', { name: 'Go to the name' }).click();
     const name = page.getByLabel('Name');
     await expect(name).toHaveClass('dk-input');

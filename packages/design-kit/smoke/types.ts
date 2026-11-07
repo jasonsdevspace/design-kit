@@ -47,5 +47,8 @@ export const sizeField = SelectField({ ref: createRef<HTMLSelectElement>(), labe
 // @ts-expect-error An input field's ref is the input drawn, not some other element.
 export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), label: 'Name' });
 
+// @ts-expect-error A select field's ref is the select drawn, not some other element.
+export const wrongSelect = SelectField({ ref: createRef<HTMLInputElement>(), label: 'Size' });
+
 // @ts-expect-error A callout's tone is one of three.
 export const loud = Callout({ tone: 'warning' });

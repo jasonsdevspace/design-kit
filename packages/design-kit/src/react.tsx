@@ -306,8 +306,9 @@ export type SelectFieldProps = FieldParts &
     Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'>;
 
 /**
- * A native select with its label, hint and error, its children the options, and its `ref` the
- * select drawn, as an input field's is.
+ * A native select with its label, hint and error, its children the options, and the select taking
+ * every other prop given, its `ref` among them, which holds the select drawn for a page that moves
+ * focus to it.
  */
 export const SelectField = (props: SelectFieldProps) => {
     const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;

@@ -207,8 +207,8 @@ they document, not by a test here.
 | A toggle has `aria-pressed` whether on or off, and an action has none                                 | `packages/design-kit/src/react.test.tsx`     |
 | A button hands its ref on to the `<button>` it draws                                                  | `packages/design-kit/src/react.test.tsx`     |
 | Focus moved through a button's ref lands on the kit's button                                          | `packages/design-kit/e2e/ref.spec.ts`        |
-| A field hands its ref on to the `<input>` or `<select>` it draws                                      | `packages/design-kit/src/react.test.tsx`     |
-| Focus moved through a field's ref lands on its control, read by its label                             | `packages/design-kit/e2e/ref.spec.ts`        |
+| A field's ref is typed as the `<input>` or `<select>` it draws, and one of another is refused         | `packages/design-kit/src/react.test.tsx`     |
+| Focus moved through a field's ref, after the field is drawn again, lands on its control               | `packages/design-kit/e2e/ref.spec.ts`        |
 | A field lists only what it draws in `aria-describedby`, and is invalid only with an error             | `packages/design-kit/src/react.test.tsx`     |
 | A callout has a role only when the page asks, and its actions sit outside the message                 | `packages/design-kit/src/react.test.tsx`     |
 | A live callout is drawn empty, and success and danger say their tone in words                         | `packages/design-kit/src/react.test.tsx`     |
