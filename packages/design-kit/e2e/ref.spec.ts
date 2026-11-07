@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 import { build } from 'vite';
 
 /*
- * The kit's button with a ref, drawn by React in a browser, since only a browser attaches a ref
+ * The kit's button and fields with a ref, drawn by React in a browser, since only a browser attaches a ref
  * and moves focus. The page is bundled from ref-page.tsx with React in it, and written into the
  * browser with the bundle as its one script.
  */
@@ -46,4 +46,17 @@ test('moves focus back to the button a ref holds when its panel closes', async (
     await expect(page.getByRole('button', { name: 'Close' })).toBeHidden();
     await expect(opener).toHaveAttribute('aria-expanded', 'false');
     await expect(opener).toBeFocused();
+});
+
+test("moves focus to the control each field's ref holds", async ({ page }) => {
+    await page.setContent('<div id="root"></div>');
+    await page.addScriptTag({ content: script, type: 'module' });
+    await page.getByRole('button', { name: 'Go to the name' }).click();
+    const name = page.getByLabel('Name');
+    await expect(name).toHaveClass('dk-input');
+    await expect(name).toBeFocused();
+    await page.getByRole('button', { name: 'Go to the size' }).click();
+    const size = page.getByLabel('Size');
+    await expect(size).toHaveClass('dk-select');
+    await expect(size).toBeFocused();
 });

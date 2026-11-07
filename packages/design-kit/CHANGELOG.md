@@ -23,6 +23,10 @@ entry below as its notes.
   kit's controls while a demo's switches are still on their way, in their section left unnamed so
   it is no landmark, and nothing below the strip moves when they come. A page without React writes
   `.dk-strip-room` in the unnamed section, and names the section when it fills it.
+- **Fields.** `InputField` and `SelectField` take a `ref`, which holds the `<input>` or the
+  `<select>` drawn, so a page that moves focus to a field, such as a form that fails, uses the kit's
+  component rather than finding the control by its id. React 19 already passed the ref through, and
+  only the type refused it.
 - **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
   moves focus to a button, such as the one that opened a panel when the panel closes, uses the
   kit's component. React 19 already passed the ref through, and only the type refused it.

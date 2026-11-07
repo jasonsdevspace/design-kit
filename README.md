@@ -207,6 +207,8 @@ they document, not by a test here.
 | A toggle has `aria-pressed` whether on or off, and an action has none                                 | `packages/design-kit/src/react.test.tsx`     |
 | A button hands its ref on to the `<button>` it draws                                                  | `packages/design-kit/src/react.test.tsx`     |
 | Focus moved through a button's ref lands on the kit's button                                          | `packages/design-kit/e2e/ref.spec.ts`        |
+| A field hands its ref on to the `<input>` or `<select>` it draws                                      | `packages/design-kit/src/react.test.tsx`     |
+| Focus moved through a field's ref lands on its control, read by its label                             | `packages/design-kit/e2e/ref.spec.ts`        |
 | A field lists only what it draws in `aria-describedby`, and is invalid only with an error             | `packages/design-kit/src/react.test.tsx`     |
 | A callout has a role only when the page asks, and its actions sit outside the message                 | `packages/design-kit/src/react.test.tsx`     |
 | A live callout is drawn empty, and success and danger say their tone in words                         | `packages/design-kit/src/react.test.tsx`     |
@@ -336,8 +338,8 @@ packages/
     ├── src/          tokens.css, base.css, components.css, theme.ts (the contract and the
     │                 script), vite.ts (the plugin and the hash), react.tsx (the page chrome,
     │                 the buttons, the fields and the callouts), and their tests
-    ├── e2e/          the sheets, the theme script, the page chrome, the controls, a button's
-    │                 ref and an explainer page as Chromium runs them
+    ├── e2e/          the sheets, the theme script, the page chrome, the controls, the refs a
+    │                 button and the fields take, and an explainer page as Chromium runs them
     └── smoke/        the packed package as a page installs it, on the oldest Node
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each
