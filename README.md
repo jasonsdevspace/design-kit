@@ -326,7 +326,8 @@ npm run e2e
 ```
 
 The site in `packages/site` is built with `npm run site` into its `dist`, served under
-`/design-kit/` as GitHub Pages serves it. `npm run lighthouse` builds it and audits every page.
+`/design-kit/` as GitHub Pages serves it. It draws the kit as npm publishes it, at the version its
+`package.json` pins, so a change to the kit reaches the site once it is released and the pin moves. `npm run lighthouse` builds it and audits every page.
 
 ```bash
 npm run site
@@ -354,6 +355,9 @@ the one that job reported. Trusted publishing means no npm token is stored anywh
 version goes live only when it is promoted on the package page. A version with a hyphen is staged
 under npm's `next` tag and marked as a prerelease on GitHub. The workflow then creates the release
 on GitHub with the changelog entry as its notes.
+
+Once a version is promoted, a pull request moves the site's pin in `packages/site/package.json` to
+it, as a demo's would move, and the site shows the new version once that merges.
 
 The job that stages holds the publish token, so it installs nothing but a pinned npm, from a
 tarball checked against the checksum npm's registry gives for that version, and fetches nothing

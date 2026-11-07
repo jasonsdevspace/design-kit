@@ -1,4 +1,4 @@
-import { themeScriptHash } from '../../design-kit/src/vite.js';
+import { themeScriptHash } from 'design-kit-release/vite';
 
 /**
  * The site's Content Security Policy, written into each page, since GitHub Pages sends no header

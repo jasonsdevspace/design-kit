@@ -45,11 +45,17 @@ the version of the kit a page is drawn from and the commit it was built at. CI b
 site from a job with read access alone once every check has passed on main, and a job that runs only
 GitHub's Pages actions deploys it.
 
+**Amended to draw the published kit.** The site installs the kit from npm at one exact version, as
+ShelfLens does, under the alias `design-kit-release` so npm fetches the published package rather
+than linking the workspace beside it. Its sheets, components and theme plugin all come from that
+version, and its footer names it. What a visitor sees is then what a demo installs, the site's tests
+and audit hold what ships, and the footer never names a version npm cannot give. A change to the
+kit reaches the site a release later, in a pull request that moves the pin, as it reaches a demo.
+
 ## Consequences
 
-- The site draws the kit from its sources under the policy a demo would set, so a change to the
-  sheets or the components that breaks that promise breaks the site's own tests. The packed package
-  is held to what it ships by the oldest Node job.
+- The site draws the published kit under the policy a demo would set, so a version whose sheets or
+  components break that promise fails the site's own tests when the pin moves to it.
 - A policy in a meta element cannot say which pages may frame the site, which only a header can, and
   GitHub Pages sends none, so the site can be framed.
 - A script the site adds is refused until the policy names it, and the browser tests fail on
@@ -63,6 +69,8 @@ GitHub's Pages actions deploys it.
 
 The paths are in `packages/site`.
 
+- `src/published.test.ts` finds the kit pinned to one exact published version, and no file the site
+  is built from reaching into the kit's sources.
 - `e2e/site.spec.ts` opens every page in the site's routes, from the preview the Playwright config
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
