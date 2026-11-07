@@ -46,7 +46,8 @@ export const SkipLink = ({
  * Whose demo this is, above the page, with three links together on the left. It is a navigation
  * landmark in a plain div rather than a header, so the demo's own header stays the page's one
  * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
- * named for them.
+ * named for them, and while they are on their way the strip keeps their room in that section,
+ * unnamed and so no landmark.
  */
 export const PortfolioStrip = ({
     about,
@@ -54,6 +55,7 @@ export const PortfolioStrip = ({
     current,
     tools,
     toolsLabel = 'Demo',
+    toolsWaiting = false,
 }: {
     /** The demo's explainer, relative to the page or absolute. */
     readonly about: string;
@@ -65,6 +67,12 @@ export const PortfolioStrip = ({
     readonly tools?: ReactNode;
     /** The name a screen reader gives the switches' landmark. */
     readonly toolsLabel?: string;
+    /**
+     * The switches are on their way, so the strip keeps the room of one row of the kit's controls
+     * in their section, empty and unnamed, so no landmark, until `tools` holds them and the section
+     * takes its name.
+     */
+    readonly toolsWaiting?: boolean;
 }) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
@@ -74,11 +82,15 @@ export const PortfolioStrip = ({
             </a>
             <a href={source}>Source on GitHub</a>
         </nav>
-        {!drawn(tools) ? null : (
+        {drawn(tools) ? (
             <section className="dk-strip-tools" aria-label={toolsLabel}>
                 {tools}
             </section>
-        )}
+        ) : toolsWaiting ? (
+            <section className="dk-strip-tools">
+                <span className="dk-strip-room" />
+            </section>
+        ) : null}
     </div>
 );
 

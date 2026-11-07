@@ -125,6 +125,19 @@ named for them, and a demo with none leaves the section out.
 </div>
 ```
 
+A demo whose switches are still on their way, drawn by a script that has not run yet, keeps their
+room so nothing below the strip moves when they come. The section is drawn with no name and holds
+only the room, with no text, so it is no landmark and a screen reader finds nothing in it. When the
+switches come they take the room's place in the same section, and the section takes its name.
+
+```html
+<section class="dk-strip-tools"><span class="dk-strip-room"></span></section>
+```
+
+The room holds the height of one row of the kit's buttons or fields, beside the links on a wide
+screen and on a row of their own on a phone. Switches of another height, or more than fit on one
+row, still move what is below them when they come.
+
 On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text, with its links
 1.5rem apart and the switches on the right. At 48rem wide or less the text steps down to the
 caption size, the links close to 1rem apart and wrap where they must, and the switches take a row
@@ -180,6 +193,8 @@ export const Page = () => (
   set to `about` marks the explainer's link as the current page. `tools` holds the demo's own
   switches, and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined,
   null or false the strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
+  `toolsWaiting` keeps the room of one row of the kit's controls while `tools` draws nothing, for a
+  page drawn before the switches can be, in the same section unnamed until they come.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
   `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
   any trailing slash on `source` dropped first. `licenseName` is the license's name in the

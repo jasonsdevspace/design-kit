@@ -65,6 +65,19 @@ describe('the strip', () => {
         for (const nothing of [null, false])
             expect(strip({ tools: nothing })).not.toContain('dk-strip-tools');
     });
+
+    it('keeps the room of switches on their way, with no landmark and no text until they come', () => {
+        expect(strip({ toolsWaiting: true })).toContain(
+            '</nav><section class="dk-strip-tools"><span class="dk-strip-room"></span></section></div>'
+        );
+        // Unnamed, the section is no landmark until the switches come and it takes its name.
+        expect(strip({ toolsWaiting: true })).not.toContain('aria-label="Demo"');
+        expect(strip({ toolsWaiting: false })).not.toContain('dk-strip-tools');
+        // The switches that arrive take the room's place.
+        expect(
+            strip({ toolsWaiting: true, tools: <button type="button">Tour</button> })
+        ).not.toContain('dk-strip-room');
+    });
 });
 
 describe('the footer', () => {

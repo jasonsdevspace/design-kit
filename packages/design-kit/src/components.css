@@ -126,6 +126,15 @@
             flex-basis: 100%;
             padding-block: 0 var(--dk-space-2);
         }
+
+        /*
+         * The room of switches on their way stands as tall as one of the kit's controls at the
+         * target, which is taller than the strip's row, so their row keeps the height the switches
+         * give it. On a wide screen the strip's row is taller than a control, and holds alone.
+         */
+        .dk-strip-room {
+            min-height: var(--dk-target);
+        }
     }
 
     /*

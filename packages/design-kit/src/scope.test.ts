@@ -199,6 +199,7 @@ describe('what the sheets style', () => {
             '.dk-strip',
             '.dk-strip-links',
             '.dk-strip-tools',
+            '.dk-strip-room',
             '.dk-footer',
         ];
         const css = readFileSync(new URL('components.css', folder), 'utf8');

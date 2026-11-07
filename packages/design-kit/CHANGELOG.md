@@ -9,6 +9,10 @@ entry below as its notes.
 
 ## Unreleased
 
+- **Page chrome.** `PortfolioStrip` takes `toolsWaiting`, which keeps the room of one row of the
+  kit's controls while a demo's switches are still on their way, in their section left unnamed so
+  it is no landmark, and nothing below the strip moves when they come. A page without React writes
+  `.dk-strip-room` in the unnamed section, and names the section when it fills it.
 - **Buttons.** `Button`'s props take a `ref`, which holds the `<button>` drawn, so a page that
   moves focus to a button, such as the one that opened a panel when the panel closes, uses the
   kit's component. React 19 already passed the ref through, and only the type refused it.
