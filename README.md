@@ -172,8 +172,10 @@ rather than keeping a copy.
 ## Browser support
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
-120 and Safari 17.5. Cascade layers and `:where()` are older than that. The browser tests run only
-in Chromium, so the other engines are held to the floor by what they document, not by a test here.
+120 and Safari 17.5. Cascade layers and `:where()` are older than that. An empty live callout draws
+nothing by `:has()`, which Firefox has from 121, so in Firefox 120 it draws its ground until it is
+filled. The browser tests run only in Chromium, so the other engines are held to the floor by what
+they document, not by a test here.
 
 ## The gotchas, and the test behind each
 
@@ -223,6 +225,7 @@ in Chromium, so the other engines are held to the floor by what they document, n
 | A field is named by its label, and described by its hint and then its error                           | `packages/design-kit/e2e/controls.spec.tsx`  |
 | The focus ring follows the keyboard, on the accent button and inside every callout                    | `packages/design-kit/e2e/controls.spec.tsx`  |
 | Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | `packages/design-kit/e2e/controls.spec.tsx`  |
+| An empty live callout draws nothing, and takes the callout's look once it is filled                   | `packages/design-kit/e2e/controls.spec.tsx`  |
 | The controls have no axe findings in any state, in either theme, wide and on a phone                  | `packages/design-kit/e2e/controls.spec.tsx`  |
 | An explainer marks its link to how it works as the current page in the strip and the footer           | `packages/design-kit/e2e/explainer.spec.tsx` |
 | An explainer's text starts where the strip's links do, and holds to the measure                       | `packages/design-kit/e2e/explainer.spec.tsx` |

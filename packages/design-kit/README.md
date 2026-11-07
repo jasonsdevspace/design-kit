@@ -338,8 +338,12 @@ at once, on `.dk-callout-body`, so the title and the tone's word are read with t
 actions are not. The page puts a live callout on the page empty first and fills it after, which is
 when a screen reader reads it. A page filling a success or danger callout puts the hidden word in
 with the message, as `<span class="dk-visually-hidden">Success: </span>Saved.`, since the word is
-part of what is read. An empty live callout still draws its ground and padding, so a page places it
-where an empty band reads as space, or leaves it out of the layout's flow until it is filled.
+part of what is read. A live callout whose message holds nothing at all, not even a space, a line
+break or the tone's word, and that has no actions draws nothing, no ground, padding or edge, until
+it is filled, so a page puts it where its words will go with no holder of its own to hide it. It
+still takes its place in the flow, so a margin or a gap around it stays. The rule reads the message
+with `:has()`, which Firefox has from 121, so in Firefox 120 an empty live callout still draws its
+ground.
 
 A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
 the edge marks where the callout starts and ends.
@@ -392,12 +396,13 @@ export const Checkout = ({ error, saved }: Props) => {
   `aria-describedby` of the page's own is listed after the hint and the error.
 - `SelectField` takes the same props, with its children as the options of the `<select>`.
 - `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn at the
-  start of the message as a paragraph or, with `headingLevel` from 2 to 6, as that heading, and as
-  a paragraph for any other level. `actions` are drawn after the message. `prefix` is the word
-  read before the title or the message, the tone's own unless given, and an empty string drops it.
+  start of the message as a paragraph or, with `headingLevel` from 2 to 6, as that heading, and as a
+  paragraph for any other level. `actions` are drawn after the message. `prefix` is the word read
+  before the title or the message, the tone's own unless given, and an empty string drops it.
   `live`, `status` or `alert`, puts that role on the message and draws the message even when it is
-  empty. A callout takes no other props, so a page that needs a class
-  or an id on one puts it on an element around it.
+  empty, and a live callout whose message draws nothing, with no title or actions, draws nothing
+  until it is filled. A callout takes no other props, so a page that needs a class or an id on one
+  puts it on an element around it.
 
 ## Explainer pages
 
@@ -645,7 +650,8 @@ from the package rather than keeping a copy.
 ## Browser support
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
-and Safari 17.5. The kit's browser tests run in Chromium.
+and Safari 17.5. An empty live callout draws nothing by `:has()`, which Firefox has from 121, so in
+Firefox 120 it draws its ground until it is filled. The kit's browser tests run in Chromium.
 
 ## License
 

@@ -9,6 +9,10 @@ entry below as its notes.
 
 ## Unreleased
 
+- **Callouts.** A live callout whose message holds nothing at all, with no actions, draws nothing,
+  no ground, padding or edge, and stays in the page so a screen reader reads what fills it. A page
+  no longer needs a holder of its own to hide one it mounts before it has words. It reads the
+  message with `:has()`, so in Firefox 120 such a callout still draws its ground.
 - **Page chrome.** The skip link waits in its own place as the visually hidden class does, one pixel
   clipped to nothing, rather than 10rem above it, so one inside a positioned box lower on the page
   no longer shows over what is above the box or takes its clicks. It shows where it did when a

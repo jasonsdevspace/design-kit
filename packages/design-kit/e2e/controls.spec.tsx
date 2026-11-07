@@ -11,7 +11,8 @@ import { Button, Callout, InputField, SelectField } from '../src/react.js';
  * and the kit's own sheets: each state told apart by more than its color, forced colors included,
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, an off button the keyboard still reaches, the field's label, hint and error read as its
- * name and description, and no audit findings for any state in either theme.
+ * name and description, an empty live callout drawn at no height until it is filled, and no audit
+ * findings for any state in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -286,6 +287,64 @@ test('draws an invalid control in the danger color, and the error beside the hin
     // The hidden word is read, and drawn at one pixel.
     const word = page.locator('.dk-field-error .dk-visually-hidden').first();
     expect(await word.boundingBox()).toMatchObject({ width: 1, height: 1 });
+});
+
+test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
+    page,
+}) => {
+    const tones = ['info', 'success', 'danger'] as const;
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+            `<style>${KIT}</style></head><body><main>` +
+            renderToStaticMarkup(
+                <>
+                    {tones.map((tone) => (
+                        <Callout key={tone} tone={tone} live="status" />
+                    ))}
+                </>
+            ) +
+            '</main></body></html>'
+    );
+    const callouts = page.locator('.dk-callout');
+    await expect(callouts).toHaveCount(tones.length);
+    // In forced colors too, where a callout's edge would otherwise show.
+    for (const forcedColors of ['none', 'active'] as const) {
+        await page.emulateMedia({ forcedColors });
+        for (const callout of await callouts.all()) {
+            // Drawn at no size rather than hidden, so it has a box and stays in the tree a screen
+            // reader reads, which a role query leaves out for an element that is hidden.
+            expect(await callout.boundingBox()).not.toBeNull();
+            expect(await height(callout)).toBe(0);
+            const drawn = await style(callout, 'background-color', 'border-top-width');
+            // No ground, whatever color forced colors give the transparent one.
+            expect(drawn['background-color']).toMatch(/^rgba\(\d+, \d+, \d+, 0\)$/);
+            expect(drawn['border-top-width']).toBe('0px');
+            await expect(callout.getByRole('status')).toBeAttached();
+        }
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
+    // Filled as the README says a page fills one, with the tone's word for success and danger,
+    // each takes the callout's look again.
+    await page.evaluate(() => {
+        for (const body of document.querySelectorAll('.dk-callout-body')) {
+            const callout = body.parentElement;
+            const word = callout?.classList.contains('dk-callout-success')
+                ? 'Success: '
+                : callout?.classList.contains('dk-callout-danger')
+                  ? 'Error: '
+                  : '';
+            body.innerHTML = word
+                ? `<span class="dk-visually-hidden">${word}</span>Saved.`
+                : 'Saved.';
+        }
+    });
+    for (const callout of await callouts.all()) {
+        expect(await height(callout)).toBeGreaterThan(0);
+        const drawn = await style(callout, 'background-color', 'padding-top');
+        expect(drawn['background-color']).not.toBe('rgba(0, 0, 0, 0)');
+        expect(drawn['padding-top']).not.toBe('0px');
+    }
 });
 
 test.describe('in forced colors', () => {
