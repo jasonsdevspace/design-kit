@@ -1,15 +1,11 @@
 # @jasonsdevspace/design-kit
 
-Design tokens, base styles, a theme script, the page chrome, buttons, fields and callouts, and the
-explainer page, for the demos on [jasonsdevspace.com](https://jasonsdevspace.com). Every rule sits
-in a cascade layer of the kit's own, so a page's own rule outside a layer wins over every rule of
-the kit's but the cut to motion, without any extra weight. A page with layers of its own has to
-name where the kit's go among them, in the order the section on layers below gives. The script
-sets the theme a visitor chose on the portfolio before the page paints. The components are the
-page chrome a demo draws around its page, a skip link, a strip and a footer, and the buttons,
-text fields, selects and callouts on the page itself, as markup a sheet styles and as React
-components that draw it. The explainer that says how a demo works, with its steps, panels, tables
-and code blocks, is markup a page writes by hand, with no component.
+Design tokens, base styles, a theme script, page chrome, buttons, fields and callouts, and an
+explainer layout, for the demos on [jasonsdevspace.com](https://jasonsdevspace.com). The styles are
+plain CSS in cascade layers, so a page's own rules outside a layer win without extra weight. The
+theme script sets the theme a visitor chose on the portfolio before the page paints. The chrome and
+the controls come as markup a sheet styles and as React components that draw it. The explainer is
+markup a page writes by hand.
 
 ```sh
 npm install @jasonsdevspace/design-kit
@@ -20,6 +16,10 @@ or later as an optional peer for its plugin, and React `^19.3.0` as an optional 
 components. Prereleases are under npm's `next` tag, as `@jasonsdevspace/design-kit@next`. What
 changed in each version is in
 [CHANGELOG.md](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
+
+A page with cascade layers of its own must name where the kit's layers go, as [Layers and
+palettes](#layers-and-palettes) describes. The cut to motion for a visitor who asks for less holds
+over a page's ordinary styles, as that section explains.
 
 A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite.
@@ -52,10 +52,10 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   `--dk-surface`, `--dk-raised`, `--dk-fg`, `--dk-muted`, `--dk-line`, `--dk-control`,
   `--dk-accent`, `--dk-on-accent`, `--dk-highlight`, `--dk-success`, `--dk-success-bg`,
   `--dk-danger`, `--dk-danger-bg` and the scrim, `--dk-scrim`. Beside them are steps of space, text
-  size and corners, a code size in em that follows the text around it, two line heights, three
-  weights, a sans and a mono font stack, the focus ring's width and offset, a field's height and
-  inline padding, the size of a touch target, the height of the portfolio's strip, the measure
-  and column widths, a shadow and a short duration.
+  size and corners, a code size in em that follows the text around it, line heights, weights, a sans
+  and a mono font stack, the focus ring's width and offset, a field's height and inline padding, the
+  size of a touch target, the height of the portfolio's strip, the measure and column widths, a
+  shadow and a short duration.
 - `@jasonsdevspace/design-kit/base.css` gives the page its type and colors, one focus ring in the
   accent for every link and control the keyboard reaches, code in running text a step under the
   text around it, the `.dk-visually-hidden` class for a label a screen reader reads and the eye
@@ -109,7 +109,7 @@ which has a tabindex of -1 so it can take focus.
 <main id="main-content" tabindex="-1">...</main>
 ```
 
-A skip link may also sit inside a box of the page's own, such as one at the top of a column of
+A skip link can also sit inside a box of the page's own, such as one at the top of a column of
 filters that leads past them to the results. It waits in its own place as the visually hidden class
 does, one pixel clipped to nothing, so it draws nothing and takes no click wherever the box starts
 on the page. A box that is positioned holds it, and it shows at the top of that box, inset as it is
@@ -251,15 +251,15 @@ toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keep
 both states, since the attribute already says which it is. An action carries no `aria-pressed` at
 all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
 
-A button that is off carries `aria-disabled="true"` rather than `disabled`. A disabled button that
-has focus drops it, and leaves the tab order, while an aria-disabled one stays where the keyboard
-can reach it and find out why. The attribute does nothing by itself, so a page that writes this
-markup makes its own click handler check `aria-disabled` and return early, calling
+An unavailable button, `off` in React, carries `aria-disabled="true"` rather than `disabled`. A
+disabled button that has focus drops it, and leaves the tab order, while an aria-disabled one stays
+where the keyboard can reach it and find out why. The attribute does nothing by itself, so a page
+that writes this markup makes its own click handler check `aria-disabled` and return early, calling
 `preventDefault()` so a submit button does not submit. The sheet draws a `disabled` button, and one
-inside a disabled fieldset, the same as an off one, and an accent button that is off keeps its
-class and is drawn as any off button is. A page says why a button is off in text beside it. A
-form's submit button is better left on while the form is incomplete, so a press shows the errors
-rather than doing nothing.
+inside a disabled fieldset, the same as an off one, and an accent button that is off keeps its class
+and is drawn as any off button is. A page says why a button is off in text beside it. A form's
+submit button is better left on while the form is incomplete, so a press shows the errors rather
+than doing nothing.
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
@@ -491,7 +491,7 @@ caption size, its heading in the title size, and its text, with an h3 at the bod
 <ol class="dk-steps" role="list">
     <li>
         <strong class="dk-steps-title">The order names a product.</strong>
-        <span class="dk-steps-note">And how many of it.</span>
+        <span class="dk-steps-note">It says how many it wants.</span>
     </li>
     <li>
         <span class="dk-steps-arrow" aria-hidden="true">↓</span>
@@ -516,7 +516,10 @@ drops a list's meaning when its markers are gone.
 ```html
 <div class="dk-panel">
     <p class="dk-panel-title">How the numbers were taken</p>
-    <p>...</p>
+    <p>
+        Each strategy ran three times on the same laptop with the same orders, and the table shows
+        the middle run.
+    </p>
 </div>
 ```
 

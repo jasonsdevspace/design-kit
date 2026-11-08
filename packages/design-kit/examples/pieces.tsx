@@ -41,7 +41,7 @@ export const CHROME: readonly Control[] = [
                 ),
             },
             {
-                name: 'The strip while the switches are on their way',
+                name: 'The strip keeping room for switches that load later',
                 attribute: 'class="dk-strip-room"',
                 react: `<PortfolioStrip about="./about/" source="https://github.com/jasonsdevspace/example" toolsWaiting />`,
                 draw: ({ PortfolioStrip }) => (
@@ -99,7 +99,7 @@ export const steps: State = {
         <ol className="dk-steps" role="list">
             <li>
                 <strong className="dk-steps-title">The order names a product.</strong>
-                <span className="dk-steps-note">And how many of it.</span>
+                <span className="dk-steps-note">It says how many it wants.</span>
             </li>
             <li>
                 <span className="dk-steps-arrow" aria-hidden="true">
@@ -119,7 +119,10 @@ export const panel: State = {
     draw: () => (
         <div className="dk-panel">
             <p className="dk-panel-title">How the numbers were taken</p>
-            <p>...</p>
+            <p>
+                Each strategy ran three times on the same laptop with the same orders, and the table
+                shows the middle run.
+            </p>
         </div>
     ),
 };
@@ -206,7 +209,8 @@ export const EXPLAINER: readonly Control[] = [
                         <div className="dk-explainer">
                             <h1>How Example works</h1>
                             <p className="dk-explainer-lead">
-                                What the demo does, in a sentence or two.
+                                Example holds stock for each order, so two customers never buy the
+                                same last unit.
                             </p>
                             <p>
                                 <a className="dk-button dk-button-accent" href="../">
@@ -218,7 +222,10 @@ export const EXPLAINER: readonly Control[] = [
                                     01
                                 </p>
                                 <h2>What happens when an order comes in</h2>
-                                <p>...</p>
+                                <p>
+                                    An order names a product and how many it wants, then waits its
+                                    turn behind any other order for the same product.
+                                </p>
                             </section>
                         </div>
                     </>

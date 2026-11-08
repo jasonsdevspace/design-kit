@@ -156,14 +156,20 @@ export const Landing = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="index.html">
         <h1>The design kit</h1>
         <p className="site-lead">
-            The tokens, theme script, page chrome, controls and explainer layout the demos on
-            jasonsdevspace.com are built to share, so they read as one body of work and a fix to a
-            button is made once.
+            One shared set of colors, type, buttons, fields and page layouts, made for the demos on
+            jasonsdevspace.com, so they can read as one body of work and a fix to a button is made
+            once. ShelfLens is built on it.
         </p>
         <p>
-            It is <a href={NPM}>@jasonsdevspace/design-kit</a> on npm. Its styles load from a
-            page&rsquo;s own origin and its components draw markup alone, so a page under{' '}
-            <code>style-src &apos;self&apos;</code> draws it, as this one does.
+            It is published on npm as <a href={NPM}>@jasonsdevspace/design-kit</a>. Its styles are
+            plain files and its components add no inline styles, so it works on a page whose
+            security policy refuses any style the site did not serve itself, as this one does. Its
+            theme script runs inline, so a page that limits scripts allows it by the hash the kit
+            gives.
+        </p>
+        <p>
+            <a href={ABOUT}>How the design kit works</a> explains it in plain words. The other pages
+            in the site&rsquo;s menu show each piece in both themes.
         </p>
     </Page>
 );
@@ -171,11 +177,11 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 /**
  * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
  * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
- * own, so the page never holds one twice. The live copy is a group named by the state's name alone, so a screen
- * reader moving from control to control hears which state it is in. A pictured state's copy in the
- * visitor's theme is inert too, and both its copies are labeled as pictures. Under both, the
- * state's name and the attribute that draws it, and then its code, closed until a reader opens it:
- * its markup, and the React a page writes for it where a component draws it.
+ * own, so the page never holds one twice. The live copy is a group named by the state's name alone,
+ * so a screen reader moving from control to control hears which state it is in. A pictured state's
+ * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Under
+ * both, the state's name and the attribute that draws it, and then its code, closed until a reader
+ * opens it: its markup, and the React a page writes for it where a component draws it.
  */
 const StateShown = ({
     state,
@@ -263,11 +269,12 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         <h1>Controls</h1>
         <p className="site-lead">
             Each state of the kit&rsquo;s buttons, fields and callouts, live in your theme, with a
-            copy in the other theme beside it and the attribute that draws it below. A toggle, an
-            open panel, a control that is unavailable and a field with an error are each drawn from
-            the attribute a screen reader already reads, never a class of the kit&rsquo;s, so what
-            you see and what a screen reader says come from one place. A kind of control, such as
-            the one action a view leads with or a callout&rsquo;s tone, is a class.
+            copy in the other theme beside it. Under each one is the attribute that draws it. A
+            toggle, an open panel, a control that is unavailable and a field with an error each come
+            from the attribute a screen reader already reads, never from a class of the kit&rsquo;s.
+            So what you see and what a screen reader says come from one place. A kind of control,
+            such as the one action a view leads with or a callout&rsquo;s tone, comes from a class
+            instead.
         </p>
         <Shown controls={CONTROLS} markup={build.markup} />
     </Page>
@@ -278,15 +285,15 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="page-chrome/index.html">
         <h1>Page chrome</h1>
         <p className="site-lead">
-            The skip link, the strip above the page that says whose demo it is, and the footer below
-            it, which a demo draws around its page so a visitor finds the same links in the same
-            places on each one. The ones around this page are the kit&rsquo;s own, drawn by its
-            components as a demo draws them.
+            Page chrome is what a demo draws around its content: the skip link, the strip across the
+            top that says whose demo it is, and the footer. With it a visitor finds the same links
+            in the same places on each demo built with the kit. The chrome around this page is the
+            kit&rsquo;s own, drawn by its components as a demo draws it.
         </p>
         <p>
-            Below, each state of the strip and the footer is drawn again in your theme and in the
-            other, as pictures the keyboard and a screen reader pass over. A second live strip would
-            give this page a second portfolio navigation, and a screen reader lists each one.
+            Under Strip and Footer, each state is drawn again in your theme and in the other, as
+            pictures the keyboard and a screen reader pass over. A second live strip would give this
+            page a second portfolio menu, and a screen reader would list both.
         </p>
         <section>
             <h2 id="skip-link">Skip link</h2>
@@ -335,9 +342,10 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             <section>
                 <h2 id="color">Color</h2>
                 <p>
-                    Each role holds its light and its dark value in one <code>light-dark()</code>,
-                    which picks by the color scheme of the element it is drawn on, so each swatch
-                    below is drawn in its column&rsquo;s theme, whatever theme the page is in.
+                    Each role holds its light and its dark value in one <code>light-dark()</code>.
+                    It picks a value by the color scheme of the element it is drawn on. So each
+                    swatch in the table is drawn in its column&rsquo;s theme, whatever theme the
+                    page is in.
                 </p>
                 <Colors declared={declared} />
             </section>
@@ -346,10 +354,10 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Contrast is how far apart two colors are in brightness, written as a ratio. Text
                     passes 4.5 to 1 on every ground it is meant for, and the edge of a control 3 to
-                    1, in both themes, as WCAG asks. These are measured from the tokens of the
-                    version this page uses, rounded down, and the kit&rsquo;s own test holds each
-                    one before a version is released. The table puts first the pairing with the
-                    least to spare over what it needs.
+                    1, in both themes, as the web&rsquo;s accessibility guidelines, WCAG, ask. These
+                    are measured from the tokens of the version this page uses, rounded down, and
+                    the kit&rsquo;s own test holds each one before a version is released. The table
+                    lists first the pairings with the least to spare.
                 </p>
                 <Contrast declared={declared} />
             </section>
@@ -363,17 +371,17 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <Scale declared={declared} />
             </section>
             <section>
-                <h2 id="theme">The theme a visitor saved</h2>
+                <h2 id="theme">How the theme is chosen</h2>
                 <p>
                     The kit&rsquo;s theme script runs inline in a page&rsquo;s head, before anything
                     is drawn, so a page never flashes the other theme. It sets{' '}
                     <code>data-theme</code> on the root to the theme the visitor saved under the key{' '}
-                    <code>theme</code>, or, when nothing usable is saved, as when System is chosen,
-                    to the system&rsquo;s, following it as it changes. It hears a choice saved in
-                    another tab. Every demo served from jasonsdevspace.com reads the same saved
-                    theme, and this page does too. With scripts on, the switch at the top of each
-                    page of this site saves a choice under that key with the portfolio&rsquo;s
-                    values, as the portfolio&rsquo;s switch does.
+                    <code>theme</code>. When nothing usable is saved, as when System is chosen, it
+                    follows the system&rsquo;s theme as it changes. A choice made in another tab
+                    reaches this one too. Every demo served from jasonsdevspace.com reads the same
+                    saved theme, and this page does too. With scripts on, the switch at the top of
+                    each page of this site saves your choice under that key, in the same words the
+                    portfolio&rsquo;s switch uses, so a choice made on either holds on both.
                 </p>
             </section>
         </Page>
