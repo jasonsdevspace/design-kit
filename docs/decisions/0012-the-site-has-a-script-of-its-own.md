@@ -87,6 +87,7 @@ The paths are in `packages/site`.
   was away checked and drawn when the page is shown again as if from the back and forward cache, and
   the arrow keys moving between the choices as radios do. Where the browser refuses storage it finds
   a choice drawn, and still drawn once every listener has heard the system's theme change. It finds
-  the site's navigation below the strip in the same place with the script and without it, from a
-  small phone to a laptop and at twice the text size.
+  the site's navigation below the strip in the same place with the script and without it, and the
+  switch's words within the width the room kept, from a small phone to a laptop and at twice the
+  text size.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
