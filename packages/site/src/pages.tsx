@@ -1,7 +1,7 @@
 import * as kit from 'design-kit-release/react';
 import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from 'react';
 
-import { HELD, type Held } from '../../design-kit/examples/held.js';
+import { type Group, HELD } from '../../design-kit/examples/held.js';
 import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
@@ -73,31 +73,36 @@ const CodeBlock = ({
     </>
 );
 
-/** The tests that hold a group, or a build that fails, rather than a page that lists none. */
-const heldFor = (group: string): readonly Held[] => {
-    if (!Object.hasOwn(HELD, group)) throw new Error(`no tests are listed for ${group}`);
-    return HELD[group as keyof typeof HELD];
+/**
+ * A control's name as a group the tests are listed for, or a build that fails, rather than a page
+ * that lists none.
+ */
+const groupOf = (name: string): Group => {
+    if (!Object.hasOwn(HELD, name)) throw new Error(`no tests are listed for ${name}`);
+    return name as Group;
 };
 
 /**
- * The tests of the kit's that hold a group, closed until a reader opens it, by their names as the
- * runner reports them, under the file each is in, linked as it was at the commit the page was built
- * at. A screen reader is given the group's name with the summary, as with a state's code.
+ * A closed panel that lists the kit's tests for a group, by the names the runner reports, under
+ * the file each is in. Each file links to its source at the commit the page was built at. A screen
+ * reader hears the group's name with the summary, as with a state's code.
  */
-const Tests = ({ group, commit }: { readonly group: string; readonly commit: string }) => (
+const Tests = ({ group, commit }: { readonly group: Group; readonly commit: string }) => (
     <details className="site-held">
         <summary>
-            <span aria-hidden="true">What the tests hold</span>
-            <span className="dk-visually-hidden">{`What the tests hold, ${group}`}</span>
+            <span aria-hidden="true">What the tests check</span>
+            <span className="dk-visually-hidden">{`What the tests check, ${group}`}</span>
         </summary>
         <p>
-            Each line is the name of a test of the kit&rsquo;s, as it reads at the commit this page
-            was built at.
+            These are the kit&rsquo;s own tests for this part, named exactly as the test runner
+            prints them. They are the tests in the repository when this page was built, which can be
+            newer than the published version drawn above. Each file name opens that file as it was
+            then.
         </p>
-        {heldFor(group).map(({ file, titles }) => (
+        {HELD[group].map(({ file, titles }) => (
             <Fragment key={file}>
                 <p className="site-held-file">
-                    {file.startsWith('e2e/') ? 'In a browser' : 'In Node'}, from{' '}
+                    {file.startsWith('e2e/') ? 'In a browser' : 'Without a browser'}, from{' '}
                     <a href={`${SOURCE}/blob/${commit}/packages/design-kit/${file}`}>
                         <code>{file}</code>
                     </a>
@@ -301,7 +306,7 @@ const Shown = ({
                     />
                 ))}
             </ul>
-            <Tests group={control.name} commit={commit} />
+            <Tests group={groupOf(control.name)} commit={commit} />
         </section>
     ));
 

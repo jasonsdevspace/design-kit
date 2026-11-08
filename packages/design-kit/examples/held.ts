@@ -17,6 +17,14 @@ const EVERY_CONTROL = [
     ),
 ];
 
+/** The tests that hold the skip link, the strip and the footer alike. */
+const EVERY_CHROME = [
+    ...BOTH_THEMES(
+        (theme) => `has no audit findings in the ${theme} theme, on a wide screen and a phone`
+    ),
+    "draws the chrome under a policy that allows styles only from the page's own origin",
+];
+
 /** The tests that hold the strip and the footer alike. */
 const STRIP_AND_FOOTER = {
     unit: [
@@ -25,15 +33,19 @@ const STRIP_AND_FOOTER = {
     ],
     browser: [
         'draws the link to the current page apart from the others in the strip and the footer',
-        ...BOTH_THEMES(
-            (theme) => `has no audit findings in the ${theme} theme, on a wide screen and a phone`
-        ),
-        "draws the chrome under a policy that allows styles only from the page's own origin",
+        ...EVERY_CHROME,
     ],
     explainer: [
         'marks the link to how it works as the current page in the strip and the footer alike',
     ],
 };
+
+/** The tests that hold every piece on an explainer alike. */
+const EVERY_PIECE = [
+    'never scrolls the page sideways, at any width or text size, but the frames scroll',
+    'clips no text when a visitor spaces it out further',
+    ...BOTH_THEMES((theme) => `has no audit findings in the ${theme} theme, wide and on a phone`),
+];
 
 /** The tests that hold a frame, a table's and a code block's alike. */
 const EVERY_FRAME = [
@@ -43,9 +55,9 @@ const EVERY_FRAME = [
 ];
 
 /**
- * The tests that hold each group the site shows, by the group's heading, each file's tests in the
- * order they run. A test that holds a whole page, such as its audit, is listed under each group it
- * holds. The examples' test holds every name to a test in its file.
+ * The tests that hold each group the site shows, by the group's heading, under the file each is in.
+ * A test that holds a whole page, such as its audit, is listed under each group it holds. The test
+ * beside this module fails on any name its file's runner does not report.
  */
 export const HELD = {
     Buttons: [
@@ -151,6 +163,7 @@ export const HELD = {
             titles: [
                 'keeps the skip link out of sight until the keyboard reaches it, and lands on the content',
                 'keeps a skip link inside a positioned box out of sight and out of the way of a click',
+                ...EVERY_CHROME,
             ],
         },
         {
@@ -210,12 +223,8 @@ export const HELD = {
                 'lines the explainer up with the strip, and holds its prose to the measure',
                 'keeps a line of prose to eighty characters or fewer on a wide screen',
                 'opens each section with its rule, its number, its heading and then its text',
-                'never scrolls the page sideways, at any width or text size, but the frames scroll',
-                'clips no text when a visitor spaces it out further',
                 'makes a landmark of no section, and of each frame, and keeps the steps a list',
-                ...BOTH_THEMES(
-                    (theme) => `has no audit findings in the ${theme} theme, wide and on a phone`
-                ),
+                ...EVERY_PIECE,
             ],
         },
     ],
@@ -224,13 +233,17 @@ export const HELD = {
             file: 'e2e/explainer.spec.tsx',
             titles: [
                 'makes a landmark of no section, and of each frame, and keeps the steps a list',
+                ...EVERY_PIECE,
             ],
         },
     ],
     Panels: [
         {
             file: 'e2e/explainer.spec.tsx',
-            titles: ['sets a panel on the card ground, with an edge that stays in forced colors'],
+            titles: [
+                'sets a panel on the card ground, with an edge that stays in forced colors',
+                ...EVERY_PIECE,
+            ],
         },
     ],
     Tables: [
@@ -240,6 +253,7 @@ export const HELD = {
                 ...EVERY_FRAME,
                 'keeps code in a table cell whole, so the frame scrolls rather than the code breaking',
                 'reads a table by its column and row headers, with its figures set to the right',
+                ...EVERY_PIECE,
             ],
         },
     ],
@@ -249,6 +263,7 @@ export const HELD = {
             titles: [
                 ...EVERY_FRAME,
                 'keeps code as it is written, its lines whole, and breaks inline code where it must',
+                ...EVERY_PIECE,
             ],
         },
     ],
@@ -282,7 +297,10 @@ export const HELD = {
     Scale: [
         {
             file: 'src/tokens.test.ts',
-            titles: ['the tokens declares the scale a component is built from'],
+            titles: [
+                'the tokens names every custom property with the kit prefix',
+                'the tokens declares the scale a component is built from',
+            ],
         },
     ],
     'How the theme is chosen': [

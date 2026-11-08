@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
-import { ABOUT, ROUTES, SOURCE } from '../src/routes.js';
+import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the path
@@ -340,13 +340,16 @@ test.describe('the explainer pieces page', () => {
     });
 });
 
-test.describe('what the tests hold', () => {
-    /** The pages that show the kit's pieces, each section of which lists the tests that hold it. */
-    const SHOWN = ['tokens', 'controls', 'page-chrome', 'explainer-pieces'].map(
-        (name) => `/design-kit/${name}/`
+test.describe('what the tests check', () => {
+    /**
+     * The pages that show the kit's pieces, each section of which lists the tests that hold it:
+     * every page in the site's menu but the landing page.
+     */
+    const SHOWN = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE).map(
+        ({ path }) => path
     );
 
-    test('lists under each section the tests that hold it, each group on one page alone', async ({
+    test('lists under each section the tests that hold it, and shows each group once', async ({
         page,
     }) => {
         const shown: string[] = [];
@@ -394,7 +397,7 @@ test.describe('what the tests hold', () => {
         await page.goto('/design-kit/controls/');
         const panel = page.locator('section:has(> h2#buttons) > details.site-held');
         await expect(panel.locator('> summary')).toHaveAccessibleName(
-            'What the tests hold, Buttons'
+            'What the tests check, Buttons'
         );
         await expect(page.locator('details.site-held[open]')).toHaveCount(0);
         await expect(panel.locator('li').first()).toBeHidden();
