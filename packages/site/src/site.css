@@ -7,6 +7,15 @@
 @import 'design-kit-release/base.css';
 @import 'design-kit-release/components.css';
 
+/*
+ * The width of the theme switch in the strip, in the strip's own text size, wide enough for its
+ * words in any font. The kit holds the room it keeps before the script runs and the section the switch
+ * fills to it, so a strip too narrow for the links and the switch wraps before it comes as after.
+ */
+:root {
+    --dk-strip-tools: 21em;
+}
+
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
     max-width: var(--dk-column);
@@ -329,17 +338,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    /*
-     * The room the page's strip keeps before the script runs and the switch that takes it are one
-     * width, in the strip's own text size, wide enough for the switch's words in any font. So a
-     * strip too narrow for both wraps before the switch comes, as it does after, and a strip wide
-     * enough for both never wraps.
-     */
-    body > .dk-strip .dk-strip-room,
-    .site-theme {
-        inline-size: 21em;
-    }
-
+    /* The switch keeps its words on one row, within the width its section keeps for it. */
     .site-theme {
         flex-wrap: nowrap;
     }

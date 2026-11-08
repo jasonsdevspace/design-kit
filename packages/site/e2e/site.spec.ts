@@ -530,10 +530,10 @@ test.describe('the theme switch', () => {
                     await page.goto('/design-kit/');
                     if (javaScriptEnabled) {
                         await expect(choice(page, 'System')).toBeVisible();
-                        // The switch's words fit the width the room kept for it, in this font.
+                        // The switch's words fit the width its section keeps for it, in this font.
                         const spills = await page
-                            .locator('.site-theme')
-                            .evaluate((group) => group.scrollWidth > group.clientWidth);
+                            .locator('body > .dk-strip .dk-strip-tools')
+                            .evaluate((section) => section.scrollWidth > section.clientWidth);
                         expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
                     }
                     const top = await page
