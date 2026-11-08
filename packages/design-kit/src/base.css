@@ -115,6 +115,28 @@
     }
 
     /*
+     * What takes a click shows a pointer: a disclosure's summary, and a box or a dot with the label
+     * that holds it, which ticks it from anywhere on its words. One that is unavailable keeps the
+     * arrow. A label for a text field only moves focus to it, so it keeps the browser's own.
+     */
+    :where(
+        summary,
+        input[type='checkbox'],
+        input[type='radio'],
+        label:has(> input[type='checkbox'], > input[type='radio'])
+    ) {
+        cursor: pointer;
+    }
+
+    :where(
+        input[type='checkbox']:disabled,
+        input[type='radio']:disabled,
+        label:has(> input[type='checkbox']:disabled, > input[type='radio']:disabled)
+    ) {
+        cursor: default;
+    }
+
+    /*
      * Out of sight but still read by a screen reader, as for a label the eye takes from what is
      * around it. It keeps one pixel, since a screen reader may skip an element with no size at all.
      */

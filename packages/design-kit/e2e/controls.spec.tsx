@@ -346,3 +346,35 @@ for (const theme of ['light', 'dark'] as const) {
         }
     });
 }
+
+test('marks an invalid field with a dashed line in forced colors, where its red is gone', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        const edge = (locator: Locator) =>
+            style(locator, 'border-top-width', 'outline-style', 'outline-color');
+        const text = await page.evaluate(() => getComputedStyle(document.body).color);
+        const invalid = await edge(page.locator('.dk-input[aria-invalid="true"]').first());
+        const valid = await edge(page.locator('.dk-input:not([aria-invalid])').first());
+        // A dashed line in the text color around the invalid field, and the edge's width
+        // unchanged, so nothing in it moves as the error comes and goes.
+        expect(invalid).toEqual({
+            'border-top-width': valid['border-top-width'],
+            'outline-style': 'dashed',
+            'outline-color': text,
+        });
+        expect(valid['outline-style']).toBe('none');
+    } finally {
+        await context.close();
+    }
+});
+
+test('pads a callout as the other boxed text at its size is padded', async ({ page }) => {
+    await open(page);
+    expect(await style(page.locator('.dk-callout').first(), 'padding-top', 'padding-left')).toEqual(
+        { 'padding-top': '12px', 'padding-left': '16px' }
+    );
+});

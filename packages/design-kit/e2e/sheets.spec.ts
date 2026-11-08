@@ -288,3 +288,25 @@ test("cuts a page's view transition short for a visitor who wants less motion", 
     });
     expect(duration).toBe('1e-05s');
 });
+
+test('shows a pointer on what takes a click, and the arrow on a choice that is unavailable', async ({
+    page,
+}) => {
+    await open(
+        page,
+        'light',
+        '<details><summary>More</summary><p>Text</p></details>' +
+            '<label id="radio"><input type="radio" name="t"> Light</label>' +
+            '<label id="box"><input type="checkbox"> Members</label>' +
+            '<label id="off"><input type="checkbox" disabled> Closed</label>' +
+            '<label id="text" for="name">Name</label><input id="name">'
+    );
+    const cursor = (selector: string) =>
+        page.locator(selector).evaluate((element) => getComputedStyle(element).cursor);
+    expect(await cursor('summary')).toBe('pointer');
+    expect(await cursor('#radio')).toBe('pointer');
+    expect(await cursor('#box')).toBe('pointer');
+    expect(await cursor('#off')).toBe('default');
+    // A label for a text field only moves focus to it, so it keeps the browser's own cursor.
+    expect(await cursor('#text')).not.toBe('pointer');
+});

@@ -234,6 +234,16 @@ test('keeps code in a table cell whole, so the frame scrolls rather than the cod
         .locator('code');
     // One box on one line, rather than the name broken into pieces.
     expect(await inCell.evaluate((element) => element.getClientRects().length)).toBe(1);
+    // A name with hyphens, wider than the frame, stays whole too, rather than breaking after one.
+    const hyphened = await inCell.evaluate((element) => {
+        element.textContent = '--dk-a-token-with-a-name-longer-than-its-cell';
+        const frame = element.closest('.dk-table-scroll');
+        return {
+            lines: element.getClientRects().length,
+            wider: element.getBoundingClientRect().width > (frame?.clientWidth ?? 0),
+        };
+    });
+    expect(hyphened).toEqual({ lines: 1, wider: true });
 });
 
 test('opens each section with its rule, its number, its heading and then its text', async ({

@@ -117,8 +117,24 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'A button that is unavailable',
                 attribute: 'aria-disabled="true"',
-                react: `<Button off>Previous</Button>`,
-                draw: ({ Button }) => <Button off>Previous</Button>,
+                react: `<>
+    <Button off aria-describedby="previous-why">
+        Previous
+    </Button>
+    <p id="previous-why" className="dk-field-hint">
+        This is the first page.
+    </p>
+</>`,
+                draw: ({ Button }, id) => (
+                    <>
+                        <Button off aria-describedby={id('previous-why')}>
+                            Previous
+                        </Button>
+                        <p id={id('previous-why')} className="dk-field-hint">
+                            This is the first page.
+                        </p>
+                    </>
+                ),
             },
         ],
     },
@@ -155,9 +171,21 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'A field that is unavailable',
                 attribute: 'disabled',
-                react: `<InputField id="store" label="Store" disabled defaultValue="Closed" />`,
+                react: `<InputField
+    id="store"
+    label="Store"
+    hint="Orders open again at nine tomorrow."
+    disabled
+    defaultValue="Closed"
+/>`,
                 draw: ({ InputField }, id) => (
-                    <InputField id={id('store')} label="Store" disabled defaultValue="Closed" />
+                    <InputField
+                        id={id('store')}
+                        label="Store"
+                        hint="Orders open again at nine tomorrow."
+                        disabled
+                        defaultValue="Closed"
+                    />
                 ),
             },
             {

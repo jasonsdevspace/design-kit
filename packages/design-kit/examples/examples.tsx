@@ -38,7 +38,7 @@ export const skipLink: ReactElement = (
 
 /** The strip, with a demo's switch in its section after the links. */
 export const strip: ReactElement = (
-    <PortfolioStrip about="./about/" source={SOURCE} tools={<button type="button">Tour</button>} />
+    <PortfolioStrip about="./about/" source={SOURCE} tools={<Button>Tour</Button>} />
 );
 
 /** The strip's section while the demo's switches are on their way, holding only their room. */
@@ -51,13 +51,21 @@ export const stripWaiting: ReactElement = (
 /** The footer. */
 export const footer: ReactElement = <DemoFooter name="Example" about="./about/" source={SOURCE} />;
 
-/** An action, the one action a view leads with, a toggle that is on, and a button that is off. */
+/**
+ * An action, the one action a view leads with, a toggle that is on, and a button that is off, with
+ * the text beside it that says why.
+ */
 export const buttons: ReactElement = (
     <>
         <Button>Filters</Button>
         <Button accent>Save rule</Button>
         <Button pressed>Members only</Button>
-        <Button off>Previous</Button>
+        <Button off aria-describedby="previous-why">
+            Previous
+        </Button>
+        <p id="previous-why" className="dk-field-hint">
+            This is the first page.
+        </p>
     </>
 );
 
