@@ -369,7 +369,14 @@ const titleOf = (level: CalloutProps['headingLevel']) =>
  */
 export type CalloutProps = Omit<
     ComponentPropsWithRef<'div'>,
-    'style' | 'role' | 'title' | 'children' | 'dangerouslySetInnerHTML'
+    | 'style'
+    | 'role'
+    | 'title'
+    | 'children'
+    | 'dangerouslySetInnerHTML'
+    | 'aria-live'
+    | 'aria-atomic'
+    | 'aria-relevant'
 > & {
     readonly tone?: CalloutTone | undefined;
     /** What the callout is about, drawn before its message. */
@@ -411,12 +418,17 @@ export const Callout = ({
     const said = filled(children);
     const word = spoken === '' ? null : <span className="dk-visually-hidden">{spoken}</span>;
     return (
-        // The page's own props first and the kit's after, as a button's are, so a role or a style
-        // plain JavaScript passes never lands on the callout.
+        // The page's own props first and the kit's after, as a button's are, so a role, a style,
+        // inner HTML or a live region plain JavaScript passes never lands on the callout, whose
+        // message takes its role from `live` alone.
         <div
             {...native}
             role={undefined}
             style={undefined}
+            dangerouslySetInnerHTML={undefined}
+            aria-live={undefined}
+            aria-atomic={undefined}
+            aria-relevant={undefined}
             className={spaced('dk-callout', kind !== 'info' && `dk-callout-${kind}`, className)}
         >
             {titled || said || live !== undefined ? (

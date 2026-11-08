@@ -592,7 +592,12 @@ describe('the callout, beside the other controls', () => {
     it('takes no props of its own that would break it, and drops a role or style plain JavaScript passes', () => {
         // @ts-expect-error A callout draws its own children, so it takes no inner HTML.
         expect(Callout({ dangerouslySetInnerHTML: { __html: 'x' } })).toBeTruthy();
-        const loose = { role: 'alert', style: { color: 'red' } } as unknown as object;
+        const loose = {
+            role: 'alert',
+            style: { color: 'red' },
+            dangerouslySetInnerHTML: { __html: 'x' },
+            'aria-live': 'polite',
+        } as unknown as object;
         expect(renderToStaticMarkup(<Callout {...loose} title="Saved" />)).toBe(
             renderToStaticMarkup(<Callout title="Saved" />)
         );

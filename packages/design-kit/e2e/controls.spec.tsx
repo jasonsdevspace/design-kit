@@ -367,6 +367,10 @@ test('marks an invalid field with a dashed line in forced colors, where its red 
             'outline-color': text,
         });
         expect(valid['outline-style']).toBe('none');
+        // With focus, the ring takes the dashed line's place, as on any control.
+        const field = page.locator('.dk-input[aria-invalid="true"]').first();
+        await field.focus();
+        expect(await style(field, 'outline-style')).toEqual({ 'outline-style': 'solid' });
     } finally {
         await context.close();
     }

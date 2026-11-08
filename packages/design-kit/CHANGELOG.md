@@ -9,33 +9,38 @@ entry below as its notes.
 
 ## 0.1.0-next.4
 
-The components take what a typed wrapper hands on and read every empty slot alike, the callout takes
-the props a button and a field take, and the sheets give a pointer to what takes a click and mark an
-invalid field in forced colors. The strip's first link says whose work it leads to, a token's name
-stays whole in a table, the callout is padded as the other boxed text is, and the footer's sentence
-holds to the measure.
+The strip's first link says whose work it leads to, and the footer's sentence holds to the measure.
+Every optional prop takes `undefined`, the callout takes the props of a `<div>` and is padded as
+steps and code blocks are, and every empty slot is read alike. The sheets show a pointer on what
+takes a click, mark an invalid field in forced colors and keep a token's name whole in a table.
 
 - **Page chrome.** The strip's first link reads "More work by Jason Poteet", where it read "A demo
-  by Jason Poteet", which fits a demo and the kit's own site alike and says where the link goes.
-  The footer's sentence holds to the measure, while its rule still runs the page's width.
+  by Jason Poteet", which fits a demo and the kit's own site alike and says where the link goes. A
+  page that writes the strip by hand changes the link's words itself. The footer's sentence holds
+  to the measure, while its rule still runs the page's width.
 - **Types.** Every optional prop of every component takes `undefined`, as if it were left out, so a
   wrapper that passes on a prop it may not have been given compiles under
   `exactOptionalPropertyTypes`. Only the types widen, so nothing that compiled before breaks.
-- **Callouts.** `Callout` takes the props of a `<div>` but `style`, `role`, the `title` attribute
-  and inner HTML, among them an `id`, a page's class after the kit's, and a `ref` that holds the
-  callout drawn, so a page can link to an error summary, focus it after a form fails, or lay it
-  out. Its props are exported as `CalloutProps`. A tone or a heading level the types refuse, as
-  plain JavaScript can pass, draws news and a paragraph. A callout is padded 0.75rem by 1rem, as
-  steps and code blocks are.
-- **Empty slots.** The strip's switches and the footer's additions read an empty string, or a list
-  or a fragment of only nothing, as nothing, as a field's hint and a callout's title do, so none
-  draws an empty landmark or a trailing space.
+- **Callouts.** `Callout` takes the props of a `<div>` but `style`, `role`, the `title` attribute,
+  inner HTML and the live attributes, among them an `id`, a page's class after the kit's, and a
+  `ref` that holds the callout drawn, so a page can link to an error summary, focus it after a form
+  fails, or lay it out. Its props are exported as `CalloutProps`. Its message takes its role from
+  `live` alone. A tone or a heading level the types refuse, as plain JavaScript can pass, draws news
+  and a paragraph. A callout is padded 0.75rem by 1rem, from 0.5rem by 0.75rem, as steps and code
+  blocks are.
+- **Empty slots.** Every slot a component leaves out when it is empty reads an empty string, or a
+  list or a fragment that holds only false, null or empty strings, as nothing. The strip's switches
+  and the footer's additions now read an empty string so too. A field's hint and error and a
+  callout's title, message and actions now read such a list or fragment as nothing, where before
+  they drew an empty paragraph, which a hint or an error also listed in `aria-describedby`.
 - **Pointers.** `base.css` shows a pointer on a disclosure's summary and on a checkbox or a radio
-  with the label that holds it, and the arrow on one that is unavailable.
+  with the label that holds it, and the arrow on one that is unavailable. The label's pointer reads
+  `:has()`, so in Firefox 120 only the box or the dot shows it.
 - **Fields.** In forced colors, where an invalid control's red edge is gone, it gains a dashed line
-  around its edge in the theme's text color, which moves nothing as the error comes and goes.
-- **Tables.** Code in a table cell stays on one line, so a token's name never breaks after `--dk-`,
-  and a long expression scrolls the frame as a wide table does.
+  around its edge in the system's text color, `CanvasText`, which moves nothing as the error comes
+  and goes. With focus, the ring takes its place.
+- **Tables.** Code in a table cell within its frame stays on one line, so a token's name never
+  breaks after `--dk-`, and a long expression scrolls the frame as a wide table does.
 - **Docs.** The README shows the strip's switch as a kit button and an unavailable button with the
   text that says why, says why a field uses `disabled` where a button stays in the tab order, and
   says the strip's and the footer's link props take only URLs the demo's author writes.
