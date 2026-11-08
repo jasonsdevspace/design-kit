@@ -1,6 +1,7 @@
 import * as kit from 'design-kit-release/react';
-import type { ComponentProps, ReactElement, ReactNode } from 'react';
+import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from 'react';
 
+import { type Group, HELD } from '../../design-kit/examples/held.js';
 import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
@@ -70,6 +71,50 @@ const CodeBlock = ({
             <code>{code}</code>
         </pre>
     </>
+);
+
+/**
+ * A control's name as a group the tests are listed for, or a build that fails, rather than a page
+ * that lists none.
+ */
+const groupOf = (name: string): Group => {
+    if (!Object.hasOwn(HELD, name)) throw new Error(`no tests are listed for ${name}`);
+    return name as Group;
+};
+
+/**
+ * A closed panel that lists the kit's tests for a group, by the names the runner reports, under
+ * the file each is in. Each file links to its source at the commit the page was built at. A screen
+ * reader hears the group's name with the summary, as with a state's code.
+ */
+const Tests = ({ group, commit }: { readonly group: Group; readonly commit: string }) => (
+    <details className="site-held">
+        <summary>
+            <span aria-hidden="true">What the tests check</span>
+            <span className="dk-visually-hidden">{`What the tests check, ${group}`}</span>
+        </summary>
+        <p>
+            These are the kit&rsquo;s own tests for this part, named exactly as the test runner
+            prints them. They are the tests in the repository when this page was built, which can be
+            newer than the published version drawn above. Each file name opens that file as it was
+            then.
+        </p>
+        {HELD[group].map(({ file, titles }) => (
+            <Fragment key={file}>
+                <p className="site-held-file">
+                    {file.startsWith('e2e/') ? 'In a browser' : 'Without a browser'}, from{' '}
+                    <a href={`${SOURCE}/blob/${commit}/packages/design-kit/${file}`}>
+                        <code>{file}</code>
+                    </a>
+                </p>
+                <ul className="site-held-tests">
+                    {titles.map((title) => (
+                        <li key={title}>{title}</li>
+                    ))}
+                </ul>
+            </Fragment>
+        ))}
+    </details>
 );
 
 /**
@@ -235,15 +280,15 @@ const StateShown = ({
 
 /**
  * Each control under its own heading, with each of its states, its two copies side by side, or one
- * above the other at the column's full width where `wide` is set.
+ * above the other at the column's full width where `wide` is set, and then the tests that hold it.
  */
 const Shown = ({
     controls,
-    markup,
+    build: { markup, commit },
     wide = false,
 }: {
     readonly controls: readonly Control[];
-    readonly markup: Build['markup'];
+    readonly build: Build;
     readonly wide?: boolean;
 }) =>
     controls.map((control) => (
@@ -261,6 +306,7 @@ const Shown = ({
                     />
                 ))}
             </ul>
+            <Tests group={groupOf(control.name)} commit={commit} />
         </section>
     ));
 
@@ -277,7 +323,7 @@ export const Controls = ({ build }: { readonly build: Build }) => (
             such as the one action a view leads with or a callout&rsquo;s tone, comes from a class
             instead.
         </p>
-        <Shown controls={CONTROLS} markup={build.markup} />
+        <Shown controls={CONTROLS} build={build} />
     </Page>
 );
 
@@ -303,8 +349,9 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
                 this page and press Tab to see it. Following it moves focus past the strip and the
                 site&rsquo;s own links to the page&rsquo;s main content.
             </p>
+            <Tests group="Skip link" commit={build.commit} />
         </section>
-        <Shown controls={CHROME} markup={build.markup} wide />
+        <Shown controls={CHROME} build={build} wide />
     </Page>
 );
 
@@ -324,7 +371,7 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
             layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
             heading and this page already has one.
         </p>
-        <Shown controls={EXPLAINER} markup={build.markup} />
+        <Shown controls={EXPLAINER} build={build} />
     </Page>
 );
 
@@ -349,6 +396,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     page is in.
                 </p>
                 <Colors declared={declared} />
+                <Tests group="Color" commit={build.commit} />
             </section>
             <section>
                 <h2 id="contrast">Contrast</h2>
@@ -361,6 +409,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     lists first the pairings with the least to spare.
                 </p>
                 <Contrast declared={declared} />
+                <Tests group="Contrast" commit={build.commit} />
             </section>
             <section>
                 <h2 id="scale">Scale</h2>
@@ -370,6 +419,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     since they must not grow with the text.
                 </p>
                 <Scale declared={declared} />
+                <Tests group="Scale" commit={build.commit} />
             </section>
             <section>
                 <h2 id="theme">How the theme is chosen</h2>
@@ -384,6 +434,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     each page of this site saves your choice under that key, in the same words the
                     portfolio&rsquo;s switch uses, so a choice made on either holds on both.
                 </p>
+                <Tests group="How the theme is chosen" commit={build.commit} />
             </section>
         </Page>
     );
