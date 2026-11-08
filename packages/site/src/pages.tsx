@@ -142,91 +142,109 @@ const SiteFooter = ({
 /**
  * The site's header under the strip: its mark and name, leading to the landing page, and its own
  * pages as tabs, the current one marked as the page, all in the site's navigation so nothing in it
- * sits outside a landmark. The mark is the site's own markup, so the policy that refuses outside
- * styles holds, and is hidden from a screen reader, which hears the name.
+ * sits outside a landmark. It is the page's banner, as the explainer's header is, so a screen reader
+ * that moves to the banner finds the way around the site on every page. The mark is the site's own
+ * markup, so the policy that refuses outside styles holds, and is hidden from a screen reader, which
+ * hears the name.
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
-    <nav className="site-header" aria-label="Design kit">
-        <a className="site-brand" href={BASE}>
-            <span className="site-mark" aria-hidden="true">
-                dk
-            </span>
-            The design kit
-        </a>
-        <ul className="site-tabs" role="list">
-            {ROUTES.filter((route) => route.nav !== null).map((route) => (
-                <li key={route.file}>
-                    <a href={route.path} aria-current={route.file === current ? 'page' : undefined}>
-                        {route.nav}
-                    </a>
-                </li>
-            ))}
-        </ul>
-    </nav>
+    <header>
+        <nav className="site-header" aria-label="Design kit">
+            <a className="site-brand" href={BASE}>
+                <span className="site-mark" aria-hidden="true">
+                    dk
+                </span>
+                The design kit
+            </a>
+            <ul className="site-tabs" role="list">
+                {ROUTES.filter((route) => route.nav !== null).map((route) => (
+                    <li key={route.file}>
+                        <a
+                            href={route.path}
+                            aria-current={route.file === current ? 'page' : undefined}
+                        >
+                            {route.nav}
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </nav>
+    </header>
 );
 
+/** A section a page lists, by its heading and the id its heading carries. */
+interface Listed {
+    readonly name: string;
+    readonly id: string;
+}
+
+/** Sections whose ids come from their names, as the pages of states give them. */
+const listed = (names: readonly string[]): readonly Listed[] =>
+    names.map((name) => ({ name, id: idOf(name) }));
+
 /**
- * The sections of a page as a plain list of links, for a wide screen to show beside the content.
- * It comes before the main content, so the keyboard reaches it after the site's tabs and the skip
- * link passes it. A phone leaves it out, since the list would push the content down a screen.
+ * The sections of a page as a plain list of links, inside the main content right after the page's
+ * opening, so the skip link lands just before it and the keyboard reaches it next. A narrow screen
+ * shows it there as a short list of contents, and a wide one beside the content, held in sight as
+ * the page scrolls. It is shown at every width, since a phone's reader and one zoomed in, a screen
+ * reader among them, need the overview of a long page most.
  */
-const OnThisPage = ({ sections }: { readonly sections: readonly string[] }) => (
+const OnThisPage = ({ sections }: { readonly sections: readonly Listed[] }) => (
     <nav className="site-toc" aria-labelledby="site-toc-name">
-        <p className="site-toc-name" id="site-toc-name">
-            On this page
-        </p>
-        <ul role="list">
-            {sections.map((name) => (
-                <li key={name}>
-                    <a href={`#${idOf(name)}`}>{name}</a>
-                </li>
-            ))}
-        </ul>
+        <div className="site-toc-words">
+            <p className="site-toc-name" id="site-toc-name">
+                On this page
+            </p>
+            <ul role="list">
+                {sections.map(({ name, id }) => (
+                    <li key={id}>
+                        <a href={`#${id}`}>{name}</a>
+                    </li>
+                ))}
+            </ul>
+        </div>
     </nav>
 );
 
-/** The main content alone, or beside the list of its sections where a page has one. */
-const Body = ({
-    sections,
-    children,
-}: {
-    readonly sections: readonly string[] | undefined;
-    readonly children: ReactNode;
-}) =>
-    sections === undefined ? (
-        children
-    ) : (
-        <div className="site-body">
-            <OnThisPage sections={sections} />
-            {children}
-        </div>
-    );
-
 /**
- * A page of the site: the kit's own skip link, strip and footer around the site's navigation and
- * the page's content, and in the footer the version of the kit it is drawn from and the commit it
- * was built at. A page of states lists its sections beside the content.
+ * A page of the site: the kit's own skip link, strip and footer around the site's header and the
+ * page's content, and in the footer the version of the kit it is drawn from and the commit it was
+ * built at. A page with a title opens with it, its lead and any paragraphs of introduction after
+ * the lead, and a page with sections lists them after that whole opening, so every such page opens
+ * the same way and its column starts in the same place.
  */
 const Page = ({
     build,
     current,
+    title,
+    lead,
+    intro,
     sections,
     children,
 }: {
     readonly build: Build;
     readonly current: Route['file'];
-    readonly sections?: readonly string[];
+    readonly title?: string;
+    readonly lead?: ReactNode;
+    readonly intro?: ReactNode;
+    readonly sections?: readonly Listed[];
     readonly children: ReactNode;
 }) => (
     <>
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
         <SiteNav current={current} />
-        <Body sections={sections}>
-            <main id="main-content" tabIndex={-1} className="site-main">
-                {children}
-            </main>
-        </Body>
+        <main
+            id="main-content"
+            tabIndex={-1}
+            className={sections === undefined ? 'site-main' : 'site-main site-main-listed'}
+        >
+            {title === undefined ? null : <h1>{title}</h1>}
+            {lead === undefined ? null : <p className="site-lead">{lead}</p>}
+            {intro}
+            {sections === undefined ? null : <OnThisPage sections={sections} />}
+            {children}
+        </main>
         <SiteFooter build={build} />
     </>
 );
@@ -561,18 +579,24 @@ const Shown = ({
 
 /** Each state of the buttons, fields and callouts. */
 export const Controls = ({ build }: { readonly build: Build }) => (
-    <Page build={build} current="controls/index.html" sections={CONTROLS.map(({ name }) => name)}>
-        <h1>Controls</h1>
-        <p className="site-lead">
-            Each state of the kit&rsquo;s buttons, fields and callouts is drawn twice: live in your
-            theme, marked Live, and as a preview in the other theme. To try the other theme, choose
-            it under Theme in the strip. Each state&rsquo;s card names the attribute that draws it.
-            A toggle, an open panel, a control that is unavailable and a field with an error each
-            come from the attribute a screen reader already reads, never from a class of the
-            kit&rsquo;s. So what you see and what a screen reader says come from one place. A kind
-            of control, such as the one action a view leads with or a callout&rsquo;s tone, comes
-            from a class instead.
-        </p>
+    <Page
+        build={build}
+        current="controls/index.html"
+        title="Controls"
+        lead={
+            <>
+                Each state of the kit&rsquo;s buttons, fields and callouts is drawn twice: live in
+                your theme, marked Live, and as a preview in the other theme. To try the other
+                theme, choose it under Theme in the strip. Each state&rsquo;s card names the
+                attribute that draws it. A toggle, an open panel, a control that is unavailable and
+                a field with an error each come from the attribute a screen reader already reads,
+                never from a class of the kit&rsquo;s. So what you see and what a screen reader says
+                come from one place. A kind of control, such as the one action a view leads with or
+                a callout&rsquo;s tone, comes from a class instead.
+            </>
+        }
+        sections={listed(CONTROLS.map(({ name }) => name))}
+    >
         <Shown controls={CONTROLS} build={build} />
     </Page>
 );
@@ -588,20 +612,24 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
         current="page-chrome/index.html"
-        sections={[SKIP_LINK, ...CHROME.map(({ name }) => name)]}
+        title="Page chrome"
+        lead={
+            <>
+                Page chrome is what a demo draws around its content: the skip link, the strip across
+                the top that says whose demo it is, and the footer. With it a visitor finds the same
+                links in the same places on each demo built with the kit. The chrome around this
+                page is the kit&rsquo;s own, drawn by its components as a demo draws it.
+            </>
+        }
+        intro={
+            <p>
+                Under Strip and Footer, each state is drawn again in your theme and in the other, as
+                pictures the keyboard and a screen reader pass over. A second live strip would give
+                this page a second portfolio menu, and a screen reader would list both.
+            </p>
+        }
+        sections={listed([SKIP_LINK, ...CHROME.map(({ name }) => name)])}
     >
-        <h1>Page chrome</h1>
-        <p className="site-lead">
-            Page chrome is what a demo draws around its content: the skip link, the strip across the
-            top that says whose demo it is, and the footer. With it a visitor finds the same links
-            in the same places on each demo built with the kit. The chrome around this page is the
-            kit&rsquo;s own, drawn by its components as a demo draws it.
-        </p>
-        <p>
-            Under Strip and Footer, each state is drawn again in your theme and in the other, as
-            pictures the keyboard and a screen reader pass over. A second live strip would give this
-            page a second portfolio menu, and a screen reader would list both.
-        </p>
         <section>
             <h2 id={idOf(SKIP_LINK)}>{SKIP_LINK}</h2>
             <p>
@@ -620,40 +648,72 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
         current="explainer-pieces/index.html"
-        sections={EXPLAINER.map(({ name }) => name)}
+        title="Explainer pieces"
+        lead={
+            <>
+                The pieces of the page that says how a demo works, the one the strip&rsquo;s
+                &ldquo;How it works&rdquo; link leads to. A demo writes them by hand in HTML, since
+                none of them does anything a component would have to handle, and the kit&rsquo;s
+                stylesheet styles them.
+            </>
+        }
+        intro={
+            <p>
+                Steps, panels, tables and code blocks are each drawn twice: live in your theme,
+                marked Live, and as a preview in the other theme, with the attribute that draws them
+                above both. To try the other theme, choose it under Theme in the strip. The
+                explainer&rsquo;s layout is drawn as a picture in both themes, since it opens with
+                the page&rsquo;s main heading and this page already has one.
+            </p>
+        }
+        sections={listed(EXPLAINER.map(({ name }) => name))}
     >
-        <h1>Explainer pieces</h1>
-        <p className="site-lead">
-            The pieces of the page that says how a demo works, the one the strip&rsquo;s &ldquo;How
-            it works&rdquo; link leads to. A demo writes them by hand in HTML, since none of them
-            does anything a component would have to handle, and the kit&rsquo;s stylesheet styles
-            them.
-        </p>
-        <p>
-            Steps, panels, tables and code blocks are each drawn twice: live in your theme, marked
-            Live, and as a preview in the other theme, with the attribute that draws them above
-            both. To try the other theme, choose it under Theme in the strip. The explainer&rsquo;s
-            layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
-            heading and this page already has one.
-        </p>
         <Shown controls={EXPLAINER} build={build} />
     </Page>
+);
+
+/**
+ * The tokens page's sections, by the id each heading carries and its name, which the list of
+ * sections and the headings both read, so the two cannot drift. The ids are the ones the explainer
+ * links to.
+ */
+const TOKEN_SECTIONS = [
+    { id: 'color', name: 'Color' },
+    { id: 'contrast', name: 'Contrast' },
+    { id: 'scale', name: 'Scale' },
+    { id: 'theme', name: 'How the theme is chosen' },
+] as const satisfies readonly Listed[];
+
+/** A section heading on the tokens page, named as the list of sections names it. */
+const TokenHeading = ({ id }: { readonly id: (typeof TOKEN_SECTIONS)[number]['id'] }) => (
+    <h2 id={id}>{TOKEN_SECTIONS.find((section) => section.id === id)?.name}</h2>
 );
 
 /** The color roles in both themes, the contrast of every pairing, the scale, and the theme. */
 export const Tokens = ({ build }: { readonly build: Build }) => {
     const declared = declaredIn(build.tokens);
     return (
-        <Page build={build} current="tokens/index.html">
-            <h1>Tokens and theme</h1>
-            <p className="site-lead">
-                The kit&rsquo;s tokens are the named colors and sizes every demo is drawn from. Each
-                is a custom property under the <code>--dk-</code> prefix, so a page that loads the
-                kit beside its own styles keeps its own names. A demo with its own palette sets the
-                color roles again on its root, both themes at once.
-            </p>
+        <Page
+            build={build}
+            current="tokens/index.html"
+            title="Tokens and theme"
+            lead={
+                <>
+                    The kit&rsquo;s tokens are the named colors and sizes every demo is drawn from.
+                    Each is a custom property under the <code>--dk-</code> prefix, so a page that
+                    loads the kit beside its own styles keeps its own names. A demo with its own
+                    palette sets the color roles again on its root, both themes at once.
+                </>
+            }
+            sections={[
+                { name: 'Color', id: 'color' },
+                { name: 'Contrast', id: 'contrast' },
+                { name: 'Scale', id: 'scale' },
+                { name: 'How the theme is chosen', id: 'theme' },
+            ]}
+        >
             <section>
-                <h2 id="color">Color</h2>
+                <TokenHeading id="color" />
                 <p>
                     Each role holds its light and its dark value in one <code>light-dark()</code>.
                     It picks a value by the color scheme of the element it is drawn on. So each card
@@ -664,7 +724,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <Tests group="Color" commit={build.commit} />
             </section>
             <section>
-                <h2 id="contrast">Contrast</h2>
+                <TokenHeading id="contrast" />
                 <p>
                     Contrast is how far apart two colors are in brightness, written as a ratio. Text
                     passes 4.5 to 1 on every ground it is meant for, and the edge of a control 3 to
@@ -678,7 +738,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <Tests group="Contrast" commit={build.commit} />
             </section>
             <section>
-                <h2 id="scale">Scale</h2>
+                <TokenHeading id="scale" />
                 <p>
                     Sizes that should grow with a reader&rsquo;s own text size are in rem, code set
                     in running text is in em, and a border, the focus ring and a shadow are in px,
@@ -690,7 +750,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <Tests group="Scale" commit={build.commit} />
             </section>
             <section>
-                <h2 id="theme">How the theme is chosen</h2>
+                <TokenHeading id="theme" />
                 <p>
                     The kit&rsquo;s theme script runs inline in a page&rsquo;s head, before anything
                     is drawn, so a page never flashes the other theme. It sets{' '}

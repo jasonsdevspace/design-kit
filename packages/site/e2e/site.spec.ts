@@ -203,7 +203,7 @@ for (const path of PAGES) {
         expect(await landmarks('main')).toBe(1);
         expect(await landmarks('contentinfo')).toBe(1);
         expect(await landmarks('navigation', 'Portfolio')).toBe(1);
-        expect(await landmarks('banner')).toBeLessThanOrEqual(1);
+        expect(await landmarks('banner')).toBe(1);
         const ids = await page.evaluate(() =>
             [...document.querySelectorAll('[id]')].map((element) => element.id)
         );
@@ -844,41 +844,28 @@ test.describe("the site's header", () => {
         }
     });
 
-    test("keeps the tabs in one row on a phone, scrolling sideways to the current one, each a thumb's size", async ({
+    test("shows every page tab on a phone without scrolling, each a thumb's size", async ({
         page,
     }) => {
         for (const width of [320, 390]) {
             await page.setViewportSize({ width, height: 800 });
-            await page.goto('/design-kit/explainer-pieces/');
-            const row = await page.locator('.site-tabs').evaluate((list) => {
-                const links = [...list.querySelectorAll('a')].map((link) =>
-                    link.getBoundingClientRect()
-                );
-                return {
-                    tops: [...new Set(links.map((box) => Math.round(box.top)))],
-                    short: links.filter((box) => box.height < 44).length,
-                    scrolls:
-                        list.scrollWidth > list.clientWidth &&
-                        getComputedStyle(list).overflowX === 'auto',
-                    // The last tab, which a phone this narrow cannot fit, is scrolled into the row.
-                    shown: (() => {
-                        const row = list.getBoundingClientRect();
-                        const current = list
-                            .querySelector('[aria-current="page"]')
-                            ?.getBoundingClientRect();
-                        return (
-                            current !== undefined &&
-                            current.left >= row.left - 1 &&
-                            current.right <= row.right + 1
-                        );
-                    })(),
-                };
-            });
-            expect(row.tops, String(width)).toHaveLength(1);
-            expect(row.short, String(width)).toBe(0);
-            expect(row.scrolls, String(width)).toBe(true);
-            expect(row.shown, String(width)).toBe(true);
-            expect(await sideways(page), String(width)).toBe(0);
+            for (const path of ['/design-kit/', '/design-kit/explainer-pieces/']) {
+                await page.goto(path);
+                const row = await page.locator('.site-tabs').evaluate((list) => {
+                    const links = [...list.querySelectorAll('a')].map((link) =>
+                        link.getBoundingClientRect()
+                    );
+                    return {
+                        outside: links.filter((box) => box.left < 0 || box.right > innerWidth)
+                            .length,
+                        short: links.filter((box) => box.height < 44).length,
+                        scrolls: list.scrollWidth > list.clientWidth + 1,
+                    };
+                });
+                const at = `${path} at ${String(width)}`;
+                expect(row, at).toEqual({ outside: 0, short: 0, scrolls: false });
+                expect(await sideways(page), at).toBe(0);
+            }
         }
     });
 
@@ -969,25 +956,6 @@ test.describe("the site's header", () => {
         const before = await widths();
         await group.getByRole('radio', { name: 'Dark' }).check();
         expect(await widths()).toEqual(before);
-    });
-
-    test('scrolls to the current tab when a turn makes the row too narrow', async ({ page }) => {
-        await page.setViewportSize({ width: 1024, height: 800 });
-        await page.goto('/design-kit/explainer-pieces/');
-        await page.setViewportSize({ width: 360, height: 800 });
-        await expect
-            .poll(() =>
-                page.locator('.site-tabs').evaluate((list) => {
-                    const row = list.getBoundingClientRect();
-                    const box = list
-                        .querySelector('[aria-current="page"]')
-                        ?.getBoundingClientRect();
-                    return (
-                        box !== undefined && box.left >= row.left - 1 && box.right <= row.right + 1
-                    );
-                })
-            )
-            .toBe(true);
     });
 });
 
@@ -1512,44 +1480,179 @@ test.describe('the state cards', () => {
         await expect(card.locator('.site-copy-button')).toHaveCount(1);
     });
 
-    test('lists the sections of a page beside it on a wide screen, and leaves it out on a phone', async ({
+    /** The pages that list their sections, the tokens page among them. */
+    const LISTED = ['/design-kit/tokens/', ...STATED];
+
+    test('lists the sections of each page inside its content, beside it wide and under its opening narrow', async ({
         page,
     }) => {
-        for (const path of STATED) {
-            await page.setViewportSize({ width: 1280, height: 900 });
-            await page.goto(path);
-            const list = page.getByRole('navigation', { name: 'On this page' });
-            await expect(list, path).toBeVisible();
-            const targets = await list
-                .getByRole('link')
-                .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
-            const sections = await page
-                .locator('main > section > h2')
-                .evaluateAll((headings) => headings.map((heading) => `#${heading.id}`));
-            expect(targets, path).toEqual(sections);
-            // Beside the content, not above it.
-            const [nav, main] = await Promise.all(
-                [list, page.locator('main > h1')].map((each) => each.boundingBox())
-            );
-            expect(nav && main && nav.x + nav.width <= main.x, path).toBe(true);
-            const short = await list
-                .getByRole('link')
-                .evaluateAll(
-                    (links) =>
-                        links.filter((link) => link.getBoundingClientRect().height < 24).length
-                );
-            expect(short, path).toBe(0);
-            for (const width of [390, 768]) {
+        for (const path of LISTED) {
+            for (const width of [1280, 820, 390]) {
                 await page.setViewportSize({ width, height: 900 });
-                await expect(list, `${path} at ${String(width)}`).toBeHidden();
+                await page.goto(path);
+                const at = `${path} at ${String(width)}`;
+                const list = page
+                    .getByRole('main')
+                    .getByRole('navigation', { name: 'On this page' });
+                await expect(list, at).toBeVisible();
+                // A thumb's size on a phone, and the strip's row on a wide screen.
+                const short = await list
+                    .getByRole('link')
+                    .evaluateAll(
+                        (links, least) =>
+                            links.filter((link) => link.getBoundingClientRect().height < least)
+                                .length,
+                        width <= 768 ? 44 : 24
+                    );
+                expect(short, at).toBe(0);
+                // The whole opening comes before the list, and the sections after it.
+                expect(await list.evaluate((nav) => nav.nextElementSibling?.tagName), at).toBe(
+                    'SECTION'
+                );
+                const targets = await list
+                    .getByRole('link')
+                    .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+                const sections = await page
+                    .locator('main > section > h2')
+                    .evaluateAll((headings) => headings.map((heading) => `#${heading.id}`));
+                expect(targets, at).toEqual(sections);
+                const [nav, heading, lead] = await Promise.all(
+                    [list, page.locator('main > h1'), page.locator('main > .site-lead')].map(
+                        (each) => each.boundingBox()
+                    )
+                );
+                if (!nav || !heading || !lead) throw new Error(`${at}: no list, heading or lead`);
+                if (width >= 1024) {
+                    // Beside the content, at its side.
+                    expect(nav.x + nav.width, at).toBeLessThanOrEqual(heading.x);
+                } else {
+                    // Under the opening, before the first section.
+                    expect(nav.y, at).toBeGreaterThanOrEqual(lead.y + lead.height);
+                }
             }
         }
-        for (const path of [BASE, '/design-kit/tokens/']) {
+        for (const path of [BASE, ABOUT]) {
             await page.goto(path);
             await expect(page.getByRole('navigation', { name: 'On this page' }), path).toHaveCount(
                 0
             );
         }
+    });
+
+    test('leads from the tokens list to the ids the explainer links to', async ({ page }) => {
+        await page.goto('/design-kit/tokens/');
+        const targets = await page
+            .getByRole('navigation', { name: 'On this page' })
+            .getByRole('link')
+            .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+        expect(targets).toEqual(['#color', '#contrast', '#scale', '#theme']);
+    });
+
+    test('makes the section list the next stop after the skip link', async ({ page }) => {
+        for (const path of LISTED) {
+            await page.goto(path);
+            await page.keyboard.press('Tab');
+            await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+            await page.keyboard.press('Enter');
+            await page.keyboard.press('Tab');
+            const focused = await page.evaluate(
+                () => document.activeElement?.closest('nav')?.getAttribute('aria-labelledby') ?? ''
+            );
+            expect(focused, path).toBe('site-toc-name');
+        }
+    });
+
+    test('starts the content column at the same place on every page with a list', async ({
+        page,
+    }) => {
+        for (const width of [1280, 1024, 820, 390]) {
+            await page.setViewportSize({ width, height: 900 });
+            const starts: number[] = [];
+            const gaps: number[] = [];
+            for (const path of LISTED) {
+                await page.goto(path);
+                const [heading, lead] = await Promise.all(
+                    [page.locator('main > h1'), page.locator('main > .site-lead')].map((each) =>
+                        each.boundingBox()
+                    )
+                );
+                starts.push(Math.round(heading?.x ?? -1));
+                gaps.push(Math.round((lead?.y ?? 0) - (heading?.y ?? 0) - (heading?.height ?? 0)));
+            }
+            expect(new Set(starts).size, String(width)).toBe(1);
+            expect(new Set(gaps).size, String(width)).toBe(1);
+            expect(gaps[0], String(width)).toBeLessThan(64);
+        }
+    });
+
+    test('spaces each opening the same on a wide screen as on a narrow one', async ({ page }) => {
+        for (const path of LISTED) {
+            const spaced: number[] = [];
+            for (const width of [1280, 820]) {
+                await page.setViewportSize({ width, height: 900 });
+                await page.goto(path);
+                spaced.push(
+                    await page.evaluate(() => {
+                        const heading = document
+                            .querySelector('main > h1')
+                            ?.getBoundingClientRect();
+                        const lead = document
+                            .querySelector('main > .site-lead')
+                            ?.getBoundingClientRect();
+                        return Math.round((lead?.top ?? 0) - (heading?.bottom ?? 0));
+                    })
+                );
+            }
+            expect(spaced[0], path).toBe(spaced[1]);
+        }
+    });
+
+    test('keeps the side list inside the content however short the window', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 300 });
+        for (const path of LISTED) {
+            await page.goto(path);
+            await page.evaluate(() => {
+                window.scrollTo(0, document.documentElement.scrollHeight);
+            });
+            const [last, main] = await page.evaluate(() => [
+                Math.round(
+                    document.querySelector('.site-toc li:last-child')?.getBoundingClientRect()
+                        .bottom ?? Infinity
+                ),
+                Math.round(document.querySelector('main')?.getBoundingClientRect().bottom ?? 0),
+            ]);
+            expect(last, path).toBeLessThanOrEqual(main);
+        }
+    });
+
+    test("lines the list's text up with the column edge, and sets each tests panel by its section", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/design-kit/controls/');
+        const [label, brand] = await Promise.all(
+            [page.locator('.site-toc-name'), page.locator('.site-brand')].map((each) =>
+                each.evaluate((element) => {
+                    const range = document.createRange();
+                    range.selectNodeContents(element);
+                    return Math.round(range.getBoundingClientRect().left);
+                })
+            )
+        );
+        expect(label).toBe(brand);
+        const gaps = await page.locator('main > section > .site-held').evaluateAll((panels) =>
+            panels.flatMap((panel) => {
+                const before = panel.previousElementSibling?.getBoundingClientRect();
+                const next = panel.parentElement?.nextElementSibling
+                    ?.querySelector('h2')
+                    ?.getBoundingClientRect();
+                const box = panel.getBoundingClientRect();
+                if (!before || !next) return [];
+                return [{ above: box.top - before.bottom, below: next.top - box.bottom }];
+            })
+        );
+        expect(gaps.length).toBeGreaterThan(0);
+        expect(gaps.filter(({ above, below }) => above >= below)).toEqual([]);
     });
 });
 
