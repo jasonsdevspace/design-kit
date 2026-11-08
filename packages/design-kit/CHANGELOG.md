@@ -9,11 +9,13 @@ entry below as its notes.
 
 ## Unreleased
 
-- **Vite.** `@jasonsdevspace/design-kit/vite` exports `browserFloor`, the kit's browser floor, Chrome
-  and Edge 123, Firefox 120 and Safari 17.5, as a build target for `build.target` and
-  `build.cssTarget`. A page that takes it keeps each `light-dark()` as written and moves with the kit
-  when it raises its floor, where a page that writes the floor out by hand goes stale without
-  failing anything. It is frozen, so no page changes it for another.
+- **Vite.** `@jasonsdevspace/design-kit/vite` exports `browserFloor()`, the kit's browser floor of
+  Chrome and Edge 123, Firefox 120 and Safari 17.5 as a build target for `build.target`, and
+  `lightningcssFloor()`, the same floor as targets for `css.lightningcss.targets`, which a page whose
+  CSS transformer is Lightning CSS needs as well. A page that takes them keeps each `light-dark()` as
+  written and moves with the kit when the kit raises its floor, where a page that writes the floor
+  out by hand goes stale without failing anything. Each call gives a new value, so a page may change
+  its own.
 
 ## 0.1.0-next.5
 

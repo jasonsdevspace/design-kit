@@ -80,13 +80,17 @@ for (const [name, values] of Object.entries(VALUE_EXPORTS)) {
 const { THEME_KEY, themeScript } = await import('@jasonsdevspace/design-kit/theme');
 assert.equal(THEME_KEY, 'theme', 'reads the key the portfolio saves under');
 assert.ok(themeScript.includes('data-theme'), 'the script sets the theme on the root');
-const { browserFloor, THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } =
+const { browserFloor, lightningcssFloor, THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } =
     await import('@jasonsdevspace/design-kit/vite');
-assert.ok(
-    Array.isArray(browserFloor) &&
-        Object.isFrozen(browserFloor) &&
-        browserFloor.includes('safari17.5'),
-    'the floor is a frozen build target'
+assert.deepEqual(
+    browserFloor(),
+    ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
+    'the floor is a build target'
+);
+assert.deepEqual(
+    lightningcssFloor(),
+    { chrome: 123 << 16, edge: 123 << 16, firefox: 120 << 16, safari: (17 << 16) | (5 << 8) },
+    'the floor is targets Lightning CSS reads'
 );
 const hook = themeScriptPlugin().transformIndexHtml;
 const page = hook.handler(`<head>${THEME_PLACEHOLDER}</head>`, {});

@@ -1,11 +1,19 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import type { IndexHtmlTransformHook } from 'vite';
+import { build, type IndexHtmlTransformHook } from 'vite';
 import { describe, expect, it } from 'vitest';
 
 import { themeScript } from './theme.js';
-import { browserFloor, THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } from './vite.js';
+import {
+    browserFloor,
+    lightningcssFloor,
+    THEME_PLACEHOLDER,
+    themeScriptHash,
+    themeScriptPlugin,
+} from './vite.js';
 
 /** The plugin's page transform, called as Vite calls it. */
 const transform = (html: string): string => {
@@ -50,33 +58,96 @@ describe('the theme script plugin', () => {
 });
 
 describe('the browser floor', () => {
-    /** The floor as the README states it, each browser by the name and version it gives. */
-    const stated = () => {
-        const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+    /**
+     * The floor a README states, each browser by its name in lower case and its version, read from
+     * the sentence that sets it. A name with no version of its own takes the next one, as in
+     * "Chrome and Edge 123".
+     */
+    const stated = (readme: URL) => {
+        const text = readFileSync(readme, 'utf8');
         const sentence = /sets the floor: (.+?)\.(?:\s|$)/s
-            .exec(readme)?.[1]
+            .exec(text)?.[1]
             ?.replaceAll(/\s+/g, ' ');
-        if (sentence === undefined) throw new Error('the README states no browser floor');
-        const versions = (name: string) => {
-            const found = new RegExp(`${name}(?: and Edge)? (\\d+(?:\\.\\d+)?)`).exec(sentence);
-            if (!found?.[1]) throw new Error(`the README's floor names no version of ${name}`);
-            return found[1];
-        };
-        const chrome = versions('Chrome');
-        return [
-            `chrome${chrome}`,
-            `edge${chrome}`,
-            `firefox${versions('Firefox')}`,
-            `safari${versions('Safari')}`,
-        ];
+        if (sentence === undefined) throw new Error(`${readme.pathname} states no browser floor`);
+        const floor: string[] = [];
+        let waiting: string[] = [];
+        for (const [, name = '', version] of sentence.matchAll(
+            /([A-Z][a-z]+)(?: (\d+(?:\.\d+)?))?/g
+        )) {
+            waiting.push(name.toLowerCase());
+            if (version === undefined) continue;
+            floor.push(...waiting.map((each) => `${each}${version}`));
+            waiting = [];
+        }
+        if (waiting.length > 0) throw new Error(`no version for ${waiting.join(', ')}`);
+        return floor;
     };
 
-    it('is the floor the README states, as a build target Vite and esbuild read', () => {
-        expect(browserFloor).toEqual(stated());
+    const README = new URL('../README.md', import.meta.url);
+    const ROOT_README = new URL('../../../README.md', import.meta.url);
+
+    it("is the floor the package's README and the repository's README both state", () => {
+        expect(browserFloor()).toEqual(stated(README));
+        expect(browserFloor()).toEqual(stated(ROOT_README));
     });
 
-    it('cannot be changed by a page that takes it', () => {
-        expect(Array.isArray(browserFloor)).toBe(true);
-        expect(Object.isFrozen(browserFloor)).toBe(true);
+    it('reads a version for each browser the sentence names, and every browser it names', () => {
+        const at = new URL(`file://${tmpdir()}/floor-readme.md`);
+        writeFileSync(
+            at,
+            'This sets the floor: Chrome 123, Edge 124, Firefox 120, Safari 17.5 and Opera 109. More.'
+        );
+        expect(stated(at)).toEqual([
+            'chrome123',
+            'edge124',
+            'firefox120',
+            'safari17.5',
+            'opera109',
+        ]);
     });
+
+    it('gives each page an array of its own, which a page may change without changing another', () => {
+        const mine = browserFloor();
+        mine.push('es2022');
+        expect(browserFloor()).not.toContain('es2022');
+    });
+
+    it('gives the same floor in the form Lightning CSS reads, a version packed in each number', () => {
+        const packed = (version: string) => {
+            const [major = 0, minor = 0] = version.split('.').map(Number);
+            return (major << 16) | (minor << 8);
+        };
+        const expected = Object.fromEntries(
+            browserFloor().map((target) => {
+                const [, name = '', version = ''] = /^([a-z]+)(.+)$/.exec(target) ?? [];
+                return [name, packed(version)];
+            })
+        );
+        expect(lightningcssFloor()).toEqual(expected);
+    });
+
+    /** A page's sheet as Vite builds it, with the floor taken from the kit as the README shows. */
+    const built = async (transformer: 'postcss' | 'lightningcss') => {
+        const root = mkdtempSync(join(tmpdir(), 'floor-'));
+        writeFileSync(join(root, 'index.html'), '<link rel="stylesheet" href="./page.css">');
+        writeFileSync(join(root, 'page.css'), ':root { --ground: light-dark(#ffffff, #121212); }');
+        await build({
+            root,
+            logLevel: 'silent',
+            configFile: false,
+            css: { transformer, lightningcss: { targets: lightningcssFloor() } },
+            build: { target: browserFloor(), outDir: 'dist' },
+        });
+        const assets = join(root, 'dist', 'assets');
+        const sheet = readdirSync(assets).find((file) => file.endsWith('.css')) ?? '';
+        return readFileSync(join(assets, sheet), 'utf8');
+    };
+
+    it.each(['postcss', 'lightningcss'] as const)(
+        'keeps each light-dark() as written in a build with the %s transformer',
+        async (transformer) => {
+            expect(await built(transformer)).toContain('light-dark(#fff,#121212)');
+        },
+        30_000
+    );
 });
