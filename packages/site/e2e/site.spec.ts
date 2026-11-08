@@ -490,6 +490,127 @@ test.describe('the explainer', () => {
     });
 });
 
+test.describe("the site's header", () => {
+    /** The pages in the site's menu, which open with the header, rather than the explainer's. */
+    const MENU = ROUTES.filter(({ nav }) => nav !== null);
+
+    test('opens each page with the mark and the name, linked to the landing page', async ({
+        page,
+    }) => {
+        for (const { path } of MENU) {
+            await page.goto(path);
+            const brand = page.getByRole('link', { name: 'The design kit', exact: true });
+            await expect(brand, path).toHaveAttribute('href', BASE);
+            await expect(brand.locator('.site-mark'), path).toHaveAttribute('aria-hidden', 'true');
+            await expect(brand.locator('.site-mark'), path).toBeVisible();
+        }
+    });
+
+    test('draws the pages as tabs, the current one filled and marked as the page', async ({
+        page,
+    }) => {
+        for (const { path, nav } of MENU) {
+            await page.goto(path);
+            const tabs = page
+                .getByRole('navigation', { name: 'Design kit' })
+                .getByRole('list')
+                .getByRole('link');
+            const drawn = await tabs.evaluateAll((links) =>
+                links.map((link) => ({
+                    current: link.getAttribute('aria-current') === 'page',
+                    filled: getComputedStyle(link).backgroundColor !== 'rgba(0, 0, 0, 0)',
+                    round: parseFloat(getComputedStyle(link).borderTopLeftRadius) >= 12,
+                    name: link.textContent.trim(),
+                }))
+            );
+            expect(
+                drawn.filter(({ current }) => current).map(({ name }) => name),
+                path
+            ).toEqual([nav]);
+            expect(
+                drawn.filter(({ current, filled }) => current !== filled),
+                path
+            ).toEqual([]);
+            expect(
+                drawn.filter(({ round }) => !round),
+                path
+            ).toEqual([]);
+        }
+    });
+
+    test("keeps the tabs in one row on a phone, scrolling sideways to the current one, each a thumb's size", async ({
+        page,
+    }) => {
+        for (const width of [320, 390]) {
+            await page.setViewportSize({ width, height: 800 });
+            await page.goto('/design-kit/explainer-pieces/');
+            const row = await page.locator('.site-tabs').evaluate((list) => {
+                const links = [...list.querySelectorAll('a')].map((link) =>
+                    link.getBoundingClientRect()
+                );
+                return {
+                    tops: [...new Set(links.map((box) => Math.round(box.top)))],
+                    short: links.filter((box) => box.height < 44).length,
+                    scrolls:
+                        list.scrollWidth > list.clientWidth &&
+                        getComputedStyle(list).overflowX === 'auto',
+                    // The last tab, which a phone this narrow cannot fit, is scrolled into the row.
+                    shown: (() => {
+                        const row = list.getBoundingClientRect();
+                        const current = list
+                            .querySelector('[aria-current="page"]')
+                            ?.getBoundingClientRect();
+                        return (
+                            current !== undefined &&
+                            current.left >= row.left - 1 &&
+                            current.right <= row.right + 1
+                        );
+                    })(),
+                };
+            });
+            expect(row.tops, String(width)).toHaveLength(1);
+            expect(row.short, String(width)).toBe(0);
+            expect(row.scrolls, String(width)).toBe(true);
+            expect(row.shown, String(width)).toBe(true);
+            expect(await sideways(page), String(width)).toBe(0);
+        }
+    });
+
+    test('draws the theme as one segmented control of three radios, the chosen one raised', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/');
+        const group = page.getByRole('radiogroup', { name: 'Theme' });
+        await expect(group.getByRole('radio')).toHaveCount(3);
+        const segments = await group.locator('label').evaluateAll((labels) =>
+            labels.map((label) => {
+                const radio = label.querySelector('input');
+                const segment = label.querySelector('span');
+                return {
+                    checked: radio?.checked ?? false,
+                    raised:
+                        segment !== null &&
+                        getComputedStyle(segment).backgroundColor !== 'rgba(0, 0, 0, 0)',
+                    // The radio is kept for the keyboard and a screen reader, and drawn as its segment.
+                    hidden: radio !== null && getComputedStyle(radio).opacity === '0',
+                };
+            })
+        );
+        expect(segments.filter(({ checked, raised }) => checked !== raised)).toEqual([]);
+        expect(segments.filter(({ hidden }) => !hidden)).toEqual([]);
+        // The keyboard moves between the choices as between radios, and the ring shows on the
+        // segment it reaches.
+        await group.getByRole('radio', { name: 'System' }).focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(group.getByRole('radio', { name: 'Light' })).toBeChecked();
+        const ring = await group
+            .locator('label', { hasText: 'Light' })
+            .locator('span')
+            .evaluate((segment) => getComputedStyle(segment).outlineStyle);
+        expect(ring).not.toBe('none');
+    });
+});
+
 test.describe('the theme switch', () => {
     /** The radio for each choice, in the strip's section named for the switch. */
     const choice = (page: Page, name: 'System' | 'Light' | 'Dark') =>
@@ -636,7 +757,7 @@ test.describe('the theme switch', () => {
                         expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
                     }
                     const top = await page
-                        .locator('.site-nav')
+                        .locator('.site-header')
                         .evaluate((nav) => nav.getBoundingClientRect().top);
                     moved.push(`${String(width)} at text ${String(scale)}: ${String(top)}`);
                 }
@@ -1111,7 +1232,7 @@ test.describe('how each state is shown', () => {
             const found = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-theme label, .site-nav a'
+                        '.site-code > summary, .site-theme label, .site-header a'
                     ),
                 ].map((element) => ({
                     what: element.textContent.trim().slice(0, 30),

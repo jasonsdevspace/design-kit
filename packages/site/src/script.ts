@@ -100,7 +100,9 @@ const themeSwitch = () => {
         radio.addEventListener('change', () => {
             choose(choice);
         });
-        label.append(radio, WORDS[choice]);
+        const word = document.createElement('span');
+        word.textContent = WORDS[choice];
+        label.append(radio, word);
         return { label, radio };
     });
     const note = document.createElement('span');
@@ -168,6 +170,17 @@ if (room && section) {
  * their own keys or their device's copy command. One status line, out of sight, tells a screen
  * reader which happened, and the button says it for a moment too.
  */
+/**
+ * Scrolls the site's tabs sideways to the current page's tab where a phone is too narrow to show
+ * them all, so the tab that says where the reader is never starts out of sight. The row scrolls on
+ * its own, so the page does not move.
+ */
+const tabs = document.querySelector<HTMLElement>('.site-tabs');
+const currentTab = tabs?.querySelector<HTMLElement>('[aria-current="page"]');
+if (tabs && currentTab && tabs.scrollWidth > tabs.clientWidth) {
+    tabs.scrollLeft = currentTab.offsetLeft - tabs.offsetLeft;
+}
+
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
