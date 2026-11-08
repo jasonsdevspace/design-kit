@@ -1,11 +1,12 @@
 import { THEME_KEY, THEMES } from 'design-kit-release/theme';
 
 /*
- * The site's own script, which the kit does not ship: the theme switch in the strip, and a copy
- * button beside each block of code. The theme script the kit puts inline has already drawn the
- * theme before this runs, so the switch shows the choice, and saves and draws a new one. It saves
- * under the portfolio's key and with the portfolio's values, so a choice made here holds on every
- * page of jasonsdevspace.com, and the other way around.
+ * The site's own script, which the kit does not ship: the theme switch in the strip, a copy button
+ * beside each block of code, and the live copies of the states a reader can change. The theme
+ * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
+ * choice, and saves and draws a new one. It saves under the portfolio's key and with the
+ * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
+ * other way around.
  */
 
 /** The portfolio's choices, System and the kit's two themes, and the word each is shown by. */
@@ -156,8 +157,8 @@ if (room && section) {
 /*
  * A copy button beside the title of each block of code. Where the browser will not let the page
  * write to the clipboard, the button selects the block's text instead, so a reader copies it with
- * their own keys. One status line, out of sight, tells a screen reader which happened, and the
- * button says it for a moment too.
+ * their own keys or their device's copy command. One status line, out of sight, tells a screen
+ * reader which happened, and the button says it for a moment too.
  */
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
@@ -181,27 +182,44 @@ const copied = async (text: string): Promise<boolean> => {
     }
 };
 
+/** The code blocks on the page, each with the head its copy button goes in. */
+const heads = document.querySelectorAll<HTMLElement>('.site-code-head');
+
 /**
- * The status line, made in the main content the first time a page with code needs it. It is
- * emptied before each message and after the button stops saying it, so a second copy is heard
- * too.
+ * The status line, in the main content from the start on a page with code, since a screen reader
+ * may not hear a line added at the moment it speaks. It is emptied before each message and when
+ * the message has been shown, on one timer, so a second copy is heard too and one message never
+ * empties the next.
  */
-let status: HTMLElement | undefined;
+const status = heads.length === 0 ? undefined : document.createElement('p');
+if (status) {
+    status.className = 'dk-visually-hidden';
+    status.setAttribute('role', 'status');
+    (document.querySelector('main') ?? document.body).append(status);
+}
+let statusTimer = 0;
 const say = (message: string) => {
-    if (!status) {
-        status = document.createElement('p');
-        status.className = 'dk-visually-hidden';
-        status.setAttribute('role', 'status');
-        (document.querySelector('main') ?? document.body).append(status);
-    }
-    const line = status;
-    line.textContent = '';
-    window.setTimeout(() => {
-        line.textContent = message;
+    if (!status) return;
+    window.clearTimeout(statusTimer);
+    status.textContent = '';
+    statusTimer = window.setTimeout(() => {
+        status.textContent = message;
+        statusTimer = window.setTimeout(() => {
+            status.textContent = '';
+        }, SAID_FOR);
     }, 100);
 };
 
-for (const head of document.querySelectorAll<HTMLElement>('.site-code-head')) {
+/**
+ * How to copy what is selected: in the keys of a keyboard where any pointer can hover, as a mouse or
+ * a trackpad, which a keyboard usually comes with, and otherwise in words for a touch screen.
+ */
+const howToCopy = () =>
+    !window.matchMedia('(any-hover: hover)').matches
+        ? "Selected. Copy it with your device's copy command."
+        : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
+
+for (const head of heads) {
     const title = head.querySelector('.site-code-name');
     const block = head.nextElementSibling;
     if (!title || !(block instanceof HTMLElement) || !block.matches('pre.dk-code')) continue;
@@ -219,17 +237,40 @@ for (const head of document.querySelectorAll<HTMLElement>('.site-code-head')) {
         void copied(block.textContent).then((done) => {
             if (!done) select(block);
             word.textContent = done ? 'Copied' : 'Selected';
-            say(
-                done
-                    ? 'Copied.'
-                    : 'Selected. Press Control and C, or Command and C on a Mac, to copy.'
-            );
+            say(done ? 'Copied.' : howToCopy());
             window.clearTimeout(timer);
             timer = window.setTimeout(() => {
                 word.textContent = 'Copy';
-                if (status) status.textContent = '';
             }, SAID_FOR);
         });
     });
     head.append(button);
+}
+
+/*
+ * The live copies of the states a reader can change. A toggle flips what it says it is, and a
+ * button that names a panel opens and closes it, so what a control says it is stays true after it
+ * is pressed. The copies in the other theme are pictures and stay as they are drawn.
+ */
+for (const toggle of document.querySelectorAll<HTMLButtonElement>(
+    'main .site-copy:not([inert]) button[aria-pressed]'
+)) {
+    toggle.addEventListener('click', () => {
+        if (toggle.getAttribute('aria-disabled') === 'true') return;
+        toggle.setAttribute('aria-pressed', String(toggle.getAttribute('aria-pressed') !== 'true'));
+    });
+}
+
+for (const opener of document.querySelectorAll<HTMLButtonElement>(
+    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]'
+)) {
+    const panel = document.getElementById(opener.getAttribute('aria-controls') ?? '');
+    if (!panel) continue;
+    // The panel starts as the button says it is, open or closed.
+    panel.hidden = opener.getAttribute('aria-expanded') !== 'true';
+    opener.addEventListener('click', () => {
+        const open = opener.getAttribute('aria-expanded') !== 'true';
+        opener.setAttribute('aria-expanded', String(open));
+        panel.hidden = !open;
+    });
 }

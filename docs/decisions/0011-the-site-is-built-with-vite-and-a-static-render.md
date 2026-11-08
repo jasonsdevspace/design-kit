@@ -99,6 +99,10 @@ The paths are in `packages/site`.
   kept where its markup is as written, React for each state a component draws and none where none
   does, the code opening with no script, and no page widened with every block of code open, at any
   width or at twice the text size.
+- `e2e/site.spec.ts` also finds each state's two copies filling the column on a wide screen, both
+  named, a picture named as a picture, the live copy a group named by its state's name, a copy
+  button one width whatever it says, and each disclosure, theme choice and site link with a pointer
+  cursor and a target of the size the kit holds to, at a laptop's width and a phone's.
 - `src/code.test.ts` builds the React each state shows with the pinned version's components, and
   finds it drawing what that version draws for the state.
 - `scripts/workflows.test.ts`, at the root, finds only the deploy job in CI asking for the token

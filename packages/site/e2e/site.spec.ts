@@ -734,3 +734,169 @@ test.describe('the code of each state', () => {
         });
     });
 });
+
+test.describe('how each state is shown', () => {
+    test('fills the column with its two copies on a wide screen', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/design-kit/controls/');
+        const gaps = await page.evaluate(() => {
+            const main = document.querySelector('.site-main');
+            if (!main) return [];
+            const style = getComputedStyle(main);
+            const right = main.getBoundingClientRect().right - parseFloat(style.paddingRight);
+            return [...document.querySelectorAll('.site-state')].map((state) => {
+                const copies = [...state.querySelectorAll('.site-copy')];
+                return Math.round(right - (copies.at(-1)?.getBoundingClientRect().right ?? 0));
+            });
+        });
+        expect(gaps.length).toBeGreaterThan(0);
+        expect(gaps.filter((gap) => Math.abs(gap) > 1)).toEqual([]);
+    });
+
+    test('names both copies, and calls a picture a picture', async ({ page }) => {
+        for (const [path, labels] of [
+            ['/design-kit/controls/', ['Your theme', 'The other theme']],
+            [
+                '/design-kit/page-chrome/',
+                ['A picture, in your theme', 'A picture, in the other theme'],
+            ],
+        ] as const) {
+            await page.goto(path);
+            const unnamed = await page.evaluate(
+                (expected) =>
+                    [...document.querySelectorAll('.site-state')].filter(
+                        (state) =>
+                            [...state.querySelectorAll('.site-copy-label')]
+                                .map((label) => label.textContent)
+                                .join('|') !== expected.join('|')
+                    ).length,
+                [...labels]
+            );
+            expect(unnamed, path).toBe(0);
+        }
+    });
+
+    test('names the live copy of each state by the state, for a screen reader moving by control', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        await expect(
+            page.getByRole('group', { name: 'An action', exact: true }).getByRole('button', {
+                name: 'Filters',
+            })
+        ).toBeVisible();
+    });
+
+    test('flips a live toggle when it is pressed', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        const toggle = page
+            .getByRole('group', { name: /^A toggle, starting on/ })
+            .getByRole('button', { name: 'Members only' });
+        await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+        await toggle.press('Space');
+        await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('opens and closes the panel a live button names', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        const group = page.getByRole('group', {
+            name: 'A button whose panel starts open',
+            exact: true,
+        });
+        const button = group.getByRole('button', { name: 'Filters' });
+        const panel = group.locator(`#${(await button.getAttribute('aria-controls')) ?? 'none'}`);
+        await expect(panel).toBeVisible();
+        await button.click();
+        await expect(button).toHaveAttribute('aria-expanded', 'false');
+        await expect(panel).toBeHidden();
+        await button.click();
+        await expect(button).toHaveAttribute('aria-expanded', 'true');
+        await expect(panel).toBeVisible();
+    });
+
+    test('gives each thing that is clicked a pointer and a target the size the kit holds to', async ({
+        page,
+    }) => {
+        for (const [width, least] of [
+            [1280, 24],
+            [390, 44],
+        ] as const) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/design-kit/controls/');
+            const found = await page.evaluate(() =>
+                [
+                    ...document.querySelectorAll<HTMLElement>(
+                        '.site-code > summary, .site-theme label, .site-nav a'
+                    ),
+                ].map((element) => ({
+                    what: element.textContent.trim().slice(0, 30),
+                    height: element.getBoundingClientRect().height,
+                    cursor: getComputedStyle(element).cursor,
+                }))
+            );
+            expect(found.length).toBeGreaterThan(0);
+            expect(
+                found.filter(({ height, cursor }) => height < least || cursor !== 'pointer'),
+                String(width)
+            ).toEqual([]);
+        }
+    });
+
+    test('keeps a copy button the same width whatever it says', async ({ page }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'clipboard', { value: undefined });
+        });
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        // Found by its place rather than its name, which changes with its word.
+        const button = page
+            .locator('.site-state', { hasText: 'An action, drawn by' })
+            .locator('.site-copy-button')
+            .first();
+        await expect(button).toHaveAccessibleName('Copy Markup, An action');
+        const before = (await button.boundingBox())?.width;
+        await button.click();
+        await expect(button).toHaveAccessibleName('Selected Markup, An action');
+        expect((await button.boundingBox())?.width).toBe(before);
+    });
+
+    test('has its status line in the page before anything is copied, and only where code is', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        await expect(page.locator('main [role="status"]')).toHaveCount(1);
+        await page.goto('/design-kit/');
+        await expect(page.locator('[role="status"]')).toHaveCount(0);
+    });
+
+    test('tells a phone how to copy what it selected, in words a phone has', async ({
+        browser,
+    }) => {
+        const context = await browser.newContext({ hasTouch: true, isMobile: true });
+        try {
+            const page = await context.newPage();
+            await page.addInitScript(() => {
+                Object.defineProperty(navigator, 'clipboard', { value: undefined });
+            });
+            await page.goto('/design-kit/controls/');
+            await page.locator('summary', { hasText: 'The code, An action' }).click();
+            await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+            await expect(page.getByRole('status')).toHaveText(
+                "Selected. Copy it with your device's copy command."
+            );
+        } finally {
+            await context.close();
+        }
+    });
+});
+
+test.describe(() => {
+    test.use({ javaScriptEnabled: false });
+
+    test('says the switch needs scripts, where scripts are off', async ({ page }) => {
+        await page.goto('/design-kit/tokens/');
+        await expect(page.locator('#theme').locator('..')).toContainText('With scripts on');
+    });
+});

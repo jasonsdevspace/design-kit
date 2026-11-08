@@ -18,6 +18,29 @@
     margin-top: 0;
 }
 
+/*
+ * The site's headings on the kit's type scale, as the explainer's are, and each section set off
+ * from the one before by more than the space between two states.
+ */
+.site-main > h1 {
+    font-size: var(--dk-text-display);
+}
+
+.site-main > section {
+    margin-top: var(--dk-space-6);
+}
+
+.site-main > section > h2 {
+    margin: 0 0 var(--dk-space-4);
+    font-size: var(--dk-text-heading);
+}
+
+/* A table of the site's holds to a width the eye can follow along a row, and scrolls past it. */
+.site-main > section > .dk-table-title,
+.site-main > section > .dk-table-scroll {
+    max-width: 48rem;
+}
+
 /* The site's own prose holds to the kit's measure, as an explainer's does. */
 .site-main > p,
 .site-main > section > p {
@@ -44,10 +67,11 @@
     list-style: none;
 }
 
+/* A link as tall as the strip's row on a wide screen, and a thumb's size on a phone. */
 .site-nav a {
     display: inline-flex;
     align-items: center;
-    min-height: var(--dk-target);
+    min-height: var(--dk-strip);
 }
 
 .site-nav a[aria-current='page'] {
@@ -56,8 +80,8 @@
 }
 
 /*
- * Each state, its copy in the visitor's theme beside its copy in the other on a wide screen and
- * above it on a phone, with its name and attribute under both.
+ * Each state, its copy in the visitor's theme beside its copy in the other on a wide screen, the
+ * two sharing the column, and above it on a phone, with its name and attribute under both.
  */
 .site-states {
     display: grid;
@@ -69,7 +93,7 @@
 
 .site-state {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--dk-space-3);
 }
 
@@ -92,6 +116,15 @@
     border-radius: var(--dk-radius);
     background: var(--dk-bg);
     color: var(--dk-fg);
+}
+
+/* What a copy holds starts and ends at its padding, whatever margins its parts bring. */
+.site-copy > :first-child {
+    margin-top: 0;
+}
+
+.site-copy > :last-child {
+    margin-bottom: 0;
 }
 
 /*
@@ -211,45 +244,26 @@
     color: var(--dk-muted);
 }
 
+/* Each choice is as tall as the strip's row, and the whole of it, word and radio, takes a click. */
 .site-theme label {
     display: inline-flex;
     align-items: center;
     gap: var(--dk-space-2);
+    min-height: var(--dk-strip);
+    cursor: pointer;
 }
 
 .site-theme input {
     margin: 0;
     accent-color: var(--dk-accent);
-}
-
-@media (max-width: 48rem) {
-    .site-theme label {
-        min-height: var(--dk-target);
-    }
-}
-
-/*
- * Where the strip keeps its links and the switch on one row, the room the page's strip keeps before
- * the script runs and the switch that takes it are one width, in the strip's own text size, wide
- * enough for the switch's words in any font. So a strip too narrow for both wraps before the switch
- * comes, as it does after, and a strip wide enough for both never wraps.
- */
-@media (min-width: 48.0625rem) {
-    body > .dk-strip .dk-strip-room,
-    .site-theme {
-        inline-size: 21em;
-    }
-
-    .site-theme {
-        flex-wrap: nowrap;
-    }
+    cursor: pointer;
 }
 
 /*
  * A state's code, closed until a reader opens it, under the state's name: a block of markup, and of
- * React where a component draws the state, each with its title and the copy button the site's script
- * puts beside it. The disclosure may shrink below its widest line, so a block scrolls in its own
- * frame, not across the page.
+ * React where a component draws the state, each with its title and the copy button the site's
+ * script puts beside it. The disclosure may shrink below its widest line, so a block scrolls in its
+ * own frame, not across the page.
  */
 .site-code {
     grid-column: 1 / -1;
@@ -257,7 +271,9 @@
     font-size: var(--dk-text-small);
 }
 
+/* The summary takes a click across its padding, a thumb's size on a phone, and keeps its marker. */
 .site-code > summary {
+    padding-block: var(--dk-space-1);
     color: var(--dk-muted);
     cursor: pointer;
 }
@@ -272,4 +288,54 @@
 
 .site-code-head .dk-code-title {
     margin: 0;
+}
+
+/* A copy button keeps one width whatever it says, the width of its longest word, Selected. */
+.site-copy-button {
+    min-inline-size: calc(9ch + 2 * var(--dk-space-3) + 2px);
+}
+
+/* A panel a live button names sits below it as any next part of a copy does. */
+.site-copy > .dk-button + .dk-panel {
+    margin-top: var(--dk-space-3);
+}
+
+/*
+ * The site's one breakpoint, the kit's: at 48rem wide or less, a phone, every target grows to a
+ * thumb's size and each state's copies stack. Wider, the copies share the column, and the strip's
+ * links and the theme switch share one row.
+ */
+@media (max-width: 48rem) {
+    .site-nav a {
+        min-height: var(--dk-target);
+    }
+
+    .site-theme label {
+        min-height: var(--dk-target);
+    }
+
+    .site-code > summary {
+        padding-block: var(--dk-space-3);
+    }
+}
+
+@media (min-width: 48.0625rem) {
+    .site-state {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /*
+     * The room the page's strip keeps before the script runs and the switch that takes it are one
+     * width, in the strip's own text size, wide enough for the switch's words in any font. So a
+     * strip too narrow for both wraps before the switch comes, as it does after, and a strip wide
+     * enough for both never wraps.
+     */
+    body > .dk-strip .dk-strip-room,
+    .site-theme {
+        inline-size: 21em;
+    }
+
+    .site-theme {
+        flex-wrap: nowrap;
+    }
 }

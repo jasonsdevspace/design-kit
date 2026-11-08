@@ -68,22 +68,38 @@ export const CONTROLS: readonly Control[] = [
                 draw: ({ Button }) => <Button accent>Save rule</Button>,
             },
             {
-                name: 'A toggle that is on',
+                name: 'A toggle, starting on',
                 attribute: 'aria-pressed="true"',
                 react: `<Button pressed>Members only</Button>`,
                 draw: ({ Button }) => <Button pressed>Members only</Button>,
             },
             {
-                name: 'A toggle that is off',
+                name: 'A toggle, starting off',
                 attribute: 'aria-pressed="false"',
                 react: `<Button pressed={false}>Members only</Button>`,
                 draw: ({ Button }) => <Button pressed={false}>Members only</Button>,
             },
             {
-                name: 'A button whose panel is open',
+                name: 'A button whose panel starts open',
                 attribute: 'aria-expanded="true"',
-                react: `<Button aria-expanded>Filters</Button>`,
-                draw: ({ Button }) => <Button aria-expanded>Filters</Button>,
+                react: `<>
+    <Button aria-expanded aria-controls="filters-panel">
+        Filters
+    </Button>
+    <div id="filters-panel" className="dk-panel">
+        <p>Brand, size and color.</p>
+    </div>
+</>`,
+                draw: ({ Button }, id) => (
+                    <>
+                        <Button aria-expanded aria-controls={id('filters-panel')}>
+                            Filters
+                        </Button>
+                        <div id={id('filters-panel')} className="dk-panel">
+                            <p>Brand, size and color.</p>
+                        </div>
+                    </>
+                ),
             },
             {
                 name: 'A button that is unavailable',

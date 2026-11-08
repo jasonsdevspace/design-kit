@@ -169,12 +169,13 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 );
 
 /**
- * One state of a control, drawn live in the visitor's theme and again in the other theme beside
- * it. The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are
- * its own, so the page never holds one twice. A pictured state's copy in the visitor's theme is
- * inert too, and labeled as the other is. Under both, the state's name and the attribute that
- * draws it, and then its code, closed until a reader opens it: its markup, and the React a page
- * writes for it where a component draws it.
+ * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
+ * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
+ * own, so the page never holds one twice. The live copy is a group named by the state's name alone, so a screen
+ * reader moving from control to control hears which state it is in. A pictured state's copy in the
+ * visitor's theme is inert too, and both its copies are labeled as pictures. Under both, the
+ * state's name and the attribute that draws it, and then its code, closed until a reader opens it:
+ * its markup, and the React a page writes for it where a component draws it.
  */
 const StateShown = ({
     state,
@@ -190,16 +191,27 @@ const StateShown = ({
     readonly laidOut: boolean;
 }) => (
     <li className="site-state">
-        <div className="site-copy" inert={pictured}>
-            {pictured ? <p className="site-copy-label">Your theme</p> : null}
-            {state.draw(kit, (name) => (pictured ? `${name}-yours` : name))}
-        </div>
+        {pictured ? (
+            <div className="site-copy" inert>
+                <p className="site-copy-label">A picture, in your theme</p>
+                {state.draw(kit, (name) => `${name}-yours`)}
+            </div>
+        ) : (
+            <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
+                <p className="site-copy-label" aria-hidden="true">
+                    Your theme
+                </p>
+                {state.draw(kit, (name) => name)}
+            </div>
+        )}
         <div className="site-copy site-other" inert>
-            <p className="site-copy-label">The other theme</p>
+            <p className="site-copy-label">
+                {pictured ? 'A picture, in the other theme' : 'The other theme'}
+            </p>
             {state.draw(kit, (name) => `${name}-other`)}
         </div>
         <p className="site-state-name">
-            {state.name}, drawn by <code>{state.attribute}</code>
+            <span id={`${id}-name`}>{state.name}</span>, drawn by <code>{state.attribute}</code>
         </p>
         <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
             <summary>
@@ -359,9 +371,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     <code>theme</code>, or, when nothing usable is saved, as when System is chosen,
                     to the system&rsquo;s, following it as it changes. It hears a choice saved in
                     another tab. Every demo served from jasonsdevspace.com reads the same saved
-                    theme, and this page does too. The switch at the top of each page of this site
-                    saves a choice under that key with the portfolio&rsquo;s values, as the
-                    portfolio&rsquo;s switch does.
+                    theme, and this page does too. With scripts on, the switch at the top of each
+                    page of this site saves a choice under that key with the portfolio&rsquo;s
+                    values, as the portfolio&rsquo;s switch does.
                 </p>
             </section>
         </Page>
