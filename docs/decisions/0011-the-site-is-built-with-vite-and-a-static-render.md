@@ -61,7 +61,8 @@ only GitHub's Pages actions deploys it.
   alias without saving it, so a change that breaks the site's audits or its policy fails its own
   pull request rather than the one that later moves the pin, after the version is on npm.
 - A policy in a meta element cannot say which pages may frame the site, which only a header can, and
-  GitHub Pages sends none, so the site can be framed.
+  GitHub Pages sends none, so the site can be framed. A page that frames it gains little: the site
+  has no forms, and the only thing a visitor changes on it is the theme.
 - An inline script the site adds is refused until the policy names it, and the browser tests fail
   on anything the policy refuses.
 - The build, the browser tests and the Lighthouse audit read one list of the site's pages, so a

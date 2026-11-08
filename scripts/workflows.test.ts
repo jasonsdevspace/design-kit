@@ -5,7 +5,8 @@ import { repositoryFiles } from './repository.mjs';
 
 /*
  * What the workflows promise that only reading them can hold: a browser installed without the
- * system packages the runner already has, and within a time of its own.
+ * system packages the runner already has, and within a time of its own, dependencies installed
+ * without their install scripts, and the token that can publish held by the deploy job alone.
  */
 
 const workflows = repositoryFiles(import.meta.url, (path) =>
@@ -74,6 +75,26 @@ describe('the workflows', () => {
             expect(text).toMatch(/npm install -g --offline --ignore-scripts "\$tarball"/);
             expect(text).not.toMatch(/npm install -g[^\n]*\bnpm@/);
         }
+    });
+
+    it('install dependencies without running their install scripts', () => {
+        // Each command that installs from npm, at the start of a line or of a run, rather than
+        // words in a message that name the command.
+        const command = /^\s*(?:-\s+)?(?:run:\s*)?npm (?:ci|install)\b[^\n]*$/gm;
+        const installs = steps.flatMap(({ text }) => text.match(command) ?? []);
+        expect(installs.length).toBeGreaterThan(0);
+        expect(installs.filter((line) => !line.includes('--ignore-scripts'))).toEqual([]);
+    });
+
+    it('give the token that can publish or deploy to the deploy job alone in CI', () => {
+        // Called from a release, every job in CI runs as the release, so any of them holding the
+        // token could publish to npm as the release does.
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        const jobs = ci.slice(ci.search(/^jobs:\n/m)).split(/^ {4}(?=[a-z][\w-]*:\n)/m);
+        const holding = jobs
+            .filter((job) => /^\s+id-token:\s*write\b/m.test(job.replace(/^\s*#.*$/gm, '')))
+            .map((job) => job.slice(0, job.indexOf(':')));
+        expect(holding).toEqual(['deploy']);
     });
 
     it('read a step the way GitHub does, whatever the step looks like', () => {

@@ -48,6 +48,9 @@ demo from npm as it was packed, with no script of the kit's to run.
   its homepage points at that folder rather than at the root.
 - A demo can install the kit with install scripts off and lose nothing, since the kit has no
   install script.
+- CI installs the repository's own dependencies with install scripts off too. None needs one on
+  Linux, and a script added to a dependency later would otherwise run in the job that packs the
+  published package, before the checksum that vouches for the tarball is taken.
 
 ## How it is tested
 
@@ -58,3 +61,6 @@ demo from npm as it was packed, with no script of the kit's to run.
   components has it. `smoke/package.test.ts` holds the list of what it loads to the package's
   exports.
 - `scripts/license.test.ts` holds each package's `LICENSE` to the one at the root.
+- `scripts/workflows.test.ts` holds every install in the workflows to `--ignore-scripts`, and the
+  token that can publish or deploy to the deploy job alone in CI, since every job in CI runs as the
+  release when the release calls it.

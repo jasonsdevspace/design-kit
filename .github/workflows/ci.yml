@@ -17,6 +17,10 @@ on:
 permissions:
     contents: read
 
+# Every install skips its dependencies' install scripts. None of them needs one on Linux, and a
+# script added to a dependency later would otherwise run in the jobs that pack the published
+# package and build the deployed site, before the checksum that vouches for the package is taken.
+
 # A newer push to a pull request supersedes the run in progress. Runs on main wait their turn, so a
 # run that has handed the site to Pages is never canceled, which would leave the deployment
 # pending.
@@ -42,7 +46,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm ci --ignore-scripts
 
             # npm ci installs from the lockfile without comparing it with each workspace's
             # manifest, so a field changed in a package.json, such as its engines, can leave the
@@ -92,7 +96,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm ci --ignore-scripts
 
             # Only the browser is downloaded, not the system libraries, within a time of its own,
             # and started once so a library the runner image lacks fails this step rather than a
@@ -144,7 +148,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm ci --ignore-scripts
 
             # The audit drives Playwright's Chromium, installed as the browser tests install it.
             - name: Install Chromium
@@ -178,7 +182,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm ci --ignore-scripts
 
             # Packing runs the package's build, which is how the published package is made. Its
             # checksum is a job output, which no other job in the run can change, unlike the
@@ -292,7 +296,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm ci --ignore-scripts
 
             - name: Build the site
               run: npm run site
