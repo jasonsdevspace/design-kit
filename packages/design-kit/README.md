@@ -243,7 +243,10 @@ wins over all of them.
 <button type="button" class="dk-button">Filters</button>
 <button type="button" class="dk-button dk-button-accent">Save rule</button>
 <button type="button" class="dk-button" aria-pressed="true">Members only</button>
-<button type="button" class="dk-button" aria-disabled="true">Previous</button>
+<button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
+    Previous
+</button>
+<p id="previous-why" class="dk-field-hint">This is the first page.</p>
 ```
 
 A button is `type="button"` unless the page gives it another type, so it never submits a form by
@@ -259,9 +262,10 @@ where the keyboard can reach it and find out why. The attribute does nothing by 
 that writes this markup makes its own click handler check `aria-disabled` and return early, calling
 `preventDefault()` so a submit button does not submit. The sheet draws a `disabled` button, and one
 inside a disabled fieldset, the same as an off one, and an accent button that is off keeps its class
-and is drawn as any off button is. A page says why a button is off in text beside it. A form's
-submit button is better left on while the form is incomplete, so a press shows the errors rather
-than doing nothing.
+and is drawn as any off button is. A page says why a button is off in text beside it, such as a
+`.dk-field-hint` paragraph the button's `aria-describedby` names, a class that works beside any
+control. A form's submit button is better left on while the form is incomplete, so a press shows the
+errors rather than doing nothing.
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
@@ -319,14 +323,15 @@ error, best after a submit is tried rather than while someone is typing.
 A control is as tall as a button, at both widths, and its text is never under 16px, so a phone does
 not zoom the page when the field is tapped. It sits on the page's own ground, so it reads as a well
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
-invalid control's edge in the danger color too, and in forced colors, where its color is gone, a
-heavier edge in the color the system marks things with. A disabled control is drawn on the surface
-ground in the muted text. The select is a native `<select>`, its caret drawn as a background, and in
-forced colors the browser's own arrow comes back. A select that shows its options as a list, with
-`multiple` or a `size`, is left as the browser draws it, with no caret. A field a visitor cannot
-change uses `disabled`, unlike a button, which stays in the tab order when it is off: a field's hint
-says why it is closed, and a screen reader reads that hint wherever the field is announced, while a
-button's reason sits beside it in text the keyboard reaches by reaching the button.
+invalid control's edge in the danger color too. In forced colors, where that color is gone, an
+invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
+error comes and goes. A disabled control is drawn on the surface ground in the muted text. The
+select is a native `<select>`, its caret drawn as a background, and in forced colors the browser's
+own arrow comes back. A select that shows its options as a list, with `multiple` or a `size`, is
+left as the browser draws it, with no caret. A field a visitor cannot change uses `disabled`, unlike
+a button, which stays in the tab order when it is off. The field's hint says why it cannot be
+changed, and a screen reader reads that hint wherever it announces the field. A button's reason sits
+beside it in text its `aria-describedby` names, read when the keyboard reaches the button.
 
 ### Callouts
 
@@ -591,9 +596,9 @@ A table is in the small text, with each row ruled in the line color. Its column 
 muted text at medium weight, and a row's header is at medium weight too. The outer cells keep no
 padding on their outer side, so the table's text lines up with the prose around it. Figures sit to
 the right and never wrap, while text in a cell wraps and keeps its first line level with the rest of
-its row. Code in a cell keeps its name whole, hyphens and all, so the frame scrolls rather than the
-name breaking. A header gives its unit in words a screen reader says well, "Slowest 1%, ms" rather
-than "p99 ms".
+its row. Code in a cell stays on one line, hyphens and spaces alike, so a token's name never breaks
+after `--dk-`, and a long expression scrolls the frame as a wide table does. A header gives its unit
+in words a screen reader says well, "Slowest 1%, ms" rather than "p99 ms".
 
 ### Code blocks
 
@@ -626,11 +631,11 @@ script, so a block has no copy button.
 ### Code in running text
 
 `base.css` sets code in running text on every page, not only an explainer, at `--dk-text-code`,
-0.9em, so it follows the size of the text around it, a step under it since a mono face looks
-larger at the same size. It breaks anywhere it must, with `overflow-wrap: anywhere`, since a long
-name has no spaces to break at and would push a narrow column wider. Inside a `pre` it takes the
-block's size and keeps its lines whole. It has no ground of its own, and in a link it keeps the
-link's underline.
+0.9em, so it follows the size of the text around it, a step under it since a mono face looks larger
+at the same size. It breaks anywhere it must, with `overflow-wrap: anywhere`, since a long name has
+no spaces to break at and would push a narrow column wider, except in a table cell, as Tables
+describes. Inside a `pre` it takes the block's size and keeps its lines whole. It has no ground of
+its own, and in a link it keeps the link's underline.
 
 ## Layers and palettes
 

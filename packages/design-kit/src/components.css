@@ -444,12 +444,13 @@
         }
 
         /*
-         * An invalid field loses its red edge to the system's colors, so its edge is heavier and in
-         * the color the system marks things with, told apart from a hint by more than its weight.
+         * An invalid field loses its red edge to the system's colors, so it gains a dashed line
+         * around its edge in the text color, which keeps its contrast in every theme and moves
+         * nothing as the error comes and goes. Focus draws the ring in its place.
          */
         :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
-            border-width: 2px;
-            border-color: Mark;
+            outline: var(--dk-ring-width) dashed CanvasText;
+            outline-offset: 1px;
         }
     }
 
@@ -655,7 +656,6 @@
 
     /* Code in a cell keeps its name whole, so the frame scrolls rather than the name breaking. */
     :where(.dk-table code) {
-        overflow-wrap: normal;
         white-space: nowrap;
     }
 

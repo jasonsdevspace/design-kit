@@ -128,7 +128,11 @@
         cursor: pointer;
     }
 
-    :where(input:disabled, label:has(> input:disabled)) {
+    :where(
+        input[type='checkbox']:disabled,
+        input[type='radio']:disabled,
+        label:has(> input[type='checkbox']:disabled, > input[type='radio']:disabled)
+    ) {
         cursor: default;
     }
 
