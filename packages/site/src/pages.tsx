@@ -76,13 +76,14 @@ const CodeBlock = ({
  * The kit's footer, and after it the version of the kit the page is drawn from and the commit it
  * was built at.
  */
-const SiteFooter = ({ build, current }: { readonly build: Build; readonly current?: 'about' }) => (
-    <DemoFooter
-        name="The design kit"
-        about={ABOUT}
-        source={SOURCE}
-        {...(current === undefined ? {} : { current })}
-    >
+const SiteFooter = ({
+    build,
+    current,
+}: {
+    readonly build: Build;
+    readonly current?: 'about' | undefined;
+}) => (
+    <DemoFooter name="The design kit" about={ABOUT} source={SOURCE} current={current}>
         This page uses version {build.version} of the kit, as published on npm, and was built at
         commit{' '}
         <a href={`${SOURCE}/commit/${build.commit}`}>
