@@ -528,7 +528,14 @@ test.describe('the theme switch', () => {
                     await page.setViewportSize({ width, height: 900 });
                     await textSize(page, scale);
                     await page.goto('/design-kit/');
-                    if (javaScriptEnabled) await expect(choice(page, 'System')).toBeVisible();
+                    if (javaScriptEnabled) {
+                        await expect(choice(page, 'System')).toBeVisible();
+                        // The switch's words fit the width the room kept for it, in this font.
+                        const spills = await page
+                            .locator('.site-theme')
+                            .evaluate((group) => group.scrollWidth > group.clientWidth);
+                        expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
+                    }
                     const top = await page
                         .locator('.site-nav')
                         .evaluate((nav) => nav.getBoundingClientRect().top);

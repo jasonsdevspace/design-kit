@@ -62,8 +62,10 @@ another, which the browser tests and the Lighthouse audit set to the local previ
 - A page whose own script fails to load or run still draws the theme the visitor saved, or the
   system's, from the theme script, and shows the empty room the strip keeps rather than a switch
   that does nothing. With scripts off, the page draws the system's theme, as before.
-- The room holds the switch's height, and the switch fits beside the strip's links wherever the
-  strip keeps them on one row, so nothing below the strip moves when it comes.
+- The room holds the switch's height, and where the strip keeps its links and the switch on one row,
+  the room and the switch are one width, wide enough for the switch's words in any font. A strip too
+  narrow for both wraps before the switch comes as it does after, so nothing below the strip moves
+  when it comes.
 - The script's values are the portfolio's, System and the kit's two themes, so `system` is saved as
   the portfolio saves it, and the theme script reads it as nothing saved.
 - The kit still runs no script of its own in a browser but the theme script. The switch is the
