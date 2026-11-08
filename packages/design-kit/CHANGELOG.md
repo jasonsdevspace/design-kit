@@ -9,8 +9,9 @@ entry below as its notes.
 
 ## 0.1.0-next.5
 
-The strip's first link is the author's name and leads to the portfolio, and a demo can name its
-switches' width so the strip never moves when they arrive.
+The strip's first link is the author's name and leads to the portfolio. A demo can name its
+switches' width, so the strip wraps the same before they arrive as after, and on a wide screen the
+switches keep to the strip's right edge.
 
 - **Page chrome.** The strip's first link reads "Jason Poteet" and leads to the portfolio's home
   page, `PORTFOLIO_URL`, where it read "More work by Jason Poteet" and led to the portfolio's list
@@ -18,15 +19,18 @@ switches' width so the strip never moves when they arrive.
   shares "more work" with the footer's link to the GitHub profile. A page that writes the strip by
   hand changes the link's words and where it leads itself. `PORTFOLIO_WORK_URL` is still exported,
   for a page that links to the list of work.
-- **Page chrome.** A new token, `--dk-strip-tools`, `auto` unless a demo names one, holds the width
-  of a demo's switches in the strip, in the strip's own text size. A demo whose switches arrive
-  after the page sets it on its root, at least as wide as they are, and on a wide screen the room
-  the strip keeps for them and the switches that fill it take that width, so a strip too narrow for
-  the links and the switches wraps before they come as it does after. On a phone the switches keep
-  a row of their own at its full width.
+- **Page chrome.** A new token, `--dk-strip-tools`, holds the width of a demo's switches in the
+  strip, in the strip's own text size, such as `:root { --dk-strip-tools: 20em; }`. It is `auto`, so
+  nothing changes for a demo that leaves it alone. A demo whose switches arrive after the page sets
+  it at least as wide as they are, and on a wide screen the room the strip keeps for them and the
+  section that holds them both take that width, the switches packed at its right end, so the strip
+  wraps before they arrive just as it does after. On a phone the switches keep a row of their own at
+  its full width.
 - **Page chrome.** On a wide screen the switches keep to the strip's right edge, on the links' row
-  or on one of their own where they wrap below it, and where they wrap within their section, its
-  last row sits at the right too.
+  or on a row of their own where they wrap below it, where before a wrapped section started at the
+  left. Where the switches wrap within their section, its last row sits at the right too. On a phone
+  they still start at the left. A page that writes the strip by hand gets this from the sheet, with
+  no change to its markup.
 
 ## 0.1.0-next.4
 
