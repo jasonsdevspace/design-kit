@@ -33,6 +33,7 @@ costs, and the test behind it.
 11. [The site is built with Vite and React's static render, with no script of React's](0011-the-site-is-built-with-vite-and-a-static-render.md):
     static pages drawn from the published kit's components under the policy a demo sets, and why
     Storybook, docs frameworks and pages written by hand were turned down.
-12. [The site has a script of its own, a file from its origin, while the kit ships none](0012-the-site-has-a-script-of-its-own.md):
+12. [The site has a script of its own, from its own path, beside the kit's theme script](0012-the-site-has-a-script-of-its-own.md):
     the theme switch, saved under the portfolio's key with the portfolio's values, in the room the
-    strip keeps for it, and why React in the browser and a second inline script were turned down.
+    strip keeps for it, with scripts allowed from the site's own path alone, and why React in the
+    browser and a second inline script were turned down.

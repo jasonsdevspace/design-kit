@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
@@ -22,6 +23,7 @@ import { ROUTES } from '../src/routes.ts';
 
 const SITE = fileURLToPath(new URL('..', import.meta.url));
 const PORT = 4181;
+const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /** The lowest performance score a page may have. */
 const PERFORMANCE = 0.9;
@@ -72,8 +74,13 @@ const findingsOf = (report: Report): readonly string[] =>
     });
 
 const main = async () => {
+    // Built for the origin the audit serves it from, so the policy lets the site's script load.
+    execFileSync('npm', ['run', 'site'], {
+        stdio: 'inherit',
+        env: { ...process.env, SITE_ORIGIN: ORIGIN },
+    });
     const server = await preview({ root: SITE, preview: { port: PORT, strictPort: true } });
-    const origin = `http://localhost:${String(PORT)}`;
+    const origin = ORIGIN;
     const chrome = await launch({
         chromePath: chromium.executablePath(),
         chromeFlags: ['--headless=new', '--no-sandbox'],

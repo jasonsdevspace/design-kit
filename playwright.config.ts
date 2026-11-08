@@ -7,6 +7,10 @@ import { defineConfig, devices } from '@playwright/test';
  * it into the browser. The site's tests open the built site, which the config builds and serves
  * under the path GitHub Pages gives it.
  */
+/** The preview's port, and the origin the site's policy is written for, so its scripts load. */
+const PORT = 4180;
+const ORIGIN = `http://localhost:${String(PORT)}`;
+
 export default defineConfig({
     testDir: 'packages',
     testMatch: '*/e2e/*.spec.{ts,tsx}',
@@ -14,10 +18,12 @@ export default defineConfig({
     forbidOnly: Boolean(process.env['CI']),
     retries: process.env['CI'] ? 1 : 0,
     reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'list',
-    use: { trace: 'retain-on-failure', baseURL: 'http://localhost:4180' },
+    use: { trace: 'retain-on-failure', baseURL: ORIGIN },
     webServer: {
-        command: 'npm run site && npm run preview --workspace @jasonsdevspace/design-kit-site',
-        url: 'http://localhost:4180/design-kit/',
+        command: `npm run site && npm exec --workspace @jasonsdevspace/design-kit-site -- vite preview --port ${String(PORT)} --strictPort`,
+        // The site's policy names the origin its scripts come from, here the preview's.
+        env: { SITE_ORIGIN: ORIGIN },
+        url: `${ORIGIN}/design-kit/`,
         // Built fresh for every run, so a preview left running never serves an older build.
         reuseExistingServer: false,
         timeout: 120_000,

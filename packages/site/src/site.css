@@ -197,23 +197,17 @@
 }
 
 /*
- * The theme switch the site's script puts in the strip: its name and its three choices in one row,
- * in the room the strip kept for it. On a phone each choice is a thumb's size, as the room is.
+ * The theme switch the site's script puts in the strip's section: its name and its three choices
+ * in one row. On a phone each choice is a thumb's size, as the room the strip kept is.
  */
 .site-theme {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0 var(--dk-space-4);
-    margin: 0;
-    padding: 0;
-    border: 0;
 }
 
-/* A floated legend takes its place in the row as the choices do. */
-.site-theme legend {
-    float: left;
-    padding: 0;
+.site-theme-name {
     color: var(--dk-muted);
 }
 
@@ -231,5 +225,22 @@
 @media (max-width: 48rem) {
     .site-theme label {
         min-height: var(--dk-target);
+    }
+}
+
+/*
+ * Where the strip keeps its links and the switch on one row, the room the page's strip keeps before
+ * the script runs and the switch that takes it are one width, in the strip's own text size, wide
+ * enough for the switch's words in any font. So a strip too narrow for both wraps before the switch
+ * comes, as it does after, and a strip wide enough for both never wraps.
+ */
+@media (min-width: 48.0625rem) {
+    body > .dk-strip .dk-strip-room,
+    .site-theme {
+        inline-size: 21em;
+    }
+
+    .site-theme {
+        flex-wrap: nowrap;
     }
 }
