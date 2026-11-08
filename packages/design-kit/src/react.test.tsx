@@ -549,6 +549,9 @@ describe('a page that hands on what it may not have been given', () => {
                 </Button>
             )
         ).toBe(renderToStaticMarkup(<Button>Filters</Button>));
+        expect(renderToStaticMarkup(<Button accent={maybe<true>()}>Filters</Button>)).toBe(
+            renderToStaticMarkup(<Button>Filters</Button>)
+        );
         expect(renderToStaticMarkup(<InputField id={maybe<string>()} label="Name" />)).toBe(
             renderToStaticMarkup(<InputField label="Name" />)
         );
@@ -572,7 +575,7 @@ describe('the callout, beside the other controls', () => {
             renderToStaticMarkup(
                 <Callout id="problems" className="summary" tone="danger" title="Two problems" />
             )
-        ).toMatch(/^<div class="dk-callout dk-callout-danger summary" id="problems">/);
+        ).toMatch(/^<div id="problems" class="dk-callout dk-callout-danger summary">/);
     });
 
     it('hands a ref to the callout it draws, for a page that moves focus to it', () => {
@@ -586,6 +589,22 @@ describe('the callout, beside the other controls', () => {
         expect(renderToStaticMarkup(<Summary />)).toContain('dk-callout');
     });
 
+    it('takes no props of its own that would break it, and drops a role or style plain JavaScript passes', () => {
+        // @ts-expect-error A callout draws its own children, so it takes no inner HTML.
+        expect(Callout({ dangerouslySetInnerHTML: { __html: 'x' } })).toBeTruthy();
+        const loose = { role: 'alert', style: { color: 'red' } } as unknown as object;
+        expect(renderToStaticMarkup(<Callout {...loose} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
+    it('draws news for a tone plain JavaScript can pass that the kit has no rule for', () => {
+        const tone = 'warning' as unknown as 'info';
+        expect(renderToStaticMarkup(<Callout tone={tone} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
     it('draws a paragraph for a heading level plain JavaScript can pass that names no heading', () => {
         const level = 'constructor' as unknown as 2;
         expect(renderToStaticMarkup(<Callout headingLevel={level} title="Saved" />)).toContain(
@@ -595,6 +614,28 @@ describe('the callout, beside the other controls', () => {
 });
 
 describe('an empty slot', () => {
+    it('is nothing when it holds only a list or a fragment of nothing', () => {
+        const none = false as boolean;
+        expect(
+            renderToStaticMarkup(
+                <PortfolioStrip about="./about/" source={SOURCE} tools={<>{none && 'Tour'}</>} />
+            )
+        ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
+        expect(
+            renderToStaticMarkup(
+                <DemoFooter name="Example" about="./about/" source={SOURCE}>
+                    {none && 'One.'}
+                    {none && 'Two.'}
+                </DemoFooter>
+            )
+        ).toBe(
+            renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
+        );
+        expect(renderToStaticMarkup(<Callout title={[none && 'Saved']} />)).toBe(
+            renderToStaticMarkup(<Callout />)
+        );
+    });
+
     it('is nothing in the strip and the footer, as it is in a field and a callout', () => {
         expect(
             renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} tools="" />)

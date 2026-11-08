@@ -71,10 +71,11 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
 - `@jasonsdevspace/design-kit/react` exports `SkipLink`, `PortfolioStrip` and `DemoFooter`, which
   draw the chrome's markup, and `Button`, `InputField`, `SelectField` and `Callout`, which draw the
   markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
-  `SelectFieldProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
-  `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub profile the chrome links to.
-  It has no component for the explainer or the pieces in it, which a page writes by hand. It takes
-  React `^19.3.0` as an optional peer, which a page that writes the markup itself never needs.
+  `SelectFieldProps`, `CalloutProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`,
+  `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub
+  profile the chrome links to. It has no component for the explainer or the pieces in it, which a
+  page writes by hand. It takes React `^19.3.0` as an optional peer, which a page that writes the
+  markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -117,7 +118,7 @@ at the top of a page, when a keyboard reaches it.
 
 The strip holds a navigation landmark named Portfolio, with links in this order: the author's other
 work, which names who made the demo, how it works and the source. It reads "More work by Jason
-Poteet" on a demo and on the kit's own site alike. The strip on the demo's explainer marks the
+Poteet", which fits a demo and the kit's own site alike. The strip on the demo's explainer marks the
 explainer's link with `aria-current="page"`. A demo with switches of its own puts them in a section
 after the links, named for them, and a demo with none leaves the section out.
 

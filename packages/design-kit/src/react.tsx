@@ -1,4 +1,11 @@
-import { type ComponentPropsWithRef, type ReactNode, useId } from 'react';
+import {
+    Children,
+    type ComponentPropsWithRef,
+    Fragment,
+    isValidElement,
+    type ReactNode,
+    useId,
+} from 'react';
 
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says
@@ -10,11 +17,17 @@ import { type ComponentPropsWithRef, type ReactNode, useId } from 'react';
  */
 
 /**
- * Whether a slot holds something to draw: a demo's `cond && <X />` leaves false or null, and an
- * empty string draws nothing either. Every slot of every component is read the same way.
+ * Whether a slot holds something to draw: a demo's `cond && <X />` leaves false or null, an empty
+ * string draws nothing either, and nor does a list or a fragment of only those. Every slot a
+ * component leaves out when it is empty is read the same way. A number draws, 0 included, as React
+ * draws it, so a page that writes `count && <X />` writes `count > 0 && <X />` instead.
  */
 const filled = (node: ReactNode): boolean =>
-    node !== undefined && node !== null && node !== false && node !== '';
+    Children.toArray(node).some((child) =>
+        isValidElement<{ readonly children?: ReactNode }>(child) && child.type === Fragment
+            ? filled(child.props.children)
+            : child !== ''
+    );
 
 /** Where the portfolio is, and the section of it that lists the work. */
 export const PORTFOLIO_URL = 'https://jasonsdevspace.com/';
@@ -165,9 +178,9 @@ export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
     readonly off?: boolean | undefined;
 } & (
-        | { readonly accent: true; readonly pressed?: never }
+        | { readonly accent: true; readonly pressed?: undefined }
         | {
-              readonly accent?: false;
+              readonly accent?: false | undefined;
               /** Whether the toggle is on. False still marks it a toggle, undefined an action. */
               readonly pressed?: boolean | undefined;
           }
@@ -341,13 +354,22 @@ const TONE_WORDS: Readonly<Record<CalloutTone, string>> = {
 const HEADINGS = { 2: 'h2', 3: 'h3', 4: 'h4', 5: 'h5', 6: 'h6' } as const;
 
 /**
+ * A tone or a heading level the types refuse, as a page in plain JavaScript can pass, draws news
+ * and a paragraph, rather than a class the sheet has no rule for or an element React refuses.
+ */
+const toneOf = (tone: CalloutTone): CalloutTone =>
+    Object.hasOwn(TONE_WORDS, tone) ? tone : 'info';
+const titleOf = (level: CalloutProps['headingLevel']) =>
+    level !== undefined && Object.hasOwn(HEADINGS, level) ? HEADINGS[level] : 'p';
+
+/**
  * A callout's own props, beside a `<div>`'s own, its `id`, a page's class, drawn after the kit's,
  * and its `ref` among them, which holds the callout drawn for a page that moves focus to it, such
  * as a summary of what went wrong in a form. Its `title` is the callout's, not the attribute.
  */
 export type CalloutProps = Omit<
     ComponentPropsWithRef<'div'>,
-    'style' | 'role' | 'title' | 'children'
+    'style' | 'role' | 'title' | 'children' | 'dangerouslySetInnerHTML'
 > & {
     readonly tone?: CalloutTone | undefined;
     /** What the callout is about, drawn before its message. */
@@ -376,24 +398,26 @@ export const Callout = ({
     title,
     headingLevel,
     live,
-    prefix = TONE_WORDS[tone],
+    prefix,
     actions,
     className,
     children,
     ...native
 }: CalloutProps) => {
-    // A level the types refuse, as a page in plain JavaScript can pass, draws a paragraph.
-    const Title =
-        headingLevel !== undefined && Object.hasOwn(HEADINGS, headingLevel)
-            ? HEADINGS[headingLevel]
-            : 'p';
+    const kind = toneOf(tone);
+    const spoken = prefix ?? TONE_WORDS[kind];
+    const Title = titleOf(headingLevel);
     const titled = filled(title);
     const said = filled(children);
-    const word = prefix === '' ? null : <span className="dk-visually-hidden">{prefix}</span>;
+    const word = spoken === '' ? null : <span className="dk-visually-hidden">{spoken}</span>;
     return (
+        // The page's own props first and the kit's after, as a button's are, so a role or a style
+        // plain JavaScript passes never lands on the callout.
         <div
-            className={spaced('dk-callout', tone !== 'info' && `dk-callout-${tone}`, className)}
             {...native}
+            role={undefined}
+            style={undefined}
+            className={spaced('dk-callout', kind !== 'info' && `dk-callout-${kind}`, className)}
         >
             {titled || said || live !== undefined ? (
                 <div className="dk-callout-body" role={live}>

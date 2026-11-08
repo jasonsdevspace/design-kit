@@ -64,3 +64,7 @@ export const summary = Callout({
     className: 'summary',
     title: 'Two problems',
 });
+
+// A wrapper hands on a button's accent as it got it, and it compiles.
+const lead: true | undefined = undefined;
+export const handedAccent = Button({ accent: lead, children: 'Save rule' });
