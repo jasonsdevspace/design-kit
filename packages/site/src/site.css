@@ -81,8 +81,8 @@ body > .dk-strip .dk-strip-tools {
 
 /*
  * The site's header under the strip, lined up with the column: its mark and name, then its own
- * pages as tabs in one row. On a wide screen the two share the row, and on a phone the tabs go
- * under the name.
+ * pages as tabs. On a wide screen the two share the row, and on a phone the tabs go under the name
+ * and wrap onto a second row.
  */
 .site-header {
     display: flex;
@@ -117,10 +117,6 @@ body > .dk-strip .dk-strip-tools {
     line-height: 1;
 }
 
-/*
- * The tabs keep one row at every width, and scroll sideways inside it when a phone is too narrow
- * for them all, so the page never does.
- */
 .site-tabs {
     display: flex;
     /*
@@ -504,10 +500,9 @@ body > .dk-strip .dk-strip-tools {
 /*
  * A page's list of sections, after its opening inside the main content. On a narrow screen it is a
  * short list of contents in the page's flow, set off by a line on its left. On a screen wide enough
- * for both, the main content becomes two columns: the list on the left, held in sight as the page
- * scrolls, and everything else on the right, so the column starts in the same place on every page
- * with a list. The list's text lines up with the column edge, and the hover ground of each link
- * reaches into the gutter.
+ * for both, it sits in a gutter on the content's left, so the column starts in the same place on
+ * every page with a list. The list's text lines up with the column edge, and the hover ground of
+ * each link reaches into the gutter.
  */
 .site-toc {
     margin-top: var(--dk-space-5);
@@ -517,32 +512,31 @@ body > .dk-strip .dk-strip-tools {
 }
 
 @media (min-width: 64rem) {
+    /* The content keeps its own column and its own flow, with the gutter on its left for the list. */
     .site-main-listed {
-        display: grid;
-        grid-template-columns: 12rem minmax(0, 1fr);
-        column-gap: var(--dk-space-6);
-    }
-
-    .site-main-listed > * {
-        grid-column: 2;
+        position: relative;
+        padding-inline-start: calc(var(--dk-space-4) + 12rem + var(--dk-space-6));
     }
 
     /*
-     * The list spans every row the content takes, so it can stay in sight down the whole page. It
-     * takes no height in those rows, so it never pushes the content apart, and draws past its own
-     * box.
+     * The list runs down the whole gutter, from the top of the content to its end, and its words
+     * stay in sight inside it as the page scrolls, stopping at the end of the content rather than
+     * over the footer.
      */
     .site-main-listed > .site-toc {
-        grid-column: 1;
-        grid-row: 1 / span 999;
-        position: sticky;
-        top: 0;
-        align-self: start;
-        height: 0;
-        overflow: visible;
-        margin: 0 0 0 calc(-1 * var(--dk-space-3));
-        padding-inline-start: 0;
+        position: absolute;
+        top: var(--dk-space-6);
+        bottom: 0;
+        left: calc(var(--dk-space-4) - var(--dk-space-3));
+        width: 12rem;
+        margin: 0;
+        padding: 0;
         border: 0;
+    }
+
+    .site-main-listed > .site-toc > .site-toc-words {
+        position: sticky;
+        top: var(--dk-space-4);
     }
 }
 
@@ -1250,6 +1244,7 @@ body > .dk-strip .dk-strip-tools {
 
     .site-brand,
     .site-tabs a,
+    .site-toc a,
     .site-code-tab {
         min-height: var(--dk-target);
     }

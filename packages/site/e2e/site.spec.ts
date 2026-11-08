@@ -1494,8 +1494,21 @@ test.describe('the state cards', () => {
                 const list = page
                     .getByRole('main')
                     .getByRole('navigation', { name: 'On this page' });
-                // The side list takes no height of its own, so its links are what a visitor sees.
-                await expect(list.getByRole('link').first(), at).toBeVisible();
+                await expect(list, at).toBeVisible();
+                // A thumb's size on a phone, and the strip's row on a wide screen.
+                const short = await list
+                    .getByRole('link')
+                    .evaluateAll(
+                        (links, least) =>
+                            links.filter((link) => link.getBoundingClientRect().height < least)
+                                .length,
+                        width <= 768 ? 44 : 24
+                    );
+                expect(short, at).toBe(0);
+                // The whole opening comes before the list, and the sections after it.
+                expect(await list.evaluate((nav) => nav.nextElementSibling?.tagName), at).toBe(
+                    'SECTION'
+                );
                 const targets = await list
                     .getByRole('link')
                     .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
@@ -1564,12 +1577,51 @@ test.describe('the state cards', () => {
                     )
                 );
                 starts.push(Math.round(heading?.x ?? -1));
-                // The side list takes no room between the heading and the lead.
                 gaps.push(Math.round((lead?.y ?? 0) - (heading?.y ?? 0) - (heading?.height ?? 0)));
             }
             expect(new Set(starts).size, String(width)).toBe(1);
             expect(new Set(gaps).size, String(width)).toBe(1);
             expect(gaps[0], String(width)).toBeLessThan(64);
+        }
+    });
+
+    test('spaces each opening the same on a wide screen as on a narrow one', async ({ page }) => {
+        for (const path of LISTED) {
+            const spaced: number[] = [];
+            for (const width of [1280, 820]) {
+                await page.setViewportSize({ width, height: 900 });
+                await page.goto(path);
+                spaced.push(
+                    await page.evaluate(() => {
+                        const heading = document
+                            .querySelector('main > h1')
+                            ?.getBoundingClientRect();
+                        const lead = document
+                            .querySelector('main > .site-lead')
+                            ?.getBoundingClientRect();
+                        return Math.round((lead?.top ?? 0) - (heading?.bottom ?? 0));
+                    })
+                );
+            }
+            expect(spaced[0], path).toBe(spaced[1]);
+        }
+    });
+
+    test('keeps the side list inside the content however short the window', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 300 });
+        for (const path of LISTED) {
+            await page.goto(path);
+            await page.evaluate(() => {
+                window.scrollTo(0, document.documentElement.scrollHeight);
+            });
+            const [last, main] = await page.evaluate(() => [
+                Math.round(
+                    document.querySelector('.site-toc li:last-child')?.getBoundingClientRect()
+                        .bottom ?? Infinity
+                ),
+                Math.round(document.querySelector('main')?.getBoundingClientRect().bottom ?? 0),
+            ]);
+            expect(last, path).toBeLessThanOrEqual(main);
         }
     });
 

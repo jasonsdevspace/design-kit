@@ -82,7 +82,7 @@ The paths are in `packages/site`.
 - `e2e/site.spec.ts` opens every page in the site's routes, from the preview the Playwright config
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
-  main, one footer and one portfolio navigation outside the inert copies, at most one banner, no id
+  main, one footer and one portfolio navigation outside the inert copies, one banner, no id
   twice, and nothing the page's policy refuses, with the theme script setting the theme only because
   its hash lets it run. It also finds the keyboard never stopping inside a copy drawn in the other
   theme, each such copy inert and drawn in a ground and text that differ from the page's, and each
