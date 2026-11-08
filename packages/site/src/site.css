@@ -306,6 +306,38 @@ body > .dk-strip {
     margin: 0;
 }
 
+/*
+ * The tests that hold a group, closed under its section as a state's code is, in the small text:
+ * each file's name over a list of its tests' names, which hold to the measure as prose does.
+ */
+.site-held {
+    margin-top: var(--dk-space-5);
+    font-size: var(--dk-text-small);
+}
+
+.site-held > summary {
+    padding-block: var(--dk-space-1);
+    color: var(--dk-muted);
+}
+
+.site-held > p,
+.site-held-tests {
+    max-width: var(--dk-measure);
+}
+
+.site-held-file {
+    margin-block: var(--dk-space-4) var(--dk-space-2);
+}
+
+.site-held-tests {
+    margin: 0;
+    padding-inline-start: var(--dk-space-5);
+}
+
+.site-held-tests > li + li {
+    margin-top: var(--dk-space-1);
+}
+
 /* A copy button keeps one width whatever it says, the width of its longest word, Selected. */
 .site-copy-button {
     min-inline-size: calc(9ch + 2 * var(--dk-space-3) + 2px);
@@ -330,7 +362,8 @@ body > .dk-strip {
         min-height: var(--dk-target);
     }
 
-    .site-code > summary {
+    .site-code > summary,
+    .site-held > summary {
         padding-block: var(--dk-space-3);
     }
 }

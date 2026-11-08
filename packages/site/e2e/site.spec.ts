@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { ABOUT, ROUTES } from '../src/routes.js';
+import { HELD } from '../../design-kit/examples/held.js';
+import { ABOUT, ROUTES, SOURCE } from '../src/routes.js';
 
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the path
@@ -336,6 +337,69 @@ test.describe('the explainer pieces page', () => {
         ).toBeVisible();
         await expect(live.locator('.dk-explainer')).toHaveCount(0);
         await expect(page.locator('.site-copy[inert] .dk-explainer')).toHaveCount(2);
+    });
+});
+
+test.describe('what the tests hold', () => {
+    /** The pages that show the kit's pieces, each section of which lists the tests that hold it. */
+    const SHOWN = ['tokens', 'controls', 'page-chrome', 'explainer-pieces'].map(
+        (name) => `/design-kit/${name}/`
+    );
+
+    test('lists under each section the tests that hold it, each group on one page alone', async ({
+        page,
+    }) => {
+        const shown: string[] = [];
+        for (const path of SHOWN) {
+            await page.goto(path);
+            const sections = page.locator('main > section:has(> h2)');
+            expect(await sections.count(), path).toBeGreaterThan(0);
+            for (const section of await sections.all()) {
+                const group = (await section.locator('> h2').textContent()) ?? '';
+                shown.push(group);
+                const panel = section.locator('> details.site-held');
+                await expect(panel, `${path} ${group}`).toHaveCount(1);
+                const held = HELD[group as keyof typeof HELD];
+                expect(held, `${path} ${group} is a group the tests are listed for`).toBeDefined();
+                await expect(panel.locator('li')).toHaveText(held.flatMap(({ titles }) => titles));
+            }
+        }
+        expect(shown.toSorted()).toEqual(Object.keys(HELD).toSorted());
+    });
+
+    test('names each file the tests are in, and links it at the commit the page was built at', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const commit = await page
+            .getByRole('contentinfo')
+            .getByRole('link', { name: /^[0-9a-f]{7}$/ })
+            .getAttribute('href');
+        const sha = commit?.split('/commit/')[1] ?? '';
+        expect(sha).toMatch(/^[0-9a-f]{40}$/);
+        const panel = page.locator('section:has(> h2#buttons) > details.site-held');
+        await panel.locator('> summary').click();
+        await expect(panel.getByRole('link')).toHaveText(HELD.Buttons.map(({ file }) => file));
+        for (const [index, { file }] of HELD.Buttons.entries()) {
+            await expect(panel.getByRole('link').nth(index)).toHaveAttribute(
+                'href',
+                `${SOURCE}/blob/${sha}/packages/design-kit/${file}`
+            );
+        }
+    });
+
+    test('names the panel by its group for a screen reader, and keeps it closed until opened', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const panel = page.locator('section:has(> h2#buttons) > details.site-held');
+        await expect(panel.locator('> summary')).toHaveAccessibleName(
+            'What the tests hold, Buttons'
+        );
+        await expect(page.locator('details.site-held[open]')).toHaveCount(0);
+        await expect(panel.locator('li').first()).toBeHidden();
+        await panel.locator('> summary').click();
+        await expect(panel.locator('li').first()).toBeVisible();
     });
 });
 

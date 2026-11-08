@@ -30,11 +30,11 @@ const sources = [
  * The kit by its own name, or a path into the workspace's copy of it, other than the modules of the
  * examples that import nothing of the kit's: the states and the pieces, which take the components
  * they draw, the palette, which takes the tokens sheet it measures, the formatter, which lays out
- * the markup the site's components draw, and the reader of the React each state shows, which builds
- * it with the components it is given.
+ * the markup the site's components draw, the reader of the React each state shows, which builds it
+ * with the components it is given, and the list of the tests that hold each group.
  */
 const OTHER_WAY =
-    /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/(states|pieces|palette|format|elements)\.js')(?=['"/])|design-kit\/(src|dist)\//;
+    /@jasonsdevspace\/design-kit\/|\.\.\/design-kit(?!\/examples\/(states|pieces|palette|format|elements|held)\.js')(?=['"/])|design-kit\/(src|dist)\//;
 
 describe('the site', () => {
     it('pins the published kit to one exact version', () => {

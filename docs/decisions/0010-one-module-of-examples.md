@@ -64,6 +64,11 @@ lists its examples, and every other control's markup breaks a line only where a 
 and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the
 sources with it, and the site measures and shows the version it pins.
 
+`examples/held.ts` holds, for each group the site shows, the tests that hold it, by their names as
+the runner reports them and the file each is in, which the site lists under the group. Its test
+runs the kit's unit tests and lists its browser tests, without a browser, and fails on a name no
+test is reported by, so a test renamed or removed is renamed or removed in the list too.
+
 ## Consequences
 
 - A change to a piece's markup is made once, and `npm run examples` carries it to the README. Until
