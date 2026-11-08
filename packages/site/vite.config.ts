@@ -5,11 +5,15 @@ import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import kit from 'design-kit-release/package.json' with { type: 'json' };
+import * as components from 'design-kit-release/react';
 import { themeScriptPlugin } from 'design-kit-release/vite';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { defineConfig, type Plugin } from 'vite';
 
-import { type Build, PAGES } from './src/pages.js';
+import { laidOut } from '../design-kit/examples/format.js';
+import { CHROME, EXPLAINER } from '../design-kit/examples/pieces.js';
+import { CONTROLS } from '../design-kit/examples/states.js';
+import { type Build, codeKey, PAGES } from './src/pages.js';
 import { policyFor, SITE_ORIGIN } from './src/policy.js';
 import { BASE, ROUTES } from './src/routes.js';
 
@@ -22,19 +26,49 @@ const DESCRIPTION = '<!-- description -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /**
- * The version of the kit the site installed from npm, its tokens sheet, and the commit the site is
- * built at, read once.
+ * Each state's markup as the site draws it, by the pinned version's components where one draws it,
+ * laid out as the repository lays out HTML: each element on a line of its own where its control is
+ * laid out, and otherwise broken only where a space already is. Two states with one key would show
+ * one state's markup under the other, so the build refuses them, and one that cannot be laid out
+ * fails the build by name.
  */
-const BUILD: Build = {
-    version: kit.version,
-    tokens: readFileSync(
-        createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
-        'utf8'
-    ),
-    commit:
-        process.env['GITHUB_SHA'] ??
-        execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+const markupOf = async (): Promise<Build['markup']> => {
+    const entries = await Promise.all(
+        [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) =>
+            control.states.map(async (state) => {
+                const key = codeKey(control, state);
+                try {
+                    const markup = renderToStaticMarkup(state.draw(components, (name) => name));
+                    return [key, await laidOut(markup, control.laidOut === true)] as const;
+                } catch (error) {
+                    throw new Error(`the markup of ${key} could not be laid out`, { cause: error });
+                }
+            })
+        )
+    );
+    const keys = entries.map(([key]) => key);
+    const twice = keys.find((key, index) => keys.indexOf(key) !== index);
+    if (twice !== undefined) throw new Error(`two states are both ${twice}`);
+    return Object.fromEntries(entries);
 };
+
+/**
+ * The version of the kit the site installed from npm, its tokens sheet, the commit the site is
+ * built at, and each state's markup, read once, when the first page is built.
+ */
+let built: Promise<Build> | undefined;
+const build = (): Promise<Build> =>
+    (built ??= markupOf().then((markup) => ({
+        markup,
+        version: kit.version,
+        tokens: readFileSync(
+            createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
+            'utf8'
+        ),
+        commit:
+            process.env['GITHUB_SHA'] ??
+            execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    })));
 
 /**
  * The policy every page carries, for the origin the site is served from. The tests and the audit
@@ -68,7 +102,7 @@ const pagesPlugin = (): Plugin => ({
     name: 'design-kit-site-pages',
     transformIndexHtml: {
         order: 'pre',
-        handler: (html, context) => {
+        handler: async (html, context) => {
             const file = relative(SITE, context.filename).split('\\').join('/');
             const route = ROUTES.find((each) => each.file === file);
             if (route === undefined || !isPage(file)) {
@@ -80,7 +114,7 @@ const pagesPlugin = (): Plugin => ({
             ) {
                 throw new Error(`${file} needs a place for each part of its page`);
             }
-            const body = renderToStaticMarkup(PAGES[file](BUILD));
+            const body = renderToStaticMarkup(PAGES[file](await build()));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`

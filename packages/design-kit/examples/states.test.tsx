@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 
+import { format, resolveConfig } from 'prettier';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import * as kit from '../src/react.js';
+import { elementOf } from './elements.js';
 import { CHROME, EXPLAINER } from './pieces.js';
 import { CONTROLS } from './states.js';
 
@@ -27,6 +29,24 @@ describe('the states a page shows', () => {
                 ? markup.includes(` ${state.attribute}`)
                 : new RegExp(`(?<![-\\w])${state.attribute}(=""|[\\s/>])`).test(markup);
             expect(drawn, `${state.name}: ${state.attribute}`).toBe(true);
+        }
+    });
+
+    it('draw what the React shown beside them draws', () => {
+        const shown = states.filter((state) => state.react !== undefined);
+        expect(shown.length).toBeGreaterThan(0);
+        for (const state of shown) {
+            expect(renderToStaticMarkup(elementOf(state.react ?? '', kit)), state.name).toBe(
+                renderToStaticMarkup(state.draw(kit, (name) => name))
+            );
+        }
+    });
+
+    it('show their React laid out as the repository lays out code', async () => {
+        const config = (await resolveConfig(import.meta.filename)) ?? {};
+        for (const state of states.filter((each) => each.react !== undefined)) {
+            const laid = await format(`${state.react ?? ''};`, { ...config, parser: 'typescript' });
+            expect(state.react, state.name).toBe(laid.trimEnd().replace(/;$/, ''));
         }
     });
 

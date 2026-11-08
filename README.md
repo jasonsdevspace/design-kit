@@ -248,6 +248,8 @@ they document, not by a test here.
 | A field makes its ids with `useId` in a server render of the packed package                                       | `packages/design-kit/smoke/consumer.mjs`       |
 | Each block of a piece's markup in the package README is what its example draws                                    | `packages/design-kit/examples/readme.test.ts`  |
 | Each state the site shows draws the attribute printed under it                                                    | `packages/design-kit/examples/states.test.tsx` |
+| Each state's React draws the state's own markup, laid out as the repository lays out code                         | `packages/design-kit/examples/states.test.tsx` |
+| Each state's React draws what the version the site pins draws for the state                                       | `packages/site/src/code.test.ts`               |
 | Every page of the site has no axe findings in either theme, on a phone and a wide screen                          | `packages/site/e2e/site.spec.ts`               |
 | No page of the site scrolls sideways at any width or at twice the text size, or cuts off text under wider spacing | `packages/site/e2e/site.spec.ts`               |
 | The site draws under `style-src 'self'`, its scripts the theme script by its hash and its own path                | `packages/site/e2e/site.spec.ts`               |
@@ -260,6 +262,7 @@ they document, not by a test here.
 | The site's explainer marks itself the current page, and every other page's strip and footer lead to it            | `packages/site/e2e/site.spec.ts`               |
 | Every link within the site leads to one of its pages, and to the id it names, where it names one                  | `packages/site/e2e/site.spec.ts`               |
 | The theme switch shows and saves the portfolio's choice, follows another tab, and works without storage           | `packages/site/e2e/site.spec.ts`               |
+| Each live state's code shows the markup its copy draws, and copies or selects it with the status saying which     | `packages/site/e2e/site.spec.ts`               |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`            |
 
 ## Decisions
@@ -394,7 +397,8 @@ packages/
 │   │                 the buttons, the fields and the callouts), and their tests
 │   ├── examples/     the markup the README prints and the browser tests import, the states
 │   │                 of each control, the chrome and an explainer's pieces the site shows,
-│   │                 the palette's pairings and their measure, and the tests that hold them
+│   │                 with the React for each, the palette's pairings and their measure, the
+│   │                 formatter that lays out markup, and the tests that hold them
 │   ├── e2e/          the sheets, the theme script, the page chrome, the controls, the refs a
 │   │                 button and the fields take, and an explainer page as Chromium runs them
 │   └── smoke/        the packed package as a page installs it, on the oldest Node

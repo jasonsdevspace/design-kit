@@ -1,0 +1,62 @@
+import * as React from 'react';
+import ts from 'typescript';
+
+/** A value an attribute of the React shown is written with: a string, true, false or an element. */
+type Value = string | boolean | React.ReactElement;
+
+/**
+ * The React a page writes for a state, read by TypeScript's parser and built as an element with the
+ * components it is given and the DOM's own elements, without running it as code. It reads what the
+ * states write: string, boolean and element attributes, and text and elements as children. The
+ * kit's tests build it with the sources' components, and the site's with the version it pins.
+ */
+export const elementOf = (react: string, kit: object): React.ReactElement => {
+    const file = ts.createSourceFile('state.tsx', `(${react});`, ts.ScriptTarget.Latest, true);
+    const valueOf = (node: ts.Node): Value => {
+        if (ts.isParenthesizedExpression(node)) return valueOf(node.expression);
+        if (ts.isStringLiteral(node)) return node.text;
+        if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+        if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+        if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) return build(node);
+        throw new Error(`the React shown writes what this test cannot read: ${node.getText()}`);
+    };
+    const build = (node: ts.JsxElement | ts.JsxSelfClosingElement): React.ReactElement => {
+        const opening = ts.isJsxElement(node) ? node.openingElement : node;
+        const tag = opening.tagName.getText();
+        const component = (kit as Record<string, unknown>)[tag];
+        const type = /^[A-Z]/.test(tag) ? component : tag;
+        if (type === undefined) throw new Error(`the kit has no ${tag}`);
+        const props: Record<string, Value> = {};
+        for (const attribute of opening.attributes.properties) {
+            if (!ts.isJsxAttribute(attribute)) throw new Error('a spread cannot be read');
+            const { initializer } = attribute;
+            props[attribute.name.getText()] =
+                initializer === undefined
+                    ? true
+                    : ts.isJsxExpression(initializer) && initializer.expression
+                      ? valueOf(initializer.expression)
+                      : valueOf(initializer);
+        }
+        const children = ts.isJsxElement(node)
+            ? node.children.flatMap((child): Value[] => {
+                  if (ts.isJsxText(child)) {
+                      const text = child.text.replaceAll(/\s*\n\s*/g, ' ').trim();
+                      return text === '' ? [] : [text];
+                  }
+                  if (ts.isJsxExpression(child) && child.expression)
+                      return [valueOf(child.expression)];
+                  return [valueOf(child)];
+              })
+            : [];
+        return React.createElement(
+            type as React.ElementType,
+            props,
+            ...(children as React.ReactNode[])
+        );
+    };
+    const [statement] = file.statements;
+    if (statement === undefined || !ts.isExpressionStatement(statement)) {
+        throw new Error('the React shown is not one element');
+    }
+    return valueOf(statement.expression) as React.ReactElement;
+};

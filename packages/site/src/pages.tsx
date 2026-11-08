@@ -18,7 +18,59 @@ export interface Build {
     readonly version: string;
     readonly tokens: string;
     readonly commit: string;
+    /** Each state's markup as the site draws it, laid out, by `codeKey`. */
+    readonly markup: Readonly<Record<string, string>>;
 }
+
+/** The key a state's markup is found by: its control's name and its own. */
+export const codeKey = (control: Control, state: State) => `${control.name} / ${state.name}`;
+
+/** A state's markup, or a build that fails, rather than a page that shows an empty block. */
+const markupFor = (markup: Build['markup'], control: Control, state: State) => {
+    const found = markup[codeKey(control, state)];
+    if (found === undefined)
+        throw new Error(`no markup was laid out for ${codeKey(control, state)}`);
+    return found;
+};
+
+/** A name as an id, its words joined by hyphens. */
+const idOf = (name: string) =>
+    name
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+/**
+ * A block of code, titled, as the kit draws one: a frame that scrolls inside itself, named by its
+ * title. A screen reader is given the title written whole with the state it is the code of, rather
+ * than the short title beside a hidden rest, which a browser reads with a space before the comma.
+ * The site's script puts a copy button beside the title.
+ */
+const CodeBlock = ({
+    id,
+    title,
+    of,
+    code,
+}: {
+    readonly id: string;
+    readonly title: string;
+    readonly of: string;
+    readonly code: string;
+}) => (
+    <>
+        <div className="site-code-head">
+            <p className="dk-code-title" aria-hidden="true">
+                {title}
+            </p>
+            <span className="dk-visually-hidden site-code-name" id={id}>
+                {`${title}, ${of}`}
+            </span>
+        </div>
+        <pre className="dk-code" role="region" aria-labelledby={id} tabIndex={0} translate="no">
+            <code>{code}</code>
+        </pre>
+    </>
+);
 
 /**
  * The kit's footer, and after it the version of the kit the page is drawn from and the commit it
@@ -121,9 +173,22 @@ export const Landing = ({ build }: { readonly build: Build }) => (
  * it. The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are
  * its own, so the page never holds one twice. A pictured state's copy in the visitor's theme is
  * inert too, and labeled as the other is. Under both, the state's name and the attribute that
- * draws it.
+ * draws it, and then its code, closed until a reader opens it: its markup, and the React a page
+ * writes for it where a component draws it.
  */
-const StateShown = ({ state, pictured }: { readonly state: State; readonly pictured: boolean }) => (
+const StateShown = ({
+    state,
+    pictured,
+    markup,
+    id,
+    laidOut,
+}: {
+    readonly state: State;
+    readonly pictured: boolean;
+    readonly markup: string;
+    readonly id: string;
+    readonly laidOut: boolean;
+}) => (
     <li className="site-state">
         <div className="site-copy" inert={pictured}>
             {pictured ? <p className="site-copy-label">Your theme</p> : null}
@@ -136,6 +201,16 @@ const StateShown = ({ state, pictured }: { readonly state: State; readonly pictu
         <p className="site-state-name">
             {state.name}, drawn by <code>{state.attribute}</code>
         </p>
+        <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
+            <summary>
+                <span aria-hidden="true">The code</span>
+                <span className="dk-visually-hidden">{`The code, ${state.name}`}</span>
+            </summary>
+            <CodeBlock id={`${id}-markup`} title="Markup" of={state.name} code={markup} />
+            {state.react === undefined ? null : (
+                <CodeBlock id={`${id}-react`} title="React" of={state.name} code={state.react} />
+            )}
+        </details>
     </li>
 );
 
@@ -145,20 +220,25 @@ const StateShown = ({ state, pictured }: { readonly state: State; readonly pictu
  */
 const Shown = ({
     controls,
+    markup,
     wide = false,
 }: {
     readonly controls: readonly Control[];
+    readonly markup: Build['markup'];
     readonly wide?: boolean;
 }) =>
     controls.map((control) => (
         <section key={control.name}>
-            <h2 id={control.name.toLowerCase().replaceAll(' ', '-')}>{control.name}</h2>
+            <h2 id={idOf(control.name)}>{control.name}</h2>
             <ul className={wide ? 'site-states site-states-wide' : 'site-states'} role="list">
                 {control.states.map((state) => (
                     <StateShown
                         key={state.name}
                         state={state}
                         pictured={control.pictured ?? false}
+                        markup={markupFor(markup, control, state)}
+                        id={`${idOf(control.name)}-${idOf(state.name)}`}
+                        laidOut={control.laidOut ?? false}
                     />
                 ))}
             </ul>
@@ -177,7 +257,7 @@ export const Controls = ({ build }: { readonly build: Build }) => (
             you see and what a screen reader says come from one place. A kind of control, such as
             the one action a view leads with or a callout&rsquo;s tone, is a class.
         </p>
-        <Shown controls={CONTROLS} />
+        <Shown controls={CONTROLS} markup={build.markup} />
     </Page>
 );
 
@@ -204,7 +284,7 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
                 site&rsquo;s own links to the page&rsquo;s main content.
             </p>
         </section>
-        <Shown controls={CHROME} wide />
+        <Shown controls={CHROME} markup={build.markup} wide />
     </Page>
 );
 
@@ -224,7 +304,7 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
             layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
             heading and this page already has one.
         </p>
-        <Shown controls={EXPLAINER} />
+        <Shown controls={EXPLAINER} markup={build.markup} />
     </Page>
 );
 

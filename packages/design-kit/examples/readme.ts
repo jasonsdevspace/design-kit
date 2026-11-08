@@ -1,7 +1,7 @@
-import { format, resolveConfig } from 'prettier';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { type ExampleName, EXAMPLES } from './examples.js';
+import { laidOut } from './format.js';
 
 /**
  * The examples with no words beside a tag where a space would be read, so the formatter is free to
@@ -22,25 +22,13 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'code',
 ]);
 
-/**
- * A space beside a tag, such as the one that ends the hidden "Error: ", held as a character the
- * formatter treats as a word while an example is laid out, so it is kept rather than trimmed.
- */
-const KEPT = '';
-
 /** An example's markup as a page writes it, laid out as the repository's formatter lays out. */
 export const htmlOf = async (name: ExampleName): Promise<string> => {
-    const config = (await resolveConfig(import.meta.filename)) ?? {};
-    const free = LAID_OUT.has(name);
-    const markup = renderToStaticMarkup(EXAMPLES[name]);
-    if (markup.includes(KEPT))
-        throw new Error(`the ${name} example holds the character kept spaces use`);
-    const formatted = await format(free ? markup.replaceAll(/ (?=<)|(?<=>) /g, KEPT) : markup, {
-        ...config,
-        parser: 'html',
-        htmlWhitespaceSensitivity: free ? 'ignore' : 'css',
-    });
-    return formatted.replaceAll(KEPT, ' ').trimEnd();
+    try {
+        return await laidOut(renderToStaticMarkup(EXAMPLES[name]), LAID_OUT.has(name));
+    } catch (error) {
+        throw new Error(`the ${name} example could not be laid out`, { cause: error });
+    }
 };
 
 /**

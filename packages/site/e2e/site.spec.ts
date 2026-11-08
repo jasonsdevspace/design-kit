@@ -548,3 +548,189 @@ test.describe('the theme switch', () => {
         expect(moved.slice(half)).toEqual(moved.slice(0, half));
     });
 });
+
+test.describe('the code of each state', () => {
+    test("shows each state's markup as the copy beside it draws it", async ({ page }) => {
+        for (const path of [
+            '/design-kit/controls/',
+            '/design-kit/page-chrome/',
+            '/design-kit/explainer-pieces/',
+        ]) {
+            await page.goto(path);
+            const differ = await page.evaluate(() => {
+                /** The elements a browser lays out as blocks, at whose edges a space draws nothing. */
+                const BLOCKS = new Set(['DIV', 'P', 'FOOTER', 'NAV', 'SECTION', 'UL', 'OL', 'LI']);
+                /**
+                 * Markup as the parser reads it. Where its control is laid out, every space beside a
+                 * tag is dropped, which that layout adds, as the README's blocks are laid out.
+                 * Markup as written keeps every space inside a sentence, and drops only those at the
+                 * edges of a block, where the layout breaks a line and a browser draws nothing.
+                 */
+                const read = (html: string, laidOut: boolean) => {
+                    const template = document.createElement('template');
+                    template.innerHTML = html;
+                    if (laidOut) {
+                        return template.innerHTML
+                            .replaceAll(/\s*(<[^>]+>)\s*/g, '$1')
+                            .replaceAll(/\s+/g, ' ');
+                    }
+                    const walker = document.createTreeWalker(
+                        template.content,
+                        NodeFilter.SHOW_TEXT
+                    );
+                    const texts: Text[] = [];
+                    while (walker.nextNode()) texts.push(walker.currentNode as Text);
+                    /** Whether a node is a block, or a text's edge is a block's own edge. */
+                    const block = (node: Node | null) =>
+                        node instanceof Element && BLOCKS.has(node.tagName);
+                    for (const text of texts) {
+                        const value = text.data.replaceAll(/\s+/g, ' ');
+                        const before = text.previousSibling ?? text.parentElement;
+                        const after = text.nextSibling ?? text.parentElement;
+                        const start = block(before) ? value.trimStart() : value;
+                        text.data = block(after) ? start.trimEnd() : start;
+                    }
+                    return template.innerHTML;
+                };
+                return [...document.querySelectorAll('.site-state')].flatMap((state) => {
+                    // The live copy, or for a picture the copy in the visitor's theme, without its
+                    // label, and with the ids the code names.
+                    const copy = state.querySelector('.site-copy')?.cloneNode(true);
+                    const code = state.querySelector<HTMLElement>('.site-code');
+                    const shown = code?.querySelector('pre.dk-code')?.textContent;
+                    if (!(copy instanceof HTMLElement) || !code || shown === undefined) return [];
+                    copy.querySelector('.site-copy-label')?.remove();
+                    const drawn = copy.innerHTML.replaceAll('-yours"', '"');
+                    const laidOut = code.dataset['layout'] === 'laid-out';
+                    return read(shown, laidOut) === read(drawn, laidOut)
+                        ? []
+                        : [state.querySelector('.site-state-name')?.textContent ?? ''];
+                });
+            });
+            expect(differ, path).toEqual([]);
+        }
+    });
+
+    test('shows React for each state a component draws, and markup alone for the rest', async ({
+        page,
+    }) => {
+        for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
+            await page.goto(path);
+            const states = await page.locator('.site-state').count();
+            await expect(
+                page.locator('.site-code-name', { hasText: /^React, / }),
+                path
+            ).toHaveCount(states);
+        }
+        await page.goto('/design-kit/explainer-pieces/');
+        await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);
+    });
+
+    test('never widens the page with every block open, at any width or text size', async ({
+        page,
+    }) => {
+        for (const path of PAGES) {
+            for (const width of WIDTHS) {
+                for (const scale of [1, 2]) {
+                    await page.setViewportSize({ width, height: 900 });
+                    await textSize(page, scale);
+                    await page.goto(path);
+                    await page.evaluate(() => {
+                        for (const code of document.querySelectorAll('details')) code.open = true;
+                    });
+                    expect(
+                        await sideways(page),
+                        `${path} ${String(width)} at ${String(scale)}`
+                    ).toBe(0);
+                }
+            }
+        }
+    });
+
+    test('copies a block to the clipboard, and says so', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const block = page.getByRole('region', { name: 'Markup, An action' });
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.getByRole('button', { name: 'Copied Markup, An action' })).toBeVisible();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            await block.textContent()
+        );
+    });
+
+    test('selects the block where the browser refuses to write to the clipboard', async ({
+        page,
+    }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'clipboard', {
+                value: { writeText: () => Promise.reject(new Error('refused')) },
+            });
+        });
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const block = page.getByRole('region', { name: 'Markup, An action' });
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(
+            page.getByRole('button', { name: 'Selected Markup, An action' })
+        ).toBeVisible();
+        expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
+            await block.textContent()
+        );
+    });
+
+    test('says so again when a second block is copied', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        // Emptied first, so a screen reader hears the same words again.
+        const heard = page.evaluate(
+            () =>
+                new Promise<string[]>((resolve) => {
+                    const status = document.querySelector('[role="status"]');
+                    const seen: string[] = [];
+                    if (!status) return resolve(seen);
+                    new MutationObserver(() => {
+                        seen.push(status.textContent);
+                        if (status.textContent !== '') resolve(seen);
+                    }).observe(status, { childList: true, characterData: true, subtree: true });
+                })
+        );
+        await page.getByRole('button', { name: 'Copy React, An action' }).click();
+        expect(await heard).toEqual(['', 'Copied.']);
+    });
+
+    test('selects the block where the browser has no clipboard, and says how to copy it', async ({
+        page,
+    }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'clipboard', { value: undefined });
+        });
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const block = page.getByRole('region', { name: 'Markup, An action' });
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toHaveText(
+            'Selected. Press Control and C, or Command and C on a Mac, to copy.'
+        );
+        expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
+            await block.textContent()
+        );
+    });
+
+    test.describe(() => {
+        test.use({ javaScriptEnabled: false });
+
+        test('still opens and shows the code with no script, with no copy button', async ({
+            page,
+        }) => {
+            await page.goto('/design-kit/controls/');
+            await page.locator('summary', { hasText: 'The code, An action' }).click();
+            await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
+            await expect(page.locator('.site-copy-button')).toHaveCount(0);
+        });
+    });
+});

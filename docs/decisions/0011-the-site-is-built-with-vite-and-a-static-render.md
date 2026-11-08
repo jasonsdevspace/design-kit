@@ -81,19 +81,24 @@ The paths are in `packages/site`.
   serves, and finds no axe findings in either theme on a phone or a wide screen, no sideways scroll
   at any width or at twice the text size, no text cut off under the spacing a reader may set, one
   main, one footer and one portfolio navigation outside the inert copies, at most one banner, no id
-  twice, and nothing the page's policy refuses, with the theme script setting the theme only
-  because its hash lets it run. It also finds the keyboard never stopping inside a copy drawn in the
-  other theme, each such copy inert and drawn in a ground and text that differ from the page's, and
-  each state's copy in the visitor's theme carrying the attribute printed under it. On the controls
-  page it finds a live copy of every state. On the tokens page it finds each swatch drawn in the
-  value printed beside it, in both themes, and every pairing at or above what it needs, listed
-  tightest first. On the page chrome page it finds the page's own skip link, strip and footer live
-  and every copy of a state inert, and on the explainer pieces page each piece live in the visitor's
-  theme and the explainer's layout drawn only as a picture. It finds the explainer marked as the
-  current page in its strip and footer, with a header that leads back to the site, every other
-  page's strip and footer leading to it, an id on each of its section headings, and every link
-  within the site leading to one of its pages and to the id it names, where it names one, outside
-  the inert copies.
+  twice, and nothing the page's policy refuses, with the theme script setting the theme only because
+  its hash lets it run. It also finds the keyboard never stopping inside a copy drawn in the other
+  theme, each such copy inert and drawn in a ground and text that differ from the page's, and each
+  state's copy in the visitor's theme carrying the attribute printed under it. On the controls page
+  it finds a live copy of every state. On the tokens page it finds each swatch drawn in the value
+  printed beside it, in both themes, and every pairing at or above what it needs, listed tightest
+  first. On the page chrome page it finds the page's own skip link, strip and footer live and every
+  copy of a state inert, and on the explainer pieces page each piece live in the visitor's theme and
+  the explainer's layout drawn only as a picture. It finds the explainer marked as the current page
+  in its strip and footer, with a header that leads back to the site, every other page's strip and
+  footer leading to it, an id on each of its section headings, and every link within the site
+  leading to one of its pages and to the id it names, where it names one, outside the inert copies.
+  It finds each state's code showing the markup the copy beside it draws, every space of a sentence
+  kept where its markup is as written, React for each state a component draws and none where none
+  does, the code opening with no script, and no page widened with every block of code open, at any
+  width or at twice the text size.
+- `src/code.test.ts` builds the React each state shows with the pinned version's components, and
+  finds it drawing what that version draws for the state.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.
