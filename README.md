@@ -301,10 +301,10 @@ options rejected, what the choice costs, and the test behind it.
     The site draws the published kit under the policy a demo sets, with no runtime of a framework's,
     at the cost of a policy in a meta element, which cannot stop another site framing it, and of a
     change to the kit reaching the site a release later.
-12. [The site has a script of its own, a file from its origin, while the kit ships none](docs/decisions/0012-the-site-has-a-script-of-its-own.md).
+12. [The site has a script of its own, from its own path, beside the kit's theme script](docs/decisions/0012-the-site-has-a-script-of-its-own.md).
     A visitor chooses a theme on the site and it holds across jasonsdevspace.com, with nothing
-    moving when the switch comes, at the cost of a policy that allows any script file from an
-    origin the portfolio and every demo share.
+    moving when the switch comes, at the cost of a policy written for the one origin the site is
+    served from, which the tests' builds name in its place.
 
 ## Dev setup
 

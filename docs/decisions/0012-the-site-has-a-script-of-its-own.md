@@ -1,4 +1,4 @@
-# 12. The site has a script of its own, a file from its origin, while the kit ships none
+# 12. The site has a script of its own, from its own path, beside the kit's theme script
 
 **Status:** accepted
 
@@ -18,39 +18,49 @@ out of the browser, and the policy allows no inline script but the theme script,
 component. Rejected, since it brings back the runtime record 11 keeps out, for three radios.
 
 **B. A second inline script, named by its hash.** The switch's script inline in each page, as the
-theme script is. Rejected, since it would be sent again with every page rather than cached once,
-and every change to it would change its hash in the policy of every page, where a file changes only
-its own name.
+theme script is. Rejected, since it would be sent again in every page rather than fetched once and
+cached, and the site would have to hash it into each page's policy itself, where the theme script's
+hash comes from the kit.
 
 **C. No switch.** Leave the choice to the portfolio. Rejected, since a visitor who reaches the site
 from a search or a link could follow the system's theme and nothing else.
 
-**D. A script of the site's own, a file from its origin.** A small module, built by Vite like the
-pages and loaded from the site's own origin, which the policy allows as `'self'`. It builds the
-switch with the DOM, so it needs no inline script or style.
+**D. A script of the site's own, a file from its own path.** A small module, built by Vite like the
+pages, which the policy allows from the folder the build writes it to and nowhere else. It builds
+the switch with the DOM, so it needs no inline script or style.
 
 ## Decision
 
-Option D. Every page's strip keeps the room the kit keeps for switches on their way, with
-`toolsWaiting`, and the script puts the switch in it: three native radios in a group named Theme,
-System, Light and Dark, described by a note that the choice is saved for every page on
-jasonsdevspace.com. It names the strip's section by the group's legend, so the section becomes the
-landmark the kit makes of switches that have come. The script shows the saved choice, saves a new
-one under the portfolio's key, and sets `data-theme` on the page at once, since the theme script
-hears only a choice saved in another tab. It moves to a choice another tab saves, which the theme
-script has already drawn, and leaves following the system's theme under System to the theme script.
-A browser that refuses the page its storage still draws a choice until the page is left.
+Option D. Every page's strip keeps the room for switches on their way, with `toolsWaiting`, and the
+script puts the switch in it: a label, Theme, and three native radios, System, Light and Dark. It
+names the strip's section by the label, so the section becomes the landmark the kit makes of
+switches that have come, and a screen reader hears the name once, with a note that the choice is
+saved for every page on jasonsdevspace.com. The script shows the saved choice, saves a new one under
+the portfolio's key, and draws it at once, since the theme script hears only a choice saved in
+another tab. It moves to a choice another tab saves, catches up with one saved while the page sat in
+the browser's back and forward cache, and leaves following the system's theme under System to the
+theme script. A browser that refuses the page its storage still draws a choice until the page is
+left, drawing it again when the theme script, which cannot know of it, draws the system's.
+
+The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
+`https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
+path only with its origin, so the build writes it for that origin unless `SITE_ORIGIN` names
+another, which the browser tests and the Lighthouse audit set to the local preview they open.
 
 ## Consequences
 
-- The policy allows any script file from the site's origin, `'self'`, beside the theme script's
-  hash. The origin is jasonsdevspace.com, which the portfolio and every demo share, so a script
-  file of theirs would run on the site too if markup put it there. Nothing the site serves writes a
-  script element from a visitor's input, and a policy can name a path only with the full origin,
-  which the preview the tests open does not have.
-- A page with no script, or one whose script fails, draws the theme the visitor saved, or the
-  system's, as before, and shows the empty room the strip keeps rather than a switch that does
-  nothing. Nothing below the strip moves when the switch comes.
+- The origin is jasonsdevspace.com, which the portfolio, every demo and any other repository the
+  account serves from GitHub Pages share. Allowing the whole origin, `'self'`, would let a script
+  file of theirs run on the site if markup put it there. Naming the site's own folder allows only
+  the files the site's build writes.
+- The deployed policy is written for one origin. Serving the build from any other, such as a
+  preview opened without `SITE_ORIGIN`, refuses the switch's script, and the page draws as it does
+  with no script.
+- A page whose own script fails to load or run still draws the theme the visitor saved, or the
+  system's, from the theme script, and shows the empty room the strip keeps rather than a switch
+  that does nothing. With scripts off, the page draws the system's theme, as before.
+- The room holds the switch's height, and the switch fits beside the strip's links wherever the
+  strip keeps them on one row, so nothing below the strip moves when it comes.
 - The script's values are the portfolio's rather than the kit's two themes, so `system` is saved
   as the portfolio saves it, and the theme script reads it as nothing saved.
 - The kit still runs no script of its own in a browser but the theme script. The switch is the
@@ -60,11 +70,17 @@ A browser that refuses the page its storage still draws a choice until the page 
 
 The paths are in `packages/site`.
 
-- `e2e/site.spec.ts` finds the switch in every page under its policy, with nothing the policy
-  refuses and no style attribute. It finds the choice the portfolio saved checked and drawn, the
-  strip's room taken, the group described as saved for jasonsdevspace.com, and a new choice drawn at
-  once, saved with the portfolio's value, and kept after a reload. Under System it finds the page
-  following the system's theme as it changes. It finds a choice saved in another tab checked and
-  drawn, the arrow keys moving between the choices as radios do, and a choice drawn when the browser
-  refuses the page its storage.
-- `bench/lighthouse.ts` finds no layout shift on any page as the switch comes.
+- `src/policy.test.ts` finds the policy for the deployed origin allowing scripts from the site's
+  assets folder and the theme script's hash alone, never the whole origin, with styles and images
+  from the origin and nothing else by default.
+- `e2e/site.spec.ts` finds the switch in every page under its policy, with scripts allowed from the
+  site's own path alone, nothing the policy refuses and no style attribute. It finds the choice the
+  portfolio saved checked and drawn, the strip's room taken, the section described as saved for
+  jasonsdevspace.com, and a new choice drawn at once, saved with the portfolio's value, and kept
+  after a reload. Under System it finds the page following the system's theme as it changes. It
+  finds a choice saved in another tab, or while the page was in the back and forward cache, checked
+  and drawn, and the arrow keys moving between the choices as radios do. Where the browser refuses
+  storage it finds a choice drawn and still drawn after the system's theme changes. It finds the
+  site's navigation below the strip in the same place with the script and without it, from a small
+  phone to a laptop and at twice the text size.
+- `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.

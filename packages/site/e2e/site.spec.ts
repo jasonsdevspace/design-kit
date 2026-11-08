@@ -220,6 +220,9 @@ for (const path of PAGES) {
             .locator('meta[http-equiv="Content-Security-Policy"]')
             .getAttribute('content');
         expect(policy).toContain("style-src 'self'");
+        // Scripts from the site's own path, never the whole origin the portfolio and demos share.
+        expect(policy).toMatch(/script-src http:\/\/localhost:\d+\/design-kit\/assets\/ 'sha256-/);
+        expect(policy).not.toMatch(/script-src[^;]*'self'/);
         expect(await page.locator('[style]').count()).toBe(0);
         expect(refused).toEqual([]);
     });
@@ -416,7 +419,7 @@ test.describe('the theme switch', () => {
         await expect(choice(page, 'Dark')).toBeChecked();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
         await expect(page.locator('.dk-strip-room')).toHaveCount(0);
-        await expect(page.getByRole('group', { name: 'Theme' })).toHaveAccessibleDescription(
+        await expect(page.getByRole('region', { name: 'Theme' })).toHaveAccessibleDescription(
             /jasonsdevspace\.com/
         );
     });
@@ -479,5 +482,50 @@ test.describe('the theme switch', () => {
         await expect(choice(page, 'System')).toBeChecked();
         await choice(page, 'Dark').check();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        // The theme script cannot know the choice, and redraws the system's when it changes.
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await page.emulateMedia({ colorScheme: 'light' });
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await expect(choice(page, 'Dark')).toBeChecked();
+    });
+
+    test('catches up with a choice saved while the page was in the back and forward cache', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/design-kit/');
+        await expect(choice(page, 'System')).toBeChecked();
+        // A choice saved elsewhere while this page was away, which it never heard, and its return.
+        await page.evaluate(() => {
+            localStorage.setItem('theme', 'dark');
+            window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+        });
+        await expect(choice(page, 'Dark')).toBeChecked();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    });
+
+    test('moves nothing below the strip as it comes, at any width or text size', async ({
+        browser,
+    }) => {
+        const moved: string[] = [];
+        for (const javaScriptEnabled of [false, true]) {
+            const context = await browser.newContext({ javaScriptEnabled });
+            const page = await context.newPage();
+            for (const width of [320, 390, 768, 769, 820, 1280]) {
+                for (const scale of [1, 2]) {
+                    await page.setViewportSize({ width, height: 900 });
+                    await textSize(page, scale);
+                    await page.goto('/design-kit/');
+                    if (javaScriptEnabled) await expect(choice(page, 'System')).toBeVisible();
+                    const top = await page
+                        .locator('.site-nav')
+                        .evaluate((nav) => nav.getBoundingClientRect().top);
+                    moved.push(`${String(width)} at text ${String(scale)}: ${String(top)}`);
+                }
+            }
+            await context.close();
+        }
+        const half = moved.length / 2;
+        expect(moved.slice(half)).toEqual(moved.slice(0, half));
     });
 });

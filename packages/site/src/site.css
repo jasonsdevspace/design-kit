@@ -197,23 +197,14 @@
 }
 
 /*
- * The theme switch the site's script puts in the strip: its name and its three choices in one row,
- * in the room the strip kept for it. On a phone each choice is a thumb's size, as the room is.
+ * The theme switch the site's script puts in the strip's section: its name and its three choices
+ * in one row. On a phone each choice is a thumb's size, as the room the strip kept is.
  */
 .site-theme {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     gap: 0 var(--dk-space-4);
-    margin: 0;
-    padding: 0;
-    border: 0;
 }
 
-/* A floated legend takes its place in the row as the choices do. */
-.site-theme legend {
-    float: left;
-    padding: 0;
+.site-theme-name {
     color: var(--dk-muted);
 }
 

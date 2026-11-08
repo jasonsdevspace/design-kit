@@ -17,8 +17,8 @@ browser.
 **A. Storybook.** The usual home for a component library's examples, with a page for each story
 and controls to change its props. Rejected, since every story is drawn in the browser by a client
 app of Storybook's, so React and Storybook's own script would reach every page and the policy would
-have to allow them beside the theme script, and the site exists to show a page with no script but
-that one.
+have to allow them beside the theme script, and the site exists to show a page with no runtime of a
+framework's.
 
 **B. A documentation or static site framework, such as Astro, Eleventy or Docusaurus.** Each builds
 static pages well. Rejected, since Astro and Eleventy write pages in templating languages of their
@@ -44,14 +44,14 @@ installs the kit from npm at one exact version, as ShelfLens does, under the ali
 it, and its sheets, components and theme plugin all come from that version. What a visitor sees is
 then what a demo installs, and the site's tests and audit hold what ships. Each page has a meta
 element for its policy: nothing by default, scripts only by the theme script's hash or from the
-site's origin, as record 12 sets out, styles and images only from the site's origin, no base element
-and no form posts. The footer names the version of the kit a page is drawn from and the commit it
-was built at, so it never names a version npm cannot give. The strip's and the footer's link to how
-the kit works leads to the site's own explainer, drawn in the kit's explainer layout as a demo's is.
-The site's navigation leaves it out, as a demo's pages leave out theirs. The explainer links the
-README and the decision records at the commit the site was built at. CI builds and uploads the site
-from a job with read access alone once every check has passed on main, and a job that runs only
-GitHub's Pages actions deploys it.
+site's own path, as record 12 sets out, styles and images only from the site's origin, no base
+element and no form posts. The footer names the version of the kit a page is drawn from and the
+commit it was built at, so it never names a version npm cannot give. The strip's and the footer's
+link to how the kit works leads to the site's own explainer, drawn in the kit's explainer layout as
+a demo's is. The site's navigation leaves it out, as a demo's pages leave out theirs. The explainer
+links the README and the decision records at the commit the site was built at. CI builds and uploads
+the site from a job with read access alone once every check has passed on main, and a job that runs
+only GitHub's Pages actions deploys it.
 
 ## Consequences
 

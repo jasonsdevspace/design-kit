@@ -10,7 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { defineConfig, type Plugin } from 'vite';
 
 import { type Build, PAGES } from './src/pages.js';
-import { POLICY } from './src/policy.js';
+import { policyFor, SITE_ORIGIN } from './src/policy.js';
 import { BASE, ROUTES } from './src/routes.js';
 
 const SITE = fileURLToPath(new URL('.', import.meta.url));
@@ -35,6 +35,13 @@ const BUILD: Build = {
         process.env['GITHUB_SHA'] ??
         execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
 };
+
+/**
+ * The policy every page carries, for the origin the site is served from. The tests and the audit
+ * serve the build from a local origin, and name it in SITE_ORIGIN, so the policy they load is the
+ * one the site ships with only the origin changed.
+ */
+const POLICY = policyFor(process.env['SITE_ORIGIN'] ?? SITE_ORIGIN);
 
 const isPage = (file: string): file is keyof typeof PAGES => Object.hasOwn(PAGES, file);
 

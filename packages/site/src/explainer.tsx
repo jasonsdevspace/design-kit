@@ -169,7 +169,8 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 , and each version is staged from a tag and goes live when it is promoted. It needs
                 Chrome or Edge 123, Firefox 120 or Safari 17.5, or later, the first versions that
                 draw <code>light-dark()</code>. This site is built with Vite and React&rsquo;s
-                static render, and its only scripts are the theme script and the theme switch.
+                static render, and its only scripts are the theme script and the one that builds its
+                theme switch.
             </p>
             <p>
                 The <a href={`${builtAt(commit)}#readme`}>README</a> is the case study, and the{' '}

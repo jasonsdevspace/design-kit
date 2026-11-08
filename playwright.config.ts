@@ -16,7 +16,9 @@ export default defineConfig({
     reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'list',
     use: { trace: 'retain-on-failure', baseURL: 'http://localhost:4180' },
     webServer: {
-        command: 'npm run site && npm run preview --workspace @jasonsdevspace/design-kit-site',
+        // The site's policy names the origin its scripts come from, here the preview's.
+        command:
+            'SITE_ORIGIN=http://localhost:4180 npm run site && npm run preview --workspace @jasonsdevspace/design-kit-site',
         url: 'http://localhost:4180/design-kit/',
         // Built fresh for every run, so a preview left running never serves an older build.
         reuseExistingServer: false,
