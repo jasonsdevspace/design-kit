@@ -7,6 +7,31 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## 0.1.0-next.5
+
+The strip's first link is the author's name and leads to the portfolio. A demo can name its
+switches' width, so the strip wraps the same before they arrive as after, and on a wide screen the
+switches keep to the strip's right edge.
+
+- **Page chrome.** The strip's first link reads "Jason Poteet" and leads to the portfolio's home
+  page, `PORTFOLIO_URL`, where it read "More work by Jason Poteet" and led to the portfolio's list
+  of work. It matches the footer's own "Jason Poteet", which leads to the same place, and no longer
+  shares "more work" with the footer's link to the GitHub profile. A page that writes the strip by
+  hand changes the link's words and where it leads itself. `PORTFOLIO_WORK_URL` is still exported,
+  for a page that links to the list of work.
+- **Page chrome.** A new token, `--dk-strip-tools`, holds the width of a demo's switches in the
+  strip, in the strip's own text size, such as `:root { --dk-strip-tools: 20em; }`. It is `auto`, so
+  nothing changes for a demo that leaves it alone. A demo whose switches arrive after the page sets
+  it at least as wide as they are, and on a wide screen the room the strip keeps for them and the
+  section that holds them both take that width, the switches packed at its right end, so the strip
+  wraps before they arrive just as it does after. On a phone the switches keep a row of their own at
+  its full width.
+- **Page chrome.** On a wide screen the switches keep to the strip's right edge, on the links' row
+  or on a row of their own where they wrap below it, where before a wrapped section started at the
+  left. Where the switches wrap within their section, its last row sits at the right too. On a phone
+  they still start at the left. A page that writes the strip by hand gets this from the sheet, with
+  no change to its markup.
+
 ## 0.1.0-next.4
 
 The strip's first link says whose work it leads to, and the footer's sentence holds to the measure.
