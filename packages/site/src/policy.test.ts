@@ -21,16 +21,11 @@ describe("the site's policy", () => {
         expect(SITE_ORIGIN).toBe('https://jasonsdevspace.com');
     });
 
-    it("runs the theme script by its hash, and only the files under the site's own path", () => {
+    it("runs the theme script by its hash, and only the files under the site's own path, never the whole origin", () => {
         expect(directive(policyFor(SITE_ORIGIN), 'script-src')).toEqual([
             'https://jasonsdevspace.com/design-kit/assets/',
             themeScriptHash,
         ]);
-    });
-
-    it('never allows a script from the whole origin', () => {
-        expect(policyFor(SITE_ORIGIN)).not.toContain("script-src 'self'");
-        expect(directive(policyFor(SITE_ORIGIN), 'script-src')).not.toContain("'self'");
     });
 
     it('takes styles and images only from the origin, and nothing else by default', () => {

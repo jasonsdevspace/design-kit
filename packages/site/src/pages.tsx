@@ -276,12 +276,12 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     The kit&rsquo;s theme script runs inline in a page&rsquo;s head, before anything
                     is drawn, so a page never flashes the other theme. It sets{' '}
                     <code>data-theme</code> on the root to the theme the visitor saved under the key{' '}
-                    <code>theme</code>, or to the system&rsquo;s when nothing usable is saved, as
-                    when System is chosen, and then follows the system as it changes. It hears a
-                    choice saved in another tab. Every demo served from jasonsdevspace.com reads the
-                    same saved theme, and this page does too. The switch at the top of each page of
-                    this site saves a choice under that key with the portfolio&rsquo;s values, as
-                    the portfolio&rsquo;s switch does.
+                    <code>theme</code>, or, when nothing usable is saved, as when System is chosen,
+                    to the system&rsquo;s, following it as it changes. It hears a choice saved in
+                    another tab. Every demo served from jasonsdevspace.com reads the same saved
+                    theme, and this page does too. The switch at the top of each page of this site
+                    saves a choice under that key with the portfolio&rsquo;s values, as the
+                    portfolio&rsquo;s switch does.
                 </p>
             </section>
         </Page>

@@ -250,8 +250,9 @@ they document, not by a test here.
 | Each state the site shows draws the attribute printed under it                                                    | `packages/design-kit/examples/states.test.tsx` |
 | Every page of the site has no axe findings in either theme, on a phone and a wide screen                          | `packages/site/e2e/site.spec.ts`               |
 | No page of the site scrolls sideways at any width or at twice the text size, or cuts off text under wider spacing | `packages/site/e2e/site.spec.ts`               |
-| The site draws under `style-src 'self'`, its scripts the theme script by its hash and its own file                | `packages/site/e2e/site.spec.ts`               |
+| The site draws under `style-src 'self'`, its scripts the theme script by its hash and its own path                | `packages/site/e2e/site.spec.ts`               |
 | The site draws the published kit at one exact version, and nothing from the kit's sources                         | `packages/site/src/published.test.ts`          |
+| The deployed policy allows scripts from the site's own path and the theme script's hash, never the whole origin   | `packages/site/src/policy.test.ts`             |
 | A copy of a state in the other theme draws in that theme, and the keyboard never stops inside it                  | `packages/site/e2e/site.spec.ts`               |
 | The tokens page draws each swatch in the value printed beside it, and lists every pairing tightest first          | `packages/site/e2e/site.spec.ts`               |
 | The page chrome page draws each state as a picture, around the kit's own live chrome                              | `packages/site/e2e/site.spec.ts`               |
@@ -304,7 +305,7 @@ options rejected, what the choice costs, and the test behind it.
 12. [The site has a script of its own, from its own path, beside the kit's theme script](docs/decisions/0012-the-site-has-a-script-of-its-own.md).
     A visitor chooses a theme on the site and it holds across jasonsdevspace.com, with nothing
     moving when the switch comes, at the cost of a policy written for the one origin the site is
-    served from, which the tests' builds name in its place.
+    served from, which the builds the tests and the audit serve name in its place.
 
 ## Dev setup
 
@@ -343,7 +344,9 @@ The site in `packages/site` is built with `npm run site` into its `dist`, served
 `/design-kit/` as GitHub Pages serves it. It draws the kit as npm publishes it, at the version its
 `package.json` pins, so a change to the kit reaches the site once it is released and the pin moves.
 CI also runs the site's browser tests over each commit's own kit, so a change that would break the
-site fails before it is released. `npm run lighthouse` builds it and audits every page.
+site fails before it is released. `npm run lighthouse` builds it and audits every page. A build to
+be served from anywhere but jasonsdevspace.com names that origin in `SITE_ORIGIN`, as the tests and
+the audit do, or its policy refuses the theme switch.
 
 ```bash
 npm run site

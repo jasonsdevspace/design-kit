@@ -201,6 +201,9 @@
  * in one row. On a phone each choice is a thumb's size, as the room the strip kept is.
  */
 .site-theme {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 0 var(--dk-space-4);
 }
 

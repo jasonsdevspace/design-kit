@@ -32,15 +32,18 @@ the switch with the DOM, so it needs no inline script or style.
 ## Decision
 
 Option D. Every page's strip keeps the room for switches on their way, with `toolsWaiting`, and the
-script puts the switch in it: a label, Theme, and three native radios, System, Light and Dark. It
-names the strip's section by the label, so the section becomes the landmark the kit makes of
-switches that have come, and a screen reader hears the name once, with a note that the choice is
-saved for every page on jasonsdevspace.com. The script shows the saved choice, saves a new one under
-the portfolio's key, and draws it at once, since the theme script hears only a choice saved in
-another tab. It moves to a choice another tab saves, catches up with one saved while the page sat in
-the browser's back and forward cache, and leaves following the system's theme under System to the
-theme script. A browser that refuses the page its storage still draws a choice until the page is
-left, drawing it again when the theme script, which cannot know of it, draws the system's.
+script puts the switch in it: three native radios, System, Light and Dark, in a radio group named
+Theme by a visible name and described by a note that the choice is saved for every page on
+jasonsdevspace.com, so a screen reader hears both as the keyboard reaches the radios. The strip's
+section is named Settings, so it becomes the landmark the kit makes of switches that have come and
+every part of the page sits in a landmark, and not Theme, so a screen reader moving by landmarks and
+then to the radios never hears one name twice. The script shows the saved choice, saves a new one
+under the portfolio's key, and draws it at once, since the theme script hears only a choice saved in
+another tab. It moves to a choice another tab saves, and catches up with one saved while the page
+sat in the browser's back and forward cache. When the system's theme changes it draws the choice
+again after the theme script draws, so a browser that refuses the page its storage still draws a
+choice until the page is left, where the theme script, which cannot know of it, draws the system's.
+A choice the browser refused to save is not read over by what storage holds.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
@@ -53,16 +56,16 @@ another, which the browser tests and the Lighthouse audit set to the local previ
   account serves from GitHub Pages share. Allowing the whole origin, `'self'`, would let a script
   file of theirs run on the site if markup put it there. Naming the site's own folder allows only
   the files the site's build writes.
-- The deployed policy is written for one origin. Serving the build from any other, such as a
-  preview opened without `SITE_ORIGIN`, refuses the switch's script, and the page draws as it does
-  with no script.
+- The deployed policy is written for one origin. Serving the build from any other, such as a preview
+  opened without `SITE_ORIGIN`, refuses the switch's script, and the page draws as it does when its
+  own script fails to load. The build refuses a `SITE_ORIGIN` that is not an origin alone.
 - A page whose own script fails to load or run still draws the theme the visitor saved, or the
   system's, from the theme script, and shows the empty room the strip keeps rather than a switch
   that does nothing. With scripts off, the page draws the system's theme, as before.
 - The room holds the switch's height, and the switch fits beside the strip's links wherever the
   strip keeps them on one row, so nothing below the strip moves when it comes.
-- The script's values are the portfolio's rather than the kit's two themes, so `system` is saved
-  as the portfolio saves it, and the theme script reads it as nothing saved.
+- The script's values are the portfolio's, System and the kit's two themes, so `system` is saved as
+  the portfolio saves it, and the theme script reads it as nothing saved.
 - The kit still runs no script of its own in a browser but the theme script. The switch is the
   site's, and a demo with a switch of its own writes it as the portfolio and the site do.
 
@@ -75,12 +78,13 @@ The paths are in `packages/site`.
   from the origin and nothing else by default.
 - `e2e/site.spec.ts` finds the switch in every page under its policy, with scripts allowed from the
   site's own path alone, nothing the policy refuses and no style attribute. It finds the choice the
-  portfolio saved checked and drawn, the strip's room taken, the section described as saved for
-  jasonsdevspace.com, and a new choice drawn at once, saved with the portfolio's value, and kept
-  after a reload. Under System it finds the page following the system's theme as it changes. It
-  finds a choice saved in another tab, or while the page was in the back and forward cache, checked
-  and drawn, and the arrow keys moving between the choices as radios do. Where the browser refuses
-  storage it finds a choice drawn and still drawn after the system's theme changes. It finds the
-  site's navigation below the strip in the same place with the script and without it, from a small
-  phone to a laptop and at twice the text size.
+  portfolio saved checked and drawn, the strip's room taken, the group named Theme and described as
+  saved for jasonsdevspace.com, and a new choice drawn at once, saved with the portfolio's value,
+  and kept after a reload. Under System it finds the page following the system's theme as it
+  changes. It finds a choice saved in another tab checked and drawn, and one saved while the page
+  was away checked and drawn when the page is shown again as if from the back and forward cache, and
+  the arrow keys moving between the choices as radios do. Where the browser refuses storage it finds
+  a choice drawn, and still drawn once every listener has heard the system's theme change. It finds
+  the site's navigation below the strip in the same place with the script and without it, from a
+  small phone to a laptop and at twice the text size.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.

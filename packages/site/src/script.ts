@@ -48,10 +48,11 @@ const savedChoice = (): Choice | null => {
 };
 
 /**
- * The choice this page shows. Where the browser refuses storage it is held here alone, so a choice
- * still holds on this page until it is left.
+ * The choice this page shows. Where the browser refuses to save it, it is held here alone, so it
+ * still holds on this page until the page is left, and what storage holds is not read over it.
  */
 let chosen: Choice = savedChoice() ?? 'system';
+let heldHere = false;
 
 /** Draws a choice on the page, the system's theme for System. */
 const draw = (choice: Choice) => {
@@ -64,17 +65,18 @@ const choose = (choice: Choice) => {
     chosen = choice;
     try {
         localStorage.setItem(THEME_KEY, choice);
+        heldHere = false;
     } catch {
         // Held in `chosen` instead, for as long as the page is open.
+        heldHere = true;
     }
     draw(choice);
 };
 
 /**
- * The switch: a label and three radios, built with the DOM, so the page's policy needs no inline
- * script or style. The strip's section holds them and is named by the label, as the kit names a
- * section of switches, so a screen reader hears the name once, and a note says where the choice is
- * kept.
+ * The switch: a name and three radios in a radio group, built with the DOM, so the page's policy
+ * needs no inline script or style. The group is named Theme and described by a note that says where
+ * the choice is kept, so a screen reader hears both as it reaches the radios.
  */
 const themeSwitch = () => {
     const name = document.createElement('span');
@@ -98,29 +100,35 @@ const themeSwitch = () => {
     note.id = 'site-theme-note';
     note.className = 'dk-visually-hidden';
     note.textContent = 'Saved for every page on jasonsdevspace.com, as the portfolio saves it.';
+    const group = document.createElement('div');
+    group.className = 'site-theme';
+    group.setAttribute('role', 'radiogroup');
+    group.setAttribute('aria-labelledby', name.id);
+    group.setAttribute('aria-describedby', note.id);
+    group.append(name, ...radios.map(({ label }) => label), note);
     const show = () => {
         for (const { radio } of radios) radio.checked = radio.value === chosen;
     };
-    return { parts: [name, ...radios.map(({ label }) => label), note], show };
+    return { group, show };
 };
 
 /**
  * Puts the switch in the room the page's own strip kept for it, not in a picture of a strip, and
- * names the strip's section, so it becomes the landmark the kit makes of switches that have come.
+ * names the strip's section Settings, so it becomes the landmark the kit makes of switches that have
+ * come and the switch sits inside a landmark. It is not named Theme, as the group is, so a screen
+ * reader never hears the name twice.
  */
 const room = document.querySelector('body > .dk-strip .dk-strip-room');
 const section = room?.parentElement;
 if (room && section) {
-    const { parts, show } = themeSwitch();
-    room.replaceWith(...parts);
-    section.classList.add('site-theme');
-    section.setAttribute('aria-labelledby', 'site-theme-name');
-    section.setAttribute('aria-describedby', 'site-theme-note');
+    const { group, show } = themeSwitch();
+    room.replaceWith(group);
+    section.setAttribute('aria-label', 'Settings');
 
     /** Shows and draws what is saved, when this page may not have heard it saved. */
     const catchUp = () => {
         const saved = savedChoice();
-        if (saved === null) return;
+        if (saved === null || heldHere) return;
         chosen = saved;
         show();
         draw(saved);
@@ -135,8 +143,9 @@ if (room && section) {
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) catchUp();
     });
-    // The theme script draws the system's theme when the system's changes, and where the browser
-    // refuses storage it cannot know a choice was made, so the choice is drawn again after it.
+    // When the system's theme changes the theme script draws again from storage, and where the
+    // browser refuses storage it draws the system's over a choice it cannot know of, so the choice
+    // is drawn again after it.
     if (typeof media?.addEventListener === 'function') {
         media.addEventListener('change', () => {
             draw(chosen);

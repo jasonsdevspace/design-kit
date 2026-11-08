@@ -11,7 +11,8 @@ export const SITE_ORIGIN = 'https://jasonsdevspace.com';
  * promises a demo they can. Scripts are the theme script, inline in the head and named by its hash,
  * and the files the build writes under the site's own path, never the whole origin, so a script
  * file of the portfolio's or a demo's cannot run here. Any other inline script, style attribute or
- * injected sheet is refused. A build the tests serve locally is written for that origin instead.
+ * injected sheet is refused. A build the tests or the audit serve locally is written for that
+ * origin instead.
  */
 export const policyFor = (origin: string) =>
     [

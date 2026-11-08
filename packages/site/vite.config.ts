@@ -41,7 +41,11 @@ const BUILD: Build = {
  * serve the build from a local origin, and name it in SITE_ORIGIN, so the policy they load is the
  * one the site ships with only the origin changed.
  */
-const POLICY = policyFor(process.env['SITE_ORIGIN'] ?? SITE_ORIGIN);
+const originOf = (value: string) => {
+    if (URL.canParse(value) && new URL(value).origin === value) return value;
+    throw new Error(`SITE_ORIGIN must be an origin alone, such as ${SITE_ORIGIN}: ${value}`);
+};
+const POLICY = policyFor(originOf(process.env['SITE_ORIGIN'] ?? SITE_ORIGIN));
 
 const isPage = (file: string): file is keyof typeof PAGES => Object.hasOwn(PAGES, file);
 

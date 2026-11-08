@@ -404,7 +404,7 @@ test.describe('the explainer', () => {
 test.describe('the theme switch', () => {
     /** The radio for each choice, in the strip's section named for the switch. */
     const choice = (page: Page, name: 'System' | 'Light' | 'Dark') =>
-        page.getByRole('region', { name: 'Theme' }).getByRole('radio', { name });
+        page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name });
 
     /** What the page saved under the portfolio's key. */
     const saved = (page: Page) => page.evaluate(() => localStorage.getItem('theme'));
@@ -418,8 +418,9 @@ test.describe('the theme switch', () => {
         await page.goto('/design-kit/');
         await expect(choice(page, 'Dark')).toBeChecked();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-        await expect(page.locator('.dk-strip-room')).toHaveCount(0);
-        await expect(page.getByRole('region', { name: 'Theme' })).toHaveAccessibleDescription(
+        await expect(page.locator('body > .dk-strip .dk-strip-room')).toHaveCount(0);
+        await expect(page.getByRole('region', { name: 'Settings' })).toContainText('Theme');
+        await expect(page.getByRole('radiogroup', { name: 'Theme' })).toHaveAccessibleDescription(
             /jasonsdevspace\.com/
         );
     });
@@ -482,9 +483,20 @@ test.describe('the theme switch', () => {
         await expect(choice(page, 'System')).toBeChecked();
         await choice(page, 'Dark').check();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-        // The theme script cannot know the choice, and redraws the system's when it changes.
+        // The theme script cannot know the choice, and redraws the system's when it changes. A
+        // listener added now hears the change after the page's own, so once it has heard it every
+        // listener has run.
+        await page.evaluate(() => {
+            const media = matchMedia('(prefers-color-scheme: dark)');
+            media.addEventListener('change', () => {
+                document.body.dataset['heard'] = media.matches ? 'dark' : 'light';
+            });
+        });
         await page.emulateMedia({ colorScheme: 'dark' });
+        await expect(page.locator('body')).toHaveAttribute('data-heard', 'dark');
+        // Back to light, where the theme script draws light over the choice.
         await page.emulateMedia({ colorScheme: 'light' });
+        await expect(page.locator('body')).toHaveAttribute('data-heard', 'light');
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
         await expect(choice(page, 'Dark')).toBeChecked();
     });
