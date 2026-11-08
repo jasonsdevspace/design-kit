@@ -163,14 +163,14 @@ body > .dk-strip .dk-strip-tools {
 
 /*
  * The landing page's opening: what the kit is, its two links and its install command, beside the
- * kit's controls in light and in dark on a wide screen, and above them on a phone, where the
- * controls still start inside the first screen.
+ * kit's controls in light and in dark on a wide screen. On a phone the controls come after the
+ * links and before the install command, so they start inside the first screen whatever font
+ * the phone draws in.
  */
 .site-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--dk-space-6);
-    align-items: center;
+    gap: var(--dk-space-5);
 }
 
 .site-hero-text > :first-child {
@@ -259,7 +259,7 @@ body > .dk-strip .dk-strip-tools {
     display: grid;
     gap: var(--dk-space-4);
     align-content: start;
-    padding: var(--dk-space-5);
+    padding: var(--dk-space-4) var(--dk-space-5);
     background: var(--dk-bg);
     color: var(--dk-fg);
 }
@@ -299,6 +299,25 @@ body > .dk-strip .dk-strip-tools {
 @media (min-width: 64rem) {
     .site-hero {
         grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-areas:
+            'text demo'
+            'install demo';
+        column-gap: var(--dk-space-6);
+        align-items: start;
+    }
+
+    .site-hero-text {
+        grid-area: text;
+        align-self: end;
+    }
+
+    .site-hero-demo {
+        grid-area: demo;
+        align-self: center;
+    }
+
+    .site-install {
+        grid-area: install;
     }
 
     .site-hero-panels {

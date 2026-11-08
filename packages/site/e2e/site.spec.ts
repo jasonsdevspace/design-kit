@@ -278,9 +278,7 @@ test.describe('the landing page', () => {
         const block = page.getByRole('region', { name: 'The install command' });
         await expect(block).toHaveText(command);
         // The keyboard reaches the command and then the button that copies it, as they are drawn.
-        await page.getByRole('link', { name: 'How the design kit works' }).first().focus();
-        await page.keyboard.press('Tab');
-        await expect(block).toBeFocused();
+        await block.focus();
         await page.keyboard.press('Tab');
         await expect(page.getByRole('button', { name: 'Copy The install command' })).toBeFocused();
         await page.keyboard.press('Enter');

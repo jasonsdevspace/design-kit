@@ -379,7 +379,6 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                         How the design kit works
                     </a>
                 </p>
-                <Install version={build.version} />
             </div>
             <figure className="site-hero-demo">
                 <div className="site-hero-panels" inert>
@@ -391,6 +390,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     dark. Try them live under <a href={CONTROLS_PAGE}>Controls</a>.
                 </figcaption>
             </figure>
+            <Install version={build.version} />
         </div>
         <section>
             <h2 id="in-the-kit">What is in the kit</h2>
