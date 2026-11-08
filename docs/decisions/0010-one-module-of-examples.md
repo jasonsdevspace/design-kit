@@ -50,7 +50,10 @@ of the page chrome and of an explainer's pieces the same way. The chrome's state
 explainer's layout are marked as pictures, which the site draws inert in both themes, since a live
 copy would give a page a second portfolio navigation or a second h1. The README's blocks for the
 steps, the panel, the table and the code block are drawn from it, so the README and the site show
-one markup.
+one markup. Each state a component draws also holds the React a page writes for it, which the site
+shows beside the state's markup. `examples/format.ts` lays out markup as the repository's formatter
+lays out HTML, for the README's blocks and the site's, and imports nothing of the kit's, so the site
+lays out what the version it pins draws.
 
 `examples/palette.ts` holds the color roles, each pairing the palette is meant for at its ratio,
 and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the
@@ -86,7 +89,10 @@ The paths are in `packages/design-kit`.
   return, and refuses a marker that names no example.
 - `examples/states.test.tsx` draws each state of the controls, the chrome and an explainer's pieces
   from the sources and finds the attribute printed under it, whole, finds each copy's ids its own,
-  and finds `states.tsx` and `pieces.tsx` importing nothing of the kit but its types.
+  and finds `states.tsx` and `pieces.tsx` importing nothing of the kit but its types. It reads the
+  React each state shows with TypeScript's parser, builds it with the kit's components without
+  running it as code, and finds it drawing the state's own markup, laid out as the repository lays
+  out code.
 - `e2e/controls.spec.tsx` draws the examples' states of every control, `e2e/explainer.spec.tsx`
   draws their steps, and `e2e/chrome.spec.tsx` names the repository they name.
 - `src/tokens.test.ts` measures every pairing in `examples/palette.ts` from the sources, in both

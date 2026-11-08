@@ -93,7 +93,9 @@ The paths are in `packages/site`.
   current page in its strip and footer, with a header that leads back to the site, every other
   page's strip and footer leading to it, an id on each of its section headings, and every link
   within the site leading to one of its pages and to the id it names, where it names one, outside
-  the inert copies.
+  the inert copies. It finds each live state's code showing the markup the copy beside it draws,
+  React for each state a component draws and none where none does, the code opening with no script,
+  and no page widened with every block of code open, at any width or at twice the text size.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.

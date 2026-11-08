@@ -548,3 +548,106 @@ test.describe('the theme switch', () => {
         expect(moved.slice(half)).toEqual(moved.slice(0, half));
     });
 });
+
+test.describe('the code of each state', () => {
+    test("shows each live state's markup as the copy beside it draws it", async ({ page }) => {
+        for (const path of ['/design-kit/controls/', '/design-kit/explainer-pieces/']) {
+            await page.goto(path);
+            const differ = await page.evaluate(() => {
+                /**
+                 * Markup as the parser reads it, with the spaces beside tags dropped, which the
+                 * layout adds and takes away, as the README's blocks are laid out.
+                 */
+                const read = (html: string) => {
+                    const template = document.createElement('template');
+                    template.innerHTML = html;
+                    return template.innerHTML
+                        .replaceAll(/\s*(<[^>]+>)\s*/g, '$1')
+                        .replaceAll(/\s+/g, ' ');
+                };
+                return [...document.querySelectorAll('.site-state')].flatMap((state) => {
+                    const live = state.querySelector('.site-copy:not([inert])');
+                    const shown = state.querySelector('.site-code pre.dk-code')?.textContent;
+                    if (!live || shown === undefined) return [];
+                    return read(shown) === read(live.innerHTML)
+                        ? []
+                        : [state.querySelector('.site-state-name')?.textContent ?? ''];
+                });
+            });
+            expect(differ, path).toEqual([]);
+        }
+    });
+
+    test('shows React for each state a component draws, and markup alone for the rest', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const states = await page.locator('.site-state').count();
+        await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(states);
+        await page.goto('/design-kit/explainer-pieces/');
+        await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);
+    });
+
+    test('never widens the page with every block open, at any width or text size', async ({
+        page,
+    }) => {
+        for (const path of PAGES) {
+            for (const width of WIDTHS) {
+                for (const scale of [1, 2]) {
+                    await page.setViewportSize({ width, height: 900 });
+                    await textSize(page, scale);
+                    await page.goto(path);
+                    await page.evaluate(() => {
+                        for (const code of document.querySelectorAll('details')) code.open = true;
+                    });
+                    expect(
+                        await sideways(page),
+                        `${path} ${String(width)} at ${String(scale)}`
+                    ).toBe(0);
+                }
+            }
+        }
+    });
+
+    test('copies a block to the clipboard, and says so', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const block = page.getByRole('region', { name: 'Markup, An action' });
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.getByRole('button', { name: 'Copied Markup, An action' })).toBeVisible();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            await block.textContent()
+        );
+    });
+
+    test('selects the block where the browser refuses the clipboard, and says how to copy it', async ({
+        page,
+    }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'clipboard', { value: undefined });
+        });
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const block = page.getByRole('region', { name: 'Markup, An action' });
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toContainText('Selected.');
+        expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
+            await block.textContent()
+        );
+    });
+
+    test.describe(() => {
+        test.use({ javaScriptEnabled: false });
+
+        test('still opens and shows the code with no script, with no copy button', async ({
+            page,
+        }) => {
+            await page.goto('/design-kit/controls/');
+            await page.locator('summary', { hasText: 'The code, An action' }).click();
+            await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
+            await expect(page.locator('.site-copy-button')).toHaveCount(0);
+        });
+    });
+});

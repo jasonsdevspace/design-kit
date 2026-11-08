@@ -1,11 +1,11 @@
 import { THEME_KEY, THEMES } from 'design-kit-release/theme';
 
 /*
- * The site's own script, which the kit does not ship: the theme switch in the strip. The theme
- * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
- * choice, and saves and draws a new one. It saves under the portfolio's key and with the
- * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
- * other way around.
+ * The site's own script, which the kit does not ship: the theme switch in the strip, and a copy
+ * button beside each block of code. The theme script the kit puts inline has already drawn the
+ * theme before this runs, so the switch shows the choice, and saves and draws a new one. It saves
+ * under the portfolio's key and with the portfolio's values, so a choice made here holds on every
+ * page of jasonsdevspace.com, and the other way around.
  */
 
 /** The portfolio's choices, System and the kit's two themes, and the word each is shown by. */
@@ -114,9 +114,9 @@ const themeSwitch = () => {
 
 /**
  * Puts the switch in the room the page's own strip kept for it, not in a picture of a strip, and
- * names the strip's section Settings, so it becomes the landmark the kit makes of switches that have
- * come and the switch sits inside a landmark. It is not named Theme, as the group is, so a screen
- * reader never hears the name twice.
+ * names the strip's section Settings, so it becomes the landmark the kit makes of switches that
+ * have come and the switch sits inside a landmark. It is not named Theme, as the group is, so a
+ * screen reader never hears the name twice.
  */
 const room = document.querySelector('body > .dk-strip .dk-strip-room');
 const section = room?.parentElement;
@@ -151,4 +151,67 @@ if (room && section) {
             draw(chosen);
         });
     }
+}
+
+/*
+ * A copy button beside the title of each block of code. Where the browser will not let the page
+ * write to the clipboard, the button selects the block's text instead, so a reader copies it with
+ * their own keys. One status line, out of sight, tells a screen reader which happened, and the
+ * button says it for a moment too.
+ */
+const status = document.createElement('p');
+status.className = 'dk-visually-hidden';
+status.setAttribute('role', 'status');
+document.body.append(status);
+
+/** How long a button says what it did before it says Copy again, in milliseconds. */
+const SAID_FOR = 2000;
+
+/** Selects all of a block's text, for a reader to copy with their own keys. */
+const select = (block: HTMLElement) => {
+    const range = document.createRange();
+    range.selectNodeContents(block);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+};
+
+/** Writes text to the clipboard, or says it could not, where the browser refuses or has none. */
+const copied = async (text: string): Promise<boolean> => {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+for (const head of document.querySelectorAll<HTMLElement>('.site-code-head')) {
+    const title = head.querySelector('.site-code-name');
+    const block = head.nextElementSibling;
+    if (!title || !(block instanceof HTMLElement) || !block.matches('pre.dk-code')) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'dk-button site-copy-button';
+    const word = document.createElement('span');
+    word.textContent = 'Copy';
+    const what = document.createElement('span');
+    what.className = 'dk-visually-hidden';
+    what.textContent = ` ${title.textContent}`;
+    button.append(word, what);
+    let timer = 0;
+    button.addEventListener('click', () => {
+        void copied(block.textContent).then((done) => {
+            if (!done) select(block);
+            word.textContent = done ? 'Copied' : 'Selected';
+            status.textContent = done
+                ? 'Copied.'
+                : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
+            window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                word.textContent = 'Copy';
+            }, SAID_FOR);
+        });
+    });
+    head.append(button);
 }

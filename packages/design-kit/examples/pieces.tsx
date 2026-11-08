@@ -20,11 +20,17 @@ export const CHROME: readonly Control[] = [
             {
                 name: "The strip on a demo's page",
                 attribute: 'class="dk-strip"',
+                react: `<PortfolioStrip about="./about/" source="https://github.com/jasonsdevspace/example" />`,
                 draw: ({ PortfolioStrip }) => <PortfolioStrip about={ABOUT} source={SOURCE} />,
             },
             {
                 name: "The strip with a demo's switches",
                 attribute: 'aria-label="Demo"',
+                react: `<PortfolioStrip
+    about="./about/"
+    source="https://github.com/jasonsdevspace/example"
+    tools={<button type="button">Tour</button>}
+/>`,
                 draw: ({ PortfolioStrip }) => (
                     <PortfolioStrip
                         about={ABOUT}
@@ -36,6 +42,7 @@ export const CHROME: readonly Control[] = [
             {
                 name: 'The strip while the switches are on their way',
                 attribute: 'class="dk-strip-room"',
+                react: `<PortfolioStrip about="./about/" source="https://github.com/jasonsdevspace/example" toolsWaiting />`,
                 draw: ({ PortfolioStrip }) => (
                     <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
                 ),
@@ -43,6 +50,11 @@ export const CHROME: readonly Control[] = [
             {
                 name: "The strip on a demo's explainer",
                 attribute: 'aria-current="page"',
+                react: `<PortfolioStrip
+    about="./about/"
+    source="https://github.com/jasonsdevspace/example"
+    current="about"
+/>`,
                 draw: ({ PortfolioStrip }) => (
                     <PortfolioStrip about={ABOUT} source={SOURCE} current="about" />
                 ),
@@ -55,14 +67,23 @@ export const CHROME: readonly Control[] = [
         states: [
             {
                 name: "The footer on a demo's page",
+                prose: true,
                 attribute: 'class="dk-footer"',
+                react: `<DemoFooter name="Example" about="./about/" source="https://github.com/jasonsdevspace/example" />`,
                 draw: ({ DemoFooter }) => (
                     <DemoFooter name="Example" about={ABOUT} source={SOURCE} />
                 ),
             },
             {
                 name: "The footer on a demo's explainer",
+                prose: true,
                 attribute: 'aria-current="page"',
+                react: `<DemoFooter
+    name="Example"
+    about="./about/"
+    source="https://github.com/jasonsdevspace/example"
+    current="about"
+/>`,
                 draw: ({ DemoFooter }) => (
                     <DemoFooter name="Example" about={ABOUT} source={SOURCE} current="about" />
                 ),
