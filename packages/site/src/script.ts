@@ -184,10 +184,11 @@ if (room && section) {
 }
 
 /*
- * A copy button beside the title of each block of code. Where the browser will not let the page
- * write to the clipboard, the button selects the block's text instead, so a reader copies it with
- * their own keys or their device's copy command. One status line, out of sight, tells a screen
- * reader which happened, and the button says it for a moment too.
+ * One copy button for each state's code, beside the title of its block, or beside the tabs where
+ * the state has Markup and React. It copies the block its tab shows. Where the browser will not
+ * let the page write to the clipboard, the button selects the block's text instead, so a reader
+ * copies it with their own keys or their device's copy command. One status line, out of sight,
+ * tells a screen reader which happened, and the button says it for a moment too.
  */
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
@@ -211,8 +212,8 @@ const copied = async (text: string): Promise<boolean> => {
     }
 };
 
-/** The code blocks on the page, each with the head its copy button goes in. */
-const heads = document.querySelectorAll<HTMLElement>('.site-code-head');
+/** Each state's code on the page, its blocks one panel each. */
+const codes = document.querySelectorAll<HTMLElement>('.site-code');
 
 /**
  * The status line, in the main content from the start on a page with code, since a screen reader
@@ -220,7 +221,7 @@ const heads = document.querySelectorAll<HTMLElement>('.site-code-head');
  * the message has been shown, on one timer, so a second copy is heard too and one message never
  * empties the next.
  */
-const status = heads.length === 0 ? undefined : document.createElement('p');
+const status = codes.length === 0 ? undefined : document.createElement('p');
 if (status) {
     status.className = 'dk-visually-hidden';
     status.setAttribute('role', 'status');
@@ -248,10 +249,28 @@ const howToCopy = () =>
         ? "Selected. Copy it with your device's copy command."
         : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
 
-for (const head of heads) {
-    const title = head.querySelector('.site-code-name');
-    const block = head.nextElementSibling;
-    if (!title || !(block instanceof HTMLElement) || !block.matches('pre.dk-code')) continue;
+/** A block of code in a state's panel: its head, its word, its whole title and the block. */
+interface Block {
+    readonly panel: HTMLElement;
+    readonly head: HTMLElement;
+    readonly word: string;
+    readonly title: string;
+    readonly block: HTMLElement;
+}
+
+/** The blocks of one state's code, in the order the page wrote them. */
+const blocksOf = (code: HTMLElement): Block[] =>
+    [...code.querySelectorAll<HTMLElement>(':scope > .site-code-panel')].flatMap((panel) => {
+        const head = panel.querySelector<HTMLElement>('.site-code-head');
+        const title = panel.querySelector('.site-code-name');
+        const block = panel.querySelector<HTMLElement>('pre.dk-code');
+        if (!head || !title || !block) return [];
+        const word = panel.querySelector('.dk-code-title')?.textContent ?? '';
+        return [{ panel, head, word, title: title.textContent, block }];
+    });
+
+/** The copy button for a state's code, copying whichever block `shown` gives when pressed. */
+const copyButton = (shown: () => Block) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'dk-button site-copy-button';
@@ -259,10 +278,16 @@ for (const head of heads) {
     word.textContent = 'Copy';
     const what = document.createElement('span');
     what.className = 'dk-visually-hidden';
-    what.textContent = ` ${title.textContent}`;
     button.append(word, what);
     let timer = 0;
+    /** Names the button for the block it copies now, and has it say Copy again. */
+    const rename = () => {
+        what.textContent = ` ${shown().title}`;
+        window.clearTimeout(timer);
+        word.textContent = 'Copy';
+    };
     button.addEventListener('click', () => {
+        const { block } = shown();
         void copied(block.textContent).then((done) => {
             if (!done) select(block);
             word.textContent = done ? 'Copied' : 'Selected';
@@ -273,7 +298,97 @@ for (const head of heads) {
             }, SAID_FOR);
         });
     });
-    head.append(button);
+    rename();
+    return { button, rename };
+};
+
+/**
+ * Makes a state's blocks tabs, as the tabs pattern has them: one tab in the tab order, the arrow
+ * keys moving the choice and the focus around the row, Home and End to its ends, and a tab chosen
+ * as it is focused. The tabs are named for the state, as the summary is, and each block's own head
+ * is hidden, since its tab names it. With no script the blocks stay one above the other.
+ */
+const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: Block) => void) => {
+    const list = document.createElement('div');
+    list.setAttribute('role', 'tablist');
+    list.setAttribute(
+        'aria-label',
+        code.querySelector('summary .dk-visually-hidden')?.textContent ?? 'The code'
+    );
+    const tabs = blocks.map((block) => {
+        const id = block.block.getAttribute('aria-labelledby') ?? '';
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'site-code-tab';
+        tab.id = `${id}-tab`;
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', `${id}-panel`);
+        tab.textContent = block.word;
+        block.panel.id = `${id}-panel`;
+        block.panel.setAttribute('role', 'tabpanel');
+        block.panel.setAttribute('aria-labelledby', tab.id);
+        block.head.hidden = true;
+        return tab;
+    });
+    const show = (index: number, focus: boolean) => {
+        blocks.forEach((block, at) => {
+            const chosen = at === index;
+            const tab = tabs[at];
+            if (!tab) return;
+            tab.setAttribute('aria-selected', String(chosen));
+            tab.tabIndex = chosen ? 0 : -1;
+            block.panel.hidden = !chosen;
+            if (chosen) {
+                showing(block);
+                if (focus) tab.focus();
+            }
+        });
+    };
+    tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            show(index, false);
+        });
+    });
+    list.addEventListener('keydown', (event) => {
+        const at = tabs.findIndex((tab) => tab === document.activeElement);
+        if (at < 0) return;
+        const last = tabs.length - 1;
+        const moves: Partial<Record<string, number>> = {
+            ArrowRight: at === last ? 0 : at + 1,
+            ArrowLeft: at === 0 ? last : at - 1,
+            Home: 0,
+            End: last,
+        };
+        const to = moves[event.key];
+        if (to === undefined) return;
+        event.preventDefault();
+        show(to, true);
+    });
+    list.append(...tabs);
+    show(0, false);
+    return list;
+};
+
+for (const code of codes) {
+    const blocks = blocksOf(code);
+    const [first] = blocks;
+    if (!first) continue;
+    let shown = first;
+    const { button, rename } = copyButton(() => shown);
+    if (blocks.length === 1) {
+        first.head.append(button);
+        continue;
+    }
+    const bar = document.createElement('div');
+    bar.className = 'site-code-bar';
+    bar.append(
+        tabsFor(code, blocks, (block) => {
+            shown = block;
+            rename();
+        }),
+        button
+    );
+    code.querySelector(':scope > summary')?.after(bar);
 }
 
 /*
@@ -316,7 +431,7 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
  */
 const previews = [
     ...document.querySelectorAll<HTMLElement>(
-        'main .site-state:not(.site-state-pictured) > .site-other'
+        'main .site-state:not(.site-state-pictured) .site-other'
     ),
 ];
 if (previews.length > 0) {

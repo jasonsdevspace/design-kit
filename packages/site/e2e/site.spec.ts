@@ -176,7 +176,8 @@ for (const path of PAGES) {
         await page.goto(path);
         const missing = await page.evaluate(() =>
             [...document.querySelectorAll('.site-state')].flatMap((state) => {
-                const attribute = state.querySelector('.site-state-name code')?.textContent ?? '';
+                const attribute =
+                    state.querySelector('.site-state-attribute code')?.textContent ?? '';
                 const live = state.querySelector('.site-copy:not(.site-other)');
                 return live?.querySelector(`[${attribute}]`) ? [] : [attribute];
             })
@@ -319,7 +320,9 @@ test.describe('the controls page', () => {
         await page.goto('/design-kit/controls/');
         const states = await page.locator('.site-state').count();
         expect(states).toBeGreaterThan(0);
-        await expect(page.locator('.site-state > .site-copy:not([inert])')).toHaveCount(states);
+        await expect(page.locator('.site-state-copies > .site-copy:not([inert])')).toHaveCount(
+            states
+        );
     });
 });
 
@@ -992,6 +995,7 @@ test.describe('the code of each state', () => {
                     }).observe(status, { childList: true, characterData: true, subtree: true });
                 })
         );
+        await page.getByRole('tab', { name: 'React' }).first().click();
         await page.getByRole('button', { name: 'Copy React, An action' }).click();
         expect(await heard).toEqual(['', 'Copied.']);
     });
@@ -1025,6 +1029,167 @@ test.describe('the code of each state', () => {
             await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
             await expect(page.locator('.site-copy-button')).toHaveCount(0);
         });
+
+        test('shows Markup and React one above the other with no script, and no tabs', async ({
+            page,
+        }) => {
+            await page.goto('/design-kit/controls/');
+            await page.locator('summary', { hasText: 'The code, An action' }).click();
+            await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
+            await expect(page.getByRole('region', { name: 'React, An action' })).toBeVisible();
+            await expect(page.getByRole('tablist')).toHaveCount(0);
+        });
+    });
+});
+
+test.describe('the state cards', () => {
+    /** The pages that draw states, each in its own card. */
+    const STATED = [
+        '/design-kit/controls/',
+        '/design-kit/page-chrome/',
+        '/design-kit/explainer-pieces/',
+    ];
+
+    test('draws each state as one card: its name and attribute, its copies, then its code', async ({
+        page,
+    }) => {
+        for (const path of STATED) {
+            await page.goto(path);
+            const wrong = await page.evaluate(() =>
+                [...document.querySelectorAll<HTMLElement>('.site-state')].flatMap((card) => {
+                    const name = card.querySelector('h3');
+                    const attribute = card.querySelector('.site-state-attribute code');
+                    const copies = card.querySelector('.site-copy');
+                    const code = card.querySelector('details.site-code');
+                    const style = getComputedStyle(card);
+                    const before = (a: Element | null, b: Element | null) =>
+                        a !== null &&
+                        b !== null &&
+                        (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+                    const good =
+                        before(name, attribute) &&
+                        before(attribute, copies) &&
+                        before(copies, code) &&
+                        parseFloat(style.borderTopWidth) > 0 &&
+                        parseFloat(style.borderTopLeftRadius) > 0;
+                    return good ? [] : [name?.textContent ?? 'a card with no name'];
+                })
+            );
+            expect(wrong, path).toEqual([]);
+        }
+    });
+
+    test('names each card by a heading under its section, which its live copy is named by', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const heading = page.getByRole('heading', { level: 3, name: 'An action', exact: true });
+        await expect(heading).toBeVisible();
+        await expect(page.getByRole('group', { name: 'An action', exact: true })).toHaveCount(1);
+    });
+
+    test('shows Markup and React as tabs, with one copy button for the tab shown', async ({
+        page,
+        context,
+    }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const card = page.locator('.site-state', {
+            has: page.getByRole('heading', { name: 'An action', exact: true }),
+        });
+        const tabs = card.getByRole('tablist', { name: 'The code, An action' });
+        const markup = tabs.getByRole('tab', { name: 'Markup' });
+        const react = tabs.getByRole('tab', { name: 'React' });
+        await expect(markup).toHaveAttribute('aria-selected', 'true');
+        await expect(react).toHaveAttribute('aria-selected', 'false');
+        await expect(card.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
+        await expect(card.getByRole('region', { name: 'React, An action' })).toBeHidden();
+        await expect(card.locator('.site-copy-button')).toHaveCount(1);
+        // The tab names its block, so the block's own title is not drawn again under it.
+        await expect(card.locator('.dk-code-title')).toHaveCount(2);
+        expect(
+            await card
+                .locator('.dk-code-title')
+                .evaluateAll((titles) =>
+                    titles.filter((title) => title.getBoundingClientRect().height > 0)
+                )
+        ).toHaveLength(0);
+        // The tabs pattern: one tab in the tab order, the arrows move the choice and the focus.
+        expect(
+            await tabs.getByRole('tab').evaluateAll((all) => all.map((tab) => tab.tabIndex))
+        ).toEqual([0, -1]);
+        await markup.focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(react).toBeFocused();
+        await expect(react).toHaveAttribute('aria-selected', 'true');
+        await expect(card.getByRole('region', { name: 'React, An action' })).toBeVisible();
+        await expect(card.getByRole('region', { name: 'Markup, An action' })).toBeHidden();
+        await expect(card.getByRole('tabpanel')).toHaveAccessibleName('React');
+        await page.keyboard.press('ArrowRight');
+        await expect(markup).toBeFocused();
+        await page.keyboard.press('End');
+        await expect(react).toBeFocused();
+        await page.keyboard.press('Home');
+        await expect(markup).toBeFocused();
+        await page.keyboard.press('ArrowLeft');
+        await expect(react).toHaveAttribute('aria-selected', 'true');
+        // The one button copies the block its tab shows.
+        await card.getByRole('button', { name: 'Copy React, An action' }).click();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            await card.getByRole('region', { name: 'React, An action' }).textContent()
+        );
+    });
+
+    test('gives a state with markup alone its block and copy button, with no tabs', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/explainer-pieces/');
+        const card = page.locator('.site-state').first();
+        await card.locator('summary').click();
+        await expect(card.getByRole('tablist')).toHaveCount(0);
+        await expect(card.locator('pre.dk-code')).toBeVisible();
+        await expect(card.locator('.site-copy-button')).toHaveCount(1);
+    });
+
+    test('lists the sections of a page beside it on a wide screen, and leaves it out on a phone', async ({
+        page,
+    }) => {
+        for (const path of STATED) {
+            await page.setViewportSize({ width: 1280, height: 900 });
+            await page.goto(path);
+            const list = page.getByRole('navigation', { name: 'On this page' });
+            await expect(list, path).toBeVisible();
+            const targets = await list
+                .getByRole('link')
+                .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+            const sections = await page
+                .locator('main > section > h2')
+                .evaluateAll((headings) => headings.map((heading) => `#${heading.id}`));
+            expect(targets, path).toEqual(sections);
+            // Beside the content, not above it.
+            const [nav, main] = await Promise.all(
+                [list, page.locator('main > h1')].map((each) => each.boundingBox())
+            );
+            expect(nav && main && nav.x + nav.width <= main.x, path).toBe(true);
+            const short = await list
+                .getByRole('link')
+                .evaluateAll(
+                    (links) =>
+                        links.filter((link) => link.getBoundingClientRect().height < 24).length
+                );
+            expect(short, path).toBe(0);
+            for (const width of [390, 768]) {
+                await page.setViewportSize({ width, height: 900 });
+                await expect(list, `${path} at ${String(width)}`).toBeHidden();
+            }
+        }
+        for (const path of [BASE, '/design-kit/tokens/']) {
+            await page.goto(path);
+            await expect(page.getByRole('navigation', { name: 'On this page' }), path).toHaveCount(
+                0
+            );
+        }
     });
 });
 
@@ -1037,9 +1202,18 @@ test.describe('how each state is shown', () => {
             if (!main) return [];
             const style = getComputedStyle(main);
             const right = main.getBoundingClientRect().right - parseFloat(style.paddingRight);
-            return [...document.querySelectorAll('.site-state')].map((state) => {
-                const copies = [...state.querySelectorAll('.site-copy')];
-                return Math.round(right - (copies.at(-1)?.getBoundingClientRect().right ?? 0));
+            // Each card runs to the column's edge, and its last copy to the card's padding.
+            return [...document.querySelectorAll('.site-state')].flatMap((state) => {
+                const room = state.querySelector('.site-state-copies');
+                const last = [...state.querySelectorAll('.site-copy')].at(-1);
+                if (!room || !last) return [Infinity];
+                const inner =
+                    room.getBoundingClientRect().right -
+                    parseFloat(getComputedStyle(room).paddingRight);
+                return [
+                    Math.round(right - state.getBoundingClientRect().right),
+                    Math.round(inner - last.getBoundingClientRect().right),
+                ];
             });
         });
         expect(gaps.length).toBeGreaterThan(0);
@@ -1231,15 +1405,22 @@ test.describe('how each state is shown', () => {
                     )
                     .map(
                         (element) =>
-                            ['site-copy-button', 'site-preview-switch', 'dk-code'].find((name) =>
-                                element.classList.contains(name)
-                            ) ?? element.tagName.toLowerCase()
+                            [
+                                'site-copy-button',
+                                'site-code-tab',
+                                'site-preview-switch',
+                                'dk-code',
+                            ].find((name) => element.classList.contains(name)) ??
+                            element.tagName.toLowerCase()
                     )
             );
         const before = await reached();
-        // Only the code's disclosures, frames and copy buttons, and the tests' links.
+        // Only the code's disclosures, tabs, frames and copy buttons, and the tests' links.
         expect(
-            before.filter((name) => !['summary', 'dk-code', 'site-copy-button', 'a'].includes(name))
+            before.filter(
+                (name) =>
+                    !['summary', 'site-code-tab', 'dk-code', 'site-copy-button', 'a'].includes(name)
+            )
         ).toEqual([]);
         const box = await page
             .locator('.site-state')
@@ -1305,7 +1486,7 @@ test.describe('how each state is shown', () => {
             const found = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-theme label, .site-header a'
+                        '.site-code > summary, .site-code [role="tab"], .site-theme label, .site-header a'
                     ),
                 ].map((element) => ({
                     what: element.textContent.trim().slice(0, 30),
@@ -1349,7 +1530,9 @@ test.describe('how each state is shown', () => {
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         // Found by its place rather than its name, which changes with its word.
         const button = page
-            .locator('.site-state', { hasText: 'An action, drawn by' })
+            .locator('.site-state', {
+                has: page.getByRole('heading', { name: 'An action', exact: true }),
+            })
             .locator('.site-copy-button')
             .first();
         await expect(button).toHaveAccessibleName('Copy Markup, An action');
