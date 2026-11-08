@@ -61,9 +61,10 @@ another, which the browser tests and the Lighthouse audit set to the local previ
 - The origin is jasonsdevspace.com, which the portfolio, every demo and any other repository the
   account serves from GitHub Pages share. Allowing the whole origin, `'self'`, would let a script
   file of theirs run on the site if markup put it there. Naming the site's own folder allows only
-  the files the site's build writes. It cannot stop a page on the same origin from opening the site
-  and reaching its page and its storage directly, which a browser allows any page of one origin
-  whatever the framed page's policy, so a compromised build of a demo is as bad as one of the site.
+  the files the site's build writes. The policy cannot stop a page on the same origin from opening
+  the site in a frame or a window and reaching into it, which a browser allows any page of one
+  origin whatever the other's policy, and such a page shares the site's storage anyway. A
+  compromised build of the portfolio or a demo is as bad as one of the site.
 - The deployed policy is written for one origin. Serving the build from any other, such as a preview
   opened without `SITE_ORIGIN`, refuses the switch's script, and the page draws as it does when its
   own script fails to load. The build refuses a `SITE_ORIGIN` that is not an origin alone.

@@ -117,8 +117,8 @@ export const DemoFooter = ({
     /** The link that is the page the footer sits on, marked as the current page. */
     readonly current?: ChromePage;
     /**
-     * The demo's license, the LICENSE file on the repository's main branch unless given, written by
-     * the demo's author.
+     * The demo's license, written by the demo's author, or `LICENSE` on the main branch of `source`
+     * unless given.
      */
     readonly license?: string;
     /** What the license is called, as the footer's sentence names it. */
