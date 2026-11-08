@@ -255,16 +255,37 @@ test.describe('the landing page', () => {
         );
     });
 
-    test('gives the install command with a copy button', async ({ page, context }) => {
+    test('gives the install command for the version it draws, with a copy button after it', async ({
+        page,
+        context,
+    }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.goto(BASE);
-        const block = page.getByRole('region', { name: 'the install command' });
-        await expect(block).toHaveText('npm install @jasonsdevspace/design-kit');
-        await page.getByRole('button', { name: 'Copy the install command' }).click();
+        const version = await page.locator('.site-eyebrow a').evaluate((link) => {
+            const text = link.textContent;
+            return {
+                text,
+                href: link.getAttribute('href') ?? '',
+                shown: link instanceof HTMLElement ? link.innerText : '',
+            };
+        });
+        const pinned = /Version (\S+) on npm/.exec(version.text)?.[1] ?? '';
+        expect(pinned).toMatch(/^\d+\.\d+\.\d+/);
+        // The version reads as npm writes it, and its link opens that version.
+        expect(version.shown).toContain(pinned);
+        expect(version.href).toMatch(new RegExp(`/v/${pinned.replaceAll('.', '\\.')}$`));
+        const command = `npm install @jasonsdevspace/design-kit@${pinned}`;
+        const block = page.getByRole('region', { name: 'The install command' });
+        await expect(block).toHaveText(command);
+        // The keyboard reaches the command and then the button that copies it, as they are drawn.
+        await page.getByRole('link', { name: 'How the design kit works' }).first().focus();
+        await page.keyboard.press('Tab');
+        await expect(block).toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(page.getByRole('button', { name: 'Copy The install command' })).toBeFocused();
+        await page.keyboard.press('Enter');
         await expect(page.getByRole('status')).toHaveText('Copied.');
-        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-            'npm install @jasonsdevspace/design-kit'
-        );
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(command);
     });
 
     test('selects the install command where the browser has no clipboard', async ({ page }) => {
@@ -272,9 +293,9 @@ test.describe('the landing page', () => {
             Object.defineProperty(navigator, 'clipboard', { value: undefined });
         });
         await page.goto(BASE);
-        await page.getByRole('button', { name: 'Copy the install command' }).click();
+        await page.getByRole('button', { name: 'Copy The install command' }).click();
         expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
-            'npm install @jasonsdevspace/design-kit'
+            await page.getByRole('region', { name: 'The install command' }).textContent()
         );
     });
 
@@ -283,6 +304,12 @@ test.describe('the landing page', () => {
         await page.goto(BASE);
         const demo = page.getByRole('figure', { name: /in light and in dark/ });
         await expect(demo).toBeVisible();
+        // It says it is a picture, and where the controls can be tried.
+        await expect(demo.locator('figcaption')).toBeVisible();
+        await expect(demo.getByRole('link', { name: 'Controls' })).toHaveAttribute(
+            'href',
+            `${BASE}controls/`
+        );
         const panels = await demo.locator('.site-hero-panel').evaluateAll((all) =>
             all.map((panel) => ({
                 scheme: getComputedStyle(panel).colorScheme,
@@ -301,13 +328,21 @@ test.describe('the landing page', () => {
         expect(heading && drawn && heading.x + heading.width <= drawn.x).toBe(true);
     });
 
-    test('shows the controls above the fold on a phone', async ({ page }) => {
+    test("shows the controls' buttons inside a phone's first screen, the field left out", async ({
+        page,
+    }) => {
         await page.setViewportSize({ width: 390, height: 844 });
         await page.goto(BASE);
-        const top = await page
-            .locator('.site-hero-demo')
-            .evaluate((demo) => demo.getBoundingClientRect().top);
-        expect(top).toBeLessThan(844);
+        const bottom = await page
+            .locator('.site-hero-panel')
+            .first()
+            .locator('.site-hero-buttons')
+            .evaluate((buttons) => buttons.getBoundingClientRect().bottom);
+        expect(bottom).toBeLessThan(844);
+        await expect(page.locator('.site-hero-field').first()).toBeHidden();
+        // Wider than a phone there is room for the field.
+        await page.setViewportSize({ width: 820, height: 1180 });
+        await expect(page.locator('.site-hero-field').first()).toBeVisible();
     });
 
     test('gives each page a card with a preview and its description', async ({ page }) => {

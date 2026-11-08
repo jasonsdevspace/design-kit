@@ -280,11 +280,13 @@ const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
  * own styles from the kit's tokens. The card's name and description say it in words, so a screen
  * reader passes the drawing by.
  */
-const PREVIEWS: Readonly<Record<string, ReactNode>> = {
+const PREVIEWS: Readonly<
+    Record<Exclude<Route['file'], 'index.html' | 'how-it-works/index.html'>, ReactNode>
+> = {
     'tokens/index.html': (
         <>
             <span className="site-preview-swatch site-preview-accent" />
-            <span className="site-preview-swatch site-preview-accent-dark" />
+            <span className="site-preview-swatch site-preview-highlight" />
             <span className="site-preview-swatch site-preview-success" />
             <span className="site-preview-swatch site-preview-danger" />
             <span className="site-preview-swatch site-preview-fg" />
@@ -310,11 +312,47 @@ const PREVIEWS: Readonly<Record<string, ReactNode>> = {
     ),
 };
 
+/**
+ * Whether a page has a card on the landing page: every page in the site's menu but the landing
+ * page itself, each of which has a drawing in PREVIEWS, which the type holds.
+ */
+const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
+    route.nav !== null && route.path !== BASE;
+
 /** A small mark for each thing the kit is built to, drawn in the accent beside its heading. */
 const RuleMark = ({ d }: { readonly d: string }) => (
     <svg className="site-rule-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d={d} />
     </svg>
+);
+
+/** The controls page, which the landing page leads to first. */
+const CONTROLS_PAGE = ROUTES.find(({ file }) => file === 'controls/index.html')?.path ?? BASE;
+
+/**
+ * The install command, the block first and its copy button after it, as they are drawn, so the
+ * keyboard and a screen reader meet them in that order. It names the version the page draws, so
+ * what a reader installs is what they see.
+ */
+const Install = ({ version }: { readonly version: string }) => (
+    <div className="site-install">
+        <div className="site-code-panel">
+            <pre
+                className="dk-code"
+                role="region"
+                aria-labelledby="install"
+                tabIndex={0}
+                translate="no"
+            >
+                <code>{`npm install @jasonsdevspace/design-kit@${version}`}</code>
+            </pre>
+            <div className="site-code-head">
+                <span className="dk-visually-hidden site-code-name" id="install">
+                    The install command
+                </span>
+            </div>
+        </div>
+    </div>
 );
 
 /**
@@ -326,7 +364,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <div className="site-hero">
             <div className="site-hero-text">
                 <p className="site-eyebrow">
-                    <a href={NPM}>Version {build.version} on npm</a>
+                    <a href={`${NPM}/v/${build.version}`}>Version {build.version} on npm</a>
                 </p>
                 <h1>One set of colors, type and controls for every demo</h1>
                 <p className="site-lead">
@@ -334,46 +372,39 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     fix to a button is made once. ShelfLens is built on it.
                 </p>
                 <p className="site-actions">
-                    <a className="dk-button dk-button-accent" href={`${BASE}controls/`}>
+                    <a className="dk-button dk-button-accent" href={CONTROLS_PAGE}>
                         See every control
                     </a>
                     <a className="dk-button" href={ABOUT}>
                         How the design kit works
                     </a>
                 </p>
-                <div className="site-install">
-                    <CodeBlock
-                        id="install"
-                        title="the install command"
-                        code="npm install @jasonsdevspace/design-kit"
-                    />
-                </div>
+                <Install version={build.version} />
             </div>
             <figure className="site-hero-demo">
-                <figcaption className="dk-visually-hidden">
-                    The kit&rsquo;s buttons, a field and a callout, drawn in light and in dark
-                </figcaption>
                 <div className="site-hero-panels" inert>
                     <HeroPanel theme="light" />
                     <HeroPanel theme="dark" />
                 </div>
+                <figcaption>
+                    A picture of the kit&rsquo;s buttons, a field and a callout, in light and in
+                    dark. Try them live under <a href={CONTROLS_PAGE}>Controls</a>.
+                </figcaption>
             </figure>
         </div>
         <section>
             <h2 id="in-the-kit">What is in the kit</h2>
             <p>Every piece is shown live in your theme, beside a preview in the other.</p>
             <ul className="site-pages" role="list">
-                {ROUTES.filter((route) => route.nav !== null && route.path !== BASE).map(
-                    (route) => (
-                        <li key={route.file}>
-                            <span className="site-page-preview" aria-hidden="true">
-                                {PREVIEWS[route.file]}
-                            </span>
-                            <a href={route.path}>{route.nav}</a>
-                            <p>{route.description}</p>
-                        </li>
-                    )
-                )}
+                {ROUTES.filter(isCarded).map((route) => (
+                    <li key={route.file}>
+                        <span className="site-page-preview" aria-hidden="true">
+                            {PREVIEWS[route.file]}
+                        </span>
+                        <a href={route.path}>{route.nav}</a>
+                        <p>{route.description}</p>
+                    </li>
+                ))}
             </ul>
         </section>
         <section>
