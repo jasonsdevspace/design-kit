@@ -844,6 +844,26 @@ test.describe('how each state is shown', () => {
         }
     });
 
+    test("gives the theme's radios the kit's pointer and accent", async ({ page }) => {
+        await page.goto('/design-kit/');
+        const radios = await page.locator('.site-theme input').evaluateAll((all) =>
+            all.map((radio) => {
+                const style = getComputedStyle(radio);
+                const accent = getComputedStyle(document.documentElement)
+                    .getPropertyValue('--dk-accent')
+                    .trim();
+                return {
+                    cursor: style.cursor,
+                    accented: style.accentColor !== 'auto' && accent !== '',
+                };
+            })
+        );
+        expect(radios.length).toBeGreaterThan(0);
+        expect(radios.filter(({ cursor, accented }) => cursor !== 'pointer' || !accented)).toEqual(
+            []
+        );
+    });
+
     test('keeps a copy button the same width whatever it says', async ({ page }) => {
         await page.addInitScript(() => {
             Object.defineProperty(navigator, 'clipboard', { value: undefined });
