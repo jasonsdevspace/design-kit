@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import type { IndexHtmlTransformHook } from 'vite';
 import { describe, expect, it } from 'vitest';
 
 import { themeScript } from './theme.js';
-import { THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } from './vite.js';
+import { browserFloor, THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } from './vite.js';
 
 /** The plugin's page transform, called as Vite calls it. */
 const transform = (html: string): string => {
@@ -45,5 +46,37 @@ describe('the theme script plugin', () => {
         );
         const hash = `'sha256-${createHash('sha256').update(inline).digest('base64')}'`;
         expect(themeScriptHash).toBe(hash);
+    });
+});
+
+describe('the browser floor', () => {
+    /** The floor as the README states it, each browser by the name and version it gives. */
+    const stated = () => {
+        const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+        const sentence = /sets the floor: (.+?)\.(?:\s|$)/s
+            .exec(readme)?.[1]
+            ?.replaceAll(/\s+/g, ' ');
+        if (sentence === undefined) throw new Error('the README states no browser floor');
+        const versions = (name: string) => {
+            const found = new RegExp(`${name}(?: and Edge)? (\\d+(?:\\.\\d+)?)`).exec(sentence);
+            if (!found?.[1]) throw new Error(`the README's floor names no version of ${name}`);
+            return found[1];
+        };
+        const chrome = versions('Chrome');
+        return [
+            `chrome${chrome}`,
+            `edge${chrome}`,
+            `firefox${versions('Firefox')}`,
+            `safari${versions('Safari')}`,
+        ];
+    };
+
+    it('is the floor the README states, as a build target Vite and esbuild read', () => {
+        expect(browserFloor).toEqual(stated());
+    });
+
+    it('cannot be changed by a page that takes it', () => {
+        expect(Array.isArray(browserFloor)).toBe(true);
+        expect(Object.isFrozen(browserFloor)).toBe(true);
     });
 });

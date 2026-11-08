@@ -80,8 +80,14 @@ for (const [name, values] of Object.entries(VALUE_EXPORTS)) {
 const { THEME_KEY, themeScript } = await import('@jasonsdevspace/design-kit/theme');
 assert.equal(THEME_KEY, 'theme', 'reads the key the portfolio saves under');
 assert.ok(themeScript.includes('data-theme'), 'the script sets the theme on the root');
-const { THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } =
+const { browserFloor, THEME_PLACEHOLDER, themeScriptHash, themeScriptPlugin } =
     await import('@jasonsdevspace/design-kit/vite');
+assert.ok(
+    Array.isArray(browserFloor) &&
+        Object.isFrozen(browserFloor) &&
+        browserFloor.includes('safari17.5'),
+    'the floor is a frozen build target'
+);
 const hook = themeScriptPlugin().transformIndexHtml;
 const page = hook.handler(`<head>${THEME_PLACEHOLDER}</head>`, {});
 assert.equal(page, `<head><script>${themeScript}</script></head>`, 'the plugin writes the script');
