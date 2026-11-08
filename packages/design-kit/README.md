@@ -73,10 +73,10 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   draw the chrome's markup, and `Button`, `InputField`, `SelectField` and `Callout`, which draw the
   markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
   `SelectFieldProps`, `CalloutProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`,
-  `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub
-  profile the chrome links to. It has no component for the explainer or the pieces in it, which a
-  page writes by hand. It takes React `^19.3.0` as an optional peer, which a page that writes the
-  markup itself never needs.
+  `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`: the portfolio and the GitHub profile, which the
+  chrome links to, and the portfolio's list of work, for a page that links to it. It has no
+  component for the explainer or the pieces in it, which a page writes by hand. It takes React
+  `^19.3.0` as an optional peer, which a page that writes the markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -117,8 +117,8 @@ does, one pixel clipped to nothing, so it draws nothing and takes no click where
 on the page. A box that is positioned holds it, and it shows at the top of that box, inset as it is
 at the top of a page, when a keyboard reaches it.
 
-The strip holds a navigation landmark named Portfolio, with links in this order: the author's other
-work, which names who made the demo, how it works and the source. It reads "More work by Jason
+The strip holds a navigation landmark named Portfolio, with links in this order: the author's name,
+which leads to the portfolio as the footer's does, how it works and the source. It reads "Jason
 Poteet", which fits a demo and the kit's own site alike. The strip on the demo's explainer marks the
 explainer's link with `aria-current="page"`. A demo with switches of its own puts them in a section
 after the links, named for them, and a demo with none leaves the section out.
@@ -128,7 +128,7 @@ after the links, named for them, and a demo with none leaves the section out.
 ```html
 <div class="dk-strip">
     <nav class="dk-strip-links" aria-label="Portfolio">
-        <a href="https://jasonsdevspace.com/#work">More work by Jason Poteet</a>
+        <a href="https://jasonsdevspace.com/">Jason Poteet</a>
         <a href="./about/">How it works</a>
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
@@ -151,7 +151,11 @@ switches come they take the room's place in the same section, and the section ta
 
 The room holds the height of one row of the kit's buttons or fields, beside the links on a wide
 screen and on a row of their own on a phone. Switches of another height, or more than fit on one
-row, still move what is below them when they come.
+row, still move what is below them when they come. On a wide screen the room has no width of its
+own, so a demo whose switches would make the strip wrap where the room did not names their width in
+`--dk-strip-tools`, in the strip's own text size, such as `:root { --dk-strip-tools: 20em; }`. The
+room and the switches then take that width, and the strip wraps before they come as it does after.
+On a phone the switches have a row of their own and the width is left aside.
 
 On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text, with its links
 1.5rem apart and the switches on the right. At 48rem wide or less the text steps down to the

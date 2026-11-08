@@ -81,13 +81,18 @@
 
     /*
      * The switches wrap where larger text leaves no room, and stand at least as tall as the links'
-     * row.
+     * row. A demo whose switches arrive after the page names their width in `--dk-strip-tools`, in
+     * the strip's own text size, so the room kept for them and the switches that fill it are one
+     * width, and a strip too narrow for the links and the switches wraps before they come as it
+     * does after. Without it, the section is as wide as what it holds.
      */
     .dk-strip-tools {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: flex-end;
         gap: var(--dk-space-3);
+        inline-size: var(--dk-strip-tools, auto);
         min-height: var(--dk-strip);
     }
 
@@ -150,6 +155,8 @@
 
         .dk-strip-tools {
             flex-basis: 100%;
+            justify-content: flex-start;
+            inline-size: auto;
             padding-block: 0 var(--dk-space-2);
         }
 

@@ -9,7 +9,6 @@ import {
     GITHUB_PROFILE_URL,
     InputField,
     PORTFOLIO_URL,
-    PORTFOLIO_WORK_URL,
     PortfolioStrip,
     SelectField,
     SkipLink,
@@ -39,10 +38,10 @@ describe('the strip', () => {
     const strip = (props: Partial<Parameters<typeof PortfolioStrip>[0]> = {}) =>
         renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} {...props} />);
 
-    it("links the author's other work, how it works and where the source is, in that order", () => {
+    it("links the author's portfolio by name, how it works and where the source is, in that order", () => {
         expect(strip()).toBe(
             '<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio">' +
-                `<a href="${PORTFOLIO_WORK_URL}">More work by Jason Poteet</a>` +
+                `<a href="${PORTFOLIO_URL}">Jason Poteet</a>` +
                 '<a href="./about/">How it works</a>' +
                 `<a href="${SOURCE}">Source on GitHub</a>` +
                 '</nav></div>'
