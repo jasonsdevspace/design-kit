@@ -7,7 +7,7 @@ import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
-import { Colors, Contrast, Scale } from './tokens.js';
+import { Colors, Contrast, Scale, Spaces } from './tokens.js';
 
 const { DemoFooter, PortfolioStrip, SkipLink } = kit;
 
@@ -656,9 +656,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <h2 id="color">Color</h2>
                 <p>
                     Each role holds its light and its dark value in one <code>light-dark()</code>.
-                    It picks a value by the color scheme of the element it is drawn on. So each
-                    swatch in the table is drawn in its column&rsquo;s theme, whatever theme the
-                    page is in.
+                    It picks a value by the color scheme of the element it is drawn on. So each card
+                    draws its light swatch on the left and its dark swatch on the right, whatever
+                    theme the page is in.
                 </p>
                 <Colors declared={declared} />
                 <Tests group="Color" commit={build.commit} />
@@ -671,7 +671,8 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     1, in both themes, as the web&rsquo;s accessibility guidelines, WCAG, ask. These
                     are measured from the tokens of the version this page uses, rounded down, and
                     the kit&rsquo;s own test holds each one before a version is released. The table
-                    lists first the pairings with the least to spare.
+                    lists first the pairings with the least to spare. Each bar runs to 21 to 1, the
+                    most two colors can have, with a mark where the pairing&rsquo;s need falls.
                 </p>
                 <Contrast declared={declared} />
                 <Tests group="Contrast" commit={build.commit} />
@@ -681,8 +682,10 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Sizes that should grow with a reader&rsquo;s own text size are in rem, code set
                     in running text is in em, and a border, the focus ring and a shadow are in px,
-                    since they must not grow with the text.
+                    since they must not grow with the text. Each step of the spacing scale is drawn
+                    to size.
                 </p>
+                <Spaces declared={declared} />
                 <Scale declared={declared} />
                 <Tests group="Scale" commit={build.commit} />
             </section>

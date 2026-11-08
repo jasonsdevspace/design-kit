@@ -752,6 +752,188 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
+ * Each color role as a card: its light and dark swatches side by side across the top, then its
+ * name, what it draws and its two values, light under the light swatch and dark under the dark.
+ */
+.site-roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+    gap: var(--dk-space-4);
+    margin: 0 0 var(--dk-space-5);
+    padding: 0;
+    list-style: none;
+}
+
+.site-roles > li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: var(--dk-space-1);
+    overflow: hidden;
+    padding-bottom: var(--dk-space-3);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+}
+
+.site-roles > li > :not(.site-role-swatches) {
+    padding-inline: var(--dk-space-3);
+}
+
+.site-role-swatches {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 3.5rem;
+    margin-bottom: var(--dk-space-2);
+    border-bottom: 1px solid var(--dk-line);
+}
+
+/* A swatch in a card fills its half rather than sitting beside a value. */
+.site-role-swatches .site-swatch {
+    width: auto;
+    height: auto;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.site-role-name {
+    font-weight: var(--dk-weight-strong);
+}
+
+.site-role-draws {
+    font-size: var(--dk-text-small);
+}
+
+/* Two columns under the two swatches, so each value sits under its own theme's swatch. */
+.site-role-values {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 var(--dk-space-3);
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+}
+
+/* A value's theme over its hex value, so a narrow card keeps each inside its own half. */
+.site-role-values > span {
+    display: grid;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* A bar a set width beside its figure, on the figure's line. */
+.site-bar {
+    display: inline-block;
+    width: 6rem;
+    height: 0.75rem;
+    margin-inline-start: var(--dk-space-2);
+    vertical-align: middle;
+}
+
+.site-bar-track {
+    fill: var(--dk-bg);
+    stroke: var(--dk-control);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.site-bar-fill {
+    fill: var(--dk-accent);
+}
+
+.site-bar-needs {
+    stroke: var(--dk-fg);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+/* Each step of the spacing scale, a square the step wide over its name and value. */
+.site-spaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--dk-space-4) var(--dk-space-5);
+    margin: 0 0 var(--dk-space-5);
+    padding: 0;
+    list-style: none;
+}
+
+.site-spaces > li {
+    display: grid;
+    justify-items: center;
+    gap: var(--dk-space-1);
+    font-size: var(--dk-text-small);
+}
+
+.site-space-room {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: var(--dk-space-6);
+}
+
+.site-space-drawn {
+    display: block;
+    border-radius: var(--dk-radius-small);
+    background: var(--dk-accent);
+}
+
+.site-space-value {
+    color: var(--dk-muted);
+}
+
+.site-space-1 {
+    width: var(--dk-space-1);
+    height: var(--dk-space-1);
+}
+
+.site-space-2 {
+    width: var(--dk-space-2);
+    height: var(--dk-space-2);
+}
+
+.site-space-3 {
+    width: var(--dk-space-3);
+    height: var(--dk-space-3);
+}
+
+.site-space-4 {
+    width: var(--dk-space-4);
+    height: var(--dk-space-4);
+}
+
+.site-space-5 {
+    width: var(--dk-space-5);
+    height: var(--dk-space-5);
+}
+
+.site-space-6 {
+    width: var(--dk-space-6);
+    height: var(--dk-space-6);
+}
+
+/*
+ * In forced colors the bar keeps its edge and its fill in the system's text color, and the mark
+ * takes the system's highlight, so it still stands apart from the fill it crosses.
+ */
+@media (forced-colors: active) {
+    .site-bar-track {
+        fill: Canvas;
+        stroke: CanvasText;
+    }
+
+    .site-bar-fill {
+        fill: CanvasText;
+    }
+
+    .site-bar-needs {
+        stroke: Highlight;
+    }
+
+    .site-space-drawn {
+        background: CanvasText;
+    }
+}
+
+/*
  * A swatch of each color role, drawn in the scheme of its column. Only the swatch takes the
  * scheme, so the value printed beside it stays in the page's colors.
  */
