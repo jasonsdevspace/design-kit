@@ -209,16 +209,17 @@ export const Page = () => (
   the words "Skip to content".
 - `PortfolioStrip` takes `about`, the demo's explainer, and `source`, its repository. `current` set
   to `about` marks the explainer's link as the current page. `tools` holds the demo's own switches,
-  and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined, null, false or
-  an empty string the strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
-  `toolsWaiting` keeps the room of one row of the kit's controls while `tools` draws nothing, for a
-  page drawn before the switches can be, in the same section unnamed until they come.
+  and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined, null, false,
+  an empty string, or a list or a fragment of only those, the strip draws no section for them, so a
+  demo can pass `hasTour && <Tour />`. `toolsWaiting` keeps the room of one row of the kit's
+  controls while `tools` draws nothing, for a page drawn before the switches can be, in the same
+  section unnamed until they come.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
   `current` set to `about` marks the explainer's link as the current page, as on the strip.
   `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
   any trailing slash on `source` dropped first. `licenseName` is the license's name in the sentence,
   `MIT license` unless given. Its children follow the license, and children that are undefined,
-  null, false or an empty string add nothing.
+  null, false, an empty string, or a list or a fragment of only those, add nothing.
 
 The strip's and the footer's `about`, `source` and `license` go into their links unchecked, so each
 is a URL the demo's author writes, never one taken from the page's address or a visitor's input,
@@ -325,13 +326,14 @@ not zoom the page when the field is tapped. It sits on the page's own ground, so
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
 invalid control's edge in the danger color too. In forced colors, where that color is gone, an
 invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
-error comes and goes. A disabled control is drawn on the surface ground in the muted text. The
-select is a native `<select>`, its caret drawn as a background, and in forced colors the browser's
-own arrow comes back. A select that shows its options as a list, with `multiple` or a `size`, is
-left as the browser draws it, with no caret. A field a visitor cannot change uses `disabled`, unlike
-a button, which stays in the tab order when it is off. The field's hint says why it cannot be
-changed, and a screen reader reads that hint wherever it announces the field. A button's reason sits
-beside it in text its `aria-describedby` names, read when the keyboard reaches the button.
+error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
+on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
+background, and in forced colors the browser's own arrow comes back. A select that shows its options
+as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A field a
+visitor cannot change uses `disabled`, unlike a button, which stays in the tab order when it is off.
+The field's hint says why it cannot be changed, and a screen reader reads that hint wherever it
+announces the field. A button's reason sits beside it in text its `aria-describedby` names, read
+when the keyboard reaches the button.
 
 ### Callouts
 
@@ -421,11 +423,12 @@ passes on a prop it may not have been given compiles under `exactOptionalPropert
   `className` follows the kit's classes. A `ref` holds the `<button>` drawn, for a page that moves
   focus to it, such as the button that opened a panel when the panel closes.
 - `InputField` takes `label`, and `hint` and `error`, each drawn only when given, an empty string,
-  null or false drawing nothing. `id` is the control's, made with React's `useId` unless given, and
-  a page gives one when something links to the field, such as an error summary. Every other prop
-  goes to the `<input>` but `style` and `aria-invalid`. A `className` follows `dk-input`, and an
-  `aria-describedby` of the page's own is listed after the hint and the error. A `ref` holds the
-  `<input>` drawn, for a page that moves focus to the field, such as a form that fails.
+  null, false, or a list or a fragment of only those drawing nothing. `id` is the control's, made
+  with React's `useId` unless given, and a page gives one when something links to the field, such as
+  an error summary. Every other prop goes to the `<input>` but `style` and `aria-invalid`. A
+  `className` follows `dk-input`, and an `aria-describedby` of the page's own is listed after the
+  hint and the error. A `ref` holds the `<input>` drawn, for a page that moves focus to the field,
+  such as a form that fails.
 - `SelectField` takes the same props, with its children as the options of the `<select>` and its
   `ref` holding the `<select>`.
 - `Callout` takes `tone`, `info` unless given, `success` or `danger`, and `title`, drawn at the
@@ -435,7 +438,8 @@ passes on a prop it may not have been given compiles under `exactOptionalPropert
   `live`, `status` or `alert`, puts that role on the message and draws the message even when it is
   empty, and a live callout whose message draws nothing, with no title or actions, draws nothing
   until it is filled. Every other prop goes to the callout's `<div>` but `style`, `role` and the
-  `title` attribute, so a page gives it an `id`, such as one an error summary is linked by, and a
+  `title` attribute, inner HTML and the live attributes, since its message takes its role from
+  `live` alone, so a page gives it an `id`, such as one an error summary is linked by, and a
   `className`, which follows the kit's. A `ref` holds the `<div>` drawn, for a page that moves focus
   to it, as to a summary of what went wrong in a form that fails.
 
@@ -700,7 +704,8 @@ from the package rather than keeping a copy.
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
 and Safari 17.5. An empty live callout draws nothing by `:has()`, which Firefox has from 121, so in
-Firefox 120 it draws its ground until it is filled. The kit's browser tests run in Chromium.
+Firefox 120 it draws its ground until it is filled, and a label that holds a checkbox or a radio
+shows no pointer there, though the box or the dot does. The kit's browser tests run in Chromium.
 
 ## License
 

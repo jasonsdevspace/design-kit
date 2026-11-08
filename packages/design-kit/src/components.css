@@ -446,11 +446,17 @@
         /*
          * An invalid field loses its red edge to the system's colors, so it gains a dashed line
          * around its edge in the text color, which keeps its contrast in every theme and moves
-         * nothing as the error comes and goes. Focus draws the ring in its place.
+         * nothing as the error comes and goes. With focus, the ring takes its place, so a
+         * keyboard sees where it landed.
          */
         :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
             outline: var(--dk-ring-width) dashed CanvasText;
             outline-offset: 1px;
+        }
+
+        :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']):focus-visible {
+            outline: var(--dk-ring-width) solid var(--dk-accent);
+            outline-offset: var(--dk-ring-offset);
         }
     }
 
@@ -655,7 +661,7 @@
     }
 
     /* Code in a cell keeps its name whole, so the frame scrolls rather than the name breaking. */
-    :where(.dk-table code) {
+    :where(.dk-table-scroll .dk-table code) {
         white-space: nowrap;
     }
 
