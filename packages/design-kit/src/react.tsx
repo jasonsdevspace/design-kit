@@ -58,9 +58,9 @@ export const PortfolioStrip = ({
     toolsLabel = 'Demo',
     toolsWaiting = false,
 }: {
-    /** The demo's explainer, relative to the page or absolute. */
+    /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
     readonly about: string;
-    /** The demo's repository. */
+    /** The demo's repository, written by the demo's author. */
     readonly source: string;
     /** The link that is the page the strip sits on, marked as the current page. */
     readonly current?: ChromePage;
@@ -110,13 +110,16 @@ export const DemoFooter = ({
 }: {
     /** The demo's name, as the footer's sentence opens with it. */
     readonly name: string;
-    /** The demo's explainer, relative to the page or absolute. */
+    /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
     readonly about: string;
-    /** The demo's repository. */
+    /** The demo's repository, written by the demo's author. */
     readonly source: string;
     /** The link that is the page the footer sits on, marked as the current page. */
     readonly current?: ChromePage;
-    /** The demo's license, the LICENSE file on the repository's main branch unless given. */
+    /**
+     * The demo's license, written by the demo's author, or `LICENSE` on the main branch of `source`
+     * unless given.
+     */
     readonly license?: string;
     /** What the license is called, as the footer's sentence names it. */
     readonly licenseName?: string;

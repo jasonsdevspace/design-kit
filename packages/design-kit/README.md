@@ -218,6 +218,10 @@ export const Page = () => (
   sentence, `MIT license` unless given. Its children follow the license, and children that are
   undefined, null or false add nothing.
 
+The strip's and the footer's `about`, `source` and `license` go into their links unchecked, so each
+is a URL the demo's author writes, never one taken from the page's address or a visitor's input,
+since one taken from either could send a visitor anywhere.
+
 ## Buttons, fields and callouts
 
 `components.css` styles a button, a text field, a select and a callout by the markup below, which a

@@ -61,7 +61,9 @@ only GitHub's Pages actions deploys it.
   alias without saving it, so a change that breaks the site's audits or its policy fails its own
   pull request rather than the one that later moves the pin, after the version is on npm.
 - A policy in a meta element cannot say which pages may frame the site, which only a header can, and
-  GitHub Pages sends none, so the site can be framed.
+  GitHub Pages sends none, so the site can be framed. A page that frames it gains little, since the
+  policy lets the site send nothing anywhere, form posts included, and the only choice it keeps is
+  the theme.
 - An inline script the site adds is refused until the policy names it, and the browser tests fail
   on anything the policy refuses.
 - The build, the browser tests and the Lighthouse audit read one list of the site's pages, so a
@@ -99,6 +101,9 @@ The paths are in `packages/site`.
   width or at twice the text size.
 - `src/code.test.ts` builds the React each state shows with the pinned version's components, and
   finds it drawing what that version draws for the state.
+- `scripts/workflows.test.ts`, at the root, finds only the deploy job in CI asking for the token
+  that can deploy, never the workflow or a job by `write-all`, since every job in CI runs as the
+  release when the release calls it.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.

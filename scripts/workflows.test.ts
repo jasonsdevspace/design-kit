@@ -5,7 +5,9 @@ import { repositoryFiles } from './repository.mjs';
 
 /*
  * What the workflows promise that only reading them can hold: a browser installed without the
- * system packages the runner already has, and within a time of its own.
+ * system packages the runner already has, and within a time of its own, dependencies installed
+ * without their install scripts, and the token that can publish or deploy held by the deploy job
+ * alone in CI.
  */
 
 const workflows = repositoryFiles(import.meta.url, (path) =>
@@ -74,6 +76,36 @@ describe('the workflows', () => {
             expect(text).toMatch(/npm install -g --offline --ignore-scripts "\$tarball"/);
             expect(text).not.toMatch(/npm install -g[^\n]*\bnpm@/);
         }
+    });
+
+    it('install dependencies without running their install scripts', () => {
+        // Each command that installs from npm, in any of npm's spellings, where a command starts:
+        // a line, a run, or after another command, rather than words in a message that name it.
+        const command =
+            /(?:^|run:|&&|\|\||;|\|)\s*npm\s+(?:ci|i|install|add|it|install-clean)\b[^\n&;|]*/gm;
+        const installs = steps.flatMap(({ text }) => text.match(command) ?? []);
+        expect(installs.length).toBeGreaterThan(0);
+        expect(installs.filter((line) => !/--ignore-scripts(?!=)/.test(line))).toEqual([]);
+    });
+
+    it('give the token that can publish or deploy to the deploy job alone in CI', () => {
+        // Called from a release, every job in CI runs as the release, so any of them holding the
+        // token and naming the npm environment could publish to npm as the release does. The workflow's own permissions would
+        // give it to every job, as write-all would give it to a job.
+        const ci = (workflows.get('.github/workflows/ci.yml') ?? '')
+            .replace(/\r\n/g, '\n')
+            .replace(/^[ \t]*#.*\n/gm, '')
+            .replace(/[ \t]+#[ \t].*$/gm, '');
+        const grants = (text: string) => /id-token:\s*write|write-all/.test(text);
+        const start = ci.search(/^jobs:/m);
+        expect(start).toBeGreaterThan(-1);
+        expect(grants(ci.slice(0, start))).toBe(false);
+        const holding = ci
+            .slice(start)
+            .split(/^ {4}(?=[a-z][\w-]*:\s*$)/m)
+            .filter(grants)
+            .map((job) => job.slice(0, job.indexOf(':')));
+        expect(holding).toEqual(['deploy']);
     });
 
     it('read a step the way GitHub does, whatever the step looks like', () => {
