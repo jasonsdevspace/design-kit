@@ -7,6 +7,27 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## 0.1.0-next.5
+
+The strip's first link is the author's name and leads to the portfolio, and a demo can name its
+switches' width so the strip never moves when they arrive.
+
+- **Page chrome.** The strip's first link reads "Jason Poteet" and leads to the portfolio's home
+  page, `PORTFOLIO_URL`, where it read "More work by Jason Poteet" and led to the portfolio's list
+  of work. It matches the footer's own "Jason Poteet", which leads to the same place, and no longer
+  shares "more work" with the footer's link to the GitHub profile. A page that writes the strip by
+  hand changes the link's words and where it leads itself. `PORTFOLIO_WORK_URL` is still exported,
+  for a page that links to the list of work.
+- **Page chrome.** A new token, `--dk-strip-tools`, `auto` unless a demo names one, holds the width
+  of a demo's switches in the strip, in the strip's own text size. A demo whose switches arrive
+  after the page sets it on its root, at least as wide as they are, and on a wide screen the room
+  the strip keeps for them and the switches that fill it take that width, so a strip too narrow for
+  the links and the switches wraps before they come as it does after. On a phone the switches keep
+  a row of their own at its full width.
+- **Page chrome.** On a wide screen the switches keep to the strip's right edge, on the links' row
+  or on one of their own where they wrap below it, and where they wrap within their section, its
+  last row sits at the right too.
+
 ## 0.1.0-next.4
 
 The strip's first link says whose work it leads to, and the footer's sentence holds to the measure.
