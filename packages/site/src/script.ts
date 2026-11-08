@@ -212,8 +212,8 @@ const copied = async (text: string): Promise<boolean> => {
     }
 };
 
-/** Each state's code on the page, its blocks one panel each. */
-const codes = document.querySelectorAll<HTMLElement>('.site-code');
+/** Each state's code on the page, and the landing page's install command, its blocks one panel each. */
+const codes = document.querySelectorAll<HTMLElement>('.site-code, .site-install');
 
 /**
  * The status line, in the main content from the start on a page with code, since a screen reader

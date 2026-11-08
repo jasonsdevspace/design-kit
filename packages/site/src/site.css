@@ -161,6 +161,322 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
+ * The landing page's opening: what the kit is, its two links and its install command, beside the
+ * kit's controls in light and in dark on a wide screen, and above them on a phone, where the
+ * controls still start inside the first screen.
+ */
+.site-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--dk-space-6);
+    align-items: center;
+}
+
+.site-hero-text > :first-child {
+    margin-top: 0;
+}
+
+.site-hero h1 {
+    margin-block: var(--dk-space-2) var(--dk-space-4);
+    font-size: var(--dk-text-display);
+    line-height: var(--dk-leading-tight);
+}
+
+.site-eyebrow {
+    margin: 0;
+    font-size: var(--dk-text-caption);
+    font-weight: var(--dk-weight-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.site-eyebrow a {
+    text-decoration: none;
+}
+
+.site-eyebrow a:hover {
+    text-decoration: underline;
+}
+
+.site-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--dk-space-3);
+}
+
+.site-actions .dk-button {
+    text-decoration: none;
+}
+
+/* The install command in one row with its copy button, the block scrolling inside its frame. */
+.site-install {
+    max-width: 32rem;
+}
+
+.site-install .site-code-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--dk-space-2);
+    padding: var(--dk-space-2);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+    background: var(--dk-surface);
+}
+
+.site-install .site-code-head {
+    order: 1;
+    margin: 0;
+}
+
+.site-install .dk-code-title {
+    display: none;
+}
+
+.site-install .dk-code {
+    flex: 1 1 14rem;
+    min-width: 0;
+    margin: 0;
+    padding: var(--dk-space-2);
+    background: none;
+}
+
+.site-hero-demo {
+    margin: 0;
+}
+
+.site-hero-panels {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+    box-shadow: var(--dk-shadow-raised);
+}
+
+.site-hero-panel {
+    display: grid;
+    gap: var(--dk-space-4);
+    align-content: start;
+    padding: var(--dk-space-5);
+    background: var(--dk-bg);
+    color: var(--dk-fg);
+}
+
+.site-hero-panel > * {
+    margin: 0;
+}
+
+.site-hero-theme {
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    font-weight: var(--dk-weight-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.site-hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--dk-space-2);
+}
+
+/* A phone shows the buttons and the callout, so the controls start inside the first screen. */
+.site-hero-field {
+    display: none;
+}
+
+@media (min-width: 64rem) {
+    .site-hero {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+
+    .site-hero-panels {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .site-hero-field {
+        display: block;
+    }
+}
+
+/* A card for each page: a drawing of what it shows, its name as a link and its description. */
+.site-pages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+    gap: var(--dk-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.site-pages > li {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: var(--dk-space-2);
+    padding: var(--dk-space-4);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+}
+
+.site-pages a {
+    font-weight: var(--dk-weight-strong);
+    text-decoration: none;
+}
+
+/* The whole card takes the link's click, while the link alone is read and focused. */
+.site-pages a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.site-pages a:hover {
+    text-decoration: underline;
+}
+
+.site-pages p {
+    margin: 0;
+    color: var(--dk-muted);
+    font-size: var(--dk-text-small);
+}
+
+.site-page-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--dk-space-2);
+    height: 5rem;
+    margin-bottom: var(--dk-space-2);
+    border-radius: var(--dk-radius);
+    background: var(--dk-surface);
+}
+
+/* The swatches narrow before they would widen a card at a large text size. */
+.site-preview-swatch {
+    flex: 0 1 1.25rem;
+    min-width: 0.5rem;
+    height: 2.5rem;
+    border-radius: var(--dk-radius-small);
+}
+
+.site-preview-accent {
+    background: var(--dk-accent);
+}
+
+.site-preview-accent-dark {
+    background: var(--dk-highlight);
+}
+
+.site-preview-success {
+    background: var(--dk-success);
+}
+
+.site-preview-danger {
+    background: var(--dk-danger);
+}
+
+.site-preview-fg {
+    background: var(--dk-fg);
+}
+
+.site-preview-button {
+    padding: var(--dk-space-1) var(--dk-space-2);
+    border: 1px solid var(--dk-control);
+    border-radius: var(--dk-radius);
+    background: var(--dk-bg);
+    font-size: var(--dk-text-caption);
+}
+
+.site-preview-button-accent {
+    border-color: var(--dk-accent);
+    background: var(--dk-accent);
+    color: var(--dk-on-accent);
+}
+
+.site-preview-page {
+    display: grid;
+    align-content: space-between;
+    width: 80%;
+    height: 3.5rem;
+}
+
+.site-preview-strip,
+.site-preview-foot {
+    height: 0.375rem;
+    border-radius: var(--site-pill);
+    background: var(--dk-control);
+}
+
+.site-preview-strip {
+    width: 40%;
+}
+
+.site-preview-foot {
+    width: 60%;
+}
+
+.site-preview-steps {
+    display: grid;
+    gap: var(--dk-space-2);
+    width: 70%;
+}
+
+.site-preview-step {
+    display: flex;
+    align-items: center;
+    gap: var(--dk-space-2);
+}
+
+.site-preview-step::before {
+    content: '';
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid var(--dk-accent);
+    border-radius: 50%;
+}
+
+.site-preview-step-done::before {
+    background: var(--dk-accent);
+}
+
+.site-preview-step::after {
+    content: '';
+    flex: 1;
+    height: 0.375rem;
+    border-radius: var(--site-pill);
+    background: var(--dk-control);
+}
+
+/* What the kit is built to, each with its mark, in columns as wide as the screen allows. */
+.site-rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+    gap: var(--dk-space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.site-rules h3 {
+    margin: var(--dk-space-2) 0;
+    font-size: var(--dk-text-body);
+}
+
+.site-rules p {
+    margin: 0;
+    color: var(--dk-muted);
+}
+
+.site-rule-mark {
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: var(--dk-accent);
+}
+
+/*
  * A page of states lists its sections beside the content on a screen wide enough for both, the
  * list held in sight as the page scrolls. Narrower, the list is left out and the content takes the
  * column, as on every other page.

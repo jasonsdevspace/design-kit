@@ -235,6 +235,111 @@ for (const path of PAGES) {
     });
 }
 
+test.describe('the landing page', () => {
+    test('opens with a heading, a lead, and links to the controls and to how the kit works', async ({
+        page,
+    }) => {
+        await page.goto(BASE);
+        const main = page.getByRole('main');
+        await expect(main.getByRole('heading', { level: 1 })).toHaveText(
+            'One set of colors, type and controls for every demo'
+        );
+        await expect(main.locator('.site-lead')).toBeVisible();
+        await expect(main.getByRole('link', { name: 'See every control' })).toHaveAttribute(
+            'href',
+            `${BASE}controls/`
+        );
+        await expect(main.getByRole('link', { name: 'How the design kit works' })).toHaveAttribute(
+            'href',
+            ABOUT
+        );
+    });
+
+    test('gives the install command with a copy button', async ({ page, context }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto(BASE);
+        const block = page.getByRole('region', { name: 'the install command' });
+        await expect(block).toHaveText('npm install @jasonsdevspace/design-kit');
+        await page.getByRole('button', { name: 'Copy the install command' }).click();
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            'npm install @jasonsdevspace/design-kit'
+        );
+    });
+
+    test('selects the install command where the browser has no clipboard', async ({ page }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'clipboard', { value: undefined });
+        });
+        await page.goto(BASE);
+        await page.getByRole('button', { name: 'Copy the install command' }).click();
+        expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
+            'npm install @jasonsdevspace/design-kit'
+        );
+    });
+
+    test("draws the kit's controls in light and in dark, beside the heading", async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto(BASE);
+        const demo = page.getByRole('figure', { name: /in light and in dark/ });
+        await expect(demo).toBeVisible();
+        const panels = await demo.locator('.site-hero-panel').evaluateAll((all) =>
+            all.map((panel) => ({
+                scheme: getComputedStyle(panel).colorScheme,
+                inert: panel.closest('[inert]') !== null,
+                accent: panel.querySelector('button.dk-button-accent') !== null,
+                callout: panel.querySelector('.dk-callout') !== null,
+            }))
+        );
+        expect(panels).toEqual([
+            { scheme: 'light', inert: true, accent: true, callout: true },
+            { scheme: 'dark', inert: true, accent: true, callout: true },
+        ]);
+        const [heading, drawn] = await Promise.all(
+            [page.getByRole('heading', { level: 1 }), demo].map((each) => each.boundingBox())
+        );
+        expect(heading && drawn && heading.x + heading.width <= drawn.x).toBe(true);
+    });
+
+    test('shows the controls above the fold on a phone', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto(BASE);
+        const top = await page
+            .locator('.site-hero-demo')
+            .evaluate((demo) => demo.getBoundingClientRect().top);
+        expect(top).toBeLessThan(844);
+    });
+
+    test('gives each page a card with a preview and its description', async ({ page }) => {
+        await page.goto(BASE);
+        const cards = page.locator('.site-pages > li');
+        const pages = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
+        await expect(cards).toHaveCount(pages.length);
+        for (const [index, { nav, path, description }] of pages.entries()) {
+            const card = cards.nth(index);
+            await expect(card.getByRole('link', { name: nav ?? '', exact: true })).toHaveAttribute(
+                'href',
+                path
+            );
+            await expect(card).toContainText(description);
+            await expect(card.locator('.site-page-preview')).toHaveAttribute('aria-hidden', 'true');
+            await expect(card.locator('.site-page-preview')).toBeVisible();
+        }
+    });
+
+    test('says what the kit is built to', async ({ page }) => {
+        await page.goto(BASE);
+        const section = page.locator('main > section', {
+            has: page.getByRole('heading', { level: 2, name: 'Built to the demos’ rules' }),
+        });
+        await expect(section.getByRole('heading', { level: 3 })).toHaveText([
+            'Works under a strict policy',
+            'Both themes, measured',
+            'State from the attribute a screen reader reads',
+        ]);
+    });
+});
+
 test.describe('the tokens page', () => {
     test('draws each swatch in the value printed beside it, in its column’s theme', async ({
         page,
@@ -1609,7 +1714,7 @@ test.describe('how each state is shown', () => {
     }) => {
         await page.goto('/design-kit/controls/');
         await expect(page.locator('main [role="status"]')).toHaveCount(1);
-        await page.goto('/design-kit/');
+        await page.goto('/design-kit/tokens/');
         await expect(page.locator('[role="status"]')).toHaveCount(0);
     });
 
