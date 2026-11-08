@@ -18,6 +18,14 @@ body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
+/*
+ * The site's pill, the round ends its tabs, theme segments and Live mark share. The kit's radius
+ * scale stops at a card's corner, so the site keeps the one shape it adds here.
+ */
+:root {
+    --site-pill: 999px;
+}
+
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
     max-width: var(--dk-column);
@@ -62,30 +70,84 @@ body > .dk-strip {
     font-size: var(--dk-text-lead);
 }
 
-/* The site's own pages, in a row under the strip, lined up with the column. */
-.site-nav {
-    max-width: var(--dk-column);
-    margin-inline: auto;
-    padding: var(--dk-space-3) var(--dk-space-4) 0;
-}
-
-.site-nav ul {
+/*
+ * The site's header under the strip, lined up with the column: its mark and name, then its own
+ * pages as tabs in one row. On a wide screen the two share the row, and on a phone the tabs go
+ * under the name.
+ */
+.site-header {
     display: flex;
     flex-wrap: wrap;
-    gap: 0 var(--dk-space-5);
-    margin: 0;
-    padding: 0;
+    align-items: center;
+    gap: var(--dk-space-3) var(--dk-space-5);
+    max-width: var(--dk-column);
+    margin-inline: auto;
+    padding: var(--dk-space-4) var(--dk-space-4) 0;
+}
+
+.site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--dk-space-2);
+    min-height: var(--dk-strip);
+    color: var(--dk-fg);
+    font-weight: var(--dk-weight-strong);
+    text-decoration: none;
+}
+
+/* The mark, the kit's initials on its accent, drawn by the page itself. */
+.site-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75em;
+    height: 1.75em;
+    border-radius: var(--dk-radius-large);
+    background: var(--dk-accent);
+    color: var(--dk-on-accent);
+    font-size: var(--dk-text-small);
+    line-height: 1;
+}
+
+/*
+ * The tabs keep one row at every width, and scroll sideways inside it when a phone is too narrow
+ * for them all, so the page never does.
+ */
+.site-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--dk-space-1);
+    /*
+     * The row scrolls, so it clips what is drawn past its edges. It keeps room on every side for
+     * the kit's focus ring, and gives that room back to the layout, so a focused tab shows its
+     * whole ring and the tabs still line up with the column.
+     */
+    --site-ring-room: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+    margin: calc(-1 * var(--site-ring-room));
+    padding: var(--site-ring-room);
+    min-width: 0;
+    max-width: calc(100% + 2 * var(--site-ring-room));
+    overflow-x: auto;
     list-style: none;
 }
 
-/* A link as tall as the strip's row on a wide screen, and a thumb's size on a phone. */
-.site-nav a {
+/* A tab is as tall as the strip's row on a wide screen, and a thumb's size on a phone. */
+.site-tabs a {
     display: inline-flex;
     align-items: center;
     min-height: var(--dk-strip);
+    padding-inline: var(--dk-space-3);
+    border-radius: var(--site-pill);
+    color: var(--dk-muted);
+    text-decoration: none;
+    white-space: nowrap;
 }
 
-.site-nav a[aria-current='page'] {
+.site-tabs a:hover {
+    color: var(--dk-fg);
+}
+
+.site-tabs a[aria-current='page'] {
+    background: var(--dk-highlight);
     color: var(--dk-fg);
     font-weight: var(--dk-weight-strong);
 }
@@ -199,7 +261,7 @@ body > .dk-strip {
 /* The mark on the copy that can be tried. */
 .site-live {
     padding: 0 var(--dk-space-2);
-    border-radius: 999px;
+    border-radius: var(--site-pill);
     background: var(--dk-highlight);
     color: var(--dk-accent);
     font-weight: var(--dk-weight-strong);
@@ -314,10 +376,11 @@ body > .dk-strip {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0 var(--dk-space-4);
+    gap: 0 var(--dk-space-1);
 }
 
 .site-theme-name {
+    margin-inline-end: var(--dk-space-2);
     color: var(--dk-muted);
 }
 
@@ -327,16 +390,46 @@ body > .dk-strip {
  * Firefox 120 lacks, so the site gives it too.
  */
 .site-theme label {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: var(--dk-space-2);
     min-height: var(--dk-strip);
     cursor: pointer;
 }
 
-/* The radio sits flush against its word. The kit's base gives it the pointer and the accent. */
+/*
+ * The switch reads as one control of three segments: the radio is kept for the keyboard and a
+ * screen reader, and lies unseen over its whole segment, so a click anywhere on the segment lands
+ * on the radio itself. Its word draws it, the chosen word raised on the highlight in the same
+ * weight as the others, so no segment changes width as the choice moves.
+ */
 .site-theme input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     margin: 0;
+    opacity: 0;
+}
+
+.site-theme label > span {
+    padding: var(--dk-space-1) var(--dk-space-2);
+    border-radius: var(--site-pill);
+    color: var(--dk-muted);
+}
+
+.site-theme input:checked + span {
+    background: var(--dk-highlight);
+    color: var(--dk-fg);
+}
+
+/*
+ * The kit rings anything focused from its base, but the focus is on the unseen radio, so its
+ * segment takes the same ring from the kit's own ring tokens.
+ */
+.site-theme input:focus-visible + span {
+    outline: var(--dk-ring-width) solid var(--dk-accent);
+    outline-offset: var(--dk-ring-offset);
 }
 
 /*
@@ -415,12 +508,26 @@ body > .dk-strip {
 }
 
 /*
+ * In forced colors the browser drops the highlight behind the chosen theme and the current tab,
+ * and the radio is unseen, so both take the system's own colors for a selection, as the kit's
+ * pressed toggles do.
+ */
+@media (forced-colors: active) {
+    .site-theme input:checked + span,
+    .site-tabs a[aria-current='page'] {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+}
+
+/*
  * The site's one breakpoint, the kit's: at 48rem wide or less, a phone, every target grows to a
  * thumb's size and each state's copies stack. Wider, the copies share the column, and the strip's
  * links and the theme switch share one row.
  */
 @media (max-width: 48rem) {
-    .site-nav a {
+    .site-brand,
+    .site-tabs a {
         min-height: var(--dk-target);
     }
 

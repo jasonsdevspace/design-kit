@@ -100,7 +100,9 @@ const themeSwitch = () => {
         radio.addEventListener('change', () => {
             choose(choice);
         });
-        label.append(radio, WORDS[choice]);
+        const word = document.createElement('span');
+        word.textContent = WORDS[choice];
+        label.append(radio, word);
         return { label, radio };
     });
     const note = document.createElement('span');
@@ -119,6 +121,25 @@ const themeSwitch = () => {
     };
     return { group, show };
 };
+
+/**
+ * Scrolls the site's tabs sideways to the current page's tab where the row is too narrow to show
+ * them all, so the tab that says where the reader is never starts out of sight, and again when a
+ * turn or a resize hides it. The row scrolls on its own, so the page does not move, and a tab the
+ * reader can already see is left where it is.
+ */
+const tabs = document.querySelector<HTMLElement>('.site-tabs');
+const currentTab = tabs?.querySelector<HTMLElement>('[aria-current="page"]');
+if (tabs && currentTab) {
+    const showCurrent = () => {
+        const row = tabs.getBoundingClientRect();
+        const tab = currentTab.getBoundingClientRect();
+        if (tab.left >= row.left && tab.right <= row.right) return;
+        tabs.scrollLeft += tab.left - row.left - parseFloat(getComputedStyle(tabs).paddingLeft);
+    };
+    showCurrent();
+    window.addEventListener('resize', showCurrent);
+}
 
 /**
  * Puts the switch in the room the page's own strip kept for it, not in a picture of a strip, and

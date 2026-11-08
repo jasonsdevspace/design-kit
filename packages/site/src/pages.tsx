@@ -138,10 +138,21 @@ const SiteFooter = ({
     </DemoFooter>
 );
 
-/** The site's own pages, each marked as the current page where it is the one shown. */
+/**
+ * The site's header under the strip: its mark and name, leading to the landing page, and its own
+ * pages as tabs, the current one marked as the page, all in the site's navigation so nothing in it
+ * sits outside a landmark. The mark is the site's own markup, so the policy that refuses outside
+ * styles holds, and is hidden from a screen reader, which hears the name.
+ */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
-    <nav className="site-nav" aria-label="Design kit">
-        <ul role="list">
+    <nav className="site-header" aria-label="Design kit">
+        <a className="site-brand" href={BASE}>
+            <span className="site-mark" aria-hidden="true">
+                dk
+            </span>
+            The design kit
+        </a>
+        <ul className="site-tabs" role="list">
             {ROUTES.filter((route) => route.nav !== null).map((route) => (
                 <li key={route.file}>
                     <a href={route.path} aria-current={route.file === current ? 'page' : undefined}>
