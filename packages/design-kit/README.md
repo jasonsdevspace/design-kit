@@ -118,10 +118,10 @@ on the page. A box that is positioned holds it, and it shows at the top of that 
 at the top of a page, when a keyboard reaches it.
 
 The strip holds a navigation landmark named Portfolio, with links in this order: the author's name,
-which leads to the portfolio as the footer's does, how it works and the source. It reads "Jason
-Poteet", which fits a demo and the kit's own site alike. The strip on the demo's explainer marks the
-explainer's link with `aria-current="page"`. A demo with switches of its own puts them in a section
-after the links, named for them, and a demo with none leaves the section out.
+which leads to the portfolio as the footer's does, how it works and the source. The name reads
+"Jason Poteet", which fits a demo and the kit's own site alike. The strip on the demo's explainer
+marks the explainer's link with `aria-current="page"`. A demo with switches of its own puts them in
+a section after the links, named for them, and a demo with none leaves the section out.
 
 <!-- example: strip -->
 

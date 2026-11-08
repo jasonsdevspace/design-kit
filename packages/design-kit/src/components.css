@@ -81,10 +81,12 @@
 
     /*
      * The switches wrap where larger text leaves no room, and stand at least as tall as the links'
-     * row. A demo whose switches arrive after the page names their width in `--dk-strip-tools`, in
-     * the strip's own text size, so the room kept for them and the switches that fill it are one
-     * width, and a strip too narrow for the links and the switches wraps before they come as it
-     * does after. Without it, the section is as wide as what it holds.
+     * row, against the strip's right edge, on the links' row or on one of their own where they
+     * wrap below it. A demo whose switches arrive after the page names their width, at least as
+     * wide as they are, in `--dk-strip-tools`, in the strip's own text size, so the room kept for
+     * them and the switches that fill it are one width, and a strip too narrow for the links and
+     * the switches wraps before they come as it does after. Without it, the section is as wide as
+     * what it holds.
      */
     .dk-strip-tools {
         display: flex;
@@ -94,6 +96,7 @@
         gap: var(--dk-space-3);
         inline-size: var(--dk-strip-tools, auto);
         min-height: var(--dk-strip);
+        margin-inline-start: auto;
     }
 
     /* The exit after a long scroll, its rule the width of the page and its text in the column. */
@@ -142,7 +145,8 @@
 
     /*
      * On a phone the links are smaller and closer, and wrap to rows of their own where they must,
-     * with the switches on a row below them.
+     * with the switches on a row below them, at its start and its full width whatever width a demo
+     * names.
      */
     @media (max-width: 48rem) {
         .dk-strip {
@@ -157,6 +161,7 @@
             flex-basis: 100%;
             justify-content: flex-start;
             inline-size: auto;
+            margin-inline-start: 0;
             padding-block: 0 var(--dk-space-2);
         }
 
