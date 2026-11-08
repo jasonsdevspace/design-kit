@@ -8,8 +8,8 @@ type Value = string | boolean | React.ReactElement;
  * The React a page writes for a state, read by TypeScript's parser and built as an element with the
  * components it is given and the DOM's own elements, without running it as code. It reads what the
  * states write: string, boolean and element attributes, text and elements as children, and
- * fragments. The
- * kit's tests build it with the sources' components, and the site's with the version it pins.
+ * fragments. The kit's tests build it with the sources' components, and the site's with the version
+ * it pins.
  */
 export const elementOf = (react: string, kit: object): React.ReactElement => {
     const file = ts.createSourceFile('state.tsx', `(${react});`, ts.ScriptTarget.Latest, true);

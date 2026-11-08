@@ -157,8 +157,8 @@ if (room && section) {
 /*
  * A copy button beside the title of each block of code. Where the browser will not let the page
  * write to the clipboard, the button selects the block's text instead, so a reader copies it with
- * their own keys. One status line, out of sight, tells a screen reader which happened, and the
- * button says it for a moment too.
+ * their own keys or their device's copy command. One status line, out of sight, tells a screen
+ * reader which happened, and the button says it for a moment too.
  */
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
@@ -210,9 +210,12 @@ const say = (message: string) => {
     }, 100);
 };
 
-/** How to copy what is selected, in the keys of a keyboard, or in words for a touch screen. */
+/**
+ * How to copy what is selected: in the keys of a keyboard where any pointer can hover, as a mouse or
+ * a trackpad, which a keyboard usually comes with, and otherwise in words for a touch screen.
+ */
 const howToCopy = () =>
-    window.matchMedia('(pointer: coarse)').matches
+    !window.matchMedia('(any-hover: hover)').matches
         ? "Selected. Copy it with your device's copy command."
         : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
 
@@ -263,6 +266,8 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
 )) {
     const panel = document.getElementById(opener.getAttribute('aria-controls') ?? '');
     if (!panel) continue;
+    // The panel starts as the button says it is, open or closed.
+    panel.hidden = opener.getAttribute('aria-expanded') !== 'true';
     opener.addEventListener('click', () => {
         const open = opener.getAttribute('aria-expanded') !== 'true';
         opener.setAttribute('aria-expanded', String(open));

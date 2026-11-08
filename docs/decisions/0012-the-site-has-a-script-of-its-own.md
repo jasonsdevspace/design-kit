@@ -47,14 +47,15 @@ A choice the browser refused to save is not read over by what storage holds.
 
 The same script puts a copy button beside the title of each block of code. It writes the block's
 text to the clipboard, and where the browser refuses or has no clipboard it selects the text
-instead, so a reader copies it with their own keys. One status line out of sight tells a screen
+instead, so a reader copies it with their own keys, or with the device's copy command on a touch
+screen. One status line out of sight, in the page from load on a page with code, tells a screen
 reader which happened, emptied first so a second copy is heard too, and the button says Copied or
 Selected for a moment. With no script, the code still opens and its text can be selected by hand.
 
 It also makes the live copies of the states a reader can change behave as they say. A toggle flips
 `aria-pressed` when pressed, and a button that names a panel with `aria-controls` opens and closes
-it, so a control never says it is pressed or open after a reader has changed it. With no script, the
-copies stay as they are drawn, as each state's name, which says how it starts, describes them.
+it, so what a control says it is stays true after a reader changes it. With no script, the copies
+stay as they are drawn, as each state's name says they start.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a

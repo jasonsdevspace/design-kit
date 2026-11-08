@@ -781,7 +781,7 @@ test.describe('how each state is shown', () => {
     }) => {
         await page.goto('/design-kit/controls/');
         await expect(
-            page.getByRole('group', { name: /^An action, drawn by/ }).getByRole('button', {
+            page.getByRole('group', { name: 'An action', exact: true }).getByRole('button', {
                 name: 'Filters',
             })
         ).toBeVisible();
@@ -801,7 +801,10 @@ test.describe('how each state is shown', () => {
 
     test('opens and closes the panel a live button names', async ({ page }) => {
         await page.goto('/design-kit/controls/');
-        const group = page.getByRole('group', { name: /^A button whose panel starts open/ });
+        const group = page.getByRole('group', {
+            name: 'A button whose panel starts open',
+            exact: true,
+        });
         const button = group.getByRole('button', { name: 'Filters' });
         const panel = group.locator(`#${(await button.getAttribute('aria-controls')) ?? 'none'}`);
         await expect(panel).toBeVisible();
@@ -825,7 +828,7 @@ test.describe('how each state is shown', () => {
             const found = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-theme label'
+                        '.site-code > summary, .site-theme label, .site-nav a'
                     ),
                 ].map((element) => ({
                     what: element.textContent.trim().slice(0, 30),
@@ -847,12 +850,15 @@ test.describe('how each state is shown', () => {
         });
         await page.goto('/design-kit/controls/');
         await page.locator('summary', { hasText: 'The code, An action' }).click();
-        const button = page.getByRole('button', { name: 'Copy Markup, An action' });
+        // Found by its place rather than its name, which changes with its word.
+        const button = page
+            .locator('.site-state', { hasText: 'An action, drawn by' })
+            .locator('.site-copy-button')
+            .first();
+        await expect(button).toHaveAccessibleName('Copy Markup, An action');
         const before = (await button.boundingBox())?.width;
         await button.click();
-        await expect(
-            page.getByRole('button', { name: 'Selected Markup, An action' })
-        ).toBeVisible();
+        await expect(button).toHaveAccessibleName('Selected Markup, An action');
         expect((await button.boundingBox())?.width).toBe(before);
     });
 
@@ -869,17 +875,20 @@ test.describe('how each state is shown', () => {
         browser,
     }) => {
         const context = await browser.newContext({ hasTouch: true, isMobile: true });
-        const page = await context.newPage();
-        await page.addInitScript(() => {
-            Object.defineProperty(navigator, 'clipboard', { value: undefined });
-        });
-        await page.goto('/design-kit/controls/');
-        await page.locator('summary', { hasText: 'The code, An action' }).click();
-        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.getByRole('status')).toHaveText(
-            "Selected. Copy it with your device's copy command."
-        );
-        await context.close();
+        try {
+            const page = await context.newPage();
+            await page.addInitScript(() => {
+                Object.defineProperty(navigator, 'clipboard', { value: undefined });
+            });
+            await page.goto('/design-kit/controls/');
+            await page.locator('summary', { hasText: 'The code, An action' }).click();
+            await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+            await expect(page.getByRole('status')).toHaveText(
+                "Selected. Copy it with your device's copy command."
+            );
+        } finally {
+            await context.close();
+        }
     });
 });
 

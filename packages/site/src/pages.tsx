@@ -169,13 +169,13 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 );
 
 /**
- * One state of a control, drawn live in the visitor's theme and again in the other theme beside
- * it. The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are
- * its own, so the page never holds one twice. The live copy is a group named by the state, so a
- * screen reader moving from control to control hears which state it is in. A pictured state's copy
- * in the visitor's theme is inert too, and both its copies are labeled as pictures. Under both, the state's name and the attribute that
- * draws it, and then its code, closed until a reader opens it: its markup, and the React a page
- * writes for it where a component draws it.
+ * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
+ * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
+ * own, so the page never holds one twice. The live copy is a group named by the state's name alone, so a screen
+ * reader moving from control to control hears which state it is in. A pictured state's copy in the
+ * visitor's theme is inert too, and both its copies are labeled as pictures. Under both, the
+ * state's name and the attribute that draws it, and then its code, closed until a reader opens it:
+ * its markup, and the React a page writes for it where a component draws it.
  */
 const StateShown = ({
     state,
@@ -210,8 +210,8 @@ const StateShown = ({
             </p>
             {state.draw(kit, (name) => `${name}-other`)}
         </div>
-        <p className="site-state-name" id={`${id}-name`}>
-            {state.name}, drawn by <code>{state.attribute}</code>
+        <p className="site-state-name">
+            <span id={`${id}-name`}>{state.name}</span>, drawn by <code>{state.attribute}</code>
         </p>
         <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
             <summary>
