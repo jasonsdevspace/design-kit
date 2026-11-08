@@ -6,6 +6,7 @@ import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
+import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
 import { ROUTES } from '../src/routes.ts';
 
 /**
@@ -96,6 +97,8 @@ const main = async () => {
         return result.lhr;
     };
     const failures: string[] = [];
+    // Each page as it was judged, for the run's summary.
+    const pages: Parameters<typeof lighthouseSummary>[0][number][] = [];
     try {
         for (const { path } of ROUTES) {
             const url = `${origin}${path}`;
@@ -105,6 +108,7 @@ const main = async () => {
             console.log(
                 `${path}: accessibility ${String(score)}${findings.length > 0 ? `, ${findings.join(', ')}` : ''}`
             );
+            const short = score < 100 ? [`accessibility ${String(score)}`] : [];
             if (score < 100) failures.push(`${path} (accessibility ${String(score)})`);
             const measures = [measureOf(await run(url, 'performance'))];
             if (missed(middle(measures)).length > 0) {
@@ -118,9 +122,26 @@ const main = async () => {
                     `largest paint ${String(Math.round(judged.paint))} ms, layout shift ${judged.shift.toFixed(3)}`
             );
             const misses = missed(judged);
+            pages.push({
+                path,
+                accessibility: score,
+                performance: judged.performance,
+                paint: judged.paint,
+                shift: judged.shift,
+                missed: [...short, ...misses],
+            });
             if (misses.length > 0) failures.push(`${path} (${misses.join(', ')})`);
         }
     } finally {
+        // Written whatever happened, so the pages measured before a failure are still reported.
+        writeSummary(
+            lighthouseSummary(pages, {
+                accessibility: 100,
+                performance: PERFORMANCE,
+                paint: LARGEST_PAINT_MS,
+                shift: LAYOUT_SHIFT,
+            })
+        );
         chrome.kill();
         await new Promise<void>((resolve) => {
             server.httpServer.close(() => {

@@ -27,7 +27,7 @@ concurrency:
 jobs:
     verify:
         name: Lint, test and build
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -78,7 +78,7 @@ jobs:
 
     browser:
         name: Browser tests
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -105,8 +105,19 @@ jobs:
                   npx playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
+            # The totals, and any test that failed, go to the run's summary from the JSON report. The
+            # summary reports the tests and never decides them, so the step ends with their status
+            # whether or not it could be written.
             - name: Browser tests
-              run: npm run e2e
+              run: |
+                  rm -f playwright-results.json
+                  status=0
+                  npm run e2e || status=$?
+                  if [ -f playwright-results.json ]; then
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests" ||
+                          echo "The summary of the browser tests could not be written."
+                  fi
+                  exit "$status"
 
             # The site draws the version of the kit it pins, so a change to the kit is not on the
             # site until it is released. The site's tests run again over this commit's kit, packed
@@ -116,7 +127,14 @@ jobs:
               run: |
                   npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
                   npm install --no-save --ignore-scripts "design-kit-release@file:$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
-                  npx playwright test packages/site
+                  rm -f playwright-results.json
+                  status=0
+                  npx playwright test packages/site || status=$?
+                  if [ -f playwright-results.json ]; then
+                      node scripts/summary.mjs playwright playwright-results.json "Site tests over this commit's kit" ||
+                          echo "The summary of the site tests could not be written."
+                  fi
+                  exit "$status"
 
             - name: Keep the report of a failed run
               if: failure()
@@ -131,7 +149,7 @@ jobs:
     # no more layout shift than a good visit has.
     lighthouse:
         name: Lighthouse audits
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 15
         steps:
             - name: Checkout
@@ -164,7 +182,7 @@ jobs:
     # engines field admits.
     floor:
         name: Package on oldest Node
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         outputs:
             sha256: ${{ steps.pack.outputs.sha256 }}
@@ -273,6 +291,13 @@ jobs:
                   retention-days: 7
                   overwrite: true
 
+            # What the tarball that was proved weighs, file by file, raw and gzipped, for the run's
+            # summary. It reports the package and never decides it.
+            - name: Summarize the package's size
+              run: |
+                  node scripts/summary.mjs package "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz ||
+                      echo "The summary of the package's size could not be written."
+
     # The site, published to GitHub Pages at jasonsdevspace.com/design-kit/ once everything above
     # has passed on main, so a merge that fails a check is never deployed. It is built in a job
     # with no more than read access, so nothing the build installs or runs can deploy, and the
@@ -281,7 +306,7 @@ jobs:
         name: Build the site
         needs: [verify, browser, lighthouse, floor]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -310,7 +335,7 @@ jobs:
     deploy:
         name: Deploy the site
         needs: site
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         permissions:
             pages: write
@@ -325,3 +350,10 @@ jobs:
             - name: Deploy to GitHub Pages
               id: deployment
               uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+            - name: Summarize the deploy
+              env:
+                  PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+              run: |
+                  commit="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+                  printf '### Deployed\n\n%s, from [`%s`](%s).\n' "$PAGE_URL" "${GITHUB_SHA:0:7}" "$commit" >> "$GITHUB_STEP_SUMMARY"
