@@ -271,6 +271,28 @@ test.describe('the tokens page', () => {
 });
 
 test.describe('the page chrome page', () => {
+    test("draws its strip pictures without the width the page's own switch takes", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/design-kit/page-chrome/');
+        // Each pictured section as wide as what it holds, as a demo that names no width draws it.
+        const fits = await page.locator('.site-copy .dk-strip-tools').evaluateAll((sections) =>
+            sections.map((section) => {
+                const gap = parseFloat(getComputedStyle(section).columnGap) || 0;
+                const children = [...section.children].map(
+                    (child) => child.getBoundingClientRect().width
+                );
+                const content =
+                    children.reduce((sum, width) => sum + width, 0) +
+                    gap * Math.max(0, children.length - 1);
+                return Math.round(section.getBoundingClientRect().width - content);
+            })
+        );
+        expect(fits.length).toBeGreaterThan(0);
+        expect(fits.filter((extra) => extra !== 0)).toEqual([]);
+    });
+
     test("draws the kit's chrome live around the page, and each state only as a picture", async ({
         page,
     }) => {
@@ -530,10 +552,20 @@ test.describe('the theme switch', () => {
                     await page.goto('/design-kit/');
                     if (javaScriptEnabled) {
                         await expect(choice(page, 'System')).toBeVisible();
-                        // The switch's words fit the width the room kept for it, in this font.
+                        // The switch's words fit the width its section keeps for it, in this font,
+                        // on either side, since the section sets what it holds against its end.
                         const spills = await page
-                            .locator('.site-theme')
-                            .evaluate((group) => group.scrollWidth > group.clientWidth);
+                            .locator('body > .dk-strip .dk-strip-tools')
+                            .evaluate((section) => {
+                                const outer = section.getBoundingClientRect();
+                                const group = section.querySelector('.site-theme');
+                                const inner = group?.getBoundingClientRect();
+                                return (
+                                    !inner ||
+                                    inner.left < outer.left - 1 ||
+                                    inner.right > outer.right + 1
+                                );
+                            });
                         expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
                     }
                     const top = await page
