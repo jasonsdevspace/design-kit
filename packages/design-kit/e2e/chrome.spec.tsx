@@ -12,7 +12,9 @@ import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
  * The page chrome as a browser lays it out, from the markup the components draw and the kit's own
  * sheets: the strip one row over its rule on a wide screen and rows of links on a phone, whatever
  * font the machine running the test has, the demo's switches beside the links or below them, the
- * room of switches on their way holding the strip at the height they give it, the skip link out of
+ * room of switches on their way holding the strip at the height they give it, the room and the
+ * switches at the width a demo names on a wide screen, keeping to the strip's right edge and
+ * wrapping alike before and after they come, and the row's width on a phone, the skip link out of
  * sight until the keyboard reaches it and then at the column's inset, one inside a positioned box
  * down the page out of sight and out of the way of a click until it takes focus and then at the top
  * of its box, the footer's rule the width of the page with its text in the column, the link to the
@@ -85,12 +87,13 @@ const open = async (
         theme = 'light',
         tools = 'none',
         where = 'demo',
-    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools; where?: Where }
+        css = '',
+    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools; where?: Where; css?: string }
 ) => {
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
-            `<style>${KIT}</style></head><body>${chrome(tools, where)}</body></html>`
+            `<style>${KIT}${css}</style></head><body>${chrome(tools, where)}</body></html>`
     );
 };
 
@@ -195,7 +198,7 @@ test('keeps the room of switches on their way, so nothing below the strip moves 
         // The room is no landmark and says nothing, so a screen reader finds the links alone.
         await expect(page.getByRole('region')).toHaveCount(0);
         await expect(page.locator('.dk-strip')).toHaveText(
-            'More work by Jason PoteetHow it worksSource on GitHub'
+            'Jason PoteetHow it worksSource on GitHub'
         );
         await open(page, { width, tools: 'kit' });
         const arrived = await box(page.locator('.dk-strip'), 'the strip with its switches');
@@ -208,6 +211,57 @@ test('keeps the room of switches on their way, so nothing below the strip moves 
     }
 });
 
+test("holds the switches' room and the switches to the width a demo names, on a wide screen", async ({
+    page,
+}) => {
+    const css = ':root { --dk-strip-tools: 20em; }';
+    for (const tools of ['waiting', 'kit'] as const) {
+        await open(page, { width: 1280, tools, css });
+        const section = page.locator('.dk-strip-tools');
+        const em = await section.evaluate((element) =>
+            parseFloat(getComputedStyle(element).fontSize)
+        );
+        expect(Math.round((await box(section, `the ${tools} section`)).width)).toBe(
+            Math.round(20 * em)
+        );
+    }
+    // On a phone the switches take a row of their own, the width a demo names left aside.
+    await open(page, { width: 360, tools: 'kit', css });
+    const row = await box(page.locator('.dk-strip-tools'), 'the switches on a phone');
+    expect(Math.round(row.width)).toBe(360 - 32);
+    // A demo that names no width keeps the section as wide as its switches and the gaps between.
+    await open(page, { width: 1280, tools: 'kit' });
+    const fit = await page.locator('.dk-strip-tools').evaluate((element) => {
+        const gap = parseFloat(getComputedStyle(element).columnGap);
+        const children = [...element.children].map((child) => child.getBoundingClientRect().width);
+        const content =
+            children.reduce((sum, width) => sum + width, 0) + gap * (children.length - 1);
+        return Math.round(element.getBoundingClientRect().width - content);
+    });
+    expect(fit).toBe(0);
+});
+
+test('wraps a strip too narrow for its links and named switches the same before and after', async ({
+    page,
+}) => {
+    // Just over the phone's breakpoint, a named width too wide to sit beside the links.
+    const css = ':root { --dk-strip-tools: 28em; }';
+    const at = async (tools: 'waiting' | 'kit') => {
+        await open(page, { width: 790, tools, css });
+        const strip = await box(page.locator('.dk-strip'), `the ${tools} strip`);
+        const section = await box(page.locator('.dk-strip-tools'), `the ${tools} section`);
+        return { height: Math.round(strip.height), right: Math.round(section.x + section.width) };
+    };
+    const waiting = await at('waiting');
+    const arrived = await at('kit');
+    // It does wrap, onto a second row below the links' 2.5rem row.
+    expect(waiting.height).toBeGreaterThan(40);
+    expect(arrived.height).toBe(waiting.height);
+    // Wrapped onto a row of its own, the section keeps to the strip's right edge, at the inset.
+    expect(waiting.right).toBe(790 - (await stripLayout(page)).inset);
+    expect(arrived.right).toBe(waiting.right);
+});
+
 test('keeps the skip link out of sight until the keyboard reaches it, and lands on the content', async ({
     page,
 }) => {
@@ -216,14 +270,16 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await expect(skip).not.toBeInViewport();
     // Waiting over the strip, it takes no click meant for the strip's first link.
     const first = await box(
-        page.getByRole('link', { name: 'More work by Jason Poteet' }),
+        page
+            .getByRole('navigation', { name: 'Portfolio' })
+            .getByRole('link', { name: 'Jason Poteet', exact: true }),
         "the strip's first link"
     );
     const under = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, {
         x: first.x + 4,
         y: first.y + first.height / 2,
     });
-    expect(under).toBe('More work by Jason Poteet');
+    expect(under).toBe('Jason Poteet');
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     await expect(skip).toBeInViewport();

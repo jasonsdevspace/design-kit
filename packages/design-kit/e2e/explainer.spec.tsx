@@ -153,7 +153,11 @@ test('lines the explainer up with the strip, and holds its prose to the measure'
     ] as const) {
         await open(page, { width });
         const heading = await box(page.getByRole('heading', { level: 1 }));
-        const link = await box(page.getByRole('link', { name: 'More work by Jason Poteet' }));
+        const link = await box(
+            page
+                .getByRole('navigation', { name: 'Portfolio' })
+                .getByRole('link', { name: 'Jason Poteet', exact: true })
+        );
         expect(Math.round(heading.x)).toBe(inset);
         expect(Math.round(link.x)).toBe(inset);
         const lead = await box(page.locator('.dk-explainer-lead'));

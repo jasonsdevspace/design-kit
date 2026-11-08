@@ -61,7 +61,8 @@ const currentAs = (current: ChromePage | undefined, page: ChromePage) =>
     current === page ? 'page' : undefined;
 
 /**
- * Whose demo this is, above the page, with three links together on the left. It is a navigation
+ * Whose demo this is, above the page, with three links together on the left: the author's name,
+ * which leads to the portfolio as the footer's does, how it works and the source. It is a navigation
  * landmark in a plain div rather than a header, so the demo's own header stays the page's one
  * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
  * named for them, and while they are on their way the strip keeps their room in that section,
@@ -94,7 +95,7 @@ export const PortfolioStrip = ({
 }) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
-            <a href={PORTFOLIO_WORK_URL}>More work by Jason Poteet</a>
+            <a href={PORTFOLIO_URL}>Jason Poteet</a>
             <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
             </a>
