@@ -19,6 +19,14 @@ body > .dk-strip {
 }
 
 /*
+ * The section the switch fills may be narrower than the switch's words, so on a phone with large
+ * text the switch scrolls inside it rather than widening the strip and the page.
+ */
+body > .dk-strip .dk-strip-tools {
+    min-width: 0;
+}
+
+/*
  * The site's pill, the round ends its tabs, theme segments and Live mark share. The kit's radius
  * scale stops at a card's corner, so the site keeps the one shape it adds here.
  */
@@ -472,9 +480,26 @@ body > .dk-strip {
  */
 .site-theme {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0 var(--dk-space-1);
+    /*
+     * The switch keeps one row, as tall as the room the strip kept for it, at any text size, and
+     * scrolls sideways inside it where a phone with large text is too narrow for all its words,
+     * so nothing below it moves as it comes. It keeps room at its ends for the focus ring.
+     */
+    min-width: 0;
+    max-width: 100%;
+    padding-inline: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+    overflow-x: auto;
+}
+
+.site-theme-name {
+    flex-shrink: 0;
+}
+
+.site-theme label {
+    flex-shrink: 0;
 }
 
 .site-theme-name {
@@ -540,7 +565,8 @@ body > .dk-strip {
     min-width: 0;
     padding: 0 var(--dk-space-4);
     border-top: 1px solid var(--dk-line);
-    border-radius: 0 0 var(--dk-radius-large) var(--dk-radius-large);
+    /* The card's inner edge, inside its border, so the ground follows its curve. */
+    border-radius: 0 0 calc(var(--dk-radius-large) - 1px) calc(var(--dk-radius-large) - 1px);
     background: var(--dk-surface);
     font-size: var(--dk-text-small);
 }
@@ -558,9 +584,14 @@ body > .dk-strip {
     color: var(--dk-muted);
 }
 
-/* The tabs and the copy button in one row, the tabs underlined where chosen. */
+/*
+ * The tabs and the copy button in one row, the tabs underlined where chosen. Where a phone with
+ * large text is too narrow for both, the button wraps under the tabs, and a block's title and
+ * its button wrap the same way.
+ */
 .site-code-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--dk-space-3);
@@ -570,6 +601,7 @@ body > .dk-strip {
 
 .site-code-bar [role='tablist'] {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--dk-space-1);
 }
 
@@ -596,6 +628,7 @@ body > .dk-strip {
 
 .site-code-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--dk-space-3);
@@ -654,12 +687,14 @@ body > .dk-strip {
 
 /*
  * In forced colors the browser drops the highlight behind the chosen theme and the current tab,
- * and the radio is unseen, so both take the system's own colors for a selection, as the kit's
- * pressed toggles do.
+ * and every edge takes one color, so the chosen code tab's underline no longer marks it. The radio
+ * is unseen too. So all three take the system's own colors for a selection, as the kit's pressed
+ * toggles do.
  */
 @media (forced-colors: active) {
     .site-theme input:checked + span,
-    .site-tabs a[aria-current='page'] {
+    .site-tabs a[aria-current='page'],
+    .site-code-tab[aria-selected='true'] {
         background-color: Highlight;
         color: HighlightText;
     }
@@ -699,11 +734,6 @@ body > .dk-strip {
      */
     :root[data-theme='dark'] .site-other {
         order: -1;
-    }
-
-    /* The switch keeps its words on one row, within the width its section keeps for it. */
-    .site-theme {
-        flex-wrap: nowrap;
     }
 }
 

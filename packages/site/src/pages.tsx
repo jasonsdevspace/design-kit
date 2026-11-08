@@ -185,6 +185,23 @@ const OnThisPage = ({ sections }: { readonly sections: readonly string[] }) => (
     </nav>
 );
 
+/** The main content alone, or beside the list of its sections where a page has one. */
+const Body = ({
+    sections,
+    children,
+}: {
+    readonly sections: readonly string[] | undefined;
+    readonly children: ReactNode;
+}) =>
+    sections === undefined ? (
+        children
+    ) : (
+        <div className="site-body">
+            <OnThisPage sections={sections} />
+            {children}
+        </div>
+    );
+
 /**
  * A page of the site: the kit's own skip link, strip and footer around the site's navigation and
  * the page's content, and in the footer the version of the kit it is drawn from and the commit it
@@ -205,18 +222,11 @@ const Page = ({
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
         <SiteNav current={current} />
-        {sections === undefined ? (
+        <Body sections={sections}>
             <main id="main-content" tabIndex={-1} className="site-main">
                 {children}
             </main>
-        ) : (
-            <div className="site-body">
-                <OnThisPage sections={sections} />
-                <main id="main-content" tabIndex={-1} className="site-main">
-                    {children}
-                </main>
-            </div>
-        )}
+        </Body>
         <SiteFooter build={build} />
     </>
 );
@@ -397,12 +407,18 @@ export const Controls = ({ build }: { readonly build: Build }) => (
     </Page>
 );
 
+/**
+ * The page chrome's own section, written by hand rather than from the states, under one name for
+ * its heading, its id, its tests and its place in the list of sections.
+ */
+const SKIP_LINK = 'Skip link';
+
 /** The skip link, and each state of the strip and the footer, as pictures. */
 export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
         current="page-chrome/index.html"
-        sections={['Skip link', ...CHROME.map(({ name }) => name)]}
+        sections={[SKIP_LINK, ...CHROME.map(({ name }) => name)]}
     >
         <h1>Page chrome</h1>
         <p className="site-lead">
@@ -417,13 +433,13 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
             page a second portfolio menu, and a screen reader would list both.
         </p>
         <section>
-            <h2 id="skip-link">Skip link</h2>
+            <h2 id={idOf(SKIP_LINK)}>{SKIP_LINK}</h2>
             <p>
                 The skip link is the first thing the keyboard reaches, out of sight until then. Load
                 this page and press Tab to see it. Following it moves focus past the strip and the
                 site&rsquo;s own links to the page&rsquo;s main content.
             </p>
-            <Tests group="Skip link" commit={build.commit} />
+            <Tests group={SKIP_LINK} commit={build.commit} />
         </section>
         <Shown controls={CHROME} build={build} wide />
     </Page>

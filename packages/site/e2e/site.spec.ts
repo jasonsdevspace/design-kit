@@ -19,13 +19,18 @@ const PAGES = ROUTES.map(({ path }) => path);
 /** The widths of a small phone, a phone, a tablet and a laptop. */
 const WIDTHS = [320, 390, 768, 1280] as const;
 
-/** The visitor's own text size, as the browser's setting sets it, which every rem is drawn from. */
+/**
+ * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from.
+ * The session stays open for the page's life, since closing it undoes the setting, and the size is
+ * read back, so a setting the browser drops fails the test rather than leaving it at one size.
+ */
 const textSize = async (page: Page, scale: number) => {
     const session = await page.context().newCDPSession(page);
     await session.send('Page.setFontSizes', {
         fontSizes: { standard: Math.round(16 * scale), fixed: Math.round(13 * scale) },
     });
-    await session.detach();
+    const size = await page.evaluate(() => getComputedStyle(document.documentElement).fontSize);
+    expect(size, 'the text size the browser draws').toBe(`${String(Math.round(16 * scale))}px`);
 };
 
 /** How far the page itself scrolls sideways, which is nothing when it reflows. */
@@ -650,6 +655,7 @@ test.describe("the site's header", () => {
         );
         expect(forced).toContain('.site-theme input:checked + span');
         expect(forced).toContain('.site-tabs a[aria-current="page"]');
+        expect(forced).toContain('.site-code-tab[aria-selected="true"]');
     });
 
     test('keeps each segment one width as the choice moves', async ({ page }) => {
@@ -1139,6 +1145,62 @@ test.describe('the state cards', () => {
         expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
             await card.getByRole('region', { name: 'React, An action' }).textContent()
         );
+    });
+
+    test('leaves the browser its own shortcuts on a tab, such as going back', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const markup = page.getByRole('tab', { name: 'Markup' }).first();
+        await markup.focus();
+        const passed = await page.evaluate(() => {
+            const tab = document.activeElement;
+            if (!tab) return [];
+            return (['altKey', 'ctrlKey', 'metaKey'] as const).map((modifier) => {
+                const event = new KeyboardEvent('keydown', {
+                    key: 'ArrowLeft',
+                    bubbles: true,
+                    cancelable: true,
+                    [modifier]: true,
+                });
+                tab.dispatchEvent(event);
+                return !event.defaultPrevented;
+            });
+        });
+        expect(passed).toEqual([true, true, true]);
+        await expect(markup).toHaveAttribute('aria-selected', 'true');
+    });
+
+    test('names the button for the block it copied, when the tab changes as it copies', async ({
+        page,
+    }) => {
+        // The clipboard answers only when the test says, as it would behind a permission prompt.
+        await page.addInitScript(() => {
+            const held: { resolve?: () => void } = {};
+            Object.defineProperty(window, 'answerClipboard', { value: () => held.resolve?.() });
+            Object.defineProperty(navigator, 'clipboard', {
+                value: {
+                    writeText: () =>
+                        new Promise<void>((resolve) => {
+                            held.resolve = resolve;
+                        }),
+                },
+            });
+        });
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await page.getByRole('tab', { name: 'React' }).first().click();
+        await page.evaluate(() => {
+            (window as unknown as { answerClipboard: () => void }).answerClipboard();
+        });
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        // Read at once, before the button would say Copy again on its own.
+        expect(
+            await page
+                .locator('.site-copy-button')
+                .first()
+                .evaluate((button) => button.textContent)
+        ).toBe('Copy React, An action');
     });
 
     test('gives a state with markup alone its block and copy button, with no tabs', async ({

@@ -287,8 +287,15 @@ const copyButton = (shown: () => Block) => {
         word.textContent = 'Copy';
     };
     button.addEventListener('click', () => {
-        const { block } = shown();
+        const pressed = shown();
+        const { block } = pressed;
         void copied(block.textContent).then((done) => {
+            // A tab changed while the clipboard answered has renamed the button for its own
+            // block, so the button is left as it is, and a block no longer shown is not selected.
+            if (shown() !== pressed) {
+                if (done) say('Copied.');
+                return;
+            }
             if (!done) select(block);
             word.textContent = done ? 'Copied' : 'Selected';
             say(done ? 'Copied.' : howToCopy());
@@ -350,6 +357,8 @@ const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: B
         });
     });
     list.addEventListener('keydown', (event) => {
+        // A key held with a modifier is the browser's or the system's, such as Back.
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
         const at = tabs.findIndex((tab) => tab === document.activeElement);
         if (at < 0) return;
         const last = tabs.length - 1;
