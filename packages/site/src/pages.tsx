@@ -5,19 +5,10 @@ import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
-import { BASE, type Route, ROUTES } from './routes.js';
+import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
 import { Colors, Contrast, Scale } from './tokens.js';
 
 const { DemoFooter, PortfolioStrip, SkipLink } = kit;
-
-/** The kit's repository, which the strip and the footer link as the site's source. */
-export const SOURCE = 'https://github.com/jasonsdevspace/design-kit';
-
-/** How the kit works, the site's explainer, which the strip and the footer lead to. */
-const ABOUT = `${BASE}how-it-works/`;
-
-/** The package on npm. */
-const NPM = 'https://www.npmjs.com/package/@jasonsdevspace/design-kit';
 
 /**
  * The version of the kit the site pins, its tokens sheet as the package ships it, and the commit
@@ -28,6 +19,26 @@ export interface Build {
     readonly tokens: string;
     readonly commit: string;
 }
+
+/**
+ * The kit's footer, and after it the version of the kit the page is drawn from and the commit it
+ * was built at.
+ */
+const SiteFooter = ({ build, current }: { readonly build: Build; readonly current?: 'about' }) => (
+    <DemoFooter
+        name="The design kit"
+        about={ABOUT}
+        source={SOURCE}
+        {...(current === undefined ? {} : { current })}
+    >
+        This page uses version {build.version} of the kit, as published on npm, and was built at
+        commit{' '}
+        <a href={`${SOURCE}/commit/${build.commit}`}>
+            <code>{build.commit.slice(0, 7)}</code>
+        </a>
+        .
+    </DemoFooter>
+);
 
 /** The site's own pages, each marked as the current page where it is the one shown. */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
@@ -65,14 +76,7 @@ const Page = ({
         <main id="main-content" tabIndex={-1} className="site-main">
             {children}
         </main>
-        <DemoFooter name="The design kit" about={ABOUT} source={SOURCE}>
-            This page uses version {build.version} of the kit, as published on npm, and was built at
-            commit{' '}
-            <a href={`${SOURCE}/commit/${build.commit}`}>
-                <code>{build.commit.slice(0, 7)}</code>
-            </a>
-            .
-        </DemoFooter>
+        <SiteFooter build={build} />
     </>
 );
 
@@ -89,16 +93,9 @@ const Explainer = ({ build }: { readonly build: Build }) => (
             <a href={BASE}>The design kit</a>
         </header>
         <main id="main-content" tabIndex={-1} className="dk-explainer">
-            <HowItWorks />
+            <HowItWorks commit={build.commit} />
         </main>
-        <DemoFooter name="The design kit" about={ABOUT} source={SOURCE} current="about">
-            This page uses version {build.version} of the kit, as published on npm, and was built at
-            commit{' '}
-            <a href={`${SOURCE}/commit/${build.commit}`}>
-                <code>{build.commit.slice(0, 7)}</code>
-            </a>
-            .
-        </DemoFooter>
+        <SiteFooter build={build} current="about" />
     </>
 );
 

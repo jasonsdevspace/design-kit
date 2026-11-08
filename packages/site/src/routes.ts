@@ -2,10 +2,19 @@
  * The site's pages, each the HTML file Vite builds it from, relative to the site, the path a
  * visitor asks for under the base GitHub Pages serves the site from, the page's title, the name the
  * site's navigation gives it, or none for the explainer, which the strip and the footer lead to as
- * a demo's do, and the description a search result shows for it. The build, the
- * browser tests and the Lighthouse audit all read this one list.
+ * a demo's do, and the description a search result shows for it. The build, the browser tests and
+ * the Lighthouse audit all read this one list.
  */
 export const BASE = '/design-kit/';
+
+/** The explainer, which the strip and the footer on every page lead to as a demo's do. */
+export const ABOUT = `${BASE}how-it-works/`;
+
+/** The kit's repository, which the strip and the footer link as the site's source. */
+export const SOURCE = 'https://github.com/jasonsdevspace/design-kit';
+
+/** The package on npm. */
+export const NPM = 'https://www.npmjs.com/package/@jasonsdevspace/design-kit';
 
 export const ROUTES = [
     {
@@ -50,7 +59,7 @@ export const ROUTES = [
     },
     {
         file: 'how-it-works/index.html',
-        path: `${BASE}how-it-works/`,
+        path: ABOUT,
         title: 'How the design kit works · Jason Poteet',
         nav: null,
         description:
