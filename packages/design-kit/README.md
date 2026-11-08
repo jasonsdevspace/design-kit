@@ -54,8 +54,8 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   `--dk-danger`, `--dk-danger-bg` and the scrim, `--dk-scrim`. Beside them are steps of space, text
   size and corners, a code size in em that follows the text around it, line heights, weights, a sans
   and a mono font stack, the focus ring's width and offset, a field's height and inline padding, the
-  size of a touch target, the height of the portfolio's strip, the measure and column widths, a
-  shadow and a short duration.
+  size of a touch target, the height of the portfolio's strip and the width of a demo's switches in
+  it, `auto` until a demo names one, the measure and column widths, a shadow and a short duration.
 - `@jasonsdevspace/design-kit/base.css` gives the page its type and colors, one focus ring in the
   accent for every link and control the keyboard reaches, code in running text a step under the text
   around it, the `.dk-visually-hidden` class for a label a screen reader reads and the eye does not,
