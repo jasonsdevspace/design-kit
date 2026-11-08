@@ -730,14 +730,19 @@ export default defineConfig({
 ```
 
 A page whose `css.transformer` is `'lightningcss'` passes the floor to Lightning CSS too, since Vite
-gives that transformer targets of its own, lower than the floor, and it rewrites each
+gives that transformer targets of its own, lower than the floor, and the transformer rewrites each
 `light-dark()` before the build target applies.
 
 ```ts
-import { browserFloor, lightningcssFloor } from '@jasonsdevspace/design-kit/vite';
+import {
+    browserFloor,
+    lightningcssFloor,
+    themeScriptPlugin,
+} from '@jasonsdevspace/design-kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    plugins: [themeScriptPlugin()],
     css: { transformer: 'lightningcss', lightningcss: { targets: lightningcssFloor() } },
     build: { target: browserFloor() },
 });

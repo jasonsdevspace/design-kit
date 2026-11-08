@@ -135,7 +135,10 @@ describe('the browser floor', () => {
             root,
             logLevel: 'silent',
             configFile: false,
-            css: { transformer, lightningcss: { targets: lightningcssFloor() } },
+            css:
+                transformer === 'lightningcss'
+                    ? { transformer, lightningcss: { targets: lightningcssFloor() } }
+                    : { transformer },
             build: { target: browserFloor(), outDir: 'dist' },
         });
         const assets = join(root, 'dist', 'assets');

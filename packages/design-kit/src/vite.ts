@@ -22,8 +22,8 @@ type Engine = (typeof FLOOR)[number][0];
 
 /**
  * The floor as a build target for Vite's `build.target`, which `build.cssTarget` follows unless a
- * page sets it, such as `['chrome123', 'safari17.5']`. Each call gives a new array, so a page may
- * change its own without changing another's.
+ * page sets it, each browser written as Vite reads it, such as `'chrome123'` or `'safari17.5'`.
+ * Each call gives a new array, so a page may change its own without changing another's.
  */
 export const browserFloor = (): string[] =>
     FLOOR.map(
@@ -34,7 +34,7 @@ export const browserFloor = (): string[] =>
  * The floor as targets for `css.lightningcss.targets`, each version packed into a number as
  * Lightning CSS reads it. A page whose `css.transformer` is `'lightningcss'` needs it as well as
  * the build target, since Vite gives that transformer targets of its own, lower than the floor,
- * and it rewrites each `light-dark()` before the build target applies.
+ * and the transformer rewrites each `light-dark()` before the build target applies.
  */
 export const lightningcssFloor = (): Record<Engine, number> =>
     Object.fromEntries(
