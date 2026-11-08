@@ -123,19 +123,18 @@ body > .dk-strip .dk-strip-tools {
  */
 .site-tabs {
     display: flex;
-    flex-wrap: nowrap;
-    gap: var(--dk-space-1);
     /*
-     * The row scrolls, so it clips what is drawn past its edges. It keeps room on every side for
-     * the kit's focus ring, and gives that room back to the layout, so a focused tab shows its
-     * whole ring and the tabs still line up with the column.
+     * The tabs wrap onto a second row where a phone is too narrow for them all, so every page is in
+     * view. The row keeps room on every side for the kit's focus ring, and gives that room back to
+     * the layout, so a focused tab shows its whole ring and the tabs still line up with the column.
      */
+    flex-wrap: wrap;
+    gap: var(--dk-space-1);
     --site-ring-room: calc(var(--dk-ring-width) + var(--dk-ring-offset));
     margin: calc(-1 * var(--site-ring-room));
     padding: var(--site-ring-room);
     min-width: 0;
     max-width: calc(100% + 2 * var(--site-ring-room));
-    overflow-x: auto;
     list-style: none;
 }
 
@@ -503,37 +502,47 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
- * A page of states lists its sections beside the content on a screen wide enough for both, the
- * list held in sight as the page scrolls. Narrower, the list is left out and the content takes the
- * column, as on every other page.
+ * A page's list of sections, after its opening inside the main content. On a narrow screen it is a
+ * short list of contents in the page's flow, set off by a line on its left. On a screen wide enough
+ * for both, the main content becomes two columns: the list on the left, held in sight as the page
+ * scrolls, and everything else on the right, so the column starts in the same place on every page
+ * with a list. The list's text lines up with the column edge, and the hover ground of each link
+ * reaches into the gutter.
  */
 .site-toc {
-    display: none;
+    margin-top: var(--dk-space-5);
+    padding-inline-start: var(--dk-space-3);
+    border-inline-start: 2px solid var(--dk-line);
+    font-size: var(--dk-text-small);
 }
 
 @media (min-width: 64rem) {
-    .site-body {
+    .site-main-listed {
         display: grid;
         grid-template-columns: 12rem minmax(0, 1fr);
-        gap: var(--dk-space-6);
-        max-width: var(--dk-column);
-        margin-inline: auto;
-        padding-inline: var(--dk-space-4);
+        column-gap: var(--dk-space-6);
     }
 
-    .site-body > .site-main {
-        max-width: none;
-        margin-inline: 0;
-        padding-inline: 0;
+    .site-main-listed > * {
+        grid-column: 2;
     }
 
-    .site-toc {
-        display: block;
+    /*
+     * The list spans every row the content takes, so it can stay in sight down the whole page. It
+     * takes no height in those rows, so it never pushes the content apart, and draws past its own
+     * box.
+     */
+    .site-main-listed > .site-toc {
+        grid-column: 1;
+        grid-row: 1 / span 999;
         position: sticky;
         top: 0;
         align-self: start;
-        padding-top: var(--dk-space-6);
-        font-size: var(--dk-text-small);
+        height: 0;
+        overflow: visible;
+        margin: 0 0 0 calc(-1 * var(--dk-space-3));
+        padding-inline-start: 0;
+        border: 0;
     }
 }
 
@@ -1172,7 +1181,7 @@ body > .dk-strip .dk-strip-tools {
  * each file's name over a list of its tests' names, which hold to the measure as prose does.
  */
 .site-held {
-    margin-top: var(--dk-space-5);
+    margin-top: var(--dk-space-4);
     font-size: var(--dk-text-small);
 }
 
@@ -1230,6 +1239,15 @@ body > .dk-strip .dk-strip-tools {
  * links and the theme switch share one row.
  */
 @media (max-width: 48rem) {
+    /* A tab's words may break where a phone with large text is too narrow for them on one line. */
+    .site-tabs li {
+        max-width: 100%;
+    }
+
+    .site-tabs a {
+        white-space: normal;
+    }
+
     .site-brand,
     .site-tabs a,
     .site-code-tab {
