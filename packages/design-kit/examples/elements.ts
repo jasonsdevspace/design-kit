@@ -7,7 +7,8 @@ type Value = string | boolean | React.ReactElement;
 /**
  * The React a page writes for a state, read by TypeScript's parser and built as an element with the
  * components it is given and the DOM's own elements, without running it as code. It reads what the
- * states write: string, boolean and element attributes, and text and elements as children. The
+ * states write: string, boolean and element attributes, text and elements as children, and
+ * fragments. The
  * kit's tests build it with the sources' components, and the site's with the version it pins.
  */
 export const elementOf = (react: string, kit: object): React.ReactElement => {
@@ -18,8 +19,22 @@ export const elementOf = (react: string, kit: object): React.ReactElement => {
         if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
         if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
         if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) return build(node);
+        if (ts.isJsxFragment(node)) {
+            return React.createElement(React.Fragment, null, ...childrenOf(node.children));
+        }
         throw new Error(`the React shown writes what this test cannot read: ${node.getText()}`);
     };
+    /** The children of an element or a fragment: its text with the layout's breaks dropped. */
+    const childrenOf = (children: ts.NodeArray<ts.JsxChild>): React.ReactNode[] =>
+        children.flatMap((child): Value[] => {
+            if (ts.isJsxText(child)) {
+                const text = child.text.replaceAll(/\s*\n\s*/g, ' ').trim();
+                return text === '' ? [] : [text];
+            }
+            if (ts.isJsxExpression(child))
+                return child.expression ? [valueOf(child.expression)] : [];
+            return [valueOf(child)];
+        });
     const build = (node: ts.JsxElement | ts.JsxSelfClosingElement): React.ReactElement => {
         const opening = ts.isJsxElement(node) ? node.openingElement : node;
         const tag = opening.tagName.getText();
@@ -37,22 +52,8 @@ export const elementOf = (react: string, kit: object): React.ReactElement => {
                       ? valueOf(initializer.expression)
                       : valueOf(initializer);
         }
-        const children = ts.isJsxElement(node)
-            ? node.children.flatMap((child): Value[] => {
-                  if (ts.isJsxText(child)) {
-                      const text = child.text.replaceAll(/\s*\n\s*/g, ' ').trim();
-                      return text === '' ? [] : [text];
-                  }
-                  if (ts.isJsxExpression(child) && child.expression)
-                      return [valueOf(child.expression)];
-                  return [valueOf(child)];
-              })
-            : [];
-        return React.createElement(
-            type as React.ElementType,
-            props,
-            ...(children as React.ReactNode[])
-        );
+        const children = ts.isJsxElement(node) ? childrenOf(node.children) : [];
+        return React.createElement(type as React.ElementType, props, ...children);
     };
     const [statement] = file.statements;
     if (statement === undefined || !ts.isExpressionStatement(statement)) {

@@ -51,6 +51,11 @@ instead, so a reader copies it with their own keys. One status line out of sight
 reader which happened, emptied first so a second copy is heard too, and the button says Copied or
 Selected for a moment. With no script, the code still opens and its text can be selected by hand.
 
+It also makes the live copies of the states a reader can change behave as they say. A toggle flips
+`aria-pressed` when pressed, and a button that names a panel with `aria-controls` opens and closes
+it, so a control never says it is pressed or open after a reader has changed it. With no script, the
+copies stay as they are drawn, as each state's name, which says how it starts, describes them.
+
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
 path only with its origin, so the build writes it for that origin unless `SITE_ORIGIN` names
@@ -103,4 +108,8 @@ The paths are in `packages/site`.
   saying so again for a second block. Where the browser refuses to write to the clipboard, or has
   none, it finds the block's text selected, with the status saying how to copy it. It finds no copy
   button with no script.
+- `e2e/site.spec.ts` also finds a live toggle flipped by a click and by Space, and the panel a live
+  button names closed and opened again with it. It finds the status line in the page before
+  anything is copied, only on a page with code, and the words for copying what was selected given
+  for a touch screen on a phone.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
