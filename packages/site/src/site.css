@@ -8,11 +8,13 @@
 @import 'design-kit-release/components.css';
 
 /*
- * The width of the theme switch in the strip, in the strip's own text size, wide enough for its
- * words in any font. The kit holds the room it keeps before the script runs and the section the switch
- * fills to it, so a strip too narrow for the links and the switch wraps before it comes as after.
+ * The width of the theme switch in the page's own strip, in the strip's own text size, wide enough
+ * for its words in any font. The kit holds the room it keeps before the script runs and the section
+ * the switch fills to it, so a strip too narrow for the links and the switch wraps before it comes
+ * as after. It is set on the page's strip alone, so the strips the page chrome page pictures stay
+ * as a demo without it draws them.
  */
-:root {
+body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
