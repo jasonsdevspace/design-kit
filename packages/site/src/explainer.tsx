@@ -39,10 +39,10 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
     <>
         <h1>How the design kit works</h1>
         <p className="dk-explainer-lead">
-            The design kit is one package the demos on jasonsdevspace.com are built to share: their
+            The design kit is one package made for the demos on jasonsdevspace.com to share: their
             colors and type, the theme a visitor chose, the links around each page, the buttons,
-            fields and messages, and the page that explains each demo. A fix to a button is made
-            once, and reaches every demo that installs the version with it.
+            fields and messages, and the page that explains each demo. ShelfLens is built on it. A
+            fix to a button is made once, and reaches every demo that installs the version with it.
         </p>
         <p>
             It is built for two people. The person building a demo wants it to look like the rest
@@ -80,8 +80,9 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 </Step>
                 <Step title="The demo's own styles win.">
                     Every rule of the kit&rsquo;s sits in a cascade layer, so a demo&rsquo;s own
-                    rule outside one wins over it however plain it is. The one rule a demo cannot
-                    beat is the cut to motion a visitor asked for.
+                    styles win over it, however plain they are. The exception is less motion: when a
+                    visitor asks for it, the kit&rsquo;s rule holds over a demo&rsquo;s ordinary
+                    styles.
                 </Step>
             </ol>
         </section>
@@ -108,10 +109,10 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <p>
                 A style library usually wins by the weight of its selectors, so a demo has to
                 outweigh it to change anything. Here every value the kit names starts with{' '}
-                <code>--dk-</code> and every class with <code>dk-</code>, and every rule sits in a
-                layer of the kit&rsquo;s. So a demo keeps its own names, and its own rules outside
-                any layer win whatever their selectors, all but the cut to motion a visitor asks
-                for. A test fails if a rule slips out of its layer.
+                <code>--dk-</code> and every class with <code>dk-</code>, so a demo keeps its own
+                names. Every rule sits in a layer of the kit&rsquo;s, so a demo&rsquo;s own styles
+                win whatever their selectors. The one exception is a visitor&rsquo;s request for
+                less motion. A test fails if a rule slips out of its layer.
             </p>
 
             <h3>A state you can see but not hear</h3>
@@ -119,8 +120,8 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 A class such as &ldquo;active&rdquo; can make a button look pressed while a screen
                 reader hears an ordinary button. Here pressed, open, invalid and unavailable are
                 each drawn from the attribute a screen reader reads. A button the kit marks
-                unavailable still takes focus from the keyboard, so someone using one can reach it
-                and read the words beside it that say why.{' '}
+                unavailable still takes focus from the keyboard, so someone on a keyboard can reach
+                it and read the words beside it that say why.{' '}
                 <a href={`${BASE}controls/#buttons`}>Each state of the buttons</a>.
             </p>
 

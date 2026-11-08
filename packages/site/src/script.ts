@@ -100,7 +100,8 @@ const themeSwitch = () => {
     const note = document.createElement('span');
     note.id = 'site-theme-note';
     note.className = 'dk-visually-hidden';
-    note.textContent = 'Saved for every page on jasonsdevspace.com, as the portfolio saves it.';
+    note.textContent =
+        'Your choice is saved for every page on jasonsdevspace.com, the portfolio included.';
     const group = document.createElement('div');
     group.className = 'site-theme';
     group.setAttribute('role', 'radiogroup');

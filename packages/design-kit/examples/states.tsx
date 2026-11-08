@@ -148,7 +148,7 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'A select',
+                name: 'A select waiting for a choice',
                 attribute: 'class="dk-select"',
                 react: `<SelectField id="sort" label="Sort by">
     <option value="">Choose an order</option>

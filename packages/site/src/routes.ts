@@ -23,7 +23,7 @@ export const ROUTES = [
         title: 'The design kit · Jason Poteet',
         nav: 'Home',
         description:
-            'The tokens, theme script, page chrome, controls and explainer layout the demos on jasonsdevspace.com are built to share.',
+            'A shared set of colors, type, buttons, fields and page layouts made for the demos on jasonsdevspace.com, shown in both themes.',
     },
     {
         file: 'tokens/index.html',
@@ -31,7 +31,7 @@ export const ROUTES = [
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens and theme',
         description:
-            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how a page takes the theme a visitor saved.',
+            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
     },
     {
         file: 'controls/index.html',

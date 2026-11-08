@@ -41,7 +41,7 @@ export const CHROME: readonly Control[] = [
                 ),
             },
             {
-                name: 'The strip while the switches are on their way',
+                name: 'The strip keeping room for switches that load later',
                 attribute: 'class="dk-strip-room"',
                 react: `<PortfolioStrip about="./about/" source="https://github.com/jasonsdevspace/example" toolsWaiting />`,
                 draw: ({ PortfolioStrip }) => (
@@ -99,7 +99,7 @@ export const steps: State = {
         <ol className="dk-steps" role="list">
             <li>
                 <strong className="dk-steps-title">The order names a product.</strong>
-                <span className="dk-steps-note">And how many of it.</span>
+                <span className="dk-steps-note">With the number it wants.</span>
             </li>
             <li>
                 <span className="dk-steps-arrow" aria-hidden="true">
@@ -119,7 +119,7 @@ export const panel: State = {
     draw: () => (
         <div className="dk-panel">
             <p className="dk-panel-title">How the numbers were taken</p>
-            <p>...</p>
+            <p>The machine, the load and how long each run lasted, in a sentence or two.</p>
         </div>
     ),
 };
@@ -218,7 +218,7 @@ export const EXPLAINER: readonly Control[] = [
                                     01
                                 </p>
                                 <h2>What happens when an order comes in</h2>
-                                <p>...</p>
+                                <p>The flow, step by step, in plain words.</p>
                             </section>
                         </div>
                     </>

@@ -5,14 +5,15 @@ are meant to share: the design tokens, base styles, theme script, page chrome, b
 callouts, and the explainer page with its steps, panels, tables and code blocks. Each version from
 `0.1.0-next.1` on is staged on npm from a tag, and goes live when it is promoted.
 
-**Why I built it.** My demos each carry their own copy of the same things. ShelfLens and
-inventory-reservations both ship a `theme.js` that reads the theme a visitor saved on the portfolio
-and sets it before the first paint, the same script line for line, and each names its colors in
-custom properties of its own, such as `--bg` and `--accent`. A change to how a theme is chosen has
-to be made in every repository, and a new demo would copy it again. I wanted one package a
-demo could load beside the styles it already has, without either side taking the other's names or
-overruling the other's rules, and I wanted each of those promises held by a test, since a
-stylesheet that loses the cascade fails without an error.
+**Why I built it.** My demos each carried their own copy of the same things. ShelfLens and
+inventory-reservations both shipped a `theme.js` that read the theme a visitor saved on the
+portfolio and set it before the first paint, the same script line for line, and each named its
+colors in custom properties of its own, such as `--bg` and `--accent`. A change to how a theme is
+chosen had to be made in every repository, and a new demo would have copied it again. I wanted one
+package a demo could load beside the styles it already has, without either side taking the other's
+names or overruling the other's rules, and I wanted each of those promises held by a test, since a
+stylesheet that loses the cascade fails without an error. ShelfLens is now built on it, at the
+version it pins.
 
 ## Using it in a demo
 
