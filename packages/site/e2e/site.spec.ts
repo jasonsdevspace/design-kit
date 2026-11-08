@@ -885,17 +885,20 @@ test.describe('how each state is shown', () => {
     test('frames a copy that cannot be tried with a dashed edge, and a live one with a solid edge', async ({
         page,
     }) => {
-        await page.goto('/design-kit/controls/');
-        const edges = await page.evaluate(() =>
-            [...document.querySelectorAll('.site-copy')].map((copy) => ({
-                inert: copy.hasAttribute('inert'),
-                edge: getComputedStyle(copy).borderTopStyle,
-            }))
-        );
-        expect(edges.length).toBeGreaterThan(0);
-        expect(edges.filter(({ inert, edge }) => edge !== (inert ? 'dashed' : 'solid'))).toEqual(
-            []
-        );
+        for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
+            await page.goto(path);
+            const edges = await page.evaluate(() =>
+                [...document.querySelectorAll('.site-copy')].map((copy) => ({
+                    inert: copy.hasAttribute('inert'),
+                    edge: getComputedStyle(copy).borderTopStyle,
+                }))
+            );
+            expect(edges.length, path).toBeGreaterThan(0);
+            expect(
+                edges.filter(({ inert, edge }) => edge !== (inert ? 'dashed' : 'solid')),
+                path
+            ).toEqual([]);
+        }
     });
 
     test('sets light on the left and dark on the right on a wide screen, and the live copy first on a phone', async ({
@@ -918,7 +921,7 @@ test.describe('how each state is shown', () => {
                             const [a, b] = [live, other].map((copy) =>
                                 copy.getBoundingClientRect()
                             );
-                            if (!a || !b) return [];
+                            if (!a || !b) return ['a state whose copies have no box'];
                             const right = phone
                                 ? a.bottom <= b.top
                                 : scheme === 'light'
@@ -935,7 +938,7 @@ test.describe('how each state is shown', () => {
         }
     });
 
-    test('says how to try a preview when it is tapped, and switches the page to its theme', async ({
+    test('answers a tap on a preview with a note, and its button switches the theme', async ({
         page,
     }) => {
         await page.emulateMedia({ colorScheme: 'light' });
@@ -950,10 +953,10 @@ test.describe('how each state is shown', () => {
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
         await expect(note).toHaveCount(1);
         await expect(note).toHaveText(
-            'This copy is a preview of the dark theme. Try the live copy, or switch the page to dark.'
+            'This is only a preview of the dark theme. Try the one marked Live, or switch to dark.'
         );
         await expect(page.getByRole('status')).toHaveText(
-            'This copy is a preview of the dark theme. Try the live copy.'
+            'This is only a preview of the dark theme. Try the light one.'
         );
         // Escape closes it, and so does a tap anywhere else.
         await page.keyboard.press('Escape');
@@ -964,27 +967,96 @@ test.describe('how each state is shown', () => {
         await expect(note).toHaveCount(0);
         // Its button switches the page, as the strip's switch does.
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-        await note.getByRole('button', { name: 'switch the page to dark' }).click();
+        await note.getByRole('button', { name: 'switch to dark' }).click();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
         await expect(page.getByRole('radio', { name: 'Dark' })).toBeChecked();
         await expect(note).toHaveCount(0);
-        await expect(page.getByRole('status')).toHaveText(
-            'The page is dark now, and so are the live copies.'
-        );
+        await expect(page.getByRole('status')).toHaveText('The theme is dark now.');
+        // Focus goes to the live copy beside it, rather than back to the start of the page.
+        await expect(state.locator('.site-copy:not(.site-other)')).toBeFocused();
     });
 
-    test("adds nothing to the keyboard's path for the previews", async ({ page }) => {
+    test('closes the note when the page changes theme some other way, so it never names the wrong one', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
         await page.goto('/design-kit/controls/');
-        // The only buttons outside the copies are the copy buttons and the strip's switch.
-        const extra = await page.evaluate(
-            () =>
-                [...document.querySelectorAll('main button')].filter(
-                    (button) =>
-                        button.closest('.site-copy') === null &&
-                        !button.classList.contains('site-copy-button')
-                ).length
-        );
-        expect(extra).toBe(0);
+        const preview = page
+            .locator('.site-state')
+            .filter({ hasText: 'A field with an error' })
+            .locator('.site-other');
+        const box = await preview.boundingBox();
+        if (!box) throw new Error('no preview');
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(page.locator('.site-preview-note')).toHaveCount(1);
+        // With System chosen, the system turning dark changes the page with no click to close it.
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await expect(page.locator('.site-preview-note')).toHaveCount(0);
+    });
+
+    test('takes a drag that only ends on a preview for no tap on it', async ({ page }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('/design-kit/controls/');
+        const state = page.locator('.site-state').filter({ hasText: 'A field with an error' });
+        const [from, to] = await Promise.all([
+            state.locator('.site-copy:not(.site-other)').boundingBox(),
+            state.locator('.site-other').boundingBox(),
+        ]);
+        if (!from || !to) throw new Error('no copies');
+        // From the gap between the two copies, which is the state's own, to the preview.
+        await page.mouse.move((from.x + from.width + to.x) / 2, to.y + to.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 4 });
+        await page.mouse.up();
+        await expect(page.locator('.site-preview-note')).toHaveCount(0);
+        // And a tap that starts there too opens it, so the drag is what was refused.
+        await page.mouse.click(to.x + to.width / 2, to.y + to.height / 2);
+        await expect(page.locator('.site-preview-note')).toHaveCount(1);
+    });
+
+    test("adds nothing to the keyboard's path for the previews until a tap brings the note", async ({
+        page,
+    }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/design-kit/controls/');
+        /** What the keyboard reaches in the main content outside the live copies. */
+        const reached = () =>
+            page.evaluate(() =>
+                [
+                    ...document.querySelectorAll<HTMLElement>(
+                        'main :is(a[href], button, input, select, textarea, summary, [tabindex])'
+                    ),
+                ]
+                    .filter(
+                        (element) =>
+                            element.tabIndex >= 0 &&
+                            element.closest('[inert]') === null &&
+                            element.closest('.site-copy') === null
+                    )
+                    .map(
+                        (element) =>
+                            ['site-copy-button', 'site-preview-switch', 'dk-code'].find((name) =>
+                                element.classList.contains(name)
+                            ) ?? element.tagName.toLowerCase()
+                    )
+            );
+        const before = await reached();
+        // Only the code's disclosures, frames and copy buttons, and the tests' links.
+        expect(
+            before.filter((name) => !['summary', 'dk-code', 'site-copy-button', 'a'].includes(name))
+        ).toEqual([]);
+        const box = await page
+            .locator('.site-state')
+            .filter({ hasText: 'A field with an error' })
+            .locator('.site-other')
+            .boundingBox();
+        if (!box) throw new Error('no preview');
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        const after = await reached();
+        expect(after.filter((name) => name === 'site-preview-switch')).toHaveLength(1);
+        expect(after).toHaveLength(before.length + 1);
     });
 
     test('names the live copy of each state by the state, for a screen reader moving by control', async ({

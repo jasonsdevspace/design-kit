@@ -169,21 +169,28 @@ body > .dk-strip {
 }
 
 /*
- * A copy's label names its theme: the page's for the live copy, the other for the preview. Of the
- * two names each label holds, the page's theme hides the one that is not so.
+ * A copy's label names its theme: the page's for the live copy, the other for the preview.
+ * Each label holds both names, and the page's theme hides the wrong one: the light page's names
+ * show unless the page is dark, so a label never shows both.
  */
-:root[data-theme='light'] :is(.site-page-dark, .site-other-light),
+.site-page-dark,
+.site-other-light {
+    display: none;
+}
+
+:root[data-theme='dark'] :is(.site-page-dark, .site-other-light) {
+    display: inline;
+}
+
 :root[data-theme='dark'] :is(.site-page-light, .site-other-dark) {
     display: none;
 }
 
-@media (prefers-color-scheme: light) {
-    :root:not([data-theme]) :is(.site-page-dark, .site-other-light) {
-        display: none;
-    }
-}
-
 @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) :is(.site-page-dark, .site-other-light) {
+        display: inline;
+    }
+
     :root:not([data-theme]) :is(.site-page-light, .site-other-dark) {
         display: none;
     }
@@ -433,8 +440,8 @@ body > .dk-strip {
     }
 
     /*
-     * Light is drawn on the left and dark on the right whichever is live, so the two never trade
-     * places as the theme changes. The live copy stays first in the page, for the keyboard and a
+     * Light is drawn first, on the left or above, and dark after it whichever is live, so the two
+     * never trade places as the theme changes. The live copy stays first in the page, for the keyboard and a
      * screen reader, and on a phone, where it is the one a thumb reaches first.
      */
     :root[data-theme='dark'] .site-other {

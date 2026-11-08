@@ -239,9 +239,9 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
  * so a screen reader moving from control to control hears which state it is in. A pictured state's
  * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Each copy
  * is labeled by its theme's name: the live one marked Live, the other a preview, which the site's
- * script explains when it is tapped, and a picture a picture. Under
- * both, the state's name and the attribute that draws it, and then its code, closed until a reader
- * opens it: its markup, and the React a page writes for it where a component draws it.
+ * script explains when it is tapped, and a picture a picture. Under both, the state's name and the
+ * attribute that draws it, and then its code, closed until a reader opens it: its markup, and the
+ * React a page writes for it where a component draws it.
  */
 const StateShown = ({
     state,
@@ -332,13 +332,14 @@ export const Controls = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="controls/index.html">
         <h1>Controls</h1>
         <p className="site-lead">
-            Each state of the kit&rsquo;s buttons, fields and callouts, live in your theme, with a
-            preview of the other theme beside it, and the switch in the strip swaps which one is
-            live. Under each one is the attribute that draws it. A toggle, an open panel, a control
-            that is unavailable and a field with an error each come from the attribute a screen
-            reader already reads, never from a class of the kit&rsquo;s. So what you see and what a
-            screen reader says come from one place. A kind of control, such as the one action a view
-            leads with or a callout&rsquo;s tone, comes from a class instead.
+            Each state of the kit&rsquo;s buttons, fields and callouts is drawn twice: live in your
+            theme, marked Live, and as a preview in the other theme. To try the other theme, choose
+            it under Theme in the strip. Under each state is the attribute that draws it. A toggle,
+            an open panel, a control that is unavailable and a field with an error each come from
+            the attribute a screen reader already reads, never from a class of the kit&rsquo;s. So
+            what you see and what a screen reader says come from one place. A kind of control, such
+            as the one action a view leads with or a callout&rsquo;s tone, comes from a class
+            instead.
         </p>
         <Shown controls={CONTROLS} build={build} />
     </Page>
@@ -383,10 +384,11 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
             them.
         </p>
         <p>
-            Steps, panels, tables and code blocks are each live in your theme, with a preview of the
-            other theme beside it and the attribute that draws it below. The switch in the strip
-            swaps which one is live. The explainer&rsquo;s layout is drawn as a picture in both
-            themes, since it opens with the page&rsquo;s main heading and this page already has one.
+            Steps, panels, tables and code blocks are each drawn twice: live in your theme, marked
+            Live, and as a preview in the other theme, with the attribute that draws them under
+            both. To try the other theme, choose it under Theme in the strip. The explainer&rsquo;s
+            layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
+            heading and this page already has one.
         </p>
         <Shown controls={EXPLAINER} build={build} />
     </Page>
