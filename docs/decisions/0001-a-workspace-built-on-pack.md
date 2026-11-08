@@ -62,5 +62,8 @@ demo from npm as it was packed, with no script of the kit's to run.
   components has it. `smoke/package.test.ts` holds the list of what it loads to the package's
   exports.
 - `scripts/license.test.ts` holds each package's `LICENSE` to the one at the root.
-- `scripts/workflows.test.ts` holds every install in the workflows, in any of npm's spellings, to
-  `--ignore-scripts`.
+- `scripts/workflows.test.ts` holds every install in the workflows to `--ignore-scripts` with no
+  value of false, finding it in any of npm's spellings, with flags before its subcommand, after a
+  keyword or an assignment and across continued lines, as shelflens's test does. It holds `npx` to
+  the tools the lockfile installed, so nothing is fetched and run with its scripts on, and holds the
+  kit's manifest to no install script of its own.
