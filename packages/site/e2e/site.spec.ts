@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { ROUTES } from '../src/routes.js';
+import { ABOUT, ROUTES } from '../src/routes.js';
 
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the path
@@ -309,5 +309,89 @@ test.describe('the explainer pieces page', () => {
         ).toBeVisible();
         await expect(live.locator('.dk-explainer')).toHaveCount(0);
         await expect(page.locator('.site-copy[inert] .dk-explainer')).toHaveCount(2);
+    });
+});
+
+test('every link within the site leads to one of its pages, and to an id on it', async ({
+    page,
+}) => {
+    // Every link outside the inert copies, gathered from every page first, so each page a link
+    // leads to is loaded once.
+    const targets = new Map<string, Set<string>>();
+    const broken: string[] = [];
+    for (const path of PAGES) {
+        await page.goto(path);
+        const own = new URL(page.url()).origin;
+        const links = await page
+            .locator('a[href]')
+            .evaluateAll((all) =>
+                all
+                    .filter((link) => link.closest('[inert]') === null)
+                    .map((link) => (link as HTMLAnchorElement).href)
+            );
+        for (const href of links) {
+            const url = new URL(href);
+            if (url.origin !== own) continue;
+            if (!(PAGES as readonly string[]).includes(url.pathname)) {
+                broken.push(`${path}: ${href}`);
+                continue;
+            }
+            const ids = targets.get(url.pathname) ?? new Set<string>();
+            if (url.hash !== '') ids.add(decodeURIComponent(url.hash.slice(1)));
+            targets.set(url.pathname, ids);
+        }
+    }
+    for (const [path, ids] of targets) {
+        await page.goto(path);
+        // An id inside an inert copy is no place a link can take a reader.
+        const missing = await page.evaluate(
+            (wanted) =>
+                // Missing when no element has the id, which gives undefined, or one inside an
+                // inert copy has it, which gives that copy. Only a target outside every copy gives
+                // null.
+                wanted.filter((id) => document.getElementById(id)?.closest('[inert]') !== null),
+            [...ids]
+        );
+        broken.push(...missing.map((id) => `${path}#${id}`));
+    }
+    expect(broken).toEqual([]);
+});
+
+test.describe('the explainer', () => {
+    test('marks itself the current page, and leads back to the site', async ({ page }) => {
+        await page.goto(ABOUT);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+            'How the design kit works'
+        );
+        for (const landmark of [
+            page.getByRole('navigation', { name: 'Portfolio' }),
+            page.getByRole('contentinfo'),
+        ]) {
+            await expect(landmark.getByRole('link', { name: 'How it works' })).toHaveAttribute(
+                'aria-current',
+                'page'
+            );
+        }
+        await expect(page.getByRole('banner').getByRole('link')).toHaveAttribute(
+            'href',
+            '/design-kit/'
+        );
+        const headings = page.locator('main.dk-explainer > section > h2');
+        expect(await headings.count()).toBeGreaterThan(0);
+        await expect(headings.and(page.locator(':not([id])'))).toHaveCount(0);
+    });
+
+    test("is where every other page's strip and footer say how it works", async ({ page }) => {
+        for (const path of PAGES.filter((each) => each !== ABOUT)) {
+            await page.goto(path);
+            // The page's own strip and footer, not a picture of them on the page chrome page.
+            const links = page
+                .locator('body > .dk-strip, body > .dk-footer')
+                .getByRole('link', { name: 'How it works' });
+            await expect(links, path).toHaveCount(2);
+            for (const link of await links.all()) {
+                await expect(link, path).toHaveAttribute('href', ABOUT);
+            }
+        }
     });
 });

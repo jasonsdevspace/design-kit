@@ -4,20 +4,11 @@ import type { ReactElement, ReactNode } from 'react';
 import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
-import { type Route, ROUTES } from './routes.js';
+import { HowItWorks } from './explainer.js';
+import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
 import { Colors, Contrast, Scale } from './tokens.js';
 
 const { DemoFooter, PortfolioStrip, SkipLink } = kit;
-
-/** The kit's repository, which the strip and the footer link as the site's source. */
-export const SOURCE = 'https://github.com/jasonsdevspace/design-kit';
-
-/** How the kit works, the package's README at the tag of the version a page uses. */
-const aboutOf = (build: Build) =>
-    `${SOURCE}/tree/design-kit-v${build.version}/packages/design-kit#readme`;
-
-/** The package on npm. */
-const NPM = 'https://www.npmjs.com/package/@jasonsdevspace/design-kit';
 
 /**
  * The version of the kit the site pins, its tokens sheet as the package ships it, and the commit
@@ -29,11 +20,31 @@ export interface Build {
     readonly commit: string;
 }
 
+/**
+ * The kit's footer, and after it the version of the kit the page is drawn from and the commit it
+ * was built at.
+ */
+const SiteFooter = ({ build, current }: { readonly build: Build; readonly current?: 'about' }) => (
+    <DemoFooter
+        name="The design kit"
+        about={ABOUT}
+        source={SOURCE}
+        {...(current === undefined ? {} : { current })}
+    >
+        This page uses version {build.version} of the kit, as published on npm, and was built at
+        commit{' '}
+        <a href={`${SOURCE}/commit/${build.commit}`}>
+            <code>{build.commit.slice(0, 7)}</code>
+        </a>
+        .
+    </DemoFooter>
+);
+
 /** The site's own pages, each marked as the current page where it is the one shown. */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <nav className="site-nav" aria-label="Design kit">
         <ul role="list">
-            {ROUTES.map((route) => (
+            {ROUTES.filter((route) => route.nav !== null).map((route) => (
                 <li key={route.file}>
                     <a href={route.path} aria-current={route.file === current ? 'page' : undefined}>
                         {route.nav}
@@ -60,19 +71,31 @@ const Page = ({
 }) => (
     <>
         <SkipLink />
-        <PortfolioStrip about={aboutOf(build)} source={SOURCE} />
+        <PortfolioStrip about={ABOUT} source={SOURCE} />
         <SiteNav current={current} />
         <main id="main-content" tabIndex={-1} className="site-main">
             {children}
         </main>
-        <DemoFooter name="The design kit" about={aboutOf(build)} source={SOURCE}>
-            This page uses version {build.version} of the kit, as published on npm, and was built at
-            commit{' '}
-            <a href={`${SOURCE}/commit/${build.commit}`}>
-                <code>{build.commit.slice(0, 7)}</code>
-            </a>
-            .
-        </DemoFooter>
+        <SiteFooter build={build} />
+    </>
+);
+
+/**
+ * The explainer, in the kit's own layout as a demo's explainer is: the strip and the footer mark it
+ * as the current page, and a header leads back to the site, outside the main content so the skip
+ * link passes it.
+ */
+const Explainer = ({ build }: { readonly build: Build }) => (
+    <>
+        <SkipLink />
+        <PortfolioStrip about={ABOUT} source={SOURCE} current="about" />
+        <header className="dk-explainer-header">
+            <a href={BASE}>The design kit</a>
+        </header>
+        <main id="main-content" tabIndex={-1} className="dk-explainer">
+            <HowItWorks commit={build.commit} />
+        </main>
+        <SiteFooter build={build} current="about" />
     </>
 );
 
@@ -270,4 +293,5 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'controls/index.html': (build) => <Controls build={build} />,
     'page-chrome/index.html': (build) => <Chrome build={build} />,
     'explainer-pieces/index.html': (build) => <Pieces build={build} />,
+    'how-it-works/index.html': (build) => <Explainer build={build} />,
 };
