@@ -221,11 +221,25 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 );
 
 /**
+ * The theme a copy is drawn in, by name: the page's own, or the other. Both words are in the page,
+ * and the page's theme decides which one shows, the theme the script set or the system's where no
+ * script ran, as it decides each copy's colors.
+ */
+const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
+    <>
+        <span className={`site-${of}-light`}>Light</span>
+        <span className={`site-${of}-dark`}>Dark</span>
+    </>
+);
+
+/**
  * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
  * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
  * own, so the page never holds one twice. The live copy is a group named by the state's name alone,
  * so a screen reader moving from control to control hears which state it is in. A pictured state's
- * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Under
+ * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Each copy
+ * is labeled by its theme's name: the live one marked Live, the other a preview, which the site's
+ * script explains when it is tapped, and a picture a picture. Under
  * both, the state's name and the attribute that draws it, and then its code, closed until a reader
  * opens it: its markup, and the React a page writes for it where a component draws it.
  */
@@ -242,23 +256,26 @@ const StateShown = ({
     readonly id: string;
     readonly laidOut: boolean;
 }) => (
-    <li className="site-state">
+    <li className={pictured ? 'site-state site-state-pictured' : 'site-state'}>
         {pictured ? (
             <div className="site-copy" inert>
-                <p className="site-copy-label">A picture, in your theme</p>
+                <p className="site-copy-label">
+                    <ThemeName of="page" />, a picture
+                </p>
                 {state.draw(kit, (name) => `${name}-yours`)}
             </div>
         ) : (
             <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
                 <p className="site-copy-label" aria-hidden="true">
-                    Your theme
+                    <ThemeName of="page" /> <span className="site-live">Live</span>
                 </p>
                 {state.draw(kit, (name) => name)}
             </div>
         )}
         <div className="site-copy site-other" inert>
             <p className="site-copy-label">
-                {pictured ? 'A picture, in the other theme' : 'The other theme'}
+                <ThemeName of="other" />
+                {pictured ? ', a picture' : ', preview only'}
             </p>
             {state.draw(kit, (name) => `${name}-other`)}
         </div>
@@ -316,12 +333,12 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         <h1>Controls</h1>
         <p className="site-lead">
             Each state of the kit&rsquo;s buttons, fields and callouts, live in your theme, with a
-            copy in the other theme beside it. Under each one is the attribute that draws it. A
-            toggle, an open panel, a control that is unavailable and a field with an error each come
-            from the attribute a screen reader already reads, never from a class of the kit&rsquo;s.
-            So what you see and what a screen reader says come from one place. A kind of control,
-            such as the one action a view leads with or a callout&rsquo;s tone, comes from a class
-            instead.
+            preview of the other theme beside it, and the switch in the strip swaps which one is
+            live. Under each one is the attribute that draws it. A toggle, an open panel, a control
+            that is unavailable and a field with an error each come from the attribute a screen
+            reader already reads, never from a class of the kit&rsquo;s. So what you see and what a
+            screen reader says come from one place. A kind of control, such as the one action a view
+            leads with or a callout&rsquo;s tone, comes from a class instead.
         </p>
         <Shown controls={CONTROLS} build={build} />
     </Page>
@@ -366,10 +383,10 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
             them.
         </p>
         <p>
-            Steps, panels, tables and code blocks are each live in your theme, with a copy in the
-            other theme beside it and the attribute that draws it below. The explainer&rsquo;s
-            layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
-            heading and this page already has one.
+            Steps, panels, tables and code blocks are each live in your theme, with a preview of the
+            other theme beside it and the attribute that draws it below. The switch in the strip
+            swaps which one is live. The explainer&rsquo;s layout is drawn as a picture in both
+            themes, since it opens with the page&rsquo;s main heading and this page already has one.
         </p>
         <Shown controls={EXPLAINER} build={build} />
     </Page>

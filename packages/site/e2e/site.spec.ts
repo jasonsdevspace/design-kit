@@ -852,27 +852,139 @@ test.describe('how each state is shown', () => {
         expect(gaps.filter((gap) => Math.abs(gap) > 1)).toEqual([]);
     });
 
-    test('names both copies, and calls a picture a picture', async ({ page }) => {
-        for (const [path, labels] of [
-            ['/design-kit/controls/', ['Your theme', 'The other theme']],
-            [
-                '/design-kit/page-chrome/',
-                ['A picture, in your theme', 'A picture, in the other theme'],
-            ],
+    test('names each copy by its theme, marks the live one, and calls a picture a picture', async ({
+        page,
+    }) => {
+        for (const [scheme, theme, other] of [
+            ['light', 'Light', 'Dark'],
+            ['dark', 'Dark', 'Light'],
         ] as const) {
-            await page.goto(path);
-            const unnamed = await page.evaluate(
-                (expected) =>
-                    [...document.querySelectorAll('.site-state')].filter(
-                        (state) =>
-                            [...state.querySelectorAll('.site-copy-label')]
-                                .map((label) => label.textContent)
-                                .join('|') !== expected.join('|')
-                    ).length,
-                [...labels]
-            );
-            expect(unnamed, path).toBe(0);
+            await page.emulateMedia({ colorScheme: scheme });
+            for (const [path, live, preview] of [
+                ['/design-kit/controls/', `${theme} Live`, `${other}, preview only`],
+                ['/design-kit/page-chrome/', `${theme}, a picture`, `${other}, a picture`],
+            ] as const) {
+                await page.goto(path);
+                // The words a reader sees, which the page's theme decides.
+                const wrong = await page.evaluate(
+                    (expected) =>
+                        [...document.querySelectorAll('.site-state')]
+                            .map((state) =>
+                                [...state.querySelectorAll<HTMLElement>('.site-copy-label')]
+                                    .map((label) => label.innerText.replaceAll(/\s+/g, ' ').trim())
+                                    .join('|')
+                            )
+                            .filter((labels) => labels !== expected.join('|')),
+                    [live, preview]
+                );
+                expect(wrong, `${path} in ${scheme}`).toEqual([]);
+            }
         }
+    });
+
+    test('frames a copy that cannot be tried with a dashed edge, and a live one with a solid edge', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const edges = await page.evaluate(() =>
+            [...document.querySelectorAll('.site-copy')].map((copy) => ({
+                inert: copy.hasAttribute('inert'),
+                edge: getComputedStyle(copy).borderTopStyle,
+            }))
+        );
+        expect(edges.length).toBeGreaterThan(0);
+        expect(edges.filter(({ inert, edge }) => edge !== (inert ? 'dashed' : 'solid'))).toEqual(
+            []
+        );
+    });
+
+    test('sets light on the left and dark on the right on a wide screen, and the live copy first on a phone', async ({
+        page,
+    }) => {
+        for (const scheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme: scheme });
+            for (const [width, phone] of [
+                [1280, false],
+                [390, true],
+            ] as const) {
+                await page.setViewportSize({ width, height: 900 });
+                await page.goto('/design-kit/controls/');
+                const out = await page.evaluate(
+                    ({ scheme, phone }) =>
+                        [...document.querySelectorAll('.site-state')].flatMap((state) => {
+                            const live = state.querySelector('.site-copy:not(.site-other)');
+                            const other = state.querySelector('.site-other');
+                            if (!live || !other) return ['a state without both copies'];
+                            const [a, b] = [live, other].map((copy) =>
+                                copy.getBoundingClientRect()
+                            );
+                            if (!a || !b) return [];
+                            const right = phone
+                                ? a.bottom <= b.top
+                                : scheme === 'light'
+                                  ? a.right <= b.left
+                                  : b.right <= a.left;
+                            return right
+                                ? []
+                                : [state.querySelector('.site-state-name')?.textContent ?? ''];
+                        }),
+                    { scheme, phone }
+                );
+                expect(out, `${String(width)} in ${scheme}`).toEqual([]);
+            }
+        }
+    });
+
+    test('says how to try a preview when it is tapped, and switches the page to its theme', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/design-kit/controls/');
+        const state = page.locator('.site-state').filter({ hasText: 'A field with an error' });
+        const preview = state.locator('.site-other');
+        const note = page.locator('.site-preview-note');
+        await expect(note).toHaveCount(0);
+        // A preview is inert, so a tap on it reaches what is under it, as a reader's would.
+        const box = await preview.boundingBox();
+        if (!box) throw new Error('no preview');
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(note).toHaveCount(1);
+        await expect(note).toHaveText(
+            'This copy is a preview of the dark theme. Try the live copy, or switch the page to dark.'
+        );
+        await expect(page.getByRole('status')).toHaveText(
+            'This copy is a preview of the dark theme. Try the live copy.'
+        );
+        // Escape closes it, and so does a tap anywhere else.
+        await page.keyboard.press('Escape');
+        await expect(note).toHaveCount(0);
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(note).toHaveCount(1);
+        await page.getByRole('heading', { level: 1 }).click();
+        await expect(note).toHaveCount(0);
+        // Its button switches the page, as the strip's switch does.
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await note.getByRole('button', { name: 'switch the page to dark' }).click();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await expect(page.getByRole('radio', { name: 'Dark' })).toBeChecked();
+        await expect(note).toHaveCount(0);
+        await expect(page.getByRole('status')).toHaveText(
+            'The page is dark now, and so are the live copies.'
+        );
+    });
+
+    test("adds nothing to the keyboard's path for the previews", async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        // The only buttons outside the copies are the copy buttons and the strip's switch.
+        const extra = await page.evaluate(
+            () =>
+                [...document.querySelectorAll('main button')].filter(
+                    (button) =>
+                        button.closest('.site-copy') === null &&
+                        !button.classList.contains('site-copy-button')
+                ).length
+        );
+        expect(extra).toBe(0);
     });
 
     test('names the live copy of each state by the state, for a screen reader moving by control', async ({

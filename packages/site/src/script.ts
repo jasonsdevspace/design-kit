@@ -54,6 +54,8 @@ const savedChoice = (): Choice | null => {
  */
 let chosen: Choice = savedChoice() ?? 'system';
 let heldHere = false;
+/** Shows the chosen theme on the strip's switch, once the switch is built. */
+let showChosen = () => undefined as void;
 
 /** Draws a choice on the page, the system's theme for System. */
 const draw = (choice: Choice) => {
@@ -124,6 +126,7 @@ const room = document.querySelector('body > .dk-strip .dk-strip-room');
 const section = room?.parentElement;
 if (room && section) {
     const { group, show } = themeSwitch();
+    showChosen = show;
     room.replaceWith(group);
     section.setAttribute('aria-label', 'Settings');
 
@@ -275,3 +278,67 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
         panel.hidden = !open;
     });
 }
+
+/*
+ * A preview does nothing when it is tapped, since it is inert, so the tap is answered: a note under
+ * the state says the copy is a preview of the other theme and offers to switch the page to it, and
+ * the status line says the same to a screen reader. The keyboard never reaches a preview, so the
+ * note is never needed there, and it adds nothing to the keyboard's path until a tap brings it. It
+ * closes on Escape, on a tap anywhere else, and once the page is switched. A picture is a picture
+ * in either theme, so a tap on one is left alone.
+ */
+/** The theme the page is drawn in, as the script set it or as the system's where it set none. */
+const pageTheme = () =>
+    document.documentElement.getAttribute('data-theme') ?? (systemIsDark() ? 'dark' : 'light');
+let note: HTMLElement | undefined;
+const closeNote = () => {
+    note?.remove();
+    note = undefined;
+};
+const noteFor = (preview: HTMLElement) => {
+    closeNote();
+    const theme = pageTheme() === 'dark' ? 'light' : 'dark';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'site-preview-switch';
+    button.textContent = `switch the page to ${theme}`;
+    button.addEventListener('click', () => {
+        choose(theme);
+        showChosen();
+        closeNote();
+        say(`The page is ${theme} now, and so are the live copies.`);
+    });
+    const said = `This copy is a preview of the ${theme} theme. Try the live copy`;
+    note = document.createElement('p');
+    note.className = 'site-preview-note';
+    note.append(`${said}, or `, button, '.');
+    preview.after(note);
+    say(`${said}.`);
+};
+const previews = [
+    ...document.querySelectorAll<HTMLElement>(
+        'main .site-state:not(.site-state-pictured) > .site-other'
+    ),
+];
+document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Node)) return;
+    const target = event.target;
+    if (note?.contains(target)) return;
+    // A tap on an inert copy is given to an element that holds it, the root in some browsers, so a
+    // tap is on a preview when it lands inside the preview's box on the preview or on what holds it.
+    const tapped = previews.find((preview) => {
+        if (!(preview.contains(target) || target.contains(preview))) return false;
+        const box = preview.getBoundingClientRect();
+        return (
+            event.clientX >= box.left &&
+            event.clientX <= box.right &&
+            event.clientY >= box.top &&
+            event.clientY <= box.bottom
+        );
+    });
+    if (tapped) noteFor(tapped);
+    else closeNote();
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeNote();
+});

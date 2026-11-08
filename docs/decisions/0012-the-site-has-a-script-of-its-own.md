@@ -57,6 +57,15 @@ It also makes the live copies of the states a reader can change behave as they s
 it, so what a control says it is stays true after a reader changes it. With no script, the copies
 stay as they are drawn, as each state's name says they start.
 
+And it answers a tap on a preview, the copy of a state in the theme the page is not in. A preview is
+inert, so a tap on it does nothing and a reader would be left to guess why. The script puts a note
+under the state that says the copy is a preview of the other theme and offers to switch the page to
+it, and the status line says the same to a screen reader. The keyboard never reaches a preview, so
+the note adds nothing to its path until a tap brings it, and it closes on Escape, on a tap elsewhere
+and once the page is switched. A browser gives a tap on an inert copy to an element that holds it,
+the page's root in Chromium, so the script tells a tap on a preview by where it lands. Each copy's
+label names its theme with no script at all, by the page's theme, as its colors are.
+
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
 path only with its origin, so the build writes it for that origin unless `SITE_ORIGIN` names
@@ -114,4 +123,9 @@ The paths are in `packages/site`.
   button names closed and opened again with it. It finds the status line in the page before
   anything is copied, only on a page with code, and the words for copying what was selected given
   for a touch screen on a phone.
+- `e2e/site.spec.ts` also finds each copy labeled by its theme, the live one marked Live, in both
+  themes, the previews and pictures framed by a dashed edge, light on the left on a wide screen and
+  the live copy first on a phone. It finds a tap on a preview answered by the note and the status
+  line, the note closed by Escape and by a tap elsewhere, its button switching the page and the
+  strip's switch with it, and no button added to the keyboard's path for the previews.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
