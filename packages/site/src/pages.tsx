@@ -56,7 +56,7 @@ const CodeBlock = ({
 }: {
     readonly id: string;
     readonly title: string;
-    readonly of: string;
+    readonly of?: string;
     readonly code: string;
 }) => (
     <div className="site-code-panel">
@@ -65,7 +65,7 @@ const CodeBlock = ({
                 {title}
             </p>
             <span className="dk-visually-hidden site-code-name" id={id}>
-                {`${title}, ${of}`}
+                {of === undefined ? title : `${title}, ${of}`}
             </span>
         </div>
         <pre className="dk-code" role="region" aria-labelledby={id} tabIndex={0} translate="no">
@@ -250,26 +250,196 @@ const Explainer = ({ build }: { readonly build: Build }) => (
     </>
 );
 
-/** The landing page: what the kit is. */
+/**
+ * The kit's controls as the landing page shows them, in one theme: two buttons, a field and a
+ * callout, drawn from the pinned version. Each panel's ids are its own, so the page never holds one
+ * twice.
+ */
+const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
+    <div className={`site-hero-panel site-${theme}`}>
+        <p className="site-hero-theme">{theme === 'light' ? 'Light' : 'Dark'}</p>
+        <div className="site-hero-buttons">
+            <kit.Button accent>Save rule</kit.Button>
+            <kit.Button>Filters</kit.Button>
+        </div>
+        <div className="site-hero-field">
+            <kit.InputField
+                id={`hero-email-${theme}`}
+                label="Email"
+                hint="Where the receipt goes"
+            />
+        </div>
+        <kit.Callout tone="success" title="The rule was saved" headingLevel={3}>
+            It applies to the next search.
+        </kit.Callout>
+    </div>
+);
+
+/**
+ * A small drawing of what each page shows, for its card on the landing page, drawn by the site's
+ * own styles from the kit's tokens. The card's name and description say it in words, so a screen
+ * reader passes the drawing by.
+ */
+const PREVIEWS: Readonly<
+    Record<Exclude<Route['file'], 'index.html' | 'how-it-works/index.html'>, ReactNode>
+> = {
+    'tokens/index.html': (
+        <>
+            <span className="site-preview-swatch site-preview-accent" />
+            <span className="site-preview-swatch site-preview-highlight" />
+            <span className="site-preview-swatch site-preview-success" />
+            <span className="site-preview-swatch site-preview-danger" />
+            <span className="site-preview-swatch site-preview-fg" />
+        </>
+    ),
+    'controls/index.html': (
+        <>
+            <span className="site-preview-button site-preview-button-accent">Save rule</span>
+            <span className="site-preview-button">Filters</span>
+        </>
+    ),
+    'page-chrome/index.html': (
+        <span className="site-preview-page">
+            <span className="site-preview-strip" />
+            <span className="site-preview-foot" />
+        </span>
+    ),
+    'explainer-pieces/index.html': (
+        <span className="site-preview-steps">
+            <span className="site-preview-step site-preview-step-done" />
+            <span className="site-preview-step" />
+        </span>
+    ),
+};
+
+/**
+ * Whether a page has a card on the landing page: every page in the site's menu but the landing
+ * page itself, each of which has a drawing in PREVIEWS, which the type holds.
+ */
+const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
+    route.nav !== null && route.path !== BASE;
+
+/** A small mark for each thing the kit is built to, drawn in the accent beside its heading. */
+const RuleMark = ({ d }: { readonly d: string }) => (
+    <svg className="site-rule-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d={d} />
+    </svg>
+);
+
+/** The controls page, which the landing page leads to first. */
+const CONTROLS_PAGE = ROUTES.find(({ file }) => file === 'controls/index.html')?.path ?? BASE;
+
+/**
+ * The install command, the block first and its copy button after it, as they are drawn, so the
+ * keyboard and a screen reader meet them in that order. It names the version the page draws, so
+ * what a reader installs is what they see.
+ */
+const Install = ({ version }: { readonly version: string }) => (
+    <div className="site-install">
+        <div className="site-code-panel">
+            <pre
+                className="dk-code"
+                role="region"
+                aria-labelledby="install"
+                tabIndex={0}
+                translate="no"
+            >
+                <code>{`npm install @jasonsdevspace/design-kit@${version}`}</code>
+            </pre>
+            <div className="site-code-head">
+                <span className="dk-visually-hidden site-code-name" id="install">
+                    The install command
+                </span>
+            </div>
+        </div>
+    </div>
+);
+
+/**
+ * The landing page: what the kit is, how to install it, its controls working in both themes, a
+ * card for each page, and what it is built to.
+ */
 export const Landing = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="index.html">
-        <h1>The design kit</h1>
-        <p className="site-lead">
-            One shared set of colors, type, buttons, fields and page layouts, made for the demos on
-            jasonsdevspace.com, so they can read as one body of work and a fix to a button is made
-            once. ShelfLens is built on it.
-        </p>
-        <p>
-            It is published on npm as <a href={NPM}>@jasonsdevspace/design-kit</a>. Its styles are
-            plain files and its components add no inline styles, so it works on a page whose
-            security policy refuses any style the site did not serve itself, as this one does. Its
-            theme script runs inline, so a page that limits scripts allows it by the hash the kit
-            gives.
-        </p>
-        <p>
-            <a href={ABOUT}>How the design kit works</a> explains it in plain words. The other pages
-            in the site&rsquo;s menu show each piece in both themes.
-        </p>
+        <div className="site-hero">
+            <div className="site-hero-text">
+                <p className="site-eyebrow">
+                    <a href={`${NPM}/v/${build.version}`}>Version {build.version} on npm</a>
+                </p>
+                <h1>One set of colors, type and controls for every demo</h1>
+                <p className="site-lead">
+                    Made for the demos on jasonsdevspace.com, so they read as one body of work and a
+                    fix to a button is made once. ShelfLens is built on it.
+                </p>
+                <p className="site-actions">
+                    <a className="dk-button dk-button-accent" href={CONTROLS_PAGE}>
+                        See every control
+                    </a>
+                    <a className="dk-button" href={ABOUT}>
+                        How the design kit works
+                    </a>
+                </p>
+            </div>
+            <figure className="site-hero-demo">
+                <div className="site-hero-panels" inert>
+                    <HeroPanel theme="light" />
+                    <HeroPanel theme="dark" />
+                </div>
+                <figcaption>
+                    A picture of the kit&rsquo;s buttons, a field and a callout, in light and in
+                    dark. Try them live under <a href={CONTROLS_PAGE}>Controls</a>.
+                </figcaption>
+            </figure>
+            <Install version={build.version} />
+        </div>
+        <section>
+            <h2 id="in-the-kit">What is in the kit</h2>
+            <p>Every piece is shown live in your theme, beside a preview in the other.</p>
+            <ul className="site-pages" role="list">
+                {ROUTES.filter(isCarded).map((route) => (
+                    <li key={route.file}>
+                        <span className="site-page-preview" aria-hidden="true">
+                            {PREVIEWS[route.file]}
+                        </span>
+                        <a href={route.path}>{route.nav}</a>
+                        <p>{route.description}</p>
+                    </li>
+                ))}
+            </ul>
+        </section>
+        <section>
+            <h2 id="built-to">Built to the demos&rsquo; rules</h2>
+            <ul className="site-rules" role="list">
+                <li>
+                    <RuleMark d="M12 3 5 6v5c0 4.4 3 8.4 7 9.5 4-1.1 7-5.1 7-9.5V6l-7-3Zm-1.2 12.2-3-3 1.4-1.4 1.6 1.6 4-4 1.4 1.4-5.4 5.4Z" />
+                    <h3>Works under a strict policy</h3>
+                    <p>
+                        Its styles are plain files and its components add no inline styles, so it
+                        works on a page whose security policy refuses any style the site did not
+                        serve itself, as this one does. Its theme script runs inline, so a page that
+                        limits scripts allows it by the hash the kit gives.
+                    </p>
+                </li>
+                <li>
+                    <RuleMark d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 2v14a7 7 0 0 1 0-14Z" />
+                    <h3>Both themes, measured</h3>
+                    <p>
+                        Text passes 4.5 to 1 on every ground it is meant for, and the edge of a
+                        control 3 to 1, in light and in dark. The kit&rsquo;s own test holds each
+                        pairing before a version is released.
+                    </p>
+                </li>
+                <li>
+                    <RuleMark d="M4 6h16v2H4V6Zm0 5h10v2H4v-2Zm0 5h7v2H4v-2Zm13-2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" />
+                    <h3>State from the attribute a screen reader reads</h3>
+                    <p>
+                        A toggle, an open panel, a control that is unavailable and a field with an
+                        error are drawn from the attributes a screen reader already reads, so what
+                        you see and what it says come from one place.
+                    </p>
+                </li>
+            </ul>
+        </section>
     </Page>
 );
 
