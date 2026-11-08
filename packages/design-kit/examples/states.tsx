@@ -25,11 +25,6 @@ export interface State {
     /** The React a page writes for the state, where a component draws it. */
     readonly react?: string;
     /**
-     * The markup holds a sentence, so its layout breaks a line only where a space already is,
-     * rather than putting each element on a line of its own.
-     */
-    readonly prose?: true;
-    /**
      * Draws the state. `id` turns a name into an id of this copy's own, so a page that draws a
      * state twice, once in each theme, never holds one id twice.
      */
@@ -46,11 +41,19 @@ export interface Control {
      * strip's navigation or an h1.
      */
     readonly pictured?: true;
+    /**
+     * Its states' markup has no words beside a tag where a space would be read, so its layout may
+     * put each element on a line of its own, as a page written by hand does. Without it, markup
+     * breaks a line only where a space already is, so a state added later is laid out tightly
+     * rather than wrongly, as the README's blocks are.
+     */
+    readonly laidOut?: true;
 }
 
 export const CONTROLS: readonly Control[] = [
     {
         name: 'Buttons',
+        laidOut: true,
         states: [
             {
                 name: 'An action',
@@ -92,6 +95,7 @@ export const CONTROLS: readonly Control[] = [
     },
     {
         name: 'Fields',
+        laidOut: true,
         states: [
             {
                 name: 'A field with a hint',
@@ -145,6 +149,7 @@ export const CONTROLS: readonly Control[] = [
     },
     {
         name: 'Callouts',
+        laidOut: true,
         states: [
             {
                 name: 'News',

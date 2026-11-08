@@ -48,8 +48,8 @@ A choice the browser refused to save is not read over by what storage holds.
 The same script puts a copy button beside the title of each block of code. It writes the block's
 text to the clipboard, and where the browser refuses or has no clipboard it selects the text
 instead, so a reader copies it with their own keys. One status line out of sight tells a screen
-reader which happened, and the button says Copied or Selected for a moment. With no script, the
-code still opens and its text can be selected by hand.
+reader which happened, emptied first so a second copy is heard too, and the button says Copied or
+Selected for a moment. With no script, the code still opens and its text can be selected by hand.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
@@ -97,6 +97,7 @@ The paths are in `packages/site`.
   switch's words within the width the room kept, from a small phone to a laptop and at twice the
   text size.
 - `e2e/site.spec.ts` also finds a block copied to the clipboard with the status saying so, and
-  where the browser has no clipboard the block's text selected with the status saying how to copy
-  it, and no copy button with no script.
+  saying so again for a second block. Where the browser refuses to write to the clipboard, or has
+  none, it finds the block's text selected, with the status saying how to copy it. It finds no copy
+  button with no script.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.

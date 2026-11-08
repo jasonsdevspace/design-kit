@@ -18,12 +18,20 @@ export interface Build {
     readonly version: string;
     readonly tokens: string;
     readonly commit: string;
-    /** Each state's markup as the pinned version draws it, laid out, by `codeKey`. */
+    /** Each state's markup as the site draws it, laid out, by `codeKey`. */
     readonly markup: Readonly<Record<string, string>>;
 }
 
 /** The key a state's markup is found by: its control's name and its own. */
 export const codeKey = (control: Control, state: State) => `${control.name} / ${state.name}`;
+
+/** A state's markup, or a build that fails, rather than a page that shows an empty block. */
+const markupFor = (markup: Build['markup'], control: Control, state: State) => {
+    const found = markup[codeKey(control, state)];
+    if (found === undefined)
+        throw new Error(`no markup was laid out for ${codeKey(control, state)}`);
+    return found;
+};
 
 /** A name as an id, its words joined by hyphens. */
 const idOf = (name: string) =>
@@ -173,11 +181,13 @@ const StateShown = ({
     pictured,
     markup,
     id,
+    laidOut,
 }: {
     readonly state: State;
     readonly pictured: boolean;
     readonly markup: string;
     readonly id: string;
+    readonly laidOut: boolean;
 }) => (
     <li className="site-state">
         <div className="site-copy" inert={pictured}>
@@ -191,7 +201,7 @@ const StateShown = ({
         <p className="site-state-name">
             {state.name}, drawn by <code>{state.attribute}</code>
         </p>
-        <details className="site-code">
+        <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
             <summary>
                 <span aria-hidden="true">The code</span>
                 <span className="dk-visually-hidden">{`The code, ${state.name}`}</span>
@@ -219,15 +229,16 @@ const Shown = ({
 }) =>
     controls.map((control) => (
         <section key={control.name}>
-            <h2 id={control.name.toLowerCase().replaceAll(' ', '-')}>{control.name}</h2>
+            <h2 id={idOf(control.name)}>{control.name}</h2>
             <ul className={wide ? 'site-states site-states-wide' : 'site-states'} role="list">
                 {control.states.map((state) => (
                     <StateShown
                         key={state.name}
                         state={state}
                         pictured={control.pictured ?? false}
-                        markup={markup[codeKey(control, state)] ?? ''}
+                        markup={markupFor(markup, control, state)}
                         id={`${idOf(control.name)}-${idOf(state.name)}`}
+                        laidOut={control.laidOut ?? false}
                     />
                 ))}
             </ul>

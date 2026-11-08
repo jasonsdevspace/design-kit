@@ -15,6 +15,7 @@ const ABOUT = './about/';
 export const CHROME: readonly Control[] = [
     {
         name: 'Strip',
+        laidOut: true,
         pictured: true,
         states: [
             {
@@ -67,7 +68,6 @@ export const CHROME: readonly Control[] = [
         states: [
             {
                 name: "The footer on a demo's page",
-                prose: true,
                 attribute: 'class="dk-footer"',
                 react: `<DemoFooter name="Example" about="./about/" source="https://github.com/jasonsdevspace/example" />`,
                 draw: ({ DemoFooter }) => (
@@ -76,7 +76,6 @@ export const CHROME: readonly Control[] = [
             },
             {
                 name: "The footer on a demo's explainer",
-                prose: true,
                 attribute: 'aria-current="page"',
                 react: `<DemoFooter
     name="Example"
@@ -227,8 +226,8 @@ export const EXPLAINER: readonly Control[] = [
             },
         ],
     },
-    { name: 'Steps', states: [steps] },
-    { name: 'Panels', states: [panel] },
-    { name: 'Tables', states: [table] },
-    { name: 'Code blocks', states: [code] },
+    { name: 'Steps', laidOut: true, states: [steps] },
+    { name: 'Panels', laidOut: true, states: [panel] },
+    { name: 'Tables', laidOut: true, states: [table] },
+    { name: 'Code blocks', laidOut: true, states: [code] },
 ];

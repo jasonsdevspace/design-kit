@@ -159,11 +159,6 @@ if (room && section) {
  * their own keys. One status line, out of sight, tells a screen reader which happened, and the
  * button says it for a moment too.
  */
-const status = document.createElement('p');
-status.className = 'dk-visually-hidden';
-status.setAttribute('role', 'status');
-document.body.append(status);
-
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
@@ -186,6 +181,26 @@ const copied = async (text: string): Promise<boolean> => {
     }
 };
 
+/**
+ * The status line, made in the main content the first time a page with code needs it. It is
+ * emptied before each message and after the button stops saying it, so a second copy is heard
+ * too.
+ */
+let status: HTMLElement | undefined;
+const say = (message: string) => {
+    if (!status) {
+        status = document.createElement('p');
+        status.className = 'dk-visually-hidden';
+        status.setAttribute('role', 'status');
+        (document.querySelector('main') ?? document.body).append(status);
+    }
+    const line = status;
+    line.textContent = '';
+    window.setTimeout(() => {
+        line.textContent = message;
+    }, 100);
+};
+
 for (const head of document.querySelectorAll<HTMLElement>('.site-code-head')) {
     const title = head.querySelector('.site-code-name');
     const block = head.nextElementSibling;
@@ -204,12 +219,15 @@ for (const head of document.querySelectorAll<HTMLElement>('.site-code-head')) {
         void copied(block.textContent).then((done) => {
             if (!done) select(block);
             word.textContent = done ? 'Copied' : 'Selected';
-            status.textContent = done
-                ? 'Copied.'
-                : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
+            say(
+                done
+                    ? 'Copied.'
+                    : 'Selected. Press Control and C, or Command and C on a Mac, to copy.'
+            );
             window.clearTimeout(timer);
             timer = window.setTimeout(() => {
                 word.textContent = 'Copy';
+                if (status) status.textContent = '';
             }, SAID_FOR);
         });
     });

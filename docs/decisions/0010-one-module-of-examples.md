@@ -51,9 +51,12 @@ explainer's layout are marked as pictures, which the site draws inert in both th
 copy would give a page a second portfolio navigation or a second h1. The README's blocks for the
 steps, the panel, the table and the code block are drawn from it, so the README and the site show
 one markup. Each state a component draws also holds the React a page writes for it, which the site
-shows beside the state's markup. `examples/format.ts` lays out markup as the repository's formatter
-lays out HTML, for the README's blocks and the site's, and imports nothing of the kit's, so the site
-lays out what the version it pins draws.
+shows beside the state's markup, and `examples/elements.ts` reads that React with TypeScript's
+parser and builds it with the components it is given, without running it as code.
+`examples/format.ts` lays out markup as the repository's formatter lays out HTML, for the README's
+blocks and the site's, and imports nothing of the kit's, so the site lays out what the version it
+pins draws. A control whose markup has no words beside a tag is marked as laid out, as the README
+lists its examples, and every other control's markup breaks a line only where a space already is.
 
 `examples/palette.ts` holds the color roles, each pairing the palette is meant for at its ratio,
 and the measure of contrast, read from a tokens sheet it is given. The kit's test measures the

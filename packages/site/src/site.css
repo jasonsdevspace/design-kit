@@ -247,10 +247,10 @@
 
 /*
  * A state's code, closed until a reader opens it, under the state's name: a block of markup, and of
- * React where a component draws the state, each with its title and the copy button the site's
- * script puts beside it.
+ * React where a component draws the state, each with its title and the copy button the site's script
+ * puts beside it. The disclosure may shrink below its widest line, so a block scrolls in its own
+ * frame, not across the page.
  */
-/* It may shrink below its widest line, so a block scrolls in its own frame, not across the page. */
 .site-code {
     grid-column: 1 / -1;
     min-width: 0;

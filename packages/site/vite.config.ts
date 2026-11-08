@@ -26,42 +26,49 @@ const DESCRIPTION = '<!-- description -->';
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /**
- * Each state's markup as the pinned version's components draw it, laid out as the repository lays
- * out HTML, a sentence such as the footer's broken only where a space already is.
+ * Each state's markup as the site draws it, by the pinned version's components where one draws it,
+ * laid out as the repository lays out HTML: each element on a line of its own where its control is
+ * laid out, and otherwise broken only where a space already is. Two states with one key would show
+ * one state's markup under the other, so the build refuses them, and one that cannot be laid out
+ * fails the build by name.
  */
-const markupOf = async (): Promise<Build['markup']> =>
-    Object.fromEntries(
-        await Promise.all(
-            [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) =>
-                control.states.map(
-                    async (state) =>
-                        [
-                            codeKey(control, state),
-                            await laidOut(
-                                renderToStaticMarkup(state.draw(components, (name) => name)),
-                                state.prose !== true
-                            ),
-                        ] as const
-                )
-            )
+const markupOf = async (): Promise<Build['markup']> => {
+    const entries = await Promise.all(
+        [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) =>
+            control.states.map(async (state) => {
+                const key = codeKey(control, state);
+                try {
+                    const markup = renderToStaticMarkup(state.draw(components, (name) => name));
+                    return [key, await laidOut(markup, control.laidOut === true)] as const;
+                } catch (error) {
+                    throw new Error(`the markup of ${key} could not be laid out`, { cause: error });
+                }
+            })
         )
     );
+    const keys = entries.map(([key]) => key);
+    const twice = keys.find((key, index) => keys.indexOf(key) !== index);
+    if (twice !== undefined) throw new Error(`two states are both ${twice}`);
+    return Object.fromEntries(entries);
+};
 
 /**
  * The version of the kit the site installed from npm, its tokens sheet, the commit the site is
- * built at, and each state's markup, read once.
+ * built at, and each state's markup, read once, when the first page is built.
  */
-const BUILD: Promise<Build> = markupOf().then((markup) => ({
-    markup,
-    version: kit.version,
-    tokens: readFileSync(
-        createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
-        'utf8'
-    ),
-    commit:
-        process.env['GITHUB_SHA'] ??
-        execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-}));
+let built: Promise<Build> | undefined;
+const build = (): Promise<Build> =>
+    (built ??= markupOf().then((markup) => ({
+        markup,
+        version: kit.version,
+        tokens: readFileSync(
+            createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
+            'utf8'
+        ),
+        commit:
+            process.env['GITHUB_SHA'] ??
+            execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    })));
 
 /**
  * The policy every page carries, for the origin the site is served from. The tests and the audit
@@ -107,7 +114,7 @@ const pagesPlugin = (): Plugin => ({
             ) {
                 throw new Error(`${file} needs a place for each part of its page`);
             }
-            const body = renderToStaticMarkup(PAGES[file](await BUILD));
+            const body = renderToStaticMarkup(PAGES[file](await build()));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`
