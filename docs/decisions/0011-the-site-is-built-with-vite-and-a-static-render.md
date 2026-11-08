@@ -43,14 +43,15 @@ installs the kit from npm at one exact version, as ShelfLens does, under the ali
 `design-kit-release`, so npm fetches the published package rather than linking the workspace beside
 it, and its sheets, components and theme plugin all come from that version. What a visitor sees is
 then what a demo installs, and the site's tests and audit hold what ships. Each page has a meta
-element for its policy: nothing by default, scripts only by the theme script's hash, styles and
-images only from the site's origin, no base element and no form posts. The footer names the version
-of the kit a page is drawn from and the commit it was built at, so it never names a version npm
-cannot give. The strip's and the footer's link to how the kit works leads to the site's own
-explainer, drawn in the kit's explainer layout as a demo's is. The site's navigation leaves it out,
-as a demo's pages leave out theirs. The explainer links the README and the decision records at the
-commit the site was built at. CI builds and uploads the site from a job with read access alone once
-every check has passed on main, and a job that runs only GitHub's Pages actions deploys it.
+element for its policy: nothing by default, scripts only by the theme script's hash or from the
+site's origin, as record 12 sets out, styles and images only from the site's origin, no base element
+and no form posts. The footer names the version of the kit a page is drawn from and the commit it
+was built at, so it never names a version npm cannot give. The strip's and the footer's link to how
+the kit works leads to the site's own explainer, drawn in the kit's explainer layout as a demo's is.
+The site's navigation leaves it out, as a demo's pages leave out theirs. The explainer links the
+README and the decision records at the commit the site was built at. CI builds and uploads the site
+from a job with read access alone once every check has passed on main, and a job that runs only
+GitHub's Pages actions deploys it.
 
 ## Consequences
 
@@ -61,8 +62,8 @@ every check has passed on main, and a job that runs only GitHub's Pages actions 
   pull request rather than the one that later moves the pin, after the version is on npm.
 - A policy in a meta element cannot say which pages may frame the site, which only a header can, and
   GitHub Pages sends none, so the site can be framed.
-- A script the site adds is refused until the policy names it, and the browser tests fail on
-  anything the policy refuses.
+- An inline script the site adds is refused until the policy names it, and the browser tests fail
+  on anything the policy refuses.
 - The build, the browser tests and the Lighthouse audit read one list of the site's pages, so a
   page added to it is built, tested and audited alike.
 - Lighthouse is a dependency of the repository's own, for development alone, and the package gains

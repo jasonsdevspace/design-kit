@@ -214,6 +214,8 @@ for (const path of PAGES) {
         await page.goto(path);
         // The script sets the theme only when the policy lets it run, so the theme proves its hash.
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        // The site's own script fills the strip with the switch only when the policy lets it load.
+        await expect(page.getByRole('radio', { name: 'System' })).toBeChecked();
         const policy = await page
             .locator('meta[http-equiv="Content-Security-Policy"]')
             .getAttribute('content');
@@ -393,5 +395,89 @@ test.describe('the explainer', () => {
                 await expect(link, path).toHaveAttribute('href', ABOUT);
             }
         }
+    });
+});
+
+test.describe('the theme switch', () => {
+    /** The radio for each choice, in the strip's section named for the switch. */
+    const choice = (page: Page, name: 'System' | 'Light' | 'Dark') =>
+        page.getByRole('region', { name: 'Theme' }).getByRole('radio', { name });
+
+    /** What the page saved under the portfolio's key. */
+    const saved = (page: Page) => page.evaluate(() => localStorage.getItem('theme'));
+
+    test('shows the theme the portfolio saved, and takes the room the strip kept for it', async ({
+        page,
+    }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('theme', 'dark');
+        });
+        await page.goto('/design-kit/');
+        await expect(choice(page, 'Dark')).toBeChecked();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await expect(page.locator('.dk-strip-room')).toHaveCount(0);
+        await expect(page.getByRole('group', { name: 'Theme' })).toHaveAccessibleDescription(
+            /jasonsdevspace\.com/
+        );
+    });
+
+    test('saves a choice as the portfolio does, and draws it at once and after a reload', async ({
+        page,
+    }) => {
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await page.goto('/design-kit/tokens/');
+        await choice(page, 'Light').check();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+        expect(await saved(page)).toBe('light');
+        await page.reload();
+        await expect(choice(page, 'Light')).toBeChecked();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    });
+
+    test("follows the system's theme once System is chosen", async ({ page }) => {
+        await page.addInitScript(() => {
+            if (localStorage.getItem('theme') === null) localStorage.setItem('theme', 'light');
+        });
+        await page.emulateMedia({ colorScheme: 'dark' });
+        await page.goto('/design-kit/controls/');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+        await choice(page, 'System').check();
+        expect(await saved(page)).toBe('system');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await page.emulateMedia({ colorScheme: 'light' });
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    });
+
+    test('moves to the choice another tab saves', async ({ page, context }) => {
+        await page.goto('/design-kit/');
+        const other = await context.newPage();
+        await other.goto('/design-kit/how-it-works/');
+        await choice(other, 'Dark').check();
+        await expect(choice(page, 'Dark')).toBeChecked();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    });
+
+    test('moves between its choices with the arrow keys, as radios do', async ({ page }) => {
+        await page.goto('/design-kit/');
+        await choice(page, 'System').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(choice(page, 'Light')).toBeFocused();
+        await expect(choice(page, 'Light')).toBeChecked();
+        expect(await saved(page)).toBe('light');
+    });
+
+    test('still draws the page when the browser refuses it storage', async ({ page }) => {
+        await page.addInitScript(() => {
+            Object.defineProperty(window, 'localStorage', {
+                get: () => {
+                    throw new Error('refused');
+                },
+            });
+        });
+        await page.emulateMedia({ colorScheme: 'light' });
+        await page.goto('/design-kit/');
+        await expect(choice(page, 'System')).toBeChecked();
+        await choice(page, 'Dark').check();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     });
 });

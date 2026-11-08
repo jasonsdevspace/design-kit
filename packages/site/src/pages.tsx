@@ -71,7 +71,7 @@ const Page = ({
 }) => (
     <>
         <SkipLink />
-        <PortfolioStrip about={ABOUT} source={SOURCE} />
+        <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
         <SiteNav current={current} />
         <main id="main-content" tabIndex={-1} className="site-main">
             {children}
@@ -88,7 +88,7 @@ const Page = ({
 const Explainer = ({ build }: { readonly build: Build }) => (
     <>
         <SkipLink />
-        <PortfolioStrip about={ABOUT} source={SOURCE} current="about" />
+        <PortfolioStrip about={ABOUT} source={SOURCE} current="about" toolsWaiting />
         <header className="dk-explainer-header">
             <a href={BASE}>The design kit</a>
         </header>
@@ -279,7 +279,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     portfolio, under the key <code>theme</code>, or to the system&rsquo;s when
                     nothing usable is saved. It follows the system as it changes while nothing is
                     saved, and hears a choice saved in another tab. Every demo served from
-                    jasonsdevspace.com reads the same saved theme, and this page does too.
+                    jasonsdevspace.com reads the same saved theme, and this page does too. The
+                    switch at the top of each page of this site saves a choice to it, as the
+                    portfolio&rsquo;s does.
                 </p>
             </section>
         </Page>
