@@ -114,7 +114,7 @@ jobs:
                   status=0
                   npm run e2e || status=$?
                   if [ -f playwright-results.json ]; then
-                      node scripts/summary.mjs playwright playwright-results.json "Browser tests" ||
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests" "$status" ||
                           echo "The summary of the browser tests could not be written."
                   fi
                   exit "$status"
@@ -131,7 +131,7 @@ jobs:
                   status=0
                   npx playwright test packages/site || status=$?
                   if [ -f playwright-results.json ]; then
-                      node scripts/summary.mjs playwright playwright-results.json "Site tests over this commit's kit" ||
+                      node scripts/summary.mjs playwright playwright-results.json "Site tests over this commit's kit" "$status" ||
                           echo "The summary of the site tests could not be written."
                   fi
                   exit "$status"
