@@ -399,13 +399,13 @@ test.describe('the tokens page', () => {
                                 ?.textContent.toLowerCase() ?? 'none'
                     );
                     // The light swatch is on the left and the dark on the right.
-                    const [left, right] = ['light', 'dark'].map(
+                    const [left = 0, right = 0] = ['light', 'dark'].map(
                         (theme) =>
                             card
                                 .querySelector(`.site-swatch.site-${theme}`)
                                 ?.getBoundingClientRect().left ?? 0
                     );
-                    return { name, drawn, printed, ordered: (left ?? 0) < (right ?? 0) };
+                    return { name, drawn, printed, ordered: left < right };
                 });
             });
             expect(cards.length, colorScheme).toBeGreaterThan(10);
@@ -420,11 +420,40 @@ test.describe('the tokens page', () => {
         }
     });
 
-    test('names each hex value by its theme for a screen reader', async ({ page }) => {
-        await page.goto('/design-kit/tokens/');
-        const first = page.locator('.site-roles > li').first();
-        await expect(first.locator('.site-role-light')).toContainText(/^Light\s*#/);
-        await expect(first.locator('.site-role-dark')).toContainText(/^Dark\s*#/);
+    test('names each hex value by its theme, the dark value always under the dark swatch', async ({
+        page,
+    }) => {
+        for (const [width, scale] of [
+            [1280, 1],
+            [390, 2],
+        ] as const) {
+            await page.setViewportSize({ width, height: 900 });
+            await textSize(page, scale);
+            await page.goto('/design-kit/tokens/');
+            const wrong = await page.locator('.site-roles > li').evaluateAll((cards) =>
+                cards.flatMap((card) => {
+                    const name = card.querySelector('code')?.textContent ?? '';
+                    const label = (theme: string) => {
+                        const value = card.querySelector<HTMLElement>(`.site-role-${theme}`);
+                        const swatch = card.querySelector(`.site-swatch.site-${theme}`);
+                        if (!value || !swatch) return 'missing';
+                        const box = value.getBoundingClientRect();
+                        const under = swatch.getBoundingClientRect();
+                        // Named by a word that is drawn, not one only a screen reader hears.
+                        const word = value.querySelector('.site-role-theme');
+                        const named =
+                            word?.textContent.trim() === (theme === 'light' ? 'Light' : 'Dark') &&
+                            word.getBoundingClientRect().width > 1;
+                        const placed = box.left >= under.left - 1 && box.right <= under.right + 1;
+                        if (named && placed) return '';
+                        return `${theme}${named ? '' : ' unnamed'}${placed ? '' : ' misplaced'}`;
+                    };
+                    const found = ['light', 'dark'].map(label).filter(Boolean);
+                    return found.length === 0 ? [] : [`${name}: ${found.join(', ')}`];
+                })
+            );
+            expect(wrong, `${String(width)} at ${String(scale)}`).toEqual([]);
+        }
     });
 
     test('draws a bar beside each figure, to scale, with a mark at what the pairing needs', async ({
@@ -445,7 +474,7 @@ test.describe('the tokens page', () => {
                             bar?.querySelector('.site-bar-fill')?.getAttribute('width')
                         );
                         const mark = Number(
-                            bar?.querySelector('.site-bar-needs')?.getAttribute('x')
+                            bar?.querySelector('.site-bar-needs')?.getAttribute('x1')
                         );
                         return {
                             hidden: bar?.getAttribute('aria-hidden') === 'true',
@@ -460,6 +489,38 @@ test.describe('the tokens page', () => {
             []
         );
         expect(rows.every((figures) => figures.length === 2)).toBe(true);
+    });
+
+    test('draws the track and the mark where the need falls clearly against the page', async ({
+        page,
+    }) => {
+        for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme });
+            await page.goto('/design-kit/tokens/');
+            const drawn = await page
+                .locator('svg.site-bar')
+                .first()
+                .evaluate((bar) => {
+                    const mark = bar.querySelector('.site-bar-needs');
+                    const track = bar.querySelector('.site-bar-track');
+                    const fill = bar.querySelector('.site-bar-fill');
+                    if (!mark || !track || !fill) return null;
+                    const markBox = mark.getBoundingClientRect();
+                    const fillBox = fill.getBoundingClientRect();
+                    const edge = getComputedStyle(track);
+                    return {
+                        // The mark runs past the fill above and below, so it shows on the page.
+                        reaches:
+                            markBox.top < fillBox.top - 1 && markBox.bottom > fillBox.bottom + 1,
+                        wide: Number.parseFloat(getComputedStyle(mark).strokeWidth) >= 2,
+                        edged:
+                            edge.stroke !== 'none' &&
+                            Number.parseFloat(edge.strokeWidth) >= 1 &&
+                            edge.vectorEffect === 'non-scaling-stroke',
+                    };
+                });
+            expect(drawn, colorScheme).toEqual({ reaches: true, wide: true, edged: true });
+        }
     });
 
     test('draws each step of the spacing scale to size beside its name and value', async ({

@@ -74,7 +74,7 @@ const Table = ({
 
 /**
  * Each color role as a card: a swatch of it in light beside one in dark, its name, what it draws,
- * and its value in each theme, named by the theme for a screen reader. The swatches say nothing a
+ * and its value in each theme under that theme's swatch, named by the theme. The swatches say nothing a
  * reader does not hear in the values, so a screen reader passes them by.
  */
 export const Colors = ({ declared }: { readonly declared: Declared }) => (
@@ -94,7 +94,7 @@ export const Colors = ({ declared }: { readonly declared: Declared }) => (
                 <span className="site-role-values">
                     {THEMES.map((theme) => (
                         <span key={theme} className={`site-role-${theme}`}>
-                            <span className="dk-visually-hidden">{THEME_NAMES[theme]} </span>
+                            <span className="site-role-theme">{THEME_NAMES[theme]}</span>{' '}
                             <code>{colorOf(declared, role, theme)}</code>
                         </span>
                     ))}
@@ -131,22 +131,24 @@ const MOST = 21;
 const along = (ratio: number) => Math.round((ratio / MOST) * 10000) / 100;
 
 /**
- * A ratio as a bar, its whole length the most two colors can have, with a mark where the pairing's
- * need falls, so how far past its need a pairing runs shows at a glance. It is drawn by the
- * attributes of its own shapes, which the page's policy allows where it refuses a style written
- * on an element, and a screen reader hears the figure beside it instead.
+ * A ratio as a bar, its whole length the most two colors can have, edged so its length shows, with
+ * a mark centered where the pairing's need falls that runs past the bar above and below, so it is
+ * seen against the page and not only against the fill. How far past its need a pairing runs shows
+ * at a glance. It is drawn by the attributes of its own shapes, which the page's policy allows
+ * where it refuses a style written on an element, its lines kept to a pixel width however the bar
+ * is stretched, and a screen reader hears the figure beside it instead.
  */
 const Bar = ({ ratio, needs }: { readonly ratio: number; readonly needs: number }) => (
     <svg
         className="site-bar"
-        viewBox="0 0 100 8"
+        viewBox="0 0 100 12"
         preserveAspectRatio="none"
         aria-hidden="true"
         focusable="false"
     >
-        <rect className="site-bar-track" x="0" y="2" width="100" height="4" rx="2" />
-        <rect className="site-bar-fill" x="0" y="2" width={along(ratio)} height="4" rx="2" />
-        <rect className="site-bar-needs" x={along(needs)} y="0" width="0.6" height="8" />
+        <rect className="site-bar-track" x="0" y="4" width="100" height="4" />
+        <rect className="site-bar-fill" x="0" y="4" width={along(ratio)} height="4" />
+        <line className="site-bar-needs" x1={along(needs)} x2={along(needs)} y1="0" y2="12" />
     </svg>
 );
 
@@ -172,7 +174,7 @@ export const Contrast = ({ declared }: { readonly declared: Declared }) => (
                 </td>
                 <td className="dk-table-number">{needs} to 1</td>
                 {ratios.map((ratio, index) => (
-                    <td key={THEMES[index]} className="dk-table-number site-figure">
+                    <td key={THEMES[index]} className="dk-table-number">
                         {ratio.toFixed(2)} to 1
                         <Bar ratio={ratio} needs={needs} />
                     </td>
@@ -184,6 +186,20 @@ export const Contrast = ({ declared }: { readonly declared: Declared }) => (
 
 /** A spacing step, its name the scale's and its number the step. */
 const SPACE = /^--dk-space-\d+$/;
+
+/**
+ * The steps the site's sheet has a class to draw, one for each, since a size can only reach an
+ * element through a class under the page's policy. A step the pinned sheet adds fails the build
+ * here, rather than drawing as an empty square, until the sheet draws it too.
+ */
+const DRAWN = new Set(['1', '2', '3', '4', '5', '6']);
+
+/** A step's own class, or a build that fails for a step the sheet cannot draw. */
+const drawnAs = (name: string) => {
+    const step = name.replace(/^--dk-space-/, '');
+    if (!DRAWN.has(step)) throw new Error(`the site's sheet has no class to draw ${name}`);
+    return `site-space-${step}`;
+};
 
 /**
  * The spacing scale, each step drawn to size as a square the step wide beside its name and its
@@ -198,7 +214,7 @@ export const Spaces = ({ declared }: { readonly declared: Declared }) => (
             .map(([name, value]) => (
                 <li key={name}>
                     <span className="site-space-room" aria-hidden="true">
-                        <span className={`site-space-drawn site-${name.replace(/^--dk-/, '')}`} />
+                        <span className={`site-space-drawn ${drawnAs(name)}`} />
                     </span>
                     <code>{name}</code>
                     <span className="site-space-value">{value}</span>

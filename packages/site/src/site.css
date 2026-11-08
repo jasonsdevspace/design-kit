@@ -804,32 +804,36 @@ body > .dk-strip .dk-strip-tools {
     font-size: var(--dk-text-small);
 }
 
+/* Two columns under the two swatches, so each value sits under its own theme's swatch. */
 .site-role-values {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0 var(--dk-space-3);
     color: var(--dk-muted);
     font-size: var(--dk-text-caption);
 }
 
-/* A figure and its bar in one row, the bar taking what the column leaves. */
-.site-figure {
-    white-space: nowrap;
+/* A value's theme over its hex value, so a narrow card keeps each inside its own half. */
+.site-role-values > span {
+    display: grid;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
+/* A bar a set width beside its figure, on the figure's line. */
 .site-bar {
     display: inline-block;
     width: 6rem;
-    height: 0.5rem;
+    height: 0.75rem;
     margin-inline-start: var(--dk-space-2);
     vertical-align: middle;
 }
 
 .site-bar-track {
-    fill: var(--dk-surface);
-    stroke: var(--dk-line);
-    stroke-width: 0.2;
+    fill: var(--dk-bg);
+    stroke: var(--dk-control);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
 }
 
 .site-bar-fill {
@@ -837,7 +841,9 @@ body > .dk-strip .dk-strip-tools {
 }
 
 .site-bar-needs {
-    fill: var(--dk-fg);
+    stroke: var(--dk-fg);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
 }
 
 /* Each step of the spacing scale, a square the step wide over its name and value. */
@@ -904,10 +910,25 @@ body > .dk-strip .dk-strip-tools {
     height: var(--dk-space-6);
 }
 
+/*
+ * In forced colors the bar keeps its edge and its fill in the system's text color, and the mark
+ * takes the system's highlight, so it still stands apart from the fill it crosses.
+ */
 @media (forced-colors: active) {
-    .site-bar-fill,
-    .site-space-drawn {
+    .site-bar-track {
+        fill: Canvas;
+        stroke: CanvasText;
+    }
+
+    .site-bar-fill {
         fill: CanvasText;
+    }
+
+    .site-bar-needs {
+        stroke: Highlight;
+    }
+
+    .site-space-drawn {
         background: CanvasText;
     }
 }
