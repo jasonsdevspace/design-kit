@@ -157,13 +157,15 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <h1>The design kit</h1>
         <p className="site-lead">
             One shared set of colors, type, buttons, fields and page layouts, made for the demos on
-            jasonsdevspace.com, so they read as one body of work and a fix to a button is made once.
-            ShelfLens is built on it.
+            jasonsdevspace.com, so they can read as one body of work and a fix to a button is made
+            once. ShelfLens is built on it.
         </p>
         <p>
             It is published on npm as <a href={NPM}>@jasonsdevspace/design-kit</a>. Its styles are
-            plain files and its components add no inline styles, so it works on a page with a strict
-            security policy, as this one has.
+            plain files and its components add no inline styles, so it works on a page whose
+            security policy refuses any style the site did not serve itself, as this one does. Its
+            theme script runs inline, so a page that limits scripts allows it by the hash the kit
+            gives.
         </p>
         <p>
             <a href={ABOUT}>How the design kit works</a> explains it in plain words. The other pages
@@ -175,11 +177,11 @@ export const Landing = ({ build }: { readonly build: Build }) => (
 /**
  * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
  * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
- * own, so the page never holds one twice. The live copy is a group named by the state's name alone, so a screen
- * reader moving from control to control hears which state it is in. A pictured state's copy in the
- * visitor's theme is inert too, and both its copies are labeled as pictures. Under both, the
- * state's name and the attribute that draws it, and then its code, closed until a reader opens it:
- * its markup, and the React a page writes for it where a component draws it.
+ * own, so the page never holds one twice. The live copy is a group named by the state's name alone,
+ * so a screen reader moving from control to control hears which state it is in. A pictured state's
+ * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Under
+ * both, the state's name and the attribute that draws it, and then its code, closed until a reader
+ * opens it: its markup, and the React a page writes for it where a component draws it.
  */
 const StateShown = ({
     state,
@@ -271,7 +273,8 @@ export const Controls = ({ build }: { readonly build: Build }) => (
             toggle, an open panel, a control that is unavailable and a field with an error each come
             from the attribute a screen reader already reads, never from a class of the kit&rsquo;s.
             So what you see and what a screen reader says come from one place. A kind of control,
-            such as the one action a view leads with or a callout&rsquo;s tone, is a class.
+            such as the one action a view leads with or a callout&rsquo;s tone, comes from a class
+            instead.
         </p>
         <Shown controls={CONTROLS} markup={build.markup} />
     </Page>
@@ -282,10 +285,10 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="page-chrome/index.html">
         <h1>Page chrome</h1>
         <p className="site-lead">
-            Page chrome is what every demo draws around its content: the skip link, the strip across
-            the top that says whose demo it is, and the footer. With it a visitor finds the same
-            links in the same places on each demo. The chrome around this page is the kit&rsquo;s
-            own, drawn by its components as a demo draws it.
+            Page chrome is what a demo draws around its content: the skip link, the strip across the
+            top that says whose demo it is, and the footer. With it a visitor finds the same links
+            in the same places on each demo built with the kit. The chrome around this page is the
+            kit&rsquo;s own, drawn by its components as a demo draws it.
         </p>
         <p>
             Under Strip and Footer, each state is drawn again in your theme and in the other, as
@@ -339,9 +342,10 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             <section>
                 <h2 id="color">Color</h2>
                 <p>
-                    Each role holds its light and its dark value in one <code>light-dark()</code>,
-                    which picks by the color scheme of the element it is drawn on, so each swatch in
-                    the table is drawn in its column&rsquo;s theme, whatever theme the page is in.
+                    Each role holds its light and its dark value in one <code>light-dark()</code>.
+                    It picks a value by the color scheme of the element it is drawn on. So each
+                    swatch in the table is drawn in its column&rsquo;s theme, whatever theme the
+                    page is in.
                 </p>
                 <Colors declared={declared} />
             </section>
@@ -353,7 +357,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     1, in both themes, as the web&rsquo;s accessibility guidelines, WCAG, ask. These
                     are measured from the tokens of the version this page uses, rounded down, and
                     the kit&rsquo;s own test holds each one before a version is released. The table
-                    puts first the pairing with the least to spare over what it needs.
+                    lists first the pairings with the least to spare.
                 </p>
                 <Contrast declared={declared} />
             </section>
@@ -376,8 +380,8 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     follows the system&rsquo;s theme as it changes. A choice made in another tab
                     reaches this one too. Every demo served from jasonsdevspace.com reads the same
                     saved theme, and this page does too. With scripts on, the switch at the top of
-                    each page of this site saves a choice under that key with the portfolio&rsquo;s
-                    values, as the portfolio&rsquo;s switch does.
+                    each page of this site saves your choice under that key, in the same words the
+                    portfolio&rsquo;s switch uses, so a choice made on either holds on both.
                 </p>
             </section>
         </Page>

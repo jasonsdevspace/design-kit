@@ -2,10 +2,10 @@
 
 Design tokens, base styles, a theme script, page chrome, buttons, fields and callouts, and an
 explainer layout, for the demos on [jasonsdevspace.com](https://jasonsdevspace.com). The styles are
-plain CSS in cascade layers, so a page's own rules win without extra weight. The theme script sets
-the theme a visitor chose on the portfolio before the page paints. The chrome and the controls come
-as markup a sheet styles and as React components that draw it. The explainer is markup a page writes
-by hand.
+plain CSS in cascade layers, so a page's own rules outside a layer win without extra weight. The
+theme script sets the theme a visitor chose on the portfolio before the page paints. The chrome and
+the controls come as markup a sheet styles and as React components that draw it. The explainer is
+markup a page writes by hand.
 
 ```sh
 npm install @jasonsdevspace/design-kit
@@ -17,8 +17,9 @@ components. Prereleases are under npm's `next` tag, as `@jasonsdevspace/design-k
 changed in each version is in
 [CHANGELOG.md](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
 
-A page with layers of its own names where the kit's go, as [Layers and palettes](#layers-and-palettes)
-describes. One rule holds over a page's own: the cut to motion for a visitor who asks for less.
+A page with cascade layers of its own must name where the kit's layers go, as [Layers and
+palettes](#layers-and-palettes) describes. The cut to motion for a visitor who asks for less holds
+over a page's ordinary styles, as that section explains.
 
 A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite.
@@ -490,7 +491,7 @@ caption size, its heading in the title size, and its text, with an h3 at the bod
 <ol class="dk-steps" role="list">
     <li>
         <strong class="dk-steps-title">The order names a product.</strong>
-        <span class="dk-steps-note">With the number it wants.</span>
+        <span class="dk-steps-note">It says how many it wants.</span>
     </li>
     <li>
         <span class="dk-steps-arrow" aria-hidden="true">↓</span>
@@ -515,7 +516,10 @@ drops a list's meaning when its markers are gone.
 ```html
 <div class="dk-panel">
     <p class="dk-panel-title">How the numbers were taken</p>
-    <p>The machine, the load and how long each run lasted, in a sentence or two.</p>
+    <p>
+        Each strategy ran three times on the same laptop with the same orders, and the table shows
+        the middle run.
+    </p>
 </div>
 ```
 
