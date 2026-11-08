@@ -245,16 +245,19 @@
 }
 
 /*
- * Each choice is as tall as the strip's row, and the whole of it, word and radio, takes a click.
- * The kit's base gives the pointer and the accent.
+ * Each choice is as tall as the strip's row, and the whole of it, word and radio, takes a click
+ * and shows a pointer. The kit gives a label that holds a radio its pointer by `:has()`, which
+ * Firefox 120 lacks, so the site gives it too.
  */
 .site-theme label {
     display: inline-flex;
     align-items: center;
     gap: var(--dk-space-2);
     min-height: var(--dk-strip);
+    cursor: pointer;
 }
 
+/* The radio sits flush against its word. The kit's base gives it the pointer and the accent. */
 .site-theme input {
     margin: 0;
 }

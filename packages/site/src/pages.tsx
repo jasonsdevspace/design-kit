@@ -1,5 +1,5 @@
 import * as kit from 'design-kit-release/react';
-import type { ReactElement, ReactNode } from 'react';
+import type { ComponentProps, ReactElement, ReactNode } from 'react';
 
 import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
@@ -81,7 +81,7 @@ const SiteFooter = ({
     current,
 }: {
     readonly build: Build;
-    readonly current?: 'about' | undefined;
+    readonly current?: ComponentProps<typeof DemoFooter>['current'];
 }) => (
     <DemoFooter name="The design kit" about={ABOUT} source={SOURCE} current={current}>
         This page uses version {build.version} of the kit, as published on npm, and was built at
