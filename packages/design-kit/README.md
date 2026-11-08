@@ -57,10 +57,11 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   size of a touch target, the height of the portfolio's strip, the measure and column widths, a
   shadow and a short duration.
 - `@jasonsdevspace/design-kit/base.css` gives the page its type and colors, one focus ring in the
-  accent for every link and control the keyboard reaches, code in running text a step under the
-  text around it, the `.dk-visually-hidden` class for a label a screen reader reads and the eye
-  does not, and less motion for a visitor who asks for it. It loads after the tokens, since the
-  tokens' first statement declares the kit's layer order.
+  accent for every link and control the keyboard reaches, code in running text a step under the text
+  around it, the `.dk-visually-hidden` class for a label a screen reader reads and the eye does not,
+  a pointer on a disclosure's summary and on a box or a dot with the label that holds it, and less
+  motion for a visitor who asks for it. It loads after the tokens, since the tokens' first statement
+  declares the kit's layer order.
 - `@jasonsdevspace/design-kit/components.css` styles the page chrome, the skip link, the strip and
   the footer, the buttons, fields and callouts, and the explainer page with its steps, panels,
   tables and code blocks, by the classes in the markup the sections below give. It loads after
@@ -131,7 +132,9 @@ after the links, named for them, and a demo with none leaves the section out.
         <a href="./about/">How it works</a>
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
-    <section class="dk-strip-tools" aria-label="Demo"><button type="button">Tour</button></section>
+    <section class="dk-strip-tools" aria-label="Demo">
+        <button type="button" class="dk-button">Tour</button>
+    </section>
 </div>
 ```
 
@@ -158,11 +161,12 @@ of their own below them.
 The footer is one paragraph that says whose project the demo is, with the author's name linking the
 portfolio, and links how it works, the source, the rest of the work and the license. The footer on
 the demo's explainer marks the link to how it works with `aria-current="page"`, as the strip does.
-Anything the demo adds follows the license, as sentences of its own. Every link in the chrome keeps
-its underline, and in the footer's sentence the underline is what tells a link from the text around
-it. The link marked as the current page, in the strip or the footer, stands in the page's text at
-the heading's weight, so it is told from the links around it by more than its color, in forced
-colors too, and still reads as a link.
+Anything the demo adds follows the license, as sentences of its own. The sentence holds to the
+measure, as prose does, while the footer's rule runs the page's width. Every link in the chrome
+keeps its underline, and in the footer's sentence the underline is what tells a link from the text
+around it. The link marked as the current page, in the strip or the footer, stands in the page's
+text at the heading's weight, so it is told from the links around it by more than its color, in
+forced colors too, and still reads as a link.
 
 <!-- example: footer -->
 
@@ -185,18 +189,14 @@ is another width sets `--dk-column` to it, as it sets a color role.
 A page with React draws the same markup from the components.
 
 ```tsx
-import { DemoFooter, PortfolioStrip, SkipLink } from '@jasonsdevspace/design-kit/react';
+import { Button, DemoFooter, PortfolioStrip, SkipLink } from '@jasonsdevspace/design-kit/react';
 
 const source = 'https://github.com/jasonsdevspace/example';
 
 export const Page = () => (
     <>
         <SkipLink />
-        <PortfolioStrip
-            about="./about/"
-            source={source}
-            tools={<button type="button">Tour</button>}
-        />
+        <PortfolioStrip about="./about/" source={source} tools={<Button>Tour</Button>} />
         <main id="main-content" tabIndex={-1}>
             <h1>Example</h1>
         </main>
@@ -319,10 +319,14 @@ error, best after a submit is tried rather than while someone is typing.
 A control is as tall as a button, at both widths, and its text is never under 16px, so a phone does
 not zoom the page when the field is tapped. It sits on the page's own ground, so it reads as a well
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
-invalid control's edge in the danger color too. A disabled control is drawn on the surface ground
-in the muted text. The select is a native `<select>`, its caret drawn as a background, and in forced
-colors the browser's own arrow comes back. A select that shows its options as a list, with
-`multiple` or a `size`, is left as the browser draws it, with no caret.
+invalid control's edge in the danger color too, and in forced colors, where its color is gone, a
+heavier edge in the color the system marks things with. A disabled control is drawn on the surface
+ground in the muted text. The select is a native `<select>`, its caret drawn as a background, and in
+forced colors the browser's own arrow comes back. A select that shows its options as a list, with
+`multiple` or a `size`, is left as the browser draws it, with no caret. A field a visitor cannot
+change uses `disabled`, unlike a button, which stays in the tab order when it is off: a field's hint
+says why it is closed, and a screen reader reads that hint wherever the field is announced, while a
+button's reason sits beside it in text the keyboard reaches by reaching the button.
 
 ### Callouts
 
@@ -585,10 +589,11 @@ WebKit. It scrolls in its frame instead.
 
 A table is in the small text, with each row ruled in the line color. Its column headers are the
 muted text at medium weight, and a row's header is at medium weight too. The outer cells keep no
-padding on their outer side, so the table's text lines up with the prose around it. Figures sit
-to the right and never wrap, while text in a cell wraps and keeps its first line level with the
-rest of its row. A header gives its unit in words a screen reader says well, "Slowest 1%, ms"
-rather than "p99 ms".
+padding on their outer side, so the table's text lines up with the prose around it. Figures sit to
+the right and never wrap, while text in a cell wraps and keeps its first line level with the rest of
+its row. Code in a cell keeps its name whole, hyphens and all, so the frame scrolls rather than the
+name breaking. A header gives its unit in words a screen reader says well, "Slowest 1%, ms" rather
+than "p99 ms".
 
 ### Code blocks
 

@@ -292,6 +292,8 @@ test("runs the footer's rule the width of the page, with its text in the column"
     expect(Math.round(footer.width)).toBe(1280);
     const text = await box(page.locator('.dk-footer p'), "the footer's text");
     expect(Math.round(text.x)).toBe((1280 - 1152) / 2 + 16);
+    // Its sentence holds to the measure, as the page's prose does, however wide the column.
+    expect(text.width).toBeLessThanOrEqual(34 * 16);
 });
 
 /** What sets a link apart from the text and links around it, as the screen draws it. */

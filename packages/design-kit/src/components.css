@@ -100,7 +100,9 @@
         font-size: var(--dk-text-small);
     }
 
+    /* The footer sentence holds to the measure, as prose does, while its rule runs full width. */
     :where(.dk-footer p) {
+        max-width: var(--dk-measure);
         margin: 0;
     }
 
@@ -350,7 +352,7 @@
     :where(.dk-callout) {
         display: grid;
         gap: var(--dk-space-2);
-        padding: var(--dk-space-2) var(--dk-space-3);
+        padding: var(--dk-space-3) var(--dk-space-4);
         border: 1px solid transparent;
         border-radius: var(--dk-radius);
         background: var(--dk-highlight);
@@ -439,6 +441,15 @@
             appearance: auto;
             padding-inline-end: var(--dk-field-inline);
             background-image: none;
+        }
+
+        /*
+         * An invalid field loses its red edge to the system's colors, so its edge is heavier and in
+         * the color the system marks things with, told apart from a hint by more than its weight.
+         */
+        :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
+            border-width: 2px;
+            border-color: Mark;
         }
     }
 
@@ -645,6 +656,7 @@
     /* Code in a cell keeps its name whole, so the frame scrolls rather than the name breaking. */
     :where(.dk-table code) {
         overflow-wrap: normal;
+        white-space: nowrap;
     }
 
     /*

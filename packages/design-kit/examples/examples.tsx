@@ -38,7 +38,7 @@ export const skipLink: ReactElement = (
 
 /** The strip, with a demo's switch in its section after the links. */
 export const strip: ReactElement = (
-    <PortfolioStrip about="./about/" source={SOURCE} tools={<button type="button">Tour</button>} />
+    <PortfolioStrip about="./about/" source={SOURCE} tools={<Button>Tour</Button>} />
 );
 
 /** The strip's section while the demo's switches are on their way, holding only their room. */

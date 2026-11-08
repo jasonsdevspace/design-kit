@@ -30,14 +30,10 @@ export const CHROME: readonly Control[] = [
                 react: `<PortfolioStrip
     about="./about/"
     source="https://github.com/jasonsdevspace/example"
-    tools={<button type="button">Tour</button>}
+    tools={<Button>Tour</Button>}
 />`,
-                draw: ({ PortfolioStrip }) => (
-                    <PortfolioStrip
-                        about={ABOUT}
-                        source={SOURCE}
-                        tools={<button type="button">Tour</button>}
-                    />
+                draw: ({ Button, PortfolioStrip }) => (
+                    <PortfolioStrip about={ABOUT} source={SOURCE} tools={<Button>Tour</Button>} />
                 ),
             },
             {

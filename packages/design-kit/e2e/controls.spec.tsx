@@ -346,3 +346,29 @@ for (const theme of ['light', 'dark'] as const) {
         }
     });
 }
+
+test('draws an invalid field with a heavier edge in forced colors, where its red is gone', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        const edge = (locator: Locator) => style(locator, 'border-top-width');
+        expect(await edge(page.locator('.dk-input[aria-invalid="true"]').first())).toEqual({
+            'border-top-width': '2px',
+        });
+        expect(await edge(page.locator('.dk-input:not([aria-invalid])').first())).toEqual({
+            'border-top-width': '1px',
+        });
+    } finally {
+        await context.close();
+    }
+});
+
+test('pads a callout as the other boxed text at its size is padded', async ({ page }) => {
+    await open(page);
+    expect(await style(page.locator('.dk-callout').first(), 'padding-top', 'padding-left')).toEqual(
+        { 'padding-top': '12px', 'padding-left': '16px' }
+    );
+});

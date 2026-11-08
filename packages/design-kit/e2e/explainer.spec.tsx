@@ -234,6 +234,12 @@ test('keeps code in a table cell whole, so the frame scrolls rather than the cod
         .locator('code');
     // One box on one line, rather than the name broken into pieces.
     expect(await inCell.evaluate((element) => element.getClientRects().length)).toBe(1);
+    // A name with hyphens, such as a token's, stays whole too, rather than breaking after one.
+    const hyphened = await inCell.evaluate((element) => {
+        element.textContent = '--dk-success-bg';
+        return element.getClientRects().length;
+    });
+    expect(hyphened).toBe(1);
 });
 
 test('opens each section with its rule, its number, its heading and then its text', async ({
