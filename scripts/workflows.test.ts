@@ -42,6 +42,21 @@ const installsBrowser = ({ text }: Step) =>
 const hasOwnTimeLimit = ({ indent, text }: Step) =>
     new RegExp(`^${indent} {2}timeout-minutes: ['"]?[1-5]['"]?\\s*$`, 'm').test(text);
 
+/** A workflow's jobs, each by its id with the lines under it, read without comments. */
+const jobsOf = (text: string) => {
+    const lines = `${text}\n`.replace(/\r\n/g, '\n').replace(/^[ \t]*#.*\n/gm, '');
+    const start = lines.search(/^jobs:/m);
+    if (start < 0) return [];
+    return lines
+        .slice(start)
+        .split(/^ {4}(?=[a-z][\w-]*:\s*$)/m)
+        .slice(1)
+        .map((block) => ({
+            id: block.slice(0, block.indexOf(':')),
+            body: `\n${block.slice(block.indexOf('\n') + 1)}`,
+        }));
+};
+
 describe('the workflows', () => {
     const steps = [...workflows.values()].flatMap(stepsOf);
 
@@ -106,6 +121,42 @@ describe('the workflows', () => {
             .filter(grants)
             .map((job) => job.slice(0, job.indexOf(':')));
         expect(holding).toEqual(['deploy']);
+    });
+
+    it('run every job on a named image, with a name and a time limit of its own', () => {
+        const unready = [...workflows].flatMap(([path, text]) =>
+            jobsOf(text)
+                // A job that calls another workflow takes the image and the time limits of the
+                // jobs in it.
+                .filter(({ body }) => !/^ {8}uses:/m.test(body))
+                .filter(
+                    ({ body }) =>
+                        !/^ {8}name: \S/m.test(body) ||
+                        !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
+                        !/^ {8}runs-on: ubuntu-26\.04\s*$/m.test(body)
+                )
+                .map(({ id }) => `${path} ${id}`)
+        );
+        expect([...workflows.keys()].length).toBeGreaterThan(0);
+        expect(unready).toEqual([]);
+    });
+
+    it("read a workflow's jobs by their ids, each with its own lines", () => {
+        const jobs = jobsOf(
+            [
+                'on: push',
+                'jobs:',
+                '    build:',
+                '        name: Build',
+                '        runs-on: ubuntu-26.04',
+                '        timeout-minutes: 5',
+                '    checks:',
+                '        uses: ./.github/workflows/ci.yml',
+            ].join('\n')
+        );
+        expect(jobs.map(({ id }) => id)).toEqual(['build', 'checks']);
+        expect(jobs[0]?.body).toContain('timeout-minutes: 5');
+        expect(jobs[1]?.body).not.toContain('runs-on');
     });
 
     it('read a step the way GitHub does, whatever the step looks like', () => {

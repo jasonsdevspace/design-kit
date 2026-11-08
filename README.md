@@ -334,6 +334,13 @@ and the Lighthouse audit of the site in another. The jobs run at the same time. 
 pass on main, a job with read access alone builds the site and uploads it, and a job that runs only
 GitHub's Pages actions deploys it to jasonsdevspace.com/design-kit/.
 
+Each job runs on a named Ubuntu image and within a time limit, which a test holds. Each check also
+writes what it found to its run's page on GitHub: the browser tests' totals and any test that
+failed, with a link to the report a failure keeps, the Lighthouse scores of every page against the
+gates, the package's size file by file, raw and gzipped, the live link a deploy made, and what a
+release staged on npm and published on GitHub. `scripts/summary.mjs` writes them, and its tests
+hold what each says.
+
 `npm run build` compiles the theme module, the plugin and the components into the package's `dist`,
 beside a copy of each sheet, which is what the package's entries load from, and builds the site.
 Packing the package builds it first. `npm run e2e` runs the browser tests in Chromium, after `npx

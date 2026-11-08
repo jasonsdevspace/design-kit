@@ -27,7 +27,7 @@ concurrency:
 jobs:
     verify:
         name: Lint, test and build
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -78,7 +78,7 @@ jobs:
 
     browser:
         name: Browser tests
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -105,8 +105,15 @@ jobs:
                   npx playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
+            # The totals, and any test that failed, go to the run's summary from the JSON report.
             - name: Browser tests
-              run: npm run e2e
+              run: |
+                  status=0
+                  npm run e2e || status=$?
+                  if [ -f playwright-results.json ]; then
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests"
+                  fi
+                  exit "$status"
 
             # The site draws the version of the kit it pins, so a change to the kit is not on the
             # site until it is released. The site's tests run again over this commit's kit, packed
@@ -116,7 +123,12 @@ jobs:
               run: |
                   npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
                   npm install --no-save --ignore-scripts "design-kit-release@file:$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
-                  npx playwright test packages/site
+                  status=0
+                  npx playwright test packages/site || status=$?
+                  if [ -f playwright-results.json ]; then
+                      node scripts/summary.mjs playwright playwright-results.json "Site tests over this commit's kit"
+                  fi
+                  exit "$status"
 
             - name: Keep the report of a failed run
               if: failure()
@@ -131,7 +143,7 @@ jobs:
     # no more layout shift than a good visit has.
     lighthouse:
         name: Lighthouse audits
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 15
         steps:
             - name: Checkout
@@ -164,7 +176,7 @@ jobs:
     # engines field admits.
     floor:
         name: Package on oldest Node
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         outputs:
             sha256: ${{ steps.pack.outputs.sha256 }}
@@ -198,6 +210,10 @@ jobs:
                   fi
                   sum=$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)
                   echo "sha256=$sum" >> "$GITHUB_OUTPUT"
+
+            # What the package weighs, file by file, raw and gzipped, for the run's summary.
+            - name: Summarize the package's size
+              run: node scripts/summary.mjs package @jasonsdevspace/design-kit
 
             # The standard check of a published package's manifest: that its exports, types and
             # files point at what the tarball holds.
@@ -281,7 +297,7 @@ jobs:
         name: Build the site
         needs: [verify, browser, lighthouse, floor]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         steps:
             - name: Checkout
@@ -310,7 +326,7 @@ jobs:
     deploy:
         name: Deploy the site
         needs: site
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         permissions:
             pages: write
@@ -325,3 +341,10 @@ jobs:
             - name: Deploy to GitHub Pages
               id: deployment
               uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+            - name: Summarize the deploy
+              env:
+                  PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+              run: |
+                  commit="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+                  printf '### Deployed\n\n%s, from [`%s`](%s).\n' "$PAGE_URL" "${GITHUB_SHA:0:7}" "$commit" >> "$GITHUB_STEP_SUMMARY"

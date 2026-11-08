@@ -6,6 +6,7 @@ import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
+import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
 import { ROUTES } from '../src/routes.ts';
 
 /**
@@ -96,6 +97,8 @@ const main = async () => {
         return result.lhr;
     };
     const failures: string[] = [];
+    // Each page as it was judged, for the run's summary.
+    const pages: Parameters<typeof lighthouseSummary>[0][number][] = [];
     try {
         for (const { path } of ROUTES) {
             const url = `${origin}${path}`;
@@ -117,6 +120,13 @@ const main = async () => {
                 `${path} on a first visit: performance ${String(Math.round(judged.performance * 100))}, ` +
                     `largest paint ${String(Math.round(judged.paint))} ms, layout shift ${judged.shift.toFixed(3)}`
             );
+            pages.push({
+                path,
+                accessibility: score,
+                performance: judged.performance,
+                paint: judged.paint,
+                shift: judged.shift,
+            });
             const misses = missed(judged);
             if (misses.length > 0) failures.push(`${path} (${misses.join(', ')})`);
         }
@@ -128,6 +138,13 @@ const main = async () => {
             });
         });
     }
+    writeSummary(
+        lighthouseSummary(pages, {
+            performance: PERFORMANCE,
+            paint: LARGEST_PAINT_MS,
+            shift: LAYOUT_SHIFT,
+        })
+    );
     if (failures.length > 0) {
         console.error(`Missed the gates: ${failures.join('; ')}`);
         process.exitCode = 1;
