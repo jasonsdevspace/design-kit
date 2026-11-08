@@ -52,3 +52,15 @@ export const wrongSelect = SelectField({ ref: createRef<HTMLInputElement>(), lab
 
 // @ts-expect-error A callout's tone is one of three.
 export const loud = Callout({ tone: 'warning' });
+
+// A wrapper hands on an optional prop it may not have been given, as undefined, and it compiles.
+const given: 'about' | undefined = undefined;
+export const handedOn = PortfolioStrip({ about: './about/', source: './', current: given });
+
+// A callout takes an id, a page's class and a ref, as a button and a field do.
+export const summary = Callout({
+    ref: createRef<HTMLDivElement>(),
+    id: 'problems',
+    className: 'summary',
+    title: 'Two problems',
+});

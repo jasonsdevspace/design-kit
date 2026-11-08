@@ -45,8 +45,10 @@ block for the theme script is no piece's markup, and is written by hand.
 `examples/states.tsx` holds each state of each control the site shows one by one, named, with the
 attribute that draws it. It takes the components it draws with rather than importing them, and
 imports nothing of the kit's but its types, so the site draws the states from the version of the kit
-it pins and the kit's own tests draw them from the sources. `examples/pieces.tsx` holds the states
-of the page chrome and of an explainer's pieces the same way. The chrome's states and the
+it pins and the kit's own tests draw them from the sources. It types those components by the props
+the states pass, with no optional prop set to undefined, which the sources take and so does a
+version the site pins from before the optional props took undefined. `examples/pieces.tsx` holds the
+states of the page chrome and of an explainer's pieces the same way. The chrome's states and the
 explainer's layout are marked as pictures, which the site draws inert in both themes, since a live
 copy would give a page a second portfolio navigation or a second h1. The README's blocks for the
 steps, the panel, the table and the code block are drawn from it, so the README and the site show
