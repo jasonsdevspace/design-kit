@@ -45,7 +45,8 @@ const idOf = (name: string) =>
  * A block of code, titled, as the kit draws one: a frame that scrolls inside itself, named by its
  * title. A screen reader is given the title written whole with the state it is the code of, rather
  * than the short title beside a hidden rest, which a browser reads with a space before the comma.
- * The site's script puts a copy button beside the title.
+ * Each block is a panel of its own, which the site's script makes a tab's panel where a state has
+ * two, and it puts the one copy button beside the title or the tabs.
  */
 const CodeBlock = ({
     id,
@@ -58,7 +59,7 @@ const CodeBlock = ({
     readonly of: string;
     readonly code: string;
 }) => (
-    <>
+    <div className="site-code-panel">
         <div className="site-code-head">
             <p className="dk-code-title" aria-hidden="true">
                 {title}
@@ -70,7 +71,7 @@ const CodeBlock = ({
         <pre className="dk-code" role="region" aria-labelledby={id} tabIndex={0} translate="no">
             <code>{code}</code>
         </pre>
-    </>
+    </div>
 );
 
 /**
@@ -165,26 +166,67 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
 );
 
 /**
+ * The sections of a page as a plain list of links, for a wide screen to show beside the content.
+ * It comes before the main content, so the keyboard reaches it after the site's tabs and the skip
+ * link passes it. A phone leaves it out, since the list would push the content down a screen.
+ */
+const OnThisPage = ({ sections }: { readonly sections: readonly string[] }) => (
+    <nav className="site-toc" aria-labelledby="site-toc-name">
+        <p className="site-toc-name" id="site-toc-name">
+            On this page
+        </p>
+        <ul role="list">
+            {sections.map((name) => (
+                <li key={name}>
+                    <a href={`#${idOf(name)}`}>{name}</a>
+                </li>
+            ))}
+        </ul>
+    </nav>
+);
+
+/** The main content alone, or beside the list of its sections where a page has one. */
+const Body = ({
+    sections,
+    children,
+}: {
+    readonly sections: readonly string[] | undefined;
+    readonly children: ReactNode;
+}) =>
+    sections === undefined ? (
+        children
+    ) : (
+        <div className="site-body">
+            <OnThisPage sections={sections} />
+            {children}
+        </div>
+    );
+
+/**
  * A page of the site: the kit's own skip link, strip and footer around the site's navigation and
  * the page's content, and in the footer the version of the kit it is drawn from and the commit it
- * was built at.
+ * was built at. A page of states lists its sections beside the content.
  */
 const Page = ({
     build,
     current,
+    sections,
     children,
 }: {
     readonly build: Build;
     readonly current: Route['file'];
+    readonly sections?: readonly string[];
     readonly children: ReactNode;
 }) => (
     <>
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
         <SiteNav current={current} />
-        <main id="main-content" tabIndex={-1} className="site-main">
-            {children}
-        </main>
+        <Body sections={sections}>
+            <main id="main-content" tabIndex={-1} className="site-main">
+                {children}
+            </main>
+        </Body>
         <SiteFooter build={build} />
     </>
 );
@@ -244,15 +286,16 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
 );
 
 /**
- * One state of a control, drawn live in the visitor's theme and again in the other theme beside it.
- * The other copy is inert, so the keyboard and a screen reader pass over it, and its ids are its
- * own, so the page never holds one twice. The live copy is a group named by the state's name alone,
- * so a screen reader moving from control to control hears which state it is in. A pictured state's
- * copy in the visitor's theme is inert too, and both its copies are labeled as pictures. Each copy
- * is labeled by its theme's name: the live one marked Live, the other a preview, which the site's
- * script explains when it is tapped, and a picture a picture. Under both, the state's name and the
- * attribute that draws it, and then its code, closed until a reader opens it: its markup, and the
- * React a page writes for it where a component draws it.
+ * One state of a control, in one card: its name as a heading and the attribute that draws it at
+ * the top, then its copies, and its code at the foot. The state is drawn live in the visitor's
+ * theme and again in the other theme beside it. The other copy is inert, so the keyboard and a
+ * screen reader pass over it, and its ids are its own, so the page never holds one twice. The live
+ * copy is a group named by the state's name alone, so a screen reader moving from control to
+ * control hears which state it is in. A pictured state's copy in the visitor's theme is inert too,
+ * and both its copies are labeled as pictures. Each copy is labeled by its theme's name: the live
+ * one marked Live, the other a preview, which the site's script explains when it is tapped, and a
+ * picture a picture. The code is closed until a reader opens it: its markup, and the React a page
+ * writes for it where a component draws it, which the site's script shows as tabs.
  */
 const StateShown = ({
     state,
@@ -268,31 +311,39 @@ const StateShown = ({
     readonly laidOut: boolean;
 }) => (
     <li className={pictured ? 'site-state site-state-pictured' : 'site-state'}>
-        {pictured ? (
-            <div className="site-copy" inert>
-                <p className="site-copy-label">
-                    <ThemeName of="page" />, a picture
-                </p>
-                {state.draw(kit, (name) => `${name}-yours`)}
-            </div>
-        ) : (
-            <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
-                <p className="site-copy-label" aria-hidden="true">
-                    <ThemeName of="page" /> <span className="site-live">Live</span>
-                </p>
-                {state.draw(kit, (name) => name)}
-            </div>
-        )}
-        <div className="site-copy site-other" inert>
-            <p className="site-copy-label">
-                <ThemeName of="other" />
-                {pictured ? ', a picture' : ', preview only'}
+        <div className="site-state-head">
+            <h3 className="site-state-name" id={`${id}-name`}>
+                {state.name}
+            </h3>
+            <p className="site-state-attribute">
+                <span className="dk-visually-hidden">Drawn by </span>
+                <code>{state.attribute}</code>
             </p>
-            {state.draw(kit, (name) => `${name}-other`)}
         </div>
-        <p className="site-state-name">
-            <span id={`${id}-name`}>{state.name}</span>, drawn by <code>{state.attribute}</code>
-        </p>
+        <div className="site-state-copies">
+            {pictured ? (
+                <div className="site-copy" inert>
+                    <p className="site-copy-label">
+                        <ThemeName of="page" />, a picture
+                    </p>
+                    {state.draw(kit, (name) => `${name}-yours`)}
+                </div>
+            ) : (
+                <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
+                    <p className="site-copy-label" aria-hidden="true">
+                        <ThemeName of="page" /> <span className="site-live">Live</span>
+                    </p>
+                    {state.draw(kit, (name) => name)}
+                </div>
+            )}
+            <div className="site-copy site-other" inert>
+                <p className="site-copy-label">
+                    <ThemeName of="other" />
+                    {pictured ? ', a picture' : ', preview only'}
+                </p>
+                {state.draw(kit, (name) => `${name}-other`)}
+            </div>
+        </div>
         <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
             <summary>
                 <span aria-hidden="true">The code</span>
@@ -340,25 +391,35 @@ const Shown = ({
 
 /** Each state of the buttons, fields and callouts. */
 export const Controls = ({ build }: { readonly build: Build }) => (
-    <Page build={build} current="controls/index.html">
+    <Page build={build} current="controls/index.html" sections={CONTROLS.map(({ name }) => name)}>
         <h1>Controls</h1>
         <p className="site-lead">
             Each state of the kit&rsquo;s buttons, fields and callouts is drawn twice: live in your
             theme, marked Live, and as a preview in the other theme. To try the other theme, choose
-            it under Theme in the strip. Under each state is the attribute that draws it. A toggle,
-            an open panel, a control that is unavailable and a field with an error each come from
-            the attribute a screen reader already reads, never from a class of the kit&rsquo;s. So
-            what you see and what a screen reader says come from one place. A kind of control, such
-            as the one action a view leads with or a callout&rsquo;s tone, comes from a class
-            instead.
+            it under Theme in the strip. Each state&rsquo;s card names the attribute that draws it.
+            A toggle, an open panel, a control that is unavailable and a field with an error each
+            come from the attribute a screen reader already reads, never from a class of the
+            kit&rsquo;s. So what you see and what a screen reader says come from one place. A kind
+            of control, such as the one action a view leads with or a callout&rsquo;s tone, comes
+            from a class instead.
         </p>
         <Shown controls={CONTROLS} build={build} />
     </Page>
 );
 
+/**
+ * The page chrome's own section, written by hand rather than from the states, under one name for
+ * its heading, its id, its tests and its place in the list of sections.
+ */
+const SKIP_LINK = 'Skip link';
+
 /** The skip link, and each state of the strip and the footer, as pictures. */
 export const Chrome = ({ build }: { readonly build: Build }) => (
-    <Page build={build} current="page-chrome/index.html">
+    <Page
+        build={build}
+        current="page-chrome/index.html"
+        sections={[SKIP_LINK, ...CHROME.map(({ name }) => name)]}
+    >
         <h1>Page chrome</h1>
         <p className="site-lead">
             Page chrome is what a demo draws around its content: the skip link, the strip across the
@@ -372,13 +433,13 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
             page a second portfolio menu, and a screen reader would list both.
         </p>
         <section>
-            <h2 id="skip-link">Skip link</h2>
+            <h2 id={idOf(SKIP_LINK)}>{SKIP_LINK}</h2>
             <p>
                 The skip link is the first thing the keyboard reaches, out of sight until then. Load
                 this page and press Tab to see it. Following it moves focus past the strip and the
                 site&rsquo;s own links to the page&rsquo;s main content.
             </p>
-            <Tests group="Skip link" commit={build.commit} />
+            <Tests group={SKIP_LINK} commit={build.commit} />
         </section>
         <Shown controls={CHROME} build={build} wide />
     </Page>
@@ -386,7 +447,11 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
 
 /** An explainer's layout as a picture, and each piece it holds, live. */
 export const Pieces = ({ build }: { readonly build: Build }) => (
-    <Page build={build} current="explainer-pieces/index.html">
+    <Page
+        build={build}
+        current="explainer-pieces/index.html"
+        sections={EXPLAINER.map(({ name }) => name)}
+    >
         <h1>Explainer pieces</h1>
         <p className="site-lead">
             The pieces of the page that says how a demo works, the one the strip&rsquo;s &ldquo;How
@@ -396,7 +461,7 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
         </p>
         <p>
             Steps, panels, tables and code blocks are each drawn twice: live in your theme, marked
-            Live, and as a preview in the other theme, with the attribute that draws them under
+            Live, and as a preview in the other theme, with the attribute that draws them above
             both. To try the other theme, choose it under Theme in the strip. The explainer&rsquo;s
             layout is drawn as a picture in both themes, since it opens with the page&rsquo;s main
             heading and this page already has one.
