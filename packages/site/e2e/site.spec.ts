@@ -609,6 +609,79 @@ test.describe("the site's header", () => {
             .evaluate((segment) => getComputedStyle(segment).outlineStyle);
         expect(ring).not.toBe('none');
     });
+    test("leaves room in the tabs' row for the kit's focus ring", async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        const room = await page.locator('.site-tabs').evaluate((list) => {
+            const style = getComputedStyle(list);
+            const root = getComputedStyle(document.documentElement);
+            // The kit sets its ring in pixels, the line and the gap outside the box it rings.
+            const ring =
+                parseFloat(root.getPropertyValue('--dk-ring-width')) +
+                parseFloat(root.getPropertyValue('--dk-ring-offset'));
+            return [style.paddingTop, style.paddingBottom, style.paddingLeft, style.paddingRight]
+                .map(parseFloat)
+                .every((padding) => padding >= ring - 0.5);
+        });
+        expect(room).toBe(true);
+    });
+
+    test('shows the chosen theme and the current tab in forced colors', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        // A browser reports the author's colors to a script even while it forces its own, so the
+        // test reads the rules the sheet keeps for forced colors, which set the system's own.
+        const forced = await page.evaluate(() =>
+            [...document.styleSheets]
+                .flatMap((sheet) => [...sheet.cssRules])
+                .filter(
+                    (rule): rule is CSSMediaRule =>
+                        rule instanceof CSSMediaRule && rule.conditionText.includes('forced-colors')
+                )
+                .flatMap((rule) => [...rule.cssRules])
+                .filter(
+                    (rule): rule is CSSStyleRule =>
+                        rule instanceof CSSStyleRule &&
+                        rule.style.backgroundColor.toLowerCase() === 'highlight'
+                )
+                .map((rule) => rule.selectorText)
+                .join(',')
+        );
+        expect(forced).toContain('.site-theme input:checked + span');
+        expect(forced).toContain('.site-tabs a[aria-current="page"]');
+    });
+
+    test('keeps each segment one width as the choice moves', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.goto('/design-kit/');
+        const group = page.getByRole('radiogroup', { name: 'Theme' });
+        const widths = () =>
+            group
+                .locator('label')
+                .evaluateAll((labels) =>
+                    labels.map((label) => label.getBoundingClientRect().width)
+                );
+        const before = await widths();
+        await group.getByRole('radio', { name: 'Dark' }).check();
+        expect(await widths()).toEqual(before);
+    });
+
+    test('scrolls to the current tab when a turn makes the row too narrow', async ({ page }) => {
+        await page.setViewportSize({ width: 1024, height: 800 });
+        await page.goto('/design-kit/explainer-pieces/');
+        await page.setViewportSize({ width: 360, height: 800 });
+        await expect
+            .poll(() =>
+                page.locator('.site-tabs').evaluate((list) => {
+                    const row = list.getBoundingClientRect();
+                    const box = list
+                        .querySelector('[aria-current="page"]')
+                        ?.getBoundingClientRect();
+                    return (
+                        box !== undefined && box.left >= row.left - 1 && box.right <= row.right + 1
+                    );
+                })
+            )
+            .toBe(true);
+    });
 });
 
 test.describe('the theme switch', () => {

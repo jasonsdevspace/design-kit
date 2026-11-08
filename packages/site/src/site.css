@@ -18,6 +18,14 @@ body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
+/*
+ * The site's pill, the round ends its tabs, theme segments and Live mark share. The kit's radius
+ * scale stops at a card's corner, so the site keeps the one shape it adds here.
+ */
+:root {
+    --site-pill: 999px;
+}
+
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
     max-width: var(--dk-column);
@@ -108,10 +116,16 @@ body > .dk-strip {
     display: flex;
     flex-wrap: nowrap;
     gap: var(--dk-space-1);
-    margin: 0;
-    padding: 0;
+    /*
+     * The row scrolls, so it clips what is drawn past its edges. It keeps room on every side for
+     * the kit's focus ring, and gives that room back to the layout, so a focused tab shows its
+     * whole ring and the tabs still line up with the column.
+     */
+    --site-ring-room: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+    margin: calc(-1 * var(--site-ring-room));
+    padding: var(--site-ring-room);
     min-width: 0;
-    max-width: 100%;
+    max-width: calc(100% + 2 * var(--site-ring-room));
     overflow-x: auto;
     list-style: none;
 }
@@ -122,7 +136,7 @@ body > .dk-strip {
     align-items: center;
     min-height: var(--dk-strip);
     padding-inline: var(--dk-space-3);
-    border-radius: 999px;
+    border-radius: var(--site-pill);
     color: var(--dk-muted);
     text-decoration: none;
     white-space: nowrap;
@@ -247,7 +261,7 @@ body > .dk-strip {
 /* The mark on the copy that can be tried. */
 .site-live {
     padding: 0 var(--dk-space-2);
-    border-radius: 999px;
+    border-radius: var(--site-pill);
     background: var(--dk-highlight);
     color: var(--dk-accent);
     font-weight: var(--dk-weight-strong);
@@ -386,8 +400,8 @@ body > .dk-strip {
 /*
  * The switch reads as one control of three segments: the radio is kept for the keyboard and a
  * screen reader, and lies unseen over its whole segment, so a click anywhere on the segment lands
- * on the radio itself. Its word draws it, the chosen word raised on the highlight, and the word of
- * the focused radio ringed as the kit rings anything focused.
+ * on the radio itself. Its word draws it, the chosen word raised on the highlight in the same
+ * weight as the others, so no segment changes width as the choice moves.
  */
 .site-theme input {
     position: absolute;
@@ -400,16 +414,19 @@ body > .dk-strip {
 
 .site-theme label > span {
     padding: var(--dk-space-1) var(--dk-space-2);
-    border-radius: 999px;
+    border-radius: var(--site-pill);
     color: var(--dk-muted);
 }
 
 .site-theme input:checked + span {
     background: var(--dk-highlight);
     color: var(--dk-fg);
-    font-weight: var(--dk-weight-medium);
 }
 
+/*
+ * The kit rings anything focused from its base, but the focus is on the unseen radio, so its
+ * segment takes the same ring from the kit's own ring tokens.
+ */
 .site-theme input:focus-visible + span {
     outline: var(--dk-ring-width) solid var(--dk-accent);
     outline-offset: var(--dk-ring-offset);
@@ -488,6 +505,19 @@ body > .dk-strip {
 /* A panel a live button names sits below it as any next part of a copy does. */
 .site-copy > .dk-button + .dk-panel {
     margin-top: var(--dk-space-3);
+}
+
+/*
+ * In forced colors the browser drops the highlight behind the chosen theme and the current tab,
+ * and the radio is unseen, so both take the system's own colors for a selection, as the kit's
+ * pressed toggles do.
+ */
+@media (forced-colors: active) {
+    .site-theme input:checked + span,
+    .site-tabs a[aria-current='page'] {
+        background-color: Highlight;
+        color: HighlightText;
+    }
 }
 
 /*

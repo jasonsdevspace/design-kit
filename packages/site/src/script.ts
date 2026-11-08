@@ -123,6 +123,25 @@ const themeSwitch = () => {
 };
 
 /**
+ * Scrolls the site's tabs sideways to the current page's tab where the row is too narrow to show
+ * them all, so the tab that says where the reader is never starts out of sight, and again when a
+ * turn or a resize hides it. The row scrolls on its own, so the page does not move, and a tab the
+ * reader can already see is left where it is.
+ */
+const tabs = document.querySelector<HTMLElement>('.site-tabs');
+const currentTab = tabs?.querySelector<HTMLElement>('[aria-current="page"]');
+if (tabs && currentTab) {
+    const showCurrent = () => {
+        const row = tabs.getBoundingClientRect();
+        const tab = currentTab.getBoundingClientRect();
+        if (tab.left >= row.left && tab.right <= row.right) return;
+        tabs.scrollLeft += tab.left - row.left - parseFloat(getComputedStyle(tabs).paddingLeft);
+    };
+    showCurrent();
+    window.addEventListener('resize', showCurrent);
+}
+
+/**
  * Puts the switch in the room the page's own strip kept for it, not in a picture of a strip, and
  * names the strip's section Settings, so it becomes the landmark the kit makes of switches that
  * have come and the switch sits inside a landmark. It is not named Theme, as the group is, so a
@@ -170,17 +189,6 @@ if (room && section) {
  * their own keys or their device's copy command. One status line, out of sight, tells a screen
  * reader which happened, and the button says it for a moment too.
  */
-/**
- * Scrolls the site's tabs sideways to the current page's tab where a phone is too narrow to show
- * them all, so the tab that says where the reader is never starts out of sight. The row scrolls on
- * its own, so the page does not move.
- */
-const tabs = document.querySelector<HTMLElement>('.site-tabs');
-const currentTab = tabs?.querySelector<HTMLElement>('[aria-current="page"]');
-if (tabs && currentTab && tabs.scrollWidth > tabs.clientWidth) {
-    tabs.scrollLeft = currentTab.offsetLeft - tabs.offsetLeft;
-}
-
 /** How long a button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
