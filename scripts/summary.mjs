@@ -2,7 +2,8 @@
  * What a check writes to its run's page on GitHub, so a reviewer sees what it found without
  * opening the log: a table or a line, never the log itself, and nothing at all outside a run.
  *
- * Run as `node scripts/summary.mjs playwright <report.json> <title>` after a browser test run, or
+ * Run as `node scripts/summary.mjs playwright <report.json> <title> <status>` after a browser test
+ * run, with the status the run exited with, or
  * `node scripts/summary.mjs package <tarball>` after packing. The Lighthouse audit calls
  * `lighthouseSummary` itself. A summary reports a check and never decides it, so the workflow
  * steps that run this carry on when it fails.
@@ -14,14 +15,21 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 import { isRunDirectly } from './repository.mjs';
 
 /**
- * Appends to the run's summary, or does nothing outside a run, where there is none.
+ * Appends to the run's summary, or does nothing outside a run, where there is none. A summary
+ * that cannot be written is said in the log and never thrown, so it cannot decide the check it
+ * reports.
  *
  * @param {string} markdown
  * @param {Record<string, string | undefined>} [env]
  */
 export const writeSummary = (markdown, env = process.env) => {
     const file = env['GITHUB_STEP_SUMMARY'];
-    if (file) appendFileSync(file, markdown);
+    if (!file) return;
+    try {
+        appendFileSync(file, markdown);
+    } catch (error) {
+        console.warn(`The run's summary could not be written: ${String(error)}`);
+    }
 };
 
 /**
@@ -37,14 +45,15 @@ export const table = (head, rows) => {
 };
 
 /**
- * A page as the audit judged it, with what it missed of the gates in the audit's own words.
+ * A page as the audit judged it, with what it missed of the gates in the audit's own words. A page
+ * the audit stopped before measuring for performance has no performance figures.
  *
  * @typedef {{
  *     path: string,
  *     accessibility: number,
- *     performance: number,
- *     paint: number,
- *     shift: number,
+ *     performance?: number,
+ *     paint?: number,
+ *     shift?: number,
  *     missed: readonly string[],
  * }} LighthousePage
  * @typedef {{ accessibility: number, performance: number, paint: number, shift: number }} LighthouseGates
@@ -57,12 +66,17 @@ export const table = (head, rows) => {
  * @param {LighthouseGates} gates
  */
 export const lighthouseSummary = (pages, gates) => {
+    if (pages.length === 0) {
+        return '### Lighthouse\n\nThe audit stopped before it measured a page.\n';
+    }
     const rows = pages.map((page) => [
         page.path,
         String(page.accessibility),
-        String(Math.round(page.performance * 100)),
-        `${String(Math.round(page.paint))} ms`,
-        page.shift.toFixed(3),
+        page.performance === undefined
+            ? 'Not measured'
+            : String(Math.round(page.performance * 100)),
+        page.paint === undefined ? 'Not measured' : `${String(Math.round(page.paint))} ms`,
+        page.shift === undefined ? 'Not measured' : page.shift.toFixed(3),
         page.missed.length === 0 ? 'Pass' : `Missed: ${page.missed.join(', ')}`,
     ]);
     return (
@@ -92,14 +106,16 @@ export const lighthouseSummary = (pages, gates) => {
 
 /**
  * A browser test run's totals in a line, and when a test failed, each failing test by its file and
- * line, and where its report is kept. A run that stopped before its tests says why.
+ * line, and where its report is kept when the run failed and so kept one. A run that stopped
+ * before its tests says why.
  *
  * @param {PlaywrightReport} report
- * @param {{ title: string, runUrl: string, root?: string }} where `root` is the folder the
- *     report's files are named from, relative to the repository, so each line names a file a reader
- *     can open.
+ * @param {{ title: string, runUrl: string, root?: string, failed?: boolean }} where `root` is the
+ *     folder the report's files are named from, relative to the repository, so each line names a
+ *     file a reader can open, and `failed` whether the run exited with a failure, which is when CI
+ *     keeps the report.
  */
-export const playwrightSummary = (report, { title, runUrl, root = '' }) => {
+export const playwrightSummary = (report, { title, runUrl, root = '', failed = false }) => {
     const { expected, unexpected, flaky, skipped } = report.stats;
     const totals = [
         `${String(expected)} passed`,
@@ -109,16 +125,18 @@ export const playwrightSummary = (report, { title, runUrl, root = '' }) => {
     ].join(', ');
     /** @type {string[]} */
     const failing = [];
+    /** @type {string[]} */
+    const retried = [];
     /**
      * @param {PlaywrightSuite} suite
      * @param {readonly string[]} groups
      */
     const walk = (suite, groups) => {
         for (const spec of suite.specs ?? []) {
-            if (spec.tests.some((test) => test.status === 'unexpected')) {
-                const name = [...groups, spec.title].join(' › ');
-                failing.push(`- ${name} (\`${join(root, spec.file)}:${String(spec.line)}\`)`);
-            }
+            const name = [...groups, spec.title].join(' › ');
+            const line = `- ${name} (\`${join(root, spec.file)}:${String(spec.line)}\`)`;
+            if (spec.tests.some((test) => test.status === 'unexpected')) failing.push(line);
+            else if (spec.tests.some((test) => test.status === 'flaky')) retried.push(line);
         }
         for (const inner of suite.suites ?? []) walk(inner, [...groups, inner.title]);
     };
@@ -139,8 +157,11 @@ export const playwrightSummary = (report, { title, runUrl, root = '' }) => {
         );
     }
     lines.push(`${totals}.`);
-    if (failing.length > 0 || stopped.length > 0) {
-        if (failing.length > 0) lines.push('', 'Failed:', '', ...failing);
+    // A test that passed only on a retry is named too, so a test that is starting to fail shows
+    // before it fails, and fails the run where the run holds tests to their first try.
+    if (failing.length > 0) lines.push('', 'Failed:', '', ...failing);
+    if (retried.length > 0) lines.push('', 'Passed only on a retry:', '', ...retried);
+    if (failed) {
         lines.push(
             '',
             `The report, with each failure's trace and screenshot, is in [the run's artifacts](${runUrl}#artifacts).`
@@ -149,8 +170,12 @@ export const playwrightSummary = (report, { title, runUrl, root = '' }) => {
     return `${lines.join('\n')}\n`;
 };
 
-/** @param {number} bytes */
-const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
+/**
+ * A size in kilobytes, to a tenth.
+ *
+ * @param {number} bytes
+ */
+export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 
 /**
  * @typedef {{ path: string, size: number, gzip: number }} PackedFile
@@ -179,6 +204,29 @@ export const packageSummary = (packed, loads) => {
 };
 
 /**
+ * The path a pax header gives, read record by record by each record's own length, so a path with a
+ * newline in it is read whole.
+ *
+ * @param {Buffer} records
+ * @returns {string | undefined}
+ */
+const paxPath = (records) => {
+    let at = 0;
+    /** @type {string | undefined} */
+    let path;
+    while (at < records.length) {
+        const space = records.indexOf(0x20, at);
+        if (space < 0) break;
+        const length = parseInt(records.subarray(at, space).toString('utf8'), 10);
+        if (!(length > 0)) break;
+        const record = records.subarray(space + 1, at + length - 1).toString('utf8');
+        if (record.startsWith('path=')) path = record.slice('path='.length);
+        at += length;
+    }
+    return path;
+};
+
+/**
  * The files a packed tarball holds, read from its tar blocks: each file's path inside the package
  * and its bytes. npm packs plain files under `package/`, so only those are read.
  *
@@ -190,6 +238,10 @@ export const filesOf = (tarball) => {
     /** @type {{ path: string, bytes: Buffer }[]} */
     const files = [];
     let at = 0;
+    // A path too long for the header's own fields comes before its entry, in a pax header or in
+    // the long name entry GNU tar writes.
+    /** @type {string | undefined} */
+    let long;
     while (at + 512 <= tar.length) {
         const header = tar.subarray(at, at + 512);
         if (header.every((byte) => byte === 0)) break;
@@ -199,12 +251,21 @@ export const filesOf = (tarball) => {
         const prefix = text(345, 500);
         const size = parseInt(text(124, 136).trim() || '0', 8);
         const type = text(156, 157);
-        const path = prefix ? `${prefix}/${name}` : name;
+        const content = tar.subarray(at + 512, at + 512 + size);
+        if (type === 'x') {
+            long = paxPath(content) ?? long;
+            at += 512 + Math.ceil(size / 512) * 512;
+            continue;
+        }
+        if (type === 'L') {
+            long = content.toString('utf8').replace(/\0.*$/s, '');
+            at += 512 + Math.ceil(size / 512) * 512;
+            continue;
+        }
+        const path = long ?? (prefix ? `${prefix}/${name}` : name);
+        long = undefined;
         if ((type === '0' || type === '') && path.startsWith('package/')) {
-            files.push({
-                path: path.slice('package/'.length),
-                bytes: tar.subarray(at + 512, at + 512 + size),
-            });
+            files.push({ path: path.slice('package/'.length), bytes: content });
         }
         at += 512 + Math.ceil(size / 512) * 512;
     }
@@ -240,11 +301,14 @@ if (isRunDirectly(import.meta.url)) {
         /** @type {PlaywrightReport} */
         const report = JSON.parse(readFileSync(first, 'utf8'));
         const root = report.config?.rootDir ? relative(process.cwd(), report.config.rootDir) : '';
-        writeSummary(playwrightSummary(report, { title: second, runUrl, root }));
+        const failed = (process.argv[5] ?? '0') !== '0';
+        writeSummary(playwrightSummary(report, { title: second, runUrl, root, failed }));
     } else if (kind === 'package' && first) {
         writeSummary(packageSummary(packedOf(first), (path) => /\.(css|js|mjs)$/.test(path)));
     } else {
-        console.error('Usage: summary.mjs playwright <report.json> <title> | package <tarball>');
+        console.error(
+            'Usage: summary.mjs playwright <report.json> <title> <status> | package <tarball>'
+        );
         process.exitCode = 1;
     }
 }
