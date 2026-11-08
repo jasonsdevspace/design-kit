@@ -250,7 +250,7 @@ they document, not by a test here.
 | Each state the site shows draws the attribute printed under it                                                    | `packages/design-kit/examples/states.test.tsx` |
 | Every page of the site has no axe findings in either theme, on a phone and a wide screen                          | `packages/site/e2e/site.spec.ts`               |
 | No page of the site scrolls sideways at any width or at twice the text size, or cuts off text under wider spacing | `packages/site/e2e/site.spec.ts`               |
-| The site draws under `style-src 'self'`, its one script the theme script by its hash                              | `packages/site/e2e/site.spec.ts`               |
+| The site draws under `style-src 'self'`, its scripts the theme script by its hash and its own file                | `packages/site/e2e/site.spec.ts`               |
 | The site draws the published kit at one exact version, and nothing from the kit's sources                         | `packages/site/src/published.test.ts`          |
 | A copy of a state in the other theme draws in that theme, and the keyboard never stops inside it                  | `packages/site/e2e/site.spec.ts`               |
 | The tokens page draws each swatch in the value printed beside it, and lists every pairing tightest first          | `packages/site/e2e/site.spec.ts`               |
@@ -258,6 +258,7 @@ they document, not by a test here.
 | The explainer pieces page draws each piece live, and the explainer's layout as a picture                          | `packages/site/e2e/site.spec.ts`               |
 | The site's explainer marks itself the current page, and every other page's strip and footer lead to it            | `packages/site/e2e/site.spec.ts`               |
 | Every link within the site leads to one of its pages, and to the id it names, where it names one                  | `packages/site/e2e/site.spec.ts`               |
+| The theme switch shows and saves the portfolio's choice, follows another tab, and works without storage           | `packages/site/e2e/site.spec.ts`               |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`            |
 
 ## Decisions
@@ -300,6 +301,10 @@ options rejected, what the choice costs, and the test behind it.
     The site draws the published kit under the policy a demo sets, with no runtime of a framework's,
     at the cost of a policy in a meta element, which cannot stop another site framing it, and of a
     change to the kit reaching the site a release later.
+12. [The site has a script of its own, a file from its origin, while the kit ships none](docs/decisions/0012-the-site-has-a-script-of-its-own.md).
+    A visitor chooses a theme on the site and it holds across jasonsdevspace.com, with nothing
+    moving when the switch comes, at the cost of a policy that allows any script file from an
+    origin the portfolio and every demo share.
 
 ## Dev setup
 

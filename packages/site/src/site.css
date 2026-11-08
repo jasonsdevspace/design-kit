@@ -195,3 +195,41 @@
 .site-swatch-danger-bg {
     background: var(--dk-danger-bg);
 }
+
+/*
+ * The theme switch the site's script puts in the strip: its name and its three choices in one row,
+ * in the room the strip kept for it. On a phone each choice is a thumb's size, as the room is.
+ */
+.site-theme {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--dk-space-4);
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+/* A floated legend takes its place in the row as the choices do. */
+.site-theme legend {
+    float: left;
+    padding: 0;
+    color: var(--dk-muted);
+}
+
+.site-theme label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--dk-space-2);
+}
+
+.site-theme input {
+    margin: 0;
+    accent-color: var(--dk-accent);
+}
+
+@media (max-width: 48rem) {
+    .site-theme label {
+        min-height: var(--dk-target);
+    }
+}
