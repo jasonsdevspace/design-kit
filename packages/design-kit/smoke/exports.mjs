@@ -18,6 +18,8 @@ export const VALUE_EXPORTS = {
     ],
     '@jasonsdevspace/design-kit/theme': ['THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/vite': [
+        'browserFloor',
+        'lightningcssFloor',
         'THEME_PLACEHOLDER',
         'themeScriptHash',
         'themeScriptPlugin',

@@ -78,9 +78,11 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
   component for the explainer or the pieces in it, which a page writes by hand. It takes React
   `^19.3.0` as an optional peer, which a page that writes the markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
-  script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
-  `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
-  takes Vite 8 or later as an optional peer, which a page that does not use the plugin never needs.
+  script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`,
+  `themeScriptHash`, the script's hash as a Content Security Policy source, and `browserFloor()` and
+  `lightningcssFloor()`, the kit's browser floor as a build target and as Lightning CSS targets. The
+  entry runs in Node, and takes Vite 8 or later as an optional peer, which a page that does not use
+  it never needs.
 
 A page with no placeholder fails the build, since without the script it would draw the system's
 theme rather than the visitor's, and so does a page with two. A page built without Vite writes the
@@ -710,6 +712,41 @@ The colors are written with `light-dark()`, which sets the floor: Chrome and Edg
 and Safari 17.5. An empty live callout draws nothing by `:has()`, which Firefox has from 121, so in
 Firefox 120 it draws its ground until it is filled, and a label that holds a checkbox or a radio
 shows no pointer there, though the box or the dot does. The kit's browser tests run in Chromium.
+
+A page built with Vite takes the floor from the kit as its build target, so its sheets keep each
+`light-dark()` as written. A lower target rewrites each one into switches set once on the root, and
+any part of the page set to the other scheme keeps the page's colors. Taken from the kit, the target
+moves with the kit when the kit raises its floor. Each call gives a new value, so a page may change
+its own.
+
+```ts
+import { browserFloor, themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+    plugins: [themeScriptPlugin()],
+    build: { target: browserFloor() },
+});
+```
+
+A page whose `css.transformer` is `'lightningcss'` passes the floor to Lightning CSS too, since Vite
+gives that transformer targets of its own, lower than the floor, and the transformer rewrites each
+`light-dark()` before the build target applies.
+
+```ts
+import {
+    browserFloor,
+    lightningcssFloor,
+    themeScriptPlugin,
+} from '@jasonsdevspace/design-kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+    plugins: [themeScriptPlugin()],
+    css: { transformer: 'lightningcss', lightningcss: { targets: lightningcssFloor() } },
+    build: { target: browserFloor() },
+});
+```
 
 ## License
 

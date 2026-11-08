@@ -11,13 +11,28 @@ import {
     SelectField,
 } from '@jasonsdevspace/design-kit/react';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
-import { themeScriptHash, themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
+import {
+    browserFloor,
+    lightningcssFloor,
+    themeScriptHash,
+    themeScriptPlugin,
+} from '@jasonsdevspace/design-kit/vite';
 import { createRef } from 'react';
+import type { UserConfig } from 'vite';
 
 export const first: Theme = THEMES[0];
 export const key: string = THEME_KEY;
 export const inline: string = `<script>${themeScript}</script>`;
 export const source: string = themeScriptHash;
+
+// The floor goes straight into a Vite build's target, and into Lightning CSS's targets.
+export const config: UserConfig = {
+    build: { target: browserFloor() },
+    css: { transformer: 'lightningcss', lightningcss: { targets: lightningcssFloor() } },
+};
+
+// @ts-expect-error The floor is a list of strings, so its entries are real rather than `any`.
+export const notATarget: number = browserFloor()[0];
 
 // @ts-expect-error A theme is light or dark, so the types are real rather than `any`.
 export const wrong: Theme = 'sepia';
