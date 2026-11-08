@@ -195,7 +195,7 @@ test('keeps the room of switches on their way, so nothing below the strip moves 
         // The room is no landmark and says nothing, so a screen reader finds the links alone.
         await expect(page.getByRole('region')).toHaveCount(0);
         await expect(page.locator('.dk-strip')).toHaveText(
-            'A demo by Jason PoteetHow it worksSource on GitHub'
+            'More work by Jason PoteetHow it worksSource on GitHub'
         );
         await open(page, { width, tools: 'kit' });
         const arrived = await box(page.locator('.dk-strip'), 'the strip with its switches');
@@ -216,14 +216,14 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await expect(skip).not.toBeInViewport();
     // Waiting over the strip, it takes no click meant for the strip's first link.
     const first = await box(
-        page.getByRole('link', { name: 'A demo by Jason Poteet' }),
+        page.getByRole('link', { name: 'More work by Jason Poteet' }),
         "the strip's first link"
     );
     const under = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, {
         x: first.x + 4,
         y: first.y + first.height / 2,
     });
-    expect(under).toBe('A demo by Jason Poteet');
+    expect(under).toBe('More work by Jason Poteet');
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     await expect(skip).toBeInViewport();

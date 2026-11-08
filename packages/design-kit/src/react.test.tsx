@@ -39,10 +39,10 @@ describe('the strip', () => {
     const strip = (props: Partial<Parameters<typeof PortfolioStrip>[0]> = {}) =>
         renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} {...props} />);
 
-    it('says whose demo this is, how it works and where the source is, in that order', () => {
+    it("links the author's other work, how it works and where the source is, in that order", () => {
         expect(strip()).toBe(
             '<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio">' +
-                `<a href="${PORTFOLIO_WORK_URL}">A demo by Jason Poteet</a>` +
+                `<a href="${PORTFOLIO_WORK_URL}">More work by Jason Poteet</a>` +
                 '<a href="./about/">How it works</a>' +
                 `<a href="${SOURCE}">Source on GitHub</a>` +
                 '</nav></div>'
@@ -505,6 +505,149 @@ describe('a callout', () => {
                 '<span class="dk-visually-hidden">Error: </span>Not loaded.</div>' +
                 '<div class="dk-callout-actions">' +
                 '<button type="button" class="dk-button">Try again</button></div></div>'
+        );
+    });
+});
+
+describe('a page that hands on what it may not have been given', () => {
+    /** A value a wrapper passes on as it got it, which may be undefined. */
+    const maybe = <T,>(value?: T): T | undefined => value;
+
+    it('compiles, and draws each component as if the prop were left out', () => {
+        expect(renderToStaticMarkup(<SkipLink target={maybe<string>()} />)).toBe(
+            renderToStaticMarkup(<SkipLink />)
+        );
+        expect(
+            renderToStaticMarkup(
+                <PortfolioStrip
+                    about="./about/"
+                    source={SOURCE}
+                    current={maybe<'about'>()}
+                    toolsLabel={maybe<string>()}
+                    toolsWaiting={maybe<boolean>()}
+                />
+            )
+        ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
+        expect(
+            renderToStaticMarkup(
+                <DemoFooter
+                    name="Example"
+                    about="./about/"
+                    source={SOURCE}
+                    current={maybe<'about'>()}
+                    license={maybe<string>()}
+                    licenseName={maybe<string>()}
+                />
+            )
+        ).toBe(
+            renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
+        );
+        expect(
+            renderToStaticMarkup(
+                <Button off={maybe<boolean>()} pressed={maybe<boolean>()}>
+                    Filters
+                </Button>
+            )
+        ).toBe(renderToStaticMarkup(<Button>Filters</Button>));
+        expect(renderToStaticMarkup(<Button accent={maybe<true>()}>Filters</Button>)).toBe(
+            renderToStaticMarkup(<Button>Filters</Button>)
+        );
+        expect(renderToStaticMarkup(<InputField id={maybe<string>()} label="Name" />)).toBe(
+            renderToStaticMarkup(<InputField label="Name" />)
+        );
+        expect(
+            renderToStaticMarkup(
+                <Callout
+                    tone={maybe<'danger'>()}
+                    headingLevel={maybe<2>()}
+                    live={maybe<'status'>()}
+                    prefix={maybe<string>()}
+                    title="Saved"
+                />
+            )
+        ).toBe(renderToStaticMarkup(<Callout title="Saved" />));
+    });
+});
+
+describe('the callout, beside the other controls', () => {
+    it('takes an id and a class of the page, after its own, as a button and a field do', () => {
+        expect(
+            renderToStaticMarkup(
+                <Callout id="problems" className="summary" tone="danger" title="Two problems" />
+            )
+        ).toMatch(/^<div id="problems" class="dk-callout dk-callout-danger summary">/);
+    });
+
+    it('hands a ref to the callout it draws, for a page that moves focus to it', () => {
+        const ref = createRef<HTMLDivElement>();
+        const callout = Callout({ ref, title: 'Two problems' });
+        expect((callout.props as { ref?: unknown }).ref).toBe(ref);
+        // A page that hands on a ref it may not have been given, as a wrapper does, compiles too.
+        const Summary = ({ ref: handed }: { readonly ref?: Ref<HTMLDivElement> | undefined }) => (
+            <Callout ref={handed} title="Two problems" />
+        );
+        expect(renderToStaticMarkup(<Summary />)).toContain('dk-callout');
+    });
+
+    it('takes no props of its own that would break it, and drops a role or style plain JavaScript passes', () => {
+        // @ts-expect-error A callout draws its own children, so it takes no inner HTML.
+        expect(Callout({ dangerouslySetInnerHTML: { __html: 'x' } })).toBeTruthy();
+        const loose = { role: 'alert', style: { color: 'red' } } as unknown as object;
+        expect(renderToStaticMarkup(<Callout {...loose} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
+    it('draws news for a tone plain JavaScript can pass that the kit has no rule for', () => {
+        const tone = 'warning' as unknown as 'info';
+        expect(renderToStaticMarkup(<Callout tone={tone} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
+    it('draws a paragraph for a heading level plain JavaScript can pass that names no heading', () => {
+        const level = 'constructor' as unknown as 2;
+        expect(renderToStaticMarkup(<Callout headingLevel={level} title="Saved" />)).toContain(
+            '<p class="dk-callout-title">'
+        );
+    });
+});
+
+describe('an empty slot', () => {
+    it('is nothing when it holds only a list or a fragment of nothing', () => {
+        const none = false as boolean;
+        expect(
+            renderToStaticMarkup(
+                <PortfolioStrip about="./about/" source={SOURCE} tools={<>{none && 'Tour'}</>} />
+            )
+        ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
+        expect(
+            renderToStaticMarkup(
+                <DemoFooter name="Example" about="./about/" source={SOURCE}>
+                    {none && 'One.'}
+                    {none && 'Two.'}
+                </DemoFooter>
+            )
+        ).toBe(
+            renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
+        );
+        expect(renderToStaticMarkup(<Callout title={[none && 'Saved']} />)).toBe(
+            renderToStaticMarkup(<Callout />)
+        );
+    });
+
+    it('is nothing in the strip and the footer, as it is in a field and a callout', () => {
+        expect(
+            renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} tools="" />)
+        ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
+        expect(
+            renderToStaticMarkup(
+                <DemoFooter name="Example" about="./about/" source={SOURCE}>
+                    {''}
+                </DemoFooter>
+            )
+        ).toBe(
+            renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
         );
     });
 });

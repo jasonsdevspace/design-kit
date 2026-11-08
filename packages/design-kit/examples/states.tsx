@@ -9,11 +9,24 @@ import type * as React from '../src/react.js';
  * imports nothing from the kit but its types.
  */
 
-/** The components a state is drawn with. */
-export type Kit = Pick<
+type Components = Pick<
     typeof React,
     'Button' | 'Callout' | 'DemoFooter' | 'InputField' | 'PortfolioStrip' | 'SelectField'
 >;
+
+/** Props as a state passes them, with no optional prop set to undefined. */
+type Given<Props> = { [Name in keyof Props]: Exclude<Props[Name], undefined> };
+
+/**
+ * The components a state is drawn with, typed by the props the states pass. The sources take
+ * those, and so does the version of the kit the site pins, even one from before its optional props
+ * took undefined, so the site can draw the states from it.
+ */
+export type Kit = {
+    readonly [Name in keyof Components]: (
+        props: Given<Parameters<Components[Name]>[0]>
+    ) => ReturnType<Components[Name]>;
+};
 
 /**
  * One state: what it is called, the attribute that draws it, a class among them, and how it is

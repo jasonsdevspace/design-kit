@@ -1,4 +1,11 @@
-import { type ComponentPropsWithRef, type ReactNode, useId } from 'react';
+import {
+    Children,
+    type ComponentPropsWithRef,
+    Fragment,
+    isValidElement,
+    type ReactNode,
+    useId,
+} from 'react';
 
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says
@@ -9,8 +16,18 @@ import { type ComponentPropsWithRef, type ReactNode, useId } from 'react';
  * native or ARIA attribute, never a class of the kit's.
  */
 
-/** Whether a slot holds something to draw: a demo's `cond && <X />` leaves false or null. */
-const drawn = (node: ReactNode): boolean => node !== undefined && node !== null && node !== false;
+/**
+ * Whether a slot holds something to draw: a demo's `cond && <X />` leaves false or null, an empty
+ * string draws nothing either, and nor does a list or a fragment of only those. Every slot a
+ * component leaves out when it is empty is read the same way. A number draws, 0 included, as React
+ * draws it, so a page that writes `count && <X />` writes `count > 0 && <X />` instead.
+ */
+const filled = (node: ReactNode): boolean =>
+    Children.toArray(node).some((child) =>
+        isValidElement<{ readonly children?: ReactNode }>(child) && child.type === Fragment
+            ? filled(child.props.children)
+            : child !== ''
+    );
 
 /** Where the portfolio is, and the section of it that lists the work. */
 export const PORTFOLIO_URL = 'https://jasonsdevspace.com/';
@@ -28,7 +45,7 @@ export const SkipLink = ({
     children = 'Skip to content',
 }: {
     /** The id of the element the link leads to. */
-    readonly target?: string;
+    readonly target?: string | undefined;
     readonly children?: ReactNode;
 }) => (
     <a className="dk-skip" href={`#${target}`}>
@@ -63,27 +80,27 @@ export const PortfolioStrip = ({
     /** The demo's repository, written by the demo's author. */
     readonly source: string;
     /** The link that is the page the strip sits on, marked as the current page. */
-    readonly current?: ChromePage;
+    readonly current?: ChromePage | undefined;
     /** The demo's own switches, drawn beside the links. */
     readonly tools?: ReactNode;
     /** The name a screen reader gives the switches' landmark. */
-    readonly toolsLabel?: string;
+    readonly toolsLabel?: string | undefined;
     /**
      * The switches are on their way, so the strip keeps the room of one row of the kit's controls
      * in their section, empty and unnamed, so no landmark, until `tools` holds them and the section
      * takes its name.
      */
-    readonly toolsWaiting?: boolean;
+    readonly toolsWaiting?: boolean | undefined;
 }) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
-            <a href={PORTFOLIO_WORK_URL}>A demo by Jason Poteet</a>
+            <a href={PORTFOLIO_WORK_URL}>More work by Jason Poteet</a>
             <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
             </a>
             <a href={source}>Source on GitHub</a>
         </nav>
-        {drawn(tools) ? (
+        {filled(tools) ? (
             <section className="dk-strip-tools" aria-label={toolsLabel}>
                 {tools}
             </section>
@@ -115,14 +132,14 @@ export const DemoFooter = ({
     /** The demo's repository, written by the demo's author. */
     readonly source: string;
     /** The link that is the page the footer sits on, marked as the current page. */
-    readonly current?: ChromePage;
+    readonly current?: ChromePage | undefined;
     /**
      * The demo's license, written by the demo's author, or `LICENSE` on the main branch of `source`
      * unless given.
      */
-    readonly license?: string;
+    readonly license?: string | undefined;
     /** What the license is called, as the footer's sentence names it. */
-    readonly licenseName?: string;
+    readonly licenseName?: string | undefined;
     /** What the demo adds after the license, as sentences of its own. */
     readonly children?: ReactNode;
 }) => (
@@ -134,13 +151,10 @@ export const DemoFooter = ({
             </a>
             , in plain words. The <a href={source}>source</a> and{' '}
             <a href={GITHUB_PROFILE_URL}>more work</a> are on GitHub, under the{' '}
-            <a href={license}>{licenseName}</a>.{drawn(children) ? <> {children}</> : null}
+            <a href={license}>{licenseName}</a>.{filled(children) ? <> {children}</> : null}
         </p>
     </footer>
 );
-
-/** Whether a slot holds words to draw, an empty string being none. */
-const filled = (node: ReactNode): boolean => drawn(node) && node !== '';
 
 /**
  * A list of names an attribute holds, such as the classes a component draws, its own first and a
@@ -162,13 +176,13 @@ type NativeButton = Omit<
  */
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
-    readonly off?: boolean;
+    readonly off?: boolean | undefined;
 } & (
-        | { readonly accent: true; readonly pressed?: never }
+        | { readonly accent: true; readonly pressed?: undefined }
         | {
-              readonly accent?: false;
+              readonly accent?: false | undefined;
               /** Whether the toggle is on. False still marks it a toggle, undefined an action. */
-              readonly pressed?: boolean;
+              readonly pressed?: boolean | undefined;
           }
     );
 
@@ -215,7 +229,7 @@ type FieldParts = {
     /** What is wrong with the value, drawn only when given, which marks the control invalid. */
     readonly error?: ReactNode;
     /** The control's id, made with useId unless a page gives one, as it does for a link to it. */
-    readonly id?: string;
+    readonly id?: string | undefined;
 };
 
 /**
@@ -340,6 +354,38 @@ const TONE_WORDS: Readonly<Record<CalloutTone, string>> = {
 const HEADINGS = { 2: 'h2', 3: 'h3', 4: 'h4', 5: 'h5', 6: 'h6' } as const;
 
 /**
+ * A tone or a heading level the types refuse, as a page in plain JavaScript can pass, draws news
+ * and a paragraph, rather than a class the sheet has no rule for or an element React refuses.
+ */
+const toneOf = (tone: CalloutTone): CalloutTone =>
+    Object.hasOwn(TONE_WORDS, tone) ? tone : 'info';
+const titleOf = (level: CalloutProps['headingLevel']) =>
+    level !== undefined && Object.hasOwn(HEADINGS, level) ? HEADINGS[level] : 'p';
+
+/**
+ * A callout's own props, beside a `<div>`'s own, its `id`, a page's class, drawn after the kit's,
+ * and its `ref` among them, which holds the callout drawn for a page that moves focus to it, such
+ * as a summary of what went wrong in a form. Its `title` is the callout's, not the attribute.
+ */
+export type CalloutProps = Omit<
+    ComponentPropsWithRef<'div'>,
+    'style' | 'role' | 'title' | 'children' | 'dangerouslySetInnerHTML'
+> & {
+    readonly tone?: CalloutTone | undefined;
+    /** What the callout is about, drawn before its message. */
+    readonly title?: ReactNode;
+    /** The title's heading level, where the callout is a section a visitor would jump to. */
+    readonly headingLevel?: 2 | 3 | 4 | 5 | 6 | undefined;
+    /** A message a screen reader reads when it changes, politely or at once. */
+    readonly live?: 'status' | 'alert' | undefined;
+    /** The word read before the title or the message, the tone's own unless given. */
+    readonly prefix?: string | undefined;
+    /** Buttons or links that act on the message. */
+    readonly actions?: ReactNode;
+    readonly children?: ReactNode;
+};
+
+/**
  * A message set apart from the page, with an optional title before it and actions after it. It has
  * no role unless the page gives `live`, whatever its tone, since a message on the page when it
  * loads is read in its place. A live message is drawn even when empty, so the page can mount it
@@ -352,30 +398,27 @@ export const Callout = ({
     title,
     headingLevel,
     live,
-    prefix = TONE_WORDS[tone],
+    prefix,
     actions,
+    className,
     children,
-}: {
-    readonly tone?: CalloutTone;
-    /** What the callout is about, drawn before its message. */
-    readonly title?: ReactNode;
-    /** The title's heading level, where the callout is a section a visitor would jump to. */
-    readonly headingLevel?: 2 | 3 | 4 | 5 | 6;
-    /** A message a screen reader reads when it changes, politely or at once. */
-    readonly live?: 'status' | 'alert';
-    /** The word read before the title or the message, the tone's own unless given. */
-    readonly prefix?: string;
-    /** Buttons or links that act on the message. */
-    readonly actions?: ReactNode;
-    readonly children?: ReactNode;
-}) => {
-    // A level the types refuse, as a page in plain JavaScript can pass, draws a paragraph.
-    const Title = (headingLevel === undefined ? undefined : HEADINGS[headingLevel]) ?? 'p';
+    ...native
+}: CalloutProps) => {
+    const kind = toneOf(tone);
+    const spoken = prefix ?? TONE_WORDS[kind];
+    const Title = titleOf(headingLevel);
     const titled = filled(title);
     const said = filled(children);
-    const word = prefix === '' ? null : <span className="dk-visually-hidden">{prefix}</span>;
+    const word = spoken === '' ? null : <span className="dk-visually-hidden">{spoken}</span>;
     return (
-        <div className={spaced('dk-callout', tone !== 'info' && `dk-callout-${tone}`)}>
+        // The page's own props first and the kit's after, as a button's are, so a role or a style
+        // plain JavaScript passes never lands on the callout.
+        <div
+            {...native}
+            role={undefined}
+            style={undefined}
+            className={spaced('dk-callout', kind !== 'info' && `dk-callout-${kind}`, className)}
+        >
             {titled || said || live !== undefined ? (
                 <div className="dk-callout-body" role={live}>
                     {titled ? (

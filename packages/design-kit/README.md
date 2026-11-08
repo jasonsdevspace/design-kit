@@ -71,10 +71,11 @@ export default defineConfig({ plugins: [themeScriptPlugin()] });
 - `@jasonsdevspace/design-kit/react` exports `SkipLink`, `PortfolioStrip` and `DemoFooter`, which
   draw the chrome's markup, and `Button`, `InputField`, `SelectField` and `Callout`, which draw the
   markup of the buttons, fields and callouts, with the types `ButtonProps`, `InputFieldProps`,
-  `SelectFieldProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
-  `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub profile the chrome links to.
-  It has no component for the explainer or the pieces in it, which a page writes by hand. It takes
-  React `^19.3.0` as an optional peer, which a page that writes the markup itself never needs.
+  `SelectFieldProps`, `CalloutProps` and `CalloutTone`. It also exports `PORTFOLIO_URL`,
+  `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`, the portfolio, its list of work and the GitHub
+  profile the chrome links to. It has no component for the explainer or the pieces in it, which a
+  page writes by hand. It takes React `^19.3.0` as an optional peer, which a page that writes the
+  markup itself never needs.
 - `@jasonsdevspace/design-kit/vite` exports `themeScriptPlugin()`, the Vite plugin that puts the
   script inline in place of `THEME_PLACEHOLDER`, the comment `<!-- theme-script -->`, and
   `themeScriptHash`, the script's hash as a Content Security Policy source. It runs in Node, and
@@ -115,17 +116,18 @@ does, one pixel clipped to nothing, so it draws nothing and takes no click where
 on the page. A box that is positioned holds it, and it shows at the top of that box, inset as it is
 at the top of a page, when a keyboard reaches it.
 
-The strip holds a navigation landmark named Portfolio, with three links in this order: whose demo
-it is, how it works and the source. The strip on the demo's explainer marks the explainer's link
-with `aria-current="page"`. A demo with switches of its own puts them in a section after the links,
-named for them, and a demo with none leaves the section out.
+The strip holds a navigation landmark named Portfolio, with links in this order: the author's other
+work, which names who made the demo, how it works and the source. It reads "More work by Jason
+Poteet", which fits a demo and the kit's own site alike. The strip on the demo's explainer marks the
+explainer's link with `aria-current="page"`. A demo with switches of its own puts them in a section
+after the links, named for them, and a demo with none leaves the section out.
 
 <!-- example: strip -->
 
 ```html
 <div class="dk-strip">
     <nav class="dk-strip-links" aria-label="Portfolio">
-        <a href="https://jasonsdevspace.com/#work">A demo by Jason Poteet</a>
+        <a href="https://jasonsdevspace.com/#work">More work by Jason Poteet</a>
         <a href="./about/">How it works</a>
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
@@ -205,18 +207,18 @@ export const Page = () => (
 
 - `SkipLink` leads to `main-content` unless `target` names another id, and its children replace
   the words "Skip to content".
-- `PortfolioStrip` takes `about`, the demo's explainer, and `source`, its repository. `current`
-  set to `about` marks the explainer's link as the current page. `tools` holds the demo's own
-  switches, and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined,
-  null or false the strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
+- `PortfolioStrip` takes `about`, the demo's explainer, and `source`, its repository. `current` set
+  to `about` marks the explainer's link as the current page. `tools` holds the demo's own switches,
+  and `toolsLabel` names their landmark, `Demo` unless given. With `tools` undefined, null, false or
+  an empty string the strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
   `toolsWaiting` keeps the room of one row of the kit's controls while `tools` draws nothing, for a
   page drawn before the switches can be, in the same section unnamed until they come.
 - `DemoFooter` takes `name`, the demo's name as the sentence opens with it, `about` and `source`.
   `current` set to `about` marks the explainer's link as the current page, as on the strip.
   `license` is the link to the license, `LICENSE` on the main branch of `source` unless given, with
-  any trailing slash on `source` dropped first. `licenseName` is the license's name in the
-  sentence, `MIT license` unless given. Its children follow the license, and children that are
-  undefined, null or false add nothing.
+  any trailing slash on `source` dropped first. `licenseName` is the license's name in the sentence,
+  `MIT license` unless given. Its children follow the license, and children that are undefined,
+  null, false or an empty string add nothing.
 
 The strip's and the footer's `about`, `source` and `license` go into their links unchecked, so each
 is a URL the demo's author writes, never one taken from the page's address or a visitor's input,
@@ -397,6 +399,9 @@ export const Checkout = ({ error, saved }: Props) => {
 };
 ```
 
+Every optional prop of every component takes `undefined` as if it were left out, so a wrapper that
+passes on a prop it may not have been given compiles under `exactOptionalPropertyTypes` too.
+
 - `Button` takes the props of a `<button>` but `style`, `disabled`, `aria-disabled` and
   `aria-pressed`, and is `type="button"` unless `type` says otherwise. `accent` adds
   `dk-button-accent`. `pressed` writes `aria-pressed`, `false` included, and left undefined makes
@@ -420,8 +425,10 @@ export const Checkout = ({ error, saved }: Props) => {
   before the title or the message, the tone's own unless given, and an empty string drops it.
   `live`, `status` or `alert`, puts that role on the message and draws the message even when it is
   empty, and a live callout whose message draws nothing, with no title or actions, draws nothing
-  until it is filled. A callout takes no other props, so a page that needs a class or an id on one
-  puts it on an element around it.
+  until it is filled. Every other prop goes to the callout's `<div>` but `style`, `role` and the
+  `title` attribute, so a page gives it an `id`, such as one an error summary is linked by, and a
+  `className`, which follows the kit's. A `ref` holds the `<div>` drawn, for a page that moves focus
+  to it, as to a summary of what went wrong in a form that fails.
 
 ## Explainer pages
 
