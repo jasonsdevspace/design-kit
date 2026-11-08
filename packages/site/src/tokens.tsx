@@ -72,35 +72,36 @@ const Table = ({
     </>
 );
 
-/** Each color role, with what it draws and its value in each theme beside a swatch of it. */
+/**
+ * Each color role as a card: a swatch of it in light beside one in dark, its name, what it draws,
+ * and its value in each theme, named by the theme for a screen reader. The swatches say nothing a
+ * reader does not hear in the values, so a screen reader passes them by.
+ */
 export const Colors = ({ declared }: { readonly declared: Declared }) => (
-    <Table
-        id="colors-title"
-        title="Each color role in both themes"
-        columns={[
-            { name: 'Role' },
-            { name: 'Draws' },
-            ...THEMES.map((theme) => ({ name: THEME_NAMES[theme] })),
-        ]}
-    >
+    <ul className="site-roles" role="list">
         {rolesIn(declared).map(({ role, draws }) => (
-            <tr key={role}>
-                <th scope="row">
-                    <code>--dk-{role}</code>
-                </th>
-                <td>{draws}</td>
-                {THEMES.map((theme) => (
-                    <td key={theme}>
+            <li key={role}>
+                <span className="site-role-swatches" aria-hidden="true">
+                    {THEMES.map((theme) => (
                         <span
+                            key={theme}
                             className={`site-swatch site-swatch-${role} site-${theme}`}
-                            aria-hidden="true"
                         />
-                        <code>{colorOf(declared, role, theme)}</code>
-                    </td>
-                ))}
-            </tr>
+                    ))}
+                </span>
+                <code className="site-role-name">--dk-{role}</code>
+                <span className="site-role-draws">{draws}</span>
+                <span className="site-role-values">
+                    {THEMES.map((theme) => (
+                        <span key={theme} className={`site-role-${theme}`}>
+                            <span className="dk-visually-hidden">{THEME_NAMES[theme]} </span>
+                            <code>{colorOf(declared, role, theme)}</code>
+                        </span>
+                    ))}
+                </span>
+            </li>
         ))}
-    </Table>
+    </ul>
 );
 
 /** A ratio to the two places the page shows, rounded down, so a pairing is never shown passing. */
@@ -122,6 +123,32 @@ const measuredIn = (declared: Declared) => {
         })
         .sort((a, b) => a.margin - b.margin);
 };
+
+/** The highest contrast two colors can have, white on black, which a bar's full length stands for. */
+const MOST = 21;
+
+/** A length along a bar, as a share of its whole, to a hundredth. */
+const along = (ratio: number) => Math.round((ratio / MOST) * 10000) / 100;
+
+/**
+ * A ratio as a bar, its whole length the most two colors can have, with a mark where the pairing's
+ * need falls, so how far past its need a pairing runs shows at a glance. It is drawn by the
+ * attributes of its own shapes, which the page's policy allows where it refuses a style written
+ * on an element, and a screen reader hears the figure beside it instead.
+ */
+const Bar = ({ ratio, needs }: { readonly ratio: number; readonly needs: number }) => (
+    <svg
+        className="site-bar"
+        viewBox="0 0 100 8"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+    >
+        <rect className="site-bar-track" x="0" y="2" width="100" height="4" rx="2" />
+        <rect className="site-bar-fill" x="0" y="2" width={along(ratio)} height="4" rx="2" />
+        <rect className="site-bar-needs" x={along(needs)} y="0" width="0.6" height="8" />
+    </svg>
+);
 
 /** Every pairing the palette is meant for, the tightest against what it needs first. */
 export const Contrast = ({ declared }: { readonly declared: Declared }) => (
@@ -145,8 +172,9 @@ export const Contrast = ({ declared }: { readonly declared: Declared }) => (
                 </td>
                 <td className="dk-table-number">{needs} to 1</td>
                 {ratios.map((ratio, index) => (
-                    <td key={THEMES[index]} className="dk-table-number">
+                    <td key={THEMES[index]} className="dk-table-number site-figure">
                         {ratio.toFixed(2)} to 1
+                        <Bar ratio={ratio} needs={needs} />
                     </td>
                 ))}
             </tr>
@@ -154,15 +182,40 @@ export const Contrast = ({ declared }: { readonly declared: Declared }) => (
     </Table>
 );
 
-/** Every token the color roles leave out, by name, with its value as the sheet writes it. */
+/** A spacing step, its name the scale's and its number the step. */
+const SPACE = /^--dk-space-\d+$/;
+
+/**
+ * The spacing scale, each step drawn to size as a square the step wide beside its name and its
+ * value. Each square takes its size from its own token by a class, as the page's policy allows,
+ * so it is drawn from the pinned sheet. The squares say what the values say, so a screen reader
+ * passes them by.
+ */
+export const Spaces = ({ declared }: { readonly declared: Declared }) => (
+    <ul className="site-spaces" role="list">
+        {[...declared]
+            .filter(([name]) => SPACE.test(name))
+            .map(([name, value]) => (
+                <li key={name}>
+                    <span className="site-space-room" aria-hidden="true">
+                        <span className={`site-space-drawn site-${name.replace(/^--dk-/, '')}`} />
+                    </span>
+                    <code>{name}</code>
+                    <span className="site-space-value">{value}</span>
+                </li>
+            ))}
+    </ul>
+);
+
+/** Every token the color roles and the spacing scale leave out, by name, with its value as written. */
 export const Scale = ({ declared }: { readonly declared: Declared }) => (
     <Table
         id="scale-title"
-        title="The scale, and every other token"
+        title="Every other token"
         columns={[{ name: 'Token' }, { name: 'Value' }]}
     >
         {[...declared]
-            .filter(([, value]) => !TWO_COLORS.test(value))
+            .filter(([name, value]) => !TWO_COLORS.test(value) && !SPACE.test(name))
             .map(([name, value]) => (
                 <tr key={name}>
                     <th scope="row">

@@ -374,26 +374,125 @@ test.describe('the landing page', () => {
 });
 
 test.describe('the tokens page', () => {
-    test('draws each swatch in the value printed beside it, in its column’s theme', async ({
+    test('draws each color role as a card, its light and dark swatches in the values it prints', async ({
         page,
     }) => {
         for (const colorScheme of ['light', 'dark'] as const) {
             await page.emulateMedia({ colorScheme });
             await page.goto('/design-kit/tokens/');
-            const wrong = await page.evaluate(() => {
+            const cards = await page.locator('.site-roles > li').evaluateAll((all) => {
                 const hex = (rgb: string) =>
                     `#${(rgb.match(/\d+/g) ?? [])
                         .slice(0, 3)
                         .map((channel) => Number(channel).toString(16).padStart(2, '0'))
                         .join('')}`;
-                return [...document.querySelectorAll('.site-swatch')].flatMap((swatch) => {
-                    const printed = swatch.nextElementSibling?.textContent ?? '';
-                    const drawn = hex(getComputedStyle(swatch).backgroundColor);
-                    return drawn === printed.toLowerCase() ? [] : [`${printed} drawn as ${drawn}`];
+                return all.map((card) => {
+                    const name = card.querySelector('code')?.textContent ?? '';
+                    const drawn = ['light', 'dark'].map((theme) => {
+                        const swatch = card.querySelector(`.site-swatch.site-${theme}`);
+                        return swatch ? hex(getComputedStyle(swatch).backgroundColor) : 'none';
+                    });
+                    const printed = ['light', 'dark'].map(
+                        (theme) =>
+                            card
+                                .querySelector(`.site-role-${theme} code`)
+                                ?.textContent.toLowerCase() ?? 'none'
+                    );
+                    // The light swatch is on the left and the dark on the right.
+                    const [left, right] = ['light', 'dark'].map(
+                        (theme) =>
+                            card
+                                .querySelector(`.site-swatch.site-${theme}`)
+                                ?.getBoundingClientRect().left ?? 0
+                    );
+                    return { name, drawn, printed, ordered: (left ?? 0) < (right ?? 0) };
                 });
             });
-            expect(wrong, colorScheme).toEqual([]);
+            expect(cards.length, colorScheme).toBeGreaterThan(10);
+            expect(
+                cards.filter(
+                    ({ drawn, printed, ordered }) =>
+                        !ordered || drawn[0] !== printed[0] || drawn[1] !== printed[1]
+                ),
+                colorScheme
+            ).toEqual([]);
+            expect(cards.every(({ name }) => name.startsWith('--dk-'))).toBe(true);
         }
+    });
+
+    test('names each hex value by its theme for a screen reader', async ({ page }) => {
+        await page.goto('/design-kit/tokens/');
+        const first = page.locator('.site-roles > li').first();
+        await expect(first.locator('.site-role-light')).toContainText(/^Light\s*#/);
+        await expect(first.locator('.site-role-dark')).toContainText(/^Dark\s*#/);
+    });
+
+    test('draws a bar beside each figure, to scale, with a mark at what the pairing needs', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/tokens/');
+        const rows = await page
+            .getByRole('table', { name: 'The contrast of every pairing, the tightest first' })
+            .locator('tbody tr')
+            .evaluateAll((trs) =>
+                trs.map((tr) => {
+                    const [needsCell, ...figures] = [...tr.querySelectorAll('td.dk-table-number')];
+                    const needs = Number.parseFloat(needsCell?.textContent ?? '');
+                    return figures.map((cell) => {
+                        const ratio = Number.parseFloat(cell.textContent);
+                        const bar = cell.querySelector('svg.site-bar');
+                        const fill = Number(
+                            bar?.querySelector('.site-bar-fill')?.getAttribute('width')
+                        );
+                        const mark = Number(
+                            bar?.querySelector('.site-bar-needs')?.getAttribute('x')
+                        );
+                        return {
+                            hidden: bar?.getAttribute('aria-hidden') === 'true',
+                            fill: Math.abs(fill - (ratio / 21) * 100) < 0.5,
+                            mark: Math.abs(mark - (needs / 21) * 100) < 0.5,
+                        };
+                    });
+                })
+            );
+        expect(rows.length).toBeGreaterThan(0);
+        expect(rows.flat().filter(({ hidden, fill, mark }) => !hidden || !fill || !mark)).toEqual(
+            []
+        );
+        expect(rows.every((figures) => figures.length === 2)).toBe(true);
+    });
+
+    test('draws each step of the spacing scale to size beside its name and value', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/tokens/');
+        const steps = await page.locator('.site-spaces > li').evaluateAll((all) =>
+            all.map((step) => {
+                const name = step.querySelector('code')?.textContent ?? '';
+                const value = step.querySelector('.site-space-value')?.textContent ?? '';
+                const drawn = step.querySelector('.site-space-drawn')?.getBoundingClientRect();
+                const probe = document.createElement('div');
+                probe.style.width = `var(${name})`;
+                document.body.append(probe);
+                const wanted = probe.getBoundingClientRect().width;
+                probe.remove();
+                return {
+                    name,
+                    value,
+                    sized:
+                        drawn !== undefined && wanted > 0 && Math.abs(drawn.width - wanted) < 0.5,
+                };
+            })
+        );
+        expect(steps.map(({ name }) => name)).toEqual([
+            '--dk-space-1',
+            '--dk-space-2',
+            '--dk-space-3',
+            '--dk-space-4',
+            '--dk-space-5',
+            '--dk-space-6',
+        ]);
+        expect(steps.filter(({ sized, value }) => !sized || !/rem$/.test(value))).toEqual([]);
     });
 
     test('lists every pairing at or above what it needs, the tightest first', async ({ page }) => {
