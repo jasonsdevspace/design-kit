@@ -168,6 +168,72 @@ body > .dk-strip {
     font-size: var(--dk-text-caption);
 }
 
+/*
+ * A copy's label names its theme: the page's for the live copy, the other for the preview.
+ * Each label holds both names, and the page's theme hides the wrong one: the light page's names
+ * show unless the page is dark, so a label never shows both.
+ */
+.site-page-dark,
+.site-other-light {
+    display: none;
+}
+
+:root[data-theme='dark'] :is(.site-page-dark, .site-other-light) {
+    display: inline;
+}
+
+:root[data-theme='dark'] :is(.site-page-light, .site-other-dark) {
+    display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) :is(.site-page-dark, .site-other-light) {
+        display: inline;
+    }
+
+    :root:not([data-theme]) :is(.site-page-light, .site-other-dark) {
+        display: none;
+    }
+}
+
+/* The mark on the copy that can be tried. */
+.site-live {
+    padding: 0 var(--dk-space-2);
+    border-radius: 999px;
+    background: var(--dk-highlight);
+    color: var(--dk-accent);
+    font-weight: var(--dk-weight-strong);
+}
+
+/*
+ * A copy that cannot be tried, a preview or a picture, is framed by a dashed edge rather than
+ * dimmed, since its colors are what it is there to show.
+ */
+.site-copy[inert] {
+    border-style: dashed;
+    border-color: var(--dk-control);
+}
+
+/* What a tap on a preview is told, under the state's two copies. */
+.site-preview-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: var(--dk-space-2) var(--dk-space-3);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius);
+    background: var(--dk-surface);
+    font-size: var(--dk-text-small);
+}
+
+.site-preview-switch {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--dk-accent);
+    font: inherit;
+    text-decoration: underline;
+}
+
 .site-state-name {
     grid-column: 1 / -1;
     margin: 0;
@@ -373,8 +439,23 @@ body > .dk-strip {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    /*
+     * Light is drawn first, on the left or above, and dark after it whichever is live, so the two
+     * never trade places as the theme changes. The live copy stays first in the page, for the keyboard and a
+     * screen reader, and on a phone, where it is the one a thumb reaches first.
+     */
+    :root[data-theme='dark'] .site-other {
+        order: -1;
+    }
+
     /* The switch keeps its words on one row, within the width its section keeps for it. */
     .site-theme {
         flex-wrap: nowrap;
+    }
+}
+
+@media (min-width: 48.0625rem) and (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .site-other {
+        order: -1;
     }
 }

@@ -57,6 +57,18 @@ It also makes the live copies of the states a reader can change behave as they s
 it, so what a control says it is stays true after a reader changes it. With no script, the copies
 stay as they are drawn, as each state's name says they start.
 
+And it answers a tap on a preview, the copy of a state in the theme the page is not in. A preview is
+inert, so a tap on it does nothing and a reader would be left to guess why. The script puts a note
+under the state's two copies that says the copy is only a preview, points to the one marked Live,
+and offers to switch to the other theme. Its button chooses that theme as the strip's switch does,
+saved the same way. The status line says the same to a screen reader, naming the live copy by its
+theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the note adds
+nothing to its path until a tap brings it. It closes on Escape, on a tap elsewhere and whenever the
+theme changes, however it changed, and a drag that only ends on a preview is no tap on it. A browser
+gives a tap on an inert copy to an element that holds it, the page's root in Chromium, so the script
+tells a tap on a preview by where it starts and ends. Each copy's label names its theme with no
+script at all, since the page's theme picks the label as it picks the colors.
+
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
 path only with its origin, so the build writes it for that origin unless `SITE_ORIGIN` names
@@ -114,4 +126,11 @@ The paths are in `packages/site`.
   button names closed and opened again with it. It finds the status line in the page before
   anything is copied, only on a page with code, and the words for copying what was selected given
   for a touch screen on a phone.
+- `e2e/site.spec.ts` also finds each copy labeled by its theme, the live one marked Live, in both
+  themes, the previews and pictures framed by a dashed edge, light on the left on a wide screen and
+  the live copy first on a phone. It finds a tap on a preview answered by the note and the status
+  line, the note closed by Escape, by a tap elsewhere and by the strip's switch, its button
+  switching the theme and the strip's switch with it and leaving focus on the live copy, a drag
+  that ends on a preview taken for no tap, and nothing added to the keyboard's path until a tap
+  brings the note.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.

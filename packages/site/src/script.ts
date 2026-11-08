@@ -38,6 +38,9 @@ const systemIsDark = () => {
     }
 };
 
+/** The system's theme, light where the browser cannot say. */
+const systemTheme = () => (systemIsDark() ? 'dark' : 'light');
+
 /** The choice saved, or null where the browser refuses the page its storage. */
 const savedChoice = (): Choice | null => {
     try {
@@ -54,10 +57,12 @@ const savedChoice = (): Choice | null => {
  */
 let chosen: Choice = savedChoice() ?? 'system';
 let heldHere = false;
+/** Shows the chosen theme on the strip's switch, once the switch is built. */
+let showChosen: () => void = () => undefined;
 
 /** Draws a choice on the page, the system's theme for System. */
 const draw = (choice: Choice) => {
-    const theme = choice === 'system' ? (systemIsDark() ? 'dark' : 'light') : choice;
+    const theme = choice === 'system' ? systemTheme() : choice;
     document.documentElement.setAttribute('data-theme', theme);
 };
 
@@ -71,6 +76,7 @@ const choose = (choice: Choice) => {
         // Held in `chosen` instead, for as long as the page is open.
         heldHere = true;
     }
+    showChosen();
     draw(choice);
 };
 
@@ -124,6 +130,7 @@ const room = document.querySelector('body > .dk-strip .dk-strip-room');
 const section = room?.parentElement;
 if (room && section) {
     const { group, show } = themeSwitch();
+    showChosen = show;
     room.replaceWith(group);
     section.setAttribute('aria-label', 'Settings');
 
@@ -251,7 +258,7 @@ for (const head of heads) {
 /*
  * The live copies of the states a reader can change. A toggle flips what it says it is, and a
  * button that names a panel opens and closes it, so what a control says it is stays true after it
- * is pressed. The copies in the other theme are pictures and stay as they are drawn.
+ * is pressed. The previews in the other theme stay as they are drawn.
  */
 for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     'main .site-copy:not([inert]) button[aria-pressed]'
@@ -273,5 +280,96 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
         const open = opener.getAttribute('aria-expanded') !== 'true';
         opener.setAttribute('aria-expanded', String(open));
         panel.hidden = !open;
+    });
+}
+
+/*
+ * A preview does nothing when it is tapped, since it is inert, so the tap is answered: a note under
+ * the state's two copies says the copy is only a preview, points to the one marked Live and offers
+ * to switch to the other theme, and the status line says the same to a screen reader, naming the
+ * live copy by its theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the
+ * note is never needed there, and it adds nothing to the keyboard's path until a tap brings it. It
+ * closes on Escape, on a tap anywhere else, and whenever the page's theme changes, by its button,
+ * the strip's switch, the system or another tab, so it never names a theme the preview is not in.
+ * A picture is a picture in either theme, so a tap on one is left alone.
+ */
+const previews = [
+    ...document.querySelectorAll<HTMLElement>(
+        'main .site-state:not(.site-state-pictured) > .site-other'
+    ),
+];
+if (previews.length > 0) {
+    /** The theme the page is drawn in, as the script set it or as the system's where it set none. */
+    const pageTheme = () => document.documentElement.getAttribute('data-theme') ?? systemTheme();
+    let note: HTMLElement | undefined;
+    /** The live copy beside the open note's preview, where focus goes when the note takes it away. */
+    let live: HTMLElement | undefined;
+    const closeNote = () => {
+        const hadFocus = note?.contains(document.activeElement) ?? false;
+        note?.remove();
+        note = undefined;
+        if (hadFocus && live) {
+            live.tabIndex = -1;
+            live.focus();
+        }
+    };
+    const noteFor = (preview: HTMLElement) => {
+        closeNote();
+        live =
+            preview.parentElement?.querySelector<HTMLElement>(':scope > .site-copy:not([inert])') ??
+            undefined;
+        const shown = pageTheme();
+        const theme = shown === 'dark' ? 'light' : 'dark';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'site-preview-switch';
+        button.textContent = `switch to ${theme}`;
+        button.addEventListener('click', () => {
+            choose(theme);
+            say(`The theme is ${theme} now.`);
+        });
+        const only = `This is only a preview of the ${theme} theme.`;
+        note = document.createElement('p');
+        note.className = 'site-preview-note';
+        note.append(`${only} Try the one marked Live, or `, button, '.');
+        preview.after(note);
+        say(`${only} Try the ${shown} one.`);
+    };
+    // Any change to the page's theme closes the note, whatever made it.
+    new MutationObserver(closeNote).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+    });
+    /** The preview whose box a pointer is in, on the preview or on an element that holds it. */
+    const previewAt = (event: MouseEvent) => {
+        const target = event.target;
+        if (!(target instanceof Node)) return undefined;
+        return previews.find((preview) => {
+            if (!(preview.contains(target) || target.contains(preview))) return false;
+            const box = preview.getBoundingClientRect();
+            return (
+                event.clientX >= box.left &&
+                event.clientX <= box.right &&
+                event.clientY >= box.top &&
+                event.clientY <= box.bottom
+            );
+        });
+    };
+    // A tap on an inert copy is given to an element that holds it, the root in some browsers, so a
+    // tap is on a preview when it starts and ends inside the preview's box. A drag that only ends
+    // there is not a tap on it.
+    let pressed: HTMLElement | undefined;
+    document.addEventListener('pointerdown', (event) => {
+        pressed = previewAt(event);
+    });
+    document.addEventListener('click', (event) => {
+        if (event.target instanceof Node && note?.contains(event.target)) return;
+        const tapped = previewAt(event);
+        if (tapped && tapped === pressed) noteFor(tapped);
+        else closeNote();
+        pressed = undefined;
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && note && !event.defaultPrevented) closeNote();
     });
 }
