@@ -44,12 +44,15 @@ const hasOwnTimeLimit = ({ indent, text }: Step) =>
 
 /** A workflow's jobs, each by its id with the lines under it, read without comments. */
 const jobsOf = (text: string) => {
-    const lines = `${text}\n`.replace(/\r\n/g, '\n').replace(/^[ \t]*#.*\n/gm, '');
+    const lines = `${text}\n`
+        .replace(/\r\n/g, '\n')
+        .replace(/^[ \t]*#.*\n/gm, '')
+        .replace(/[ \t]+#[ \t].*$/gm, '');
     const start = lines.search(/^jobs:/m);
     if (start < 0) return [];
     return lines
         .slice(start)
-        .split(/^ {4}(?=[a-z][\w-]*:\s*$)/m)
+        .split(/^ {4}(?=[A-Za-z_][\w-]*:\s*$)/m)
         .slice(1)
         .map((block) => ({
             id: block.slice(0, block.indexOf(':')),
@@ -152,9 +155,12 @@ describe('the workflows', () => {
                 '        timeout-minutes: 5',
                 '    checks:',
                 '        uses: ./.github/workflows/ci.yml',
+                '    Lint_All:',
+                '        runs-on: ubuntu-26.04 # a comment after the value',
             ].join('\n')
         );
-        expect(jobs.map(({ id }) => id)).toEqual(['build', 'checks']);
+        expect(jobs.map(({ id }) => id)).toEqual(['build', 'checks', 'Lint_All']);
+        expect(jobs[2]?.body).toMatch(/^ {8}runs-on: ubuntu-26\.04\s*$/m);
         expect(jobs[0]?.body).toContain('timeout-minutes: 5');
         expect(jobs[1]?.body).not.toContain('runs-on');
     });

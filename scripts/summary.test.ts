@@ -1,10 +1,12 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+    filesOf,
     lighthouseSummary,
     packageSummary,
     playwrightSummary,
@@ -43,18 +45,26 @@ describe('a summary', () => {
 });
 
 describe('the Lighthouse summary', () => {
-    const gates = { performance: 0.9, paint: 2500, shift: 0.1 };
+    const gates = { accessibility: 100, performance: 0.9, paint: 2500, shift: 0.1 };
 
-    it('gives a row for each page against the gates, and says which missed', () => {
+    it('gives a row for each page against the gates, with what the audit found it missed', () => {
         const text = lighthouseSummary(
             [
-                { path: '/design-kit/', accessibility: 100, performance: 1, paint: 910, shift: 0 },
+                {
+                    path: '/design-kit/',
+                    accessibility: 100,
+                    performance: 1,
+                    paint: 910,
+                    shift: 0,
+                    missed: [],
+                },
                 {
                     path: '/design-kit/controls/',
                     accessibility: 96,
                     performance: 0.88,
                     paint: 2600,
                     shift: 0.12,
+                    missed: ['accessibility 96', 'performance 88'],
                 },
             ],
             gates
@@ -62,7 +72,7 @@ describe('the Lighthouse summary', () => {
         expect(text).toContain('### Lighthouse');
         expect(text).toContain('| /design-kit/ | 100 | 100 | 910 ms | 0.000 | Pass |');
         expect(text).toContain(
-            '| /design-kit/controls/ | 96 | 88 | 2600 ms | 0.120 | Missed: accessibility, performance, largest paint, layout shift |'
+            '| /design-kit/controls/ | 96 | 88 | 2600 ms | 0.120 | Missed: accessibility 96, performance 88 |'
         );
         expect(text).toContain('accessibility 100, performance 90 or more');
     });
@@ -110,7 +120,7 @@ describe('the browser test summary', () => {
             '- the theme switch › saves a choice (`packages/site/e2e/site.spec.ts:12`)'
         );
         expect(text).toContain(
-            '[the run’s artifacts](https://github.com/o/r/actions/runs/1#artifacts)'
+            "[the run's artifacts](https://github.com/o/r/actions/runs/1#artifacts)"
         );
     });
 
@@ -128,6 +138,23 @@ describe('the browser test summary', () => {
             { title: 'Browser tests', runUrl: 'u', root: 'packages' }
         );
         expect(text).toContain('(`packages/site/e2e/site.spec.ts:12`)');
+    });
+});
+
+describe('a run that stops outside its tests', () => {
+    it('says why, from the report, rather than reading as a clean run of nothing', () => {
+        const text = playwrightSummary(
+            {
+                stats: { expected: 0, unexpected: 0, flaky: 0, skipped: 0 },
+                suites: [],
+                errors: [{ message: 'Error: Process from config.webServer exited early.\n  at x' }],
+            },
+            { title: 'Browser tests', runUrl: 'u' }
+        );
+        expect(text).toContain('The run stopped outside its tests:');
+        expect(text).toContain('- Error: Process from config.webServer exited early.');
+        expect(text).not.toContain('  at x');
+        expect(text).toContain("[the run's artifacts](u#artifacts)");
     });
 });
 
@@ -153,5 +180,22 @@ describe('the package summary', () => {
         expect(text).toContain('| dist/react.js | 8.0 KB | 2.0 KB |');
         expect(text).toMatch(/<details>\n<summary>Every file in the package<\/summary>/);
         expect(text.indexOf('README.md')).toBeGreaterThan(text.indexOf('<details>'));
+    });
+});
+
+describe('a packed tarball', () => {
+    it('is read file by file from its tar blocks, under the package folder', () => {
+        const dir = mkdtempSync(join(tmpdir(), 'packed-'));
+        made.push(dir);
+        mkdirSync(join(dir, 'package', 'dist'), { recursive: true });
+        writeFileSync(join(dir, 'package', 'package.json'), '{"name":"@o/kit","version":"1.0.0"}');
+        writeFileSync(join(dir, 'package', 'dist', 'tokens.css'), ':root { --a: 1; }\n'.repeat(40));
+        const tarball = join(dir, 'kit.tgz');
+        execFileSync('tar', ['-czf', tarball, '-C', dir, 'package']);
+        const files = filesOf(readFileSync(tarball));
+        expect(files.map(({ path }) => path).sort()).toEqual(['dist/tokens.css', 'package.json']);
+        expect(files.find(({ path }) => path === 'dist/tokens.css')?.bytes.length).toBe(
+            ':root { --a: 1; }\n'.length * 40
+        );
     });
 });

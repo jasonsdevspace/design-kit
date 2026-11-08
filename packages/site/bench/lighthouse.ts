@@ -108,6 +108,7 @@ const main = async () => {
             console.log(
                 `${path}: accessibility ${String(score)}${findings.length > 0 ? `, ${findings.join(', ')}` : ''}`
             );
+            const short = score < 100 ? [`accessibility ${String(score)}`] : [];
             if (score < 100) failures.push(`${path} (accessibility ${String(score)})`);
             const measures = [measureOf(await run(url, 'performance'))];
             if (missed(middle(measures)).length > 0) {
@@ -120,17 +121,27 @@ const main = async () => {
                 `${path} on a first visit: performance ${String(Math.round(judged.performance * 100))}, ` +
                     `largest paint ${String(Math.round(judged.paint))} ms, layout shift ${judged.shift.toFixed(3)}`
             );
+            const misses = missed(judged);
             pages.push({
                 path,
                 accessibility: score,
                 performance: judged.performance,
                 paint: judged.paint,
                 shift: judged.shift,
+                missed: [...short, ...misses],
             });
-            const misses = missed(judged);
             if (misses.length > 0) failures.push(`${path} (${misses.join(', ')})`);
         }
     } finally {
+        // Written whatever happened, so the pages measured before a failure are still reported.
+        writeSummary(
+            lighthouseSummary(pages, {
+                accessibility: 100,
+                performance: PERFORMANCE,
+                paint: LARGEST_PAINT_MS,
+                shift: LAYOUT_SHIFT,
+            })
+        );
         chrome.kill();
         await new Promise<void>((resolve) => {
             server.httpServer.close(() => {
@@ -138,13 +149,6 @@ const main = async () => {
             });
         });
     }
-    writeSummary(
-        lighthouseSummary(pages, {
-            performance: PERFORMANCE,
-            paint: LARGEST_PAINT_MS,
-            shift: LAYOUT_SHIFT,
-        })
-    );
     if (failures.length > 0) {
         console.error(`Missed the gates: ${failures.join('; ')}`);
         process.exitCode = 1;

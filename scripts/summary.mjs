@@ -3,13 +3,13 @@
  * opening the log: a table or a line, never the log itself, and nothing at all outside a run.
  *
  * Run as `node scripts/summary.mjs playwright <report.json> <title>` after a browser test run, or
- * `node scripts/summary.mjs package <workspace>` after packing. The Lighthouse audit calls
- * `lighthouseSummary` itself.
+ * `node scripts/summary.mjs package <tarball>` after packing. The Lighthouse audit calls
+ * `lighthouseSummary` itself. A summary reports a check and never decides it, so the workflow
+ * steps that run this carry on when it fails.
  */
-import { execFileSync } from 'node:child_process';
-import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 
 import { isRunDirectly } from './repository.mjs';
 
@@ -37,44 +37,40 @@ export const table = (head, rows) => {
 };
 
 /**
+ * A page as the audit judged it, with what it missed of the gates in the audit's own words.
+ *
  * @typedef {{
  *     path: string,
  *     accessibility: number,
  *     performance: number,
  *     paint: number,
  *     shift: number,
+ *     missed: readonly string[],
  * }} LighthousePage
- * @typedef {{ performance: number, paint: number, shift: number }} LighthouseGates
+ * @typedef {{ accessibility: number, performance: number, paint: number, shift: number }} LighthouseGates
  */
 
 /**
- * Each page's scores against the gates, and which it missed.
+ * Each page's scores against the gates, and what the audit found it missed.
  *
  * @param {readonly LighthousePage[]} pages
  * @param {LighthouseGates} gates
  */
 export const lighthouseSummary = (pages, gates) => {
-    const rows = pages.map((page) => {
-        const missed = [
-            ...(page.accessibility < 100 ? ['accessibility'] : []),
-            ...(page.performance < gates.performance ? ['performance'] : []),
-            ...(page.paint > gates.paint ? ['largest paint'] : []),
-            ...(page.shift > gates.shift ? ['layout shift'] : []),
-        ];
-        return [
-            page.path,
-            String(page.accessibility),
-            String(Math.round(page.performance * 100)),
-            `${String(Math.round(page.paint))} ms`,
-            page.shift.toFixed(3),
-            missed.length === 0 ? 'Pass' : `Missed: ${missed.join(', ')}`,
-        ];
-    });
+    const rows = pages.map((page) => [
+        page.path,
+        String(page.accessibility),
+        String(Math.round(page.performance * 100)),
+        `${String(Math.round(page.paint))} ms`,
+        page.shift.toFixed(3),
+        page.missed.length === 0 ? 'Pass' : `Missed: ${page.missed.join(', ')}`,
+    ]);
     return (
         '### Lighthouse\n\n' +
-        `Each page on a first visit as a slow phone makes it, held to accessibility 100, ` +
-        `performance ${String(Math.round(gates.performance * 100))} or more, a largest paint ` +
-        `within ${String(gates.paint)} ms and a layout shift of ${String(gates.shift)} or less.\n\n` +
+        `Each page on a first visit as a slow phone makes it, held to accessibility ` +
+        `${String(gates.accessibility)}, performance ${String(Math.round(gates.performance * 100))} ` +
+        `or more, a largest paint within ${String(gates.paint)} ms and a layout shift of ` +
+        `${String(gates.shift)} or less.\n\n` +
         table(
             ['Page', 'Accessibility', 'Performance', 'Largest paint', 'Layout shift', 'Result'],
             rows
@@ -90,12 +86,13 @@ export const lighthouseSummary = (pages, gates) => {
  *     config?: { rootDir?: string },
  *     stats: { expected: number, unexpected: number, flaky: number, skipped: number },
  *     suites: PlaywrightSuite[],
+ *     errors?: { message?: string }[],
  * }} PlaywrightReport
  */
 
 /**
  * A browser test run's totals in a line, and when a test failed, each failing test by its file and
- * line, and where its report is kept.
+ * line, and where its report is kept. A run that stopped before its tests says why.
  *
  * @param {PlaywrightReport} report
  * @param {{ title: string, runUrl: string, root?: string }} where `root` is the folder the
@@ -128,15 +125,25 @@ export const playwrightSummary = (report, { title, runUrl, root = '' }) => {
     // A file's own suite is named by the file, which each line already gives, so its title is
     // left out of the names.
     for (const suite of report.suites) walk(suite, []);
-    const lines = [`### ${title}`, '', `${totals}.`];
-    if (failing.length > 0) {
+    // An error outside every test, such as a server that never started, in its first line.
+    const stopped = (report.errors ?? [])
+        .map((error) => (error.message ?? '').split('\n')[0]?.trim() ?? '')
+        .filter((line) => line !== '');
+    const lines = [`### ${title}`, ''];
+    if (stopped.length > 0) {
+        lines.push(
+            'The run stopped outside its tests:',
+            '',
+            ...stopped.map((line) => `- ${line}`),
+            ''
+        );
+    }
+    lines.push(`${totals}.`);
+    if (failing.length > 0 || stopped.length > 0) {
+        if (failing.length > 0) lines.push('', 'Failed:', '', ...failing);
         lines.push(
             '',
-            'Failed:',
-            '',
-            ...failing,
-            '',
-            `The report, with each failure's trace and screenshot, is in [the run’s artifacts](${runUrl}#artifacts).`
+            `The report, with each failure's trace and screenshot, is in [the run's artifacts](${runUrl}#artifacts).`
         );
     }
     return `${lines.join('\n')}\n`;
@@ -151,7 +158,7 @@ const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
  */
 
 /**
- * The package as npm ships it: the files a page loads, raw and gzipped, and every file folded away
+ * The package as npm ships it: its styles and scripts, raw and gzipped, and every file folded away
  * under them.
  *
  * @param {Packed} packed
@@ -172,45 +179,57 @@ export const packageSummary = (packed, loads) => {
 };
 
 /**
- * A workspace packed as npm would pack it, each file measured raw and gzipped.
+ * The files a packed tarball holds, read from its tar blocks: each file's path inside the package
+ * and its bytes. npm packs plain files under `package/`, so only those are read.
  *
- * @param {string} workspace
+ * @param {Buffer} tarball the `.tgz` as npm packed it
+ * @returns {{ path: string, bytes: Buffer }[]}
+ */
+export const filesOf = (tarball) => {
+    const tar = gunzipSync(tarball);
+    /** @type {{ path: string, bytes: Buffer }[]} */
+    const files = [];
+    let at = 0;
+    while (at + 512 <= tar.length) {
+        const header = tar.subarray(at, at + 512);
+        if (header.every((byte) => byte === 0)) break;
+        const text = (/** @type {number} */ from, /** @type {number} */ to) =>
+            header.subarray(from, to).toString('utf8').replace(/\0.*$/s, '');
+        const name = text(0, 100);
+        const prefix = text(345, 500);
+        const size = parseInt(text(124, 136).trim() || '0', 8);
+        const type = text(156, 157);
+        const path = prefix ? `${prefix}/${name}` : name;
+        if ((type === '0' || type === '') && path.startsWith('package/')) {
+            files.push({
+                path: path.slice('package/'.length),
+                bytes: tar.subarray(at + 512, at + 512 + size),
+            });
+        }
+        at += 512 + Math.ceil(size / 512) * 512;
+    }
+    return files;
+};
+
+/**
+ * A packed tarball measured file by file, raw and gzipped, named from its own manifest.
+ *
+ * @param {string} tarball
  * @returns {Packed}
  */
-const packedOf = (workspace) => {
-    /** @type {{ name: string, version: string, size: number, files: { path: string, size: number }[] }[]} */
-    const [packed] = JSON.parse(
-        execFileSync(
-            'npm',
-            ['pack', '--dry-run', '--json', '--ignore-scripts', '--workspace', workspace],
-            {
-                encoding: 'utf8',
-            }
-        )
-    );
-    if (!packed) throw new Error(`npm packed nothing for ${workspace}`);
-    // The workspace's folder, found by its name among the folders under packages/.
-    const where = readdirSync('packages')
-        .map((folder) => join('packages', folder))
-        .find((folder) => {
-            try {
-                /** @type {{ name?: unknown }} */
-                const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8'));
-                return manifest.name === workspace;
-            } catch {
-                return false;
-            }
-        });
-    if (where === undefined) throw new Error(`no workspace under packages/ is named ${workspace}`);
+const packedOf = (tarball) => {
+    const files = filesOf(readFileSync(tarball));
+    const manifest = files.find((file) => file.path === 'package.json');
+    if (!manifest) throw new Error(`${tarball} holds no package.json`);
+    /** @type {{ name: string, version: string }} */
+    const { name, version } = JSON.parse(manifest.bytes.toString('utf8'));
     return {
-        name: packed.name,
-        version: packed.version,
-        size: packed.size,
-        files: packed.files.map(({ path, size }) => ({
-            path,
-            size,
-            gzip: gzipSync(readFileSync(join(where, path))).length,
-        })),
+        name,
+        version,
+        size: statSync(tarball).size,
+        files: files
+            .map(({ path, bytes }) => ({ path, size: bytes.length, gzip: gzipSync(bytes).length }))
+            .sort((a, b) => a.path.localeCompare(b.path)),
     };
 };
 
@@ -223,14 +242,9 @@ if (isRunDirectly(import.meta.url)) {
         const root = report.config?.rootDir ? relative(process.cwd(), report.config.rootDir) : '';
         writeSummary(playwrightSummary(report, { title: second, runUrl, root }));
     } else if (kind === 'package' && first) {
-        writeSummary(
-            packageSummary(
-                packedOf(first),
-                (path) => /\.(css|js|mjs)$/.test(path) && !/\.d\.ts$/.test(path)
-            )
-        );
+        writeSummary(packageSummary(packedOf(first), (path) => /\.(css|js|mjs)$/.test(path)));
     } else {
-        console.error('Usage: summary.mjs playwright <report.json> <title> | package <workspace>');
+        console.error('Usage: summary.mjs playwright <report.json> <title> | package <tarball>');
         process.exitCode = 1;
     }
 }
