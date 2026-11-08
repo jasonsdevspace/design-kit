@@ -110,6 +110,12 @@ const main = async () => {
             );
             const short = score < 100 ? [`accessibility ${String(score)}`] : [];
             if (score < 100) failures.push(`${path} (accessibility ${String(score)})`);
+            // Kept now, so a page whose performance run fails is still reported.
+            pages.push({
+                path,
+                accessibility: score,
+                missed: [...short, 'stopped before performance'],
+            });
             const measures = [measureOf(await run(url, 'performance'))];
             if (missed(middle(measures)).length > 0) {
                 while (measures.length < TRACES) {
@@ -122,6 +128,7 @@ const main = async () => {
                     `largest paint ${String(Math.round(judged.paint))} ms, layout shift ${judged.shift.toFixed(3)}`
             );
             const misses = missed(judged);
+            pages.pop();
             pages.push({
                 path,
                 accessibility: score,
