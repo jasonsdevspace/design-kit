@@ -1,25 +1,49 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
 /*
- * Every command the contributing guide names is one the repository runs, and every file and heading
- * the guide or the accessibility statement links to is there.
+ * Every npm script the contributing guide runs is one the repository has, and every file, heading
+ * and issue template the guide or the accessibility statement links to is there.
  */
+
+const FILES = ['CONTRIBUTING.md', 'ACCESSIBILITY.md'];
+const REPOSITORY = 'jasonsdevspace/design-kit';
 
 const at = (path: string) => new URL(`../${path}`, import.meta.url);
 const read = (path: string) => readFileSync(at(path), 'utf8');
+const exists = (path: string) => statSync(at(path), { throwIfNoEntry: false }) !== undefined;
+const isFile = (path: string) => statSync(at(path), { throwIfNoEntry: false })?.isFile() === true;
 
-/** A heading's id as GitHub writes it: its words in lower case, joined by hyphens. */
+/** Markdown with its fenced code blocks taken out, so an example is never read as a heading or link. */
+const prose = (markdown: string) => markdown.replaceAll(/^(```|~~~)[\s\S]*?^\1/gm, '');
+
+/** A heading's id as GitHub writes it: lower case, punctuation dropped, each space a hyphen. */
 const slug = (heading: string) =>
     heading
-        .toLowerCase()
-        .replaceAll(/[^\w\s-]/g, '')
+        .replace(/\s+#+\s*$/, '')
         .trim()
-        .replaceAll(/\s+/g, '-');
+        .toLowerCase()
+        .replaceAll(/[^\p{L}\p{M}\p{N}\s_-]/gu, '')
+        .replaceAll(/\s/g, '-');
+
+/** Every heading id in a Markdown file, with a repeat numbered as GitHub numbers it. */
+const headingIds = (markdown: string) => {
+    const seen = new Map<string, number>();
+    return [...prose(markdown).matchAll(/^#+ (.+)$/gm)].map(([, title]) => {
+        const id = slug(title ?? '');
+        const count = seen.get(id) ?? 0;
+        seen.set(id, count + 1);
+        return count === 0 ? id : `${id}-${String(count)}`;
+    });
+};
+
+/** A link to a path in the repository, with an optional title in any of the forms Markdown allows. */
+const LINK =
+    /\]\((?![a-z][\w+.-]*:)([^)\s#]*)(?:#([^)\s]*))?(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\)/gi;
 
 describe('the community files', () => {
-    it('names only commands the repository has, however a line wraps them', () => {
+    it('runs only npm scripts the repository has, however a line wraps them', () => {
         const scripts = Object.keys(
             (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts
         );
@@ -30,21 +54,30 @@ describe('the community files', () => {
         expect(named.filter((script) => !scripts.includes(script))).toEqual([]);
     });
 
-    it.each(['CONTRIBUTING.md', 'ACCESSIBILITY.md'])(
-        'links only files that are there, and headings they hold, from %s',
-        (file) => {
-            const missing = [
-                ...read(file).matchAll(/\]\((?!https?:)([^)#]*)(?:#([^)]*))?\)/g),
-            ].flatMap(([, path = '', heading]) => {
-                const target = path === '' ? file : path;
-                if (!existsSync(at(target))) return [target];
-                if (heading === undefined) return [];
-                const headings = [...read(target).matchAll(/^#+ (.+)$/gm)].map(([, title]) =>
-                    slug(title ?? '')
-                );
-                return headings.includes(heading) ? [] : [`${target}#${heading}`];
-            });
-            expect(missing).toEqual([]);
-        }
-    );
+    it.each(FILES)('links only files that are there, and headings they hold, from %s', (file) => {
+        const missing = [...prose(read(file)).matchAll(LINK)].flatMap(([, path = '', heading]) => {
+            const target = path === '' ? file : path;
+            if (heading === undefined) return exists(target) ? [] : [target];
+            if (!isFile(target)) return [`${target}#${heading}`];
+            return headingIds(read(target)).includes(heading) ? [] : [`${target}#${heading}`];
+        });
+        expect(missing).toEqual([]);
+    });
+
+    it('opens only issue templates the repository has, and opens at least one', () => {
+        const templates = FILES.flatMap((file) =>
+            [
+                ...read(file).matchAll(
+                    new RegExp(
+                        `github\\.com/${REPOSITORY}/issues/new\\?[^)\\s]*?\\btemplate=([\\w.-]+)`,
+                        'gi'
+                    )
+                ),
+            ].map(([, template = '']) => template)
+        );
+        expect(templates.length).toBeGreaterThan(0);
+        expect(
+            templates.filter((template) => !isFile(`.github/ISSUE_TEMPLATE/${template}`))
+        ).toEqual([]);
+    });
 });
