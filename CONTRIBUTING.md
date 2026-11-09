@@ -15,9 +15,9 @@ npm run e2e
 npm run lighthouse
 ```
 
-`npm run e2e` needs `npx playwright install chromium` the first time. A change to a piece's markup also
-needs `npm run examples`, which writes the blocks the package README prints from the examples. CI
-also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
+`npm run e2e` needs `npx playwright install chromium` the first time. A change to a piece's markup
+also needs `npm run examples`, which writes the blocks the package README prints from the examples.
+CI also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
 describes.
 
 ## Writing
@@ -45,7 +45,8 @@ browser tests and the Lighthouse audit among them.
 
 ## Releasing
 
-The README says how a release reaches npm. Around it, a maintainer:
+[Dev setup](README.md#dev-setup) in the README says how a release reaches npm, under "How a
+release reaches npm". Around it, a maintainer:
 
 - bumps the version in `packages/design-kit/package.json` and adds a `## VERSION` entry to its
   `CHANGELOG.md`, in a pull request of its own

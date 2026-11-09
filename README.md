@@ -9,8 +9,9 @@ ships on npm as `@jasonsdevspace/design-kit`, and ShelfLens is built on it.
 [The package on npm](https://www.npmjs.com/package/@jasonsdevspace/design-kit) ·
 [The full reference](packages/design-kit/README.md)
 
-- **A page's own styles always win.** The kit never fights the page it sits in, so a demo can load
-  it beside the styles it already has.
+- **A page's own styles win.** The kit never fights the page it sits in, so a demo can load it
+  beside the styles it already has. The one rule it holds over a page is the cut to motion for a
+  visitor who asks for less.
 - **The theme never flashes.** A visitor's light or dark choice on the portfolio is set before a
   demo draws anything.
 - **Each promise has a test.** The default colors are measured for contrast in both themes, and
@@ -77,8 +78,11 @@ layers of its own names where the kit's go, and
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
 120 and Safari 17.5. Cascade layers and `:where()` are older than that. A Vite build takes the
-floor from the kit with `browserFloor()`, so its sheets keep each `light-dark()` as written, as
-[the package README](packages/design-kit/README.md#browser-support) shows. What falls short at the floor, and what no test here covers, is under
+floor from the kit with `browserFloor()`, so its sheets keep each `light-dark()` as written. A page
+that compiles its CSS with Lightning CSS passes `lightningcssFloor()` to it as well, since Vite
+otherwise gives that transformer lower targets of its own, as
+[the package README](packages/design-kit/README.md#browser-support) shows. What falls short at the
+floor, and what no test here covers, is under
 [known limitations](ACCESSIBILITY.md#known-limitations).
 
 ## The gotchas, and the test behind each
@@ -126,7 +130,7 @@ follow by area.
 | The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts` |
 | A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`  |
 | The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`  |
-| The floor both READMEs state is the one the kit gives a build                                | `packages/design-kit/src/vite.test.ts`  |
+| The floor both READMEs and the accessibility statement give is the one the kit gives a build | `packages/design-kit/src/vite.test.ts`  |
 
 </details>
 
@@ -321,7 +325,10 @@ npm run verify
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
 `npm run e2e` runs the browser tests in Chromium, and `npm run lighthouse` builds the site and
-audits every page against the gates CI holds it to. Installing also sets up the hooks, which lint
+audits every page against the gates CI holds it to. Nothing needs building first, since the kit's
+tests read the sources and the site's tests build and serve the site themselves. `npm run build`
+compiles the theme module, the plugin and the components into the package's `dist`, beside a copy
+of each sheet, and builds the site. Installing also sets up the hooks, which lint
 and format what is staged and check each commit message.
 
 ```bash
@@ -344,11 +351,11 @@ build in one job. Another packs the package, checks its manifest with publint, a
 an empty project on the lowest Node its engines field admits, with install scripts off and no Vite,
 where each sheet must resolve and each module load by the name a demo imports it by, then
 type-checks a page's use of it as Node and as a bundler resolve it. The browser tests run in a job
-of their own, and again over each commit's own packed kit, so a change that would break the site
-fails before it is released. The Lighthouse audit runs in another. Once every job passes on main, a
-job with read access alone builds the site, and a job that runs only GitHub's Pages actions deploys
-it. Each job runs on a named Ubuntu image within a time limit, which a test holds, and each check
-writes what it found to its run's page on GitHub, from `scripts/summary.mjs`.
+of their own, and the site's run again over each commit's own packed kit, so a change that would
+break the site fails before it is released. The Lighthouse audit runs in another. Once every job
+passes on main, a job with read access alone builds the site, and a job that runs only GitHub's
+Pages actions deploys it. Each job runs on a named Ubuntu image within a time limit, which a test
+holds, and each check writes what it found to its run's page on GitHub, from `scripts/summary.mjs`.
 
 </details>
 
