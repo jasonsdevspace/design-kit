@@ -10,13 +10,14 @@ entry below as its notes.
 ## 0.2.0
 
 The footer takes a line of a demo's own beside its sentence, and the scale names a pill radius. No
-token is renamed and the theme script is unchanged, so a page on 0.1 moves up without changes.
+token is renamed and the theme script is unchanged. A footer drawn by `DemoFooter`, or written by
+hand as its one sentence, draws as it did. A footer written by hand with more than its sentence, or
+styled by the page itself, is worth a look, since the footer is now a row that wraps.
 
 - **Components.** `DemoFooter` takes an `aside`, drawn as a second paragraph, `.dk-footer-aside`,
   at the end of the sentence's row on a wide screen and under it on a phone or wherever the row has
-  no room. A footer without one draws as it did. Either paragraph now wraps a long unbroken name
-  rather than push a phone's page sideways, and anything else a page writes after the sentence
-  stacks under it.
+  no room. An element a page writes after the sentence, other than the aside, stacks under it with
+  a small gap above, and a long unbroken name in either paragraph still wraps on a phone.
 - **Tokens.** `--dk-radius-pill`, 999px, gives a tab or a tag round ends at any text size.
 
 ## 0.1.2
