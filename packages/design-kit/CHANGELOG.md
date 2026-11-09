@@ -10,15 +10,16 @@ entry below as its notes.
 ## 0.1.2
 
 The README is cut to what someone on npm needs first, and the full reference moves to a file of its
-own. Nothing in the code or the types changed, and the styles change in one comment only.
+own. Nothing a page installs changed in its code or types, and the styles change in one comment
+only.
 
 - **Docs.** The README keeps the opening, setup, every export, a short guide with the React examples
   for the page chrome and the controls, a page's own layers and palette, the theme and its policy
   hash, browser support and versions. Each part links the site page that shows its pieces live and
   the section of `REFERENCE.md` that gives the rest. The reference holds the token table, the page
   chrome, the buttons, fields and callouts, the explainer pages, the layers and palettes and the
-  theme contract in full, under the headings they had, and the README links it at this version's
-  tag, so it matches what a page installs.
+  theme contract in full, each under the heading it had, with the token table under The sheets. The
+  README links it at this version's tag, so it matches what a page installs.
 - **Styles.** A comment in `components.css` that said the package README gives each piece's markup
   now says the reference does.
 
