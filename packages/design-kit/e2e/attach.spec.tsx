@@ -42,7 +42,9 @@ const MARKUP = renderToStaticMarkup(
 const ATTACH = `import { attachCopyButton, attachThemeSwitch } from './controls.js';
 const group = document.querySelector('.dk-theme-switch');
 attachThemeSwitch(group);
-attachThemeSwitch(group);
+window.detachFirst = attachThemeSwitch(group);
+window.attachFirst = () => attachThemeSwitch(group);
+window.kit = { attachCopyButton, attachThemeSwitch };
 window.detachHeld = attachThemeSwitch(document.querySelector('#holder'));
 window.detachCopy = attachCopyButton(document.querySelector('.dk-copy'), {
     source: () => document.querySelector('#code'),
@@ -189,6 +191,93 @@ test('hides a switch again once it is taken away', async ({ browser }) => {
         (window as unknown as { detachHeld: () => void }).detachHeld();
     });
     await expect(held(opened)).toBeHidden();
+    await context.close();
+});
+
+test('shows the choice saved meanwhile on a switch attached again after every switch was taken away', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context);
+    await first(opened).getByRole('radio', { name: 'Light' }).check();
+    await opened.evaluate(() => {
+        (window as unknown as { detachHeld: () => void }).detachHeld();
+        (window as unknown as { detachFirst: () => void }).detachFirst();
+    });
+    const other = await context.newPage();
+    await other.goto(`${ORIGIN}/`);
+    await other.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+    }, THEME_KEY);
+    await expect.poll(() => themeOf(opened)).toBe('dark');
+    await opened.evaluate(() => {
+        (window as unknown as { attachFirst: () => void }).attachFirst();
+    });
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await context.close();
+});
+
+test('draws a choice the page holds on a switch attached again after every switch was taken away', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    await context.addInitScript(() => {
+        Storage.prototype.setItem = () => {
+            throw new Error('refused');
+        };
+        Storage.prototype.getItem = () => {
+            throw new Error('refused');
+        };
+    });
+    const opened = await tab(context);
+    await first(opened).getByRole('radio', { name: 'Dark' }).check();
+    await opened.evaluate(() => {
+        (window as unknown as { detachHeld: () => void }).detachHeld();
+        (window as unknown as { detachFirst: () => void }).detachFirst();
+        // The theme script draws the system's light from storage it cannot read.
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    });
+    expect(await themeOf(opened)).toBe('light');
+    await opened.evaluate(() => {
+        (window as unknown as { attachFirst: () => void }).attachFirst();
+    });
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
+    expect(await themeOf(opened)).toBe('dark');
+    await context.close();
+});
+
+test('attaches one element as a copy button though it was attached as a switch first', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const opened = await tab(context);
+    await opened.evaluate(() => {
+        const kit = (
+            window as unknown as {
+                kit: {
+                    attachThemeSwitch: (element: HTMLElement) => () => void;
+                    attachCopyButton: (
+                        element: HTMLElement,
+                        options: { source: () => HTMLElement; status: HTMLElement }
+                    ) => () => void;
+                };
+            }
+        ).kit;
+        const fresh = document.createElement('button');
+        fresh.className = 'dk-button dk-copy';
+        fresh.id = 'fresh';
+        fresh.innerHTML =
+            '<span class="dk-copy-words"><span>Copy</span><span aria-hidden="true">Copied</span><span aria-hidden="true">Selected</span></span>';
+        document.querySelector('main')?.append(fresh);
+        kit.attachThemeSwitch(fresh);
+        kit.attachCopyButton(fresh, {
+            source: () => document.querySelector<HTMLElement>('#code') ?? document.body,
+            status: document.querySelector<HTMLElement>('[role="status"]') ?? document.body,
+        });
+    });
+    await opened.locator('#fresh').click();
+    await expect(opened.locator('#fresh')).toHaveAccessibleName('Copied');
     await context.close();
 });
 
