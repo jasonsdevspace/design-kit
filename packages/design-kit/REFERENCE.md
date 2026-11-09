@@ -498,6 +498,115 @@ prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except
 the `title` attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes
 its role from `live` alone.
 
+## Theme switch and copy button
+
+The kit's two controls that do something in the browser: a switch for the theme a visitor saves,
+and a button that copies a block's text. Each is markup the components draw, or a page writes by
+hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
+returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
+without script meets no control that does nothing, and the functions set no style, so a page's
+policy can refuse every style it did not serve. Nothing runs when the module is imported.
+
+### Theme switch
+
+<!-- example: themeSwitch -->
+
+```html
+<div
+    class="dk-theme-switch"
+    role="radiogroup"
+    aria-labelledby="theme-name"
+    aria-describedby="theme-note"
+    hidden=""
+>
+    <span class="dk-theme-switch-name" id="theme-name">Theme</span>
+    <label class="dk-theme-switch-choice">
+        <input type="radio" name="theme" value="system" />
+        <span>System</span>
+    </label>
+    <label class="dk-theme-switch-choice">
+        <input type="radio" name="theme" value="light" />
+        <span>Light</span>
+    </label>
+    <label class="dk-theme-switch-choice">
+        <input type="radio" name="theme" value="dark" />
+        <span>Dark</span>
+    </label>
+    <span class="dk-visually-hidden" id="theme-note">
+        Your choice is saved for every page of this site.
+    </span>
+</div>
+```
+
+The switch is a group named Theme with three native radios, System, Light and Dark, described by a
+note that the choice is saved for every page of the site, which a page can word for itself.
+`attachThemeSwitch(element)` takes the switch, or an element that holds it, checks the choice the
+page draws, shows the switch, and saves and draws a choice under the theme contract's key, `system`
+following the system's scheme. It follows a choice saved in another tab and a page restored by Back,
+and where the browser refuses storage it holds the choice for as long as the page is open. The
+chosen word is drawn as a pressed button is, with an edge twice as thick in the accent. Attaching
+one switch again before it is taken away attaches it once, and taking it away hides it again. Every
+switch on a page shows one choice, each with radios named for its own id.
+
+```tsx
+import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
+import { ThemeSwitch } from '@jasonsdevspace/design-kit/react';
+import { useEffect, useRef } from 'react';
+
+export const Settings = () => {
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => (ref.current ? attachThemeSwitch(ref.current) : undefined), []);
+    return (
+        <div ref={ref}>
+            <ThemeSwitch />
+        </div>
+    );
+};
+```
+
+In a demo's strip it goes in `tools`, with `toolsLabel="Settings"`, so its landmark is not named
+Theme as its group is. `chooseTheme(choice)` saves and draws a choice from anywhere else on the
+page, and every switch on the page shows it.
+
+### Copy button
+
+<!-- example: copyButton -->
+
+```html
+<button type="button" class="dk-button dk-copy" hidden="">
+    <span class="dk-copy-words">
+        <span>Copy</span>
+        <span aria-hidden="true">Copied</span>
+        <span aria-hidden="true">Selected</span>
+    </span>
+    <span class="dk-visually-hidden"> install command</span>
+</button>
+<p class="dk-visually-hidden" role="status"></p>
+```
+
+`attachCopyButton(button, { source, status })` copies the text of the element `source()` returns
+when the button is pressed, read at each press, so a button beside tabs copies the block its tab
+shows. Where the browser refuses the clipboard, it selects that text instead. The button says Copied
+or Selected for a moment, its three words sharing one cell so it keeps its width, and the status
+line says which to a screen reader, with how to copy a selection with the keys or the device's own
+command. One status line serves every button on a page, and it is on the page from the start, since
+a line added at the moment it speaks may go unheard. Taking a button away hides it and puts it back
+to Copy.
+
+**`ThemeSwitch` props**
+
+| `ThemeSwitch` | Default                   | What it does                              |
+| ------------- | ------------------------- | ----------------------------------------- |
+| `id`          | from `useId`              | What the name's and note's ids start with |
+| `name`        | the id                    | The radios' name, unique on a page        |
+| `note`        | where the choice is saved | What the group is described by            |
+
+**`CopyButton` props**
+
+| `CopyButton` | Default  | What it does                    |
+| ------------ | -------- | ------------------------------- |
+| `name`       | required | What it copies, read after Copy |
+
 ## Explainer pages
 
 An explainer is the page that says how a demo works, the one the strip's "How it works" link leads

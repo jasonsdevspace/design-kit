@@ -308,6 +308,9 @@ options rejected, what the choice costs, and the test behind it.
     A visitor chooses a theme on the site and it holds across jasonsdevspace.com, with nothing
     moving when the switch comes, at the cost of a policy written for jasonsdevspace.com alone, so
     a build served anywhere else, as the tests and the audit serve theirs, names its own origin.
+13. [The kit's controls ship their behavior as a module a page attaches to their markup](docs/decisions/0013-controls-attach-to-markup.md).
+    The theme switch and the copy button work the same on a page with React and one without, from
+    one copy of their behavior, at the cost of a second script in the browser, held to a budget.
 
 </details>
 

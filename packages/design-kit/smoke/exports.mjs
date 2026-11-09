@@ -7,6 +7,8 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/react': [
         'Button',
         'Callout',
+        'CopyButton',
+        'CopyStatus',
         'DemoFooter',
         'GITHUB_PROFILE_URL',
         'InputField',
@@ -15,8 +17,10 @@ export const VALUE_EXPORTS = {
         'PortfolioStrip',
         'SelectField',
         'SkipLink',
+        'ThemeSwitch',
     ],
-    '@jasonsdevspace/design-kit/theme': ['THEMES', 'THEME_KEY', 'themeScript'],
+    '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
+    '@jasonsdevspace/design-kit/controls': ['attachCopyButton', 'attachThemeSwitch', 'chooseTheme'],
     '@jasonsdevspace/design-kit/vite': [
         'browserFloor',
         'lightningcssFloor',

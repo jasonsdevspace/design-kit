@@ -36,6 +36,8 @@ otherwise writes `themeScript` into its head itself.
 
 ## Consequences
 
+- The values a visitor saves, `system`, `light` and `dark`, are `THEME_CHOICES` in `./theme`,
+  which the kit's theme switch saves, as record 13 has it.
 - Storage belongs to an origin, so the contract holds only on the portfolio's own. A demo served
   from anywhere else, a dev server on localhost included, finds nothing saved and follows the
   system.

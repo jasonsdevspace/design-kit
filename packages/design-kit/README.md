@@ -79,22 +79,23 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 
 ## What it exports
 
-| Entry                                       | What it gives                                                                                |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `@jasonsdevspace/design-kit/tokens.css`     | The layer order and every named value, each under the `--dk-` prefix                         |
-| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule |
-| `@jasonsdevspace/design-kit/components.css` | The page chrome, buttons, fields, callouts and the explainer page                            |
-| `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES` and the type `Theme`                                    |
-| `@jasonsdevspace/design-kit/react`          | The components, their props types, `CalloutTone` and the chrome's URLs                       |
-| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`         |
+| Entry                                       | What it gives                                                                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `@jasonsdevspace/design-kit/tokens.css`     | The layer order and every named value, each under the `--dk-` prefix                                              |
+| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule                      |
+| `@jasonsdevspace/design-kit/components.css` | The page chrome, buttons, fields, callouts and the explainer page                                                 |
+| `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                     |
+| `@jasonsdevspace/design-kit/controls`       | `attachThemeSwitch()`, `attachCopyButton()` and `chooseTheme()`, which make the controls work                     |
+| `@jasonsdevspace/design-kit/react`          | The components, the theme switch's and copy button's markup, the props types, `CalloutTone` and the chrome's URLs |
+| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`                              |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
-`SelectField` and `Callout`, the types `ButtonProps`, `InputFieldProps`, `SelectFieldProps`,
-`CalloutProps` and `CalloutTone`, and the URLs the chrome links, `PORTFOLIO_URL` and
-`GITHUB_PROFILE_URL`, with `PORTFOLIO_WORK_URL`, the portfolio's list of work. The `vite` entry runs
-in Node, and also exports `THEME_PLACEHOLDER`, the marker `<!-- theme-script -->`. Every token's
-value, each color in both themes, and the contrast of each color pairing are on [the tokens
-page](https://jasonsdevspace.com/design-kit/tokens/).
+`SelectField`, `Callout`, `ThemeSwitch`, `CopyButton` and `CopyStatus`, the types `ButtonProps`,
+`InputFieldProps`, `SelectFieldProps`, `CalloutProps` and `CalloutTone`, and the URLs the chrome
+links, `PORTFOLIO_URL` and `GITHUB_PROFILE_URL`, with `PORTFOLIO_WORK_URL`, the portfolio's list of
+work. The `vite` entry runs in Node, and also exports `THEME_PLACEHOLDER`, the marker
+`<!-- theme-script -->`. Every token's value, each color in both themes, and the contrast of each
+color pairing are on [the tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 
 ## Using it
 

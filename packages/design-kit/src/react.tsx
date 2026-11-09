@@ -7,6 +7,7 @@ import {
     useId,
 } from 'react';
 
+import { THEME_CHOICES, type ThemeChoice } from './theme.js';
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says
  * whose demo it is and a footer below it, and the buttons, fields and callouts on the page itself.
@@ -456,3 +457,82 @@ export const Callout = ({
         </div>
     );
 };
+
+/** The word each theme choice is shown by. */
+const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
+    system: 'System',
+    light: 'Light',
+    dark: 'Dark',
+};
+
+/**
+ * The theme switch's markup: a group named Theme with three native radios, described by a note that
+ * says where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch` from
+ * `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
+ * without script meets no control that does nothing. The radios carry no checked prop, so React
+ * never undoes what the attach function sets.
+ */
+export const ThemeSwitch = ({
+    id,
+    name,
+    note = 'Your choice is saved for every page of this site.',
+}: {
+    /** What the name's and the note's ids start with, made with useId unless a page gives one. */
+    readonly id?: string | undefined;
+    /** The radios' name, unique on the page, the id unless a page gives one. */
+    readonly name?: string | undefined;
+    /** What the group is described by, out of sight. */
+    readonly note?: string | undefined;
+}) => {
+    const made = useId();
+    const base = id ?? made;
+    return (
+        <div
+            className="dk-theme-switch"
+            role="radiogroup"
+            aria-labelledby={`${base}-name`}
+            aria-describedby={`${base}-note`}
+            hidden
+        >
+            <span className="dk-theme-switch-name" id={`${base}-name`}>
+                Theme
+            </span>
+            {THEME_CHOICES.map((value) => (
+                <label className="dk-theme-switch-choice" key={value}>
+                    <input type="radio" name={name ?? base} value={value} />
+                    <span>{CHOICE_WORDS[value]}</span>
+                </label>
+            ))}
+            <span className="dk-visually-hidden" id={`${base}-note`}>
+                {note}
+            </span>
+        </div>
+    );
+};
+
+/**
+ * A copy button's markup, named for what it copies. It is hidden until `attachCopyButton` from
+ * `@jasonsdevspace/design-kit/controls` shows it, and its three words share one cell, so it keeps
+ * the width of the longest whichever shows.
+ */
+export const CopyButton = ({
+    name,
+}: {
+    /** What the button copies, read after Copy, such as "install command". */
+    readonly name: string;
+}) => (
+    <button type="button" className="dk-button dk-copy" hidden>
+        <span className="dk-copy-words">
+            <span>Copy</span>
+            <span aria-hidden="true">Copied</span>
+            <span aria-hidden="true">Selected</span>
+        </span>
+        <span className="dk-visually-hidden"> {name}</span>
+    </button>
+);
+
+/**
+ * The line a screen reader hears a copy button's result on, out of sight. One is enough for a page,
+ * and it is on the page from the start, since a line added at the moment it speaks may go unheard.
+ */
+export const CopyStatus = () => <p className="dk-visually-hidden" role="status" />;

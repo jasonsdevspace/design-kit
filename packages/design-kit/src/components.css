@@ -924,4 +924,12 @@
     :where(.dk-copy-words > [aria-hidden='true']) {
         visibility: hidden;
     }
+
+    /*
+     * A theme switch or a copy button stays hidden until a page's script attaches it, since the
+     * display these pieces take would otherwise win over the browser's own rule for hidden.
+     */
+    :where(.dk-theme-switch[hidden], .dk-copy[hidden]) {
+        display: none;
+    }
 }

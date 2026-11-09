@@ -12,6 +12,14 @@ export const THEMES = ['light', 'dark'] as const;
 
 export type Theme = (typeof THEMES)[number];
 
+/**
+ * What a visitor chooses on a theme switch: System, which follows the system's scheme and saves as
+ * `system`, and the two themes. The theme script treats `system` as nothing saved.
+ */
+export const THEME_CHOICES = ['system', ...THEMES] as const;
+
+export type ThemeChoice = (typeof THEME_CHOICES)[number];
+
 const [LIGHT, DARK] = THEMES;
 const quoted = (text: string) => JSON.stringify(text);
 

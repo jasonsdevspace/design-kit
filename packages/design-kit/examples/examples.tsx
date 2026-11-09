@@ -4,11 +4,14 @@ import * as kit from '../src/react.js';
 import {
     Button,
     Callout,
+    CopyButton,
+    CopyStatus,
     DemoFooter,
     InputField,
     PortfolioStrip,
     SelectField,
     SkipLink,
+    ThemeSwitch,
 } from '../src/react.js';
 import * as pieces from './pieces.js';
 
@@ -226,6 +229,17 @@ export const table: ReactElement = pieces.table.draw(kit, asWritten);
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
 export const code: ReactElement = pieces.code.draw(kit, asWritten);
 
+/** The theme switch, as the component draws it before a page attaches it. */
+export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
+
+/** A copy button and the page's status line, before a page attaches the button. */
+export const copyButton: ReactElement = (
+    <>
+        <CopyButton name="install command" />
+        <CopyStatus />
+    </>
+);
+
 /** Every example by the name the reference's markers give it. */
 export const EXAMPLES = {
     skipLink,
@@ -235,6 +249,8 @@ export const EXAMPLES = {
     buttons,
     fields,
     callout,
+    themeSwitch,
+    copyButton,
     explainerPage,
     steps,
     panel,
