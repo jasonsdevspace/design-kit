@@ -148,11 +148,11 @@ const SiteFooter = ({
 
 /**
  * The site's header under the strip: its mark and name, leading to the landing page, and its own
- * pages as the kit's link pills, the current one marked as the page, all in the site's navigation so nothing in it
- * sits outside a landmark. It is the page's banner, as the explainer's header is, so a screen reader
- * that moves to the banner finds the way around the site on every page. The mark is the site's own
- * markup, so the policy that refuses outside styles holds, and is hidden from a screen reader, which
- * hears the name.
+ * pages as the kit's link pills, the current one marked as the page, all in the site's navigation
+ * so nothing in it sits outside a landmark. It is the page's banner, as the explainer's header is,
+ * so a screen reader that moves to the banner finds the way around the site on every page. The mark
+ * is the site's own markup, so the policy that refuses outside styles holds, and is hidden from a
+ * screen reader, which hears the name.
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header>

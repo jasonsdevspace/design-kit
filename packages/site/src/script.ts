@@ -49,7 +49,7 @@ if (status) {
     (document.querySelector('main') ?? document.body).append(status);
 }
 
-/** How long the status line holds what the preview note says, in milliseconds, as the kit's does. */
+/** How long the status line holds what the preview note says, in milliseconds, as the kit's. */
 const SAID_FOR = 2000;
 
 /**

@@ -36,29 +36,28 @@ Option D. Every page's strip keeps the room for switches on their way, with `too
 script puts the switch in it. Since record 13 the switch is the kit's: each page draws the kit's
 `ThemeSwitch` in a template, which no browser draws and no screen reader reads, and the script puts
 a copy of it in the room and attaches it with the kit's `attachThemeSwitch`. It is three native
-radios, System, Light and Dark, in a radio group named
-Theme by a visible name and described by a note that the choice is saved for every page on
-jasonsdevspace.com, so a screen reader hears both as the keyboard reaches the radios. The strip's
-section is named Settings, so it becomes the landmark the kit makes of switches that have come and
-every part of the page sits in a landmark, and not Theme, so a screen reader moving by landmarks and
-then to the radios never hears one name twice. With no script the page holds the room alone, in a
-section with no name and so no landmark, and no switch that does nothing. The kit's function shows
-the saved choice, saves a new one
-under the portfolio's key, and draws it at once, since the theme script hears only a choice saved in
-another tab. It moves to a choice another tab saves, and catches up with one saved while the page
-sat in the browser's back and forward cache. When the system's theme changes it draws the choice
-again after the theme script draws, so a browser that refuses the page its storage still draws a
-choice until the page is left, where the theme script, which cannot know of it, draws the system's.
-A choice the browser refused to save is not read over by what storage holds.
+radios, System, Light and Dark, in a radio group named Theme by a visible name and described by a
+note that the choice is saved for every page on jasonsdevspace.com, so a screen reader hears both as
+the keyboard reaches the radios. The strip's section is named Settings, so it becomes the landmark
+the kit makes of switches that have come and every part of the page sits in a landmark, and not
+Theme, so a screen reader moving by landmarks and then to the radios never hears one name twice.
+With no script the page holds the room alone, in a section with no name and so no landmark, and no
+switch that does nothing. The kit's function shows the saved choice, saves a new one under the
+portfolio's key, and draws it at once, since the theme script hears only a choice saved in another
+tab. It moves to a choice another tab saves, and catches up with one saved while the page sat in the
+browser's back and forward cache. When the system's theme changes it draws the choice again after
+the theme script draws, so a browser that refuses the page its storage still draws a choice until
+the page is left, where the theme script, which cannot know of it, draws the system's. A choice the
+browser refused to save is not read over by what storage holds.
 
-The same script puts a copy button beside the title of each block of code, or beside the tabs where a
-state has Markup and React, in the markup the kit's `CopyButton` draws, and attaches it with the
+The same script puts a copy button beside the title of each block of code, or beside the tabs where
+a state has Markup and React, in the markup the kit's `CopyButton` draws, and attaches it with the
 kit's `attachCopyButton`, which copies the block the shown tab holds. It writes the block's text to
-the clipboard, and where the browser refuses or has no clipboard it selects the text
-instead, so a reader copies it with their own keys, or with the device's copy command on a touch
-screen. One status line out of sight, in the page from load on a page with code, tells a screen
-reader which happened, emptied first so a second copy is heard too, and the button says Copied or
-Selected for a moment. With no script, the code still opens and its text can be selected by hand.
+the clipboard, and where the browser refuses or has no clipboard it selects the text instead, so a
+reader copies it with their own keys, or with the device's copy command on a touch screen. One
+status line out of sight, in the page from load on a page with code, tells a screen reader which
+happened, emptied first so a second copy is heard too, and the button says Copied or Selected for a
+moment. With no script, the code still opens and its text can be selected by hand.
 
 It also makes the live copies of the states a reader can change behave as they say. A toggle flips
 `aria-pressed` when pressed, and a button that names a panel with `aria-controls` opens and closes
@@ -69,13 +68,14 @@ And it answers a tap on a preview, the copy of a state in the theme the page is 
 inert, so a tap on it does nothing and a reader would be left to guess why. The script puts a note
 under the state's two copies that says the copy is only a preview, points to the one marked Live,
 and offers to switch to the other theme. Its button chooses that theme with the kit's `chooseTheme`,
-as the strip's switch does, so it is saved the same way and the switch shows it. The status line says the same to a screen reader, naming the live copy by its
-theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the note adds
-nothing to its path until a tap brings it. It closes on Escape, on a tap elsewhere and whenever the
-theme changes, however it changed, and a drag that only ends on a preview is no tap on it. A browser
-gives a tap on an inert copy to an element that holds it, the page's root in Chromium, so the script
-tells a tap on a preview by where it starts and ends. Each copy's label names its theme with no
-script at all, since the page's theme picks the label as it picks the colors.
+as the strip's switch does, so it is saved the same way and the switch shows it. The status line
+says the same to a screen reader, naming the live copy by its theme, since the Live mark is hidden
+from it. The keyboard never reaches a preview, so the note adds nothing to its path until a tap
+brings it. It closes on Escape, on a tap elsewhere and whenever the theme changes, however it
+changed, and a drag that only ends on a preview is no tap on it. A browser gives a tap on an inert
+copy to an element that holds it, the page's root in Chromium, so the script tells a tap on a
+preview by where it starts and ends. Each copy's label names its theme with no script at all, since
+the page's theme picks the label as it picks the colors.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
