@@ -13,9 +13,9 @@ The footer takes a line of a demo's own beside its sentence, and the scale names
 token is renamed and the theme script is unchanged, so `themeScriptHash` is the same.
 
 - **Upgrading.** The footer is now a row that wraps. A footer drawn by `DemoFooter`, or written by
-  hand as its one sentence, draws as it did. Anything else a page writes after the sentence now
-  stacks under it with a small gap above, held to the measure. Check a footer written by hand with
-  more than its sentence, or one the page styles itself, at a phone's width and a wide one.
+  hand as its one sentence, draws as it did. Anything else a page writes after the sentence stacks
+  under it with a small gap above, held to the measure. Check a footer written by hand with more
+  than its sentence, or one the page styles itself, at a phone's width and a wide one.
 - **Page chrome.** `DemoFooter` takes an `aside`, such as the version and commit a page was built
   from, drawn as a second paragraph, `.dk-footer-aside`, at the end of the sentence's row on a wide
   screen and under it on a phone or wherever the row has no room. A page without React writes
@@ -41,9 +41,9 @@ The README is reorganized for someone installing the package from npm. Nothing i
 styles or the types changed.
 
 - **Docs.** The README opens with a picture of the controls in both themes and a link to the live
-  site. Setup shows the browser floor in a Vite config and the step a page that uses Lightning CSS
-  adds. The exports, tokens and props are tables, and the theme contract shows how a Content
-  Security Policy names the script by `themeScriptHash`.
+  site. Setup shows the browser floor in a Vite config and points a page that uses Lightning CSS to
+  the step it adds. The exports, tokens and props are tables, and the theme contract shows how a
+  Content Security Policy names the script by `themeScriptHash`.
 
 ## 0.1.0
 
@@ -84,8 +84,9 @@ switches keep to the strip's right edge.
 - **Page chrome.** The strip's first link reads "Jason Poteet" and leads to the portfolio's home
   page, `PORTFOLIO_URL`, rather than "More work by Jason Poteet" and the list of work, so it matches
   the footer's "Jason Poteet" link. `PORTFOLIO_WORK_URL` is still exported. On a wide screen the
-  switches keep to the strip's right edge, on the links' row or on a row of their own, and on a
-  phone they still start at the left. A page that writes the strip by hand gets this from the sheet.
+  switches keep to the strip's right edge, on the links' row or on a row of their own, and where
+  they wrap within their section its last row sits at the right too. On a phone they still start at
+  the left. A page that writes the strip by hand gets this from the sheet.
 - **Tokens.** `--dk-strip-tools` is new and sets the width of a demo's switches in the strip, in the
   strip's text size, such as `:root { --dk-strip-tools: 20em; }`. It defaults to `auto`, so a demo
   that leaves it alone sees no change. A demo whose switches load after the page sets it at least as
@@ -97,7 +98,8 @@ switches keep to the strip's right edge.
 Every optional prop takes `undefined`, `Callout` takes a `<div>`'s props and a `ref`, and the
 footer's sentence holds to the measure.
 
-- **Upgrading.** A page that writes the strip by hand changes its first link's words itself.
+- **Upgrading.** A page that writes the strip by hand changes its first link's words to "More work
+  by Jason Poteet" itself.
 - **Page chrome.** The strip's first link reads "More work by Jason Poteet", where it read "A demo
   by Jason Poteet", which fits a demo and the kit's own site alike and says where the link goes. The
   footer's sentence holds to the measure, while its rule still runs the page's width.
@@ -112,8 +114,9 @@ footer's sentence holds to the measure.
   paragraph. A callout is now padded 0.75rem by 1rem, from 0.5rem by 0.75rem, to match steps and
   code blocks.
 - **React.** Every component treats an empty string, or a list or fragment holding only `false`,
-  `null` or empty strings, as an empty slot. A field's hint and error, and a callout's title,
-  message and actions, used to draw an empty paragraph for these, and a hint or error was also
+  `null` or empty strings, as an empty slot. The strip's switches and the footer's additions now
+  pass over an empty string too. A field's hint and error, and a callout's title, message and
+  actions, used to draw an empty paragraph for such a list or fragment, and a hint or error was also
   listed in `aria-describedby`.
 - **Base.** `base.css` shows a pointer on a disclosure's summary and on a checkbox or a radio with
   the label that holds it, and the arrow on one that is unavailable. The label's pointer reads
@@ -202,10 +205,10 @@ styled too, as markup a page writes by hand.
 - **Sheets.** Every rule for these pieces, the resting look and the explainer's layout included,
   sits in one `:where()`, so a state wins over the resting look by its order in the sheet, and a
   page's own rule outside a layer wins over both.
-- **Tokens.** `--dk-measure` is 34rem, from 42rem, so a line of body text stays at 80 characters or
-  fewer, as WCAG 1.4.8 suggests. `--dk-text-code` is new, at 0.9em, so code sizes to the text around
-  it. The dark value of `--dk-control` is `#7d7d7d`, from `#7a7a7a`, so a control's edge inside an
-  info callout reaches 3 to 1 in the dark theme.
+- **Tokens.** `--dk-measure` is 34rem so a line of body text stays at 80 characters or fewer, as
+  WCAG 1.4.8 suggests. `--dk-text-code` is new, at 0.9em, so code sizes to the text around it. The
+  dark value of `--dk-control` is `#7d7d7d`, from `#7a7a7a`, so a control's edge inside an info
+  callout reaches 3 to 1 in the dark theme.
 
 ## 0.1.0-next.1
 
