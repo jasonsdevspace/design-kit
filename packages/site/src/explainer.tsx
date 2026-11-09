@@ -52,7 +52,7 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
         </p>
         <p>
             <a className="dk-button dk-button-accent" href={`${BASE}controls/`}>
-                See the controls
+                See every control
             </a>
         </p>
 

@@ -95,9 +95,9 @@ const Tests = ({ group, commit }: { readonly group: Group; readonly commit: stri
             <span className="dk-visually-hidden">{`What the tests check, ${group}`}</span>
         </summary>
         <p>
-            These are the kit&rsquo;s own tests for this part, named exactly as the test runner
-            prints them. They are the tests in the repository when this page was built, which can be
-            newer than the published version drawn above. Each file name opens that file as it was
+            These are the kit&rsquo;s own tests for this part, named as the test runner prints them.
+            They come from the repository as it was when this page was built, so they can be newer
+            than the published version shown on this page. Each file name opens that file as it was
             then.
         </p>
         {HELD[group].map(({ file, titles }) => (
@@ -412,7 +412,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         </div>
         <section>
             <h2 id="in-the-kit">What is in the kit</h2>
-            <p>Every piece is shown live in your theme, beside a preview in the other.</p>
+            <p>Each page shows every piece in light and in dark.</p>
             <ul className="site-pages" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
@@ -420,7 +420,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                             {PREVIEWS[route.file]}
                         </span>
                         <a href={route.path}>{route.nav}</a>
-                        <p>{route.description}</p>
+                        <p>{route.card}</p>
                     </li>
                 ))}
             </ul>
@@ -430,7 +430,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
             <ul className="site-rules" role="list">
                 <li>
                     <RuleMark d="M12 3 5 6v5c0 4.4 3 8.4 7 9.5 4-1.1 7-5.1 7-9.5V6l-7-3Zm-1.2 12.2-3-3 1.4-1.4 1.6 1.6 4-4 1.4 1.4-5.4 5.4Z" />
-                    <h3>Works under a strict policy</h3>
+                    <h3>Works under a strict security policy</h3>
                     <p>
                         Its styles are plain files and its components add no inline styles, so it
                         works on a page whose security policy refuses any style the site did not
@@ -443,17 +443,17 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     <h3>Both themes, measured</h3>
                     <p>
                         Text passes 4.5 to 1 on every ground it is meant for, and the edge of a
-                        control 3 to 1, in light and in dark. The kit&rsquo;s own test holds each
+                        control 3 to 1, in light and in dark. The kit&rsquo;s own test checks each
                         pairing before a version is released.
                     </p>
                 </li>
                 <li>
                     <RuleMark d="M4 6h16v2H4V6Zm0 5h10v2H4v-2Zm0 5h7v2H4v-2Zm13-2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" />
-                    <h3>State from the attribute a screen reader reads</h3>
+                    <h3>What you see matches what a screen reader says</h3>
                     <p>
                         A toggle, an open panel, a control that is unavailable and a field with an
-                        error are drawn from the attributes a screen reader already reads, so what
-                        you see and what it says come from one place.
+                        error each get their look from what a screen reader already announces, so
+                        what you see and what it says come from one place.
                     </p>
                 </li>
             </ul>
@@ -474,7 +474,7 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
 );
 
 /**
- * One state of a control, in one card: its name as a heading and the attribute that draws it at
+ * One state of a control, in one card: its name as a heading and the code that draws it at
  * the top, then its copies, and its code at the foot. The state is drawn live in the visitor's
  * theme and again in the other theme beside it. The other copy is inert, so the keyboard and a
  * screen reader pass over it, and its ids are its own, so the page never holds one twice. The live
@@ -547,7 +547,7 @@ const StateShown = ({
 
 /**
  * Each control under its own heading, with each of its states, its two copies side by side, or one
- * above the other at the column's full width where `wide` is set, and then the tests that hold it.
+ * above the other at the column's full width where `wide` is set, and then the tests that check it.
  */
 const Shown = ({
     controls,
@@ -583,17 +583,13 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         build={build}
         current="controls/index.html"
         title="Controls"
-        lead={
-            <>
-                Each state of the kit&rsquo;s buttons, fields and callouts is drawn twice: live in
-                your theme, marked Live, and as a preview in the other theme. To try the other
-                theme, choose it under Theme in the strip. Each state&rsquo;s card names the
-                attribute that draws it. A toggle, an open panel, a control that is unavailable and
-                a field with an error each come from the attribute a screen reader already reads,
-                never from a class of the kit&rsquo;s. So what you see and what a screen reader says
-                come from one place. A kind of control, such as the one action a view leads with or
-                a callout&rsquo;s tone, comes from a class instead.
-            </>
+        lead={<>The kit&rsquo;s buttons, fields and callouts, in each state they can be in.</>}
+        intro={
+            <p>
+                Each state is shown twice: live in your theme, marked Live, and as a preview in the
+                other. Each card names the code that draws it. To see the other theme live, press
+                Light or Dark in the strip&rsquo;s Theme switch.
+            </p>
         }
         sections={listed(CONTROLS.map(({ name }) => name))}
     >
@@ -615,17 +611,17 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         title="Page chrome"
         lead={
             <>
-                Page chrome is what a demo draws around its content: the skip link, the strip across
-                the top that says whose demo it is, and the footer. With it a visitor finds the same
-                links in the same places on each demo built with the kit. The chrome around this
-                page is the kit&rsquo;s own, drawn by its components as a demo draws it.
+                Page chrome is the frame a demo draws around its content: the skip link, the strip
+                across the top that says whose demo it is, and the footer. It puts the same links in
+                the same places on every demo built with the kit.
             </>
         }
         intro={
             <p>
-                Under Strip and Footer, each state is drawn again in your theme and in the other, as
-                pictures the keyboard and a screen reader pass over. A second live strip would give
-                this page a second portfolio menu, and a screen reader would list both.
+                The frame around this page is the kit&rsquo;s own. Each state of the strip and the
+                footer is shown as a picture in both themes, since a second working strip would give
+                this page two portfolio menus. To try the real ones in the other theme, press Light
+                or Dark in the strip&rsquo;s Theme switch.
             </p>
         }
         sections={listed([SKIP_LINK, ...CHROME.map(({ name }) => name)])}
@@ -651,19 +647,18 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
         title="Explainer pieces"
         lead={
             <>
-                The pieces of the page that says how a demo works, the one the strip&rsquo;s
-                &ldquo;How it works&rdquo; link leads to. A demo writes them by hand in HTML, since
-                none of them does anything a component would have to handle, and the kit&rsquo;s
-                stylesheet styles them.
+                An explainer is the page that says how a demo works, the one the strip&rsquo;s
+                &ldquo;How it works&rdquo; link opens. These are its layout and its pieces: steps,
+                panels, tables and code blocks.
             </>
         }
         intro={
             <p>
-                Steps, panels, tables and code blocks are each drawn twice: live in your theme,
-                marked Live, and as a preview in the other theme, with the attribute that draws them
-                above both. To try the other theme, choose it under Theme in the strip. The
-                explainer&rsquo;s layout is drawn as a picture in both themes, since it opens with
-                the page&rsquo;s main heading and this page already has one.
+                Each is shown twice: live in your theme, marked Live, and as a preview in the other.
+                Each card names the code that draws it. To see the other theme live, press Light or
+                Dark in the strip&rsquo;s Theme switch. The layout of a whole explainer is shown as
+                a picture in both themes, since it opens with a main heading of its own and this
+                page already has one.
             </p>
         }
         sections={listed(EXPLAINER.map(({ name }) => name))}
@@ -699,26 +694,28 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             title="Tokens and theme"
             lead={
                 <>
-                    The kit&rsquo;s tokens are the named colors and sizes every demo is drawn from.
-                    Each is a custom property under the <code>--dk-</code> prefix, so a page that
-                    loads the kit beside its own styles keeps its own names. A demo with its own
-                    palette sets the color roles again on its root, both themes at once.
+                    Tokens are the named colors and sizes every demo is drawn from. This page shows
+                    each color in both themes, the contrast of each pairing it is meant for, every
+                    size, and how a page picks its theme.
                 </>
             }
-            sections={[
-                { name: 'Color', id: 'color' },
-                { name: 'Contrast', id: 'contrast' },
-                { name: 'Scale', id: 'scale' },
-                { name: 'How the theme is chosen', id: 'theme' },
-            ]}
+            intro={
+                <p>
+                    The colors and the contrast table show both themes whatever theme you are in.
+                    Every name starts with <code>--dk-</code>, so the kit&rsquo;s names never clash
+                    with a demo&rsquo;s own.
+                </p>
+            }
+            sections={TOKEN_SECTIONS}
         >
             <section>
                 <TokenHeading id="color" />
                 <p>
-                    Each role holds its light and its dark value in one <code>light-dark()</code>.
-                    It picks a value by the color scheme of the element it is drawn on. So each card
-                    draws its light swatch on the left and its dark swatch on the right, whatever
-                    theme the page is in.
+                    Each color has a role, such as text or the page itself, and a light and a dark
+                    value. Each card shows its light value on the left and its dark value on the
+                    right, whatever theme the page is in. In CSS both values sit in one{' '}
+                    <code>light-dark()</code>, and a demo with its own palette sets them again on
+                    its root, both themes at once.
                 </p>
                 <Colors declared={declared} />
                 <Tests group="Color" commit={build.commit} />
@@ -730,7 +727,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     passes 4.5 to 1 on every ground it is meant for, and the edge of a control 3 to
                     1, in both themes, as the web&rsquo;s accessibility guidelines, WCAG, ask. These
                     are measured from the tokens of the version this page uses, rounded down, and
-                    the kit&rsquo;s own test holds each one before a version is released. The table
+                    the kit&rsquo;s own test checks each one before a version is released. The table
                     lists first the pairings with the least to spare. Each bar runs to 21 to 1, the
                     most two colors can have, with a mark where the pairing&rsquo;s need falls.
                 </p>
@@ -740,10 +737,10 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             <section>
                 <TokenHeading id="scale" />
                 <p>
-                    Sizes that should grow with a reader&rsquo;s own text size are in rem, code set
-                    in running text is in em, and a border, the focus ring and a shadow are in px,
-                    since they must not grow with the text. Each step of the spacing scale is drawn
-                    to size.
+                    Sizes that should grow when a reader makes their text bigger are in rem. Code
+                    inside a sentence is in em, so it matches the words around it. Borders, the
+                    focus ring and shadows are in px, since they should stay the same size. Each
+                    step of the spacing scale is drawn to size.
                 </p>
                 <Spaces declared={declared} />
                 <Scale declared={declared} />
@@ -752,15 +749,13 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             <section>
                 <TokenHeading id="theme" />
                 <p>
-                    The kit&rsquo;s theme script runs inline in a page&rsquo;s head, before anything
-                    is drawn, so a page never flashes the other theme. It sets{' '}
-                    <code>data-theme</code> on the root to the theme the visitor saved under the key{' '}
-                    <code>theme</code>. When nothing usable is saved, as when System is chosen, it
-                    follows the system&rsquo;s theme as it changes. A choice made in another tab
-                    reaches this one too. Every demo served from jasonsdevspace.com reads the same
-                    saved theme, and this page does too. With scripts on, the switch at the top of
-                    each page of this site saves your choice under that key, in the same words the
-                    portfolio&rsquo;s switch uses, so a choice made on either holds on both.
+                    The kit&rsquo;s theme script runs before anything is drawn, so a page never
+                    flashes the wrong theme. It uses the theme you saved, or follows your system
+                    when you choose System or have saved nothing. A choice made in another tab
+                    reaches this one too. Every demo on jasonsdevspace.com, this site included,
+                    reads the same saved choice, so a theme picked here holds on the portfolio and
+                    the other way round. With scripts on, the Theme switch in the strip saves your
+                    choice the same way the portfolio&rsquo;s switch does.
                 </p>
                 <Tests group="How the theme is chosen" commit={build.commit} />
             </section>
