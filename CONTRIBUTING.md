@@ -7,7 +7,7 @@ conduct](https://github.com/jasonsdevspace/.github/blob/main/CODE_OF_CONDUCT.md)
 ## Setting up and running the checks
 
 [Dev setup](README.md#dev-setup) in the README says how to install and what each check covers.
-Before a pull request, run the checks CI runs:
+Before a pull request, run these checks, which CI runs too:
 
 ```bash
 npm run verify
@@ -18,15 +18,18 @@ npm run lighthouse
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
 `npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
 time. `npm run lighthouse` builds the site and audits every page. A change to a piece's markup also
-needs `npm run examples`, which writes the blocks the package README prints from the examples.
+needs `npm run examples`, which writes the blocks the package README prints from the examples. CI
+also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
+describes.
 
 ## Writing
 
-Every file and message is held to one style, which the prose check and the commit message check
-enforce: no em dashes, no semicolons joining clauses, American spelling, and no notes about the
-process, such as a list of what is left to do, in anything a reader sees. A commit message says what
-changed and why in a plain sentence, and names the work rather than whatever tool wrote it. The
-commit message check runs as a hook when `npm ci` installs it, and again in CI.
+Every file is held to one style, which the prose check enforces: no em dashes, no semicolons joining
+clauses, American spelling, no issue numbers in comments, and no notes about the process, such as a
+list of what is left to do, in anything a reader sees. A commit message says what changed and why in
+plain sentences, with no em dash or semicolon, and names the work rather than whatever tool wrote it,
+which the commit message check enforces. Installing with `npm ci` sets that check up as a hook on
+each commit, and CI runs it on a pull request's title and body.
 
 ## Issues
 
@@ -36,9 +39,10 @@ test or a look can check. A bug says what happens, what should happen and how to
 
 ## Pull requests
 
-A pull request follows the template. Its title becomes the commit on main, since pull requests are
-squashed, so it is checked as a commit message is, and its body says what changed and why and ends
-with "Closes #N" or "Part of #N". Every check in CI passes before a pull request is merged, the
+A pull request follows the template. Pull requests are squashed, so the title becomes the commit on
+main, and the title and the body both pass the commit message check. The body says what changed and
+why, with no counts, no checklist and no notes to the reviewer, and ends with "Closes #N", or "Part
+of #N" when the issue has more to do. Every check in CI passes before a pull request is merged, the
 browser tests and the Lighthouse audit among them.
 
 ## Security and accessibility
