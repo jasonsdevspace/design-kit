@@ -89,6 +89,8 @@
         --dk-radius-small: 0.25rem;
         --dk-radius: 0.375rem;
         --dk-radius-large: 0.5rem;
+        /* Round ends on a box of any height, for a tab or a tag, held at any text size. */
+        --dk-radius-pill: 999px;
 
         /* The one focus ring every control draws, in the accent. */
         --dk-ring-width: 2px;
