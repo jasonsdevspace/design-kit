@@ -1,7 +1,7 @@
 {
     "recorded": {
         "date": "2026-11-09",
-        "commit": "cc3f409",
+        "commit": "52b8926",
         "machine": "Apple M2 Max, 12 cores",
         "node": "v24.22.2"
     },
@@ -15,7 +15,7 @@
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 909.3,
+            "paint": 908,
             "shift": 0,
             "bytes": 12893,
             "requests": 3
@@ -24,7 +24,7 @@
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 913.8,
+            "paint": 914,
             "shift": 0,
             "bytes": 15887,
             "requests": 3
@@ -33,36 +33,36 @@
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 913.2,
+            "paint": 912.9,
             "shift": 0,
-            "bytes": 16238,
+            "bytes": 16239,
             "requests": 3
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.7,
+            "paint": 911.3,
             "shift": 0,
-            "bytes": 14084,
+            "bytes": 14087,
             "requests": 3
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.6,
+            "paint": 911.7,
             "shift": 0,
-            "bytes": 14341,
+            "bytes": 14340,
             "requests": 3
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 907.8,
+            "paint": 908.2,
             "shift": 0,
-            "bytes": 13614,
+            "bytes": 13613,
             "requests": 3
         }
     ]
