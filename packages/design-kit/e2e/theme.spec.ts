@@ -4,9 +4,10 @@ import { THEME_KEY, themeScript } from '../src/theme.js';
 
 /*
  * The theme script as a visitor's browser runs it: the theme the portfolio saved, or the system's
- * when nothing usable is saved, set on the root before anything paints, and again when the
- * system's changes or the portfolio saves a choice in another tab. The page is served from an
- * origin of its own, so the script has a real localStorage to read, shared by every tab.
+ * when nothing usable is saved, set on the root before anything paints, and again when the system's
+ * changes, the portfolio saves a choice in another tab, or the browser restores the page from its
+ * cache. The page is served from an origin of its own, so the script has a real localStorage to
+ * read, shared by every tab.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -93,6 +94,26 @@ test('takes a choice the portfolio saves in another tab', async ({ browser }) =>
     // Cleared there, which another tab hears as a storage event with no key.
     await portfolio.evaluate(() => localStorage.clear());
     await expect.poll(() => themeOf(demo)).toBe('light');
+    await context.close();
+});
+
+test('draws the theme saved now when the browser restores the page from its cache', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const demo = await savedThen(context, 'light');
+    // Saved while the page was frozen in the cache, so it heard no storage event, then restored.
+    await demo.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    }, THEME_KEY);
+    expect(await themeOf(demo)).toBe('dark');
+    // A first load, not a restore, sets nothing again.
+    await demo.evaluate((key) => {
+        localStorage.setItem(key, 'light');
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    }, THEME_KEY);
+    expect(await themeOf(demo)).toBe('dark');
     await context.close();
 });
 

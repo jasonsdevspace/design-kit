@@ -27,11 +27,12 @@ for a Content Security Policy.
 
 ## Decision
 
-Option C. The script runs inline in the head, before the body is parsed. It sets `data-theme` to
-the theme saved, or to the system's when nothing usable is saved, and sets it again when the
-system's changes or the portfolio saves or clears a choice in another tab. A page built with Vite
-asks for it with `<!-- theme-script -->`, and a page built otherwise writes `themeScript` into its
-head itself.
+Option C. The script runs inline in the head, before the body is parsed. It sets `data-theme` to the
+theme saved, or to the system's when nothing usable is saved, and sets it again when the system's
+changes, when the portfolio saves or clears a choice in another tab, and when the browser restores
+the page from its back and forward cache, where a page hears no storage event. Print always draws
+the light values. A page built with Vite asks for it with `<!-- theme-script -->`, and a page built
+otherwise writes `themeScript` into its head itself.
 
 ## Consequences
 
@@ -62,8 +63,10 @@ The paths are in `packages/design-kit`.
   page with no placeholder and for one with two, and the hash matching the script as the plugin
   writes it.
 - `e2e/theme.spec.ts` serves the page from an origin of its own in Chromium and finds the saved
-  theme drawn whatever the system, the system followed when nothing, `system` or an unknown value
-  is saved and when storage is refused, the theme set before the body is parsed, the system
-  followed as it changes, a choice saved or cleared in another tab taken up, and light or the saved
-  theme drawn, and a choice from another tab still heard, where `matchMedia` is missing, throws,
-  answers with `addListener` alone or gives a `matches` that throws.
+  theme drawn whatever the system, the system followed when nothing, `system` or an unknown value is
+  saved and when storage is refused, the theme set before the body is parsed, the system followed as
+  it changes, a choice saved or cleared in another tab taken up, the theme saved meanwhile drawn
+  when the page is restored from the cache, and light or the saved theme drawn, and a choice from
+  another tab still heard, where `matchMedia` is missing, throws, answers with `addListener` alone
+  or gives a `matches` that throws. `e2e/chrome.spec.tsx` prints a page in the dark theme and finds
+  the light text.

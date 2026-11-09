@@ -5,8 +5,9 @@
  *
  * Each color role holds its light and its dark value in one light-dark(), which picks by the color
  * scheme of the element it is drawn on. The scheme follows data-theme on the root when a page sets
- * it, as the portfolio does with the theme a visitor saved, and the system's otherwise. A demo with
- * its own palette sets the roles again on its root, both values at once.
+ * it, as the portfolio does with the theme a visitor saved, and the system's otherwise. In print it
+ * is light, whatever the theme. A demo with its own palette sets the roles again on its root, both
+ * values at once.
  *
  * Every rule in the kit sits in one of its layers, declared here in order, so a page's own rule
  * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
@@ -130,5 +131,15 @@
 
     :where(:root[data-theme='dark']) {
         color-scheme: dark;
+    }
+
+    /*
+     * Paper is light whatever the theme, and the browser drops backgrounds when it prints, so a
+     * page prints the light values rather than the dark theme's pale text.
+     */
+    @media print {
+        :where(:root) {
+            color-scheme: light;
+        }
     }
 }

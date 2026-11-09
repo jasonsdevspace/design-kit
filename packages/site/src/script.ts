@@ -150,9 +150,12 @@ if (room && section) {
         if (event.key === null || event.key === THEME_KEY) catchUp();
     });
     // A page brought back from the browser's back and forward cache heard nothing while it was
-    // away.
+    // away. The theme script has drawn from storage again, so where the browser refuses storage
+    // the choice held here is drawn again after it.
     window.addEventListener('pageshow', (event) => {
-        if (event.persisted) catchUp();
+        if (!event.persisted) return;
+        if (heldHere) draw(chosen);
+        else catchUp();
     });
     // When the system's theme changes the theme script draws again from storage, and where the
     // browser refuses storage it draws the system's over a choice it cannot know of, so the choice

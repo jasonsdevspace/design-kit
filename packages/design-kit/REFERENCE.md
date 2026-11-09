@@ -740,9 +740,12 @@ The portfolio saves a visitor's theme in `localStorage` under `theme`, and the s
 | `light` or `dark`                                    | the same                                                      |
 | `system`, nothing, another value, or storage refused | the system's scheme, or `light` where the browser cannot tell |
 
-It sets the theme again when the system's scheme changes, and when another tab saves or clears a
-choice. Storage belongs to an origin, so only a page on the portfolio's origin reads the visitor's
-choice, and anywhere else follows the system.
+It sets the theme again when the system's scheme changes, when another tab saves or clears a choice,
+and when the browser restores the page from its back and forward cache. Storage belongs to an
+origin, so only a page on the portfolio's origin reads the visitor's choice, and anywhere else
+follows the system. Print always draws the light values, whatever the theme, since paper is light
+and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
+layer sets them back to light in print too.
 
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed

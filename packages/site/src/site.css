@@ -1271,3 +1271,14 @@ body > .dk-strip .dk-strip-tools {
         order: -1;
     }
 }
+
+/*
+ * Paper is light whatever the theme, as the kit prints it, so the copy in the other theme prints
+ * light too rather than in pale text on a background the browser drops.
+ */
+@media print {
+    :root[data-theme] .site-other,
+    :root:not([data-theme]) .site-other {
+        color-scheme: light;
+    }
+}
