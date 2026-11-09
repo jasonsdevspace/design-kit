@@ -7,7 +7,9 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
-## Unreleased
+## 0.1.0-next.6
+
+The kit gives its browser floor to a page's build, so a page that takes it keeps each `light-dark()` as written and moves with the kit when the kit raises its floor.
 
 - **Vite.** `@jasonsdevspace/design-kit/vite` exports `browserFloor()`, the kit's browser floor of
   Chrome and Edge 123, Firefox 120 and Safari 17.5 as a build target for `build.target`, and
