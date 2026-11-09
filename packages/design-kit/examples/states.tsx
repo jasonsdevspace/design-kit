@@ -189,7 +189,7 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'A select waiting for a choice',
+                name: 'A drop-down waiting for a choice',
                 attribute: 'class="dk-select"',
                 react: `<SelectField id="sort" label="Sort by">
     <option value="">Choose an order</option>
@@ -209,7 +209,7 @@ export const CONTROLS: readonly Control[] = [
         laidOut: true,
         states: [
             {
-                name: 'News',
+                name: 'Something to know',
                 attribute: 'class="dk-callout"',
                 react: `<Callout title="The catalog was updated">
     <p>New products are in the results.</p>

@@ -39,9 +39,9 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
     <>
         <h1>How the design kit works</h1>
         <p className="dk-explainer-lead">
-            The design kit is one package made for the demos on jasonsdevspace.com to share: their
+            The design kit is one package the demos on jasonsdevspace.com share. It holds their
             colors and type, the theme a visitor chose, the links around each page, the buttons,
-            fields and messages, and the page that explains each demo. ShelfLens is built on it. A
+            fields and callouts, and the page that explains each demo. ShelfLens is built on it. A
             fix to a button is made once, and reaches every demo that installs the version with it.
         </p>
         <p>
@@ -74,7 +74,7 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                     Its type and colors, one focus ring for every link and control, and less motion
                     if you ask your system for it.
                 </Step>
-                <Step title="Each control is drawn from what it already says.">
+                <Step title="Each control looks like what it tells a screen reader.">
                     A pressed button looks pressed because of the attribute a screen reader reads as
                     pressed, so what you see and what you hear come from one place.
                 </Step>
@@ -111,10 +111,10 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 outweigh it to change anything. Here every value the kit names starts with{' '}
                 <code>--dk-</code> and every class with <code>dk-</code>, so a demo keeps its own
                 names. Every rule sits in a layer of the kit&rsquo;s, so a demo&rsquo;s own styles
-                outside a layer win whatever their selectors, and a demo with layers of its own
-                names where the kit&rsquo;s go. The one exception is the kit&rsquo;s rule for a
-                visitor who asks for less motion, which holds over a demo&rsquo;s ordinary styles. A
-                test fails if a rule slips out of its layer.
+                outside a layer win whatever their selectors. A demo with layers of its own chooses
+                where the kit&rsquo;s layer sits among them. The one exception is the kit&rsquo;s
+                rule for a visitor who asks for less motion, which holds over a demo&rsquo;s
+                ordinary styles. A test fails if a rule slips out of its layer.
             </p>
 
             <h3>A state you can see but not hear</h3>
@@ -122,8 +122,8 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 A class such as &ldquo;active&rdquo; can make a button look pressed while a screen
                 reader hears an ordinary button. Here pressed, open, invalid and unavailable are
                 each drawn from the attribute a screen reader reads. A button the kit marks
-                unavailable can still be reached with the keyboard, so someone using one can land on
-                it and read the words beside it that say why.{' '}
+                unavailable can still be reached with the keyboard, so a keyboard user lands on it
+                and hears the words beside it that say why.{' '}
                 <a href={`${BASE}controls/#buttons`}>Each state of the buttons</a>.
             </p>
 
@@ -140,8 +140,8 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <h3>Colors that fail in the dark</h3>
             <p>
                 A palette checked in the light theme alone can leave text too faint to read in the
-                dark. Here each pairing the palette is meant for, text on every ground it sits on
-                and the edge of every control, is measured in both themes. Every change and every
+                dark theme. Here each pairing the palette is meant for, text on every ground it sits
+                on and the edge of every control, is measured in both themes. Every change and every
                 release has to pass that test.{' '}
                 <a href={`${BASE}tokens/#contrast`}>The contrast of every pairing</a>.
             </p>
@@ -149,9 +149,11 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <h3>Docs that drift from the code</h3>
             <p>
                 Examples written by hand stop matching the code a release or two later. Here each
-                block of markup in the kit&rsquo;s reference is written from the examples the
-                browser tests draw, and a test fails when a block differs from what its example
-                draws. This site draws the version on npm, so what you see is what a demo installs.
+                block of markup in the kit&rsquo;s{' '}
+                <a href={`${builtAt(commit)}/packages/design-kit/REFERENCE.md`}>reference</a> is
+                written from the examples the browser tests draw, and a test fails when a block
+                differs from what its example draws. This site is built from the version on npm, so
+                what you see is what a demo installs.
             </p>
         </section>
 
@@ -172,8 +174,8 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                 , and each version is staged from a tag and goes live when it is promoted. It needs
                 Chrome or Edge 123, Firefox 120 or Safari 17.5, or later, the first versions that
                 draw <code>light-dark()</code>. This site is built with Vite and React&rsquo;s
-                static render, and its only scripts are the theme script and its own, for the theme
-                switch and the copy buttons.
+                static render, and its only scripts are the theme script and one of its own, for the
+                theme switch, the copy buttons and the live examples.
             </p>
             <p>
                 The <a href={`${builtAt(commit)}#readme`}>README</a> is the case study, and the{' '}

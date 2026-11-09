@@ -189,7 +189,7 @@ export const code: State = {
 
 export const EXPLAINER: readonly Control[] = [
     {
-        name: 'The page',
+        name: 'The layout',
         pictured: true,
         states: [
             {

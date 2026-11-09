@@ -216,7 +216,7 @@ export const HELD = {
         },
         { file: 'e2e/explainer.spec.tsx', titles: STRIP_AND_FOOTER.explainer },
     ],
-    'The page': [
+    'The layout': [
         {
             file: 'e2e/explainer.spec.tsx',
             titles: [

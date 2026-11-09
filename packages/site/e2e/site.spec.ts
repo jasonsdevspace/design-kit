@@ -242,7 +242,7 @@ test.describe('the landing page', () => {
         await page.goto(BASE);
         const main = page.getByRole('main');
         await expect(main.getByRole('heading', { level: 1 })).toHaveText(
-            'One set of colors, type and controls for every demo'
+            'One set of colors, type and controls for the demos'
         );
         await expect(main.locator('.site-lead')).toBeVisible();
         await expect(main.getByRole('link', { name: 'See every control' })).toHaveAttribute(
@@ -300,7 +300,7 @@ test.describe('the landing page', () => {
     test("draws the kit's controls in light and in dark, beside the heading", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto(BASE);
-        const demo = page.getByRole('figure', { name: /in light and in dark/ });
+        const demo = page.getByRole('figure', { name: /in the light and dark themes/ });
         await expect(demo).toBeVisible();
         // It says it is a picture, and where the controls can be tried.
         await expect(demo.locator('figcaption')).toBeVisible();
@@ -373,7 +373,7 @@ test.describe('the landing page', () => {
             await page.goto('/design-kit/');
             const sentence = page.locator('body > .dk-footer > p').first();
             const line = page.locator('body > .dk-footer > .dk-footer-aside');
-            await expect(line).toContainText('Uses version');
+            await expect(line).toContainText('This site uses version');
             await expect(line.getByRole('link')).toHaveAttribute('href', /\/commit\/[0-9a-f]{7,}$/);
             const [drawn, own] = await Promise.all([sentence.boundingBox(), line.boundingBox()]);
             if (!drawn || !own) throw new Error('expected the footer to be drawn');
@@ -390,11 +390,14 @@ test.describe('the landing page', () => {
     test('says what the kit is built to', async ({ page }) => {
         await page.goto(BASE);
         const section = page.locator('main > section', {
-            has: page.getByRole('heading', { level: 2, name: 'Built to the demos’ rules' }),
+            has: page.getByRole('heading', {
+                level: 2,
+                name: 'Built for strict security, contrast and screen readers',
+            }),
         });
         await expect(section.getByRole('heading', { level: 3 })).toHaveText([
             'Works under a strict security policy',
-            'Both themes, measured',
+            'Readable in both themes',
             'What you see matches what a screen reader says',
         ]);
     });
@@ -405,7 +408,7 @@ test.describe('the words each page opens with', () => {
     const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
     const OPENED = CARDED.map(({ path }) => path);
     /** The one way every page says how to see the other theme. */
-    const SWITCH = 'press Light or Dark in the strip’s Theme switch';
+    const SWITCH = 'choose Light or Dark next to Theme, at the top of the page';
 
     test('opens each page with what it holds in one or two sentences, and no reasons', async ({
         page,

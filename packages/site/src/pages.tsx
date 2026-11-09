@@ -95,10 +95,10 @@ const Tests = ({ group, commit }: { readonly group: Group; readonly commit: stri
             <span className="dk-visually-hidden">{`What the tests check, ${group}`}</span>
         </summary>
         <p>
-            These are the kit&rsquo;s own tests for this part, named as the test runner prints them.
-            They come from the repository as it was when this page was built, so they can be newer
-            than the published version shown on this page. Each file name opens that file as it was
-            then.
+            These are the design kit&rsquo;s own tests for this part, named as the test runner
+            prints them. They come from the source on GitHub as it was when this page was built, so
+            they can be newer than the version named in the footer. Each file name opens that file
+            as it was then.
         </p>
         {HELD[group].map(({ file, titles }) => (
             <Fragment key={file}>
@@ -136,7 +136,7 @@ const SiteFooter = ({
         current={current}
         aside={
             <>
-                Uses version {build.version} of the kit from npm. Built at commit{' '}
+                This site uses version {build.version} of the design kit, from npm. Built at commit{' '}
                 <a href={`${SOURCE}/commit/${build.commit}`}>
                     <code>{build.commit.slice(0, 7)}</code>
                 </a>
@@ -391,10 +391,11 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                 <p className="site-eyebrow">
                     <a href={`${NPM}/v/${build.version}`}>Version {build.version} on npm</a>
                 </p>
-                <h1>One set of colors, type and controls for every demo</h1>
+                <h1>One set of colors, type and controls for the demos</h1>
                 <p className="site-lead">
-                    Made for the demos on jasonsdevspace.com, so they read as one body of work and a
-                    fix to a button is made once. ShelfLens is built on it.
+                    The design kit is one package the demos on jasonsdevspace.com share, so they
+                    read as one body of work and a fix to a button is made once. ShelfLens is built
+                    on it.
                 </p>
                 <p className="site-actions">
                     <a className="dk-button dk-button-accent" href={CONTROLS_PAGE}>
@@ -411,15 +412,15 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     <HeroPanel theme="dark" />
                 </div>
                 <figcaption>
-                    A picture of the kit&rsquo;s buttons, a field and a callout, in light and in
-                    dark. Try them live under <a href={CONTROLS_PAGE}>Controls</a>.
+                    A picture of the design kit&rsquo;s buttons, a field and a callout, in the light
+                    and dark themes. Try them live under <a href={CONTROLS_PAGE}>Controls</a>.
                 </figcaption>
             </figure>
             <Install version={build.version} />
         </div>
         <section>
-            <h2 id="in-the-kit">What is in the kit</h2>
-            <p>Each page shows every piece in light and in dark.</p>
+            <h2 id="in-the-kit">What is in the design kit</h2>
+            <p>Each page shows every piece in the light and dark themes.</p>
             <ul className="site-pages" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
@@ -433,24 +434,25 @@ export const Landing = ({ build }: { readonly build: Build }) => (
             </ul>
         </section>
         <section>
-            <h2 id="built-to">Built to the demos&rsquo; rules</h2>
+            <h2 id="built-to">Built for strict security, contrast and screen readers</h2>
             <ul className="site-rules" role="list">
                 <li>
                     <RuleMark d="M12 3 5 6v5c0 4.4 3 8.4 7 9.5 4-1.1 7-5.1 7-9.5V6l-7-3Zm-1.2 12.2-3-3 1.4-1.4 1.6 1.6 4-4 1.4 1.4-5.4 5.4Z" />
                     <h3>Works under a strict security policy</h3>
                     <p>
-                        Its styles are plain files and its components add no inline styles, so it
-                        works on a page whose security policy refuses any style the site did not
-                        serve itself, as this one does. Its theme script runs inline, so a page that
-                        limits scripts allows it by the hash the kit gives.
+                        The kit&rsquo;s styles are plain files, and its components write no styles
+                        into the page. So it works where a page refuses any style it did not serve
+                        itself, as this site does. Its one inline script, the one that sets the
+                        theme, comes with the fingerprint a strict page lists to allow it.
                     </p>
                 </li>
                 <li>
                     <RuleMark d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 2v14a7 7 0 0 1 0-14Z" />
-                    <h3>Both themes, measured</h3>
+                    <h3>Readable in both themes</h3>
                     <p>
-                        Text passes 4.5 to 1 on every ground it is meant for, and the edge of a
-                        control 3 to 1, in light and in dark. The kit&rsquo;s own test checks each
+                        Text stands out from its background by at least the 4.5 to 1 contrast the
+                        web&rsquo;s accessibility guidelines ask for, and the edge of a control by 3
+                        to 1, in the light and dark themes. The kit&rsquo;s own test checks each
                         pairing before a version is released.
                     </p>
                 </li>
@@ -458,9 +460,9 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     <RuleMark d="M4 6h16v2H4V6Zm0 5h10v2H4v-2Zm0 5h7v2H4v-2Zm13-2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" />
                     <h3>What you see matches what a screen reader says</h3>
                     <p>
-                        A toggle, an open panel, a control that is unavailable and a field with an
-                        error each get their look from what a screen reader already announces, so
-                        what you see and what it says come from one place.
+                        A toggle, an open panel, an unavailable control and a field with an error
+                        each take their look from what a screen reader announces. So what you see
+                        and what it says come from one place.
                     </p>
                 </li>
             </ul>
@@ -511,7 +513,7 @@ const StateShown = ({
                 {state.name}
             </h3>
             <p className="site-state-attribute">
-                <span className="dk-visually-hidden">Drawn by </span>
+                <span className="dk-visually-hidden">Set by </span>
                 <code>{state.attribute}</code>
             </p>
         </div>
@@ -590,12 +592,14 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         build={build}
         current="controls/index.html"
         title="Controls"
-        lead={<>The kit&rsquo;s buttons, fields and callouts, in each state they can be in.</>}
+        lead={
+            <>The design kit&rsquo;s buttons, fields and callouts, in each state they can be in.</>
+        }
         intro={
             <p>
                 Each state is shown twice: live in your theme, marked Live, and as a preview in the
-                other. Each card names the code that draws it. To see the other theme live, press
-                Light or Dark in the strip&rsquo;s Theme switch.
+                other. Under each name is the code that sets that state. To see the other theme
+                live, choose Light or Dark next to Theme, at the top of the page.
             </p>
         }
         sections={listed(CONTROLS.map(({ name }) => name))}
@@ -620,15 +624,15 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
             <>
                 Page chrome is the frame a demo draws around its content: the skip link, the strip
                 across the top that says whose demo it is, and the footer. It puts the same links in
-                the same places on every demo built with the kit.
+                the same places on every demo built with the design kit.
             </>
         }
         intro={
             <p>
                 The frame around this page is the kit&rsquo;s own. Each state of the strip and the
                 footer is shown as a picture in both themes, since a second working strip would give
-                this page two portfolio menus. To try the real ones in the other theme, press Light
-                or Dark in the strip&rsquo;s Theme switch.
+                this page two portfolio menus. To try the real ones in the other theme, choose Light
+                or Dark next to Theme, at the top of the page.
             </p>
         }
         sections={listed([SKIP_LINK, ...CHROME.map(({ name }) => name)])}
@@ -636,9 +640,9 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         <section>
             <h2 id={idOf(SKIP_LINK)}>{SKIP_LINK}</h2>
             <p>
-                The skip link is the first thing the keyboard reaches, out of sight until then. Load
-                this page and press Tab to see it. Following it moves focus past the strip and the
-                site&rsquo;s own links to the page&rsquo;s main content.
+                The skip link is the first thing the keyboard reaches, out of sight until then.
+                Reload this page and press Tab to see it. Pressing Enter on it takes you past the
+                strip and the site&rsquo;s own links, straight to the page&rsquo;s main content.
             </p>
             <Tests group={SKIP_LINK} commit={build.commit} />
         </section>
@@ -662,10 +666,10 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
         intro={
             <p>
                 Each is shown twice: live in your theme, marked Live, and as a preview in the other.
-                Each card names the code that draws it. To see the other theme live, press Light or
-                Dark in the strip&rsquo;s Theme switch. The layout of a whole explainer is shown as
-                a picture in both themes, since it opens with a main heading of its own and this
-                page already has one.
+                Under each name is the code that sets it. To see the other theme live, choose Light
+                or Dark next to Theme, at the top of the page. The layout of a whole explainer is a
+                picture in both themes, since a live copy would give this page a second main
+                heading.
             </p>
         }
         sections={listed(EXPLAINER.map(({ name }) => name))}
@@ -701,9 +705,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             title="Tokens and theme"
             lead={
                 <>
-                    Tokens are the named colors and sizes every demo is drawn from. This page shows
-                    each color in both themes, the contrast of each pairing it is meant for, every
-                    size, and how a page picks its theme.
+                    Tokens are the named colors and sizes everything in the design kit is drawn
+                    from. This page shows each color in both themes, the contrast of each pairing it
+                    is meant for, every size, and how a page picks its theme.
                 </>
             }
             intro={
@@ -730,13 +734,14 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             <section>
                 <TokenHeading id="contrast" />
                 <p>
-                    Contrast is how far apart two colors are in brightness, written as a ratio. Text
-                    passes 4.5 to 1 on every ground it is meant for, and the edge of a control 3 to
-                    1, in both themes, as the web&rsquo;s accessibility guidelines, WCAG, ask. These
-                    are measured from the tokens of the version this page uses, rounded down, and
-                    the kit&rsquo;s own test checks each one before a version is released. The table
-                    lists first the pairings with the least to spare. Each bar runs to 21 to 1, the
-                    most two colors can have, with a mark where the pairing&rsquo;s need falls.
+                    Contrast is how far apart two colors are in brightness, written as a ratio. The
+                    web&rsquo;s accessibility guidelines, WCAG, ask for 4.5 to 1 between text and
+                    its background, and 3 to 1 for the edge of a control. Every pairing here meets
+                    that in both themes. The figures are measured from the tokens of the version
+                    this page uses and rounded down, and the kit&rsquo;s own test checks each one
+                    before a version is released. The pairings with the least to spare come first.
+                    Each bar runs to 21 to 1, the most two colors can have, with a mark at what the
+                    pairing needs.
                 </p>
                 <Contrast declared={declared} />
                 <Tests group="Contrast" commit={build.commit} />
@@ -746,9 +751,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Sizes that should grow when a reader makes their text bigger are in rem. Code
                     inside a sentence is in em, so it matches the words around it. Borders, the
-                    focus ring and shadows are in px, since they should stay the same size, and so
-                    is the pill radius, far larger than a tab or a tag could be tall. Each step of
-                    the spacing scale is drawn to size.
+                    focus ring and shadows are in px, since they should stay the same size. So is
+                    the pill radius, set far larger than any tab or tag is tall, so their ends are
+                    always fully round. Each step of the spacing scale is drawn to size.
                 </p>
                 <Spaces declared={declared} />
                 <Scale declared={declared} />
@@ -762,8 +767,8 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     when you choose System or have saved nothing. A choice made in another tab
                     reaches this one too. Every demo on jasonsdevspace.com, this site included,
                     reads the same saved choice, so a theme picked here holds on the portfolio and
-                    the other way round. With scripts on, the Theme switch in the strip saves your
-                    choice the same way the portfolio&rsquo;s switch does.
+                    the other way around. With scripts on, the Theme switch at the top of the page
+                    saves your choice.
                 </p>
                 <Tests group="How the theme is chosen" commit={build.commit} />
             </section>

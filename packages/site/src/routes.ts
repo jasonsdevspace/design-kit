@@ -24,14 +24,14 @@ export const ROUTES = [
         title: 'The design kit · Jason Poteet',
         nav: 'Home',
         description:
-            'A shared set of colors, type, buttons, fields and page layouts made for the demos on jasonsdevspace.com, shown in both themes.',
+            'The design kit: one set of colors, type, buttons, fields and page layouts for the demos on jasonsdevspace.com, shown in the light and dark themes.',
     },
     {
         file: 'tokens/index.html',
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens and theme',
-        card: 'Every color, its contrast, every size and how the theme is picked.',
+        card: 'Every color, its contrast, every size and how the theme is chosen.',
         description:
             'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
     },
@@ -49,7 +49,7 @@ export const ROUTES = [
         path: `${BASE}page-chrome/`,
         title: 'Page chrome · The design kit · Jason Poteet',
         nav: 'Page chrome',
-        card: 'Skip link, strip and footer that frame each demo.',
+        card: 'The skip link, top strip and footer around each demo.',
         description:
             'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the code that draws it.',
     },
@@ -58,9 +58,9 @@ export const ROUTES = [
         path: `${BASE}explainer-pieces/`,
         title: 'Explainer pieces · The design kit · Jason Poteet',
         nav: 'Explainer pieces',
-        card: 'The layout and the pieces of a demo explainer.',
+        card: 'The layout and parts of the page that explains a demo.',
         description:
-            'The layout, steps, panels, tables and code blocks of the page that says how a demo works, in both themes.',
+            'The layout, steps, panels, tables and code blocks the design kit gives the page that explains each demo, in both themes.',
     },
     {
         file: 'how-it-works/index.html',
