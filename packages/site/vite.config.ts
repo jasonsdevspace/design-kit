@@ -19,10 +19,22 @@ import { BASE, ROUTES } from './src/routes.js';
 
 const SITE = fileURLToPath(new URL('.', import.meta.url));
 
-/** Where a page asks for its body, its title and its description, and its policy's element. */
+/** Where a page asks for its body, title, description and icons, and its policy's element. */
 const PAGE = '<!-- page -->';
 const TITLE = '<!-- title -->';
 const DESCRIPTION = '<!-- description -->';
+const ICONS = '<!-- icons -->';
+
+/**
+ * The kit's icon, the same on every page: a 32px `.ico` for a browser that takes no SVG icon, the
+ * SVG, which follows the system's scheme, and a full square a phone rounds for its home screen.
+ * Each path is the site's own, which Vite gives the site's base.
+ */
+const ICON_LINKS = [
+    '<link rel="icon" href="/favicon.ico" sizes="32x32" />',
+    '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />',
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />',
+].join('\n        ');
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /**
@@ -109,7 +121,7 @@ const pagesPlugin = (): Plugin => ({
                 throw new Error(`the site has no page drawn from ${file}`);
             }
             if (
-                ![PAGE, TITLE, DESCRIPTION].every((place) => html.includes(place)) ||
+                ![PAGE, TITLE, DESCRIPTION, ICONS].every((place) => html.includes(place)) ||
                 !POLICY_META.test(html)
             ) {
                 throw new Error(`${file} needs a place for each part of its page`);
@@ -123,6 +135,7 @@ const pagesPlugin = (): Plugin => ({
                 .replace(POLICY_META, () => policy)
                 .replace(TITLE, () => escaped(route.title))
                 .replace(DESCRIPTION, () => escaped(route.description))
+                .replace(ICONS, () => ICON_LINKS)
                 .replace(PAGE, () => body);
         },
     },

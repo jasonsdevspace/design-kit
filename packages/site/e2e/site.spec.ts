@@ -837,6 +837,85 @@ test.describe('what the tests check', () => {
     });
 });
 
+test("gives every page the kit's icon, for a tab, a phone's home screen and a browser that takes no SVG icon", async ({
+    page,
+}) => {
+    const served = new Map<string, { type: string; body: Buffer }>();
+    for (const path of PAGES) {
+        await page.goto(path);
+        const icons = await page
+            .locator('head link[rel~="icon"], head link[rel="apple-touch-icon"]')
+            .evaluateAll((links) =>
+                links.map(
+                    (link) => [link.getAttribute('rel'), (link as HTMLLinkElement).href] as const
+                )
+            );
+        expect(
+            icons.map(([rel, href]) => `${rel ?? ''} ${new URL(href).pathname}`),
+            path
+        ).toEqual([
+            'icon /design-kit/favicon.ico',
+            'icon /design-kit/favicon.svg',
+            'apple-touch-icon /design-kit/apple-touch-icon.png',
+        ]);
+        for (const [, href] of icons) {
+            if (served.has(href)) continue;
+            const response = await page.request.get(href);
+            expect(response.status(), href).toBe(200);
+            served.set(href, {
+                type: (response.headers()['content-type'] ?? '').split(';')[0] ?? '',
+                body: await response.body(),
+            });
+        }
+    }
+    const file = (name: string) => {
+        const found = [...served].find(([href]) => new URL(href).pathname.endsWith(name));
+        expect(found, name).toBeDefined();
+        return found?.[1] ?? { type: '', body: Buffer.alloc(0) };
+    };
+    // The `.ico` holds one image of the size its link claims, its width and height a byte each.
+    const ico = file('/favicon.ico');
+    expect(ico.type).toBe('image/x-icon');
+    expect([ico.body.readUInt16LE(4), ico.body[6], ico.body[7]]).toEqual([1, 32, 32]);
+    const svg = file('/favicon.svg');
+    expect(svg.type).toBe('image/svg+xml');
+    expect(svg.body.toString('utf8')).toMatch(/^<svg [^>]*viewBox="0 0 32 32"/);
+    // A PNG gives its width and height first, after its signature and the header's length and name.
+    const touch = file('/apple-touch-icon.png');
+    expect(touch.type).toBe('image/png');
+    expect([touch.body.readUInt32BE(16), touch.body.readUInt32BE(20)]).toEqual([180, 180]);
+    // Both are drawn from the SVG in its light colors, so each one's ground, above the tiles, is
+    // the SVG's light accent. The `.ico`'s image is a PNG, at the offset its entry gives.
+    const accent = /\.ground\s*\{\s*fill:\s*#([0-9a-f]{6})/i.exec(svg.body.toString('utf8'))?.[1];
+    expect(accent, "the SVG's light accent").toBeDefined();
+    const ground = (png: Buffer, size: number) =>
+        page.evaluate(
+            async ({ data, x, y }) => {
+                const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+                const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+                const canvas = new OffscreenCanvas(image.width, image.height);
+                const context = canvas.getContext('2d');
+                context?.drawImage(image, 0, 0);
+                return [...(context?.getImageData(x, y, 1, 1).data.slice(0, 3) ?? [])];
+            },
+            { data: png.toString('base64'), x: size / 2, y: Math.round(size / 16) }
+        );
+    const rgb = Buffer.from(accent ?? '', 'hex');
+    const offset = ico.body.readUInt32LE(18);
+    for (const [name, pixel] of [
+        [
+            'favicon.ico',
+            await ground(ico.body.subarray(offset, offset + ico.body.readUInt32LE(14)), 32),
+        ],
+        ['apple-touch-icon.png', await ground(touch.body, 180)],
+    ] as const) {
+        expect(
+            pixel.every((value, at) => Math.abs(value - (rgb[at] ?? -9)) <= 2),
+            `${name} drawn in ${String(pixel)}, not the accent #${accent ?? ''}`
+        ).toBe(true);
+    }
+});
+
 test('every link within the site leads to one of its pages, and to an id on it', async ({
     page,
 }) => {
@@ -925,7 +1004,7 @@ test.describe("the site's header", () => {
     /** The pages in the site's menu, which open with the header, rather than the explainer's. */
     const MENU = ROUTES.filter(({ nav }) => nav !== null);
 
-    test('opens each page with the mark and the name, linked to the landing page', async ({
+    test("opens each page with the site's icon and the name, linked to the landing page", async ({
         page,
     }) => {
         for (const { path } of MENU) {
@@ -934,6 +1013,9 @@ test.describe("the site's header", () => {
             await expect(brand, path).toHaveAttribute('href', BASE);
             await expect(brand.locator('.site-mark'), path).toHaveAttribute('aria-hidden', 'true');
             await expect(brand.locator('.site-mark'), path).toBeVisible();
+            // The mark is the site's icon, drawn rather than written, so the name is all it reads.
+            await expect(brand.locator('.site-mark svg'), path).toBeVisible();
+            await expect(brand.locator('.site-mark'), path).toHaveText('');
         }
     });
 
