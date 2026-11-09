@@ -10,8 +10,8 @@ ships on npm as `@jasonsdevspace/design-kit`, and ShelfLens is built on it.
 [The full reference](packages/design-kit/README.md)
 
 - **A page's own styles win.** The kit never fights the page it sits in, so a demo can load it
-  beside the styles it already has. The one rule it holds over a page is the cut to motion for a
-  visitor who asks for less.
+  beside the styles it already has. The one thing it holds over a page is the reduced-motion rule,
+  for a visitor who asks for less.
 - **The theme never flashes.** A visitor's light or dark choice on the portfolio is set before a
   demo draws anything.
 - **Each promise has a test.** The default colors are measured for contrast in both themes, and
