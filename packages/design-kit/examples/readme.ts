@@ -16,6 +16,8 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'buttons',
     'fields',
     'callout',
+    'themeSwitch',
+    'copyButton',
     'steps',
     'panel',
     'table',

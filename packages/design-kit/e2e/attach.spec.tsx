@@ -1,0 +1,195 @@
+import { readFileSync } from 'node:fs';
+
+import { type BrowserContext, expect, type Page, test } from '@playwright/test';
+import { renderToStaticMarkup } from 'react-dom/server';
+import ts from 'typescript';
+
+import { CopyButton, CopyStatus, ThemeSwitch } from '../src/react.js';
+import { THEME_KEY, themeScript } from '../src/theme.js';
+import { themeScriptHash } from '../src/vite.js';
+
+/*
+ * The theme switch and the copy button as a page attaches them, served from an origin of its own
+ * under a policy that allows scripts only from that origin or by the theme script's hash and styles
+ * only from that origin: hidden with no script, showing the saved choice once attached, saving and
+ * drawing a new one, following another tab, holding a choice the browser will not save through a
+ * Back, attaching once however often it is asked, and copying, or selecting where the clipboard is
+ * refused, with the button and the status line saying which.
+ */
+
+const ORIGIN = 'https://kit.test';
+const POLICY = `default-src 'self'; script-src 'self' ${themeScriptHash}; style-src 'self'`;
+
+const js = (file: string) =>
+    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
+        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
+    }).outputText;
+const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
+
+const MARKUP = renderToStaticMarkup(
+    <main>
+        <h1>Controls</h1>
+        <ThemeSwitch />
+        <pre id="code">npm install @jasonsdevspace/design-kit</pre>
+        <CopyButton name="install command" />
+        <CopyStatus />
+    </main>
+);
+
+const ATTACH = `import { attachCopyButton, attachThemeSwitch } from './controls.js';
+const group = document.querySelector('.dk-theme-switch');
+attachThemeSwitch(group);
+attachThemeSwitch(group);
+attachCopyButton(document.querySelector('.dk-copy'), {
+    source: () => document.querySelector('#code'),
+    status: document.querySelector('[role="status"]'),
+});`;
+
+const page = (attach: boolean) =>
+    `<!doctype html><html lang="en"><head><title>Controls</title>` +
+    `<script>${themeScript}</script><link rel="stylesheet" href="/kit.css"></head><body>${MARKUP}` +
+    (attach ? '<script type="module" src="/page.js"></script>' : '') +
+    `</body></html>`;
+
+const FILES: Readonly<Record<string, readonly [string, string]>> = {
+    '/kit.css': [['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n'), 'text/css'],
+    '/controls.js': [js('controls.ts'), 'text/javascript'],
+    '/theme.js': [js('theme.ts'), 'text/javascript'],
+    '/page.js': [ATTACH, 'text/javascript'],
+};
+
+/** A tab on the test origin, every file served from memory under the policy. */
+const tab = async (context: BrowserContext, attach = true): Promise<Page> => {
+    await context.route(`${ORIGIN}/**`, (route) => {
+        const path = new URL(route.request().url()).pathname;
+        const [body, contentType] = FILES[path] ?? [page(attach), 'text/html'];
+        return route.fulfill({ body, contentType, headers: { 'content-security-policy': POLICY } });
+    });
+    const opened = await context.newPage();
+    await opened.goto(`${ORIGIN}/`);
+    return opened;
+};
+
+const themeOf = (opened: Page) =>
+    opened.evaluate(() => document.documentElement.getAttribute('data-theme'));
+
+test('keeps both controls hidden where no script attaches them', async ({ browser }) => {
+    const context = await browser.newContext();
+    const opened = await tab(context, false);
+    await expect(opened.getByRole('radiogroup', { name: 'Theme' })).toBeHidden();
+    await expect(opened.locator('.dk-copy')).toBeHidden();
+    await context.close();
+});
+
+test('shows the saved choice, then saves and draws a new one, with nothing the policy refuses', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    await context.addInitScript((key) => {
+        localStorage.setItem(key, 'dark');
+    }, THEME_KEY);
+    const refused: string[] = [];
+    context.on('console', (message) => {
+        if (/Content Security Policy/i.test(message.text())) refused.push(message.text());
+    });
+    const opened = await tab(context);
+    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    expect(await themeOf(opened)).toBe('dark');
+    await opened.getByRole('radio', { name: 'Light' }).check();
+    expect(await themeOf(opened)).toBe('light');
+    expect(await opened.evaluate((key) => localStorage.getItem(key), THEME_KEY)).toBe('light');
+    expect(refused).toEqual([]);
+    await context.close();
+});
+
+test('saves once a choice made on a switch attached twice', async ({ browser }) => {
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+        const set = localStorage.setItem.bind(localStorage);
+        Storage.prototype.setItem = (key: string, value: string) => {
+            (window as unknown as { saves: number }).saves =
+                ((window as unknown as { saves?: number }).saves ?? 0) + 1;
+            set(key, value);
+        };
+    });
+    const opened = await tab(context);
+    await opened.getByRole('radio', { name: 'Dark' }).check();
+    expect(await opened.evaluate(() => (window as unknown as { saves: number }).saves)).toBe(1);
+    await context.close();
+});
+
+test('follows a choice saved in another tab', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context);
+    const other = await context.newPage();
+    await other.goto(`${ORIGIN}/`);
+    await other.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+    }, THEME_KEY);
+    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    expect(await themeOf(opened)).toBe('dark');
+    await context.close();
+});
+
+test('holds a choice the browser will not save, through a page restored by Back', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    await context.addInitScript(() => {
+        Storage.prototype.setItem = () => {
+            throw new Error('refused');
+        };
+        Storage.prototype.getItem = () => {
+            throw new Error('refused');
+        };
+    });
+    const opened = await tab(context);
+    await opened.getByRole('radio', { name: 'Dark' }).check();
+    expect(await themeOf(opened)).toBe('dark');
+    // The theme script draws the system's light from storage it cannot read, then the switch's
+    // choice is drawn again after it.
+    await opened.evaluate(() => {
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    });
+    expect(await themeOf(opened)).toBe('dark');
+    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await context.close();
+});
+
+test('copies the source, says Copied on the button and the status line, then Copy again', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const opened = await tab(context);
+    const button = opened.locator('.dk-copy');
+    await expect(button).toHaveAccessibleName('Copy install command');
+    await button.click();
+    await expect(button).toHaveAccessibleName('Copied install command');
+    await expect(opened.getByRole('status')).toHaveText('Copied.');
+    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe(
+        'npm install @jasonsdevspace/design-kit'
+    );
+    await expect(button).toHaveAccessibleName('Copy install command', { timeout: 4000 });
+    await context.close();
+});
+
+test('selects the source where the clipboard is refused, and says how to copy it', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: () => Promise.reject(new Error('refused')) },
+        });
+    });
+    const opened = await tab(context);
+    const button = opened.locator('.dk-copy');
+    await button.click();
+    await expect(button).toHaveAccessibleName('Selected install command');
+    await expect(opened.getByRole('status')).toContainText('Selected.');
+    expect(await opened.evaluate(() => window.getSelection()?.toString())).toBe(
+        'npm install @jasonsdevspace/design-kit'
+    );
+    await context.close();
+});

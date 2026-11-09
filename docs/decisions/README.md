@@ -37,3 +37,7 @@ costs, and the test behind it.
     the theme switch, saved under the portfolio's key with the portfolio's values, in the room the
     strip keeps for it, and copy buttons for the code, with scripts allowed from the site's own path
     alone, and why React in the browser and a second inline script were turned down.
+13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
+    the theme switch and the copy button as markup from a component and a function a page calls on
+    it, from `./controls`, and why a stateful component and a script that builds the DOM were turned
+    down.

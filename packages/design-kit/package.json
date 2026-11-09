@@ -33,6 +33,10 @@
             "types": "./dist/theme.d.ts",
             "default": "./dist/theme.js"
         },
+        "./controls": {
+            "types": "./dist/controls.d.ts",
+            "default": "./dist/controls.js"
+        },
         "./react": {
             "types": "./dist/react.d.ts",
             "default": "./dist/react.js"
