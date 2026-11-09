@@ -366,33 +366,33 @@ test("runs the footer's rule the width of the page, with its text in the column"
     expect(text.width).toBeLessThanOrEqual(34 * 16);
 });
 
-test("puts a demo's own line beside the footer's sentence on a wide screen and under it on a phone", async ({
+test("puts a demo's own line beside the footer's text on a wide screen and under it on a phone", async ({
     page,
 }) => {
     await open(page, { width: 1280, aside: true });
-    let sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    let sentence = await box(page.locator('.dk-footer p').first(), "the footer's text");
     let aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
-    // Beside it, ending at the column's right edge, and on the sentence's first line.
+    // Beside it, ending at the column's right edge, and on the text's first line.
     expect(aside.x).toBeGreaterThan(sentence.x + sentence.width);
     expect(Math.round(aside.x + aside.width)).toBe(1280 - (1280 - 1152) / 2 - 16);
     expect(Math.abs(aside.y - sentence.y)).toBeLessThan(4);
 
     await open(page, { width: 375, aside: true });
-    sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    sentence = await box(page.locator('.dk-footer p').first(), "the footer's text");
     aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
     // Under it, at the same inset.
     expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
     expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
 
-    // Between a phone and a screen with room for both, it wraps under the sentence, at its inset.
+    // Between a phone and a screen with room for both, it wraps under the text, at its inset.
     await open(page, { width: 800, aside: true });
-    sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    sentence = await box(page.locator('.dk-footer p').first(), "the footer's text");
     aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
     expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
     expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
 });
 
-test("wraps a long unbroken name in the footer's sentence and its own line on a phone", async ({
+test("wraps a long unbroken name in the footer's text and its own line on a phone", async ({
     page,
 }) => {
     const hash = 'a'.repeat(40);
@@ -415,7 +415,7 @@ test("wraps a long unbroken name in the footer's sentence and its own line on a 
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
 });
 
-test('stacks anything else a page writes after the sentence under it, as before', async ({
+test("stacks anything else a page writes after the footer's text under it, as before", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1280, height: 800 });

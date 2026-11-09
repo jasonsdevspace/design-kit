@@ -127,7 +127,7 @@ export const DemoFooter = ({
     children,
     aside,
 }: {
-    /** The demo's name, as the footer's sentence opens with it. */
+    /** The demo's name, as the footer's text opens with it. */
     readonly name: string;
     /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
     readonly about: string;
@@ -140,26 +140,26 @@ export const DemoFooter = ({
      * unless given.
      */
     readonly license?: string | undefined;
-    /** What the license is called, as the footer's sentence names it. */
+    /** What the license is called, as the footer's text names it. */
     readonly licenseName?: string | undefined;
     /** What the demo adds at the end, as sentences of its own. */
     readonly children?: ReactNode;
     /**
-     * A line of the demo's own beside the sentence on a wide screen and under it on a phone, such as
-     * the version and commit the page was built from. It is drawn in a paragraph, so it holds text,
-     * links and code, never a block.
+     * A line of the demo's own beside the footer's text on a wide screen and under it on a phone,
+     * such as the version and commit the page was built from. It is drawn in a paragraph, so it
+     * holds text, links and code, never a block.
      */
     readonly aside?: ReactNode;
 }) => (
     <footer className="dk-footer">
         <p>
-            {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>.{' '}
+            {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>, who has{' '}
+            <a href={GITHUB_PROFILE_URL}>more work</a> on GitHub.{' '}
             <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
             </a>{' '}
-            is explained in plain words. Its <a href={source}>source</a> is on GitHub under the{' '}
-            <a href={license}>{licenseName}</a>, and <a href={GITHUB_PROFILE_URL}>more work</a> is
-            there too.{filled(children) ? <> {children}</> : null}
+            is explained in plain words. The <a href={source}>source</a> is on GitHub under the{' '}
+            <a href={license}>{licenseName}</a>.{filled(children) ? <> {children}</> : null}
         </p>
         {filled(aside) ? <p className="dk-footer-aside">{aside}</p> : null}
     </footer>
