@@ -837,6 +837,41 @@ test.describe('what the tests check', () => {
     });
 });
 
+test("gives every page the kit's icon, for a tab, a phone's home screen and an older browser", async ({
+    page,
+}) => {
+    const served = new Map<string, string>();
+    for (const path of PAGES) {
+        await page.goto(path);
+        const icons = await page
+            .locator('head link[rel~="icon"], head link[rel="apple-touch-icon"]')
+            .evaluateAll((links) =>
+                links.map(
+                    (link) => [link.getAttribute('rel'), (link as HTMLLinkElement).href] as const
+                )
+            );
+        expect(
+            icons.map(([rel, href]) => `${rel ?? ''} ${new URL(href).pathname}`),
+            path
+        ).toEqual([
+            'icon /design-kit/favicon.ico',
+            'icon /design-kit/favicon.svg',
+            'apple-touch-icon /design-kit/apple-touch-icon.png',
+        ]);
+        for (const [, href] of icons) {
+            if (served.has(href)) continue;
+            const response = await page.request.get(href);
+            expect(response.status(), href).toBe(200);
+            served.set(href, response.headers()['content-type'] ?? '');
+        }
+    }
+    expect([...served.values()].map((type) => type.split(';')[0])).toEqual([
+        'image/x-icon',
+        'image/svg+xml',
+        'image/png',
+    ]);
+});
+
 test('every link within the site leads to one of its pages, and to an id on it', async ({
     page,
 }) => {
