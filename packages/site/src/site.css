@@ -26,14 +26,6 @@ body > .dk-strip .dk-strip-tools {
     min-width: 0;
 }
 
-/*
- * The site's pill, the round ends its tabs, theme segments and Live mark share. The kit's radius
- * scale stops at a card's corner, so the site keeps the one shape it adds here.
- */
-:root {
-    --site-pill: 999px;
-}
-
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
     max-width: var(--dk-column);
@@ -140,7 +132,7 @@ body > .dk-strip .dk-strip-tools {
     align-items: center;
     min-height: var(--dk-strip);
     padding-inline: var(--dk-space-3);
-    border-radius: var(--site-pill);
+    border-radius: var(--dk-radius-pill);
     color: var(--dk-muted);
     text-decoration: none;
     white-space: nowrap;
@@ -427,7 +419,7 @@ body > .dk-strip .dk-strip-tools {
 .site-preview-strip,
 .site-preview-foot {
     height: 0.375rem;
-    border-radius: var(--site-pill);
+    border-radius: var(--dk-radius-pill);
     background: var(--dk-control);
 }
 
@@ -467,7 +459,7 @@ body > .dk-strip .dk-strip-tools {
     content: '';
     flex: 1;
     height: 0.375rem;
-    border-radius: var(--site-pill);
+    border-radius: var(--dk-radius-pill);
     background: var(--dk-control);
 }
 
@@ -719,7 +711,7 @@ body > .dk-strip .dk-strip-tools {
 /* The mark on the copy that can be tried. */
 .site-live {
     padding: 0 var(--dk-space-2);
-    border-radius: var(--site-pill);
+    border-radius: var(--dk-radius-pill);
     background: var(--dk-highlight);
     color: var(--dk-accent);
     font-weight: var(--dk-weight-strong);
@@ -1064,7 +1056,7 @@ body > .dk-strip .dk-strip-tools {
 
 .site-theme label > span {
     padding: var(--dk-space-1) var(--dk-space-2);
-    border-radius: var(--site-pill);
+    border-radius: var(--dk-radius-pill);
     color: var(--dk-muted);
 }
 

@@ -129,14 +129,21 @@ const SiteFooter = ({
     readonly build: Build;
     readonly current?: ComponentProps<typeof DemoFooter>['current'];
 }) => (
-    <DemoFooter name="The design kit" about={ABOUT} source={SOURCE} current={current}>
-        This page uses version {build.version} of the kit, as published on npm, and was built at
-        commit{' '}
-        <a href={`${SOURCE}/commit/${build.commit}`}>
-            <code>{build.commit.slice(0, 7)}</code>
-        </a>
-        .
-    </DemoFooter>
+    <DemoFooter
+        name="The design kit"
+        about={ABOUT}
+        source={SOURCE}
+        current={current}
+        aside={
+            <>
+                Built from version {build.version} of the kit on npm, at commit{' '}
+                <a href={`${SOURCE}/commit/${build.commit}`}>
+                    <code>{build.commit.slice(0, 7)}</code>
+                </a>
+                .
+            </>
+        }
+    />
 );
 
 /**
