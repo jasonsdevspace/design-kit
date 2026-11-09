@@ -1,6 +1,6 @@
 # 12. The site has a script of its own, from its own path, beside the kit's theme script
 
-**Status:** accepted
+**Status:** accepted, amended by record 13, from which the switch and the copy buttons now come
 
 ## Context
 
@@ -26,18 +26,24 @@ hash comes from the kit.
 from a search or a link could follow the system's theme and nothing else.
 
 **D. A script of the site's own, a file from its own path.** A small module, built by Vite like the
-pages, which the policy allows from the folder the build writes it to and nowhere else. It builds
-the switch with the DOM, so it needs no inline script or style.
+pages, which the policy allows from the folder the build writes it to and nowhere else. It built
+the switch with the DOM, so it needed no inline script or style, until record 13 gave the kit a
+switch of its own.
 
 ## Decision
 
 Option D. Every page's strip keeps the room for switches on their way, with `toolsWaiting`, and the
-script puts the switch in it: three native radios, System, Light and Dark, in a radio group named
+script puts the switch in it. Since record 13 the switch is the kit's: each page draws the kit's
+`ThemeSwitch` in a template, which no browser draws and no screen reader reads, and the script puts
+a copy of it in the room and attaches it with the kit's `attachThemeSwitch`. It is three native
+radios, System, Light and Dark, in a radio group named
 Theme by a visible name and described by a note that the choice is saved for every page on
 jasonsdevspace.com, so a screen reader hears both as the keyboard reaches the radios. The strip's
 section is named Settings, so it becomes the landmark the kit makes of switches that have come and
 every part of the page sits in a landmark, and not Theme, so a screen reader moving by landmarks and
-then to the radios never hears one name twice. The script shows the saved choice, saves a new one
+then to the radios never hears one name twice. With no script the page holds the room alone, in a
+section with no name and so no landmark, and no switch that does nothing. The kit's function shows
+the saved choice, saves a new one
 under the portfolio's key, and draws it at once, since the theme script hears only a choice saved in
 another tab. It moves to a choice another tab saves, and catches up with one saved while the page
 sat in the browser's back and forward cache. When the system's theme changes it draws the choice
@@ -45,8 +51,10 @@ again after the theme script draws, so a browser that refuses the page its stora
 choice until the page is left, where the theme script, which cannot know of it, draws the system's.
 A choice the browser refused to save is not read over by what storage holds.
 
-The same script puts a copy button beside the title of each block of code. It writes the block's
-text to the clipboard, and where the browser refuses or has no clipboard it selects the text
+The same script puts a copy button beside the title of each block of code, or beside the tabs where a
+state has Markup and React, in the markup the kit's `CopyButton` draws, and attaches it with the
+kit's `attachCopyButton`, which copies the block the shown tab holds. It writes the block's text to
+the clipboard, and where the browser refuses or has no clipboard it selects the text
 instead, so a reader copies it with their own keys, or with the device's copy command on a touch
 screen. One status line out of sight, in the page from load on a page with code, tells a screen
 reader which happened, emptied first so a second copy is heard too, and the button says Copied or
@@ -60,8 +68,8 @@ stay as they are drawn, as each state's name says they start.
 And it answers a tap on a preview, the copy of a state in the theme the page is not in. A preview is
 inert, so a tap on it does nothing and a reader would be left to guess why. The script puts a note
 under the state's two copies that says the copy is only a preview, points to the one marked Live,
-and offers to switch to the other theme. Its button chooses that theme as the strip's switch does,
-saved the same way. The status line says the same to a screen reader, naming the live copy by its
+and offers to switch to the other theme. Its button chooses that theme with the kit's `chooseTheme`,
+as the strip's switch does, so it is saved the same way and the switch shows it. The status line says the same to a screen reader, naming the live copy by its
 theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the note adds
 nothing to its path until a tap brings it. It closes on Escape, on a tap elsewhere and whenever the
 theme changes, however it changed, and a drag that only ends on a preview is no tap on it. A browser
@@ -96,8 +104,9 @@ another, which the browser tests and the Lighthouse audit set to the local previ
   when it comes.
 - The script's values are the portfolio's, System and the kit's two themes, so `system` is saved as
   the portfolio saves it, and the theme script reads it as nothing saved.
-- The kit still runs no script of its own in a browser but the theme script. The switch is the
-  site's, and a demo with a switch of its own writes it as the portfolio and the site do.
+- The switch and the copy buttons are the kit's since record 13, which the site bundles into its
+  own script from the version it pins, so they reach the site a release after they change in the
+  kit. The tabs, the live copies and the preview note stay the site's own.
 
 ## How it is tested
 

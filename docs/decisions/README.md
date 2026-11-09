@@ -35,8 +35,9 @@ costs, and the test behind it.
     Storybook, docs frameworks and pages written by hand were turned down.
 12. [The site has a script of its own, from its own path, beside the kit's theme script](0012-the-site-has-a-script-of-its-own.md):
     the theme switch, saved under the portfolio's key with the portfolio's values, in the room the
-    strip keeps for it, and copy buttons for the code, with scripts allowed from the site's own path
-    alone, and why React in the browser and a second inline script were turned down.
+    strip keeps for it, and copy buttons for the code, both the kit's since record 13, with scripts
+    allowed from the site's own path alone, and why React in the browser and a second inline script
+    were turned down.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
     the theme switch and the copy button as markup from a component and a function a page calls on
     it, from `./controls`, and why a stateful component and a script that builds the DOM were turned

@@ -148,7 +148,7 @@ const SiteFooter = ({
 
 /**
  * The site's header under the strip: its mark and name, leading to the landing page, and its own
- * pages as tabs, the current one marked as the page, all in the site's navigation so nothing in it
+ * pages as the kit's link pills, the current one marked as the page, all in the site's navigation so nothing in it
  * sits outside a landmark. It is the page's banner, as the explainer's header is, so a screen reader
  * that moves to the banner finds the way around the site on every page. The mark is the site's own
  * markup, so the policy that refuses outside styles holds, and is hidden from a screen reader, which
@@ -163,10 +163,11 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
                 </span>
                 The design kit
             </a>
-            <ul className="site-tabs" role="list">
+            <ul className="dk-pills" role="list">
                 {ROUTES.filter((route) => route.nav !== null).map((route) => (
                     <li key={route.file}>
                         <a
+                            className="dk-pill"
                             href={route.path}
                             aria-current={route.file === current ? 'page' : undefined}
                         >
@@ -177,6 +178,22 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
             </ul>
         </nav>
     </header>
+);
+
+/**
+ * The kit's theme switch, in a template the site's script puts in the room the strip keeps for it.
+ * A template is drawn by no browser and read by no screen reader, so with no script the page holds
+ * only the room, in a section with no name and so no landmark. The note names jasonsdevspace.com,
+ * since the choice is saved under the portfolio's key and holds on every page of it.
+ */
+const ThemeSwitchToCome = () => (
+    <template id="site-theme-switch">
+        <kit.ThemeSwitch
+            id="site-theme"
+            name="site-theme"
+            note="Your choice is saved for every page on jasonsdevspace.com, the portfolio included."
+        />
+    </template>
 );
 
 /** A section a page lists, by its heading and the id its heading carries. */
@@ -240,6 +257,7 @@ const Page = ({
     <>
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
+        <ThemeSwitchToCome />
         <SiteNav current={current} />
         <main
             id="main-content"
@@ -265,6 +283,7 @@ const Explainer = ({ build }: { readonly build: Build }) => (
     <>
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} current="about" toolsWaiting />
+        <ThemeSwitchToCome />
         <header className="dk-explainer-header">
             <a href={BASE}>The design kit</a>
         </header>

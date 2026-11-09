@@ -73,8 +73,9 @@ body > .dk-strip .dk-strip-tools {
 
 /*
  * The site's header under the strip, lined up with the column: its mark and name, then its own
- * pages as tabs. On a wide screen the two share the row, and on a phone the tabs go under the name
- * and wrap onto a second row.
+ * pages as the kit's link pills. On a wide screen the two share the row, and on a phone the pills
+ * go under the name and wrap onto a second row, the kit keeping room around them for its focus
+ * ring.
  */
 .site-header {
     display: flex;
@@ -107,45 +108,6 @@ body > .dk-strip .dk-strip-tools {
     color: var(--dk-on-accent);
     font-size: var(--dk-text-small);
     line-height: 1;
-}
-
-.site-tabs {
-    display: flex;
-    /*
-     * The tabs wrap onto a second row where a phone is too narrow for them all, so every page is in
-     * view. The row keeps room on every side for the kit's focus ring, and gives that room back to
-     * the layout, so a focused tab shows its whole ring and the tabs still line up with the column.
-     */
-    flex-wrap: wrap;
-    gap: var(--dk-space-1);
-    --site-ring-room: calc(var(--dk-ring-width) + var(--dk-ring-offset));
-    margin: calc(-1 * var(--site-ring-room));
-    padding: var(--site-ring-room);
-    min-width: 0;
-    max-width: calc(100% + 2 * var(--site-ring-room));
-    list-style: none;
-}
-
-/* A tab is as tall as the strip's row on a wide screen, and a thumb's size on a phone. */
-.site-tabs a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--dk-strip);
-    padding-inline: var(--dk-space-3);
-    border-radius: var(--dk-radius-pill);
-    color: var(--dk-muted);
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.site-tabs a:hover {
-    color: var(--dk-fg);
-}
-
-.site-tabs a[aria-current='page'] {
-    background: var(--dk-highlight);
-    color: var(--dk-fg);
-    font-weight: var(--dk-weight-strong);
 }
 
 /*
@@ -994,87 +956,6 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
- * The theme switch the site's script puts in the strip's section: its name and its three choices
- * in one row. On a phone each choice is a thumb's size, as the room the strip kept is.
- */
-.site-theme {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 0 var(--dk-space-1);
-    /*
-     * The switch keeps one row, as tall as the room the strip kept for it, at any text size, and
-     * scrolls sideways inside it where a phone with large text is too narrow for all its words,
-     * so nothing below it moves as it comes. It keeps room at its ends for the focus ring.
-     */
-    min-width: 0;
-    max-width: 100%;
-    padding-inline: calc(var(--dk-ring-width) + var(--dk-ring-offset));
-    overflow-x: auto;
-}
-
-.site-theme-name {
-    flex-shrink: 0;
-}
-
-.site-theme label {
-    flex-shrink: 0;
-}
-
-.site-theme-name {
-    margin-inline-end: var(--dk-space-2);
-    color: var(--dk-muted);
-}
-
-/*
- * Each choice is as tall as the strip's row, and the whole of it, word and radio, takes a click
- * and shows a pointer. The kit gives a label that holds a radio its pointer by `:has()`, which
- * Firefox 120 lacks, so the site gives it too.
- */
-.site-theme label {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--dk-strip);
-    cursor: pointer;
-}
-
-/*
- * The switch reads as one control of three segments: the radio is kept for the keyboard and a
- * screen reader, and lies unseen over its whole segment, so a click anywhere on the segment lands
- * on the radio itself. Its word draws it, the chosen word raised on the highlight in the same
- * weight as the others, so no segment changes width as the choice moves.
- */
-.site-theme input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-}
-
-.site-theme label > span {
-    padding: var(--dk-space-1) var(--dk-space-2);
-    border-radius: var(--dk-radius-pill);
-    color: var(--dk-muted);
-}
-
-.site-theme input:checked + span {
-    background: var(--dk-highlight);
-    color: var(--dk-fg);
-}
-
-/*
- * The kit rings anything focused from its base, but the focus is on the unseen radio, so its
- * segment takes the same ring from the kit's own ring tokens.
- */
-.site-theme input:focus-visible + span {
-    outline: var(--dk-ring-width) solid var(--dk-accent);
-    outline-offset: var(--dk-ring-offset);
-}
-
-/*
  * A state's code across the foot of its card, closed until a reader opens it: a block of markup,
  * and of React where a component draws the state, which the site's script shows as tabs, with the
  * one copy button it adds. The disclosure may shrink below its widest line, so a block scrolls in
@@ -1194,25 +1075,17 @@ body > .dk-strip .dk-strip-tools {
     margin-top: var(--dk-space-1);
 }
 
-/* A copy button keeps one width whatever it says, the width of its longest word, Selected. */
-.site-copy-button {
-    min-inline-size: calc(9ch + 2 * var(--dk-space-3) + 2px);
-}
-
 /* A panel a live button names sits below it as any next part of a copy does. */
 .site-copy > .dk-button + .dk-panel {
     margin-top: var(--dk-space-3);
 }
 
 /*
- * In forced colors the browser drops the highlight behind the chosen theme and the current tab,
- * and every edge takes one color, so the chosen code tab's underline no longer marks it. The radio
- * is unseen too. So all three take the system's own colors for a selection, as the kit's pressed
- * toggles do.
+ * In forced colors every edge takes one color, so the chosen code tab's underline no longer marks
+ * it. So it takes the system's own colors for a selection, as the kit's theme switch and current
+ * pill do.
  */
 @media (forced-colors: active) {
-    .site-theme input:checked + span,
-    .site-tabs a[aria-current='page'],
     .site-code-tab[aria-selected='true'] {
         background-color: Highlight;
         color: HighlightText;
@@ -1225,23 +1098,9 @@ body > .dk-strip .dk-strip-tools {
  * links and the theme switch share one row.
  */
 @media (max-width: 48rem) {
-    /* A tab's words may break where a phone with large text is too narrow for them on one line. */
-    .site-tabs li {
-        max-width: 100%;
-    }
-
-    .site-tabs a {
-        white-space: normal;
-    }
-
     .site-brand,
-    .site-tabs a,
     .site-toc a,
     .site-code-tab {
-        min-height: var(--dk-target);
-    }
-
-    .site-theme label {
         min-height: var(--dk-target);
     }
 

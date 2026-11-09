@@ -976,7 +976,7 @@ test.describe("the site's header", () => {
             await page.setViewportSize({ width, height: 800 });
             for (const path of ['/design-kit/', '/design-kit/explainer-pieces/']) {
                 await page.goto(path);
-                const row = await page.locator('.site-tabs').evaluate((list) => {
+                const row = await page.locator('.site-header .dk-pills').evaluate((list) => {
                     const links = [...list.querySelectorAll('a')].map((link) =>
                         link.getBoundingClientRect()
                     );
@@ -1029,7 +1029,7 @@ test.describe("the site's header", () => {
     });
     test("leaves room in the tabs' row for the kit's focus ring", async ({ page }) => {
         await page.goto('/design-kit/controls/');
-        const room = await page.locator('.site-tabs').evaluate((list) => {
+        const room = await page.locator('.site-header .dk-pills').evaluate((list) => {
             const style = getComputedStyle(list);
             const root = getComputedStyle(document.documentElement);
             // The kit sets its ring in pixels, the line and the gap outside the box it rings.
@@ -1047,9 +1047,14 @@ test.describe("the site's header", () => {
         await page.goto('/design-kit/controls/');
         // A browser reports the author's colors to a script even while it forces its own, so the
         // test reads the rules the sheet keeps for forced colors, which set the system's own.
-        const forced = await page.evaluate(() =>
-            [...document.styleSheets]
-                .flatMap((sheet) => [...sheet.cssRules])
+        // The kit's rules sit in its layers, so the rules are read at any depth.
+        const forced = await page.evaluate(() => {
+            const inside = (rules: CSSRuleList): CSSRule[] =>
+                [...rules].flatMap((rule) =>
+                    rule instanceof CSSGroupingRule ? [rule, ...inside(rule.cssRules)] : [rule]
+                );
+            return [...document.styleSheets]
+                .flatMap((sheet) => inside(sheet.cssRules))
                 .filter(
                     (rule): rule is CSSMediaRule =>
                         rule instanceof CSSMediaRule && rule.conditionText.includes('forced-colors')
@@ -1061,10 +1066,10 @@ test.describe("the site's header", () => {
                         rule.style.backgroundColor.toLowerCase() === 'highlight'
                 )
                 .map((rule) => rule.selectorText)
-                .join(',')
-        );
-        expect(forced).toContain('.site-theme input:checked + span');
-        expect(forced).toContain('.site-tabs a[aria-current="page"]');
+                .join(',');
+        });
+        expect(forced).toContain('.dk-theme-switch-choice > input:checked + span');
+        expect(forced).toContain('a.dk-pill[aria-current]');
         expect(forced).toContain('.site-code-tab[aria-selected="true"]');
     });
 
@@ -1219,7 +1224,7 @@ test.describe('the theme switch', () => {
                             .locator('body > .dk-strip .dk-strip-tools')
                             .evaluate((section) => {
                                 const outer = section.getBoundingClientRect();
-                                const group = section.querySelector('.site-theme');
+                                const group = section.querySelector('.dk-theme-switch');
                                 const inner = group?.getBoundingClientRect();
                                 return (
                                     !inner ||
@@ -1424,7 +1429,7 @@ test.describe('the code of each state', () => {
             await page.goto('/design-kit/controls/');
             await page.locator('summary', { hasText: 'The code, An action' }).click();
             await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
-            await expect(page.locator('.site-copy-button')).toHaveCount(0);
+            await expect(page.locator('.dk-copy')).toHaveCount(0);
         });
 
         test('shows Markup and React one above the other with no script, and no tabs', async ({
@@ -1502,7 +1507,7 @@ test.describe('the state cards', () => {
         await expect(react).toHaveAttribute('aria-selected', 'false');
         await expect(card.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
         await expect(card.getByRole('region', { name: 'React, An action' })).toBeHidden();
-        await expect(card.locator('.site-copy-button')).toHaveCount(1);
+        await expect(card.locator('.dk-copy')).toHaveCount(1);
         // The tab names its block, so the block's own title is not drawn again under it.
         await expect(card.locator('.dk-code-title')).toHaveCount(2);
         expect(
@@ -1586,12 +1591,9 @@ test.describe('the state cards', () => {
         });
         await expect(page.getByRole('status')).toHaveText('Copied.');
         // Read at once, before the button would say Copy again on its own.
-        expect(
-            await page
-                .locator('.site-copy-button')
-                .first()
-                .evaluate((button) => button.textContent)
-        ).toBe('Copy React, An action');
+        await expect(page.locator('.dk-copy').first()).toHaveAccessibleName(
+            'Copy React, An action'
+        );
     });
 
     test('gives a state with markup alone its block and copy button, with no tabs', async ({
@@ -1602,7 +1604,7 @@ test.describe('the state cards', () => {
         await card.locator('summary').click();
         await expect(card.getByRole('tablist')).toHaveCount(0);
         await expect(card.locator('pre.dk-code')).toBeVisible();
-        await expect(card.locator('.site-copy-button')).toHaveCount(1);
+        await expect(card.locator('.dk-copy')).toHaveCount(1);
     });
 
     /** The pages that list their sections, the tokens page among them. */
@@ -1993,21 +1995,16 @@ test.describe('how each state is shown', () => {
                     )
                     .map(
                         (element) =>
-                            [
-                                'site-copy-button',
-                                'site-code-tab',
-                                'site-preview-switch',
-                                'dk-code',
-                            ].find((name) => element.classList.contains(name)) ??
-                            element.tagName.toLowerCase()
+                            ['dk-copy', 'site-code-tab', 'site-preview-switch', 'dk-code'].find(
+                                (name) => element.classList.contains(name)
+                            ) ?? element.tagName.toLowerCase()
                     )
             );
         const before = await reached();
         // Only the code's disclosures, tabs, frames and copy buttons, and the tests' links.
         expect(
             before.filter(
-                (name) =>
-                    !['summary', 'site-code-tab', 'dk-code', 'site-copy-button', 'a'].includes(name)
+                (name) => !['summary', 'site-code-tab', 'dk-code', 'dk-copy', 'a'].includes(name)
             )
         ).toEqual([]);
         const box = await page
@@ -2074,7 +2071,7 @@ test.describe('how each state is shown', () => {
             const found = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-code [role="tab"], .site-theme label, .site-header a'
+                        '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .site-header a'
                     ),
                 ].map((element) => ({
                     what: element.textContent.trim().slice(0, 30),
@@ -2092,7 +2089,7 @@ test.describe('how each state is shown', () => {
 
     test("gives the theme's radios the kit's pointer and accent", async ({ page }) => {
         await page.goto('/design-kit/');
-        const radios = await page.locator('.site-theme input').evaluateAll((all) =>
+        const radios = await page.locator('.dk-theme-switch input').evaluateAll((all) =>
             all.map((radio) => {
                 const style = getComputedStyle(radio);
                 const accent = getComputedStyle(document.documentElement)
@@ -2121,7 +2118,7 @@ test.describe('how each state is shown', () => {
             .locator('.site-state', {
                 has: page.getByRole('heading', { name: 'An action', exact: true }),
             })
-            .locator('.site-copy-button')
+            .locator('.dk-copy')
             .first();
         await expect(button).toHaveAccessibleName('Copy Markup, An action');
         const before = (await button.boundingBox())?.width;
