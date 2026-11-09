@@ -97,17 +97,26 @@ body > .dk-strip .dk-strip-tools {
     text-decoration: none;
 }
 
-/* The mark, the kit's initials on its accent, drawn by the page itself. */
+/*
+ * The site's icon: three square tiles and a round one in the text on the accent, as in a tab, its
+ * corners as round for its size as the icon's.
+ */
 .site-mark {
-    display: inline-grid;
-    place-items: center;
+    display: inline-block;
+    flex: none;
     width: 1.75em;
     height: 1.75em;
-    border-radius: var(--dk-radius-large);
+    border-radius: 21.875%;
     background: var(--dk-accent);
     color: var(--dk-on-accent);
     font-size: var(--dk-text-small);
-    line-height: 1;
+}
+
+.site-mark svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentcolor;
 }
 
 /*

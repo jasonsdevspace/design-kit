@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <title>The design kit</title>
+    <!--
+        The kit's mark: three square tiles and a round one, the parts a page is built from, on the
+        accent. It follows the system's scheme, as a browser draws a tab's icon whatever the page's
+        own theme, in the accent and the text on it of each theme.
+    -->
+    <style>
+        .ground { fill: #1f4fd8; }
+        .tile { fill: #ffffff; }
+        @media (prefers-color-scheme: dark) {
+            .ground { fill: #8fb0ff; }
+            .tile { fill: #121212; }
+        }
+    </style>
+    <rect class="ground" width="32" height="32" rx="7" />
+    <rect class="tile" x="6" y="6" width="9" height="9" rx="2.5" />
+    <rect class="tile" x="17" y="6" width="9" height="9" rx="2.5" fill-opacity="0.55" />
+    <rect class="tile" x="6" y="17" width="9" height="9" rx="2.5" fill-opacity="0.55" />
+    <circle class="tile" cx="21.5" cy="21.5" r="4.5" />
+</svg>

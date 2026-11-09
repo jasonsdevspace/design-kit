@@ -6,6 +6,7 @@ import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
+import { FAINT, TILES } from './mark.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
 import { Colors, Contrast, Scale, Spaces } from './tokens.js';
 
@@ -151,15 +152,37 @@ const SiteFooter = ({
  * pages as the kit's link pills, the current one marked as the page, all in the site's navigation
  * so nothing in it sits outside a landmark. It is the page's banner, as the explainer's header is,
  * so a screen reader that moves to the banner finds the way around the site on every page. The mark
- * is the site's own markup, so the policy that refuses outside styles holds, and is hidden from a
- * screen reader, which hears the name.
+ * is the site's icon, its tiles drawn in the text on the accent and in the page's own theme, in the
+ * site's own markup, so the policy that refuses outside styles holds. It is hidden from a screen
+ * reader, which hears the name.
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header>
         <nav className="site-header" aria-label="Design kit">
             <a className="site-brand" href={BASE}>
                 <span className="site-mark" aria-hidden="true">
-                    dk
+                    <svg viewBox="0 0 32 32">
+                        {TILES.map((tile) =>
+                            tile.shape === 'circle' ? (
+                                <circle
+                                    key={`${String(tile.x)} ${String(tile.y)}`}
+                                    cx={tile.x}
+                                    cy={tile.y}
+                                    r={tile.radius}
+                                />
+                            ) : (
+                                <rect
+                                    key={`${String(tile.x)} ${String(tile.y)}`}
+                                    x={tile.x}
+                                    y={tile.y}
+                                    width={tile.size}
+                                    height={tile.size}
+                                    rx={tile.radius}
+                                    fillOpacity={tile.faint ? FAINT : undefined}
+                                />
+                            )
+                        )}
+                    </svg>
                 </span>
                 The design kit
             </a>
