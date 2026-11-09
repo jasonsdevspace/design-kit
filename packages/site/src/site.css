@@ -572,7 +572,7 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
- * Each state in one card: its name and the attribute that draws it across the top, its copy in the
+ * Each state in one card: its name and the code that draws it across the top, its copy in the
  * visitor's theme beside its copy in the other on a wide screen and above it on a phone, and its
  * code across the foot.
  */

@@ -412,7 +412,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         </div>
         <section>
             <h2 id="in-the-kit">What is in the kit</h2>
-            <p>Each page shows every piece in light and in dark, side by side.</p>
+            <p>Each page shows every piece in light and in dark.</p>
             <ul className="site-pages" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
@@ -452,8 +452,8 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     <h3>What you see matches what a screen reader says</h3>
                     <p>
                         A toggle, an open panel, a control that is unavailable and a field with an
-                        error are drawn from the attributes a screen reader already reads, so what
-                        you see and what it says come from one place.
+                        error each get their look from what a screen reader already announces, so
+                        what you see and what it says come from one place.
                     </p>
                 </li>
             </ul>
@@ -474,7 +474,7 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
 );
 
 /**
- * One state of a control, in one card: its name as a heading and the attribute that draws it at
+ * One state of a control, in one card: its name as a heading and the code that draws it at
  * the top, then its copies, and its code at the foot. The state is drawn live in the visitor's
  * theme and again in the other theme beside it. The other copy is inert, so the keyboard and a
  * screen reader pass over it, and its ids are its own, so the page never holds one twice. The live
@@ -547,7 +547,7 @@ const StateShown = ({
 
 /**
  * Each control under its own heading, with each of its states, its two copies side by side, or one
- * above the other at the column's full width where `wide` is set, and then the tests that hold it.
+ * above the other at the column's full width where `wide` is set, and then the tests that check it.
  */
 const Shown = ({
     controls,
@@ -648,17 +648,17 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
         lead={
             <>
                 An explainer is the page that says how a demo works, the one the strip&rsquo;s
-                &ldquo;How it works&rdquo; link opens. These are its pieces: steps, panels, tables
-                and code blocks.
+                &ldquo;How it works&rdquo; link opens. These are its layout and its pieces: steps,
+                panels, tables and code blocks.
             </>
         }
         intro={
             <p>
-                Each is shown twice: live in your theme, marked Live, and as a preview in the other,
-                and each card names the code that draws it. The layout of a whole explainer is shown
-                as a picture in both themes, since it opens with a main heading of its own and this
-                page already has one. To see the other theme live, press Light or Dark in the
-                strip&rsquo;s Theme switch.
+                Each is shown twice: live in your theme, marked Live, and as a preview in the other.
+                Each card names the code that draws it. To see the other theme live, press Light or
+                Dark in the strip&rsquo;s Theme switch. The layout of a whole explainer is shown as
+                a picture in both themes, since it opens with a main heading of its own and this
+                page already has one.
             </p>
         }
         sections={listed(EXPLAINER.map(({ name }) => name))}
@@ -695,8 +695,8 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
             lead={
                 <>
                     Tokens are the named colors and sizes every demo is drawn from. This page shows
-                    each color in both themes, how well each pair of colors contrasts, every size,
-                    and how a page picks its theme.
+                    each color in both themes, the contrast of each pairing it is meant for, every
+                    size, and how a page picks its theme.
                 </>
             }
             intro={
@@ -751,11 +751,11 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     The kit&rsquo;s theme script runs before anything is drawn, so a page never
                     flashes the wrong theme. It uses the theme you saved, or follows your system
-                    when you chose System or saved nothing. A choice made in another tab reaches
-                    this one too. Every demo on jasonsdevspace.com, this site included, reads the
-                    same saved choice, so a theme picked here holds on the portfolio and the other
-                    way round. With scripts on, the Theme switch at the top of each page saves your
-                    choice in the same words the portfolio&rsquo;s switch uses.
+                    when you choose System or have saved nothing. A choice made in another tab
+                    reaches this one too. Every demo on jasonsdevspace.com, this site included,
+                    reads the same saved choice, so a theme picked here holds on the portfolio and
+                    the other way round. With scripts on, the Theme switch in the strip saves your
+                    choice the same way the portfolio&rsquo;s switch does.
                 </p>
                 <Tests group="How the theme is chosen" commit={build.commit} />
             </section>

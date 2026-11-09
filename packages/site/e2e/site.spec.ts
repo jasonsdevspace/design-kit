@@ -376,13 +376,9 @@ test.describe('the landing page', () => {
 });
 
 test.describe('the words each page opens with', () => {
-    /** The pages that list their sections, each opening the same way. */
-    const OPENED = [
-        '/design-kit/tokens/',
-        '/design-kit/controls/',
-        '/design-kit/page-chrome/',
-        '/design-kit/explainer-pieces/',
-    ];
+    /** The pages that list their sections and open the same way: every page with a landing card. */
+    const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
+    const OPENED = CARDED.map(({ path }) => path);
     /** The one way every page says how to see the other theme. */
     const SWITCH = 'press Light or Dark in the strip’s Theme switch';
 
@@ -392,16 +388,17 @@ test.describe('the words each page opens with', () => {
         for (const path of OPENED) {
             await page.goto(path);
             const lead = (await page.locator('main > .site-lead').textContent()) ?? '';
-            const sentences = lead.split(/(?<=\.)\s+/).filter((each) => each.trim() !== '');
+            const sentences = lead.split(/(?<=[.?!])\s+/).filter((each) => each.trim() !== '');
             expect(sentences.length, path).toBeLessThanOrEqual(2);
-            expect(lead, path).not.toMatch(/screen reader|attribute|class/);
+            expect(lead, path).not.toMatch(/screen reader|\battributes?\b|\bclass(es)?\b/i);
         }
     });
 
     test('says how to see the other theme one way, after the lead, on each page that needs it', async ({
         page,
     }) => {
-        for (const path of OPENED.slice(1)) {
+        // Every page but the tokens page, whose colors show both themes whatever the page's theme.
+        for (const path of OPENED.filter((each) => each !== '/design-kit/tokens/')) {
             await page.goto(path);
             const opening = await page
                 .locator('main > p:not(.site-lead)')
@@ -437,16 +434,18 @@ test.describe('the words each page opens with', () => {
     }) => {
         await page.goto(BASE);
         const lines = await page.locator('.site-pages > li > p').allTextContents();
-        const carded = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
-        expect(lines).toHaveLength(carded.length);
-        for (const [index, { description, path }] of carded.entries()) {
-            expect(lines[index]?.length ?? 0, path).toBeLessThan(description.length / 2);
+        expect(lines).toEqual(CARDED.map((route) => ('card' in route ? route.card : '')));
+        for (const [index, { description, path }] of CARDED.entries()) {
+            const line = lines[index] ?? '';
+            expect(line, path).not.toBe('');
+            expect(line.length, path).toBeLessThan(description.length / 2);
+        }
+        for (const { description, path } of CARDED) {
             await page.goto(path);
             await expect(page.locator('meta[name="description"]'), path).toHaveAttribute(
                 'content',
                 description
             );
-            await page.goto(BASE);
         }
     });
 

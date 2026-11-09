@@ -31,7 +31,7 @@ export const ROUTES = [
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens and theme',
-        card: 'Each color in both themes, how pairs contrast, and every size.',
+        card: 'Every color, its contrast, every size and how the theme is picked.',
         description:
             'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
     },
@@ -49,7 +49,7 @@ export const ROUTES = [
         path: `${BASE}page-chrome/`,
         title: 'Page chrome · The design kit · Jason Poteet',
         nav: 'Page chrome',
-        card: 'The skip link, strip and footer that frame each demo.',
+        card: 'Skip link, strip and footer that frame each demo.',
         description:
             'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the code that draws it.',
     },
@@ -58,7 +58,7 @@ export const ROUTES = [
         path: `${BASE}explainer-pieces/`,
         title: 'Explainer pieces · The design kit · Jason Poteet',
         nav: 'Explainer pieces',
-        card: 'Steps, panels, tables and code blocks.',
+        card: 'The layout and the pieces of a demo explainer.',
         description:
             'The layout, steps, panels, tables and code blocks of the page that says how a demo works, in both themes.',
     },
