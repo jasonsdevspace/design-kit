@@ -44,8 +44,8 @@ does not change, so its hash holds.
 - The kit runs a second script in the browser, on a page that attaches a control, and its weight is
   held to a budget.
 - What a page shows of the theme is kept in the module, once for the page, so every switch on it,
-  and a page's own call to `chooseTheme`, show one choice. A choice the browser will not save is held
-  there until the page is left, and drawn again after the theme script draws from storage on a
+  and a page's own call to `chooseTheme`, show one choice. A choice the browser will not save is
+  held there until the page is left, and drawn again after the theme script draws from storage on a
   change of the system's scheme or a page restored by Back.
 - A page attaches a control after it is in the page, in an effect in React, which the markup's
   hidden state makes safe to do late.
