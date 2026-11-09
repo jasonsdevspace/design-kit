@@ -7,6 +7,20 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.2.1
+
+The footer's text is now whole sentences, and names the license for the demo's source alone. No
+token is renamed and the theme script is unchanged, so `themeScriptHash` is the same.
+
+- **Upgrading.** A page that writes the footer by hand changes its words to "… is a portfolio
+  project by Jason Poteet, who has more work on GitHub. How it works is explained in plain words.
+  The source is on GitHub under the MIT license.", with the link to more work now second. A demo's
+  own sentences still follow the license, so one that says "it" for the demo may need to name it.
+- **Page chrome.** `DemoFooter` reads as whole sentences, where it read "How it works, in plain
+  words." and "The source and more work are on GitHub, under the MIT license", which put the
+  author's other work under the demo's license. Every link keeps its words, so the strip and the
+  footer still name the same places alike.
+
 ## 0.2.0
 
 The footer takes a line of a demo's own beside its sentence, and the scale names a pill radius. No
