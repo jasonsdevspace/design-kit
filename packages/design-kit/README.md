@@ -4,23 +4,25 @@
 [![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
-The shared look of the demos on [jasonsdevspace.com](https://jasonsdevspace.com): color and type
-tokens with a light and a dark theme, a script that sets the visitor's theme before the page paints,
-the strip and footer around a demo, buttons, fields and callouts, and the layout of a "How it works"
-page. It is made for those demos, so the strip and footer link to the author's portfolio, and on the
+The shared look of the demos on [jasonsdevspace.com](https://jasonsdevspace.com). It gives a page
+color and type tokens with a light and a dark theme, a script that sets the visitor's theme before
+the page paints, a strip above each demo and a footer below it, buttons, fields and callouts, and
+the layout of the "How it works" page beside each demo, called the explainer here.
+
+It is made for those demos, so the strip and footer link to the author's portfolio, and on the
 portfolio's origin the theme follows the choice a visitor made there. The tokens, base styles and
 controls work on any page. Every rule sits in a cascade layer, so a page's own styles win without
 extra weight.
 
-<img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's buttons, text fields, selects and callouts, drawn in the light theme on the left and in the dark theme on the right" width="720">
+<img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 [See every piece live](https://jasonsdevspace.com/design-kit/) ·
-[Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
-[Source](https://github.com/jasonsdevspace/design-kit)
+[Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md)
+· [Source](https://github.com/jasonsdevspace/design-kit)
 
 - **No flash of the wrong theme.** The script runs in the head, before the body is parsed.
-- **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both
-  themes, held by a test.
+- **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
+  and a test keeps it that way.
 - **No inline styles.** The components draw markup alone, so they render under `style-src 'self'`.
 
 ## Setup
@@ -38,8 +40,10 @@ Vite.
 @import '@jasonsdevspace/design-kit/components.css';
 ```
 
-In a Vite build, the plugin puts the theme script inline where the page's head holds its marker,
-and `browserFloor()` keeps each `light-dark()` color as written.
+In a Vite build, the plugin puts the theme script inline where the page's head holds its marker, and
+`browserFloor()` keeps each `light-dark()` color as written. A page that uses Lightning CSS as
+Vite's CSS transformer passes it `lightningcssFloor()` too, as [Browser support](#browser-support)
+shows.
 
 ```ts
 import { browserFloor, themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
@@ -68,30 +72,32 @@ const head = `<script>${themeScript}</script>`;
 ```
 
 The theme module, the plugin and the components load on Node 22.12 or later. Vite 8 or later and
-React `^19.3.0` are optional peers, needed only for the plugin and the components. A page with
-cascade layers of its own names where the kit's go, as [Layers and palettes](#layers-and-palettes)
-shows.
+React `^19.3.0` are optional peers, needed only for the plugin and the components. A page that has
+cascade layers of its own says where the kit's layers go, as
+[Layers and palettes](#layers-and-palettes) shows.
 
 ## What it exports
 
-| Entry                                       | What it gives                                                                        |
-| ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `@jasonsdevspace/design-kit/tokens.css`     | The layer order and every named value, each under the `--dk-` prefix                 |
-| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the focus ring, `.dk-visually-hidden`, inline code and reduced motion  |
-| `@jasonsdevspace/design-kit/components.css` | The page chrome, buttons, fields, callouts and the explainer page                    |
-| `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES` and the type `Theme`                            |
-| `@jasonsdevspace/design-kit/react`          | The components, their props types, `CalloutTone` and the chrome's URLs               |
-| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()` |
+| Entry                                       | What it gives                                                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `@jasonsdevspace/design-kit/tokens.css`     | The layer order and every named value, each under the `--dk-` prefix                         |
+| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule |
+| `@jasonsdevspace/design-kit/components.css` | The page chrome, buttons, fields, callouts and the explainer page                            |
+| `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES` and the type `Theme`                                    |
+| `@jasonsdevspace/design-kit/react`          | The components, their props types, `CalloutTone` and the chrome's URLs                       |
+| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`         |
 
 `base.css` and `components.css` load after `tokens.css`, since the tokens' first statement declares
-the kit's layer order. `base.css` sets code in running text at `--dk-text-code`, a step under the
-text around it, and lets a long name break anywhere rather than push a narrow column wider.
+the kit's layer order. `base.css` sets inline code a step smaller than the text around it and lets a
+long name break anywhere rather than push a narrow column wider. Inside a `pre` code takes the
+block's size, and inside a link it keeps the link's underline. The base also puts a pointer cursor
+on a `<summary>`, and on a checkbox or radio and the label around it.
 
 The `react` entry exports `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
 `SelectField` and `Callout`, the types `ButtonProps`, `InputFieldProps`, `SelectFieldProps`,
-`CalloutProps` and `CalloutTone`, and `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
-`GITHUB_PROFILE_URL`, the links the chrome uses and the portfolio's list of work. The `vite` entry
-runs in Node, and also exports `THEME_PLACEHOLDER`, the marker `<!-- theme-script -->`.
+`CalloutProps` and `CalloutTone`, and three URLs: `PORTFOLIO_URL` and `GITHUB_PROFILE_URL`, which
+the chrome links, and `PORTFOLIO_WORK_URL`, the portfolio's list of work. The `vite` entry runs in
+Node, and also exports `THEME_PLACEHOLDER`, the marker `<!-- theme-script -->`.
 
 Every color role, with its value in each theme and the contrast of each pairing, is on
 [the tokens page](https://jasonsdevspace.com/design-kit/tokens/).
@@ -99,32 +105,32 @@ Every color role, with its value in each theme and the contrast of each pairing,
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                           | Value or role                                          |
-| ---------------------------------------------------------------- | ------------------------------------------------------ |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both            |
-| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                         |
-| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                           |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the focus ring, the lead action, and text on it |
-| `--dk-highlight`                                                 | what is chosen or pointed at                           |
-| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                        |
-| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                        |
-| `--dk-scrim`                                                     | what dims the page behind a dialog                     |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                       |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                     |
-| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                        |
-| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                        |
-| `--dk-text-code`                                                 | 0.9em, a step under the text around it                 |
-| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                            |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                       |
-| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                      |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                 |
-| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                            |
-| `--dk-field-height`, `--dk-field-inline`                         | 2.25rem and 0.5rem                                     |
-| `--dk-target`                                                    | 2.75rem, the touch target on a phone                   |
-| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem and `auto`                                      |
-| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                        |
-| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                         |
-| `--dk-duration-short`                                            | 150ms                                                  |
+| Tokens                                                           | Value or role                                             |
+| ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
+| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
+| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the focus ring, the lead action, and text on it    |
+| `--dk-highlight`                                                 | what is chosen or pointed at                              |
+| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
+| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
+| `--dk-scrim`                                                     | what dims the page behind a dialog                        |
+| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                          |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                        |
+| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                           |
+| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                           |
+| `--dk-text-code`                                                 | 0.9em, a step under the text around it                    |
+| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                               |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
+| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
+| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
+| `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |
+| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches            |
+| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                           |
+| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                            |
+| `--dk-duration-short`                                            | 150ms                                                     |
 
 </details>
 
@@ -157,8 +163,8 @@ it. Give the box a position, and the link shows at the top of that box when it t
 
 </details>
 
-The strip holds a navigation landmark named Portfolio, with links to the author's name, which leads
-to the portfolio as the footer's does, to how it works and to the source. On the demo's explainer,
+The strip holds a navigation landmark named Portfolio, with the author's name linking to the
+portfolio, as in the footer, then "How it works" and "Source on GitHub". On the demo's explainer,
 the explainer's link carries `aria-current="page"`. A demo with switches of its own puts them in a
 section after the links, named for them, and a demo with none leaves the section out.
 
@@ -182,8 +188,8 @@ section after the links, named for them, and a demo with none leaves the section
 
 A demo whose switches are drawn by a script that has not run yet keeps their room, so nothing below
 the strip moves when they come. The section has no name and holds only the room, so it is no
-landmark and a screen reader finds nothing in it. When the switches come they take the room's
-place, and the section takes its name.
+landmark and a screen reader finds nothing in it. When the switches come they take the room's place,
+and the section takes its name.
 
 <!-- example: stripWaiting -->
 
@@ -193,17 +199,18 @@ place, and the section takes its name.
 
 The room is the height of one row of the kit's buttons or fields, beside the links on a wide screen
 and on a row of its own on a phone. Switches of another height, or more than fit on one row, still
-move what is below them. On a wide screen the room has no width of its own, so a demo whose
-switches would make the strip wrap names their width in `--dk-strip-tools`, in the strip's own text
-size, such as `:root { --dk-strip-tools: 20em; }`. The strip then wraps the same before the
-switches come as after. On a phone they take a row of their own and the width is left aside.
+move what is below them. On a wide screen the room has no width of its own, so a demo whose switches
+would make the strip wrap names their width in `--dk-strip-tools`, in the strip's own text size,
+such as `:root { --dk-strip-tools: 20em; }`. The strip then wraps the same before the switches come
+as after. On a phone they take a row of their own and the width is left aside.
 
 </details>
 
-The footer is one sentence that says whose project the demo is, with the author's name linking the
-portfolio, and links how it works, the source, the rest of the work and the license. On the
-explainer it marks the link to how it works with `aria-current="page"`, as the strip does. Anything
-the demo adds follows the license, as sentences of its own.
+The footer is one sentence that says whose project the demo is. The author's name links to the
+portfolio, and the sentence goes on to link "How it works", the source, the author's other work on
+GitHub and the license. On the explainer it marks the link to how it works with
+`aria-current="page"`, as the strip does. Anything the demo adds follows the license, as sentences
+of its own.
 
 <!-- example: footer -->
 
@@ -223,9 +230,9 @@ the demo adds follows the license, as sentences of its own.
 <summary>How the strip and footer are drawn</summary>
 
 On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text, with its links
-1.5rem apart and the switches on the right. At 48rem wide or less the text steps down to the
-caption size, the links close to 1rem apart and wrap where they must, and the switches take a row
-of their own below them.
+1.5rem apart and the switches on the right. At 48rem wide or less the text steps down to the caption
+size, the links close to 1rem apart and wrap where they must, and the switches take a row of their
+own below them.
 
 The footer's sentence holds to the measure, as prose does, while its rule runs the page's width.
 Every link in the chrome keeps its underline, and in the footer's sentence the underline is what
@@ -288,17 +295,18 @@ strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
 The default `license` is `LICENSE` on the main branch of `source`, with any trailing slash on
 `source` dropped first. Children that draw nothing, as for `tools`, add nothing.
 
-The strip's and the footer's `about`, `source` and `license` go into their links unchecked, so each
-is a URL the demo's author writes, never one taken from the page's address or a visitor's input,
-since one taken from either could send a visitor anywhere.
+The strip and the footer put `about`, `source` and `license` into their links unchecked. Each must
+be a URL the demo's author writes, never one taken from the page's address or a visitor's input,
+which could send a visitor anywhere.
 
 ## Buttons, fields and callouts
 
 `components.css` styles a button, a text field, a select and a callout by the markup below, each in
 every state on [the controls page](https://jasonsdevspace.com/design-kit/controls/). A control's
 state is the native or ARIA attribute a screen reader already reads, such as `aria-pressed` or
-`aria-invalid`, never a class of the kit's, and every rule for these pieces weighs nothing, so a
-page's own rule outside a layer wins over each, as
+`aria-invalid`, never a class of the kit's. Every rule for these pieces adds no weight, so a state
+wins over the resting look by coming later in the sheet, and a page's own rule outside a layer wins
+over both, as
 [decision 0006](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0006-a-control-state-is-an-attribute.md)
 explains.
 
@@ -321,20 +329,20 @@ surprise. `dk-button-accent` fills the one action a view leads with in the accen
 button is never a toggle. A link with the class looks the same as a button.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
-in both states, since the attribute already says which it is. An action carries no `aria-pressed`
-at all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
+in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
+all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
 
-An unavailable button carries `aria-disabled="true"` rather than `disabled`, which is `off` in
-React. A disabled button drops focus and leaves the tab order, while an aria-disabled one stays
-where the keyboard can reach it and find out why. The sheet draws a `disabled` button, and one
-inside a disabled fieldset, the same as an off one.
+An unavailable button carries `aria-disabled="true"` rather than `disabled`, and this README calls
+it off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
+aria-disabled one stays where the keyboard can reach it and find out why. The sheet draws a
+`disabled` button, and one inside a disabled fieldset, the same as an off one.
 
 The attribute does nothing by itself. A page that writes this markup makes its click handler check
 `aria-disabled` and return early, calling `preventDefault()` so a submit button does not submit.
 
 Say why a button is off in text beside it, such as a `.dk-field-hint` paragraph the button's
-`aria-describedby` names. A form's submit button is better left on while the form is incomplete,
-so a press shows the errors rather than doing nothing.
+`aria-describedby` names. A form's submit button is better left on while the form is incomplete, so
+a press shows the errors rather than doing nothing.
 
 <details>
 <summary>How a button is drawn</summary>
@@ -345,10 +353,10 @@ takes the ground of whatever it sits on, a callout included. Where a pointer can
 turns to the accent under it, and the accent button underlines its words instead. Pressed is the
 highlight with an edge twice as thick in the accent, and its words in the page's text, an accent
 button's included. Off is the muted text on no ground with an edge in the line color, rather than a
-fade, so its words keep a ratio the palette measures, and an off toggle that is on keeps the thicker
-edge, in the line color. In forced colors a pressed button takes the system's `Highlight`, an off
-one `GrayText` on the page's ground, accent or not, and an off toggle that is on an edge in
-`Highlight`.
+fade, so its words keep a ratio the palette measures. An off toggle that is on keeps the thicker
+edge, in the line color. In forced colors a pressed button takes the system's `Highlight`, and an
+off one takes `GrayText` on the page's ground, accent or not. An off toggle that is on keeps an edge
+in `Highlight`.
 
 </details>
 
@@ -429,13 +437,13 @@ as a list, with `multiple` or a `size`, is left as the browser draws it, with no
 </div>
 ```
 
-A callout is `dk-callout` alone for news, on the highlight, or adds `dk-callout-success` or
-`dk-callout-danger` for something that went right or wrong, on that color's own ground. The words
-stay in the page's text color in every tone. A success or danger callout starts its title, or its
-message when it has no title, with a visually hidden "Success: " or "Error: ", so the tone is not
-told by color alone. The title is a paragraph, or a heading from `h2` to `h6` where the callout is a
-section a visitor would jump to, and opens `.dk-callout-body`, the message. The actions, when there
-are some, follow the message, outside it.
+A plain `dk-callout` is for information, the `'info'` tone, and sits on the highlight. Add
+`dk-callout-success` or `dk-callout-danger` for something that went right or wrong, and it sits on
+that color's own ground. The words stay in the page's text color in every tone. A success or danger
+callout starts its title, or its message when it has no title, with a visually hidden "Success: " or
+"Error: ", so the tone is not told by color alone. The title is a paragraph, or a heading from `h2`
+to `h6` where the callout is a section a visitor would jump to, and opens `.dk-callout-body`, the
+message. The actions, when there are some, follow the message, outside it.
 
 A callout has no role unless the page gives it one, whatever its tone, so a message on the page when
 it loads is read in its place rather than over the page's title, as
@@ -446,7 +454,8 @@ explains. A message that arrives after the page has loaded is made live in three
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
 2. Leave the message empty at first. A live callout whose message holds nothing at all, not even a
-   space, and that has no actions draws nothing, though it keeps its place in the flow.
+   space, a line break or the tone's word, and that has no actions draws nothing, though it keeps
+   its place in the flow.
 3. Fill the message when there is something to say, which is when a screen reader reads it. For
    success or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
@@ -493,26 +502,26 @@ export const Checkout = ({ error, saved }: Props) => {
 ```
 
 Every optional prop of every component takes `undefined` as if it were left out, so a wrapper that
-passes on a prop it may not have been given compiles under `exactOptionalPropertyTypes` too.
+passes on a prop it might not have been given compiles under `exactOptionalPropertyTypes` too.
 
-| `Button`  | Default    | What it does                                                               |
-| --------- | ---------- | -------------------------------------------------------------------------- |
-| `accent`  | `false`    | Adds `dk-button-accent`. The types refuse it beside `pressed`              |
-| `pressed` | none       | Writes `aria-pressed`, `false` included. Left out, the button is an action |
-| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`               |
-| `type`    | `'button'` | The button's type                                                          |
+| `Button`  | Default    | What it does                                                           |
+| --------- | ---------- | ---------------------------------------------------------------------- |
+| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it together with `pressed` |
+| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action   |
+| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`           |
+| `type`    | `'button'` | The button's type                                                      |
 
-Every other prop goes to the `<button>`, `ref` and `className` included, except `style`,
-`disabled`, `aria-disabled` and `aria-pressed`. A click on an off button calls `preventDefault()`,
-so a submit button does not submit. Other handlers, for keys or a pointer, still run, and check
-`off` themselves.
+Every other prop goes to the `<button>`, `ref` and `className` included, except `style`, `disabled`,
+`aria-disabled` and `aria-pressed`. A click on an off button calls `preventDefault()`, so a submit
+button does not submit. Other handlers, for keys or a pointer, still run, so they must check `off`
+themselves.
 
-| `InputField`, `SelectField` | Default      | What it does                                                 |
-| --------------------------- | ------------ | ------------------------------------------------------------ |
-| `label`                     | required     | Names the control                                            |
-| `hint`                      | none         | Drawn when it holds something, and read as a description     |
-| `error`                     | none         | Drawn when it holds something, and marks the control invalid |
-| `id`                        | from `useId` | The control's id, given when something links to the field    |
+| `InputField`, `SelectField` | Default      | What it does                                                    |
+| --------------------------- | ------------ | --------------------------------------------------------------- |
+| `label`                     | required     | Names the control                                               |
+| `hint`                      | none         | Drawn when it holds something, and read as a description        |
+| `error`                     | none         | Drawn when it holds something, and marks the control invalid    |
+| `id`                        | from `useId` | The control's id. Set it when something else links to the field |
 
 Every other prop goes to the control, `ref` and `className` included, except `style` and
 `aria-invalid`. A select field's children are its options. An `aria-describedby` of the page's own
@@ -529,8 +538,8 @@ is listed after the hint and the error.
 
 A live callout's message is drawn even when it is empty, so the page can fill it later. Every other
 prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except `style`, `role`,
-the `title` attribute, inner HTML and the live attributes, since the message takes its role from
-`live` alone.
+the `title` attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes
+its role from `live` alone.
 
 ## Explainer pages
 
@@ -570,9 +579,9 @@ markup below, which every page writes by hand, since none of these pieces has lo
 ```
 
 The header holds a link back to the demo, outside `main`, so the skip link passes it and reading
-starts at the h1. `main` holds the h1, the lead, the one action as an accent button, and then
-the sections. Each section holds its number, hidden from a screen reader since its heading says
-what the section is, then an h2 with an id, then its text, with an h3 for each part of it.
+starts at the h1. `main` holds the h1, the lead, the one action as an accent button, and then the
+sections. Each section holds its number, hidden from a screen reader since its heading says what the
+section is, then an h2 with an id, then its text, with an h3 for each part of it.
 
 A section is a plain `<section>`, never named, and its h2 ids are a contract other pages link to, so
 a page keeps an id when it rewords its heading, as
@@ -582,12 +591,13 @@ explains.
 <details>
 <summary>Sections, landmarks and spacing</summary>
 
-A named section becomes a region landmark, so the page's landmarks stay the strip's navigation, the
-demo's switches when it has some, the header, the main content, the footer and the frames that
-scroll. A reader moves between sections by their headings. An in-page link needs no tabindex on the
-heading, since a jump to a fragment moves where the keyboard goes next. Each h2 has a scroll margin,
-so a jump stops short of it and leaves the section's number and rule in sight above it. The kit
-draws no table of contents, since an explainer is short enough to move through by its headings.
+A named section would become a region landmark. Left unnamed, the page's landmarks stay the strip's
+navigation, the demo's switches when it has some, the header, the main content, the footer and the
+frames that scroll. A reader moves between sections by their headings. An in-page link needs no
+tabindex on the heading, since a jump to a fragment moves where the keyboard goes next. Each h2 has
+a scroll margin, so a jump stops short of it and leaves the section's number and rule in sight above
+it. The kit draws no table of contents, since an explainer is short enough to move through by its
+headings.
 
 The header and the explainer start their text at the column's inset, where the strip's links start,
 and every part of the explainer holds to `--dk-measure`, 34rem, no more than 80 characters a line in
@@ -616,11 +626,11 @@ caption size, its heading in the title size, and its text, with an h3 at the bod
 </ol>
 ```
 
-Steps a demo takes one after another, each in a box of its own with an edge in the line color and
-large corners, in the small text. A step's title is at medium weight, with its note in the muted
-text on a line below. Every step after the first opens with an arrow, hidden from a screen reader.
-The list keeps `role="list"`, since WebKit with VoiceOver drops a list's meaning when its markers
-are gone.
+Steps show what a demo does one after another, each in a box of its own with an edge in the line
+color and large corners, in the small text. A step's title is at medium weight, with its note in the
+muted text on a line below. Every step after the first opens with an arrow, hidden from a screen
+reader. The list keeps `role="list"`, since WebKit with VoiceOver drops a list's meaning when its
+markers are gone.
 
 ### Panels
 
@@ -688,11 +698,11 @@ region whether or not it scrolls, as
 [decision 0008](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0008-a-scroll-frame-is-always-a-region.md)
 explains.
 
-A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every
-cell of a numeric column, its header included, is `.dk-table-number`. A table is never stacked
-into cards on a phone, since `display: block` on a table's parts drops its table semantics in
-WebKit. It scrolls in its frame instead. A header gives its unit in words a screen reader says
-well, "Slowest 1%, ms" rather than "p99 ms".
+A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every cell
+of a numeric column, its header included, is `.dk-table-number`. A table is never stacked into cards
+on a phone, since `display: block` on a table's parts drops its table semantics in WebKit. It
+scrolls in its frame instead. A header gives its unit in words a screen reader says well, "Slowest
+1%, ms" rather than "p99 ms".
 
 <details>
 <summary>How a table is drawn</summary>
@@ -729,22 +739,22 @@ for the same reasons as a table's frame. Its title says what the code is for, su
 yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
 page off the identifiers. A block never takes `lang` for its programming language, since `lang`
 names a human language. The code starts right after `<code>`, since a line break there shows as a
-blank first line, and a `<` or `&` in it is written `&lt;` or `&amp;`. The kit ships no script, so
-a block has no copy button.
+blank first line, and a `<` or `&` in it is written `&lt;` or `&amp;`. The kit adds no behavior
+beyond the theme script, so a block has no copy button.
 
 <details>
 <summary>How a code block is drawn</summary>
 
-A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set
-into what holds it. Its edge is transparent, and shows only in forced colors.
+A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set into
+what holds it. Its edge is transparent, and shows only in forced colors.
 
 </details>
 
 ## Layers and palettes
 
-The tokens declare three layers, `dk.tokens`, `dk.base` and `dk.components`, in that order, and
-each sheet fills its own. A page's own rule outside a layer wins over every rule of the kit's except
-the reduced-motion rule, however little it weighs and wherever its sheet loads, as
+The tokens declare three layers, `dk.tokens`, `dk.base` and `dk.components`, in that order, and each
+sheet fills its own. A page's own rule outside a layer wins over every rule of the kit's except the
+reduced-motion rule, however little it weighs and wherever its sheet loads, as
 [decision 0002](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0002-rules-sit-in-dk-layers.md)
 explains.
 
@@ -752,18 +762,25 @@ A page with layers of its own names where `dk` goes, before any rule of its own.
 place where its name first appears, so a page whose layers come first without naming `dk` puts the
 kit's rules over its own.
 
-```css
-/* The page's layer over the kit's, written before any rule of the page's layer. */
-@layer dk, page;
+Write one of these, never both, since only the first order written counts. To keep the page's layer
+over the kit's, before any rule of the page's layer:
 
-/* The kit's layer over the page's, written before the kit's sheets load. */
+```css
+@layer dk, page;
+```
+
+To put the kit's layer over the page's, before the kit's sheets load:
+
+```css
 @layer page, dk;
 ```
 
-The reduced-motion rule is held with `!important`, since it is the visitor's choice. It wins over
-every normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer
-after the kit's. An important declaration in a `style` attribute still wins over it, as does an
-important rule in a layer the page orders before the kit's.
+For a visitor who asks for less motion, the reduced-motion rule in `base.css` plays every animation
+once, cuts animations and transitions to a hundredth of a millisecond, and turns smooth scrolling
+into a jump. It is held with `!important`, since it is the visitor's choice. It wins over every
+normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer after
+the kit's. An important declaration in a `style` attribute still wins over it, as does an important
+rule in a layer the page orders before the kit's.
 
 Each color role holds its light and its dark value in one `light-dark()`. A page with its own
 palette sets the roles again, with both values at once. Set on `:root`, outside a layer or in one
@@ -793,14 +810,13 @@ The portfolio saves a visitor's theme in `localStorage` under `theme`, and the s
 
 It sets the theme again when the system's scheme changes, and when another tab saves or clears a
 choice. Storage belongs to an origin, so only a page on the portfolio's origin reads the visitor's
-choice, and anywhere else follows the system. The tokens follow `data-theme` wherever it comes
-from, so a page may set it itself.
+choice, and anywhere else follows the system.
 
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed
-version, so the policy reads it from the package rather than keeping a copy that goes stale when
-the script changes. It holds as long as nothing after the plugin rewrites the inline script, as an
-HTML minifier would.
+version, so the policy reads it from the package rather than keeping a copy that goes stale when the
+script changes. It holds as long as nothing after the plugin rewrites the inline script, as an HTML
+minifier would.
 
 ```ts
 import { themeScriptHash } from '@jasonsdevspace/design-kit/vite';
@@ -816,9 +832,9 @@ listed under
 [known limitations](https://github.com/jasonsdevspace/design-kit/blob/main/ACCESSIBILITY.md#known-limitations).
 
 A Vite build that takes `browserFloor()` as its target, as Setup shows, keeps each `light-dark()` as
-written. A lower target rewrites each one into switches set once on the root, so a part of the page
-set to the other scheme keeps the page's colors. Taken from the kit, the target rises when the kit
-raises its floor.
+written. A lower target rewrites each one into custom properties set once on the root, so a part of
+the page set to the other scheme keeps the page's colors. Taken from the kit, the target rises when
+the kit raises its floor.
 
 <details>
 <summary>With Lightning CSS as the transformer</summary>
@@ -846,7 +862,7 @@ export default defineConfig({
 
 ## Versions and license
 
-The kit follows semantic versioning. Until 1.0.0, a minor version may rename a token or change what
+The kit follows semantic versioning. Until 1.0.0, a minor version can rename a token or change what
 the theme script reads, and a patch changes neither. Prereleases are under npm's `next` tag, as
 `@jasonsdevspace/design-kit@next`. The tests and the decisions behind the kit are in
 [the repository](https://github.com/jasonsdevspace/design-kit). The kit is MIT licensed, as
