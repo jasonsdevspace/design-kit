@@ -99,8 +99,17 @@
         margin-inline-start: auto;
     }
 
-    /* The exit after a long scroll, its rule the width of the page and its text in the column. */
+    /*
+     * The exit after a long scroll, its rule the width of the page and its text in the column. A
+     * demo's own line sits at the end of the sentence's row on a wide screen, and wraps below it
+     * when the row has no room.
+     */
     .dk-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--dk-space-2) var(--dk-space-6);
         margin-top: var(--dk-space-6);
         padding-block: var(--dk-space-4);
         border-top: 1px solid var(--dk-line);
@@ -155,6 +164,10 @@
 
         .dk-strip-links {
             gap: 0 var(--dk-space-4);
+        }
+
+        .dk-footer-aside {
+            flex-basis: 100%;
         }
 
         .dk-strip-tools {

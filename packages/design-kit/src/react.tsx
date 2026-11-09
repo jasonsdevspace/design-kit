@@ -125,6 +125,7 @@ export const DemoFooter = ({
     license = `${source.endsWith('/') ? source.slice(0, -1) : source}/blob/main/LICENSE`,
     licenseName = 'MIT license',
     children,
+    aside,
 }: {
     /** The demo's name, as the footer's sentence opens with it. */
     readonly name: string;
@@ -143,6 +144,11 @@ export const DemoFooter = ({
     readonly licenseName?: string | undefined;
     /** What the demo adds after the license, as sentences of its own. */
     readonly children?: ReactNode;
+    /**
+     * A line of the demo's own beside the sentence on a wide screen and under it on a phone, such as
+     * the version and commit the page was built from.
+     */
+    readonly aside?: ReactNode;
 }) => (
     <footer className="dk-footer">
         <p>
@@ -154,6 +160,7 @@ export const DemoFooter = ({
             <a href={GITHUB_PROFILE_URL}>more work</a> are on GitHub, under the{' '}
             <a href={license}>{licenseName}</a>.{filled(children) ? <> {children}</> : null}
         </p>
+        {filled(aside) ? <p className="dk-footer-aside">{aside}</p> : null}
     </footer>
 );
 

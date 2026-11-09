@@ -49,7 +49,9 @@ export const stripWaiting: ReactElement = (
 );
 
 /** The footer. */
-export const footer: ReactElement = <DemoFooter name="Example" about="./about/" source={SOURCE} />;
+export const footer: ReactElement = (
+    <DemoFooter name="Example" about="./about/" source={SOURCE} aside="Built at commit abc1234." />
+);
 
 /**
  * An action, the one action a view leads with, a toggle that is on, and a button that is off, with

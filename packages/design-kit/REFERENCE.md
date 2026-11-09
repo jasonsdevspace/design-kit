@@ -124,7 +124,9 @@ The footer is one sentence that says whose project the demo is. The author's nam
 portfolio, and the sentence goes on to link "How it works", the source, the author's other work on
 GitHub and the license. On the explainer it marks the link to how it works with
 `aria-current="page"`, as the strip does. Anything the demo adds follows the license, as sentences
-of its own.
+of its own. A line of the demo's own that is not part of the sentence, such as the version and
+commit the page was built from, is a second paragraph, `.dk-footer-aside`. It sits at the end of the
+sentence's row on a wide screen, and under the sentence on a phone or wherever the row has no room.
 
 <!-- example: footer -->
 
@@ -137,6 +139,7 @@ of its own.
         <a href="https://github.com/jasonsdevspace">more work</a> are on GitHub, under the
         <a href="https://github.com/jasonsdevspace/example/blob/main/LICENSE">MIT license</a>.
     </p>
+    <p class="dk-footer-aside">Built at commit abc1234.</p>
 </footer>
 ```
 
@@ -211,9 +214,11 @@ strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
 | `license`     | `LICENSE` in `source` | The link to the license                       |
 | `licenseName` | `'MIT license'`       | The license's name in the sentence            |
 | `children`    | none                  | Sentences of the demo's own after the license |
+| `aside`       | none                  | A line of the demo's own beside the sentence  |
 
 The default `license` is `LICENSE` on the main branch of `source`, with any trailing slash on
-`source` dropped first. Children that draw nothing, as for `tools`, add nothing.
+`source` dropped first. Children that draw nothing, as for `tools`, add nothing, and an `aside`
+that draws nothing leaves the footer one paragraph.
 
 The strip and the footer put `about`, `source` and `license` into their links unchecked. Each must
 be a URL the demo's author writes, never one taken from the page's address or a visitor's input,
