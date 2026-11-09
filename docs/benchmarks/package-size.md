@@ -6,9 +6,9 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                | Node     |
 | ---------- | --------- | ---------------------- | -------- |
-| 2026-11-08 | `357d909` | Apple M2 Max, 12 cores | v24.22.2 |
+| 2026-11-08 | `1e80273` | Apple M2 Max, 12 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.1.0-next.6`, 36.0 KB packed.
+`@jasonsdevspace/design-kit@0.1.0`, 36.1 KB packed.
 
 The sheets a page loads:
 
@@ -30,7 +30,7 @@ Every other file the package carries, which a page never loads:
 
 | File            | Raw     | Gzipped |
 | --------------- | ------- | ------- |
-| CHANGELOG.md    | 14.2 KB | 5.4 KB  |
+| CHANGELOG.md    | 14.5 KB | 5.5 KB  |
 | dist/react.d.ts | 8.3 KB  | 2.7 KB  |
 | dist/theme.d.ts | 1.3 KB  | 0.6 KB  |
 | dist/vite.d.ts  | 2.2 KB  | 1.0 KB  |

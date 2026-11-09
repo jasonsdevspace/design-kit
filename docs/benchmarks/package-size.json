@@ -1,18 +1,18 @@
 {
     "recorded": {
         "date": "2026-11-08",
-        "commit": "357d909",
+        "commit": "1e80273",
         "machine": "Apple M2 Max, 12 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.1.0-next.6",
-    "size": 36913,
+    "version": "0.1.0",
+    "size": 37008,
     "files": [
         {
             "path": "CHANGELOG.md",
-            "size": 14511,
-            "gzip": 5570
+            "size": 14891,
+            "gzip": 5674
         },
         {
             "path": "dist/base.css",
@@ -66,8 +66,8 @@
         },
         {
             "path": "package.json",
-            "size": 2025,
-            "gzip": 710
+            "size": 2018,
+            "gzip": 705
         },
         {
             "path": "README.md",
