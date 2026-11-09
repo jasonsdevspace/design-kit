@@ -42,7 +42,8 @@ const MARKUP = renderToStaticMarkup(
 const ATTACH = `import { attachCopyButton, attachThemeSwitch } from './controls.js';
 const group = document.querySelector('.dk-theme-switch');
 attachThemeSwitch(group);
-attachThemeSwitch(group);
+window.detachFirst = attachThemeSwitch(group);
+window.attachFirst = () => attachThemeSwitch(group);
 window.detachHeld = attachThemeSwitch(document.querySelector('#holder'));
 window.detachCopy = attachCopyButton(document.querySelector('.dk-copy'), {
     source: () => document.querySelector('#code'),
@@ -189,6 +190,29 @@ test('hides a switch again once it is taken away', async ({ browser }) => {
         (window as unknown as { detachHeld: () => void }).detachHeld();
     });
     await expect(held(opened)).toBeHidden();
+    await context.close();
+});
+
+test('shows the choice saved meanwhile on a switch attached again after every switch was taken away', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context);
+    await first(opened).getByRole('radio', { name: 'Light' }).check();
+    await opened.evaluate(() => {
+        (window as unknown as { detachHeld: () => void }).detachHeld();
+        (window as unknown as { detachFirst: () => void }).detachFirst();
+    });
+    const other = await context.newPage();
+    await other.goto(`${ORIGIN}/`);
+    await other.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+    }, THEME_KEY);
+    await expect.poll(() => themeOf(opened)).toBe('dark');
+    await opened.evaluate(() => {
+        (window as unknown as { attachFirst: () => void }).attachFirst();
+    });
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
     await context.close();
 });
 

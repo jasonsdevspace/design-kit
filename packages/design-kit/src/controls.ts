@@ -114,7 +114,9 @@ const listen = () => {
     }
 };
 
-const attached = new WeakMap<HTMLElement, () => void>();
+/** Each control attached, by its element, one map for each kind so neither answers for the other. */
+const attachedSwitches = new WeakMap<HTMLElement, () => void>();
+const attachedButtons = new WeakMap<HTMLElement, () => void>();
 
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and draws
@@ -125,8 +127,10 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const group = element.matches('.dk-theme-switch')
         ? element
         : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
-    const already = attached.get(group);
+    const already = attachedSwitches.get(group);
     if (already) return already;
+    // With no switch on the page, nothing heard a choice saved meanwhile, so it is read again.
+    if (switches.size === 0 && !heldHere) chosen = undefined;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
     const show = () => {
         const choice = current();
@@ -144,10 +148,10 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const detach = () => {
         for (const radio of radios) radio.removeEventListener('change', onChange);
         switches.delete(show);
-        attached.delete(group);
+        attachedSwitches.delete(group);
         group.hidden = true;
     };
-    attached.set(group, detach);
+    attachedSwitches.set(group, detach);
     return detach;
 };
 
@@ -213,7 +217,7 @@ export const attachCopyButton = (
     button: HTMLButtonElement,
     { source, status }: { readonly source: () => HTMLElement; readonly status: HTMLElement }
 ): (() => void) => {
-    const already = attached.get(button);
+    const already = attachedButtons.get(button);
     if (already) return already;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
@@ -251,8 +255,8 @@ export const attachCopyButton = (
         window.clearTimeout(timer);
         showWord(0);
         button.hidden = true;
-        attached.delete(button);
+        attachedButtons.delete(button);
     };
-    attached.set(button, detach);
+    attachedButtons.set(button, detach);
     return detach;
 };
