@@ -32,27 +32,27 @@ export const htmlOf = async (name: ExampleName): Promise<string> => {
 };
 
 /**
- * A marker in the README, then the block of HTML it names, up to the fence that closes it at the
+ * A marker in the reference, then the block of HTML it names, up to the fence that closes it at the
  * start of a line, so an empty block closes where it should. The formatter puts a blank line
  * between the marker and the block.
  */
 const BLOCK = /(<!-- example: (\w+) -->(?:\r?\n)+```html\r?\n)[\s\S]*?(^```)/gm;
 
-/** The examples the README's blocks are marked with, in the order they appear. */
+/** The examples the reference's blocks are marked with, in the order they appear. */
 export const markedIn = (readme: string): string[] =>
     [...readme.matchAll(BLOCK)].map((match) => match[2] ?? '');
 
 const isName = (name: string): name is ExampleName => Object.hasOwn(EXAMPLES, name);
 
 /**
- * The README with each marked block written from its example. A marker that names no example is
+ * The reference with each marked block written from its example. A marker that names no example is
  * an error, so a renamed example cannot leave a block behind.
  */
 export const writtenReadme = async (readme: string): Promise<string> => {
     const names = markedIn(readme);
     const unknown = names.find((name) => !isName(name));
     if (unknown !== undefined) {
-        throw new Error(`the README marks an example there is none of: ${unknown}`);
+        throw new Error(`the reference marks an example there is none of: ${unknown}`);
     }
     const html = new Map(
         await Promise.all(

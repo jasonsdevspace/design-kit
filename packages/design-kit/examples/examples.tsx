@@ -13,12 +13,12 @@ import {
 import * as pieces from './pieces.js';
 
 /*
- * The markup each piece of the kit draws, in one place, so the README prints what the components
+ * The markup each piece of the kit draws, in one place, so the reference prints what the components
  * draw and the browser tests import it rather than keep copies. A piece is drawn by its component
  * where the block shows all of what the component draws, and written as a page without React
  * writes it otherwise. An explainer's steps, panel, table and code block come from `pieces.tsx`,
- * which the site draws them from too. The README prints each example in EXAMPLES as HTML, and a
- * test fails when one of its blocks no longer matches. The README prints none of the states of
+ * which the site draws them from too. The reference prints each example in EXAMPLES as HTML, and a
+ * test fails when one of its blocks no longer matches. The reference prints none of the states of
  * each control, which the browser tests draw from `controlStates` and the site from `states.tsx`.
  * The package ships none of this.
  */
@@ -224,7 +224,7 @@ export const table: ReactElement = pieces.table.draw(kit, asWritten);
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
 export const code: ReactElement = pieces.code.draw(kit, asWritten);
 
-/** Every example by the name the README's markers give it. */
+/** Every example by the name the reference's markers give it. */
 export const EXAMPLES = {
     skipLink,
     strip,

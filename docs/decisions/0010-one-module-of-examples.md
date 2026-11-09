@@ -87,16 +87,20 @@ runner does not report, so a test renamed or removed has to be renamed or remove
 - The control states the site shows are a list of their own in `examples/states.tsx`, beside the
   states the browser tests draw from `controlStates`, since the site draws them from the version it
   pins. A state added to the kit is added to both, and nothing fails when only one has it.
+- The blocks now live in `REFERENCE.md`, which the package README links at each release's tag, and
+  `npm run examples` writes them there.
 - The examples are not in the package's `files`, so a page that installs the kit gets none of them.
 
 ## How it is tested
 
 The paths are in `packages/design-kit`.
 
-- `examples/readme.test.ts` writes the README's blocks from the examples and fails when the README
-  differs, finds a marker for every example, none twice and each with a block after it, closes an
-  empty block at its own fence, keeps the line endings of a checkout that ends lines with a carriage
-  return, and refuses a marker that names no example.
+- `examples/readme.test.ts` writes the reference's blocks from the examples and fails when the
+  reference differs, finds a marker for every example, none twice and each with a block after it,
+  closes an empty block at its own fence, keeps the line endings of a checkout that ends lines with
+  a carriage return, and refuses a marker that names no example. It also finds the package README
+  linking the reference at its own version's tag, only to headings the reference has, and making no
+  link a reader on npm could not follow.
 - `examples/states.test.tsx` draws each state of the controls, the chrome and an explainer's pieces
   from the sources and finds the attribute printed under it, whole, finds each copy's ids its own,
   and finds `states.tsx` and `pieces.tsx` importing nothing of the kit but its types. It reads the
