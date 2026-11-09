@@ -15,11 +15,9 @@ npm run e2e
 npm run lighthouse
 ```
 
-`npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
-`npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
-time. `npm run lighthouse` builds the site and audits every page. A change to a piece's markup also
-needs `npm run examples`, which writes the blocks the package README prints from the examples. CI
-also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
+`npm run e2e` needs `npx playwright install chromium` the first time. A change to a piece's markup
+also needs `npm run examples`, which writes the blocks the package README prints from the examples.
+CI also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
 describes.
 
 ## Writing
@@ -44,6 +42,25 @@ main, and the title and the body both pass the commit message check. The body sa
 why, with no counts, no checklist and no notes to the reviewer, and ends with "Closes #N", or "Part
 of #N" when the issue has more to do. Every check in CI passes before a pull request is merged, the
 browser tests and the Lighthouse audit among them.
+
+## Releasing
+
+[Dev setup](README.md#dev-setup) in the README says how a release reaches npm, under "How a
+release reaches npm". Around it, a maintainer:
+
+- bumps the version in `packages/design-kit/package.json` and adds a `## VERSION` entry to its
+  `CHANGELOG.md`, in a pull request of its own
+- tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
+- promotes the staged version on the package's npm page
+- moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
+  with `npm dist-tag add @jasonsdevspace/design-kit@VERSION next`, so `next` is never older than
+  `latest`
+- moves the site's pin in `packages/site/package.json` to the promoted version, in a pull request,
+  as a demo's pin moves
+
+The workflow stops on a version npm already holds, staged or published, since it cannot tell one
+staged by an earlier run from one staged from other code. A run whose later step failed is repeated
+with "Re-run failed jobs", which keeps the staging and runs only what failed.
 
 ## Security and accessibility
 
