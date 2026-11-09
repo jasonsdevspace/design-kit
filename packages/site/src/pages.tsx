@@ -120,7 +120,7 @@ const Tests = ({ group, commit }: { readonly group: Group; readonly commit: stri
 
 /**
  * The kit's footer, with the version of the kit the page is drawn from and the commit it was built
- * at as its own line, beside the sentence on a wide screen and under it on a phone.
+ * at as its own line, beside the footer's text on a wide screen and under it on a phone.
  */
 const SiteFooter = ({
     build,
