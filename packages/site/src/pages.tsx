@@ -119,8 +119,8 @@ const Tests = ({ group, commit }: { readonly group: Group; readonly commit: stri
 );
 
 /**
- * The kit's footer, and after it the version of the kit the page is drawn from and the commit it
- * was built at.
+ * The kit's footer, with the version of the kit the page is drawn from and the commit it was built
+ * at as its own line, beside the sentence on a wide screen and under it on a phone.
  */
 const SiteFooter = ({
     build,
@@ -136,7 +136,7 @@ const SiteFooter = ({
         current={current}
         aside={
             <>
-                Built from version {build.version} of the kit on npm, at commit{' '}
+                Uses version {build.version} of the kit from npm. Built at commit{' '}
                 <a href={`${SOURCE}/commit/${build.commit}`}>
                     <code>{build.commit.slice(0, 7)}</code>
                 </a>
@@ -215,8 +215,8 @@ const OnThisPage = ({ sections }: { readonly sections: readonly Listed[] }) => (
 
 /**
  * A page of the site: the kit's own skip link, strip and footer around the site's header and the
- * page's content, and in the footer the version of the kit it is drawn from and the commit it was
- * built at. A page with a title opens with it, its lead and any paragraphs of introduction after
+ * page's content, and in the footer's own line the version of the kit it is drawn from and the
+ * commit it was built at. A page with a title opens with it, its lead and any paragraphs of introduction after
  * the lead, and a page with sections lists them after that whole opening, so every such page opens
  * the same way and its column starts in the same place.
  */
@@ -746,8 +746,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Sizes that should grow when a reader makes their text bigger are in rem. Code
                     inside a sentence is in em, so it matches the words around it. Borders, the
-                    focus ring and shadows are in px, since they should stay the same size. Each
-                    step of the spacing scale is drawn to size.
+                    focus ring and shadows are in px, since they should stay the same size, and so
+                    is the pill radius, far larger than a tab or a tag could be tall. Each step of
+                    the spacing scale is drawn to size.
                 </p>
                 <Spaces declared={declared} />
                 <Scale declared={declared} />
