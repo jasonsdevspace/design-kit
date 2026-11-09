@@ -45,6 +45,24 @@ why, with no counts, no checklist and no notes to the reviewer, and ends with "C
 of #N" when the issue has more to do. Every check in CI passes before a pull request is merged, the
 browser tests and the Lighthouse audit among them.
 
+## Releasing
+
+The README says how a release reaches npm. Around it, a maintainer:
+
+- bumps the version in `packages/design-kit/package.json` and turns the changelog's entry into the
+  version's, in a pull request of its own
+- tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
+- promotes the staged version on the package's npm page
+- moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
+  with `npm dist-tag add @jasonsdevspace/design-kit@VERSION next`, so `next` is never older than
+  `latest`
+- moves the site's pin in `packages/site/package.json` to the promoted version, in a pull request,
+  as a demo's pin moves
+
+The workflow stops on a version npm already holds, staged or published, since it cannot tell one
+staged by an earlier run from one staged from other code. A run whose later step failed is repeated
+with "Re-run failed jobs", which keeps the staging and runs only what failed.
+
 ## Security and accessibility
 
 Report a security issue privately, as the [security policy](SECURITY.md) says, not in a public
