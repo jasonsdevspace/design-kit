@@ -416,6 +416,10 @@ on GitHub with the changelog entry as its notes.
 Once a version is promoted, a pull request moves the site's pin in `packages/site/package.json` to
 it, as a demo's pin moves, and the site shows the new version once that merges.
 
+When a stable version is promoted and no newer prerelease is staged, npm's `next` tag is moved to it
+with `npm dist-tag add @jasonsdevspace/design-kit@VERSION next`, so `next` is never older than
+`latest`.
+
 The job that stages holds the publish token, so it installs nothing but a pinned npm, from a
 tarball checked against the checksum npm's registry gives for that version, and fetches nothing
 else. It stops on a version npm already holds, staged or published, since it cannot tell one staged
