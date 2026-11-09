@@ -118,7 +118,7 @@
     }
 
     /*
-     * The footer sentence holds to the measure, as prose does, while its rule runs full width. Each
+     * The footer's text holds to the measure, as prose does, while its rule runs full width. Each
      * paragraph may shrink below its longest word, so a long name wraps rather than push a phone's
      * page sideways.
      */
