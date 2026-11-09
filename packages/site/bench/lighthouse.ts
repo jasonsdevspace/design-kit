@@ -124,8 +124,8 @@ const recordedOf = (path: string, accessibility: number, judged: Measure): Recor
  */
 const toolsOf = (report: Report): Tools => ({
     lighthouse: report.lighthouseVersion,
-    kit: kit.version,
     chrome: /Chrome\/(\d+)/.exec(report.environment.hostUserAgent)?.[1] ?? 'unknown',
+    kit: kit.version,
 });
 
 /**
