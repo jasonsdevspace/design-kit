@@ -7,6 +7,33 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.3.0
+
+The kit ships a theme switch and a copy button a page attaches to their markup, a pill, and a focus
+color of its own, and the theme script draws the saved theme on a page restored by Back. No token is
+renamed. The theme script's text changed, so `themeScriptHash` changed too.
+
+- **Upgrading.** A page that copies `themeScriptHash` into its policy rather than reading it from
+  the package takes the new hash. A page that sets `color-scheme` on its own elements outside a
+  layer sets them back to light in print, as the kit now prints light.
+- **Theme script.** It sets the theme again when the browser restores a page from its back and
+  forward cache, where a page hears no storage event, so a choice made on another page reaches a
+  page reached by Back. `THEME_CHOICES` and the type `ThemeChoice` are new in `./theme`, the values
+  a theme switch saves.
+- **Controls.** `@jasonsdevspace/design-kit/controls` is new, with `attachThemeSwitch`,
+  `attachCopyButton` and `chooseTheme`, which make the theme switch and the copy button work on the
+  markup a page draws. Nothing runs when it is imported, and it sets no style. The switch draws its
+  chosen word as a pressed button is, with an edge twice as thick in the accent, and a copy button's
+  words share one cell so it keeps its width.
+- **React.** `ThemeSwitch`, `CopyButton` and `CopyStatus` draw that markup, hidden until a page
+  attaches it.
+- **Tokens.** `--dk-focus` is new and unset, so the focus ring and a button's hover edge stay in the
+  accent until a page sets it.
+- **Base.** Print draws the light values whatever the theme, since paper is light and the browser
+  drops backgrounds.
+- **Sheets.** `.dk-pill` draws a chip, with a faint edge and no states, or a link among others, the
+  current page on the highlight at the heading's weight.
+
 ## 0.2.1
 
 The footer's text is now whole sentences, and names the license for the demo's source alone. No
