@@ -1,12 +1,13 @@
 {
     "recorded": {
         "date": "2026-11-08",
-        "commit": "cd3f5f6",
+        "commit": "f4fea6a",
         "machine": "Apple M2 Max, 12 cores",
         "node": "v24.22.2"
     },
     "tools": {
         "lighthouse": "13.5.0",
+        "kit": "0.1.0",
         "chrome": "156"
     },
     "pages": [
@@ -14,27 +15,27 @@
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 909.3,
+            "paint": 909,
             "shift": 0,
-            "bytes": 12897,
+            "bytes": 12892,
             "requests": 3
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 912.8,
+            "paint": 913.8,
             "shift": 0,
-            "bytes": 15892,
+            "bytes": 15887,
             "requests": 3
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 914.4,
+            "paint": 913,
             "shift": 0,
-            "bytes": 16240,
+            "bytes": 16238,
             "requests": 3
         },
         {
@@ -43,25 +44,25 @@
             "performance": 100,
             "paint": 911.6,
             "shift": 0,
-            "bytes": 14089,
+            "bytes": 14087,
             "requests": 3
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.7,
+            "paint": 911.8,
             "shift": 0,
-            "bytes": 14343,
+            "bytes": 14340,
             "requests": 3
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 906.7,
+            "paint": 907.1,
             "shift": 0,
-            "bytes": 13615,
+            "bytes": 13611,
             "requests": 3
         }
     ]
