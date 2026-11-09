@@ -7,6 +7,7 @@ import {
     useId,
 } from 'react';
 
+import { THEME_CHOICES, type ThemeChoice } from './theme.js';
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says
  * whose demo it is and a footer below it, and the buttons, fields and callouts on the page itself.
@@ -457,28 +458,28 @@ export const Callout = ({
     );
 };
 
-/** The words of each theme choice, in the order the switch shows them. */
-const CHOICE_WORDS = [
-    ['system', 'System'],
-    ['light', 'Light'],
-    ['dark', 'Dark'],
-] as const;
+/** The word each theme choice is shown by. */
+const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
+    system: 'System',
+    light: 'Light',
+    dark: 'Dark',
+};
 
 /**
  * The theme switch's markup: a group named Theme with three native radios, described by a note that
  * says where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch` from
  * `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
- * without script meets no control that does nothing. The radios are left to the attach function, so
- * React never sets what it set.
+ * without script meets no control that does nothing. The radios carry no checked prop, so React
+ * never undoes what the attach function sets.
  */
 export const ThemeSwitch = ({
     id,
-    name = 'dk-theme',
-    note = 'Your choice is saved for every page on jasonsdevspace.com.',
+    name,
+    note = 'Your choice is saved for every page of this site.',
 }: {
     /** What the name's and the note's ids start with, made with useId unless a page gives one. */
     readonly id?: string | undefined;
-    /** The radios' name, unique on the page. */
+    /** The radios' name, unique on the page, the id unless a page gives one. */
     readonly name?: string | undefined;
     /** What the group is described by, out of sight. */
     readonly note?: string | undefined;
@@ -496,10 +497,10 @@ export const ThemeSwitch = ({
             <span className="dk-theme-switch-name" id={`${base}-name`}>
                 Theme
             </span>
-            {CHOICE_WORDS.map(([value, word]) => (
+            {THEME_CHOICES.map((value) => (
                 <label className="dk-theme-switch-choice" key={value}>
-                    <input type="radio" name={name} value={value} />
-                    <span>{word}</span>
+                    <input type="radio" name={name ?? base} value={value} />
+                    <span>{CHOICE_WORDS[value]}</span>
                 </label>
             ))}
             <span className="dk-visually-hidden" id={`${base}-note`}>

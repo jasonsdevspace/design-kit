@@ -521,30 +521,32 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
 >
     <span class="dk-theme-switch-name" id="theme-name">Theme</span>
     <label class="dk-theme-switch-choice">
-        <input type="radio" name="dk-theme" value="system" />
+        <input type="radio" name="theme" value="system" />
         <span>System</span>
     </label>
     <label class="dk-theme-switch-choice">
-        <input type="radio" name="dk-theme" value="light" />
+        <input type="radio" name="theme" value="light" />
         <span>Light</span>
     </label>
     <label class="dk-theme-switch-choice">
-        <input type="radio" name="dk-theme" value="dark" />
+        <input type="radio" name="theme" value="dark" />
         <span>Dark</span>
     </label>
     <span class="dk-visually-hidden" id="theme-note">
-        Your choice is saved for every page on jasonsdevspace.com.
+        Your choice is saved for every page of this site.
     </span>
 </div>
 ```
 
 The switch is a group named Theme with three native radios, System, Light and Dark, described by a
-note that the choice is saved for every page on jasonsdevspace.com. `attachThemeSwitch(group)`
-checks the choice the page draws, shows the switch, and saves and draws a choice under the theme
-contract's key, `system` following the system's scheme. It follows a choice saved in another tab
-and a page restored by Back, and where the browser refuses storage it holds the choice for as long
-as the page is open. The chosen word is drawn as a pressed button is, with an edge twice as thick in
-the accent. Attaching one switch twice attaches it once, as React asks in development.
+note that the choice is saved for every page of the site, which a page can word for itself.
+`attachThemeSwitch(element)` takes the switch, or an element that holds it, checks the choice the
+page draws, shows the switch, and saves and draws a choice under the theme contract's key, `system`
+following the system's scheme. It follows a choice saved in another tab and a page restored by Back,
+and where the browser refuses storage it holds the choice for as long as the page is open. The
+chosen word is drawn as a pressed button is, with an edge twice as thick in the accent. Attaching
+one switch again before it is taken away attaches it once, and taking it away hides it again. Every
+switch on a page shows one choice, each with radios named for its own id.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -588,15 +590,16 @@ shows. Where the browser refuses the clipboard, it selects that text instead. Th
 or Selected for a moment, its three words sharing one cell so it keeps its width, and the status
 line says which to a screen reader, with how to copy a selection with the keys or the device's own
 command. One status line serves every button on a page, and it is on the page from the start, since
-a line added at the moment it speaks may go unheard.
+a line added at the moment it speaks may go unheard. Taking a button away hides it and puts it back
+to Copy.
 
 **`ThemeSwitch` props**
 
-| `ThemeSwitch` | Default                         | What it does                              |
-| ------------- | ------------------------------- | ----------------------------------------- |
-| `id`          | from `useId`                    | What the name's and note's ids start with |
-| `name`        | `'dk-theme'`                    | The radios' name, unique on a page        |
-| `note`        | that the choice is saved on all | What the group is described by            |
+| `ThemeSwitch` | Default                   | What it does                              |
+| ------------- | ------------------------- | ----------------------------------------- |
+| `id`          | from `useId`              | What the name's and note's ids start with |
+| `name`        | the id                    | The radios' name, unique on a page        |
+| `note`        | where the choice is saved | What the group is described by            |
 
 **`CopyButton` props**
 

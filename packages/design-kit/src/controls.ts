@@ -97,18 +97,19 @@ let listening = false;
 const listen = () => {
     if (listening) return;
     listening = true;
+    // Once every switch is taken away, the theme script alone draws the theme again.
     window.addEventListener('storage', (event) => {
-        if (event.key === null || event.key === THEME_KEY) catchUp();
+        if (switches.size > 0 && (event.key === null || event.key === THEME_KEY)) catchUp();
     });
     window.addEventListener('pageshow', (event) => {
-        if (!event.persisted) return;
+        if (switches.size === 0 || !event.persisted) return;
         if (heldHere) draw(current());
         else catchUp();
     });
     const system = scheme();
     if (typeof system?.addEventListener === 'function') {
         system.addEventListener('change', () => {
-            draw(current());
+            if (switches.size > 0) draw(current());
         });
     }
 };
@@ -117,10 +118,13 @@ const attached = new WeakMap<HTMLElement, () => void>();
 
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and draws
- * a choice when a visitor makes one. Attaching one switch twice, as React does in development,
- * attaches it once.
+ * a choice when a visitor makes one. It takes the switch, or an element that holds it. Attaching one
+ * switch again before it is taken away attaches it once, and taking it away hides it again.
  */
-export const attachThemeSwitch = (group: HTMLElement): (() => void) => {
+export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
+    const group = element.matches('.dk-theme-switch')
+        ? element
+        : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
     const already = attached.get(group);
     if (already) return already;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
@@ -141,6 +145,7 @@ export const attachThemeSwitch = (group: HTMLElement): (() => void) => {
         for (const radio of radios) radio.removeEventListener('change', onChange);
         switches.delete(show);
         attached.delete(group);
+        group.hidden = true;
     };
     attached.set(group, detach);
     return detach;
@@ -178,10 +183,16 @@ const select = (element: HTMLElement) => {
 };
 
 /** How to copy what is selected, in a keyboard's keys where a pointer can hover, else in words. */
-const howToCopy = () =>
-    window.matchMedia('(any-hover: hover)').matches
-        ? 'Selected. Press Control and C, or Command and C on a Mac, to copy.'
-        : "Selected. Copy it with your device's copy command.";
+const howToCopy = () => {
+    try {
+        if (window.matchMedia('(any-hover: hover)').matches) {
+            return 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
+        }
+    } catch {
+        return "Selected. Copy it with your keys or your device's copy command.";
+    }
+    return "Selected. Copy it with your device's copy command.";
+};
 
 const copied = async (text: string): Promise<boolean> => {
     try {
@@ -206,6 +217,7 @@ export const attachCopyButton = (
     if (already) return already;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
+    let live = true;
     const showWord = (index: number) => {
         words.forEach((word, at) => {
             if (at === index) word.removeAttribute('aria-hidden');
@@ -215,10 +227,11 @@ export const attachCopyButton = (
     const onClick = () => {
         const pressed = source();
         void copied(pressed.textContent).then((done) => {
+            if (!live) return;
             // A source changed while the clipboard answered is not selected, and the button is left
-            // as the change left it.
+            // as the change left it, but the status line still says what happened.
             if (source() !== pressed) {
-                if (done) say(status, 'Copied.');
+                say(status, done ? 'Copied.' : 'Not copied. Press Copy again.');
                 return;
             }
             if (!done) select(pressed);
@@ -233,8 +246,11 @@ export const attachCopyButton = (
     button.addEventListener('click', onClick);
     button.hidden = false;
     const detach = () => {
+        live = false;
         button.removeEventListener('click', onClick);
         window.clearTimeout(timer);
+        showWord(0);
+        button.hidden = true;
         attached.delete(button);
     };
     attached.set(button, detach);

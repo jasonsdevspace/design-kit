@@ -57,12 +57,15 @@ does not change, so its hash holds.
 The paths are in `packages/design-kit`.
 
 - `src/controls.test.ts` imports the module in plain Node, finds only the three functions, and holds
-  it, as the build writes it, to 3 KB gzipped.
+  it with the theme module it imports, without their comments as a bundler sends them, to 3 KB
+  gzipped.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the saved choice shown once attached, a new one
-  saved and drawn with nothing refused, a switch attached twice saving once, a choice from another
-  tab followed, a choice the browser will not save held through a page restored by Back, and a copy
-  saying Copied on the button and the status line, or Selected with the text selected where the
-  clipboard is refused.
+  saved and drawn with nothing refused, a switch attached again saving once, a switch attached
+  through the element that holds it, one choice shown on every switch, a switch hidden again once
+  taken away, a choice from another tab followed, a choice the browser will not save held through a
+  page restored by Back, and a copy saying Copied on the button and the status line, or Selected
+  with the text selected where the clipboard is refused, and a copy button put back to Copy when it
+  is taken away.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn.

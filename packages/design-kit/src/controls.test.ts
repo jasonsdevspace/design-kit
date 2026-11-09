@@ -22,11 +22,19 @@ describe('the controls', () => {
         ]);
     });
 
-    it(`stay within ${String(BUDGET / 1024)} KB gzipped, as the build writes them`, () => {
-        const source = readFileSync(new URL('./controls.ts', import.meta.url), 'utf8');
-        const { outputText } = ts.transpileModule(source, {
-            compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
-        });
-        expect(gzipSync(outputText).length).toBeLessThanOrEqual(BUDGET);
+    it(`stay within ${String(BUDGET / 1024)} KB gzipped with the theme module they import, without their comments as a bundler sends them`, () => {
+        const built = ['./controls.ts', './theme.ts']
+            .map(
+                (file) =>
+                    ts.transpileModule(readFileSync(new URL(file, import.meta.url), 'utf8'), {
+                        compilerOptions: {
+                            target: ts.ScriptTarget.ES2023,
+                            module: ts.ModuleKind.ESNext,
+                            removeComments: true,
+                        },
+                    }).outputText
+            )
+            .join('\n');
+        expect(gzipSync(built).length).toBeLessThanOrEqual(BUDGET);
     });
 });

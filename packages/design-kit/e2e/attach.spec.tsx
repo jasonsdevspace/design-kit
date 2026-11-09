@@ -30,6 +30,9 @@ const MARKUP = renderToStaticMarkup(
     <main>
         <h1>Controls</h1>
         <ThemeSwitch />
+        <div id="holder">
+            <ThemeSwitch />
+        </div>
         <pre id="code">npm install @jasonsdevspace/design-kit</pre>
         <CopyButton name="install command" />
         <CopyStatus />
@@ -40,7 +43,8 @@ const ATTACH = `import { attachCopyButton, attachThemeSwitch } from './controls.
 const group = document.querySelector('.dk-theme-switch');
 attachThemeSwitch(group);
 attachThemeSwitch(group);
-attachCopyButton(document.querySelector('.dk-copy'), {
+window.detachHeld = attachThemeSwitch(document.querySelector('#holder'));
+window.detachCopy = attachCopyButton(document.querySelector('.dk-copy'), {
     source: () => document.querySelector('#code'),
     status: document.querySelector('[role="status"]'),
 });`;
@@ -70,13 +74,20 @@ const tab = async (context: BrowserContext, attach = true): Promise<Page> => {
     return opened;
 };
 
+/** The first switch on the page, the one attached directly. */
+const first = (opened: Page) => opened.getByRole('radiogroup', { name: 'Theme' }).first();
+
+/** The switch inside the holder, attached through the element that holds it. */
+const held = (opened: Page) => opened.locator('#holder').getByRole('radiogroup', { name: 'Theme' });
+
 const themeOf = (opened: Page) =>
     opened.evaluate(() => document.documentElement.getAttribute('data-theme'));
 
 test('keeps both controls hidden where no script attaches them', async ({ browser }) => {
     const context = await browser.newContext();
     const opened = await tab(context, false);
-    await expect(opened.getByRole('radiogroup', { name: 'Theme' })).toBeHidden();
+    await expect(first(opened)).toBeHidden();
+    await expect(held(opened)).toBeHidden();
     await expect(opened.locator('.dk-copy')).toBeHidden();
     await context.close();
 });
@@ -93,9 +104,9 @@ test('shows the saved choice, then saves and draws a new one, with nothing the p
         if (/Content Security Policy/i.test(message.text())) refused.push(message.text());
     });
     const opened = await tab(context);
-    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
     expect(await themeOf(opened)).toBe('dark');
-    await opened.getByRole('radio', { name: 'Light' }).check();
+    await first(opened).getByRole('radio', { name: 'Light' }).check();
     expect(await themeOf(opened)).toBe('light');
     expect(await opened.evaluate((key) => localStorage.getItem(key), THEME_KEY)).toBe('light');
     expect(refused).toEqual([]);
@@ -113,7 +124,7 @@ test('saves once a choice made on a switch attached twice', async ({ browser }) 
         };
     });
     const opened = await tab(context);
-    await opened.getByRole('radio', { name: 'Dark' }).check();
+    await first(opened).getByRole('radio', { name: 'Dark' }).check();
     expect(await opened.evaluate(() => (window as unknown as { saves: number }).saves)).toBe(1);
     await context.close();
 });
@@ -126,7 +137,7 @@ test('follows a choice saved in another tab', async ({ browser }) => {
     await other.evaluate((key) => {
         localStorage.setItem(key, 'dark');
     }, THEME_KEY);
-    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
     expect(await themeOf(opened)).toBe('dark');
     await context.close();
 });
@@ -144,7 +155,7 @@ test('holds a choice the browser will not save, through a page restored by Back'
         };
     });
     const opened = await tab(context);
-    await opened.getByRole('radio', { name: 'Dark' }).check();
+    await first(opened).getByRole('radio', { name: 'Dark' }).check();
     expect(await themeOf(opened)).toBe('dark');
     // The theme script draws the system's light from storage it cannot read, then the switch's
     // choice is drawn again after it.
@@ -152,7 +163,54 @@ test('holds a choice the browser will not save, through a page restored by Back'
         window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
     });
     expect(await themeOf(opened)).toBe('dark');
-    await expect(opened.getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await expect(first(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await context.close();
+});
+
+test('shows one choice on every switch, one attached through the element that holds it', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context);
+    await expect(held(opened)).toBeVisible();
+    await first(opened).getByRole('radio', { name: 'Dark' }).check();
+    await expect(held(opened).getByRole('radio', { name: 'Dark' })).toBeChecked();
+    await held(opened).getByRole('radio', { name: 'Light' }).check();
+    await expect(first(opened).getByRole('radio', { name: 'Light' })).toBeChecked();
+    expect(await themeOf(opened)).toBe('light');
+    await context.close();
+});
+
+test('hides a switch again once it is taken away', async ({ browser }) => {
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    await expect(held(opened)).toBeVisible();
+    await opened.evaluate(() => {
+        (window as unknown as { detachHeld: () => void }).detachHeld();
+    });
+    await expect(held(opened)).toBeHidden();
+    await context.close();
+});
+
+test('puts a copy button back to Copy, hidden, when it is taken away mid-message', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const opened = await tab(context);
+    const button = opened.locator('.dk-copy');
+    await button.click();
+    await expect(button).toHaveAccessibleName('Copied install command');
+    await opened.evaluate(() => {
+        (window as unknown as { detachCopy: () => void }).detachCopy();
+    });
+    await expect(button).toBeHidden();
+    expect(
+        await button.evaluate((element) => element.textContent.replace(/\s+/g, ' ').trim())
+    ).toContain('Copy');
+    expect(
+        await button.locator('.dk-copy-words > span').first().getAttribute('aria-hidden')
+    ).toBeNull();
     await context.close();
 });
 
