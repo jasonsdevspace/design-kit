@@ -97,22 +97,22 @@ describe('the footer', () => {
         );
         expect(footer.startsWith('<footer class="dk-footer"><p>')).toBe(true);
         expect(footer).toContain(
-            `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>.`
+            `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>,`
         );
         expect(footer).toBe(
             '<footer class="dk-footer"><p>' +
-                `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>. ` +
-                '<a href="./about/">How it works</a>, in plain words. ' +
-                `The <a href="${SOURCE}">source</a> and ` +
-                `<a href="${GITHUB_PROFILE_URL}">more work</a> are on GitHub, under the ` +
+                `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>, ` +
+                `who has <a href="${GITHUB_PROFILE_URL}">more work</a> on GitHub. ` +
+                '<a href="./about/">How it works</a> is explained in plain words. ' +
+                `The <a href="${SOURCE}">source</a> is on GitHub under the ` +
                 `<a href="${SOURCE}/blob/main/LICENSE">MIT license</a>.</p></footer>`
         );
         const hrefs = [...footer.matchAll(/href="([^"]+)"/g)].map(([, href]) => href);
         expect(hrefs).toEqual([
             PORTFOLIO_URL,
+            GITHUB_PROFILE_URL,
             './about/',
             SOURCE,
-            GITHUB_PROFILE_URL,
             `${SOURCE}/blob/main/LICENSE`,
         ]);
     });
@@ -151,7 +151,7 @@ describe('the footer', () => {
         );
     });
 
-    it("draws a demo's own line after its sentence, and nothing for an aside that holds nothing", () => {
+    it("draws a demo's own line after the footer's text, and nothing for an aside that holds nothing", () => {
         const footer = renderToStaticMarkup(
             <DemoFooter name="Example" about="./about/" source={SOURCE} aside="Built at abc1234.">
                 More.
