@@ -343,7 +343,9 @@ test.describe('the landing page', () => {
         await expect(page.locator('.site-hero-field').first()).toBeVisible();
     });
 
-    test('gives each page a card with a preview and its description', async ({ page }) => {
+    test('gives each page a card with a preview and a short line rather than its search description', async ({
+        page,
+    }) => {
         await page.goto(BASE);
         const cards = page.locator('.site-pages > li');
         const pages = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
@@ -354,7 +356,7 @@ test.describe('the landing page', () => {
                 'href',
                 path
             );
-            await expect(card).toContainText(description);
+            await expect(card).not.toContainText(description);
             await expect(card.locator('.site-page-preview')).toHaveAttribute('aria-hidden', 'true');
             await expect(card.locator('.site-page-preview')).toBeVisible();
         }
@@ -366,10 +368,91 @@ test.describe('the landing page', () => {
             has: page.getByRole('heading', { level: 2, name: 'Built to the demos’ rules' }),
         });
         await expect(section.getByRole('heading', { level: 3 })).toHaveText([
-            'Works under a strict policy',
+            'Works under a strict security policy',
             'Both themes, measured',
-            'State from the attribute a screen reader reads',
+            'What you see matches what a screen reader says',
         ]);
+    });
+});
+
+test.describe('the words each page opens with', () => {
+    /** The pages that list their sections, each opening the same way. */
+    const OPENED = [
+        '/design-kit/tokens/',
+        '/design-kit/controls/',
+        '/design-kit/page-chrome/',
+        '/design-kit/explainer-pieces/',
+    ];
+    /** The one way every page says how to see the other theme. */
+    const SWITCH = 'press Light or Dark in the strip’s Theme switch';
+
+    test('opens each page with what it holds in one or two sentences, and no reasons', async ({
+        page,
+    }) => {
+        for (const path of OPENED) {
+            await page.goto(path);
+            const lead = (await page.locator('main > .site-lead').textContent()) ?? '';
+            const sentences = lead.split(/(?<=\.)\s+/).filter((each) => each.trim() !== '');
+            expect(sentences.length, path).toBeLessThanOrEqual(2);
+            expect(lead, path).not.toMatch(/screen reader|attribute|class/);
+        }
+    });
+
+    test('says how to see the other theme one way, after the lead, on each page that needs it', async ({
+        page,
+    }) => {
+        for (const path of OPENED.slice(1)) {
+            await page.goto(path);
+            const opening = await page
+                .locator('main > p:not(.site-lead)')
+                .evaluateAll((paragraphs) =>
+                    paragraphs
+                        .filter((paragraph) => paragraph.nextElementSibling?.matches('nav, p'))
+                        .map((paragraph) => paragraph.textContent)
+                        .join(' ')
+                );
+            expect(opening, path).toContain(SWITCH);
+        }
+    });
+
+    test('names the code under a card and the controls button the same way everywhere', async ({
+        page,
+    }) => {
+        for (const path of PAGES) {
+            await page.goto(path);
+            const text = (await page.locator('main').textContent()) ?? '';
+            expect(text, path).not.toMatch(
+                /under Theme in the strip|attribute that draws|See the controls/
+            );
+        }
+        await page.goto(ABOUT);
+        await expect(page.getByRole('link', { name: 'See every control' })).toHaveAttribute(
+            'href',
+            `${BASE}controls/`
+        );
+    });
+
+    test('gives each landing card a short line of its own, and keeps each search description whole', async ({
+        page,
+    }) => {
+        await page.goto(BASE);
+        const lines = await page.locator('.site-pages > li > p').allTextContents();
+        const carded = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
+        expect(lines).toHaveLength(carded.length);
+        for (const [index, { description, path }] of carded.entries()) {
+            expect(lines[index]?.length ?? 0, path).toBeLessThan(description.length / 2);
+            await page.goto(path);
+            await expect(page.locator('meta[name="description"]'), path).toHaveAttribute(
+                'content',
+                description
+            );
+            await page.goto(BASE);
+        }
+    });
+
+    test('claims no page shows a piece live where it shows a picture', async ({ page }) => {
+        await page.goto(BASE);
+        expect((await page.locator('main').textContent()) ?? '').not.toContain('shown live');
     });
 });
 

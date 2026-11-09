@@ -2,7 +2,8 @@
  * The site's pages, each the HTML file Vite builds it from, relative to the site, the path a
  * visitor asks for under the base GitHub Pages serves the site from, the page's title, the name the
  * site's navigation gives it, or none for the explainer, which the strip and the footer lead to as
- * a demo's do, and the description a search result shows for it. The build, the browser tests and
+ * a demo's do, the short line its card on the landing page gives it, for a page that has one, and
+ * the description a search result shows for it. The build, the browser tests and
  * the Lighthouse audit all read this one list.
  */
 export const BASE = '/design-kit/';
@@ -30,6 +31,7 @@ export const ROUTES = [
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens and theme',
+        card: 'Each color in both themes, how pairs contrast, and every size.',
         description:
             'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
     },
@@ -38,22 +40,25 @@ export const ROUTES = [
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',
         nav: 'Controls',
+        card: 'Buttons, fields and callouts in every state.',
         description:
-            'Each state of the design kit’s buttons, fields and callouts, in both themes, with the attribute that draws it.',
+            'Each state of the design kit’s buttons, fields and callouts, in both themes, with the code that draws it.',
     },
     {
         file: 'page-chrome/index.html',
         path: `${BASE}page-chrome/`,
         title: 'Page chrome · The design kit · Jason Poteet',
         nav: 'Page chrome',
+        card: 'The skip link, strip and footer that frame each demo.',
         description:
-            'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the attribute that draws it.',
+            'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the code that draws it.',
     },
     {
         file: 'explainer-pieces/index.html',
         path: `${BASE}explainer-pieces/`,
         title: 'Explainer pieces · The design kit · Jason Poteet',
         nav: 'Explainer pieces',
+        card: 'Steps, panels, tables and code blocks.',
         description:
             'The layout, steps, panels, tables and code blocks of the page that says how a demo works, in both themes.',
     },
