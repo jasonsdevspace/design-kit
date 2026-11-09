@@ -4,9 +4,10 @@ import { THEME_KEY, themeScript } from '../src/theme.js';
 
 /*
  * The theme script as a visitor's browser runs it: the theme the portfolio saved, or the system's
- * when nothing usable is saved, set on the root before anything paints, and again when the
- * system's changes or the portfolio saves a choice in another tab. The page is served from an
- * origin of its own, so the script has a real localStorage to read, shared by every tab.
+ * when nothing usable is saved, set on the root before anything paints, and again when the system's
+ * changes, the portfolio saves a choice in another tab, or the browser restores the page from its
+ * cache. The page is served from an origin of its own, so the script has a real localStorage to
+ * read, shared by every tab.
  */
 
 const ORIGIN = 'https://kit.test';

@@ -440,7 +440,6 @@ test('prints the light values in the dark theme, since paper is light', async ({
     expect(await text()).not.toBe(light);
     await page.emulateMedia({ media: 'print' });
     expect(await text()).toBe(light);
-    await page.emulateMedia({ media: 'screen' });
 });
 
 /** What sets a link apart from the text and links around it, as the screen draws it. */

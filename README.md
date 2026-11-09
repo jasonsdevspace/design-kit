@@ -121,17 +121,19 @@ follow by area.
 <details>
 <summary>The theme script and the Vite plugin</summary>
 
-| Gotcha                                                                                       | Where it is tested                      |
-| -------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts` |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts` |
-| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts` |
-| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts` |
-| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts` |
-| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts` |
-| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`  |
-| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`  |
-| The floor both READMEs and the accessibility statement give is the one the kit gives a build | `packages/design-kit/src/vite.test.ts`  |
+| Gotcha                                                                                       | Where it is tested                        |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Nothing saved, `system`, an unknown value and refused storage follow the system              | `packages/design-kit/e2e/theme.spec.ts`   |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `packages/design-kit/e2e/theme.spec.ts`   |
+| The theme follows the system as it changes, while nothing is saved                           | `packages/design-kit/e2e/theme.spec.ts`   |
+| A choice saved in another tab, or storage cleared there, reaches the page                    | `packages/design-kit/e2e/theme.spec.ts`   |
+| A page restored by Back draws the theme saved while it was away                              | `packages/design-kit/e2e/theme.spec.ts`   |
+| A page in the dark theme prints the light values                                             | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The key and themes are the portfolio's, and the tokens have a rule for each                  | `packages/design-kit/src/theme.test.ts`   |
+| The script holds nothing that would end its element, and compiles                            | `packages/design-kit/src/theme.test.ts`   |
+| A page with no placeholder, or with two, fails the build                                     | `packages/design-kit/src/vite.test.ts`    |
+| The hash is of the script exactly as the plugin writes it                                    | `packages/design-kit/src/vite.test.ts`    |
+| The floor both READMEs and the accessibility statement give is the one the kit gives a build | `packages/design-kit/src/vite.test.ts`    |
 
 </details>
 
