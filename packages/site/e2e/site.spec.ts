@@ -837,10 +837,10 @@ test.describe('what the tests check', () => {
     });
 });
 
-test("gives every page the kit's icon, for a tab, a phone's home screen and an older browser", async ({
+test("gives every page the kit's icon, for a tab, a phone's home screen and a browser that takes no SVG icon", async ({
     page,
 }) => {
-    const served = new Map<string, string>();
+    const served = new Map<string, { type: string; body: Buffer }>();
     for (const path of PAGES) {
         await page.goto(path);
         const icons = await page
@@ -862,14 +862,28 @@ test("gives every page the kit's icon, for a tab, a phone's home screen and an o
             if (served.has(href)) continue;
             const response = await page.request.get(href);
             expect(response.status(), href).toBe(200);
-            served.set(href, response.headers()['content-type'] ?? '');
+            served.set(href, {
+                type: (response.headers()['content-type'] ?? '').split(';')[0] ?? '',
+                body: await response.body(),
+            });
         }
     }
-    expect([...served.values()].map((type) => type.split(';')[0])).toEqual([
-        'image/x-icon',
-        'image/svg+xml',
-        'image/png',
-    ]);
+    const file = (name: string) => {
+        const found = [...served].find(([href]) => new URL(href).pathname.endsWith(name));
+        expect(found, name).toBeDefined();
+        return found?.[1] ?? { type: '', body: Buffer.alloc(0) };
+    };
+    // The `.ico` holds one image of the size its link claims, its width and height a byte each.
+    const ico = file('/favicon.ico');
+    expect(ico.type).toBe('image/x-icon');
+    expect([ico.body.readUInt16LE(4), ico.body[6], ico.body[7]]).toEqual([1, 32, 32]);
+    const svg = file('/favicon.svg');
+    expect(svg.type).toBe('image/svg+xml');
+    expect(svg.body.toString('utf8')).toMatch(/^<svg [^>]*viewBox="0 0 32 32"/);
+    // A PNG gives its width and height first, after its signature and the header's length and name.
+    const touch = file('/apple-touch-icon.png');
+    expect(touch.type).toBe('image/png');
+    expect([touch.body.readUInt32BE(16), touch.body.readUInt32BE(20)]).toEqual([180, 180]);
 });
 
 test('every link within the site leads to one of its pages, and to an id on it', async ({
