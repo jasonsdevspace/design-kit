@@ -6,15 +6,15 @@ Each page of jasonsdevspace.com/design-kit/, built and served locally, on a firs
 
 | Recorded   | Commit    | Machine                | Node     |
 | ---------- | --------- | ---------------------- | -------- |
-| 2026-11-08 | `8de3172` | Apple M2 Max, 12 cores | v24.22.2 |
+| 2026-11-08 | `cd3f5f6` | Apple M2 Max, 12 cores | v24.22.2 |
 
 Measured with Lighthouse 13.5.0 in Chrome 156.
 
 | Page                          | Accessibility | Performance | Largest paint | Layout shift | Downloads | Requests |
 | ----------------------------- | ------------- | ----------- | ------------- | ------------ | --------- | -------- |
-| /design-kit/                  | 100           | 100         | 908 ms        | 0.000        | 12.6 KB   | 3        |
-| /design-kit/tokens/           | 100           | 100         | 914 ms        | 0.000        | 15.5 KB   | 3        |
-| /design-kit/controls/         | 100           | 100         | 913 ms        | 0.000        | 15.9 KB   | 3        |
-| /design-kit/page-chrome/      | 100           | 100         | 914 ms        | 0.000        | 13.8 KB   | 3        |
+| /design-kit/                  | 100           | 100         | 909 ms        | 0.000        | 12.6 KB   | 3        |
+| /design-kit/tokens/           | 100           | 100         | 913 ms        | 0.000        | 15.5 KB   | 3        |
+| /design-kit/controls/         | 100           | 100         | 914 ms        | 0.000        | 15.9 KB   | 3        |
+| /design-kit/page-chrome/      | 100           | 100         | 912 ms        | 0.000        | 13.8 KB   | 3        |
 | /design-kit/explainer-pieces/ | 100           | 100         | 912 ms        | 0.000        | 14.0 KB   | 3        |
-| /design-kit/how-it-works/     | 100           | 100         | 908 ms        | 0.000        | 13.3 KB   | 3        |
+| /design-kit/how-it-works/     | 100           | 100         | 907 ms        | 0.000        | 13.3 KB   | 3        |
