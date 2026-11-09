@@ -278,7 +278,7 @@ export const filesOf = (tarball) => {
  * @param {string} tarball
  * @returns {Packed}
  */
-const packedOf = (tarball) => {
+export const packedOf = (tarball) => {
     const files = filesOf(readFileSync(tarball));
     const manifest = files.find((file) => file.path === 'package.json');
     if (!manifest) throw new Error(`${tarball} holds no package.json`);

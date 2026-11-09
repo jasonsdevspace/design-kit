@@ -1,0 +1,78 @@
+{
+    "recorded": {
+        "date": "2026-11-09",
+        "commit": "ec735d4",
+        "machine": "Apple M2 Max, 12 cores",
+        "node": "v24.22.2"
+    },
+    "name": "@jasonsdevspace/design-kit",
+    "version": "0.1.0-next.5",
+    "size": 36898,
+    "files": [
+        {
+            "path": "CHANGELOG.md",
+            "size": 14392,
+            "gzip": 5542
+        },
+        {
+            "path": "dist/base.css",
+            "size": 6159,
+            "gzip": 2173
+        },
+        {
+            "path": "dist/components.css",
+            "size": 25459,
+            "gzip": 6401
+        },
+        {
+            "path": "dist/react.d.ts",
+            "size": 8480,
+            "gzip": 2746
+        },
+        {
+            "path": "dist/react.js",
+            "size": 10798,
+            "gzip": 3831
+        },
+        {
+            "path": "dist/theme.d.ts",
+            "size": 1353,
+            "gzip": 633
+        },
+        {
+            "path": "dist/theme.js",
+            "size": 2410,
+            "gzip": 988
+        },
+        {
+            "path": "dist/tokens.css",
+            "size": 5720,
+            "gzip": 2126
+        },
+        {
+            "path": "dist/vite.d.ts",
+            "size": 2204,
+            "gzip": 1014
+        },
+        {
+            "path": "dist/vite.js",
+            "size": 2994,
+            "gzip": 1322
+        },
+        {
+            "path": "LICENSE",
+            "size": 1069,
+            "gzip": 656
+        },
+        {
+            "path": "package.json",
+            "size": 2025,
+            "gzip": 710
+        },
+        {
+            "path": "README.md",
+            "size": 41549,
+            "gzip": 13933
+        }
+    ]
+}

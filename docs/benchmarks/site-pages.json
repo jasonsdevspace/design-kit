@@ -1,0 +1,64 @@
+{
+    "recorded": {
+        "date": "2026-11-09",
+        "commit": "ec735d4",
+        "machine": "Apple M2 Max, 12 cores",
+        "node": "v24.22.2"
+    },
+    "pages": [
+        {
+            "path": "/design-kit/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 908.4322999999999,
+            "shift": 0,
+            "bytes": 12899,
+            "requests": 3
+        },
+        {
+            "path": "/design-kit/tokens/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 913.7764999999999,
+            "shift": 0,
+            "bytes": 15893,
+            "requests": 3
+        },
+        {
+            "path": "/design-kit/controls/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 912.9368999999999,
+            "shift": 0,
+            "bytes": 16245,
+            "requests": 3
+        },
+        {
+            "path": "/design-kit/page-chrome/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 911.3743999999999,
+            "shift": 0,
+            "bytes": 14093,
+            "requests": 3
+        },
+        {
+            "path": "/design-kit/explainer-pieces/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 911.2626,
+            "shift": 0,
+            "bytes": 14346,
+            "requests": 3
+        },
+        {
+            "path": "/design-kit/how-it-works/",
+            "accessibility": 100,
+            "performance": 1,
+            "paint": 906.9313,
+            "shift": 0,
+            "bytes": 13619,
+            "requests": 3
+        }
+    ]
+}

@@ -365,6 +365,18 @@ npm run site
 npm run lighthouse
 ```
 
+What the kit costs a page and how the site's pages score are recorded in `docs/benchmarks`, each
+beside its raw results with the date, commit, machine and Node it ran on: [what the package
+weighs](docs/benchmarks/package-size.md), file by file, raw and gzipped, and [how each page of the
+site scores](docs/benchmarks/site-pages.md) on a first visit. `npm run bench:package` and `npm run
+bench:pages` record them again, the second through the same audit `npm run lighthouse` runs. A
+record is what a reader sees, and the Lighthouse gates in CI stay what decides.
+
+```bash
+npm run bench:package
+npm run bench:pages
+```
+
 Each block of a piece's markup in the package README is written from
 `packages/design-kit/examples`, and a unit test fails when one differs. After a change to a piece's
 markup, `npm run examples` writes the blocks again.
@@ -415,8 +427,11 @@ packages/
                       built pages, and the Lighthouse audit of them
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each
-                      check in a throwaway repository, and the one that creates a GitHub release
+                      check in a throwaway repository, the one that creates a GitHub release,
+                      the run summaries and the benchmark records
 docs/
+├── benchmarks/       what the package weighs and how the site's pages score, each beside its
+│                     raw results
 └── decisions/        the decision records
 .github/workflows/    CI and the site's deploy from main, the release from a tag, and the check of
                       a pull request's title and body
