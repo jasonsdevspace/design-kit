@@ -455,6 +455,19 @@ test.describe('the words each page opens with', () => {
     });
 });
 
+test.describe('the built sheet', () => {
+    test('keeps each light-dark() as written, so a copy in the other scheme draws its own colors', async ({
+        page,
+    }) => {
+        await page.goto(BASE);
+        // Read from outside the page, whose policy lets it fetch nothing.
+        const href = await page.locator('link[rel="stylesheet"]').first().getAttribute('href');
+        const sheet = await (await page.request.get(new URL(href ?? '', page.url()).href)).text();
+        expect(sheet).toContain('light-dark(');
+        expect(sheet).not.toContain('--lightningcss-light');
+    });
+});
+
 test.describe('the tokens page', () => {
     test('draws each color role as a card, its light and dark swatches in the values it prints', async ({
         page,
