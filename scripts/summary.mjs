@@ -182,6 +182,19 @@ export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
  * @typedef {{ name: string, version: string, size: number, files: PackedFile[] }} Packed
  */
 
+/** Whether a file of the package is a sheet, which a page loads. */
+export const isSheet = (/** @type {string} */ path) => path.endsWith('.css');
+
+/** Whether a file of the package is a module, which a page's build imports. */
+export const isModule = (/** @type {string} */ path) => /\.(js|mjs)$/.test(path);
+
+/**
+ * Each file as a row of a table: its path, raw and gzipped.
+ *
+ * @param {readonly PackedFile[]} files
+ */
+export const fileRows = (files) => files.map((file) => [file.path, kb(file.size), kb(file.gzip)]);
+
 /**
  * The package as npm ships it: its styles and scripts, raw and gzipped, and every file folded away
  * under them.
@@ -190,8 +203,7 @@ export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
  * @param {(path: string) => boolean} loads
  */
 export const packageSummary = (packed, loads) => {
-    /** @param {readonly PackedFile[]} files */
-    const rows = (files) => files.map((file) => [file.path, kb(file.size), kb(file.gzip)]);
+    const rows = fileRows;
     return (
         '### Package size\n\n' +
         `\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.\n\n` +
@@ -304,7 +316,7 @@ if (isRunDirectly(import.meta.url)) {
         const failed = (process.argv[5] ?? '0') !== '0';
         writeSummary(playwrightSummary(report, { title: second, runUrl, root, failed }));
     } else if (kind === 'package' && first) {
-        writeSummary(packageSummary(packedOf(first), (path) => /\.(css|js|mjs)$/.test(path)));
+        writeSummary(packageSummary(packedOf(first), (path) => isSheet(path) || isModule(path)));
     } else {
         console.error(
             'Usage: summary.mjs playwright <report.json> <title> <status> | package <tarball>'
