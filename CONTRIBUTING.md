@@ -51,7 +51,8 @@ release reaches npm". Around it, a maintainer:
 
 - bumps the version in `packages/design-kit/package.json`, adds a `## VERSION` entry to its
   `CHANGELOG.md` and points the package README's links to the reference at the new version's tag,
-  in a pull request of its own
+  in a pull request of its own. The entry opens with an **Upgrading.** bullet when a page has to
+  change anything, and files the rest under the lead-ins the entries before it use
 - tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
 - promotes the staged version on the package's npm page
 - moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
