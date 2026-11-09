@@ -57,7 +57,7 @@ type Where = 'demo' | 'about';
  * The chrome around a main column, as a demo or its explainer draws it, with the demo's switches if
  * asked, or the room for them while they are on their way.
  */
-const chrome = (tools: Tools, where: Where = 'demo') => {
+const chrome = (tools: Tools, where: Where = 'demo', aside = false) => {
     const about = where === 'about' ? './' : './about/';
     const current = where === 'about' ? { current: 'about' as const } : {};
     return renderToStaticMarkup(
@@ -74,7 +74,13 @@ const chrome = (tools: Tools, where: Where = 'demo') => {
                 <h1>Example</h1>
                 <p>A demo.</p>
             </main>
-            <DemoFooter name="Example" about={about} source={SOURCE} {...current} />
+            <DemoFooter
+                name="Example"
+                about={about}
+                source={SOURCE}
+                aside={aside && 'Version 1.0.0, built at commit abc1234.'}
+                {...current}
+            />
         </>
     );
 };
@@ -88,12 +94,20 @@ const open = async (
         tools = 'none',
         where = 'demo',
         css = '',
-    }: { width: number; theme?: 'light' | 'dark'; tools?: Tools; where?: Where; css?: string }
+        aside = false,
+    }: {
+        width: number;
+        theme?: 'light' | 'dark';
+        tools?: Tools;
+        where?: Where;
+        css?: string;
+        aside?: boolean;
+    }
 ) => {
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
-            `<style>${KIT}${css}</style></head><body>${chrome(tools, where)}</body></html>`
+            `<style>${KIT}${css}</style></head><body>${chrome(tools, where, aside)}</body></html>`
     );
 };
 
@@ -350,6 +364,72 @@ test("runs the footer's rule the width of the page, with its text in the column"
     expect(Math.round(text.x)).toBe((1280 - 1152) / 2 + 16);
     // Its sentence holds to the measure, as the page's prose does, however wide the column.
     expect(text.width).toBeLessThanOrEqual(34 * 16);
+});
+
+test("puts a demo's own line beside the footer's sentence on a wide screen and under it on a phone", async ({
+    page,
+}) => {
+    await open(page, { width: 1280, aside: true });
+    let sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    let aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
+    // Beside it, ending at the column's right edge, and on the sentence's first line.
+    expect(aside.x).toBeGreaterThan(sentence.x + sentence.width);
+    expect(Math.round(aside.x + aside.width)).toBe(1280 - (1280 - 1152) / 2 - 16);
+    expect(Math.abs(aside.y - sentence.y)).toBeLessThan(4);
+
+    await open(page, { width: 375, aside: true });
+    sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
+    // Under it, at the same inset.
+    expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
+    expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
+
+    // Between a phone and a screen with room for both, it wraps under the sentence, at its inset.
+    await open(page, { width: 800, aside: true });
+    sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
+    expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
+    expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
+});
+
+test("wraps a long unbroken name in the footer's sentence and its own line on a phone", async ({
+    page,
+}) => {
+    const hash = 'a'.repeat(40);
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
+            `<style>${KIT}</style></head><body><main><h1>Example</h1></main>` +
+            renderToStaticMarkup(
+                <DemoFooter
+                    name="Example"
+                    about="./about/"
+                    source={SOURCE}
+                    aside={`Built at ${hash}.`}
+                >
+                    Built at {hash}.
+                </DemoFooter>
+            ) +
+            `</body></html>`
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+});
+
+test('stacks anything else a page writes after the sentence under it, as before', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
+            `<style>${KIT}</style></head><body><footer class="dk-footer">` +
+            `<p>Example is a portfolio project.</p><p>A note of its own.</p></footer></body></html>`
+    );
+    const [first, second] = await Promise.all([
+        box(page.locator('.dk-footer p').first(), 'the sentence'),
+        box(page.locator('.dk-footer p').nth(1), 'the note'),
+    ]);
+    expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
+    expect(Math.round(second.x)).toBe(Math.round(first.x));
 });
 
 /** What sets a link apart from the text and links around it, as the screen draws it. */

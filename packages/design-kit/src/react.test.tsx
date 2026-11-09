@@ -150,6 +150,26 @@ describe('the footer', () => {
             /MIT license<\/a>\. You can also <a href="\.\/try\/">search your own products<\/a> with it\.<\/p><\/footer>$/
         );
     });
+
+    it("draws a demo's own line after its sentence, and nothing for an aside that holds nothing", () => {
+        const footer = renderToStaticMarkup(
+            <DemoFooter name="Example" about="./about/" source={SOURCE} aside="Built at abc1234.">
+                More.
+            </DemoFooter>
+        );
+        expect(footer).toMatch(
+            /MIT license<\/a>\. More\.<\/p><p class="dk-footer-aside">Built at abc1234\.<\/p><\/footer>$/
+        );
+        for (const nothing of [undefined, null, false, '']) {
+            expect(
+                renderToStaticMarkup(
+                    <DemoFooter name="Example" about="./about/" source={SOURCE} aside={nothing} />
+                )
+            ).toBe(
+                renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
+            );
+        }
+    });
 });
 
 describe('the chrome', () => {

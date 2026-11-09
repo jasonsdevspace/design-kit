@@ -99,8 +99,17 @@
         margin-inline-start: auto;
     }
 
-    /* The exit after a long scroll, its rule the width of the page and its text in the column. */
+    /*
+     * The exit after a long scroll, its rule the width of the page and its text in the column. A
+     * demo's own line sits at the end of the sentence's row on a wide screen, and wraps below it
+     * when the row has no room.
+     */
     .dk-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--dk-space-2) var(--dk-space-6);
         margin-top: var(--dk-space-6);
         padding-block: var(--dk-space-4);
         border-top: 1px solid var(--dk-line);
@@ -108,10 +117,24 @@
         font-size: var(--dk-text-small);
     }
 
-    /* The footer sentence holds to the measure, as prose does, while its rule runs full width. */
+    /*
+     * The footer sentence holds to the measure, as prose does, while its rule runs full width. Each
+     * paragraph may shrink below its longest word, so a long name wraps rather than push a phone's
+     * page sideways.
+     */
     :where(.dk-footer p) {
         max-width: var(--dk-measure);
+        min-width: 0;
         margin: 0;
+    }
+
+    /*
+     * Anything else a page writes after the sentence stacks under it, as it did before the row. Its
+     * text holds to the measure, and a margin fills the rest of the row, so it never fits beside.
+     */
+    :where(.dk-footer > :not(:first-child, .dk-footer-aside)) {
+        flex-basis: 100%;
+        margin-inline-end: max(0px, 100% - var(--dk-measure));
     }
 
     /*
@@ -155,6 +178,10 @@
 
         .dk-strip-links {
             gap: 0 var(--dk-space-4);
+        }
+
+        .dk-footer-aside {
+            flex-basis: 100%;
         }
 
         .dk-strip-tools {
