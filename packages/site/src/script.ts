@@ -1,216 +1,66 @@
-import { THEME_KEY, THEMES } from 'design-kit-release/theme';
+import { attachCopyButton, attachThemeSwitch, chooseTheme } from 'design-kit-release/controls';
 
 /*
- * The site's own script, which the kit does not ship: the theme switch in the strip, a copy button
- * beside each block of code, and the live copies of the states a reader can change. The theme
- * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
- * choice, and saves and draws a new one. It saves under the portfolio's key and with the
- * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
- * other way around.
+ * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
+ * each block of code, attached with the kit's controls, and adds what the kit does not ship: tabs
+ * where a state's code has two blocks, the live copies of the states a reader can change, and the
+ * note a tap on a preview brings. The theme script the kit puts inline has already drawn the theme
+ * before this runs, so the switch shows the choice, and saves and draws a new one. It saves under
+ * the portfolio's key and with the portfolio's values, so a choice made here holds on every page of
+ * jasonsdevspace.com, and the other way around.
  */
-
-/** The portfolio's choices, System and the kit's two themes, and the word each is shown by. */
-const CHOICES = ['system', ...THEMES] as const;
-const WORDS: Readonly<Record<Choice, string>> = { system: 'System', light: 'Light', dark: 'Dark' };
-
-type Choice = (typeof CHOICES)[number];
-
-const isChoice = (value: string | null): value is Choice =>
-    CHOICES.some((choice) => choice === value);
 
 /**
- * The system's scheme, read as light where the browser cannot report it, as the theme script
- * does.
+ * Puts the kit's switch, from the template the page draws it in, in the room the page's own strip
+ * kept for it, not in a picture of a strip, and names the strip's section Settings, so it becomes
+ * the landmark the kit makes of switches that have come and the switch sits inside a landmark. It
+ * is not named Theme, as the group is, so a screen reader never hears the name twice.
  */
-const media = (() => {
-    try {
-        return window.matchMedia('(prefers-color-scheme: dark)');
-    } catch {
-        return null;
-    }
-})();
-
-const systemIsDark = () => {
-    try {
-        return Boolean(media?.matches);
-    } catch {
-        return false;
-    }
-};
-
-/** The system's theme, light where the browser cannot say. */
-const systemTheme = () => (systemIsDark() ? 'dark' : 'light');
-
-/** The choice saved, or null where the browser refuses the page its storage. */
-const savedChoice = (): Choice | null => {
-    try {
-        const value = localStorage.getItem(THEME_KEY);
-        return isChoice(value) ? value : 'system';
-    } catch {
-        return null;
-    }
-};
-
-/**
- * The choice this page shows. Where the browser refuses to save it, it is held here alone, so it
- * still holds on this page until the page is left, and what storage holds is not read over it.
- */
-let chosen: Choice = savedChoice() ?? 'system';
-let heldHere = false;
-/** Shows the chosen theme on the strip's switch, once the switch is built. */
-let showChosen: () => void = () => undefined;
-
-/** Draws a choice on the page, the system's theme for System. */
-const draw = (choice: Choice) => {
-    const theme = choice === 'system' ? systemTheme() : choice;
-    document.documentElement.setAttribute('data-theme', theme);
-};
-
-/** Saves a choice where the browser allows it, and draws it on this page either way. */
-const choose = (choice: Choice) => {
-    chosen = choice;
-    try {
-        localStorage.setItem(THEME_KEY, choice);
-        heldHere = false;
-    } catch {
-        // Held in `chosen` instead, for as long as the page is open.
-        heldHere = true;
-    }
-    showChosen();
-    draw(choice);
-};
-
-/**
- * The switch: a name and three radios in a radio group, built with the DOM, so the page's policy
- * needs no inline script or style. The group is named Theme and described by a note that says where
- * the choice is kept, so a screen reader hears both as it reaches the radios.
- */
-const themeSwitch = () => {
-    const name = document.createElement('span');
-    name.id = 'site-theme-name';
-    name.className = 'site-theme-name';
-    name.textContent = 'Theme';
-    const radios = CHOICES.map((choice) => {
-        const label = document.createElement('label');
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'site-theme';
-        radio.value = choice;
-        radio.checked = choice === chosen;
-        radio.addEventListener('change', () => {
-            choose(choice);
-        });
-        const word = document.createElement('span');
-        word.textContent = WORDS[choice];
-        label.append(radio, word);
-        return { label, radio };
-    });
-    const note = document.createElement('span');
-    note.id = 'site-theme-note';
-    note.className = 'dk-visually-hidden';
-    note.textContent =
-        'Your choice is saved for every page on jasonsdevspace.com, the portfolio included.';
-    const group = document.createElement('div');
-    group.className = 'site-theme';
-    group.setAttribute('role', 'radiogroup');
-    group.setAttribute('aria-labelledby', name.id);
-    group.setAttribute('aria-describedby', note.id);
-    group.append(name, ...radios.map(({ label }) => label), note);
-    const show = () => {
-        for (const { radio } of radios) radio.checked = radio.value === chosen;
-    };
-    return { group, show };
-};
-
-/**
- * Puts the switch in the room the page's own strip kept for it, not in a picture of a strip, and
- * names the strip's section Settings, so it becomes the landmark the kit makes of switches that
- * have come and the switch sits inside a landmark. It is not named Theme, as the group is, so a
- * screen reader never hears the name twice.
- */
+const template = document.querySelector<HTMLTemplateElement>('template#site-theme-switch');
 const room = document.querySelector('body > .dk-strip .dk-strip-room');
 const section = room?.parentElement;
-if (room && section) {
-    const { group, show } = themeSwitch();
-    showChosen = show;
+const themeSwitch = template?.content.querySelector<HTMLElement>('.dk-theme-switch');
+if (template && room && section && themeSwitch) {
+    const group = document.importNode(themeSwitch, true);
     room.replaceWith(group);
     section.setAttribute('aria-label', 'Settings');
-
-    /** Shows and draws what is saved, when this page may not have heard it saved. */
-    const catchUp = () => {
-        const saved = savedChoice();
-        if (saved === null || heldHere) return;
-        chosen = saved;
-        show();
-        draw(saved);
-    };
-
-    // A choice saved in another tab, which the theme script has drawn too.
-    window.addEventListener('storage', (event) => {
-        if (event.key === null || event.key === THEME_KEY) catchUp();
-    });
-    // A page brought back from the browser's back and forward cache heard nothing while it was
-    // away. The theme script has drawn from storage again, so where the browser refuses storage
-    // the choice held here is drawn again after it.
-    window.addEventListener('pageshow', (event) => {
-        if (!event.persisted) return;
-        if (heldHere) draw(chosen);
-        else catchUp();
-    });
-    // When the system's theme changes the theme script draws again from storage, and where the
-    // browser refuses storage it draws the system's over a choice it cannot know of, so the choice
-    // is drawn again after it.
-    if (typeof media?.addEventListener === 'function') {
-        media.addEventListener('change', () => {
-            draw(chosen);
-        });
-    }
+    template.remove();
+    attachThemeSwitch(group);
 }
 
 /*
  * One copy button for each state's code, beside the title of its block, or beside the tabs where
- * the state has Markup and React. It copies the block its tab shows. Where the browser will not
- * let the page write to the clipboard, the button selects the block's text instead, so a reader
- * copies it with their own keys or their device's copy command. One status line, out of sight,
- * tells a screen reader which happened, and the button says it for a moment too.
+ * the state has Markup and React, copied from the kit's `CopyButton` in a template the page draws,
+ * since with no script there is nothing to copy with. The kit's function copies the block its tab
+ * shows, or selects it where the browser will not let the page write to the clipboard, and says
+ * which on one status line out of sight, and the button says it for a moment too.
  */
-/** How long a button says what it did before it says Copy again, in milliseconds. */
-const SAID_FOR = 2000;
-
-/** Selects all of a block's text, for a reader to copy with their own keys. */
-const select = (block: HTMLElement) => {
-    const range = document.createRange();
-    range.selectNodeContents(block);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-};
-
-/** Writes text to the clipboard, or says it could not, where the browser refuses or has none. */
-const copied = async (text: string): Promise<boolean> => {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch {
-        return false;
-    }
-};
 
 /** Each state's code on the page, and the landing page's install command, its blocks one panel each. */
 const codes = document.querySelectorAll<HTMLElement>('.site-code, .site-install');
 
+/** The kit's copy button and status line, as the page draws them in a template. */
+const copyParts = document.querySelector<HTMLTemplateElement>('template#site-copy')?.content;
+const buttonToCopy = copyParts?.querySelector<HTMLButtonElement>('.dk-copy');
+const statusToCopy = copyParts?.querySelector<HTMLElement>('[role="status"]');
+
 /**
- * The status line, in the main content from the start on a page with code, since a screen reader
- * may not hear a line added at the moment it speaks. It is emptied before each message and when
- * the message has been shown, on one timer, so a second copy is heard too and one message never
- * empties the next.
+ * The status line, the kit's `CopyStatus`, in the main content from the start on a page with code,
+ * since a screen reader may not hear a line added at the moment it speaks.
  */
-const status = codes.length === 0 ? undefined : document.createElement('p');
-if (status) {
-    status.className = 'dk-visually-hidden';
-    status.setAttribute('role', 'status');
-    (document.querySelector('main') ?? document.body).append(status);
-}
+const status =
+    codes.length === 0 || !statusToCopy ? undefined : document.importNode(statusToCopy, true);
+if (status) (document.querySelector('main') ?? document.body).append(status);
+
+/** How long the status line holds what the preview note says, in milliseconds, as the kit's. */
+const SAID_FOR = 2000;
+
+/**
+ * Says what the preview note says on the status line. It is emptied before each message and when
+ * the message has been shown, on one timer, so a second message is heard too and one message never
+ * empties the next. The copy buttons say theirs on the same line on the kit's own timer, so a
+ * message is emptied only while it is still the one put there.
+ */
 let statusTimer = 0;
 const say = (message: string) => {
     if (!status) return;
@@ -219,19 +69,10 @@ const say = (message: string) => {
     statusTimer = window.setTimeout(() => {
         status.textContent = message;
         statusTimer = window.setTimeout(() => {
-            status.textContent = '';
+            if (status.textContent === message) status.textContent = '';
         }, SAID_FOR);
     }, 100);
 };
-
-/**
- * How to copy what is selected: in the keys of a keyboard where any pointer can hover, as a mouse or
- * a trackpad, which a keyboard usually comes with, and otherwise in words for a touch screen.
- */
-const howToCopy = () =>
-    !window.matchMedia('(any-hover: hover)').matches
-        ? "Selected. Copy it with your device's copy command."
-        : 'Selected. Press Control and C, or Command and C on a Mac, to copy.';
 
 /** A block of code in a state's panel: its head, its word, its whole title and the block. */
 interface Block {
@@ -253,42 +94,29 @@ const blocksOf = (code: HTMLElement): Block[] =>
         return [{ panel, head, word, title: title.textContent, block }];
     });
 
-/** The copy button for a state's code, copying whichever block `shown` gives when pressed. */
-const copyButton = (shown: () => Block) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'dk-button site-copy-button';
-    const word = document.createElement('span');
-    word.textContent = 'Copy';
-    const what = document.createElement('span');
-    what.className = 'dk-visually-hidden';
-    button.append(word, what);
-    let timer = 0;
-    /** Names the button for the block it copies now, and has it say Copy again. */
+/**
+ * The copy button for a state's code, a copy of the kit's, attached to copy whichever block `shown`
+ * gives when pressed.
+ */
+const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLElement) => {
+    const button = document.importNode(made, true);
+    const what = button.querySelector(':scope > .dk-visually-hidden');
+    const copy = button.querySelector('.dk-copy-words > :first-child');
+    const attach = () => attachCopyButton(button, { source: () => shown().block, status: line });
+    let detach = attach();
+    /**
+     * Names the button for the block it copies now. One still saying Copied or Selected of the
+     * block before is attached again, which has it say Copy, so it never says either of a block it
+     * has not copied. A copy the clipboard has yet to answer is left to say on the status line what
+     * happened.
+     */
     const rename = () => {
-        what.textContent = ` ${shown().title}`;
-        window.clearTimeout(timer);
-        word.textContent = 'Copy';
+        if (what) what.textContent = ` ${shown().title}`;
+        if (copy?.hasAttribute('aria-hidden')) {
+            detach();
+            detach = attach();
+        }
     };
-    button.addEventListener('click', () => {
-        const pressed = shown();
-        const { block } = pressed;
-        void copied(block.textContent).then((done) => {
-            // A tab changed while the clipboard answered has renamed the button for its own
-            // block, so the button is left as it is, and a block no longer shown is not selected.
-            if (shown() !== pressed) {
-                if (done) say('Copied.');
-                return;
-            }
-            if (!done) select(block);
-            word.textContent = done ? 'Copied' : 'Selected';
-            say(done ? 'Copied.' : howToCopy());
-            window.clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                word.textContent = 'Copy';
-            }, SAID_FOR);
-        });
-    });
     rename();
     return { button, rename };
 };
@@ -365,9 +193,9 @@ const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: B
 for (const code of codes) {
     const blocks = blocksOf(code);
     const [first] = blocks;
-    if (!first) continue;
+    if (!first || !status || !buttonToCopy) continue;
     let shown = first;
-    const { button, rename } = copyButton(() => shown);
+    const { button, rename } = copyButton(buttonToCopy, () => shown, status);
     if (blocks.length === 1) {
         first.head.append(button);
         continue;
@@ -416,11 +244,11 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
  * A preview does nothing when it is tapped, since it is inert, so the tap is answered: a note under
  * the state's two copies says the copy is only a preview, points to the one marked Live and offers
  * to switch to the other theme, and the status line says the same to a screen reader, naming the
- * live copy by its theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the
- * note is never needed there, and it adds nothing to the keyboard's path until a tap brings it. It
- * closes on Escape, on a tap anywhere else, and whenever the page's theme changes, by its button,
- * the strip's switch, the system or another tab, so it never names a theme the preview is not in.
- * A picture is a picture in either theme, so a tap on one is left alone.
+ * live copy by its theme, since the Live mark is hidden from it. The keyboard never reaches a
+ * preview, so the note is never needed there, and it adds nothing to the keyboard's path until a
+ * tap brings it. It closes on Escape, on a tap anywhere else, and whenever the page's theme
+ * changes, by its button, the strip's switch, the system or another tab, so it never names a theme
+ * the preview is not in. A picture is a picture in either theme, so a tap on one is left alone.
  */
 const previews = [
     ...document.querySelectorAll<HTMLElement>(
@@ -428,7 +256,15 @@ const previews = [
     ),
 ];
 if (previews.length > 0) {
-    /** The theme the page is drawn in, as the script set it or as the system's where it set none. */
+    /** The system's theme, light where the browser cannot say, as the theme script reads it. */
+    const systemTheme = () => {
+        try {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } catch {
+            return 'light';
+        }
+    };
+    /** The theme the page is drawn in, as a script set it or as the system's where none set it. */
     const pageTheme = () => document.documentElement.getAttribute('data-theme') ?? systemTheme();
     let note: HTMLElement | undefined;
     /** The live copy beside the open note's preview, where focus goes when the note takes it away. */
@@ -454,7 +290,7 @@ if (previews.length > 0) {
         button.className = 'site-preview-switch';
         button.textContent = `switch to ${theme}`;
         button.addEventListener('click', () => {
-            choose(theme);
+            chooseTheme(theme);
             say(`The theme is ${theme} now.`);
         });
         const only = `This is only a preview of the ${theme} theme.`;
