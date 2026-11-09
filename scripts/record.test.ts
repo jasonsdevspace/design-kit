@@ -144,6 +144,14 @@ describe('the records in the repository', () => {
         expect(pages.tools.kit).toBe(pinned);
     });
 
+    it('states the packed size the package record holds, so the README cannot keep an old one', () => {
+        const { size } = JSON.parse(
+            readFileSync(at('docs/benchmarks/package-size.json'), 'utf8')
+        ) as { size: number };
+        const stated = /(\d+) KB packed/.exec(readFileSync(at('README.md'), 'utf8'))?.[1];
+        expect(stated).toBe(String(Math.round(size / 1024)));
+    });
+
     it('links each record from the README', () => {
         const readme = readFileSync(at('README.md'), 'utf8');
         expect(readme).toContain('(docs/benchmarks/package-size.md)');
