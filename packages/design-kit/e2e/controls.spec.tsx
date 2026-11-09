@@ -268,7 +268,7 @@ test("draws nothing for an empty live callout, and the callout's look once it is
         }
     }
     await page.emulateMedia({ forcedColors: 'none' });
-    // Filled as the README says a page fills one, with the tone's word for success and danger,
+    // Filled as the reference says a page fills one, with the tone's word for success and danger,
     // each takes the callout's look again.
     await page.evaluate(() => {
         for (const body of document.querySelectorAll('.dk-callout-body')) {

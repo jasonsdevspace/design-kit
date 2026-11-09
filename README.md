@@ -65,14 +65,15 @@ export default defineConfig({
 });
 ```
 
-[The package README](packages/design-kit/README.md) covers the rest:
-[what each entry exports](packages/design-kit/README.md#what-it-exports), the markup and React
-components for [the page chrome](packages/design-kit/README.md#page-chrome) and
-[buttons, fields and callouts](packages/design-kit/README.md#buttons-fields-and-callouts),
-[explainer pages](packages/design-kit/README.md#explainer-pages),
-[layers and palettes](packages/design-kit/README.md#layers-and-palettes), including how a page with
-layers of its own names where the kit's go, and
-[the theme contract](packages/design-kit/README.md#the-theme-contract).
+[The package README](packages/design-kit/README.md) covers the rest of setup and
+[what each entry exports](packages/design-kit/README.md#what-it-exports).
+[The reference](packages/design-kit/REFERENCE.md) gives the markup, rules and React props for
+[the page chrome](packages/design-kit/REFERENCE.md#page-chrome) and
+[buttons, fields and callouts](packages/design-kit/REFERENCE.md#buttons-fields-and-callouts),
+[explainer pages](packages/design-kit/REFERENCE.md#explainer-pages),
+[layers and palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a page
+with layers of its own names where the kit's go, and
+[the theme contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
 ## Browser support
 

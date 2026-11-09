@@ -1225,7 +1225,7 @@ test.describe('the code of each state', () => {
                 const BLOCKS = new Set(['DIV', 'P', 'FOOTER', 'NAV', 'SECTION', 'UL', 'OL', 'LI']);
                 /**
                  * Markup as the parser reads it. Where its control is laid out, every space beside a
-                 * tag is dropped, which that layout adds, as the README's blocks are laid out.
+                 * tag is dropped, which that layout adds, as the reference's blocks are laid out.
                  * Markup as written keeps every space inside a sentence, and drops only those at the
                  * edges of a block, where the layout breaks a line and a browser draws nothing.
                  */

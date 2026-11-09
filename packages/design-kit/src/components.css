@@ -1,6 +1,6 @@
 /*
  * The kit's components, in the kit's components layer, so they sit over the base and under a
- * page's own rules. Each is styled by its class and the markup the package README gives for it,
+ * page's own rules. Each is styled by its class and the markup the kit's reference gives for it,
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
  * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields

@@ -1,8 +1,8 @@
 import { format, resolveConfig } from 'prettier';
 
 /*
- * Markup laid out as the repository's formatter lays out HTML, for the README's blocks and for the
- * site's. It imports nothing of the kit's, so the site lays out what the version it pins draws.
+ * Markup laid out as the repository's formatter lays out HTML, for the reference's blocks and for
+ * the site's. It imports nothing of the kit's, so the site lays out what the version it pins draws.
  */
 
 /**

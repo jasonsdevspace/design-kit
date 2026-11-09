@@ -147,7 +147,7 @@ test('lets a page whose layers load first put the kit over its own by naming dk 
 });
 
 test('puts the kit over a page whose layers load first without naming dk', async ({ page }) => {
-    // The hazard the README warns of: a layer is placed where its name first appears, so the
+    // The hazard the reference warns of: a layer is placed where its name first appears, so the
     // kit's layers land after the page's, and a page meaning its own to win names dk first.
     await open(page, 'light', '', PAGE_LAYER);
     expect((await drawn(page)).background).toBe('rgb(255, 255, 255)');

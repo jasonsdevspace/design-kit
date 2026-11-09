@@ -58,7 +58,7 @@ export interface Control {
      * Its states' markup has no words beside a tag where a space would be read, so its layout may
      * put each element on a line of its own, as a page written by hand does. Without it, markup
      * breaks a line only where a space already is, so a state added later is laid out tightly
-     * rather than wrongly, as the README's blocks are.
+     * rather than wrongly, as the reference's blocks are.
      */
     readonly laidOut?: true;
 }
