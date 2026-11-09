@@ -15,11 +15,11 @@ token is renamed and the theme script is unchanged, so `themeScriptHash` is the 
 - **Upgrading.** A page that writes the footer by hand changes its words to "… is a portfolio
   project by Jason Poteet, who has more work on GitHub. How it works is explained in plain words.
   The source is on GitHub under the MIT license.", with the link to more work now second. A demo's
-  own sentences still follow the license, so one that says "it" for the demo may need to name it.
+  own sentences now follow one about the source, so one that says "it" for the demo may need to name
+  it.
 - **Page chrome.** `DemoFooter` reads as whole sentences, where it read "How it works, in plain
-  words." and "The source and more work are on GitHub, under the MIT license", which put the
-  author's other work under the demo's license. Every link keeps its words, so the strip and the
-  footer still name the same places alike.
+  words." and "The source and more work are on GitHub, under the MIT license.", which put the
+  author's other work under the demo's license. Every link keeps its words.
 
 ## 0.2.0
 
