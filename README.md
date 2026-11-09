@@ -385,11 +385,10 @@ maintainer takes around a release are in [CONTRIBUTING.md](CONTRIBUTING.md#relea
 page scores through the same audit `npm run lighthouse` runs, writing only when every page passes.
 Each record sits in `docs/benchmarks` beside its raw results, with the date, commit, machine and
 Node it ran on, and a recording run refuses a working tree with uncommitted changes, so the commit
-it names is the code it measured. Plain `npm run lighthouse` writes no record and stays the gate CI
-runs. The release workflow records both from each tagged commit, which is on main, and opens one
-pull request with them when either changed, with a token from the records app, since a pull request
-opened with the run's own token runs no other workflow. Run them by hand only to measure a change
-before it ships.
+it names is the code it measured. The release workflow records both from each stable version's
+tagged commit, which is on main, and opens one pull request with them, with a token from the records
+app, since a pull request opened with the run's own token runs no other workflow. To measure a
+change before it ships, run `npm run lighthouse`, which audits the same pages and writes no record.
 
 ```bash
 npm run bench:package

@@ -61,7 +61,7 @@ release reaches npm". Around it, a maintainer:
 - moves the site's pin in `packages/site/package.json` to the promoted version, in a pull request,
   as a demo's pin moves, with no record in it
 - reviews the pull request the release workflow opens with the package's and the site's records,
-  taken from the tagged commit, when either changed
+  taken from the tagged commit, once a stable version is staged
 
 The workflow stops on a version npm already holds, staged or published, since it cannot tell one
 staged by an earlier run from one staged from other code. A run whose later step failed is repeated
