@@ -131,4 +131,14 @@
     :where(:root[data-theme='dark']) {
         color-scheme: dark;
     }
+
+    /*
+     * Paper is light whatever the theme, and the browser drops backgrounds when it prints, so a
+     * page prints the light values rather than the dark theme's pale text.
+     */
+    @media print {
+        :where(:root) {
+            color-scheme: light;
+        }
+    }
 }

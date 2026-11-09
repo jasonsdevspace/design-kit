@@ -16,15 +16,16 @@ const [LIGHT, DARK] = THEMES;
 const quoted = (text: string) => JSON.stringify(text);
 
 /**
- * The script a page runs inline in its head, before anything paints, so it never flashes the
- * other theme. It sets the theme the portfolio saved, or the system's when nothing usable is
- * saved or the browser refuses the page its storage, and sets it again whenever the system's
- * changes or the portfolio saves a choice in another tab. Where the browser cannot report the
- * system's scheme, with no matchMedia, one that throws, or a result whose matches throws, the
- * script reads it as light, as the portfolio's own script does. It listens for another tab's
- * choice before anything else, and for a change of scheme only where the browser offers
- * addEventListener for it, so an older browser still hears the other tab. It is written with
- * var and a named catch, so an older engine still parses it.
+ * The script a page runs inline in its head, before anything paints, so it never flashes the other
+ * theme. It sets the theme the portfolio saved, or the system's when nothing usable is saved or the
+ * browser refuses the page its storage, and sets it again whenever the system's changes, when the
+ * portfolio saves a choice in another tab, and when the browser restores the page from its back and
+ * forward cache, where a page hears no storage event. Where the browser cannot report the system's
+ * scheme, with no matchMedia, one that throws, or a result whose matches throws, the script reads
+ * it as light, as the portfolio's own script does. It listens for another tab's choice before
+ * anything else, and for a change of scheme only where the browser offers addEventListener for it,
+ * so an older browser still hears the other tab. It is written with var and a named catch, so an
+ * older engine still parses it.
  */
 export const themeScript = `(function () {
     var root = document.documentElement;
@@ -55,6 +56,9 @@ export const themeScript = `(function () {
     apply();
     window.addEventListener('storage', function (event) {
         if (event.key === null || event.key === ${quoted(THEME_KEY)}) apply();
+    });
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) apply();
     });
     if (media && typeof media.addEventListener === 'function') {
         media.addEventListener('change', apply);

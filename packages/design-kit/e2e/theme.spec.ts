@@ -96,6 +96,26 @@ test('takes a choice the portfolio saves in another tab', async ({ browser }) =>
     await context.close();
 });
 
+test('draws the theme saved now when the browser restores the page from its cache', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const demo = await savedThen(context, 'light');
+    // Saved while the page was frozen in the cache, so it heard no storage event, then restored.
+    await demo.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    }, THEME_KEY);
+    expect(await themeOf(demo)).toBe('dark');
+    // A first load, not a restore, sets nothing again.
+    await demo.evaluate((key) => {
+        localStorage.setItem(key, 'light');
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    }, THEME_KEY);
+    expect(await themeOf(demo)).toBe('dark');
+    await context.close();
+});
+
 test('follows the system where the browser refuses the page its storage', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
     await context.addInitScript(() => {

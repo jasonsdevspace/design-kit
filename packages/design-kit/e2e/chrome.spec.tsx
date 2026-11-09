@@ -432,6 +432,17 @@ test("stacks anything else a page writes after the footer's text under it, as be
     expect(Math.round(second.x)).toBe(Math.round(first.x));
 });
 
+test('prints the light values in the dark theme, since paper is light', async ({ page }) => {
+    const text = () => page.evaluate(() => getComputedStyle(document.body).color);
+    await open(page, { width: 1280, theme: 'light' });
+    const light = await text();
+    await open(page, { width: 1280, theme: 'dark' });
+    expect(await text()).not.toBe(light);
+    await page.emulateMedia({ media: 'print' });
+    expect(await text()).toBe(light);
+    await page.emulateMedia({ media: 'screen' });
+});
+
 /** What sets a link apart from the text and links around it, as the screen draws it. */
 const linkLook = (link: Locator) =>
     link.evaluate((element) => {
