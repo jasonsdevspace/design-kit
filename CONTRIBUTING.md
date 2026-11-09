@@ -15,9 +15,7 @@ npm run e2e
 npm run lighthouse
 ```
 
-`npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
-`npm run e2e` runs the browser tests in Chromium, after `npx playwright install chromium` the first
-time. `npm run lighthouse` builds the site and audits every page. A change to a piece's markup also
+`npm run e2e` needs `npx playwright install chromium` the first time. A change to a piece's markup also
 needs `npm run examples`, which writes the blocks the package README prints from the examples. CI
 also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
 describes.
@@ -49,8 +47,8 @@ browser tests and the Lighthouse audit among them.
 
 The README says how a release reaches npm. Around it, a maintainer:
 
-- bumps the version in `packages/design-kit/package.json` and turns the changelog's entry into the
-  version's, in a pull request of its own
+- bumps the version in `packages/design-kit/package.json` and adds a `## VERSION` entry to its
+  `CHANGELOG.md`, in a pull request of its own
 - tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
 - promotes the staged version on the package's npm page
 - moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,

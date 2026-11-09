@@ -14,7 +14,7 @@ ships on npm as `@jasonsdevspace/design-kit`, and ShelfLens is built on it.
 - **The theme never flashes.** A visitor's light or dark choice on the portfolio is set before a
   demo draws anything.
 - **Each promise has a test.** The default colors are measured for contrast in both themes, and
-  every page is checked for accessibility and speed on each change.
+  every page of the site is checked for accessibility and speed on each change.
 
 **Why I built it.** My demos each carried their own copy of the same things. ShelfLens and
 inventory-reservations both shipped the same script to set the visitor's theme, line for line, and
@@ -76,13 +76,10 @@ layers of its own names where the kit's go, and
 ## Browser support
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
-120 and Safari 17.5. Cascade layers and `:where()` are older than that. In Firefox 120, which lacks
-`:has()`, an empty live callout draws its ground until it is filled, and a label that holds a
-checkbox or a radio shows no pointer, though the box or the dot does. A Vite build takes the floor
-from the kit with `browserFloor()`, so its sheets keep each `light-dark()` as written, as
-[the package README](packages/design-kit/README.md#browser-support) shows. The browser tests run
-only in Chromium, so the other engines are held to the floor by what they document, not by a test
-here.
+120 and Safari 17.5. Cascade layers and `:where()` are older than that. A Vite build takes the
+floor from the kit with `browserFloor()`, so its sheets keep each `light-dark()` as written, as
+[the package README](packages/design-kit/README.md#browser-support) shows. What falls short at the floor, and what no test here covers, is under
+[known limitations](ACCESSIBILITY.md#known-limitations).
 
 ## The gotchas, and the test behind each
 
@@ -252,8 +249,9 @@ follow by area.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
   its processor slowed, every page scores a hundred for accessibility and performance, shows its
   main content in about 0.9 seconds with nothing jumping as it loads, and downloads 13 to 16 KB in
-  three requests. CI fails any page under a hundred for accessibility or ninety for performance, or
-  that takes longer than two and a half seconds to show its main content.
+  three requests. CI fails any page under a hundred for accessibility or ninety for performance,
+  that takes longer than two and a half seconds to show its main content, or whose layout shifts by
+  more than a tenth.
   [The record](docs/benchmarks/site-pages.md) gives each page.
 
 ## Decisions
@@ -301,8 +299,8 @@ options rejected, what the choice costs, and the test behind it.
     change to the kit reaching the site a release later.
 12. [The site has a script of its own, from its own path, beside the kit's theme script](docs/decisions/0012-the-site-has-a-script-of-its-own.md).
     A visitor chooses a theme on the site and it holds across jasonsdevspace.com, with nothing
-    moving when the switch comes, at the cost of a policy written for jasonsdevspace.com alone, so a build served anywhere else, as
-    the tests and the audit serve theirs, names its own origin.
+    moving when the switch comes, at the cost of a policy written for jasonsdevspace.com alone, so
+    a build served anywhere else, as the tests and the audit serve theirs, names its own origin.
 
 </details>
 
@@ -395,8 +393,8 @@ npm run bench:pages
 ```
 packages/
 ├── design-kit/       the package and its npm README
-│   ├── src/          the sheets, the theme script, the Vite plugin, the React components, unit tests
-│   ├── examples/     the markup the README prints and the site shows, and its tests
+│   ├── src/          the sheets, the theme script, the Vite plugin, the React components and tests
+│   ├── examples/     the markup the package README prints and the site shows, and its tests
 │   ├── e2e/          the browser tests
 │   └── smoke/        the packed package installed as a page would install it
 └── site/             the site at jasonsdevspace.com/design-kit/, its browser tests and audit
