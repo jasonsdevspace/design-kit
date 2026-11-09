@@ -196,6 +196,18 @@ const ThemeSwitchToCome = () => (
     </template>
 );
 
+/**
+ * The kit's copy button and status line, in a template the site's script copies a button from for
+ * each block of code, and the status line from on a page with code. With no script there is nothing
+ * to copy with, and a template is drawn by no browser and read by no screen reader.
+ */
+const CopyToCome = () => (
+    <template id="site-copy">
+        <kit.CopyButton name="" />
+        <kit.CopyStatus />
+    </template>
+);
+
 /** A section a page lists, by its heading and the id its heading carries. */
 interface Listed {
     readonly name: string;
@@ -258,6 +270,7 @@ const Page = ({
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} toolsWaiting />
         <ThemeSwitchToCome />
+        <CopyToCome />
         <SiteNav current={current} />
         <main
             id="main-content"
@@ -284,6 +297,7 @@ const Explainer = ({ build }: { readonly build: Build }) => (
         <SkipLink />
         <PortfolioStrip about={ABOUT} source={SOURCE} current="about" toolsWaiting />
         <ThemeSwitchToCome />
+        <CopyToCome />
         <header className="dk-explainer-header">
             <a href={BASE}>The design kit</a>
         </header>

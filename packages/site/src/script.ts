@@ -30,25 +30,27 @@ if (template && room && section && themeSwitch) {
 
 /*
  * One copy button for each state's code, beside the title of its block, or beside the tabs where
- * the state has Markup and React, built here in the kit's markup, since with no script there is
- * nothing to copy with. The kit's function copies the block its tab shows, or selects it where the
- * browser will not let the page write to the clipboard, and says which on one status line out of
- * sight, and the button says it for a moment too.
+ * the state has Markup and React, copied from the kit's `CopyButton` in a template the page draws,
+ * since with no script there is nothing to copy with. The kit's function copies the block its tab
+ * shows, or selects it where the browser will not let the page write to the clipboard, and says
+ * which on one status line out of sight, and the button says it for a moment too.
  */
 
 /** Each state's code on the page, and the landing page's install command, its blocks one panel each. */
 const codes = document.querySelectorAll<HTMLElement>('.site-code, .site-install');
 
+/** The kit's copy button and status line, as the page draws them in a template. */
+const copyParts = document.querySelector<HTMLTemplateElement>('template#site-copy')?.content;
+const buttonToCopy = copyParts?.querySelector<HTMLButtonElement>('.dk-copy');
+const statusToCopy = copyParts?.querySelector<HTMLElement>('[role="status"]');
+
 /**
- * The status line, in the main content from the start on a page with code, since a screen reader
- * may not hear a line added at the moment it speaks, drawn as the kit's `CopyStatus` draws it.
+ * The status line, the kit's `CopyStatus`, in the main content from the start on a page with code,
+ * since a screen reader may not hear a line added at the moment it speaks.
  */
-const status = codes.length === 0 ? undefined : document.createElement('p');
-if (status) {
-    status.className = 'dk-visually-hidden';
-    status.setAttribute('role', 'status');
-    (document.querySelector('main') ?? document.body).append(status);
-}
+const status =
+    codes.length === 0 || !statusToCopy ? undefined : document.importNode(statusToCopy, true);
+if (status) (document.querySelector('main') ?? document.body).append(status);
 
 /** How long the status line holds what the preview note says, in milliseconds, as the kit's. */
 const SAID_FOR = 2000;
@@ -56,7 +58,8 @@ const SAID_FOR = 2000;
 /**
  * Says what the preview note says on the status line. It is emptied before each message and when
  * the message has been shown, on one timer, so a second message is heard too and one message never
- * empties the next.
+ * empties the next. The copy buttons say theirs on the same line on the kit's own timer, so a
+ * message is emptied only while it is still the one put there.
  */
 let statusTimer = 0;
 const say = (message: string) => {
@@ -66,7 +69,7 @@ const say = (message: string) => {
     statusTimer = window.setTimeout(() => {
         status.textContent = message;
         statusTimer = window.setTimeout(() => {
-            status.textContent = '';
+            if (status.textContent === message) status.textContent = '';
         }, SAID_FOR);
     }, 100);
 };
@@ -91,43 +94,30 @@ const blocksOf = (code: HTMLElement): Block[] =>
         return [{ panel, head, word, title: title.textContent, block }];
     });
 
-/** A span of the copy button's markup, hidden from its name where it is a word not shown. */
-const span = (text: string, hidden = false) => {
-    const made = document.createElement('span');
-    made.textContent = text;
-    if (hidden) made.setAttribute('aria-hidden', 'true');
-    return made;
-};
-
 /**
- * The copy button for a state's code, in the markup the kit's `CopyButton` draws, attached to copy
- * whichever block `shown` gives when pressed.
+ * The copy button for a state's code, a copy of the kit's, attached to copy whichever block `shown`
+ * gives when pressed.
  */
-const copyButton = (shown: () => Block, line: HTMLElement) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'dk-button dk-copy';
-    button.hidden = true;
-    const words = document.createElement('span');
-    words.className = 'dk-copy-words';
-    const copy = span('Copy');
-    words.append(copy, span('Copied', true), span('Selected', true));
-    const what = span('');
-    what.className = 'dk-visually-hidden';
-    button.append(words, what);
+const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLElement) => {
+    const button = document.importNode(made, true);
+    const what = button.querySelector(':scope > .dk-visually-hidden');
+    const copy = button.querySelector('.dk-copy-words > :first-child');
+    const attach = () => attachCopyButton(button, { source: () => shown().block, status: line });
+    let detach = attach();
     /**
-     * Names the button for the block it copies now, and has it say Copy again, so it never says
-     * Copied of a block it has not copied.
+     * Names the button for the block it copies now. One still saying Copied or Selected of the
+     * block before is attached again, which has it say Copy, so it never says either of a block it
+     * has not copied. A copy the clipboard has yet to answer is left to say on the status line what
+     * happened.
      */
     const rename = () => {
-        what.textContent = ` ${shown().title}`;
-        for (const word of words.children) {
-            if (word === copy) word.removeAttribute('aria-hidden');
-            else word.setAttribute('aria-hidden', 'true');
+        if (what) what.textContent = ` ${shown().title}`;
+        if (copy?.hasAttribute('aria-hidden')) {
+            detach();
+            detach = attach();
         }
     };
     rename();
-    attachCopyButton(button, { source: () => shown().block, status: line });
     return { button, rename };
 };
 
@@ -203,9 +193,9 @@ const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: B
 for (const code of codes) {
     const blocks = blocksOf(code);
     const [first] = blocks;
-    if (!first || !status) continue;
+    if (!first || !status || !buttonToCopy) continue;
     let shown = first;
-    const { button, rename } = copyButton(() => shown, status);
+    const { button, rename } = copyButton(buttonToCopy, () => shown, status);
     if (blocks.length === 1) {
         first.head.append(button);
         continue;

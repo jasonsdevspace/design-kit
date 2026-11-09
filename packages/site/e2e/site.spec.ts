@@ -1590,9 +1590,44 @@ test.describe('the state cards', () => {
             (window as unknown as { answerClipboard: () => void }).answerClipboard();
         });
         await expect(page.getByRole('status')).toHaveText('Copied.');
-        // Read at once, before the button would say Copy again on its own.
-        await expect(page.locator('.dk-copy').first()).toHaveAccessibleName(
-            'Copy React, An action'
+        // Read at once, before the button would say Copy again on its own: the words its name is
+        // made of, the one shown and the name of what it copies.
+        expect(
+            await page
+                .locator('.dk-copy')
+                .first()
+                .evaluate((button) =>
+                    [...button.querySelectorAll('span:not([aria-hidden]):not(:has(span))')]
+                        .map((part) => part.textContent)
+                        .join('')
+                )
+        ).toBe('Copy React, An action');
+    });
+
+    test('has the button say Copy of the block a tab shows, after it copied the one before', async ({
+        page,
+        context,
+    }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        await page.locator('summary', { hasText: 'The code, An action' }).click();
+        const button = page.locator('.dk-copy').first();
+        /** The button's name, read at once: the word shown and the name of what it copies. */
+        const name = () =>
+            button.evaluate((copy) =>
+                [...copy.querySelectorAll('span:not([aria-hidden]):not(:has(span))')]
+                    .map((part) => part.textContent)
+                    .join('')
+            );
+        await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await expect(page.getByRole('status')).toHaveText('Copied.');
+        expect(await name()).toBe('Copied Markup, An action');
+        await page.getByRole('tab', { name: 'React' }).first().click();
+        expect(await name()).toBe('Copy React, An action');
+        // Attached again, it still copies the block its tab shows.
+        await button.click();
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            await page.getByRole('region', { name: 'React, An action' }).textContent()
         );
     });
 
