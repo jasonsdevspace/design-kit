@@ -15,7 +15,9 @@ text changed, so `themeScriptHash` changed too.
 
 - **Upgrading.** A page that copies `themeScriptHash` into its policy rather than reading it from
   the package takes the new hash. A page that sets `color-scheme` outside a layer, on its root or
-  its own elements, sets it back to `light` in print, as the kit now prints light.
+  its own elements, sets it back to `light` in print, as the kit now prints light, and a page that
+  sets its own colors for each theme rather than in `light-dark()` sets the light ones for print
+  too.
 - **Theme script.** It sets the theme again when the browser restores a page from its back and
   forward cache, where a page hears no storage event, so a choice made on another page reaches a
   page reached by Back. `THEME_CHOICES` and the type `ThemeChoice` are new in `./theme`, the values
@@ -27,14 +29,15 @@ text changed, so `themeScriptHash` changed too.
 - **React.** `ThemeSwitch` and `CopyButton` draw that markup, hidden until a page attaches it, and
   `CopyStatus` draws the status line a copy button speaks on.
 - **Tokens.** `--dk-focus` is new and unset, so the focus ring and a button's hover edge stay in the
-  accent until a page sets it. Print draws the light values whatever the theme, since paper is light
-  and the browser drops backgrounds.
+  accent until a page sets it, and are held to 3 to 1 against what they sit on. Print draws the
+  light values whatever the theme, since paper is light and the browser drops backgrounds.
 - **Sheets.** `.dk-pill` draws a chip, with a faint edge and no states, and `a.dk-pill` in a
   `.dk-pills` list draws a link among others, the one marked `aria-current` on the highlight at the
   heading's weight. The theme switch's chosen word draws as a pressed button does, on the highlight
   with an edge twice as thick in the accent, and a copy button's words share one cell so it keeps
   its width. A `.dk-theme-switch` or `.dk-copy` with `hidden` stays hidden until a page attaches it,
-  so a page that writes either by hand writes it with `hidden`.
+  so a page that writes either by hand writes it with `hidden`. The reference gives the markup and
+  the classes of each.
 
 ## 0.2.1
 
