@@ -9,7 +9,8 @@ entry below as its notes.
 
 ## 0.1.0-next.6
 
-The kit gives its browser floor to a page's build, so a page that takes it keeps each `light-dark()` as written and moves with the kit when the kit raises its floor.
+The kit's Vite entry gives its browser floor to a page's build, as a build target and as targets for
+Lightning CSS.
 
 - **Vite.** `@jasonsdevspace/design-kit/vite` exports `browserFloor()`, the kit's browser floor of
   Chrome and Edge 123, Firefox 120 and Safari 17.5 as a build target for `build.target`, and
