@@ -249,8 +249,8 @@ follow by area.
 
 ## What was measured
 
-- **What the kit costs a page.** The three sheets come to about 10 KB gzipped, and the theme script
-  goes inline in the page's head. The package npm publishes is 28 KB packed, the sheets and modules
+- **What the kit costs a page.** The three sheets come to about 12 KB gzipped, and the theme script
+  goes inline in the page's head. The package npm publishes is 35 KB packed, the sheets and modules
   a page loads together with the changelog, the README and the types it never does.
   [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with

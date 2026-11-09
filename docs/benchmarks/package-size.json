@@ -1,53 +1,63 @@
 {
     "recorded": {
         "date": "2026-11-09",
-        "commit": "1de44e3",
+        "commit": "c18ec3c",
         "machine": "Apple M2 Max, 12 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.2.1",
-    "size": 29156,
+    "version": "0.3.0",
+    "size": 35701,
     "files": [
         {
             "path": "CHANGELOG.md",
-            "size": 17466,
-            "gzip": 6358
+            "size": 19826,
+            "gzip": 7159
         },
         {
             "path": "dist/base.css",
-            "size": 6159,
-            "gzip": 2173
+            "size": 6181,
+            "gzip": 2183
         },
         {
             "path": "dist/components.css",
-            "size": 26366,
-            "gzip": 6604
+            "size": 32386,
+            "gzip": 7680
+        },
+        {
+            "path": "dist/controls.d.ts",
+            "size": 1107,
+            "gzip": 523
+        },
+        {
+            "path": "dist/controls.js",
+            "size": 9407,
+            "gzip": 3054
         },
         {
             "path": "dist/react.d.ts",
-            "size": 8766,
-            "gzip": 2853
+            "size": 10377,
+            "gzip": 3329
         },
         {
             "path": "dist/react.js",
-            "size": 10922,
-            "gzip": 3874
+            "size": 13282,
+            "gzip": 4610
         },
         {
             "path": "dist/theme.d.ts",
-            "size": 1353,
-            "gzip": 633
+            "size": 1792,
+            "gzip": 771
         },
         {
             "path": "dist/theme.js",
-            "size": 2410,
-            "gzip": 988
+            "size": 2874,
+            "gzip": 1131
         },
         {
             "path": "dist/tokens.css",
-            "size": 5849,
-            "gzip": 2179
+            "size": 6523,
+            "gzip": 2388
         },
         {
             "path": "dist/vite.d.ts",
@@ -66,13 +76,13 @@
         },
         {
             "path": "package.json",
-            "size": 2018,
-            "gzip": 704
+            "size": 2142,
+            "gzip": 718
         },
         {
             "path": "README.md",
-            "size": 12116,
-            "gzip": 4220
+            "size": 12491,
+            "gzip": 4319
         }
     ]
 }
