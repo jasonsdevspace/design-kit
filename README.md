@@ -175,7 +175,8 @@ rather than keeping a copy.
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
 120 and Safari 17.5. Cascade layers and `:where()` are older than that. An empty live callout draws
 nothing by `:has()`, which Firefox has from 121, so in Firefox 120 it draws its ground until it is
-filled. The browser tests run only in Chromium, so the other engines are held to the floor by what
+filled, and a label that holds a checkbox or a radio shows no pointer there, though the box or the
+dot does. The browser tests run only in Chromium, so the other engines are held to the floor by what
 they document, not by a test here.
 
 ## The gotchas, and the test behind each
@@ -328,6 +329,9 @@ options rejected, what the choice costs, and the test behind it.
 
 ## Dev setup
 
+How to contribute is in [CONTRIBUTING.md](CONTRIBUTING.md), and what the kit holds itself to for
+accessibility, and how to report a barrier, is in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+
 You need [Node.js 24](https://nodejs.org/) and Git. The version is in `.nvmrc`, so `nvm use`
 picks it.
 
@@ -446,7 +450,8 @@ packages/
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each
                       check in a throwaway repository, the one that creates a GitHub release,
-                      the run summaries and the writer of the benchmark records
+                      the run summaries, the writer of the benchmark records and the tests of the
+                      community files
 docs/
 ├── benchmarks/       what the package weighs and how the site's pages score, each beside its
 │                     raw results
