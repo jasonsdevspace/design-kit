@@ -1,7 +1,7 @@
 {
     "recorded": {
         "date": "2026-11-09",
-        "commit": "adb4194",
+        "commit": "c18ec3c",
         "machine": "Apple M2 Max, 12 cores",
         "node": "v24.22.2"
     },
@@ -15,54 +15,54 @@
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 910.4,
+            "paint": 910.2,
             "shift": 0,
-            "bytes": 13009,
+            "bytes": 13007,
             "requests": 3
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 912.9,
+            "paint": 914.3,
             "shift": 0,
-            "bytes": 16041,
+            "bytes": 16032,
             "requests": 3
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 912.6,
+            "paint": 913,
             "shift": 0,
-            "bytes": 16313,
+            "bytes": 16310,
             "requests": 3
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.7,
+            "paint": 911.9,
             "shift": 0,
-            "bytes": 14188,
+            "bytes": 14182,
             "requests": 3
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.9,
+            "paint": 913,
             "shift": 0,
-            "bytes": 14417,
+            "bytes": 14414,
             "requests": 3
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 907,
+            "paint": 907.3,
             "shift": 0,
-            "bytes": 13761,
+            "bytes": 13758,
             "requests": 3
         }
     ]
