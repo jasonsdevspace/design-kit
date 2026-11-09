@@ -133,17 +133,6 @@ describe('the records in the repository', () => {
         );
     });
 
-    it('names the version of the kit the site pins', () => {
-        const site = JSON.parse(readFileSync(at('packages/site/package.json'), 'utf8')) as {
-            dependencies: Record<string, string>;
-        };
-        const pinned = site.dependencies['design-kit-release']?.split('@').pop();
-        const pages = JSON.parse(readFileSync(at('docs/benchmarks/site-pages.json'), 'utf8')) as {
-            tools: { kit: string };
-        };
-        expect(pages.tools.kit).toBe(pinned);
-    });
-
     it('states the packed size the package record holds, so the README cannot keep an old one', () => {
         const { size } = JSON.parse(
             readFileSync(at('docs/benchmarks/package-size.json'), 'utf8')

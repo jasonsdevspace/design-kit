@@ -214,3 +214,93 @@ jobs:
                   export NOTES_LEAD="The kit is [\`$package\`](https://www.npmjs.com/package/$package) on npm. Once this version is promoted there, install it with \`npm install $package@$VERSION\`."
                   scripts/github-release.sh "$TAG" "$VERSION" packages/design-kit/CHANGELOG.md \
                       "design-kit $VERSION" "${flags[@]}"
+
+    # What the release weighs and how the site's pages score, recorded from the tagged commit, which
+    # is on main, so the commit each record names is one main keeps. When either changed, one pull
+    # request carries them. It is opened with a token from the records app rather than the run's
+    # own, since a pull request opened with the run's token starts no workflow, so its required
+    # checks would never run. Where the app is not set up the release still stands, and the summary
+    # says the records were skipped.
+    records:
+        name: Record the release
+        needs: [agree, publish]
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        permissions:
+            contents: read
+        env:
+            VERSION: ${{ needs.agree.outputs.version }}
+            HAS_APP: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
+        steps:
+            - name: Say whether the records app is set up
+              if: env.HAS_APP != 'true'
+              run: echo "The records were skipped, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Checkout
+              if: env.HAS_APP == 'true'
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              if: env.HAS_APP == 'true'
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              if: env.HAS_APP == 'true'
+              run: npm ci --ignore-scripts
+
+            # The page audit drives Playwright's Chromium, installed as the browser tests install it.
+            - name: Install Chromium
+              if: env.HAS_APP == 'true'
+              timeout-minutes: 3
+              run: |
+                  npx playwright install chromium
+                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
+
+            - name: Record the package and the pages
+              if: env.HAS_APP == 'true'
+              run: |
+                  npm run bench:package
+                  npm run bench:pages
+
+            - name: Get the records app's token
+              id: app
+              if: env.HAS_APP == 'true'
+              uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+              with:
+                  client-id: ${{ secrets.RECORDS_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.RECORDS_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            # Nothing to open when neither record moved. Otherwise the records go on a branch of
+            # their own and one pull request, labeled and assigned as any other.
+            - name: Open a pull request with the records
+              if: env.HAS_APP == 'true'
+              env:
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  if [ -z "$(git status --porcelain docs/benchmarks)" ]; then
+                      echo "Neither record changed at $VERSION, so no pull request was opened." >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
+                  branch="records-$VERSION"
+                  git config user.name 'jasonsdevspace-records[bot]'
+                  git config user.email 'jasonsdevspace-records[bot]@users.noreply.github.com'
+                  git switch -c "$branch"
+                  git add docs/benchmarks
+                  git commit -m "Record the package and the site's pages at $VERSION"
+                  git push "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git" "HEAD:refs/heads/$branch"
+                  {
+                      echo "The package and the site's pages are recorded again from the commit tagged for $VERSION, which is on main, so the commit each record names is one main keeps. The site's pages draw from the version of the kit the site pinned at that commit."
+                  } > body.md
+                  url="$(gh pr create --repo "$REPOSITORY" --base main --head "$branch" \
+                      --title "Record the package and the site's pages at $VERSION" \
+                      --body-file body.md --label documentation --assignee jasonsdevspace)"
+                  echo "The records are in $url." >> "$GITHUB_STEP_SUMMARY"
