@@ -74,17 +74,19 @@ describe('a record', () => {
                 },
             ],
             RECORDED,
-            { lighthouse: '13.5.0', chrome: '141.0.7390.37' }
+            { lighthouse: '13.5.0', chrome: '141', kit: '0.1.0' }
         );
         expect(markdown).toContain('npm run bench:pages');
         expect(markdown).toContain('npm run lighthouse');
         expect(markdown).toContain('[site-pages.json](site-pages.json)');
         expect(markdown).toContain('| /design-kit/ | 100 | 99 | 912 ms | 0.001 | 80.0 KB | 7 |');
         expect(markdown).toContain('only when every page passes');
-        expect(markdown).toContain('Lighthouse 13.5.0 in Chrome 141.0.7390.37');
+        expect(markdown).toContain(
+            'Measured with Lighthouse 13.5.0 in Chrome 141, the site drawing from version 0.1.0 of the kit.'
+        );
         expect(JSON.parse(json)).toMatchObject({
             recorded: RECORDED,
-            tools: { lighthouse: '13.5.0', chrome: '141.0.7390.37' },
+            tools: { lighthouse: '13.5.0', chrome: '141', kit: '0.1.0' },
             pages: [{ path: '/design-kit/', performance: 99 }],
         });
     });

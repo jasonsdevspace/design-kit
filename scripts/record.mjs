@@ -30,7 +30,12 @@ import { fileRows, isModule, isSheet, kb, packedOf, table } from './summary.mjs'
  *
  * @typedef {{ path: string, accessibility: number, performance: number, paint: number, shift: number, bytes: number, requests: number }} Page
  */
-/** @typedef {{ lighthouse: string, chrome: string }} Tools */
+/**
+ * What measured the pages: the Lighthouse and the Chrome, and the version of the kit the site drew
+ * from, since the site draws the kit as npm publishes it at the version it pins.
+ *
+ * @typedef {{ lighthouse: string, chrome: string, kit: string }} Tools
+ */
 
 /** Where the records are kept, from the repository's root. */
 export const BENCHMARKS = new URL('../docs/benchmarks/', import.meta.url);
@@ -131,7 +136,7 @@ Run \`npm run bench:pages\` to reproduce it. It runs the audit \`npm run lightho
 Each page of jasonsdevspace.com/design-kit/, built and served locally, on a first visit as Lighthouse makes one: a phone on a slow network, its processor slowed, with nothing cached. CI holds every page to accessibility of a hundred, performance of at least ninety, a largest paint within 2,500 ms and layout shift within 0.1. Where a page misses a performance gate on its first trace, it is measured twice more and judged on the middle of the three. The local server gzips each file, as GitHub Pages does, so what a page downloads is close to what a visitor's browser receives.
 
 ${recordedTable(at)}
-Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}.
+Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}, the site drawing from version ${tools.kit} of the kit.
 
 ${table(
     [

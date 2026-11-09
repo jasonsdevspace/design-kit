@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 import { launch } from 'chrome-launcher';
+import kit from 'design-kit-release/package.json' with { type: 'json' };
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
@@ -117,11 +118,13 @@ const recordedOf = (path: string, accessibility: number, judged: Measure): Recor
 });
 
 /**
- * The Lighthouse and the Chrome a report was made with, as a record names them. Chrome gives only
+ * The Lighthouse and the Chrome a report was made with, and the version of the kit the site drew
+ * from, as a record names them. Chrome gives only
  * its major version in its user agent, the rest written as zeros, so only the major is named.
  */
 const toolsOf = (report: Report): Tools => ({
     lighthouse: report.lighthouseVersion,
+    kit: kit.version,
     chrome: /Chrome\/(\d+)/.exec(report.environment.hostUserAgent)?.[1] ?? 'unknown',
 });
 
