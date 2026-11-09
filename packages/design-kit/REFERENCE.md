@@ -121,13 +121,13 @@ as after. On a phone they take a row of their own and the width is left aside.
 
 </details>
 
-The footer is one sentence that says whose project the demo is. The author's name links to the
-portfolio, and the sentence goes on to link "How it works", the source, the author's other work on
-GitHub and the license. On the explainer it marks the link to how it works with
-`aria-current="page"`, as the strip does. Anything the demo adds follows the license, as sentences
-of its own. A line of the demo's own that is not part of the sentence, such as the version and
-commit the page was built from, is a second paragraph, `.dk-footer-aside`. It sits at the end of the
-sentence's row on a wide screen, and under the sentence on a phone or wherever the row has no room.
+The footer is a few short sentences that say whose project the demo is. The author's name links to
+the portfolio, then come "How it works", the demo's source under its license, and the author's other
+work on GitHub. On the explainer it marks the link to how it works with `aria-current="page"`, as
+the strip does. Anything the demo adds follows, as sentences of its own. A line of the demo's own
+that is not part of the sentences, such as the version and commit the page was built from, is a
+second paragraph, `.dk-footer-aside`. It sits at the end of the sentences' row on a wide screen, and
+under them on a phone or wherever the row has no room.
 
 <!-- example: footer -->
 
@@ -135,10 +135,10 @@ sentence's row on a wide screen, and under the sentence on a phone or wherever t
 <footer class="dk-footer">
     <p>
         Example is a portfolio project by <a href="https://jasonsdevspace.com/">Jason Poteet</a>.
-        <a href="./about/">How it works</a>, in plain words. The
-        <a href="https://github.com/jasonsdevspace/example">source</a> and
-        <a href="https://github.com/jasonsdevspace">more work</a> are on GitHub, under the
-        <a href="https://github.com/jasonsdevspace/example/blob/main/LICENSE">MIT license</a>.
+        <a href="./about/">How it works</a> is explained in plain words. Its
+        <a href="https://github.com/jasonsdevspace/example">source</a> is on GitHub under the
+        <a href="https://github.com/jasonsdevspace/example/blob/main/LICENSE">MIT license</a>, and
+        <a href="https://github.com/jasonsdevspace">more work</a> is there too.
     </p>
     <p class="dk-footer-aside">Built at commit abc1234.</p>
 </footer>
@@ -206,16 +206,16 @@ strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
 
 **`DemoFooter` props**
 
-| `DemoFooter`  | Default               | What it does                                  |
-| ------------- | --------------------- | --------------------------------------------- |
-| `name`        | required              | The demo's name, which opens the sentence     |
-| `about`       | required              | As on the strip                               |
-| `source`      | required              | As on the strip                               |
-| `current`     | none                  | As on the strip                               |
-| `license`     | `LICENSE` in `source` | The link to the license                       |
-| `licenseName` | `'MIT license'`       | The license's name in the sentence            |
-| `children`    | none                  | Sentences of the demo's own after the license |
-| `aside`       | none                  | A line of the demo's own beside the sentence  |
+| `DemoFooter`  | Default               | What it does                                 |
+| ------------- | --------------------- | -------------------------------------------- |
+| `name`        | required              | The demo's name, which opens the sentence    |
+| `about`       | required              | As on the strip                              |
+| `source`      | required              | As on the strip                              |
+| `current`     | none                  | As on the strip                              |
+| `license`     | `LICENSE` in `source` | The link to the license                      |
+| `licenseName` | `'MIT license'`       | The license's name in the sentence           |
+| `children`    | none                  | Sentences of the demo's own at the end       |
+| `aside`       | none                  | A line of the demo's own beside the sentence |
 
 The default `license` is `LICENSE` on the main branch of `source`, with any trailing slash on
 `source` dropped first. Children that draw nothing, as for `tools`, add nothing, and an `aside`
@@ -506,7 +506,7 @@ markup below, which every page writes by hand, since none of these pieces has lo
     </section>
 </main>
 <footer class="dk-footer">
-    <p>... <a href="./" aria-current="page">How it works</a>, in plain words. ...</p>
+    <p>... <a href="./" aria-current="page">How it works</a> is explained in plain words. ...</p>
 </footer>
 ```
 

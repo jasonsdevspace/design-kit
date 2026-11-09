@@ -142,7 +142,7 @@ export const DemoFooter = ({
     readonly license?: string | undefined;
     /** What the license is called, as the footer's sentence names it. */
     readonly licenseName?: string | undefined;
-    /** What the demo adds after the license, as sentences of its own. */
+    /** What the demo adds at the end, as sentences of its own. */
     readonly children?: ReactNode;
     /**
      * A line of the demo's own beside the sentence on a wide screen and under it on a phone, such as
@@ -156,10 +156,10 @@ export const DemoFooter = ({
             {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>.{' '}
             <a href={about} aria-current={currentAs(current, 'about')}>
                 How it works
-            </a>
-            , in plain words. The <a href={source}>source</a> and{' '}
-            <a href={GITHUB_PROFILE_URL}>more work</a> are on GitHub, under the{' '}
-            <a href={license}>{licenseName}</a>.{filled(children) ? <> {children}</> : null}
+            </a>{' '}
+            is explained in plain words. Its <a href={source}>source</a> is on GitHub under the{' '}
+            <a href={license}>{licenseName}</a>, and <a href={GITHUB_PROFILE_URL}>more work</a> is
+            there too.{filled(children) ? <> {children}</> : null}
         </p>
         {filled(aside) ? <p className="dk-footer-aside">{aside}</p> : null}
     </footer>

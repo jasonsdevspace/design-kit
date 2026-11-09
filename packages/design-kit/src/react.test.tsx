@@ -102,18 +102,18 @@ describe('the footer', () => {
         expect(footer).toBe(
             '<footer class="dk-footer"><p>' +
                 `Example is a portfolio project by <a href="${PORTFOLIO_URL}">Jason Poteet</a>. ` +
-                '<a href="./about/">How it works</a>, in plain words. ' +
-                `The <a href="${SOURCE}">source</a> and ` +
-                `<a href="${GITHUB_PROFILE_URL}">more work</a> are on GitHub, under the ` +
-                `<a href="${SOURCE}/blob/main/LICENSE">MIT license</a>.</p></footer>`
+                '<a href="./about/">How it works</a> is explained in plain words. ' +
+                `Its <a href="${SOURCE}">source</a> is on GitHub under the ` +
+                `<a href="${SOURCE}/blob/main/LICENSE">MIT license</a>, and ` +
+                `<a href="${GITHUB_PROFILE_URL}">more work</a> is there too.</p></footer>`
         );
         const hrefs = [...footer.matchAll(/href="([^"]+)"/g)].map(([, href]) => href);
         expect(hrefs).toEqual([
             PORTFOLIO_URL,
             './about/',
             SOURCE,
-            GITHUB_PROFILE_URL,
             `${SOURCE}/blob/main/LICENSE`,
+            GITHUB_PROFILE_URL,
         ]);
     });
 
@@ -127,7 +127,7 @@ describe('the footer', () => {
             />
         );
         expect(footer).toContain(
-            `<a href="${SOURCE}/blob/main/LICENSE">Apache License 2.0</a>.</p>`
+            `<a href="${SOURCE}/blob/main/LICENSE">Apache License 2.0</a>, and`
         );
     });
 
@@ -139,7 +139,7 @@ describe('the footer', () => {
                         {nothing}
                     </DemoFooter>
                 )
-            ).toMatch(/MIT license<\/a>\.<\/p><\/footer>$/);
+            ).toMatch(/more work<\/a> is there too\.<\/p><\/footer>$/);
         }
         const footer = renderToStaticMarkup(
             <DemoFooter name="Example" about="./about/" source={SOURCE}>
@@ -147,7 +147,7 @@ describe('the footer', () => {
             </DemoFooter>
         );
         expect(footer).toMatch(
-            /MIT license<\/a>\. You can also <a href="\.\/try\/">search your own products<\/a> with it\.<\/p><\/footer>$/
+            /more work<\/a> is there too\. You can also <a href="\.\/try\/">search your own products<\/a> with it\.<\/p><\/footer>$/
         );
     });
 
@@ -158,7 +158,7 @@ describe('the footer', () => {
             </DemoFooter>
         );
         expect(footer).toMatch(
-            /MIT license<\/a>\. More\.<\/p><p class="dk-footer-aside">Built at abc1234\.<\/p><\/footer>$/
+            /more work<\/a> is there too\. More\.<\/p><p class="dk-footer-aside">Built at abc1234\.<\/p><\/footer>$/
         );
         for (const nothing of [undefined, null, false, '']) {
             expect(

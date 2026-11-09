@@ -204,8 +204,8 @@ export const explainerPage: ReactElement = (
                 ...{' '}
                 <a href="./" aria-current="page">
                     How it works
-                </a>
-                , in plain words. ...
+                </a>{' '}
+                is explained in plain words. ...
             </p>
         </footer>
     </>
