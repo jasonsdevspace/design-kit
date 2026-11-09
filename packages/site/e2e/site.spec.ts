@@ -884,6 +884,36 @@ test("gives every page the kit's icon, for a tab, a phone's home screen and a br
     const touch = file('/apple-touch-icon.png');
     expect(touch.type).toBe('image/png');
     expect([touch.body.readUInt32BE(16), touch.body.readUInt32BE(20)]).toEqual([180, 180]);
+    // Both are drawn from the SVG in its light colors, so each one's ground, above the tiles, is
+    // the SVG's light accent. The `.ico`'s image is a PNG, at the offset its entry gives.
+    const accent = /\.ground\s*\{\s*fill:\s*#([0-9a-f]{6})/i.exec(svg.body.toString('utf8'))?.[1];
+    expect(accent, "the SVG's light accent").toBeDefined();
+    const ground = (png: Buffer, size: number) =>
+        page.evaluate(
+            async ({ data, x, y }) => {
+                const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+                const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+                const canvas = new OffscreenCanvas(image.width, image.height);
+                const context = canvas.getContext('2d');
+                context?.drawImage(image, 0, 0);
+                return [...(context?.getImageData(x, y, 1, 1).data.slice(0, 3) ?? [])];
+            },
+            { data: png.toString('base64'), x: size / 2, y: Math.round(size / 16) }
+        );
+    const rgb = Buffer.from(accent ?? '', 'hex');
+    const offset = ico.body.readUInt32LE(18);
+    for (const [name, pixel] of [
+        [
+            'favicon.ico',
+            await ground(ico.body.subarray(offset, offset + ico.body.readUInt32LE(14)), 32),
+        ],
+        ['apple-touch-icon.png', await ground(touch.body, 180)],
+    ] as const) {
+        expect(
+            pixel.every((value, at) => Math.abs(value - (rgb[at] ?? -9)) <= 2),
+            `${name} drawn in ${String(pixel)}, not the accent #${accent ?? ''}`
+        ).toBe(true);
+    }
 });
 
 test('every link within the site leads to one of its pages, and to an id on it', async ({

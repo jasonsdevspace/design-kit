@@ -6,6 +6,7 @@ import { declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
+import { FAINT, TILES } from './mark.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
 import { Colors, Contrast, Scale, Spaces } from './tokens.js';
 
@@ -160,11 +161,27 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
         <nav className="site-header" aria-label="Design kit">
             <a className="site-brand" href={BASE}>
                 <span className="site-mark" aria-hidden="true">
-                    <svg viewBox="0 0 32 32" focusable="false">
-                        <rect x="6" y="6" width="9" height="9" rx="2.5" />
-                        <rect x="17" y="6" width="9" height="9" rx="2.5" fillOpacity="0.55" />
-                        <rect x="6" y="17" width="9" height="9" rx="2.5" fillOpacity="0.55" />
-                        <circle cx="21.5" cy="21.5" r="4.5" />
+                    <svg viewBox="0 0 32 32">
+                        {TILES.map((tile) =>
+                            tile.shape === 'circle' ? (
+                                <circle
+                                    key={`${String(tile.x)} ${String(tile.y)}`}
+                                    cx={tile.x}
+                                    cy={tile.y}
+                                    r={tile.radius}
+                                />
+                            ) : (
+                                <rect
+                                    key={`${String(tile.x)} ${String(tile.y)}`}
+                                    x={tile.x}
+                                    y={tile.y}
+                                    width={tile.size}
+                                    height={tile.size}
+                                    rx={tile.radius}
+                                    fillOpacity={tile.faint ? FAINT : undefined}
+                                />
+                            )
+                        )}
                     </svg>
                 </span>
                 The design kit
