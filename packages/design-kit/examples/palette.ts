@@ -49,7 +49,7 @@ export const contrast = (a: string, b: string): number => {
 export const ROLES: readonly (readonly [string, string])[] = [
     ['bg', 'The page itself'],
     ['surface', 'A card on the page'],
-    ['raised', 'What floats over both'],
+    ['raised', 'What floats over the page and its cards, such as a menu'],
     ['fg', 'Text'],
     ['muted', 'Text that steps back'],
     ['line', 'The lines between things'],
@@ -58,9 +58,9 @@ export const ROLES: readonly (readonly [string, string])[] = [
     ['on-accent', 'Text on the accent'],
     ['highlight', 'What is chosen or pointed at'],
     ['success', 'What went right'],
-    ['success-bg', 'The ground of a callout for what went right'],
+    ['success-bg', 'The background of a callout for what went right'],
     ['danger', 'What went wrong'],
-    ['danger-bg', 'The ground of a callout for what went wrong'],
+    ['danger-bg', 'The background of a callout for what went wrong'],
 ];
 
 /** What a page is drawn on: the page itself, a card on it, and what floats over both. */
