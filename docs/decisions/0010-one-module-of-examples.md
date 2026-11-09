@@ -38,7 +38,7 @@ blocks follows a comment that names its example, and `npm run examples` writes t
 draws the example, laid out by Prettier. An example listed as free of spaces that are read, such as
 the buttons, puts each child of an element too long for one line on a line of its own, as a page
 written by hand does, and keeps a space that ends or starts an element's text, such as the one after
-the hidden "Error: ". Every other example, such as the footer's sentence of links, breaks a line
+the hidden "Error: ". Every other example, such as the footer's sentences of links, breaks a line
 only where a space already is, so one added later is laid out tightly rather than wrongly. The setup
 block for the theme script is no piece's markup, and is written by hand.
 
