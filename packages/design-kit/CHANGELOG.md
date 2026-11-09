@@ -12,13 +12,14 @@ entry below as its notes.
 The README is reorganized for someone installing the package from npm. Nothing in the code, the
 styles or the types changed.
 
-- **Docs.** The README opens with a picture of the controls in both themes and a link to the live
-  site. Setup includes the browser floor in its Vite config, and the Lightning CSS step beside it,
-  so a page keeps each `light-dark()` as written from its first build. The exports, every token with its value and each component's
-  props are tables. Each section links the page of the live site at jasonsdevspace.com/design-kit
-  that shows its pieces, and how each piece is drawn folds away beneath what a page writes. The
-  theme contract shows what the script sets for each saved value and how a Content Security Policy
-  names the script by `themeScriptHash`.
+- **Docs.** The README opens with badges for the version, CI and the license, a picture of the
+  controls in both themes, and a link to the live site. Setup includes the browser floor in its Vite
+  config, so a page keeps each `light-dark()` as written from its first build, and points a page
+  that uses Lightning CSS to the step it adds. The exports, every token with its value and each
+  component's props are tables. The sections on the chrome, the controls and the explainer link the
+  site's page for their pieces. How each piece is drawn folds away, and the rules a page must follow
+  stay in view. The theme contract shows what the script sets for each saved value and how a
+  Content Security Policy names the script by `themeScriptHash`.
 
 ## 0.1.0
 
