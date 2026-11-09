@@ -16,14 +16,20 @@ export const declaredIn = (sheet: string): ReadonlyMap<string, string> =>
         )
     );
 
-/** A color role's value in the theme given, from its `light-dark()`. */
+/** The roles the sheets read with a fallback, unset unless a page sets them, and that fallback. */
+const FALLBACKS: Readonly<Record<string, string>> = { focus: 'accent' };
+
+/** A color role's value in the theme given, from its `light-dark()`, or its fallback's. */
 export const colorOf = (
     declared: ReadonlyMap<string, string>,
     role: string,
     theme: Theme
 ): string => {
-    const value = declared.get(`--dk-${role}`);
-    const pair = /^light-dark\(\s*(#[\da-f]{6})\s*,\s*(#[\da-f]{6})\s*\)$/i.exec(value ?? '');
+    // A role a page sets only where it differs, as the focus color, takes its fallback's colors.
+    const fallback = FALLBACKS[role];
+    const written = declared.get(`--dk-${role}`);
+    if (written === undefined && fallback !== undefined) return colorOf(declared, fallback, theme);
+    const pair = /^light-dark\(\s*(#[\da-f]{6})\s*,\s*(#[\da-f]{6})\s*\)$/i.exec(written ?? '');
     if (!pair?.[1] || !pair[2]) throw new Error(`--dk-${role} is not a light-dark() of two colors`);
     return theme === 'light' ? pair[1] : pair[2];
 };
@@ -54,7 +60,8 @@ export const ROLES: readonly (readonly [string, string])[] = [
     ['muted', 'Text that steps back'],
     ['line', 'The lines between things'],
     ['control', 'The edge of a field or button'],
-    ['accent', 'Links, the focus ring and the one action a page leads with'],
+    ['accent', 'Links and the one action a page leads with'],
+    ['focus', 'The focus ring, and the edge a pointer brings to a button'],
     ['on-accent', 'Text on the accent'],
     ['highlight', 'What is chosen or pointed at'],
     ['success', 'What went right'],
@@ -68,8 +75,8 @@ const GROUNDS = ['bg', 'surface', 'raised'];
 
 /**
  * Each pairing the palette is meant for, at its ratio: text at 4.5 to 1, and at 3 to 1 the edge a
- * visitor has to see to use a control. The focus ring is drawn in the accent, which already meets
- * 4.5 to 1 on each ground as the color of a link.
+ * visitor has to see to use a control and the focus ring, which is in a role of its own so a page
+ * can ring in another color than its accent.
  */
 export const PAIRS: readonly (readonly [string, string, number])[] = [
     ...GROUNDS.flatMap((ground) => [
@@ -79,6 +86,7 @@ export const PAIRS: readonly (readonly [string, string, number])[] = [
         ['success', ground, 4.5] as const,
         ['danger', ground, 4.5] as const,
         ['control', ground, 3] as const,
+        ['focus', ground, 3] as const,
     ]),
     ['on-accent', 'accent', 4.5],
     // A callout's own ground, and what is chosen, carry text, its quieter line, a link and the

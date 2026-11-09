@@ -83,7 +83,7 @@
     }
 
     /*
-     * One focus ring for everything the keyboard reaches, in the accent, drawn only when the
+     * One focus ring for everything the keyboard reaches, in the focus color, drawn only when the
      * browser would show focus. A section a page moves focus to, with a tabindex of -1, is not a
      * control, so it draws no ring, the browser's own included.
      */
@@ -101,7 +101,7 @@
         [contenteditable]:not([contenteditable='false']),
         [tabindex]:not([tabindex='-1'])
     ):focus-visible {
-        outline: var(--dk-ring-width) solid var(--dk-accent);
+        outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
     }
 
