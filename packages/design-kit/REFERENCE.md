@@ -1,9 +1,9 @@
 # @jasonsdevspace/design-kit reference
 
-The markup, the rules and the React props for every piece of the kit, kept beside the code so it
-matches the version it ships with. [The package README](README.md) says what the kit is and how to
-set it up, and [the site](https://jasonsdevspace.com/design-kit/) shows each piece live in both
-themes.
+The markup, the rules and the React props for every piece of the kit. The package README links it at
+each release's tag, so it matches the version a page installs. [The package README](README.md) says
+what the kit is and how to set it up, and [the site](https://jasonsdevspace.com/design-kit/) shows
+each piece live in both themes.
 
 ## The sheets
 
@@ -13,8 +13,40 @@ long name break anywhere rather than push a narrow column wider. Inside a `pre` 
 block's size, and inside a link it keeps the link's underline. The base also puts a pointer cursor
 on a `<summary>`, and on a checkbox or radio and the label around it.
 
-Every token's value in each theme, and the contrast of each color pairing, is on
-[the tokens page](https://jasonsdevspace.com/design-kit/tokens/).
+Every token's value, each color in both themes, and the contrast of each color pairing are on [the
+tokens page](https://jasonsdevspace.com/design-kit/tokens/).
+
+<details>
+<summary>Every token, with its value or role</summary>
+
+| Tokens                                                           | Value or role                                             |
+| ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
+| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
+| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the focus ring, the lead action, and text on it    |
+| `--dk-highlight`                                                 | what is chosen or pointed at                              |
+| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
+| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
+| `--dk-scrim`                                                     | what dims the page behind a dialog                        |
+| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                          |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                        |
+| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                           |
+| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                           |
+| `--dk-text-code`                                                 | 0.9em, a step under the text around it                    |
+| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                               |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
+| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
+| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
+| `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |
+| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches            |
+| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                           |
+| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                            |
+| `--dk-duration-short`                                            | 150ms                                                     |
+
+</details>
 
 ## Page chrome
 
@@ -220,8 +252,8 @@ A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and ke
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
 all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
 
-Mark an unavailable button `aria-disabled="true"`, never `disabled`, which this reference calls off,
-as the React prop does. A disabled button drops focus and leaves the tab order, while an
+Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
+button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
 aria-disabled one stays where the keyboard can reach it and find out why. The sheet draws a
 `disabled` button, and one inside a disabled fieldset, the same as an off one.
 

@@ -149,9 +149,9 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <h3>Docs that drift from the code</h3>
             <p>
                 Examples written by hand stop matching the code a release or two later. Here each
-                block of markup in the kit's reference is written from the examples the browser
-                tests draw, and a test fails when a block differs from what its example draws. This
-                site draws the version on npm, so what you see is what a demo installs.
+                block of markup in the kit&rsquo;s reference is written from the examples the
+                browser tests draw, and a test fails when a block differs from what its example
+                draws. This site draws the version on npm, so what you see is what a demo installs.
             </p>
         </section>
 

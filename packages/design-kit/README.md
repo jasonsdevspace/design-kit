@@ -5,9 +5,10 @@
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
 Colors, type, light and dark themes and basic controls, shared by the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets give a page a light and a dark
-theme that never flashes, buttons, form fields and callouts for messages, and the layout of the
-"How it works" page beside each demo.
+[jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets give a page colors and type in a
+light and a dark theme, a strip above the page and a footer below it, buttons, form fields and
+callouts for messages, and the layout of the "How it works" page beside each demo, called the
+explainer.
 
 It is made for those demos, so its strip and footer link to the author's portfolio. The colors, base
 styles and controls work on any page, and a page's own styles win over the kit's without extra
@@ -24,7 +25,8 @@ weight.
 - **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
   and a test keeps it that way.
 - **Works under a strict security policy.** The components add no inline styles, so they render
-  under `style-src 'self'`.
+  under `style-src 'self'`, and a strict `script-src` allows the theme script by the hash the kit
+  gives.
 
 ## Setup
 
@@ -87,8 +89,11 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 | `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`         |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
-`SelectField` and `Callout`. The `vite` entry runs in Node. Every token's value in each theme, and
-the contrast of each color pairing, is on [the tokens
+`SelectField` and `Callout`, the types `ButtonProps`, `InputFieldProps`, `SelectFieldProps`,
+`CalloutProps` and `CalloutTone`, and the URLs the chrome links, `PORTFOLIO_URL` and
+`GITHUB_PROFILE_URL`, with `PORTFOLIO_WORK_URL`, the portfolio's list of work. The `vite` entry runs
+in Node, and also exports `THEME_PLACEHOLDER`, the marker `<!-- theme-script -->`. Every token's
+value, each color in both themes, and the contrast of each color pairing are on [the tokens
 page](https://jasonsdevspace.com/design-kit/tokens/).
 
 ## Using it
@@ -113,16 +118,16 @@ export const Page = () => (
 );
 ```
 
-The strip and the footer put `about` and `source` into their links unchecked, so each must be a URL
-the demo's author writes, never one taken from the page's address or a visitor's input. The skip
-link, strip and footer are live in each state on [the page chrome
-page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup, rules and props are
-under [Page
+The strip and the footer put `about`, `source` and `license` into their links unchecked, so each
+must be a URL the demo's author writes, never one taken from the page's address or a visitor's
+input, which could send a visitor anywhere. The skip link, strip and footer are live in each state
+on [the page chrome page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup,
+rules and props are under [Page
 chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#page-chrome)
 in the reference.
 
-The buttons, fields and callouts take their state from the attribute a screen reader already reads,
-such as `aria-pressed` or `aria-invalid`, never a class of the kit's.
+Buttons and fields take their state from the attribute a screen reader already reads, such as
+`aria-pressed` or `aria-invalid`, never a class of the kit's.
 
 ```tsx
 import { useState } from 'react';
@@ -161,21 +166,20 @@ export const Checkout = ({ error, saved }: Props) => {
 ```
 
 Every button, field and callout is live in each state on [the controls
-page](https://jasonsdevspace.com/design-kit/controls/). The rules a page follows, such as why an
-unavailable button is `aria-disabled` and how a message is made live, and each component's props are
-under [Buttons, fields and
+page](https://jasonsdevspace.com/design-kit/controls/). [Buttons, fields and
 callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
-in the reference.
+in the reference gives each component's props and the rules a page follows, such as why an
+unavailable button is `aria-disabled` and how a message is made live.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
-gives the markup for each piece, as does [Explainer
+gives the markup for each piece, and [Explainer
 pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#explainer-pages)
-for the steps, panels, tables and code blocks of a "How it works" page.
+there gives the steps, panels, tables and code blocks of a "How it works" page.
 
 ## Your own layers and palette
 
-Every rule of the kit's sits in a cascade layer named `dk`. A page with layers of its own names
-where `dk` goes, before any rule of its own, so its layer stays over the kit's.
+Every rule of the kit's sits in a cascade layer named `dk`. A page with layers of its own names `dk`
+first, before any rule of its own, so its layers stay over the kit's.
 
 ```css
 @layer dk, page;
@@ -192,8 +196,8 @@ palette sets the roles again, with both values at once.
 
 [Layers and
 palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#layers-and-palettes)
-in the reference gives the other order, the one rule a page cannot outweigh, and how far the
-contrast promise reaches.
+in the reference gives the other order, the reduced-motion rule that holds over a page's own, and
+how far the contrast promise reaches.
 
 ## The theme and a strict policy
 
@@ -208,9 +212,10 @@ import { themeScriptHash } from '@jasonsdevspace/design-kit/vite';
 const policy = `script-src 'self' ${themeScriptHash}`;
 ```
 
-[The theme
+The hash holds as long as nothing after the plugin rewrites the inline script, as an HTML minifier
+would. [The theme
 contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#the-theme-contract)
-in the reference gives every value the script reads.
+in the reference gives what the script sets for each saved value, and when it sets the theme again.
 
 ## Browser support
 

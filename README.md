@@ -7,7 +7,7 @@ ships on npm as `@jasonsdevspace/design-kit`, and ShelfLens is built on it.
 
 [See every piece live](https://jasonsdevspace.com/design-kit/) ·
 [The package on npm](https://www.npmjs.com/package/@jasonsdevspace/design-kit) ·
-[The full reference](packages/design-kit/README.md)
+[The reference](packages/design-kit/REFERENCE.md)
 
 - **A page's own styles win.** The kit never fights the page it sits in, so a demo can load it
   beside the styles it already has. The one thing it holds over a page is the reduced-motion rule,
@@ -65,15 +65,15 @@ export default defineConfig({
 });
 ```
 
-[The package README](packages/design-kit/README.md) covers the rest of setup and
-[what each entry exports](packages/design-kit/README.md#what-it-exports).
-[The reference](packages/design-kit/REFERENCE.md) gives the markup, rules and React props for
-[the page chrome](packages/design-kit/REFERENCE.md#page-chrome) and
-[buttons, fields and callouts](packages/design-kit/REFERENCE.md#buttons-fields-and-callouts),
-[explainer pages](packages/design-kit/REFERENCE.md#explainer-pages),
-[layers and palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a page
-with layers of its own names where the kit's go, and
-[the theme contract](packages/design-kit/REFERENCE.md#the-theme-contract).
+[The package README](packages/design-kit/README.md) covers the rest of setup and [what each entry
+exports](packages/design-kit/README.md#what-it-exports). [The
+reference](packages/design-kit/REFERENCE.md) gives the markup, rules and React props for [the page
+chrome](packages/design-kit/REFERENCE.md#page-chrome), [buttons, fields and
+callouts](packages/design-kit/REFERENCE.md#buttons-fields-and-callouts) and [explainer
+pages](packages/design-kit/REFERENCE.md#explainer-pages). It also covers [layers and
+palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a page with layers of
+its own names where the kit's go, and [the theme
+contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
 ## Browser support
 
@@ -215,7 +215,7 @@ follow by area.
 | Each sheet resolves and each module loads from the packed package, on the oldest Node                     | `packages/design-kit/smoke/consumer.mjs`       |
 | The strip draws its markup from the packed package, with the React a page has                             | `packages/design-kit/smoke/consumer.mjs`       |
 | A field makes its ids with `useId` in a server render of the packed package                               | `packages/design-kit/smoke/consumer.mjs`       |
-| Each block of a piece's markup in the package README is what its example draws                            | `packages/design-kit/examples/readme.test.ts`  |
+| Each block of a piece's markup in the reference is what its example draws                                 | `packages/design-kit/examples/readme.test.ts`  |
 | Each state the site shows draws the attribute printed under it                                            | `packages/design-kit/examples/states.test.tsx` |
 | Each state's React draws the state's own markup, laid out as the repository lays out code                 | `packages/design-kit/examples/states.test.tsx` |
 | Each state's React draws what the version the site pins draws for the state                               | `packages/site/src/code.test.ts`               |
@@ -296,8 +296,8 @@ options rejected, what the choice costs, and the test behind it.
    The page's landmarks stay few and a reader reaches a section by its heading, at the cost of no
    landmark stop at a section.
 10. [The markup each piece draws lives in one module of examples](docs/decisions/0010-one-module-of-examples.md).
-    The package README shows what the components draw, held to them by a unit test, at the cost of
-    a command to run after each change to a piece's markup.
+    The reference shows what the components draw, held to them by a unit test, at the cost of a
+    command to run after each change to a piece's markup.
 11. [The site is built with Vite and React's static render, with no script of React's](docs/decisions/0011-the-site-is-built-with-vite-and-a-static-render.md).
     The site draws the published kit under the policy a demo sets, with no runtime of a framework's,
     at the cost of a policy in a meta element, which cannot stop another site framing it, and of a
@@ -400,9 +400,9 @@ npm run bench:pages
 
 ```
 packages/
-├── design-kit/       the package and its npm README
+├── design-kit/       the package, its npm README and the reference
 │   ├── src/          the sheets, the theme script, the Vite plugin, the React components and tests
-│   ├── examples/     the markup the package README prints and the site shows, and its tests
+│   ├── examples/     the markup the reference prints and the site shows, and its tests
 │   ├── e2e/          the browser tests
 │   └── smoke/        the packed package installed as a page would install it
 └── site/             the site at jasonsdevspace.com/design-kit/, its browser tests and audit

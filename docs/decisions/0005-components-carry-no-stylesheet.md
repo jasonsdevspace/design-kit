@@ -33,7 +33,7 @@ on, rather than a class of the kit's.
 Option C. `components.css` holds the skip link, the strip and the footer in `dk.components`, under
 the page's own rules and over the base. `./react` exports `SkipLink`, `PortfolioStrip` and
 `DemoFooter`, which import no sheet and set no `style` attribute, so they load in plain Node and
-draw under `style-src 'self'`. The package README gives the markup each one draws.
+draw under `style-src 'self'`. The reference gives the markup each one draws.
 
 ## Consequences
 
