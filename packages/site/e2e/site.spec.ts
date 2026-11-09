@@ -974,7 +974,7 @@ test.describe("the site's header", () => {
     /** The pages in the site's menu, which open with the header, rather than the explainer's. */
     const MENU = ROUTES.filter(({ nav }) => nav !== null);
 
-    test('opens each page with the mark and the name, linked to the landing page', async ({
+    test("opens each page with the site's icon and the name, linked to the landing page", async ({
         page,
     }) => {
         for (const { path } of MENU) {
@@ -983,6 +983,9 @@ test.describe("the site's header", () => {
             await expect(brand, path).toHaveAttribute('href', BASE);
             await expect(brand.locator('.site-mark'), path).toHaveAttribute('aria-hidden', 'true');
             await expect(brand.locator('.site-mark'), path).toBeVisible();
+            // The mark is the site's icon, drawn rather than written, so the name is all it reads.
+            await expect(brand.locator('.site-mark svg'), path).toBeVisible();
+            await expect(brand.locator('.site-mark'), path).toHaveText('');
         }
     });
 

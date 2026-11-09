@@ -150,8 +150,9 @@ const SiteFooter = ({
  * The site's header under the strip: its mark and name, leading to the landing page, and its own
  * pages as tabs, the current one marked as the page, all in the site's navigation so nothing in it
  * sits outside a landmark. It is the page's banner, as the explainer's header is, so a screen reader
- * that moves to the banner finds the way around the site on every page. The mark is the site's own
- * markup, so the policy that refuses outside styles holds, and is hidden from a screen reader, which
+ * that moves to the banner finds the way around the site on every page. The mark is the site's
+ * icon, its tiles drawn in the text on the accent and in the page's own theme, in the site's own
+ * markup, so the policy that refuses outside styles holds. It is hidden from a screen reader, which
  * hears the name.
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
@@ -159,7 +160,12 @@ const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
         <nav className="site-header" aria-label="Design kit">
             <a className="site-brand" href={BASE}>
                 <span className="site-mark" aria-hidden="true">
-                    dk
+                    <svg viewBox="0 0 32 32" focusable="false">
+                        <rect x="6" y="6" width="9" height="9" rx="2.5" />
+                        <rect x="17" y="6" width="9" height="9" rx="2.5" fillOpacity="0.55" />
+                        <rect x="6" y="17" width="9" height="9" rx="2.5" fillOpacity="0.55" />
+                        <circle cx="21.5" cy="21.5" r="4.5" />
+                    </svg>
                 </span>
                 The design kit
             </a>
