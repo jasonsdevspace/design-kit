@@ -6,6 +6,7 @@ import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
+import { pagesRecord, recorded, requireCommitted, writeRecord } from '../../../scripts/record.mjs';
 import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
 import { ROUTES } from '../src/routes.ts';
 
@@ -15,11 +16,17 @@ import { ROUTES } from '../src/routes.ts';
  *   npm run lighthouse
  *
  * Builds the site first. Every page in the site's routes is audited, so a page added to them is
- * held to the same gates. Accessibility must score a hundred, and on a first
- * visit as a phone on a slow network makes it, performance at least ninety, the largest paint
- * within the time a visit counts as good, and no more layout shift than a good visit has. One
- * trace on a shared machine can be slow for reasons of its own, so a page that misses on its first
- * is measured twice more and judged on the middle of the three.
+ * held to the same gates. Accessibility must score a hundred, and on a first visit as a phone on a
+ * slow network makes it, performance at least ninety, the largest paint within the time a visit
+ * counts as good, and no more layout shift than a good visit has. One trace on a shared machine
+ * can be slow for reasons of its own, so a page that misses on its first is measured twice more
+ * and judged on the middle of the three.
+ *
+ *   npm run bench:pages
+ *
+ * runs the same audit with `--record`, and once every page passes, writes what it measured to
+ * `docs/benchmarks`, with what each page downloads, beside the commit, machine and Node it ran on
+ * and the Lighthouse and Chrome that measured it.
  */
 
 const SITE = fileURLToPath(new URL('..', import.meta.url));
@@ -41,12 +48,25 @@ interface Measure {
     readonly performance: number;
     readonly paint: number;
     readonly shift: number;
+    /** What the page downloads, in bytes, as the trace saw the files arrive. */
+    readonly bytes: number;
+    /** How many requests the page makes. */
+    readonly requests: number;
 }
+
+/** The number of rows an audit's table holds, as the network requests audit lists each request. */
+const rowsOf = (report: Report, id: string): number => {
+    const details = report.audits[id]?.details;
+    const items: unknown = details === undefined ? undefined : Reflect.get(details, 'items');
+    return Array.isArray(items) ? items.length : 0;
+};
 
 const measureOf = (report: Report): Measure => ({
     performance: report.categories['performance']?.score ?? 0,
     paint: report.audits['largest-contentful-paint']?.numericValue ?? Number.POSITIVE_INFINITY,
     shift: report.audits['cumulative-layout-shift']?.numericValue ?? Number.POSITIVE_INFINITY,
+    bytes: report.audits['total-byte-weight']?.numericValue ?? 0,
+    requests: rowsOf(report, 'network-requests'),
 });
 
 /** Each figure's middle value across the traces, so one slow trace does not decide. */
@@ -57,6 +77,8 @@ const middle = (measures: readonly Measure[]): Measure => {
         performance: of((m) => m.performance),
         paint: of((m) => m.paint),
         shift: of((m) => m.shift),
+        bytes: of((m) => m.bytes),
+        requests: of((m) => m.requests),
     };
 };
 
@@ -74,7 +96,54 @@ const findingsOf = (report: Report): readonly string[] =>
         return audit?.score !== null && audit !== undefined && audit.score < 1 ? [audit.id] : [];
     });
 
+/** Whether this run records what it measured, as `npm run bench:pages` asks. */
+const RECORD = process.argv.includes('--record');
+
+type Recorded = Parameters<typeof pagesRecord>[0][number];
+type Tools = Parameters<typeof pagesRecord>[2];
+
+/**
+ * A page as its record keeps it: its scores out of a hundred, its paint to a tenth of a
+ * millisecond and its shift to four places, so a record run again shows only real changes.
+ */
+const recordedOf = (path: string, accessibility: number, judged: Measure): Recorded => ({
+    path,
+    accessibility,
+    performance: Math.round(judged.performance * 100),
+    paint: Math.round(judged.paint * 10) / 10,
+    shift: Math.round(judged.shift * 10000) / 10000,
+    bytes: Math.round(judged.bytes),
+    requests: judged.requests,
+});
+
+/**
+ * The Lighthouse and the Chrome a report was made with, as a record names them. Chrome gives only
+ * its major version in its user agent, the rest written as zeros, so only the major is named.
+ */
+const toolsOf = (report: Report): Tools => ({
+    lighthouse: report.lighthouseVersion,
+    chrome: /Chrome\/(\d+)/.exec(report.environment.hostUserAgent)?.[1] ?? 'unknown',
+});
+
+/**
+ * Fails the run where a page missed the gates, and otherwise writes the record a recording run
+ * asks for, so a record never shows a failing page.
+ */
+const finish = (
+    failures: readonly string[],
+    measured: readonly Recorded[],
+    tools: Tools | undefined
+) => {
+    if (failures.length > 0) {
+        console.error(`Missed the gates: ${failures.join('; ')}`);
+        process.exitCode = 1;
+    } else if (RECORD && tools !== undefined) {
+        writeRecord('site-pages', pagesRecord(measured, recorded(), tools));
+    }
+};
+
 const main = async () => {
+    if (RECORD) requireCommitted();
     // Built for the origin the audit serves it from, so the policy lets the site's script load.
     execFileSync('npm', ['run', 'site'], {
         stdio: 'inherit',
@@ -99,6 +168,9 @@ const main = async () => {
     const failures: string[] = [];
     // Each page as it was judged, for the run's summary.
     const pages: Parameters<typeof lighthouseSummary>[0][number][] = [];
+    // Each page as it was measured, for the record a recording run writes, and what measured it.
+    const measured: Recorded[] = [];
+    let tools: Tools | undefined;
     try {
         for (const { path } of ROUTES) {
             const url = `${origin}${path}`;
@@ -118,7 +190,9 @@ const main = async () => {
                 accessibility: score,
                 missed: [...short, 'stopped before performance'],
             });
-            const measures = [measureOf(await run(url, 'performance'))];
+            const first = await run(url, 'performance');
+            tools ??= toolsOf(first);
+            const measures = [measureOf(first)];
             if (missed(middle(measures)).length > 0) {
                 while (measures.length < TRACES) {
                     measures.push(measureOf(await run(url, 'performance')));
@@ -139,6 +213,7 @@ const main = async () => {
                 missed: [...short, ...misses],
             };
             if (misses.length > 0) failures.push(`${path} (${misses.join(', ')})`);
+            measured.push(recordedOf(path, score, judged));
         }
     } finally {
         // Written whatever happened, so the pages measured before a failure are still reported.
@@ -157,10 +232,7 @@ const main = async () => {
             });
         });
     }
-    if (failures.length > 0) {
-        console.error(`Missed the gates: ${failures.join('; ')}`);
-        process.exitCode = 1;
-    }
+    finish(failures, measured, tools);
 };
 
 await main();
