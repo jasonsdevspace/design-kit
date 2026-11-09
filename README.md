@@ -267,6 +267,20 @@ they document, not by a test here.
 | Each state's copies fill the column, both named, and its live toggle and panel change when pressed                | `packages/site/e2e/site.spec.ts`               |
 | Every page of the site meets the Lighthouse gates ShelfLens is held to                                            | `packages/site/bench/lighthouse.ts`            |
 
+## What was measured
+
+- **What the kit costs a page.** The three sheets come to about 10 KB gzipped, and the theme script
+  goes inline in the page's head. The package npm publishes is 36 KB packed, most of it the README
+  and the changelog. [The record](docs/benchmarks/package-size.md) lists every file, raw and
+  gzipped.
+- **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
+  its processor slowed, every page scores a hundred for accessibility and performance, paints its
+  largest element in about 0.9 seconds and shifts nothing, downloading 13 to 16 KB in three
+  requests. [The record](docs/benchmarks/site-pages.md) gives each page.
+- **The gates, in CI.** Every page of the site must score a hundred for accessibility, and at least
+  ninety for performance with its largest paint within two and a half seconds and its layout shift
+  within a tenth.
+
 ## Decisions
 
 Each choice with a real alternative is a record in [docs/decisions](docs/decisions), with the
@@ -365,12 +379,12 @@ npm run site
 npm run lighthouse
 ```
 
-What the kit costs a page and how the site's pages score are recorded in `docs/benchmarks`, each
-beside its raw results with the date, commit, machine and Node it ran on: [what the package
-weighs](docs/benchmarks/package-size.md), file by file, raw and gzipped, and [how each page of the
-site scores](docs/benchmarks/site-pages.md) on a first visit. `npm run bench:package` and `npm run
-bench:pages` record them again, the second through the same audit `npm run lighthouse` runs. A
-record is what a reader sees, and the Lighthouse gates in CI stay what decides.
+`npm run bench:package` records what the package weighs, and `npm run bench:pages` records how each
+page scores through the same audit `npm run lighthouse` runs, writing only when every page passes.
+Each record sits in `docs/benchmarks` beside its raw results, with the date, commit, machine and
+Node it ran on, and a recording run refuses a working tree with uncommitted changes, so the commit
+it names is the code it measured. Plain `npm run lighthouse` writes no record and stays the gate CI
+runs.
 
 ```bash
 npm run bench:package
@@ -428,7 +442,7 @@ packages/
 scripts/              the prose, Node and commit message checks, the tests of those, of the
                       license and of the lint rules and workflows, the helper that runs each
                       check in a throwaway repository, the one that creates a GitHub release,
-                      the run summaries and the benchmark records
+                      the run summaries and the writer of the benchmark records
 docs/
 ├── benchmarks/       what the package weighs and how the site's pages score, each beside its
 │                     raw results
