@@ -97,13 +97,20 @@ let listening = false;
 const listen = () => {
     if (listening) return;
     listening = true;
-    // Once every switch is taken away, the theme script alone draws the theme again.
+    // Once every switch is taken away, the theme script alone draws the theme, and the choice is
+    // read again from storage when a switch next comes, unless the page holds one of its own.
+    const forget = () => {
+        if (!heldHere) chosen = undefined;
+    };
     window.addEventListener('storage', (event) => {
-        if (switches.size > 0 && (event.key === null || event.key === THEME_KEY)) catchUp();
+        if (event.key !== null && event.key !== THEME_KEY) return;
+        if (switches.size > 0) catchUp();
+        else forget();
     });
     window.addEventListener('pageshow', (event) => {
-        if (switches.size === 0 || !event.persisted) return;
-        if (heldHere) draw(current());
+        if (!event.persisted) return;
+        if (switches.size === 0) forget();
+        else if (heldHere) draw(current());
         else catchUp();
     });
     const system = scheme();
@@ -129,8 +136,6 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
         : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
     const already = attachedSwitches.get(group);
     if (already) return already;
-    // With no switch on the page, nothing heard a choice saved meanwhile, so it is read again.
-    if (switches.size === 0 && !heldHere) chosen = undefined;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
     const show = () => {
         const choice = current();
@@ -144,6 +149,8 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     switches.add(show);
     listen();
     show();
+    // Drawn as the switch shows it, so the two agree when a choice was held while no switch was.
+    draw(current());
     group.hidden = false;
     const detach = () => {
         for (const radio of radios) radio.removeEventListener('change', onChange);

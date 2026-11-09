@@ -64,8 +64,9 @@ The paths are in `packages/design-kit`.
   It finds both controls hidden with no script, the saved choice shown once attached, a new one
   saved and drawn with nothing refused, a switch attached again saving once, a switch attached
   through the element that holds it, one choice shown on every switch, a switch hidden again once
-  taken away, a choice from another tab followed, a choice the browser will not save held through a
-  page restored by Back, and a copy saying Copied on the button and the status line, or Selected
-  with the text selected where the clipboard is refused, and a copy button put back to Copy when it
-  is taken away.
+  taken away, the choice saved meanwhile or held by the page shown and drawn on a switch attached
+  after every switch was taken away, one element attached as a switch and then as a copy button, a
+  choice from another tab followed, a choice the browser will not save held through a page restored
+  by Back, and a copy saying Copied on the button and the status line, or Selected with the text
+  selected where the clipboard is refused, and a copy button put back to Copy when it is taken away.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn.

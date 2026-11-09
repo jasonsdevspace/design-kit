@@ -545,8 +545,10 @@ page draws, shows the switch, and saves and draws a choice under the theme contr
 following the system's scheme. It follows a choice saved in another tab and a page restored by Back,
 and where the browser refuses storage it holds the choice for as long as the page is open. The
 chosen word is drawn as a pressed button is, with an edge twice as thick in the accent. Attaching
-one switch again before it is taken away attaches it once, and taking it away hides it again. Every
-switch on a page shows one choice, each with radios named for its own id.
+one switch again before it is taken away attaches it once, and taking it away hides it again. A
+switch attached after every switch was taken away shows, and draws, the choice saved meanwhile, or
+the one the page holds where the browser would not save it. Every switch on a page shows one choice,
+each with radios named for its own id.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
