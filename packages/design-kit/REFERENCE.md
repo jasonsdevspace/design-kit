@@ -19,33 +19,34 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                           | Value or role                                             |
-| ---------------------------------------------------------------- | --------------------------------------------------------- |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
-| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
-| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the focus ring, the lead action, and text on it    |
-| `--dk-highlight`                                                 | what is chosen or pointed at                              |
-| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
-| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
-| `--dk-scrim`                                                     | what dims the page behind a dialog                        |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                          |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                        |
-| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                           |
-| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                           |
-| `--dk-text-code`                                                 | 0.9em, a step under the text around it                    |
-| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                               |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
-| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
-| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                       |
-| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
-| `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |
-| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches            |
-| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                           |
-| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                            |
-| `--dk-duration-short`                                            | 150ms                                                     |
+| Tokens                                                           | Value or role                                                   |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both                     |
+| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                                  |
+| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                                    |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                          |
+| `--dk-focus`                                                     | the focus ring and a button's hover edge, the accent unless set |
+| `--dk-highlight`                                                 | what is chosen or pointed at                                    |
+| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                                 |
+| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                                 |
+| `--dk-scrim`                                                     | what dims the page behind a dialog                              |
+| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                                |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                              |
+| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                                 |
+| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                                 |
+| `--dk-text-code`                                                 | 0.9em, a step under the text around it                          |
+| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                     |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                                |
+| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                               |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                          |
+| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                             |
+| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                     |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem       |
+| `--dk-target`                                                    | 2.75rem, the touch target on a phone                            |
+| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches                  |
+| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                                 |
+| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                                  |
+| `--dk-duration-short`                                            | 150ms                                                           |
 
 </details>
 
@@ -388,6 +389,30 @@ explains. A message that arrives after the page has loaded is made live in three
 
 A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
 the edge marks where the callout starts and ends.
+
+### Pills
+
+```html
+<ul class="dk-pills" role="list">
+    <li class="dk-pill">TypeScript</li>
+    <li class="dk-pill">React</li>
+</ul>
+<nav aria-label="Pages">
+    <ul class="dk-pills" role="list">
+        <li><a class="dk-pill" href="./" aria-current="page">Home</a></li>
+        <li><a class="dk-pill" href="./tokens/">Tokens</a></li>
+    </ul>
+</nav>
+```
+
+A pill is a chip that names something, or a link among others in a row, both `.dk-pill` in a
+`.dk-pills` list. A chip has a faint edge in the line color and no states, so it never reads as a
+control, and it is no target. A link has no edge and steps back in the muted text as the strip's
+links do, and the one that is the current page carries `aria-current` and stands on the highlight
+at the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on
+a phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
+with VoiceOver drops a list's meaning when its markers are gone. Tabs that switch what one part of a
+page shows are not pills, since they take the tab role and its keys.
 
 ### React components
 

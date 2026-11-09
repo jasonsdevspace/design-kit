@@ -22,7 +22,11 @@ export const colorOf = (
     role: string,
     theme: Theme
 ): string => {
-    const value = declared.get(`--dk-${role}`);
+    const written = declared.get(`--dk-${role}`);
+    // A role set to another, as the focus color is to the accent, takes that role's colors.
+    const alias = /^var\(--dk-([\w-]+)\)$/.exec(written ?? '')?.[1];
+    if (alias !== undefined) return colorOf(declared, alias, theme);
+    const value = written;
     const pair = /^light-dark\(\s*(#[\da-f]{6})\s*,\s*(#[\da-f]{6})\s*\)$/i.exec(value ?? '');
     if (!pair?.[1] || !pair[2]) throw new Error(`--dk-${role} is not a light-dark() of two colors`);
     return theme === 'light' ? pair[1] : pair[2];
@@ -54,7 +58,8 @@ export const ROLES: readonly (readonly [string, string])[] = [
     ['muted', 'Text that steps back'],
     ['line', 'The lines between things'],
     ['control', 'The edge of a field or button'],
-    ['accent', 'Links, the focus ring and the one action a page leads with'],
+    ['accent', 'Links and the one action a page leads with'],
+    ['focus', 'The focus ring, and the edge a pointer brings to a control'],
     ['on-accent', 'Text on the accent'],
     ['highlight', 'What is chosen or pointed at'],
     ['success', 'What went right'],
@@ -68,8 +73,8 @@ const GROUNDS = ['bg', 'surface', 'raised'];
 
 /**
  * Each pairing the palette is meant for, at its ratio: text at 4.5 to 1, and at 3 to 1 the edge a
- * visitor has to see to use a control. The focus ring is drawn in the accent, which already meets
- * 4.5 to 1 on each ground as the color of a link.
+ * visitor has to see to use a control and the focus ring, which is in a role of its own so a page
+ * can ring in another color than its accent.
  */
 export const PAIRS: readonly (readonly [string, string, number])[] = [
     ...GROUNDS.flatMap((ground) => [
@@ -79,6 +84,7 @@ export const PAIRS: readonly (readonly [string, string, number])[] = [
         ['success', ground, 4.5] as const,
         ['danger', ground, 4.5] as const,
         ['control', ground, 3] as const,
+        ['focus', ground, 3] as const,
     ]),
     ['on-accent', 'accent', 4.5],
     // A callout's own ground, and what is chosen, carry text, its quieter line, a link and the

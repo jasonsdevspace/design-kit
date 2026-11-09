@@ -17,8 +17,8 @@
  * pseudo-element, and here each is a :where() alone, so nothing in the tokens carries weight.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
- * 3 to 1 against what it sits on. The focus ring is in the accent, held at 4.5 to 1 as a link. A
- * test holds the palette to both.
+ * 3 to 1 against what it sits on. The focus ring is in its own role, the accent unless a page
+ * sets another, held at 3 to 1 against what it sits on. A test holds the palette to both.
  *
  * Which unit goes where: rem for anything that should grow with the visitor's own text size, em for
  * code set in running text, which sizes to the text around it, and px for what must not scale, a
@@ -49,6 +49,12 @@
 
         /* Links, the focus ring and the one action a page leads with, and the text drawn on it. */
         --dk-accent: light-dark(#1f4fd8, #8fb0ff);
+        /*
+         * The focus ring, and the edge a pointer brings to a control: the accent unless a page sets
+         * its own. It resolves on the root, so a page that sets the accent on one part of the page
+         * alone sets this there too.
+         */
+        --dk-focus: var(--dk-accent);
         --dk-on-accent: light-dark(#ffffff, #121212);
         /* What is chosen or pointed at, behind text in the page's own color. */
         --dk-highlight: light-dark(#e3eafb, #22305a);
@@ -93,7 +99,7 @@
         /* Round ends on a tab or a tag, far larger than one could be tall at any text size. */
         --dk-radius-pill: 999px;
 
-        /* The one focus ring every control draws, in the accent. */
+        /* The one focus ring every control draws, in the focus color. */
         --dk-ring-width: 2px;
         --dk-ring-offset: 2px;
 

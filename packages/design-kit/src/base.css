@@ -101,7 +101,7 @@
         [contenteditable]:not([contenteditable='false']),
         [tabindex]:not([tabindex='-1'])
     ):focus-visible {
-        outline: var(--dk-ring-width) solid var(--dk-accent);
+        outline: var(--dk-ring-width) solid var(--dk-focus);
         outline-offset: var(--dk-ring-offset);
     }
 
