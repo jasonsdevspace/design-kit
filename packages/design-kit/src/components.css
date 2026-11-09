@@ -237,12 +237,13 @@
     }
 
     /*
-     * Pointed at, the edge turns to the accent. Only where a pointer can rest over a button, since
-     * on a phone the look would stay after a tap, and a toggle tapped off would look pressed.
+     * Pointed at, the edge turns to the focus color, the accent unless a page sets its own. Only
+     * where a pointer can rest over a button, since on a phone the look would stay after a tap,
+     * and a toggle tapped off would look pressed.
      */
     @media (hover: hover) {
         :where(.dk-button:hover) {
-            border-color: var(--dk-accent);
+            border-color: var(--dk-focus, var(--dk-accent));
         }
     }
 
@@ -264,12 +265,16 @@
     }
 
     /*
-     * A toggle that is on, and a button whose panel is open, on the highlight with an edge twice
-     * as thick in the accent and its words in the page's text, the accent button's included. The
-     * highlight alone is close to the page's own ground, so the thicker edge is what tells the
-     * state at a glance.
+     * A toggle that is on, a button whose panel is open, and the theme switch's chosen word, on the
+     * highlight with an edge twice as thick in the accent and its words in the page's text, the
+     * accent button's included. The highlight alone is close to the page's own ground, so the
+     * thicker edge is what tells the state at a glance.
      */
-    :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+    :where(
+        .dk-button[aria-pressed='true'],
+        .dk-button[aria-expanded='true'],
+        .dk-theme-switch-choice > input:checked + span
+    ) {
         border-color: var(--dk-accent);
         background: var(--dk-highlight);
         box-shadow: inset 0 0 0 1px var(--dk-accent);
@@ -458,7 +463,11 @@
      * arrow, since the drawn caret is a background.
      */
     @media (forced-colors: active) {
-        :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+        :where(
+            .dk-button[aria-pressed='true'],
+            .dk-button[aria-expanded='true'],
+            .dk-theme-switch-choice > input:checked + span
+        ) {
             background: Highlight;
             color: HighlightText;
         }
@@ -494,7 +503,7 @@
         }
 
         :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']):focus-visible {
-            outline: var(--dk-ring-width) solid var(--dk-accent);
+            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
             outline-offset: var(--dk-ring-offset);
         }
     }
@@ -741,5 +750,178 @@
         :where(.dk-panel) {
             padding: var(--dk-space-4);
         }
+    }
+
+    /*
+     * The theme switch: a group named Theme with three choices, System, Light and Dark, each a
+     * native radio under its word. The chosen word is marked by an edge twice as thick, in the
+     * accent, drawn by the pressed button's own rule, since the highlight alone stands too close to
+     * the page. The
+     * radio fills its word's target, so the whole word takes a press, and the edge sits inside the
+     * word, so no word moves as the choice does. On a phone each choice is a thumb's width.
+     */
+    :where(.dk-theme-switch) {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0 var(--dk-space-1);
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: auto;
+        padding-inline: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+        font-size: var(--dk-text-small);
+        line-height: var(--dk-leading-tight);
+    }
+
+    :where(.dk-theme-switch-name) {
+        flex-shrink: 0;
+        margin-inline-end: var(--dk-space-2);
+        color: var(--dk-muted);
+    }
+
+    :where(.dk-theme-switch-choice) {
+        position: relative;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--dk-field-height);
+        cursor: pointer;
+    }
+
+    :where(.dk-theme-switch-choice > input) {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: inherit;
+    }
+
+    :where(.dk-theme-switch-choice > span) {
+        padding: var(--dk-space-1) var(--dk-space-2);
+        border-width: 1px;
+        border-style: solid;
+        border-radius: var(--dk-radius-pill);
+        transition:
+            color var(--dk-duration-short),
+            background-color var(--dk-duration-short),
+            border-color var(--dk-duration-short),
+            box-shadow var(--dk-duration-short);
+    }
+
+    /* The words not chosen, at rest. The chosen word takes the pressed button's rule above. */
+    :where(.dk-theme-switch-choice > input:not(:checked) + span) {
+        border-color: transparent;
+        color: var(--dk-muted);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-theme-switch-choice:hover > span) {
+            color: var(--dk-fg);
+        }
+    }
+
+    :where(.dk-theme-switch-choice > input:focus-visible + span) {
+        outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+        outline-offset: var(--dk-ring-offset);
+    }
+
+    @media (max-width: 48rem) {
+        :where(.dk-theme-switch-choice) {
+            min-width: var(--dk-target);
+            min-height: var(--dk-target);
+        }
+    }
+
+    /*
+     * A pill: a chip that names something, or a link among others in a row. A chip has a faint
+     * edge and no states, so it never reads as a control. A link has no edge, steps back in the
+     * muted text as the strip's links do, and the one that is the current page stands on the
+     * highlight at the heading's weight, which forced colors keep. The row keeps room for the
+     * focus ring on every side. A link's target is the field height, and a thumb's on a phone.
+     */
+    :where(.dk-pills) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dk-space-2);
+        min-width: 0;
+        max-width: calc(100% + 2 * (var(--dk-ring-width) + var(--dk-ring-offset)));
+        margin: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
+        padding: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+        list-style: none;
+    }
+
+    :where(.dk-pill) {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--dk-space-1) var(--dk-space-3);
+        border: 1px solid var(--dk-line);
+        border-radius: var(--dk-radius-pill);
+        color: var(--dk-fg);
+        font-size: var(--dk-text-caption);
+        line-height: var(--dk-leading-tight);
+        white-space: nowrap;
+    }
+
+    :where(a.dk-pill) {
+        min-height: var(--dk-field-height);
+        padding-block: 0;
+        border-color: transparent;
+        color: var(--dk-muted);
+        font-size: inherit;
+        text-decoration: none;
+        transition: color var(--dk-duration-short);
+    }
+
+    @media (hover: hover) {
+        :where(a.dk-pill:hover) {
+            color: var(--dk-fg);
+        }
+    }
+
+    :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
+        background: var(--dk-highlight);
+        color: var(--dk-fg);
+        font-weight: var(--dk-weight-strong);
+    }
+
+    @media (max-width: 48rem) {
+        :where(.dk-pill) {
+            white-space: normal;
+        }
+
+        :where(a.dk-pill) {
+            min-height: var(--dk-target);
+        }
+
+        :where(.dk-pills > li) {
+            max-width: 100%;
+        }
+    }
+
+    @media (forced-colors: active) {
+        :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
+            background: Highlight;
+            color: HighlightText;
+        }
+    }
+
+    /*
+     * A copy button's words share one cell, so the button is as wide as its longest word whatever
+     * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
+     * from the button's name.
+     */
+    :where(.dk-copy-words) {
+        display: inline-grid;
+    }
+
+    :where(.dk-copy-words > *) {
+        grid-area: 1 / 1;
+        text-align: center;
+    }
+
+    :where(.dk-copy-words > [aria-hidden='true']) {
+        visibility: hidden;
     }
 }

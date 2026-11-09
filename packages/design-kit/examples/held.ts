@@ -79,7 +79,7 @@ export const HELD = {
                 'sets a button and a field level, at the field height wide and the target on a phone',
                 'keeps an off button in the tab order, and skips a disabled one, drawn alike',
                 'draws a button in a disabled fieldset as off, and keeps the keyboard off it',
-                'turns the edge to the accent under a pointer, and underlines the accent instead',
+                'turns the edge to the focus color under a pointer, and underlines the accent instead',
                 "tells a pressed toggle by its edge as well as its color, and keeps the toggle's name",
                 'draws an open accent button in the page text on the highlight, so its words stay read',
                 'keeps a pressed toggle that is off told apart from one that is not pressed',

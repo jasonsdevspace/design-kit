@@ -116,7 +116,7 @@ test('draws a button in a disabled fieldset as off, and keeps the keyboard off i
     await expect(inside).toBeDisabled();
 });
 
-test('turns the edge to the accent under a pointer, and underlines the accent instead', async ({
+test('turns the edge to the focus color under a pointer, and underlines the accent instead', async ({
     page,
 }) => {
     await open(page);

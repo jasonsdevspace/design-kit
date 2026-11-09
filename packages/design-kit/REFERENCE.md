@@ -24,7 +24,8 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
 | `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
 | `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the focus ring, the lead action, and text on it    |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                    |
+| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it  |
 | `--dk-highlight`                                                 | what is chosen or pointed at                              |
 | `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
 | `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
@@ -276,7 +277,7 @@ a press shows the errors rather than doing nothing.
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
 takes the ground of whatever it sits on, a callout included. Where a pointer can hover, the edge
-turns to the accent under it, and the accent button underlines its words instead. Pressed is the
+turns to the focus color under it, and the accent button underlines its words instead. Pressed is the
 highlight with an edge twice as thick in the accent, and its words in the page's text, an accent
 button's included. Off is the muted text on no ground with an edge in the line color, rather than a
 fade, so its words keep a ratio the palette measures. An off toggle that is on keeps the thicker
@@ -388,6 +389,30 @@ explains. A message that arrives after the page has loaded is made live in three
 
 A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
 the edge marks where the callout starts and ends.
+
+### Pills
+
+```html
+<ul class="dk-pills" role="list">
+    <li class="dk-pill">TypeScript</li>
+    <li class="dk-pill">React</li>
+</ul>
+<nav aria-label="Pages">
+    <ul class="dk-pills" role="list">
+        <li><a class="dk-pill" href="./" aria-current="page">Home</a></li>
+        <li><a class="dk-pill" href="./tokens/">Tokens</a></li>
+    </ul>
+</nav>
+```
+
+A pill is a chip that names something, or a link among others in a row, both `.dk-pill` in a
+`.dk-pills` list. A chip has a faint edge in the line color and no states, so it never reads as a
+control, and it is no target. A link has no edge and steps back in the muted text as the strip's
+links do, and the one that is the current page carries `aria-current` and stands on the highlight
+at the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on
+a phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
+with VoiceOver drops a list's meaning when its markers are gone. Tabs that switch what one part of a
+page shows are not pills, since they take the tab role and its keys.
 
 ### React components
 
