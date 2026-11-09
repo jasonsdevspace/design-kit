@@ -138,12 +138,10 @@ export default defineConfig({
     plugins: [pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
-        // The kit's own browser floor, as record 3 sets it and the pinned version gives it, so the
-        // minifier leaves each light-dark() as it is, resolved by the scheme of the element that
-        // uses it. A wider target rewrites it into variables that resolve where the tokens are set,
-        // on the root, so a copy in the other scheme, or a swatch in its column's theme, would keep
-        // the page's colors. Taken from the kit, it moves with the kit when the kit raises it.
-        cssTarget: browserFloor(),
+        // The kit's browser floor, as the pinned version gives it, for the script and the sheets
+        // alike, so each light-dark() is kept as written, as record 0011 and the kit's README say.
+        // It moves when the pin does.
+        target: browserFloor(),
         rollupOptions: {
             input: Object.fromEntries(
                 ROUTES.map(({ file }) => [file, fileURLToPath(new URL(file, import.meta.url))])
