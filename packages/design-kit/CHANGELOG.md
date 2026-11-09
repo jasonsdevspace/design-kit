@@ -7,6 +7,13 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## 0.1.0
+
+The kit's first stable version, with no change since `0.1.0-next.6`. It holds what the prereleases
+below added: the tokens, the base sheet and the theme script, the page chrome, the buttons, fields
+and callouts, the explainer's pieces, and the Vite plugin with the theme script's hash and the
+browser floor. From here each release follows the versioning set out above.
+
 ## 0.1.0-next.6
 
 The kit's Vite entry gives its browser floor to a page's build, as a build target and as targets for
