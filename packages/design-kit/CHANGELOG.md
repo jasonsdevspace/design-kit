@@ -9,10 +9,21 @@ entry below as its notes.
 
 ## 0.1.0
 
-The kit's first stable version, with no change since `0.1.0-next.6`. It holds what the prereleases
-below added: the tokens, the base sheet and the theme script, the page chrome, the buttons, fields
-and callouts, the explainer's pieces, and the Vite plugin with the theme script's hash and the
-browser floor. From here each release follows the versioning set out above.
+The kit's first stable version, with the code, styles and types of `0.1.0-next.6`. Until 1.0.0, a
+minor version may rename a token or change what the theme script reads, and a patch changes neither.
+
+- **Tokens.** The scale and the color roles, every name under the `--dk-` prefix, each color
+  holding its light and its dark value in one `light-dark()`.
+- **Sheets.** `tokens.css`, `base.css` and `components.css`, every rule in the kit's own cascade
+  layers, so a page's own styles win over the kit's.
+- **Theme script.** `@jasonsdevspace/design-kit/theme` gives the script that draws the theme a
+  visitor saved before the page is drawn, the one every demo on jasonsdevspace.com shares.
+- **Components.** `@jasonsdevspace/design-kit/react` gives the page chrome, the skip link, the strip
+  and the footer, and the buttons, fields and callouts, with React `^19.3.0` as an optional peer.
+- **Explainer.** The layout, steps, panels, tables and code blocks of the page that says how a demo
+  works, written as markup the sheets style.
+- **Vite.** `@jasonsdevspace/design-kit/vite` gives `themeScriptPlugin()`, `themeScriptHash`,
+  `browserFloor()` and `lightningcssFloor()`.
 
 ## 0.1.0-next.6
 
