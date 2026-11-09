@@ -6,16 +6,16 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                | Node     |
 | ---------- | --------- | ---------------------- | -------- |
-| 2026-11-08 | `8de3172` | Apple M2 Max, 12 cores | v24.22.2 |
+| 2026-11-09 | `69fb918` | Apple M2 Max, 12 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.1.0`, 36.2 KB packed.
+`@jasonsdevspace/design-kit@0.1.2`, 28.1 KB packed.
 
 The sheets a page loads:
 
 | File                | Raw     | Gzipped |
 | ------------------- | ------- | ------- |
 | dist/base.css       | 6.0 KB  | 2.1 KB  |
-| dist/components.css | 24.9 KB | 6.3 KB  |
+| dist/components.css | 24.9 KB | 6.2 KB  |
 | dist/tokens.css     | 5.6 KB  | 2.1 KB  |
 
 The modules a page's build imports:
@@ -30,10 +30,10 @@ Every other file the package carries, which a page never loads:
 
 | File            | Raw     | Gzipped |
 | --------------- | ------- | ------- |
-| CHANGELOG.md    | 15.3 KB | 5.7 KB  |
+| CHANGELOG.md    | 17.1 KB | 6.3 KB  |
 | dist/react.d.ts | 8.3 KB  | 2.7 KB  |
 | dist/theme.d.ts | 1.3 KB  | 0.6 KB  |
 | dist/vite.d.ts  | 2.2 KB  | 1.0 KB  |
 | LICENSE         | 1.0 KB  | 0.6 KB  |
 | package.json    | 2.0 KB  | 0.7 KB  |
-| README.md       | 40.6 KB | 13.6 KB |
+| README.md       | 11.8 KB | 4.1 KB  |
