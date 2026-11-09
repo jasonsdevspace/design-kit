@@ -123,11 +123,11 @@ as after. On a phone they take a row of their own and the width is left aside.
 
 The footer is a few short sentences that say whose project the demo is. The author's name links to
 the portfolio and "more work" to the author's GitHub, then come "How it works" and the demo's source
-under its license. On the explainer it marks the link to how it works with `aria-current="page"`, as
-the strip does. Anything the demo adds follows the license, as sentences of its own. A line of the
-demo's own that is not part of the footer's text, such as the version and commit the page was built
-from, is a second paragraph, `.dk-footer-aside`. It sits at the end of the text's row on a wide
-screen, and under the text on a phone or wherever the row has no room.
+under its license. On the explainer it marks the "How it works" link with `aria-current="page"`, as
+the strip does. Anything the demo adds comes after the license's name, as sentences of its own. A
+line of the demo's own that is not part of the footer's text, such as the version and commit the
+page was built from, is a second paragraph, `.dk-footer-aside`. It sits at the end of the text's row
+on a wide screen, and under the text on a phone or wherever the row has no room.
 
 <!-- example: footer -->
 
