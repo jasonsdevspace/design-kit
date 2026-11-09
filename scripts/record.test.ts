@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 
+import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 
 import { packageRecord, pagesRecord, recorded, recordedTable } from './record.mjs';
@@ -108,6 +109,40 @@ describe('the records in the repository', () => {
             expect(markdown).toContain(`\`${raw.recorded['commit'] ?? ''}\``);
         }
     );
+
+    it('keeps each page exactly as its raw results make it, so neither is edited alone', async () => {
+        const read = (name: string) => readFileSync(at(`docs/benchmarks/${name}`), 'utf8');
+        const made = async (markdown: string) =>
+            format(markdown, { parser: 'markdown', filepath: 'record.md' });
+        const packed = JSON.parse(read('package-size.json')) as Parameters<
+            typeof packageRecord
+        >[0] & {
+            recorded: Parameters<typeof packageRecord>[1];
+        };
+        const { recorded: packedAt, ...packageOnly } = packed;
+        expect(await made(packageRecord(packageOnly, packedAt).markdown)).toBe(
+            await made(read('package-size.md'))
+        );
+        const pages = JSON.parse(read('site-pages.json')) as {
+            recorded: Parameters<typeof pagesRecord>[1];
+            tools: Parameters<typeof pagesRecord>[2];
+            pages: Parameters<typeof pagesRecord>[0];
+        };
+        expect(await made(pagesRecord(pages.pages, pages.recorded, pages.tools).markdown)).toBe(
+            await made(read('site-pages.md'))
+        );
+    });
+
+    it('names the version of the kit the site pins', () => {
+        const site = JSON.parse(readFileSync(at('packages/site/package.json'), 'utf8')) as {
+            dependencies: Record<string, string>;
+        };
+        const pinned = site.dependencies['design-kit-release']?.split('@').pop();
+        const pages = JSON.parse(readFileSync(at('docs/benchmarks/site-pages.json'), 'utf8')) as {
+            tools: { kit: string };
+        };
+        expect(pages.tools.kit).toBe(pinned);
+    });
 
     it('links each record from the README', () => {
         const readme = readFileSync(at('README.md'), 'utf8');
