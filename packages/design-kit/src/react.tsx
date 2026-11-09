@@ -146,7 +146,8 @@ export const DemoFooter = ({
     readonly children?: ReactNode;
     /**
      * A line of the demo's own beside the sentence on a wide screen and under it on a phone, such as
-     * the version and commit the page was built from.
+     * the version and commit the page was built from. It is drawn in a paragraph, so it holds text,
+     * links and code, never a block.
      */
     readonly aside?: ReactNode;
 }) => (

@@ -383,6 +383,53 @@ test("puts a demo's own line beside the footer's sentence on a wide screen and u
     // Under it, at the same inset.
     expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
     expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
+
+    // Between a phone and a screen with room for both, it wraps under the sentence, at its inset.
+    await open(page, { width: 800, aside: true });
+    sentence = await box(page.locator('.dk-footer p').first(), "the footer's sentence");
+    aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
+    expect(aside.y).toBeGreaterThanOrEqual(sentence.y + sentence.height);
+    expect(Math.round(aside.x)).toBe(Math.round(sentence.x));
+});
+
+test("wraps a long unbroken name in the footer's sentence and its own line on a phone", async ({
+    page,
+}) => {
+    const hash = 'a'.repeat(40);
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
+            `<style>${KIT}</style></head><body><main><h1>Example</h1></main>` +
+            renderToStaticMarkup(
+                <DemoFooter
+                    name="Example"
+                    about="./about/"
+                    source={SOURCE}
+                    aside={`Built at ${hash}.`}
+                >
+                    Built at {hash}.
+                </DemoFooter>
+            ) +
+            `</body></html>`
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+});
+
+test('stacks anything else a page writes after the sentence under it, as before', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Example</title>` +
+            `<style>${KIT}</style></head><body><footer class="dk-footer">` +
+            `<p>Example is a portfolio project.</p><p>A note of its own.</p></footer></body></html>`
+    );
+    const [first, second] = await Promise.all([
+        box(page.locator('.dk-footer p').first(), 'the sentence'),
+        box(page.locator('.dk-footer p').nth(1), 'the note'),
+    ]);
+    expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
+    expect(Math.round(second.x)).toBe(Math.round(first.x));
 });
 
 /** What sets a link apart from the text and links around it, as the screen draws it. */
