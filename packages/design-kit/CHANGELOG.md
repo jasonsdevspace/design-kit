@@ -7,6 +7,18 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## 0.2.0
+
+The footer takes a line of a demo's own beside its sentence, and the scale names a pill radius. No
+token is renamed and the theme script is unchanged, so a page on 0.1 moves up without changes.
+
+- **Components.** `DemoFooter` takes an `aside`, drawn as a second paragraph, `.dk-footer-aside`,
+  at the end of the sentence's row on a wide screen and under it on a phone or wherever the row has
+  no room. A footer without one draws as it did. Either paragraph now wraps a long unbroken name
+  rather than push a phone's page sideways, and anything else a page writes after the sentence
+  stacks under it.
+- **Tokens.** `--dk-radius-pill`, 999px, gives a tab or a tag round ends at any text size.
+
 ## 0.1.2
 
 The README is cut to what someone on npm needs first, and the full reference moves to a file of its
