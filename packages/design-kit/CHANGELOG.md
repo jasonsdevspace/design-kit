@@ -7,6 +7,20 @@ keeping a copy. Each version from `0.1.0-next.1` on is staged on npm from a tag 
 workflow, with provenance, goes live when it is promoted, and has a release on GitHub with the
 entry below as its notes.
 
+## 0.1.1
+
+The README is reorganized for someone installing the package from npm. Nothing in the code, the
+styles or the types changed.
+
+- **Docs.** The README opens with badges for the version, CI and the license, a picture of the
+  controls in both themes, and a link to the live site. Setup includes the browser floor in its Vite
+  config, so a page keeps each `light-dark()` as written from its first build, and points a page
+  that uses Lightning CSS to the step it adds. The exports, every token with its value and each
+  component's props are tables. The sections on the chrome, the controls and the explainer link the
+  site's page for their pieces. How each piece is drawn folds away, and the rules a page must follow
+  stay in view. The theme contract shows what the script sets for each saved value and how a
+  Content Security Policy names the script by `themeScriptHash`.
+
 ## 0.1.0
 
 The kit's first stable version, with the code, styles and types of `0.1.0-next.6`. Until 1.0.0, a
