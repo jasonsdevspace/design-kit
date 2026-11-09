@@ -17,7 +17,7 @@ weight.
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 **[See every piece live, in both themes, with its code](https://jasonsdevspace.com/design-kit/)** ·
-[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md) ·
+[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md) ·
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md)
 · [Source](https://github.com/jasonsdevspace/design-kit)
 
@@ -123,7 +123,7 @@ must be a URL the demo's author writes, never one taken from the page's address 
 input, which could send a visitor anywhere. The skip link, strip and footer are live in each state
 on [the page chrome page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup,
 rules and props are under [Page
-chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#page-chrome)
+chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md#page-chrome)
 in the reference.
 
 Buttons and fields take their state from the attribute a screen reader already reads, such as
@@ -167,13 +167,13 @@ export const Checkout = ({ error, saved }: Props) => {
 
 Every button, field and callout is live in each state on [the controls
 page](https://jasonsdevspace.com/design-kit/controls/). [Buttons, fields and
-callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
+callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
 in the reference gives each component's props and the rules a page follows, such as why an
 unavailable button is `aria-disabled` and how a message is made live.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
 gives the markup for each piece, and [Explainer
-pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#explainer-pages)
+pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md#explainer-pages)
 there gives the steps, panels, tables and code blocks of a "How it works" page.
 
 ## Your own layers and palette
@@ -195,7 +195,7 @@ palette sets the roles again, with both values at once.
 ```
 
 [Layers and
-palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#layers-and-palettes)
+palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md#layers-and-palettes)
 in the reference gives the other order, the reduced-motion rule that holds over a page's own, and
 how far the contrast promise reaches.
 
@@ -214,7 +214,7 @@ const policy = `script-src 'self' ${themeScriptHash}`;
 
 The hash holds as long as nothing after the plugin rewrites the inline script, as an HTML minifier
 would. [The theme
-contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.1/packages/design-kit/REFERENCE.md#the-theme-contract)
+contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.1.2/packages/design-kit/REFERENCE.md#the-theme-contract)
 in the reference gives what the script sets for each saved value, and when it sets the theme again.
 
 ## Browser support
