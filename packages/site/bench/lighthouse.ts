@@ -116,10 +116,13 @@ const recordedOf = (path: string, accessibility: number, judged: Measure): Recor
     requests: judged.requests,
 });
 
-/** The Lighthouse and the Chrome a report was made with, as a record names them. */
+/**
+ * The Lighthouse and the Chrome a report was made with, as a record names them. Chrome gives only
+ * its major version in its user agent, the rest written as zeros, so only the major is named.
+ */
 const toolsOf = (report: Report): Tools => ({
     lighthouse: report.lighthouseVersion,
-    chrome: /Chrome\/([\d.]+)/.exec(report.environment.hostUserAgent)?.[1] ?? 'unknown',
+    chrome: /Chrome\/(\d+)/.exec(report.environment.hostUserAgent)?.[1] ?? 'unknown',
 });
 
 /**
