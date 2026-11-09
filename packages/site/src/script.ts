@@ -1,12 +1,13 @@
 import { attachCopyButton, attachThemeSwitch, chooseTheme } from 'design-kit-release/controls';
 
 /*
- * The site's own script, which attaches the kit's controls and adds what the kit does not ship: the
- * theme switch in the strip, a copy button beside each block of code with tabs where a state has
- * two, and the live copies of the states a reader can change. The theme script the kit puts inline
- * has already drawn the theme before this runs, so the switch shows the choice, and saves and draws
- * a new one. It saves under the portfolio's key and with the portfolio's values, so a choice made
- * here holds on every page of jasonsdevspace.com, and the other way around.
+ * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
+ * each block of code, attached with the kit's controls, and adds what the kit does not ship: tabs
+ * where a state's code has two blocks, the live copies of the states a reader can change, and the
+ * note a tap on a preview brings. The theme script the kit puts inline has already drawn the theme
+ * before this runs, so the switch shows the choice, and saves and draws a new one. It saves under
+ * the portfolio's key and with the portfolio's values, so a choice made here holds on every page of
+ * jasonsdevspace.com, and the other way around.
  */
 
 /**
@@ -253,11 +254,11 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
  * A preview does nothing when it is tapped, since it is inert, so the tap is answered: a note under
  * the state's two copies says the copy is only a preview, points to the one marked Live and offers
  * to switch to the other theme, and the status line says the same to a screen reader, naming the
- * live copy by its theme, since the Live mark is hidden from it. The keyboard never reaches a preview, so the
- * note is never needed there, and it adds nothing to the keyboard's path until a tap brings it. It
- * closes on Escape, on a tap anywhere else, and whenever the page's theme changes, by its button,
- * the strip's switch, the system or another tab, so it never names a theme the preview is not in.
- * A picture is a picture in either theme, so a tap on one is left alone.
+ * live copy by its theme, since the Live mark is hidden from it. The keyboard never reaches a
+ * preview, so the note is never needed there, and it adds nothing to the keyboard's path until a
+ * tap brings it. It closes on Escape, on a tap anywhere else, and whenever the page's theme
+ * changes, by its button, the strip's switch, the system or another tab, so it never names a theme
+ * the preview is not in. A picture is a picture in either theme, so a tap on one is left alone.
  */
 const previews = [
     ...document.querySelectorAll<HTMLElement>(

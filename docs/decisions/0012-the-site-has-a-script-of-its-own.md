@@ -4,13 +4,14 @@
 
 ## Context
 
-The only script the kit runs in a visitor's browser is the theme script, which reads the theme a
-visitor saved and draws it before the first paint, and its components draw markup alone. Choosing a
-theme is left to the page, as the portfolio does with a switch of its own. The site is a page a
-visitor may reach directly, with no way back to the portfolio's switch but leaving, so it needs a
-switch of its own that saves under the portfolio's key with the portfolio's values, `system`,
-`light` and `dark`, and so holds on every page of jasonsdevspace.com. Record 11 keeps React's script
-out of the browser, and the policy allows no inline script but the theme script, named by its hash.
+When this was decided, the only script the kit ran in a visitor's browser was the theme script,
+which reads the theme a visitor saved and draws it before the first paint, and its components drew
+markup alone. Choosing a theme was left to the page, as the portfolio does with a switch of its own.
+The site is a page a visitor may reach directly, with no way back to the portfolio's switch but
+leaving, so it needs a switch of its own that saves under the portfolio's key with the portfolio's
+values, `system`, `light` and `dark`, and so holds on every page of jasonsdevspace.com. Record 11
+keeps React's script out of the browser, and the policy allows no inline script but the theme
+script, named by its hash.
 
 ## Options
 
@@ -26,9 +27,8 @@ hash comes from the kit.
 from a search or a link could follow the system's theme and nothing else.
 
 **D. A script of the site's own, a file from its own path.** A small module, built by Vite like the
-pages, which the policy allows from the folder the build writes it to and nowhere else. It built
-the switch with the DOM, so it needed no inline script or style, until record 13 gave the kit a
-switch of its own.
+pages, which the policy allows from the folder the build writes it to and nowhere else. It needs no
+inline script or style.
 
 ## Decision
 
@@ -92,7 +92,7 @@ another, which the browser tests and the Lighthouse audit set to the local previ
   origin whatever the other's policy, and such a page shares the site's storage anyway. A
   compromised build of the portfolio or a demo is as bad as one of the site.
 - The deployed policy is written for one origin. Serving the build from any other, such as a preview
-  opened without `SITE_ORIGIN`, refuses the switch's script, and the page draws as it does when its
+  opened without `SITE_ORIGIN`, refuses the site's script, and the page draws as it does when its
   own script fails to load. The build refuses a `SITE_ORIGIN` that is not an origin alone.
 - A page whose own script fails to load or run still draws the theme the visitor saved, or the
   system's, from the theme script, and shows the empty room the strip keeps rather than a switch
@@ -102,11 +102,11 @@ another, which the browser tests and the Lighthouse audit set to the local previ
   the kit holds the room and the section the switch fills to that width, so a strip too narrow for
   the links and the switch wraps before it comes as it does after, and nothing below the strip moves
   when it comes.
-- The script's values are the portfolio's, System and the kit's two themes, so `system` is saved as
-  the portfolio saves it, and the theme script reads it as nothing saved.
-- The switch and the copy buttons are the kit's since record 13, which the site bundles into its
-  own script from the version it pins, so they reach the site a release after they change in the
-  kit. The tabs, the live copies and the preview note stay the site's own.
+- The kit's switch saves the portfolio's values, System and the kit's two themes, so `system` is
+  saved as the portfolio saves it, and the theme script reads it as nothing saved.
+- The switch and the copy buttons are the kit's since record 13, which the site bundles into its own
+  script from the version it pins, so they reach the site a release after they change in the kit.
+  The code's tabs, the live copies and the preview note stay the site's own.
 
 ## How it is tested
 
