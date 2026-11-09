@@ -47,14 +47,13 @@
         --dk-line: light-dark(#d9d9d9, #3a3a3a);
         --dk-control: light-dark(#858585, #7d7d7d);
 
-        /* Links, the focus ring and the one action a page leads with, and the text drawn on it. */
+        /* Links and the one action a page leads with, and the text drawn on it. */
         --dk-accent: light-dark(#1f4fd8, #8fb0ff);
         /*
-         * The focus ring, and the edge a pointer brings to a control: the accent unless a page sets
-         * its own. It resolves on the root, so a page that sets the accent on one part of the page
-         * alone sets this there too.
+         * The focus ring, and the edge a pointer brings to a button, are drawn in --dk-focus where a
+         * page sets it, and in the accent otherwise. It is left unset here, so a page that sets the
+         * accent on one part of the page alone rings in that accent there too.
          */
-        --dk-focus: var(--dk-accent);
         --dk-on-accent: light-dark(#ffffff, #121212);
         /* What is chosen or pointed at, behind text in the page's own color. */
         --dk-highlight: light-dark(#e3eafb, #22305a);

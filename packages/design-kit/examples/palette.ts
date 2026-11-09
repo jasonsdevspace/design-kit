@@ -16,18 +16,20 @@ export const declaredIn = (sheet: string): ReadonlyMap<string, string> =>
         )
     );
 
-/** A color role's value in the theme given, from its `light-dark()`. */
+/** The roles the sheets read with a fallback, unset unless a page sets them, and that fallback. */
+const FALLBACKS: Readonly<Record<string, string>> = { focus: 'accent' };
+
+/** A color role's value in the theme given, from its `light-dark()`, or its fallback's. */
 export const colorOf = (
     declared: ReadonlyMap<string, string>,
     role: string,
     theme: Theme
 ): string => {
+    // A role a page sets only where it differs, as the focus color, takes its fallback's colors.
+    const fallback = FALLBACKS[role];
     const written = declared.get(`--dk-${role}`);
-    // A role set to another, as the focus color is to the accent, takes that role's colors.
-    const alias = /^var\(--dk-([\w-]+)\)$/.exec(written ?? '')?.[1];
-    if (alias !== undefined) return colorOf(declared, alias, theme);
-    const value = written;
-    const pair = /^light-dark\(\s*(#[\da-f]{6})\s*,\s*(#[\da-f]{6})\s*\)$/i.exec(value ?? '');
+    if (written === undefined && fallback !== undefined) return colorOf(declared, fallback, theme);
+    const pair = /^light-dark\(\s*(#[\da-f]{6})\s*,\s*(#[\da-f]{6})\s*\)$/i.exec(written ?? '');
     if (!pair?.[1] || !pair[2]) throw new Error(`--dk-${role} is not a light-dark() of two colors`);
     return theme === 'light' ? pair[1] : pair[2];
 };
@@ -59,7 +61,7 @@ export const ROLES: readonly (readonly [string, string])[] = [
     ['line', 'The lines between things'],
     ['control', 'The edge of a field or button'],
     ['accent', 'Links and the one action a page leads with'],
-    ['focus', 'The focus ring, and the edge a pointer brings to a control'],
+    ['focus', 'The focus ring, and the edge a pointer brings to a button'],
     ['on-accent', 'Text on the accent'],
     ['highlight', 'What is chosen or pointed at'],
     ['success', 'What went right'],

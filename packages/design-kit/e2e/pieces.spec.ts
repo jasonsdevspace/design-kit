@@ -83,7 +83,7 @@ test('keeps every word in place as the choice moves', async ({ page }) => {
     expect(await places()).toEqual(before);
 });
 
-test('makes each choice the field height wide, and a thumb wide and tall on a phone', async ({
+test('makes each choice the field height tall, and a thumb wide and tall on a phone', async ({
     page,
 }) => {
     for (const [width, size] of [
@@ -149,6 +149,33 @@ test("rings focus and edges a pointer's button in the focus color a page sets", 
                 .evaluate((element) => getComputedStyle(element).borderTopColor)
         )
         .toBe('rgb(0, 128, 128)');
+});
+
+test("draws the switch's own ring, on the chosen word, in the focus color", async ({ page }) => {
+    await open(page, { css: ':root { --dk-focus: rgb(0, 128, 128); }' });
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('radio', { name: 'Light' })).toBeFocused();
+    const ring = await word(page, 'Light').evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { color: style.outlineColor, style: style.outlineStyle };
+    });
+    expect(ring).toEqual({ color: 'rgb(0, 128, 128)', style: 'solid' });
+});
+
+test('rings in the accent a part of the page sets, where the page sets no focus color', async ({
+    page,
+}) => {
+    await open(page, {
+        css: 'main { --dk-accent: light-dark(rgb(0, 112, 64), rgb(0, 112, 64)); }',
+    });
+    await page.getByRole('button', { name: 'Filters' }).focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    expect(
+        await page
+            .getByRole('button', { name: 'Filters' })
+            .evaluate((element) => getComputedStyle(element).outlineColor)
+    ).toBe('rgb(0, 112, 64)');
 });
 
 for (const theme of ['light', 'dark']) {
