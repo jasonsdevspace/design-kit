@@ -101,7 +101,7 @@
 
     /*
      * The exit after a long scroll, its rule the width of the page and its text in the column. A
-     * demo's own line sits at the end of the sentence's row on a wide screen, and wraps below it
+     * demo's own line sits at the end of the text's row on a wide screen, and wraps below it
      * when the row has no room.
      */
     .dk-footer {
@@ -129,7 +129,7 @@
     }
 
     /*
-     * Anything else a page writes after the sentence stacks under it, as it did before the row. Its
+     * Anything else a page writes after the footer's text stacks under it, as before the row. Its
      * text holds to the measure, and a margin fills the rest of the row, so it never fits beside.
      */
     :where(.dk-footer > :not(:first-child, .dk-footer-aside)) {
@@ -140,7 +140,7 @@
     /*
      * The chrome's links step back in the muted text, and come forward to the page's text when
      * pointed at or focused, as the link to the current page always is. Every one keeps its
-     * underline, which in the footer's sentence is what tells a link from the text around it.
+     * underline, which in the footer's text is what tells a link from the text around it.
      */
     :where(.dk-strip-links a, .dk-footer a) {
         color: var(--dk-muted);
