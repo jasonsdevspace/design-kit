@@ -35,7 +35,13 @@ const Step = ({
  * kit's own explainer layout. The README and the decision records it links are at the commit the
  * site was built at.
  */
-export const HowItWorks = ({ commit }: { readonly commit: string }) => (
+export const HowItWorks = ({
+    commit,
+    version,
+}: {
+    readonly commit: string;
+    readonly version: string;
+}) => (
     <>
         <h1>How the design kit works</h1>
         <p className="dk-explainer-lead">
@@ -79,10 +85,10 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
                     pressed, so what you see and what you hear come from one place.
                 </Step>
                 <Step title="The demo's own styles win.">
-                    Every rule of the kit&rsquo;s sits in a cascade layer, which the browser ranks
-                    below a demo&rsquo;s own styles outside a layer, so those win without having to
-                    outweigh the kit&rsquo;s. The exception is less motion: when a visitor asks for
-                    it, the kit&rsquo;s rule holds over a demo&rsquo;s ordinary styles.
+                    Every one of the kit&rsquo;s rules sits in a cascade layer, which the browser
+                    ranks below a demo&rsquo;s own styles outside a layer, so those win without
+                    having to outweigh the kit&rsquo;s. The exception is less motion: when a visitor
+                    asks for it, the kit&rsquo;s rule holds over a demo&rsquo;s ordinary styles.
                 </Step>
             </ol>
         </section>
@@ -140,9 +146,9 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <h3>Colors that fail in the dark</h3>
             <p>
                 A palette checked in the light theme alone can leave text too faint to read in the
-                dark theme. Here each pairing the palette is meant for, text on every ground it sits
-                on and the edge of every control, is measured in both themes. Every change and every
-                release has to pass that test.{' '}
+                dark theme. Here each pairing the palette is meant for, text on every background it
+                sits on and the edge of every control, is measured in both themes. Every change and
+                every release has to pass that test.{' '}
                 <a href={`${BASE}tokens/#contrast`}>The contrast of every pairing</a>.
             </p>
 
@@ -150,8 +156,10 @@ export const HowItWorks = ({ commit }: { readonly commit: string }) => (
             <p>
                 Examples written by hand stop matching the code a release or two later. Here each
                 block of markup in the kit&rsquo;s{' '}
-                <a href={`${builtAt(commit)}/packages/design-kit/REFERENCE.md`}>reference</a> is
-                written from the examples the browser tests draw, and a test fails when a block
+                <a href={`${SOURCE}/blob/design-kit-v${version}/packages/design-kit/REFERENCE.md`}>
+                    reference
+                </a>{' '}
+                is written from the examples the browser tests draw, and a test fails when a block
                 differs from what its example draws. This site is built from the version on npm, so
                 what you see is what a demo installs.
             </p>

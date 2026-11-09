@@ -297,7 +297,9 @@ test.describe('the landing page', () => {
         );
     });
 
-    test("draws the kit's controls in light and in dark, beside the heading", async ({ page }) => {
+    test("draws the kit's controls in the light and dark themes, beside the heading", async ({
+        page,
+    }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto(BASE);
         const demo = page.getByRole('figure', { name: /in the light and dark themes/ });
@@ -387,7 +389,7 @@ test.describe('the landing page', () => {
         }
     });
 
-    test('says what the kit is built to', async ({ page }) => {
+    test('says what the kit is built for', async ({ page }) => {
         await page.goto(BASE);
         const section = page.locator('main > section', {
             has: page.getByRole('heading', {

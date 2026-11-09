@@ -150,9 +150,9 @@ body > .dk-strip .dk-strip-tools {
 
 /*
  * The landing page's opening: what the kit is, its two links and its install command, beside the
- * kit's controls in light and in dark on a wide screen. On a phone the controls come after the
- * links and before the install command, so they start inside the first screen whatever font
- * the phone draws in.
+ * kit's controls in the light and dark themes on a wide screen. On a phone the controls come after
+ * the links and before the install command, so they start inside the first screen whatever font the
+ * phone draws in.
  */
 .site-hero {
     display: grid;

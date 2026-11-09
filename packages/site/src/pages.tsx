@@ -216,9 +216,9 @@ const OnThisPage = ({ sections }: { readonly sections: readonly Listed[] }) => (
 /**
  * A page of the site: the kit's own skip link, strip and footer around the site's header and the
  * page's content, and in the footer's own line the version of the kit it is drawn from and the
- * commit it was built at. A page with a title opens with it, its lead and any paragraphs of introduction after
- * the lead, and a page with sections lists them after that whole opening, so every such page opens
- * the same way and its column starts in the same place.
+ * commit it was built at. A page with a title opens with it, its lead and any paragraphs of
+ * introduction after the lead, and a page with sections lists them after that whole opening, so
+ * every such page opens the same way and its column starts in the same place.
  */
 const Page = ({
     build,
@@ -269,7 +269,7 @@ const Explainer = ({ build }: { readonly build: Build }) => (
             <a href={BASE}>The design kit</a>
         </header>
         <main id="main-content" tabIndex={-1} className="dk-explainer">
-            <HowItWorks commit={build.commit} />
+            <HowItWorks commit={build.commit} version={build.version} />
         </main>
         <SiteFooter build={build} current="about" />
     </>
@@ -434,7 +434,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
             </ul>
         </section>
         <section>
-            <h2 id="built-to">Built for strict security, contrast and screen readers</h2>
+            <h2 id="built-for">Built for strict security, contrast and screen readers</h2>
             <ul className="site-rules" role="list">
                 <li>
                     <RuleMark d="M12 3 5 6v5c0 4.4 3 8.4 7 9.5 4-1.1 7-5.1 7-9.5V6l-7-3Zm-1.2 12.2-3-3 1.4-1.4 1.6 1.6 4-4 1.4 1.4-5.4 5.4Z" />
@@ -513,7 +513,7 @@ const StateShown = ({
                 {state.name}
             </h3>
             <p className="site-state-attribute">
-                <span className="dk-visually-hidden">Set by </span>
+                <span className="dk-visually-hidden">The code behind it: </span>
                 <code>{state.attribute}</code>
             </p>
         </div>
@@ -598,8 +598,8 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         intro={
             <p>
                 Each state is shown twice: live in your theme, marked Live, and as a preview in the
-                other. Under each name is the code that sets that state. To see the other theme
-                live, choose Light or Dark next to Theme, at the top of the page.
+                other. Under each name is the code behind it. To see the other theme live, choose
+                Light or Dark next to Theme, at the top of the page.
             </p>
         }
         sections={listed(CONTROLS.map(({ name }) => name))}
@@ -665,10 +665,10 @@ export const Pieces = ({ build }: { readonly build: Build }) => (
         }
         intro={
             <p>
-                Each is shown twice: live in your theme, marked Live, and as a preview in the other.
-                Under each name is the code that sets it. To see the other theme live, choose Light
-                or Dark next to Theme, at the top of the page. The layout of a whole explainer is a
-                picture in both themes, since a live copy would give this page a second main
+                Each piece is shown twice: live in your theme, marked Live, and as a preview in the
+                other. Under each name is the code behind it. To see the other theme live, choose
+                Light or Dark next to Theme, at the top of the page. The layout of a whole explainer
+                is a picture in both themes, since a live copy would give this page a second main
                 heading.
             </p>
         }
