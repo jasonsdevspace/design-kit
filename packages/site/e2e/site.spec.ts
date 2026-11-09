@@ -362,6 +362,31 @@ test.describe('the landing page', () => {
         }
     });
 
+    test("puts the build line in the footer's own line, beside the sentence and under it on a phone", async ({
+        page,
+    }) => {
+        for (const [width, beside] of [
+            [1280, true],
+            [390, false],
+        ] as const) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/design-kit/');
+            const sentence = page.locator('body > .dk-footer > p').first();
+            const line = page.locator('body > .dk-footer > .dk-footer-aside');
+            await expect(line).toContainText('Uses version');
+            await expect(line.getByRole('link')).toHaveAttribute('href', /\/commit\/[0-9a-f]{7,}$/);
+            const [drawn, own] = await Promise.all([sentence.boundingBox(), line.boundingBox()]);
+            if (!drawn || !own) throw new Error('expected the footer to be drawn');
+            if (beside) {
+                expect(own.x).toBeGreaterThan(drawn.x + drawn.width);
+                expect(Math.abs(own.y - drawn.y)).toBeLessThan(4);
+            } else {
+                expect(own.y).toBeGreaterThanOrEqual(drawn.y + drawn.height);
+                expect(Math.round(own.x)).toBe(Math.round(drawn.x));
+            }
+        }
+    });
+
     test('says what the kit is built to', async ({ page }) => {
         await page.goto(BASE);
         const section = page.locator('main > section', {
