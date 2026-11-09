@@ -38,6 +38,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
 | `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
 | `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
+| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                       |
 | `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
 | `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
 | `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |

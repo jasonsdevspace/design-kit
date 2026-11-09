@@ -39,6 +39,7 @@ describe('the tokens', () => {
             'radius-small',
             'radius',
             'radius-large',
+            'radius-pill',
             'ring-width',
             'ring-offset',
             'field-height',
