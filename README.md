@@ -248,9 +248,9 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets come to about 10 KB gzipped, and the theme script
-  goes inline in the page's head. The package npm publishes is 36 KB packed, most of it the README
-  and the changelog. [The record](docs/benchmarks/package-size.md) lists every file, raw and
-  gzipped.
+  goes inline in the page's head. The package npm publishes is 28 KB packed, the sheets and modules
+  a page loads together with the changelog, the README and the types it never does.
+  [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
   its processor slowed, every page scores a hundred for accessibility and performance, shows its
   main content in about 0.9 seconds with nothing jumping as it loads, and downloads 13 to 16 KB in

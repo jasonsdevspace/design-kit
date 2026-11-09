@@ -9,6 +9,6 @@
         "preview": "vite preview --port 4180 --strictPort"
     },
     "dependencies": {
-        "design-kit-release": "npm:@jasonsdevspace/design-kit@0.1.0"
+        "design-kit-release": "npm:@jasonsdevspace/design-kit@0.1.2"
     }
 }
