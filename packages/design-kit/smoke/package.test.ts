@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -76,6 +77,27 @@ describe('the published package', () => {
             const year = Number(/es(\d{4})/i.exec(name)?.[1] ?? Number.POSITIVE_INFINITY);
             expect(year, name).toBeLessThanOrEqual(edition ?? 0);
         }
+    });
+
+    it('packs its build, its README and its license, and no changelog', () => {
+        // The changelog is a page on GitHub, which the README links, and each release carries its
+        // entry as its notes, so a page that installs the package never reads it.
+        const listed = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+            cwd: fileURLToPath(new URL('..', import.meta.url)),
+            encoding: 'utf8',
+        });
+        const [packed] = JSON.parse(listed) as readonly { files: readonly { path: string }[] }[];
+        const paths = (packed?.files ?? []).map(({ path }) => path);
+        expect(paths).toContain('README.md');
+        expect(paths).toContain('LICENSE');
+        expect(paths).toContain('package.json');
+        expect(
+            paths.filter(
+                (path) =>
+                    !path.startsWith('dist/') &&
+                    !['README.md', 'LICENSE', 'package.json'].includes(path)
+            )
+        ).toEqual([]);
     });
 
     it('has a changelog entry for the version it declares', () => {
