@@ -84,9 +84,18 @@
 
     /*
      * One focus ring for everything the keyboard reaches, in the focus color, drawn only when the
-     * browser would show focus. A section a page moves focus to, with a tabindex of -1, is not a
-     * control, so it draws no ring, the browser's own included.
+     * browser would show focus. A section a page moves focus to, with a tabindex of -1 and no
+     * widget role, is not a control, so it draws no ring, the browser's own included. That rule
+     * comes first, so a control keeps its ring whatever its tabindex by the ring's own rule coming
+     * after it: a tab strip or another roving widget gives every item but the chosen one a tabindex
+     * of -1 and moves focus between them from the keyboard. The widget roles are the ones an
+     * element with a tabindex takes to be a control, since a plain element with a role of its own
+     * cannot be told from a landmark otherwise.
      */
+    :where([tabindex='-1']):focus {
+        outline: none;
+    }
+
     :where(
         a[href],
         area[href],
@@ -99,14 +108,34 @@
         audio[controls],
         video[controls],
         [contenteditable]:not([contenteditable='false']),
-        [tabindex]:not([tabindex='-1'])
+        [tabindex]:not([tabindex='-1']),
+        [tabindex]:is(
+            [role='tab'],
+            [role='option'],
+            [role='menuitem'],
+            [role='menuitemcheckbox'],
+            [role='menuitemradio'],
+            [role='treeitem'],
+            [role='gridcell'],
+            [role='row'],
+            [role='columnheader'],
+            [role='rowheader'],
+            [role='radio'],
+            [role='checkbox'],
+            [role='switch'],
+            [role='button'],
+            [role='link'],
+            [role='slider'],
+            [role='spinbutton'],
+            [role='textbox'],
+            [role='searchbox'],
+            [role='combobox'],
+            [role='separator'],
+            [role='scrollbar']
+        )
     ):focus-visible {
         outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
-    }
-
-    :where([tabindex='-1']):focus {
-        outline: none;
     }
 
     /* A box or a dot a visitor ticks, in the accent rather than the browser's own color. */

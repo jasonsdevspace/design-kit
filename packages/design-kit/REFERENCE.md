@@ -381,8 +381,9 @@ explains. A message that arrives after the page has loaded is made live in three
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
 2. Leave the message empty at first. A live callout whose message holds nothing at all, not even a
-   space, a line break or the tone's word, and that has no actions draws nothing, though it keeps
-   its place in the flow.
+   space, a line break or the tone's word, and that has no actions leaves the flow, drawn as
+   visually hidden text is, so it takes no room and opens no gap, and stays in the tree a screen
+   reader reads.
 3. Fill the message when there is something to say, which is when a screen reader reads it. For
    success or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`

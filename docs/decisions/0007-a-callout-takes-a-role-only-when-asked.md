@@ -29,8 +29,9 @@ Option B. `Callout` draws no role in any tone unless the page passes `live`. The
 `.dk-callout-body`, the message, which holds the title too, so the title and the tone's word are
 read with it and the actions after it are not. A live callout is drawn even when it is empty, so a
 page mounts it first and fills it after, which is when a screen reader reads it. While its message
-holds nothing, not even a space, and it has no actions, it draws no ground, padding or edge, so the
-page needs no holder of its own to hide it. The tone is told by a visually hidden "Success: " or
+holds nothing, not even a space, and it has no actions, it leaves the flow, drawn as visually hidden
+text is, so it takes no room and opens no gap in a grid or a column, and the page needs no holder of
+its own to hide it. The tone is told by a visually hidden "Success: " or
 "Error: " before the title, or before the message when there is no title, rather than by a role or
 by color alone. `prefix` gives another word, and an empty string drops it.
 
@@ -41,6 +42,8 @@ by color alone. `prefix` gives another word, and an empty string drops it.
   reaches it.
 - A page has to mount a live callout before it fills it. A live callout mounted with its message
   already in it is the case option A was rejected for.
+- A page needs no holder of its own around a live callout that waits, since the empty callout
+  leaves the flow by itself. A holder a page added to hide one, as ShelfLens's did, can go.
 - A field's error is not live either, for the same reason and one more: a form that fails in
   several fields at once would speak over itself. The page moves focus to the first invalid control
   or to an error summary instead.
@@ -58,8 +61,9 @@ The paths are in `packages/design-kit`.
   `headingLevel` names.
 - `e2e/controls.spec.tsx` draws a callout of each tone with a link, a field and a button in it, and
   finds the focus ring on the button in each, the edge drawn in forced colors, and no axe findings
-  in either theme. It draws an empty live callout of each tone at no height, on no ground and with
-  no edge, in forced colors too, and finds the callout's ground and padding once it is filled.
+  in either theme. It draws an empty live callout of each tone at a pixel out of the flow, on no
+  ground and with no edge, in forced colors too, finds two neighbors of one in a grid one gap apart,
+  and finds the callout's ground, padding and cell once it is filled.
 - `src/tokens.test.ts` measures text, muted text and the accent at 4.5 to 1, and a control's edge at
   3 to 1, on the highlight and on each callout's ground, in both themes.
 - `smoke/types.ts` fails to compile a tone outside the three against the packed package.
