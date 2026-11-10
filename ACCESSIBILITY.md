@@ -13,7 +13,9 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   a wide screen.
 - **Contrast.** Every pairing of colors the kit is meant for is measured in both themes: text at 4.5
   to 1 against every ground it sits on, and the edge of a control at 3 to 1. The focus ring is drawn
-  in the accent, so it meets the ratio a link does.
+  in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
+  native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
+  cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is.
 - **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen and 44 on a phone.
   On the site, the page tabs, the theme switch, the list of a page's sections and the controls of
   each code panel are at least 24 pixels tall on a wide screen and 44 on a phone.

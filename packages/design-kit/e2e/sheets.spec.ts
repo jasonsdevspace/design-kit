@@ -57,6 +57,22 @@ for (const system of ['light', 'dark'] as const) {
     });
 }
 
+/**
+ * The outline on whatever has focus, and whether the browser would show focus on it, so a missing
+ * ring is told apart from focus the browser does not show.
+ */
+const ring = (page: Page) =>
+    page.evaluate(() => {
+        const element = document.activeElement ?? document.body;
+        const style = getComputedStyle(element);
+        return {
+            style: style.outlineStyle,
+            color: style.outlineColor,
+            width: style.outlineWidth,
+            visible: element.matches(':focus-visible'),
+        };
+    });
+
 for (const [theme, accent] of [
     ['light', 'rgb(31, 79, 216)'],
     ['dark', 'rgb(143, 176, 255)'],
@@ -70,22 +86,55 @@ for (const [theme, accent] of [
             '<a href="#next">Next</a><section id="next" tabindex="-1">Next</section>'
         );
         await page.keyboard.press('Tab');
-        const ring = () =>
-            page.evaluate(() => {
-                const style = getComputedStyle(document.activeElement ?? document.body);
-                return {
-                    style: style.outlineStyle,
-                    color: style.outlineColor,
-                    width: style.outlineWidth,
-                };
-            });
-        expect(await ring()).toEqual({ style: 'solid', color: accent, width: '2px' });
+        expect(await ring(page)).toEqual({
+            style: 'solid',
+            color: accent,
+            width: '2px',
+            visible: true,
+        });
         // Moved there from the keyboard, as a skip link moves it, so the browser would show focus.
         await page.keyboard.press('Enter');
         await expect(page.locator('#next')).toBeFocused();
-        expect((await ring()).style).toBe('none');
+        expect(await ring(page)).toMatchObject({ style: 'none', visible: true });
     });
 }
+
+test('keeps the ring on a control a roving widget gives a tabindex of -1', async ({ page }) => {
+    await open(
+        page,
+        'light',
+        '<div role="tablist"><button role="tab" tabindex="0" aria-selected="true">Markup</button>' +
+            '<button role="tab" tabindex="-1">React</button></div>' +
+            '<div role="tablist"><div role="tab" tabindex="0" aria-selected="true">One</div>' +
+            '<div role="tab" tabindex="-1">Two</div></div>' +
+            '<section id="next" tabindex="-1">Next</section>'
+    );
+    // The page's own script moves focus to the next tab on the right arrow, as a tab strip does.
+    await page.evaluate(() => {
+        for (const list of document.querySelectorAll('[role="tablist"]')) {
+            list.addEventListener('keydown', (event) => {
+                if ((event as KeyboardEvent).key !== 'ArrowRight') return;
+                const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
+                const at = tabs.indexOf(document.activeElement as HTMLElement);
+                tabs[(at + 1) % tabs.length]?.focus();
+            });
+        }
+    });
+    const ringed = { style: 'solid', color: 'rgb(31, 79, 216)', width: '2px', visible: true };
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'React' })).toBeFocused();
+    expect(await ring(page), 'a button tab').toEqual(ringed);
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Two' })).toBeFocused();
+    expect(await ring(page), 'a div tab').toEqual(ringed);
+    // A section with no widget role, moved to the same way, still draws none, though the browser
+    // would show focus on it.
+    await page.evaluate(() => document.getElementById('next')?.focus());
+    await expect(page.locator('#next')).toBeFocused();
+    expect(await ring(page), 'a section').toMatchObject({ style: 'none', visible: true });
+});
 
 test("takes a demo's own palette whichever sheet loads first", async ({ page }) => {
     await open(
