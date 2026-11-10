@@ -42,6 +42,8 @@ by color alone. `prefix` gives another word, and an empty string drops it.
   reaches it.
 - A page has to mount a live callout before it fills it. A live callout mounted with its message
   already in it is the case option A was rejected for.
+- A page needs no holder of its own around a live callout that waits, since the empty callout
+  leaves the flow by itself. A holder a page added to hide one, as ShelfLens's did, can go.
 - A field's error is not live either, for the same reason and one more: a form that fails in
   several fields at once would speak over itself. The page moves focus to the first invalid control
   or to an error summary instead.

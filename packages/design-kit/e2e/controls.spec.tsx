@@ -12,7 +12,8 @@ import { Callout } from '../src/react.js';
  * and the kit's own sheets: each state told apart by more than its color, forced colors included,
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, an off button the keyboard still reaches, the field's label, hint and error read as its
- * name and description, an empty live callout drawn at no height until it is filled, and no audit
+ * name and description, an empty live callout waiting a pixel out of the flow until it is filled,
+ * and no audit
  * findings for any state in either theme.
  */
 
@@ -239,7 +240,7 @@ test('opens no gap around an empty live callout in a grid, and keeps it for a sc
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
-            `<style>${KIT} .grid { display: grid; gap: 16px; } .grid > * { margin: 0; }</style>` +
+            `<style>${KIT} .grid { display: grid; gap: 16px; }</style>` +
             `</head><body><main class="grid">` +
             '<div id="before">Before</div>' +
             renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
