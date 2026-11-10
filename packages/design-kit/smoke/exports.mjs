@@ -7,6 +7,7 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/react': [
         'Button',
         'Callout',
+        'ChoiceField',
         'CopyButton',
         'CopyStatus',
         'DemoFooter',

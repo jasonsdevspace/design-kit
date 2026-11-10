@@ -6,6 +6,7 @@
 import {
     Button,
     Callout,
+    ChoiceField,
     InputField,
     PortfolioStrip,
     SelectField,
@@ -49,6 +50,21 @@ export const fieldWithout = InputField({});
 // @ts-expect-error The one action a view leads with is not a switch.
 export const accentToggle = Button({ accent: true, pressed: true });
 
+// @ts-expect-error The one action a view leads with is not drawn as a link.
+export const accentText = Button({ accent: true, text: true });
+
+// A large button and a text button take their props, and a wrapper can hand each on as undefined.
+const grown: boolean | undefined = undefined;
+export const wayIn = Button({ large: grown, children: 'Try it' });
+export const link = Button({ text: true, children: 'Show the markup' });
+export const linkOrNot = Button({ text: grown, children: 'Show the markup' });
+
+// @ts-expect-error A text button is not a toggle.
+export const textToggle = Button({ text: true, pressed: true });
+
+// @ts-expect-error A text button is not large.
+export const textLarge = Button({ text: true, large: true });
+
 // A page moves focus to a button through its ref, which the props name as the button drawn.
 export const opener = Button({ ref: createRef<HTMLButtonElement>(), children: 'Tour' });
 
@@ -64,6 +80,25 @@ export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), labe
 
 // @ts-expect-error A select field's ref is the select drawn, not some other element.
 export const wrongSelect = SelectField({ ref: createRef<HTMLInputElement>(), label: 'Size' });
+
+// A choice field needs its name and its choices beside its label, and its ref is the fieldset drawn.
+export const rules = ChoiceField({
+    ref: createRef<HTMLFieldSetElement>(),
+    label: 'Rule',
+    name: 'rule',
+    choices: [{ value: 'pin', label: 'Pin' }],
+});
+
+// @ts-expect-error A choice field needs its choices, so its props are real too.
+export const choicesWithout = ChoiceField({ label: 'Rule', name: 'rule' });
+
+export const wrongChoices = ChoiceField({
+    // @ts-expect-error A choice field's ref is the fieldset drawn, not a control.
+    ref: createRef<HTMLInputElement>(),
+    label: 'Rule',
+    name: 'rule',
+    choices: [],
+});
 
 // @ts-expect-error A callout's tone is one of four.
 export const loud = Callout({ tone: 'sepia' });
