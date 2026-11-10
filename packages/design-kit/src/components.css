@@ -1000,17 +1000,23 @@
      * before any script runs, and the switch keeps one row of the strip's room either way.
      */
     @media (width < 20rem) {
+        /* As tall as the room the strip keeps, a thumb's target, so the strip is one height either way. */
         :where(.dk-strip-tools .dk-theme-switch) {
             position: relative;
             flex-wrap: nowrap;
+            min-height: var(--dk-target);
             overflow: visible;
         }
 
+        /*
+         * Sized as the chosen word is, which is a thumb's target wherever the switch collapses,
+         * since the text is set large there.
+         */
         :where(.dk-strip-tools .dk-theme-switch-button) {
             display: inline-flex;
             align-items: center;
-            min-height: var(--dk-target);
-            padding: var(--dk-space-1) var(--dk-space-3);
+            min-height: var(--dk-field-height);
+            padding: var(--dk-space-1) var(--dk-space-2);
             border-width: 1px;
             border-style: solid;
             border-radius: var(--dk-radius-pill);
@@ -1025,7 +1031,7 @@
 
         :where(.dk-strip-tools .dk-theme-switch-choices) {
             position: absolute;
-            inset-inline-start: 0;
+            inset-inline-end: 0;
             top: calc(100% + var(--dk-space-1));
             z-index: 1;
             display: none;
