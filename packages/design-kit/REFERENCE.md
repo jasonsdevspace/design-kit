@@ -354,7 +354,13 @@ as a list, with `multiple` or a `size`, is left as the browser draws it, with no
 <!-- example: choiceField -->
 
 ```html
-<fieldset class="dk-field dk-choice-field" id="rule" aria-describedby="rule-hint rule-error">
+<fieldset
+    class="dk-field dk-choice-field"
+    id="rule"
+    role="radiogroup"
+    aria-describedby="rule-hint rule-error"
+    aria-invalid="true"
+>
     <legend class="dk-field-label">What the rule does</legend>
     <p class="dk-field-hint" id="rule-hint">A rule applies to every search</p>
     <p class="dk-field-error" id="rule-error">
@@ -363,7 +369,7 @@ as a list, with `multiple` or a `size`, is left as the browser draws it, with no
     </p>
     <div class="dk-choices">
         <label class="dk-choice">
-            <input type="radio" aria-invalid="true" name="rule" value="pin" />
+            <input type="radio" name="rule" value="pin" />
             <span>
                 Pin
                 <span class="dk-choice-hint"> to the top of the results</span>
@@ -395,22 +401,26 @@ legend is the field's label, then the hint and the error as a field has them, th
 `.dk-choices`, one under the other, or `.dk-choices-row` for a row that wraps. Each choice is a
 `label.dk-choice` holding a native radio or checkbox and its word, with a gloss in `.dk-choice-hint`
 after the word, inside its span, which is read as part of the choice's name. The hint and the error
-describe the set, through `aria-describedby` on the fieldset, and the first control carries
-`aria-invalid="true"` while an error is drawn, so a screen reader that reads a control's state hears
-it on the set's first stop. The arrow keys move and check among radios, as the browser has them, and
-a choice a visitor cannot make uses `disabled` on its control.
+describe the set, through `aria-describedby` on the fieldset. A set of radios carries
+`role="radiogroup"`, and `aria-invalid="true"` on the fieldset while an error is drawn, since the
+keyboard enters a radio group at the chosen radio, wherever that is, and a radio takes no invalid
+state of its own. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
+instead. The arrow keys move and check among radios, as the browser has them, and a choice a visitor
+cannot make uses `disabled` on its control.
 
 <details>
 <summary>How a choice is drawn</summary>
 
 A choice is the field's height, and a thumb's target on a phone, and takes the highlight under a
-pointer and while its control has focus, so the whole word reads as one target, with the ring on the
-control itself. The highlight reaches past the control by the choice's own padding, so the control
-stays in line with the legend. A gloss is in the muted text at the caption size, and a choice whose
-control is disabled is in the muted text with no highlight. An invalid control draws a thin line in
-the danger color around it, and a dashed line in `CanvasText` in forced colors, each giving way to
-the ring. The theme switch's choice is the same label of a radio and its word, drawn by rules of its
-own as a pill word with the radio under it, as the Theme switch section says.
+pointer and after the keyboard, as the ring does, so the whole word reads as one target with the
+ring on the control itself, and a tap leaves no choice lit once it is done. The highlight reaches
+past the control by the choice's own padding, so the control stays in line with the legend, into the
+room around the field, which a container that clips must leave. A gloss is in the muted text at the
+caption size, and a choice whose control is disabled is in the muted text with no highlight. Every
+control of an invalid set draws a thin line in the danger color around it, and a dashed line in
+`CanvasText` in forced colors, each giving way to the ring. The theme switch's choice is the same
+label of a radio and its word, drawn by rules of its own as a pill word with the radio under it, as
+the Theme switch section says.
 
 </details>
 

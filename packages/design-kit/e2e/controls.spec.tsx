@@ -297,23 +297,30 @@ test('moves and checks among radios with the arrow keys, ringing the control and
     });
 });
 
-test('reads a set by its legend, describes it by its hint or error, and marks its first control', async ({
+test('reads a set by its legend, describes it by its hint or error, and marks an invalid set', async ({
     page,
 }) => {
     await open(page);
-    const rule = page.getByRole('group', { name: 'What the rule does' });
+    const rule = page.getByRole('radiogroup', { name: 'What the rule does' });
     await expect(rule).toHaveAccessibleDescription('A rule applies to every search');
+    await expect(rule).not.toHaveAttribute('aria-invalid');
     await expect(rule.getByRole('radio', { name: /^Pin/ })).toHaveAccessibleName(
         'Pin to the top of the results'
     );
-    const when = page.getByRole('group', { name: 'When' });
+    // A radio group is marked as a whole, since the keyboard enters it at the chosen radio.
+    const when = page.getByRole('radiogroup', { name: 'When' });
     await expect(when).toHaveAccessibleDescription('Error: Choose when the rule runs');
+    await expect(when).toHaveAttribute('aria-invalid', 'true');
     const always = when.getByRole('radio', { name: 'Always' });
-    await expect(always).toHaveAttribute('aria-invalid', 'true');
-    await expect(when.getByRole('radio', { name: 'During a sale' })).not.toHaveAttribute(
-        'aria-invalid'
-    );
-    // The invalid control's line in the danger color, which gives way to the ring.
+    await expect(always).not.toHaveAttribute('aria-invalid');
+    // Checkboxes are each a stop, so each is marked, and a set with no error marks none.
+    const show = page.getByRole('group', { name: 'Show' });
+    await expect(show).not.toHaveAttribute('aria-invalid');
+    await expect(show.getByRole('checkbox', { name: 'Brand' })).not.toHaveAttribute('aria-invalid');
+    // Every control of the invalid set draws a line in the danger color, which gives way to the ring.
+    expect(
+        await style(when.getByRole('radio', { name: 'During a sale' }), 'outline-style')
+    ).toEqual({ 'outline-style': 'solid' });
     expect(await style(always, 'outline-style', 'outline-color')).toEqual({
         'outline-style': 'solid',
         'outline-color': 'rgb(179, 38, 30)',
@@ -493,8 +500,10 @@ test('marks an invalid field with a dashed line in forced colors, where its red 
         const field = page.locator('.dk-input[aria-invalid="true"]').first();
         await field.focus();
         expect(await style(field, 'outline-style')).toEqual({ 'outline-style': 'solid' });
-        // The first control of a set with an error is marked the same way.
-        const choice = page.locator('.dk-choice > input[aria-invalid="true"]').first();
+        // Every control of a set with an error is marked the same way.
+        const choice = page
+            .locator('.dk-choice-field[aria-invalid="true"] .dk-choice > input')
+            .first();
         expect(await style(choice, 'outline-style', 'outline-color')).toEqual({
             'outline-style': 'dashed',
             'outline-color': text,

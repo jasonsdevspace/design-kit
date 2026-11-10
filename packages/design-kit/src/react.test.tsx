@@ -419,7 +419,7 @@ describe('a choice field', () => {
 
     it('draws a fieldset with its label as the legend, and a label of a radio and its word for each choice', () => {
         expect(rule()).toBe(
-            '<fieldset class="dk-field dk-choice-field" id="rule">' +
+            '<fieldset class="dk-field dk-choice-field" id="rule" role="radiogroup">' +
                 '<legend class="dk-field-label">Rule</legend><div class="dk-choices">' +
                 '<label class="dk-choice"><input type="radio" name="rule" value="pin"/><span>Pin</span></label>' +
                 '<label class="dk-choice"><input type="radio" name="rule" value="hide"/><span>Hide</span></label>' +
@@ -427,21 +427,21 @@ describe('a choice field', () => {
         );
     });
 
-    it('describes the set by its hint, then its error, and marks the first control invalid only with one', () => {
+    it('describes the set by its hint, then its error, and marks a radio group invalid only with one', () => {
         expect(rule({ hint: 'Applies to every search' })).toContain(
-            '<fieldset class="dk-field dk-choice-field" id="rule" aria-describedby="rule-hint">' +
+            '<fieldset class="dk-field dk-choice-field" id="rule" role="radiogroup" aria-describedby="rule-hint">' +
                 '<legend class="dk-field-label">Rule</legend>' +
                 '<p class="dk-field-hint" id="rule-hint">Applies to every search</p>'
         );
         const wrong = rule({ hint: 'Applies to every search', error: 'Choose one' });
-        expect(wrong).toContain('aria-describedby="rule-hint rule-error"');
+        expect(wrong).toContain(
+            'role="radiogroup" aria-describedby="rule-hint rule-error" aria-invalid="true">'
+        );
         expect(wrong).toContain(
             '<p class="dk-field-error" id="rule-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Choose one</p>'
         );
-        expect(wrong).toContain(
-            '<input type="radio" aria-invalid="true" name="rule" value="pin"/>'
-        );
+        expect(wrong).toContain('<input type="radio" name="rule" value="pin"/>');
         expect(wrong).toContain('<input type="radio" name="rule" value="hide"/>');
         expect(rule()).not.toContain('aria-invalid');
         expect(rule({ error: 'Choose one', 'aria-describedby': 'moved' })).toContain(
@@ -449,19 +449,26 @@ describe('a choice field', () => {
         );
     });
 
-    it('draws checkboxes in a row where the field asks, with a gloss after a word', () => {
-        expect(
-            rule({
-                type: 'checkbox',
-                row: true,
-                choices: [
-                    { value: 'brand', label: 'Brand', hint: 'the maker', defaultChecked: true },
-                ],
-            })
-        ).toContain(
+    it('draws checkboxes in a row where the field asks, with a gloss after a word, each marked by an error', () => {
+        const boxes = rule({
+            type: 'checkbox',
+            row: true,
+            choices: [{ value: 'brand', label: 'Brand', hint: 'the maker', defaultChecked: true }],
+        });
+        expect(boxes).toContain('<fieldset class="dk-field dk-choice-field" id="rule">');
+        expect(boxes).toContain(
             '<div class="dk-choices dk-choices-row"><label class="dk-choice">' +
                 '<input type="checkbox" name="rule" checked="" value="brand"/>' +
                 '<span>Brand<span class="dk-choice-hint"> the maker</span></span></label></div>'
+        );
+        const wrong = rule({ type: 'checkbox', error: 'Choose one', choices: CHOICES });
+        expect(wrong).not.toContain('role=');
+        expect(wrong).toContain('id="rule" aria-describedby="rule-error">');
+        expect(wrong).toContain(
+            '<input type="checkbox" aria-invalid="true" name="rule" value="pin"/>'
+        );
+        expect(wrong).toContain(
+            '<input type="checkbox" aria-invalid="true" name="rule" value="hide"/>'
         );
     });
 
@@ -487,7 +494,7 @@ describe('a choice field', () => {
     it('takes neither a style nor a value for aria-invalid of its own', () => {
         // @ts-expect-error The kit draws markup alone, so a page styles a field by its classes.
         expect(rule({ style: { color: 'red' } })).toBeTruthy();
-        // @ts-expect-error The first control is marked invalid by the error alone.
+        // @ts-expect-error The set is marked invalid by the error alone.
         expect(rule({ 'aria-invalid': true })).toBeTruthy();
     });
 });

@@ -232,7 +232,10 @@ export const Button = ({
 
 /** What a field draws around its control. */
 type FieldParts = {
-    /** The label, which names the control and focuses it when pressed. */
+    /**
+     * The label, which names the control and focuses it when pressed, or names a set as its
+     * legend.
+     */
     readonly label: ReactNode;
     /** What helps a visitor fill the field, read as its description. */
     readonly hint?: ReactNode;
@@ -390,7 +393,7 @@ const ChoiceLabel = ({
 /** A choice in a choice field, beside its control's own props, such as `checked` or `disabled`. */
 export type Choice = Omit<
     ComponentPropsWithRef<'input'>,
-    'style' | 'type' | 'name' | 'aria-invalid' | 'className' | 'children' | 'value'
+    'style' | 'type' | 'name' | 'aria-invalid' | 'className' | 'children' | 'value' | 'key'
 > & {
     /** What the control submits, and what tells the choices apart. */
     readonly value: string;
@@ -413,9 +416,10 @@ export type ChoiceFieldProps = FieldParts &
 
 /**
  * A set of radios or checkboxes with its label, hint and error: a fieldset whose legend is the
- * label, described by the hint and the error as a control is, with the first control marked
- * invalid while an error is drawn, so a screen reader that reads a control's state hears it on
- * the set's first stop. The fieldset takes every other prop given, its `ref` among them.
+ * label, described by the hint and the error as a control is. A set of radios is a radio group,
+ * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
+ * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked. The
+ * fieldset takes every other prop given, its `ref` among them.
  */
 export const ChoiceField = (props: ChoiceFieldProps) => {
     const {
@@ -437,12 +441,14 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
             {...native}
             className={spaced('dk-field', 'dk-choice-field', className)}
             id={field.id}
+            role={type === 'radio' ? 'radiogroup' : undefined}
             aria-describedby={field.wired['aria-describedby']}
+            aria-invalid={type === 'radio' && field.error ? true : undefined}
         >
             <legend className="dk-field-label">{label}</legend>
             <FieldText parts={props} field={field} />
             <div className={spaced('dk-choices', row && 'dk-choices-row')}>
-                {choices.map(({ value, label: word, hint: gloss, ...input }, index) => (
+                {choices.map(({ value, label: word, hint: gloss, ...input }) => (
                     <ChoiceLabel
                         key={value}
                         className="dk-choice"
@@ -451,7 +457,7 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
                         type={type}
                         name={name}
                         value={value}
-                        aria-invalid={field.error && index === 0 ? true : undefined}
+                        aria-invalid={type === 'checkbox' && field.error ? true : undefined}
                         {...input}
                     />
                 ))}

@@ -393,10 +393,11 @@
     /*
      * A set of choices: a fieldset whose legend is the field's label, then the hint and the error
      * as a field has them, then each choice a label holding a native radio or checkbox and its
-     * word. The whole label takes the highlight under a pointer and while its control has focus, so
-     * the word reads as one target with the control, which keeps the ring. The theme switch's
-     * choice is the same label, drawn as a pill word with the radio under it by its own rules
-     * below.
+     * word. The whole label takes the highlight under a pointer and after the keyboard, so the word
+     * reads as one target with the control, which keeps the ring. The highlight reaches past the
+     * control into the room around the field, which a container that clips must leave. The theme
+     * switch's choice is the same label, drawn as a pill word with the radio under it by its own
+     * rules below.
      */
     :where(.dk-choice-field) {
         min-width: 0;
@@ -459,7 +460,8 @@
         }
     }
 
-    :where(.dk-choice:focus-within) {
+    /* After the keyboard, as the ring is, so a tap leaves no choice lit once it is done. */
+    :where(.dk-choice:has(> input:focus-visible)) {
         background-color: var(--dk-highlight);
     }
 
@@ -468,13 +470,20 @@
         color: var(--dk-muted);
     }
 
-    :where(.dk-choice > input[aria-invalid='true']) {
+    /* Every control of an invalid set, a radio group marked as one or checkboxes marked each. */
+    :where(
+        .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+        .dk-choice > input[aria-invalid='true']
+    ) {
         outline: 1px solid var(--dk-danger);
         outline-offset: 2px;
     }
 
     /* The ring takes the line's place, as it does on an invalid field in forced colors. */
-    :where(.dk-choice > input[aria-invalid='true']):focus-visible {
+    :where(
+        .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+        .dk-choice > input[aria-invalid='true']
+    ):focus-visible {
         outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
     }
@@ -609,6 +618,7 @@
         :where(
             .dk-input[aria-invalid='true'],
             .dk-select[aria-invalid='true'],
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
             .dk-choice > input[aria-invalid='true']
         ) {
             outline: var(--dk-ring-width) dashed CanvasText;
@@ -618,6 +628,7 @@
         :where(
             .dk-input[aria-invalid='true'],
             .dk-select[aria-invalid='true'],
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
             .dk-choice > input[aria-invalid='true']
         ):focus-visible {
             outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));

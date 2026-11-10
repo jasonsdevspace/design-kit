@@ -60,9 +60,11 @@ test("moves focus to the control each field's ref holds", async ({ page }) => {
     const size = page.getByLabel('Size');
     await expect(size).toHaveClass('dk-select');
     await expect(size).toBeFocused();
-    // A choice's ref holds its control, which the set marks invalid when the error comes.
+    // A choice's ref holds its control, inside the set the error marks invalid.
     await page.getByRole('button', { name: 'Go to the color' }).click();
-    const red = page.getByRole('radio', { name: 'Red' });
-    await expect(red).toHaveAttribute('aria-invalid', 'true');
-    await expect(red).toBeFocused();
+    await expect(page.getByRole('radiogroup', { name: 'Color' })).toHaveAttribute(
+        'aria-invalid',
+        'true'
+    );
+    await expect(page.getByRole('radio', { name: 'Red' })).toBeFocused();
 });
