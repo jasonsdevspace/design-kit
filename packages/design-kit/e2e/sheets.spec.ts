@@ -311,9 +311,9 @@ test("keeps a page's delays for a visitor who wants less motion, and cuts the mo
         page,
         'light',
         '<p class="waiting">Waiting</p><p class="spin">Spins</p><p class="fade">Fades</p>',
-        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 2s both }' +
-            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 1s infinite }' +
-            '.fade { opacity: 0; transition: opacity 0s 2s } .fade.shown { opacity: 1 }'
+        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 30s both }' +
+            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 30s infinite }' +
+            '.fade { opacity: 0; transition: opacity 0s 30s } .fade.shown { opacity: 1 }'
     );
     const timing = await page.evaluate(() =>
         ['.waiting', '.spin'].map((name) => {
@@ -322,30 +322,37 @@ test("keeps a page's delays for a visitor who wants less motion, and cuts the mo
         })
     );
     expect(timing).toEqual([
-        ['1e-05s', '2s', '1'],
-        ['1e-05s', '1s', '1'],
+        ['1e-05s', '30s', '1'],
+        ['1e-05s', '30s', '1'],
     ]);
+    // The delays are long enough that no runner reaches their end before the reads below, and
+    // each animation is then finished by hand, which stands for its delay passing.
+    const finish = (selector: string) =>
+        page.evaluate((name) => {
+            for (const animation of document.querySelector(name)?.getAnimations() ?? []) {
+                animation.finish();
+            }
+        }, selector);
     // The line is hidden while its delay runs, and shows once it has passed.
     await expect(page.locator('.waiting')).toHaveCSS('visibility', 'hidden');
-    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'visible', { timeout: 6000 });
+    await finish('.waiting');
+    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'visible');
     // The spinner comes to rest once its delay has passed, having played its cut once.
-    await expect
-        .poll(
-            () =>
-                page.evaluate(() =>
-                    document
-                        .querySelector('.spin')
-                        ?.getAnimations()
-                        .every((animation) => animation.playState === 'finished')
-                ),
-            { timeout: 6000 }
+    await finish('.spin');
+    expect(
+        await page.evaluate(() =>
+            document
+                .querySelector('.spin')
+                ?.getAnimations()
+                .every((animation) => animation.playState === 'finished')
         )
-        .toBe(true);
+    ).toBe(true);
     // A transition's delay holds too, so a timer written as one still waits.
     const fade = page.locator('.fade');
     await fade.evaluate((element) => element.classList.add('shown'));
     await expect(fade).toHaveCSS('opacity', '0');
-    await expect(fade).toHaveCSS('opacity', '1', { timeout: 6000 });
+    await finish('.fade');
+    await expect(fade).toHaveCSS('opacity', '1');
 });
 
 test("gives a page's ::before and ::after the border box, as every element has", async ({

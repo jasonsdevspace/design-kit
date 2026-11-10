@@ -1327,16 +1327,23 @@ test.describe('the theme switch', () => {
     test('moves nothing below the strip as it comes, at any width or text size', async ({
         browser,
     }) => {
+        // Before the switch comes, the page has run the theme script but not the site's own, which
+        // is what puts the switch in the room, so the room stands as the page serves it.
         const moved: string[] = [];
-        for (const javaScriptEnabled of [false, true]) {
-            const context = await browser.newContext({ javaScriptEnabled });
+        for (const came of [false, true]) {
+            const context = await browser.newContext();
+            if (!came) await context.route('**/assets/script-*.js', (route) => route.abort());
             const page = await context.newPage();
             for (const width of [320, 390, 768, 769, 820, 1280]) {
                 for (const scale of [1, 2]) {
                     await page.setViewportSize({ width, height: 900 });
                     await textSize(page, scale);
                     await page.goto('/design-kit/');
-                    if (javaScriptEnabled) await switchCame(page, width, scale);
+                    if (came) await switchCame(page, width, scale);
+                    else
+                        await expect(page.locator('body > .dk-strip .dk-strip-room')).toHaveCount(
+                            1
+                        );
                     const top = await page
                         .locator('.site-header')
                         .evaluate((nav) => nav.getBoundingClientRect().top);

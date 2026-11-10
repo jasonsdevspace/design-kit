@@ -405,14 +405,14 @@ would push its column.
     </p>
     <div class="dk-choices">
         <label class="dk-choice">
-            <input type="radio" name="rule" value="pin" />
+            <input type="radio" aria-describedby="rule-error" name="rule" value="pin" />
             <span>
                 Pin
                 <span class="dk-choice-hint"> to the top of the results</span>
             </span>
         </label>
         <label class="dk-choice">
-            <input type="radio" name="rule" value="hide" />
+            <input type="radio" aria-describedby="rule-error" name="rule" value="hide" />
             <span>Hide</span>
         </label>
     </div>

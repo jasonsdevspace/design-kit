@@ -205,7 +205,7 @@ test("puts the demo's switches beside the links on a wide screen and below them 
     expect(Math.round(phoneTools.x)).toBe(16);
 });
 
-test("tells a visitor without script what the room is for, in the room's own box", async ({
+test('tells a visitor without script what the room is for, whole, inside the section', async ({
     browser,
 }) => {
     const scripted = await browser.newContext();
@@ -220,18 +220,32 @@ test("tells a visitor without script what the room is for, in the room's own box
             await expect(line).toHaveText("With scripts on, the demo's switches sit here.");
             await expect(line).toBeVisible();
             await expect(withScript.locator('.dk-strip-noscript')).toHaveCount(0);
-            // The line takes the room's box, so the strip is as tall either way, and the words stay
-            // inside the section rather than push it taller where they would wrap.
-            expect(await stripLayout(withoutScript), `${String(width)}px`).toEqual(
-                await stripLayout(withScript)
-            );
-            const inside = await line.evaluate((element) => {
-                // The parent is the noscript element, which has no box of its own.
+            // The line sits inside the section, whole, wrapping where it must rather than cut off
+            // and scrolled out of a keyboard's reach, and the page never scrolls sideways for it.
+            const fit = await line.evaluate((element) => {
                 const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
                 const own = element.getBoundingClientRect();
-                return section !== undefined && own.bottom <= section.bottom + 0.5;
+                const page = document.documentElement;
+                return {
+                    inside:
+                        section !== undefined &&
+                        own.top >= section.top - 0.5 &&
+                        own.bottom <= section.bottom + 0.5 &&
+                        own.right <= section.right + 0.5,
+                    cut: element.scrollWidth > element.clientWidth + 1,
+                    sideways: page.scrollWidth > page.clientWidth,
+                };
             });
-            expect(inside, `${String(width)}px`).toBe(true);
+            expect(fit, `${String(width)}px`).toEqual({
+                inside: true,
+                cut: false,
+                sideways: false,
+            });
+            // Where the line fits one row, the strip is as tall as with script, so a wide screen
+            // holds its place either way.
+            if (width === 1280) {
+                expect(await stripLayout(withoutScript)).toEqual(await stripLayout(withScript));
+            }
             await withScript.close();
             await withoutScript.close();
         }

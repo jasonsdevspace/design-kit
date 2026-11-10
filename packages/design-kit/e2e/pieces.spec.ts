@@ -14,8 +14,9 @@ import { textSize } from './text-size.js';
  * narrower than 20rem and the row of choices everywhere else, a chip that never reads as a
  * control, the current page among pills marked by weight, a copy button as wide as its longest
  * word, the chosen tab told by its text, its weight and an accent line whether it is a tab, a page
- * or a toggle, no word cut off under the wider spacing a visitor may set, and the focus ring and a
- * button's hover edge in the focus color a page sets, with no audit findings in either theme.
+ * or a toggle, an eyebrow in caps at the caption size, no word cut off under the wider spacing a
+ * visitor may set, and the focus ring and a button's hover edge in the focus color a page sets,
+ * with no audit findings in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -71,6 +72,7 @@ const open = async (
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Pieces</title>` +
             `<style>${KIT}${css}</style></head><body><main><h1>Pieces</h1>${SWITCH}${PILLS}${TABS}${COPY}` +
+            `<p class="dk-eyebrow">Signed in as a guest</p>` +
             `<button type="button" class="dk-button">Filters</button></main></body></html>`
     );
 };
@@ -384,10 +386,37 @@ test('cuts no word off the pill, the copy button or the switch under the wider s
 }) => {
     // A 320px screen with a 20px gutter.
     await open(page, { width: 320, css: `main { padding-inline: 20px; } ${SPACED}` });
-    expect(await cutOff(page, '.dk-pill, .dk-copy, .dk-theme-switch')).toEqual([]);
+    expect(
+        await cutOff(page, '.dk-pill, .dk-copy, .dk-theme-switch, .dk-tab, .dk-eyebrow')
+    ).toEqual([]);
     const fit = await switchFit(page);
     expect(fit.inside).toEqual([true, true, true, true]);
     expect(fit.pageScrolls).toBe(false);
+});
+
+test('draws an eyebrow in caps at the caption size in the muted text, tracked, with no margin of its own', async ({
+    page,
+}) => {
+    await open(page);
+    const eyebrow = page.locator('.dk-eyebrow');
+    expect(
+        await eyebrow.evaluate((element) => {
+            const style = getComputedStyle(element);
+            return {
+                transform: style.textTransform,
+                size: style.fontSize,
+                color: style.color,
+                tracking: style.letterSpacing,
+                margin: style.marginBlock,
+            };
+        })
+    ).toEqual({
+        transform: 'uppercase',
+        size: '13.6px',
+        color: 'rgb(92, 92, 92)',
+        tracking: '0.816px',
+        margin: '0px',
+    });
 });
 
 test('keeps the copy button as wide as its longest word, whichever word shows', async ({

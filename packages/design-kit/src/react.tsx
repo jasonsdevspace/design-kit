@@ -456,7 +456,7 @@ export const TextareaField = (props: TextareaFieldProps) => {
 /**
  * One choice among a set: a label holding a native radio or checkbox and its word, with a gloss
  * after the word when it has one. The theme switch's choices are drawn by it too, under their own
- * class, so the markup a page wrote by hand for the switch stays as it was.
+ * class, so the two cannot drift apart.
  */
 const ChoiceLabel = ({
     className,
@@ -491,7 +491,10 @@ export type Choice = Omit<
 };
 
 export type ChoiceFieldProps = FieldParts &
-    Omit<ComponentPropsWithRef<'fieldset'>, 'style' | 'id' | 'aria-invalid' | 'children'> & {
+    Omit<
+        ComponentPropsWithRef<'fieldset'>,
+        'style' | 'id' | 'role' | 'aria-invalid' | 'children'
+    > & {
         /** The controls' name, shared by every choice in the set. */
         readonly name: string;
         /** Radios, where one choice is on, or checkboxes, where any number are. */
@@ -505,34 +508,25 @@ export type ChoiceFieldProps = FieldParts &
  * A set of radios or checkboxes with its label, hint and error: a fieldset whose legend is the
  * label, described by the hint and the error as a control is. A set of radios is a radio group,
  * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
- * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked. The
- * fieldset takes every other prop given, its `ref` among them.
+ * chosen radio, wherever that is, and each radio is described by the error too, since a screen
+ * reader that lands on a radio may read nothing of its group. Checkboxes are each a stop of their
+ * own, so each is marked. The fieldset takes every other prop given, its `ref` among them, and no
+ * role, since the set's role follows its type.
  */
 export const ChoiceField = (props: ChoiceFieldProps) => {
-    const {
-        label,
-        hint: _hint,
-        error: _error,
-        id: _id,
-        name,
-        type = 'radio',
-        choices,
-        row = false,
-        className,
-        ...rest
-    } = props;
-    const { 'aria-describedby': own, ...native } = rest;
-    const field = useField(props, own);
+    const { native, field } = useControl(props);
+    const { name, type = 'radio', choices, row = false, className, ...rest } = native;
+    const errorId = field.error ? `${field.id}-error` : undefined;
     return (
         <fieldset
-            {...native}
+            {...rest}
             className={spaced('dk-field', 'dk-choice-field', className)}
             id={field.id}
             role={type === 'radio' ? 'radiogroup' : undefined}
             aria-describedby={field.wired['aria-describedby']}
             aria-invalid={type === 'radio' && field.error ? true : undefined}
         >
-            <legend className="dk-field-label">{label}</legend>
+            <legend className="dk-field-label">{props.label}</legend>
             <FieldText parts={props} field={field} />
             <div className={spaced('dk-choices', row && 'dk-choices-row')}>
                 {choices.map(({ value, label: word, hint: gloss, ...input }) => (
@@ -545,6 +539,7 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
                         name={name}
                         value={value}
                         aria-invalid={type === 'checkbox' && field.error ? true : undefined}
+                        aria-describedby={type === 'radio' ? errorId : undefined}
                         {...input}
                     />
                 ))}

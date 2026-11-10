@@ -456,7 +456,7 @@ describe('a field', () => {
                     hint="Shown to the picker"
                     error="Write a note"
                     defaultValue="On its way"
-                    rows={3}
+                    rows={5}
                 />
             )
         ).toBe(
@@ -464,7 +464,7 @@ describe('a field', () => {
                 '<p class="dk-field-hint" id="note-hint">Shown to the picker</p>' +
                 '<p class="dk-field-error" id="note-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Write a note</p>' +
-                '<textarea class="dk-textarea" rows="3" id="note"' +
+                '<textarea class="dk-textarea" rows="5" id="note"' +
                 ' aria-describedby="note-hint note-error" aria-invalid="true">On its way</textarea></div>'
         );
         const note = createRef<HTMLTextAreaElement>();
@@ -529,9 +529,18 @@ describe('a choice field', () => {
             '<p class="dk-field-error" id="rule-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Choose one</p>'
         );
-        expect(wrong).toContain('<input type="radio" name="rule" value="pin"/>');
-        expect(wrong).toContain('<input type="radio" name="rule" value="hide"/>');
+        // Each radio is described by the error too, for a screen reader that reads nothing of the
+        // group on landing in it.
+        expect(wrong).toContain(
+            '<input type="radio" aria-describedby="rule-error" name="rule" value="pin"/>'
+        );
+        expect(wrong).toContain(
+            '<input type="radio" aria-describedby="rule-error" name="rule" value="hide"/>'
+        );
         expect(rule()).not.toContain('aria-invalid');
+        expect(rule({ hint: 'Applies to every search' })).not.toContain(
+            '<input type="radio" aria-describedby'
+        );
         expect(rule({ error: 'Choose one', 'aria-describedby': 'moved' })).toContain(
             'aria-describedby="rule-error moved"'
         );
@@ -584,6 +593,8 @@ describe('a choice field', () => {
         expect(rule({ style: { color: 'red' } })).toBeTruthy();
         // @ts-expect-error The set is marked invalid by the error alone.
         expect(rule({ 'aria-invalid': true })).toBeTruthy();
+        // @ts-expect-error The set's role follows its type, so a page's would be dropped.
+        expect(rule({ role: 'group' })).toBeTruthy();
     });
 });
 

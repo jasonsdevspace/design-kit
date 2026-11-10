@@ -278,6 +278,22 @@ test("draws a text button as a link, at the button's height, with its states", a
                 (await style(text, 'text-decoration-thickness'))['text-decoration-thickness']
         )
         .toBe('2px');
+    // Open, it keeps its link look with the thicker underline, since the pressed look has no
+    // padding to fit and the open panel is the sign.
+    expect(
+        await style(
+            page.getByRole('button', { name: 'Hide the markup' }),
+            'background-color',
+            'box-shadow',
+            'color',
+            'text-decoration-thickness'
+        )
+    ).toEqual({
+        'background-color': 'rgba(0, 0, 0, 0)',
+        'box-shadow': 'none',
+        color: 'rgb(31, 79, 216)',
+        'text-decoration-thickness': '2px',
+    });
     // Off, it keeps its underline in the muted text with no edge, and takes no hover.
     const none = page.getByRole('button', { name: 'No markup' });
     await expect(none).toBeDisabled();
