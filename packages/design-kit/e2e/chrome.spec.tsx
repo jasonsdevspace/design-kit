@@ -303,6 +303,27 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await expect(page.locator('#main-content')).toBeFocused();
 });
 
+test('draws the focused skip link as a box in forced colors, by an edge in the text color', async ({
+    page,
+}) => {
+    await open(page, { width: 1280 });
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    const edge = () =>
+        skip.evaluate((link) => {
+            const style = getComputedStyle(link);
+            return { style: style.borderTopStyle, color: style.borderTopColor };
+        });
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.keyboard.press('Tab');
+    await expect(skip).toBeFocused();
+    const forced = await edge();
+    expect(forced.style).toBe('solid');
+    expect(forced.color).not.toMatch(/^rgba\(\d+, \d+, \d+, 0\)$/);
+    // Outside forced colors the edge is transparent, so the link looks as it did.
+    await page.emulateMedia({ forcedColors: 'none' });
+    expect((await edge()).color).toMatch(/^rgba\(\d+, \d+, \d+, 0\)$/);
+});
+
 test('keeps a skip link inside a positioned box out of sight and out of the way of a click', async ({
     page,
 }) => {

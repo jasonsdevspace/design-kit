@@ -20,7 +20,8 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG asks
   a page to allow.
-- **Forced colors.** A pressed or unavailable button, an invalid field, the edge of a callout or a
+- **Forced colors.** A pressed or unavailable button, an invalid field, the edge of a callout, the
+  edge of a focused skip link or a
   panel, the chrome's link to the current page, and the site's chosen theme and tab keep what sets
   them apart when the system draws its own colors.
 - **Lighthouse.** Every page of the site scores a hundred for accessibility.

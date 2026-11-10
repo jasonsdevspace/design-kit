@@ -16,7 +16,8 @@
      * class does, one pixel clipped to nothing, rather than moved above it, so one inside a
      * positioned box of the page's own draws nothing, takes no click and covers nothing a screen
      * reader's touch finds wherever the box starts, and shows at the top of that box once a
-     * keyboard reaches it.
+     * keyboard reaches it. Its edge is transparent, so forced colors draw it in the text color and
+     * the link reads as a box there, where its fill and the page are both Canvas.
      */
     .dk-skip {
         position: absolute;
@@ -28,6 +29,7 @@
         overflow: hidden;
         clip-path: inset(50%);
         white-space: nowrap;
+        border: 1px solid transparent;
         border-radius: var(--dk-radius);
         background: var(--dk-accent);
         color: var(--dk-on-accent);
