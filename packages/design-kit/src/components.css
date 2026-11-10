@@ -498,7 +498,10 @@
         gap: var(--dk-space-1);
     }
 
-    /* The row's gap leaves a step between two lit choices, whose highlights reach past their words. */
+    /*
+     * The row's gap leaves a step between two lit choices, whose highlights reach past their
+     * words.
+     */
     :where(.dk-choices-row) {
         flex-flow: row wrap;
         gap: var(--dk-space-1) var(--dk-space-5);
@@ -1044,7 +1047,10 @@
 
         :where(.dk-strip-tools .dk-theme-switch-choices) {
             position: absolute;
-            /* The switch's padding leaves room for the ring, so the list's end lands on the button's. */
+            /*
+             * The switch's padding leaves room for the ring, so the list's end lands on the
+             * button's.
+             */
             inset-inline-end: calc(var(--dk-ring-width) + var(--dk-ring-offset));
             top: calc(100% + var(--dk-space-1));
             z-index: 1;
@@ -1079,8 +1085,8 @@
 
     /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
-     * the muted text at the strip's size. In the strip's room it sits beside the room and wraps where
-     * the section is narrow, as at a large text size on a phone, since a line cut off and scrolled
+     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where the
+     * section is narrow, as at a large text size on a phone, since a line cut off and scrolled
      * would reach no keyboard, and for this visitor nothing comes later that the strip has to hold
      * still for.
      */

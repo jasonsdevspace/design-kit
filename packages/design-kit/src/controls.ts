@@ -121,18 +121,22 @@ const listen = () => {
     }
 };
 
-/** Each control attached, by its element, one map for each kind so neither answers for the other. */
+/**
+ * Each control attached, by its element, one map for each kind so neither answers for the
+ * other.
+ */
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
 const attachedButtons = new WeakMap<HTMLElement, () => void>();
 
 /**
- * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and draws
- * a choice when a visitor makes one. It takes the switch, or an element that holds it. Attaching one
- * switch again before it is taken away attaches it once, and taking it away hides it again.
+ * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
+ * draws a choice when a visitor makes one. It takes the switch, or an element that holds it.
+ * Attaching one switch again before it is taken away attaches it once, and taking it away hides
+ * it again.
  *
  * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
- * narrower than 20rem, the button names the choice shown and opens the choices under itself, with focus on the
- * chosen one so the arrow keys move the choice without closing them. They close, with focus back
+ * narrower than 20rem, the button names the choice shown and opens the choices under itself, with
+ * focus on the chosen one so the arrow keys move the choice without closing them. They close, with focus back
  * on the button, when a choice is picked by a pointer or on Escape, and close where they are on a
  * press outside or when focus leaves the switch. The button is wired on every switch, since the
  * sheet alone decides where it shows.
@@ -165,8 +169,8 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
      * press under way on the button or the choices lets focus leave the switch, since a browser
      * that gives a pressed button no focus blurs the open choices first, which would close them for
      * the press to open again, and a press is over once its click has run, which on a touch screen
-     * is after the pointer lifts. A press the browser cancels, or a key pressed after one, leaves
-     * nothing set, so a later pick by key is a pick by key.
+     * is after the pointer lifts. A press the browser cancels leaves nothing set, and a key
+     * pressed after one leaves no pick by pointer set, so a later pick by key is a pick by key.
      */
     let pointed = false;
     let pressing = false;

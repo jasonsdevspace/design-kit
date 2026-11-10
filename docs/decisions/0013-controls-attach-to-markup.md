@@ -40,11 +40,11 @@ Node. The functions set no style. The choices a switch saves, `system` and the t
 does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
-radios that carries the group's role, name and note, and `attachThemeSwitch` wires the button it
-finds. In a demo's strip on a screen narrower than 20rem, a media query in rem that follows the
+radios that carries the group's role and is named and described by the name and the note, and the
+note, and `attachThemeSwitch` wires the button it finds. In a demo's strip on a screen narrower than 20rem, a media query in rem that follows the
 browser's text size, the sheet shows the button, which names the choice shown and opens the group
 under itself, over the page, with the choices one to a row at a thumb's target. The group is not in
-the top layer, since the popover attribute that puts it there is above the kit's Firefox floor, so
+the top layer, since the popover attribute that puts it there is above Firefox 120, the kit's floor, so
 it is positioned under the button with a stacking order of its own. Elsewhere the button stays
 hidden and the group is the row of choices.
 
