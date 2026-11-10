@@ -396,6 +396,25 @@ export const SelectField = (props: SelectFieldProps) => {
     );
 };
 
+export type TextareaFieldProps = FieldParts &
+    Omit<ComponentPropsWithRef<'textarea'>, 'style' | 'id' | 'aria-invalid' | 'children'>;
+
+/**
+ * A textarea with its label, hint and error, the textarea taking every other prop given, its
+ * `ref` among them, which holds the textarea drawn for a page that moves focus to it. Its text
+ * is `defaultValue` or `value`, never children, as React has it.
+ */
+export const TextareaField = (props: TextareaFieldProps) => {
+    const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;
+    const { 'aria-describedby': own, ...native } = rest;
+    const field = useField(props, own);
+    return (
+        <Field parts={props} field={field}>
+            <textarea className={spaced('dk-textarea', className)} {...native} {...field.wired} />
+        </Field>
+    );
+};
+
 /**
  * One choice among a set: a label holding a native radio or checkbox and its word, with a gloss
  * after the word when it has one. The theme switch's choices are drawn by it too, under their own

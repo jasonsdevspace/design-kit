@@ -18,6 +18,7 @@ export const VALUE_EXPORTS = {
         'PortfolioStrip',
         'SelectField',
         'SkipLink',
+        'TextareaField',
         'ThemeSwitch',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],

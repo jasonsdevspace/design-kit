@@ -78,8 +78,9 @@ test('draws text in a field at 16px or more on a phone, so tapping it does not z
     page,
 }) => {
     await open(page, { width: 360 });
-    for (const name of ['Search words', 'Sort by']) {
-        const size = (await style(page.getByLabel(name), 'font-size'))['font-size'] ?? '';
+    for (const name of ['Search words', 'Sort by', 'Note']) {
+        const size =
+            (await style(page.getByLabel(name, { exact: true }), 'font-size'))['font-size'] ?? '';
         expect(parseFloat(size)).toBeGreaterThanOrEqual(16);
     }
 });
@@ -254,6 +255,27 @@ test("draws a text button as a link, at the button's height, with its states", a
         'text-decoration-thickness': 'auto',
         'border-top-width': '0px',
     });
+});
+
+test('draws a textarea as a field, taller, that resizes down its height alone', async ({
+    page,
+}) => {
+    await open(page);
+    const note = page.getByLabel('Note', { exact: true });
+    const field = page.getByLabel('Search words');
+    const look = ['border-top-color', 'background-color', 'color', 'padding-left', 'font-size'];
+    expect(await style(note, ...look)).toEqual(await style(field, ...look));
+    expect(await height(note)).toBeGreaterThan(await height(field));
+    expect(await style(note, 'resize')).toEqual({ resize: 'vertical' });
+    // An error turns its edge, and disabled takes the surface, as a field's do.
+    const message = page.getByLabel('Message');
+    await expect(message).toHaveAccessibleDescription('Error: Write a message');
+    expect(await style(message, 'border-top-color')).toEqual(
+        await style(page.getByRole('textbox', { name: 'Email' }), 'border-top-color')
+    );
+    expect(await style(page.getByLabel('Closed note'), 'background-color')).toEqual(
+        await style(page.getByLabel('Store'), 'background-color')
+    );
 });
 
 test('draws a list that shows its options as the browser does, with no caret', async ({ page }) => {
@@ -581,6 +603,10 @@ test('marks an invalid field with a dashed line in forced colors, where its red 
             style(locator, 'border-top-width', 'outline-style', 'outline-color');
         const text = await page.evaluate(() => getComputedStyle(document.body).color);
         const invalid = await edge(page.locator('.dk-input[aria-invalid="true"]').first());
+        // A textarea with an error takes the same dashed line.
+        expect(
+            await style(page.locator('.dk-textarea[aria-invalid="true"]').first(), 'outline-style')
+        ).toEqual({ 'outline-style': 'dashed' });
         const valid = await edge(page.locator('.dk-input:not([aria-invalid])').first());
         // A dashed line in the text color around the invalid field, and the edge's width
         // unchanged, so nothing in it moves as the error comes and goes.
