@@ -934,15 +934,18 @@
     }
 
     /*
-     * Tabs: a row of muted words with the chosen one in the page's text at the heading's weight and
-     * an accent line under it, which three sites drew by hand for a category among categories, a
-     * block of markup beside its React, and a lane among lanes. The classes draw the row alone. A
-     * tab's role and its keys belong to the page that owns the panels, so the chosen tab is
-     * whichever carries the attribute a screen reader already reads: aria-selected true on a tab,
-     * aria-current on a link among pages, or aria-pressed true on a toggle, each drawn alike.
-     * Forced colors paint the line as they paint every edge, and the weight alone tells little, so
-     * there the chosen tab takes the system's selection colors, as the current pill does. A tab is
-     * the strip's height, and a thumb's on a phone, where a short word is still a thumb wide.
+     * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
+     * three sites drew by hand for a category among categories, a block of markup beside its React,
+     * and a lane among lanes. The classes draw the row alone. A tab's role and its keys belong to
+     * the page that owns the panels, so the chosen tab is whichever carries the attribute a screen
+     * reader already reads: aria-selected true on a tab, aria-current on a link among pages, or
+     * aria-pressed true on a toggle, each drawn alike. The chosen tab keeps the resting weight,
+     * since a heavier word is a wider one and the tabs after it would shift as the choice moves.
+     * Only the chosen tab has a line, the others padded to its depth, so forced colors, which paint
+     * every edge in a system color, draw no line under a resting tab and fill the chosen one in the
+     * system's selection colors, as the current pill does. A tab is the strip's height, and a
+     * thumb's on a phone, where a short word is still a thumb wide. A row of links wraps each in an
+     * item, which stretches its link to the rule.
      */
     :where(.dk-tabs) {
         display: flex;
@@ -955,14 +958,17 @@
         list-style: none;
     }
 
+    :where(.dk-tabs > li) {
+        display: flex;
+    }
+
     :where(.dk-tab) {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-height: var(--dk-strip);
-        padding: 0 var(--dk-space-3);
+        padding: 0 var(--dk-space-3) 2px;
         border: 0;
-        border-bottom: 2px solid transparent;
         border-radius: 0;
         background: none;
         color: var(--dk-muted);
@@ -983,9 +989,9 @@
         .dk-tab[aria-current]:not([aria-current='false']),
         .dk-tab[aria-pressed='true']
     ) {
-        border-bottom-color: var(--dk-accent);
+        padding-bottom: 0;
+        border-bottom: 2px solid var(--dk-accent);
         color: var(--dk-fg);
-        font-weight: var(--dk-weight-strong);
     }
 
     @media (max-width: 48rem) {

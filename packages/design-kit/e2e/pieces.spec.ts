@@ -192,7 +192,7 @@ test('draws a chip that never reads as a control, and marks the current page by 
     ).toBe(44);
 });
 
-/** How a tab is drawn: its text, its weight, the line under it, its ground, and any underline. */
+/** How a tab is drawn: its text, its weight, the line under it and its depth, its ground, and any underline. */
 const tabLook = (tab: Locator) =>
     tab.evaluate((element) => {
         const style = getComputedStyle(element);
@@ -200,6 +200,7 @@ const tabLook = (tab: Locator) =>
             color: style.color,
             weight: style.fontWeight,
             line: style.borderBottomColor,
+            lineWidth: style.borderBottomWidth,
             ground: style.backgroundColor,
             underline: style.textDecorationLine,
         };
@@ -225,7 +226,7 @@ const tabColors = (page: Page) =>
         return colors;
     });
 
-test("marks the chosen tab by the page's text at the heading's weight over an accent line, and by the system's selection in forced colors", async ({
+test("marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, with no line under the others", async ({
     page,
 }) => {
     for (const theme of ['light', 'dark'] as const) {
@@ -236,14 +237,12 @@ test("marks the chosen tab by the page's text at the heading's weight over an ac
             const chosen = await tabLook(page.getByRole('tab', { name: 'Markup' }));
             const resting = await tabLook(page.getByRole('tab', { name: 'React' }));
             const colors = await tabColors(page);
-            expect(chosen.weight, at).toBe('600');
-            expect(resting.weight, at).toBe('400');
+            expect(chosen.weight, at).toBe(resting.weight);
+            expect(chosen.lineWidth, at).toBe('2px');
+            expect(resting.lineWidth, at).toBe('0px');
             if (forcedColors === 'none') {
                 expect(chosen, at).toMatchObject({ color: colors.text, line: colors.accent });
-                expect(resting, at).toMatchObject({
-                    color: colors.muted,
-                    line: 'rgba(0, 0, 0, 0)',
-                });
+                expect(resting.color, at).toBe(colors.muted);
                 expect(chosen.ground, at).toBe('rgba(0, 0, 0, 0)');
             } else {
                 expect(chosen, at).toMatchObject({
@@ -270,6 +269,33 @@ test('draws a tab, a link among pages and a toggle alike, chosen or not', async 
     expect(resting).not.toEqual(chosen);
     expect(await tabLook(page.getByRole('link', { name: 'Books' }))).toEqual(resting);
     expect(await tabLook(page.getByRole('button', { name: 'Go' }))).toEqual(resting);
+});
+
+test('keeps every tab in place as the choice moves', async ({ page }) => {
+    await open(page);
+    const tabs = page.getByRole('tab');
+    const places = async () =>
+        Promise.all((await tabs.all()).map(async (tab) => (await tab.boundingBox())?.x));
+    const before = await places();
+    await tabs.evaluateAll((elements) => {
+        for (const tab of elements) {
+            tab.setAttribute('aria-selected', String(tab.getAttribute('aria-selected') !== 'true'));
+        }
+    });
+    expect(await places()).toEqual(before);
+});
+
+test("keeps the chosen link's line on the rule when a neighbor's words wrap", async ({ page }) => {
+    // A row a page keeps to one line, so a long name wraps its words beside the others.
+    await open(page, { width: 320, css: '.dk-tabs { flex-wrap: nowrap; }' });
+    const books = page.getByRole('link', { name: 'Books' });
+    await books.evaluate((link) => {
+        link.textContent = 'Books, music and film for the whole family';
+    });
+    const tall = await books.boundingBox();
+    const chosen = await page.getByRole('link', { name: 'All' }).boundingBox();
+    expect(tall?.height ?? 0).toBeGreaterThan(44);
+    expect(Math.round(chosen?.height ?? 0)).toBe(Math.round(tall?.height ?? 0));
 });
 
 test("makes each tab the strip's height, and a thumb wide and tall on a phone", async ({

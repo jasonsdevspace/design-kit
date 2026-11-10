@@ -455,14 +455,16 @@ of a page shows, or pages or toggles underlined where chosen, is tabs, below.
 </nav>
 ```
 
-Tabs are a row of muted words with the chosen one in the page's text at the heading's weight and an
-accent line under it, each `.dk-tab` in a `.dk-tabs` row over a rule. The classes draw the row
-alone, and ship no script and no React component, since a tab's role and its keys belong to the page
-that owns the panels. The chosen tab carries the attribute a screen reader already reads for its
-control: `aria-selected="true"` on a tab, `aria-current` on a link among pages, or
-`aria-pressed="true"` on a toggle, each drawn alike. In forced colors the chosen tab stands in the
-system's selection colors, as the current pill does. A tab is the strip's height, and a thumb wide
-and tall on a phone. A row of links keeps `role="list"`, as the pills do.
+Tabs are a row of muted words with the chosen one in the page's text over an accent line, each
+`.dk-tab` in a `.dk-tabs` row over a rule. The classes draw the row alone, and ship no script and no
+React component, since a tab's role and its keys belong to the page that owns the panels. The chosen
+tab carries the attribute a screen reader already reads for its control: `aria-selected="true"` on a
+tab, `aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike.
+It keeps the resting weight, so no tab moves as the choice does. In forced colors the chosen tab
+stands in the system's selection colors, as the current pill does, and a resting tab has no line for
+them to paint. A tab is the strip's height, and a thumb wide and tall on a phone, and its first word
+sits in from the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as
+the pills do, and each link fills its item down to the rule.
 
 A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab in the tab order,
 the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
