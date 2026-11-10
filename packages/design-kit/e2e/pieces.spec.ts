@@ -1,14 +1,15 @@
 import { readFileSync } from 'node:fs';
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 /*
- * The theme switch, the pill and the copy button's words as a browser draws them from the kit's
+ * The theme switch, the pill, the tab and the copy button's words as a browser draws them from the kit's
  * sheets, in markup written by hand: the chosen theme told apart by an edge rather than a fill
  * alone, a target the field's height and a thumb's on a phone, no word moving as the choice
  * moves, a chip that never reads as a control, the current page among pills marked by weight, a
- * copy button as wide as its longest word, and the focus ring and a button's hover edge in the
+ * copy button as wide as its longest word, the chosen tab told by its text, its weight and an
+ * accent line whether it is a tab, a page or a toggle, and the focus ring and a button's hover edge in the
  * focus color a page sets, with no audit findings in either theme.
  */
 
@@ -29,6 +30,21 @@ const PILLS = `<ul class="dk-pills" role="list"><li class="dk-pill">TypeScript</
     <li><a class="dk-pill" href="#tokens">Tokens</a></li>
 </ul></nav>`;
 
+const TABS = `<div class="dk-tabs" role="tablist" aria-label="Code">
+    <button type="button" class="dk-tab" role="tab" id="markup-tab" aria-selected="true" aria-controls="markup" tabindex="0">Markup</button>
+    <button type="button" class="dk-tab" role="tab" id="react-tab" aria-selected="false" aria-controls="react" tabindex="-1">React</button>
+</div>
+<div id="markup" role="tabpanel" aria-labelledby="markup-tab"><p>The markup.</p></div>
+<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden><p>The React.</p></div>
+<nav aria-label="Categories"><ul class="dk-tabs" role="list">
+    <li><a class="dk-tab" href="#all" aria-current="page">All</a></li>
+    <li><a class="dk-tab" href="#books">Books</a></li>
+</ul></nav>
+<div class="dk-tabs">
+    <button type="button" class="dk-tab" aria-pressed="true">Open</button>
+    <button type="button" class="dk-tab" aria-pressed="false">Go</button>
+</div>`;
+
 const COPY = `<button type="button" class="dk-button dk-copy">
     <span class="dk-copy-words"><span>Copy</span><span aria-hidden="true">Copied</span><span aria-hidden="true">Selected</span></span>
     <span class="dk-visually-hidden"> install command</span>
@@ -46,7 +62,7 @@ const open = async (
     await page.setViewportSize({ width, height: 900 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Pieces</title>` +
-            `<style>${KIT}${css}</style></head><body><main><h1>Pieces</h1>${SWITCH}${PILLS}${COPY}` +
+            `<style>${KIT}${css}</style></head><body><main><h1>Pieces</h1>${SWITCH}${PILLS}${TABS}${COPY}` +
             `<button type="button" class="dk-button">Filters</button></main></body></html>`
     );
 };
@@ -174,6 +190,100 @@ test('draws a chip that never reads as a control, and marks the current page by 
     expect(
         Math.round((await page.getByRole('link', { name: 'Tokens' }).boundingBox())?.height ?? 0)
     ).toBe(44);
+});
+
+/** How a tab is drawn: its text, its weight, the line under it, its ground, and any underline. */
+const tabLook = (tab: Locator) =>
+    tab.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+            color: style.color,
+            weight: style.fontWeight,
+            line: style.borderBottomColor,
+            ground: style.backgroundColor,
+            underline: style.textDecorationLine,
+        };
+    });
+
+/** The page's text, muted text and accent as it resolves them, and the system's selection colors. */
+const tabColors = (page: Page) =>
+    page.evaluate(() => {
+        const probe = document.createElement('span');
+        document.body.append(probe);
+        const read = (property: 'color' | 'backgroundColor', value: string) => {
+            probe.style[property] = value;
+            return getComputedStyle(probe)[property];
+        };
+        const colors = {
+            text: read('color', 'var(--dk-fg)'),
+            muted: read('color', 'var(--dk-muted)'),
+            accent: read('color', 'var(--dk-accent)'),
+            selection: read('backgroundColor', 'Highlight'),
+            selectionText: read('color', 'HighlightText'),
+        };
+        probe.remove();
+        return colors;
+    });
+
+test("marks the chosen tab by the page's text at the heading's weight over an accent line, and by the system's selection in forced colors", async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        for (const forcedColors of ['none', 'active'] as const) {
+            await page.emulateMedia({ forcedColors });
+            await open(page, { theme });
+            const at = `${theme} theme, forced colors ${forcedColors}`;
+            const chosen = await tabLook(page.getByRole('tab', { name: 'Markup' }));
+            const resting = await tabLook(page.getByRole('tab', { name: 'React' }));
+            const colors = await tabColors(page);
+            expect(chosen.weight, at).toBe('600');
+            expect(resting.weight, at).toBe('400');
+            if (forcedColors === 'none') {
+                expect(chosen, at).toMatchObject({ color: colors.text, line: colors.accent });
+                expect(resting, at).toMatchObject({
+                    color: colors.muted,
+                    line: 'rgba(0, 0, 0, 0)',
+                });
+                expect(chosen.ground, at).toBe('rgba(0, 0, 0, 0)');
+            } else {
+                expect(chosen, at).toMatchObject({
+                    color: colors.selectionText,
+                    ground: colors.selection,
+                });
+                expect(resting.ground, at).not.toBe(colors.selection);
+            }
+        }
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
+});
+
+test('draws a tab, a link among pages and a toggle alike, chosen or not', async ({ page }) => {
+    await open(page);
+    const tab = page.getByRole('tab', { name: 'Markup' });
+    const link = page.getByRole('link', { name: 'All' });
+    const toggle = page.getByRole('button', { name: 'Open' });
+    const chosen = await tabLook(tab);
+    expect(chosen.underline).toBe('none');
+    expect(await tabLook(link)).toEqual(chosen);
+    expect(await tabLook(toggle)).toEqual(chosen);
+    const resting = await tabLook(page.getByRole('tab', { name: 'React' }));
+    expect(resting).not.toEqual(chosen);
+    expect(await tabLook(page.getByRole('link', { name: 'Books' }))).toEqual(resting);
+    expect(await tabLook(page.getByRole('button', { name: 'Go' }))).toEqual(resting);
+});
+
+test("makes each tab the strip's height, and a thumb wide and tall on a phone", async ({
+    page,
+}) => {
+    for (const [width, size] of [
+        [1280, 40],
+        [375, 44],
+    ] as const) {
+        await open(page, { width });
+        const box = await page.getByRole('button', { name: 'Go' }).boundingBox();
+        expect(Math.round(box?.height ?? 0), `${String(width)}px`).toBe(size);
+        if (width === 375) expect(Math.round(box?.width ?? 0)).toBeGreaterThanOrEqual(size);
+    }
 });
 
 test('keeps the copy button as wide as its longest word, whichever word shows', async ({

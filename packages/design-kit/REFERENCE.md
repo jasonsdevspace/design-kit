@@ -417,7 +417,50 @@ links do, and the one that is the current page carries `aria-current` and stands
 at the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on
 a phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
 with VoiceOver drops a list's meaning when its markers are gone. Tabs that switch what one part of a
-page shows are not pills, since they take the tab role and its keys.
+page shows, or a row of pages or toggles underlined where chosen, are tabs, below.
+
+### Tabs
+
+```html
+<div class="dk-tabs" role="tablist" aria-label="Code">
+    <button class="dk-tab" role="tab" id="markup-tab" aria-selected="true" aria-controls="markup">
+        Markup
+    </button>
+    <button
+        class="dk-tab"
+        role="tab"
+        id="react-tab"
+        aria-selected="false"
+        aria-controls="react"
+        tabindex="-1"
+    >
+        React
+    </button>
+</div>
+<div id="markup" role="tabpanel" aria-labelledby="markup-tab">…</div>
+<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden>…</div>
+<nav aria-label="Categories">
+    <ul class="dk-tabs" role="list">
+        <li><a class="dk-tab" href="./" aria-current="page">All</a></li>
+        <li><a class="dk-tab" href="./books/">Books</a></li>
+    </ul>
+</nav>
+```
+
+Tabs are a row of muted words with the chosen one in the page's text at the heading's weight and an
+accent line under it, each `.dk-tab` in a `.dk-tabs` row over a rule. The classes draw the row
+alone, and ship no script and no React component, since a tab's role and its keys belong to the page
+that owns the panels. The chosen tab is whichever carries the attribute a screen reader already
+reads, so a page marks it with the one its control has: `aria-selected="true"` on a tab,
+`aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike. In
+forced colors the chosen tab stands in the system's selection colors, as the current pill does. A
+tab is the strip's height, and a thumb wide and tall on a phone. A row of links keeps
+`role="list"`, as the pills do.
+
+A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab in the tab order,
+the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
+kit's site wires its code tabs this way, with the chosen tab's focus ring kept where the row gives
+the others a tabindex of -1.
 
 ### React components
 
