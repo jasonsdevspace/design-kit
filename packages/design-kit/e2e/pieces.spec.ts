@@ -4,13 +4,13 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 /*
- * The theme switch, the pill, the tab and the copy button's words as a browser draws them from the kit's
- * sheets, in markup written by hand: the chosen theme told apart by an edge rather than a fill
- * alone, a target the field's height and a thumb's on a phone, no word moving as the choice
- * moves, a chip that never reads as a control, the current page among pills marked by weight, a
- * copy button as wide as its longest word, the chosen tab told by its text, its weight and an
- * accent line whether it is a tab, a page or a toggle, and the focus ring and a button's hover edge in the
- * focus color a page sets, with no audit findings in either theme.
+ * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
+ * the kit's sheets, in markup written by hand: the chosen theme told apart by an edge rather
+ * than a fill alone, a target the field's height and a thumb's on a phone, no word moving as
+ * the choice moves, a chip that never reads as a control, the current page among pills marked
+ * by weight, a copy button as wide as its longest word, the chosen tab told by its text, its
+ * weight and an accent line whether it is a tab, a page or a toggle, and the focus ring and a
+ * button's hover edge in the focus color a page sets, with no audit findings in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');

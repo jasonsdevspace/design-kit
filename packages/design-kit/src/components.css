@@ -934,15 +934,15 @@
     }
 
     /*
-     * Tabs: a row of muted words with the chosen one in the page's text at the heading's weight
-     * and an accent line under it, which three sites drew by hand for a category among categories,
-     * a block of markup beside its React, and a lane among lanes. The classes draw the row alone.
-     * A tab's role and its keys belong to the page that owns the panels, so the chosen tab is
-     * whichever carries the attribute a screen reader already reads: aria-selected on a tab,
-     * aria-current on a link among pages, or aria-pressed on a toggle, each drawn alike. Forced
-     * colors drop the line and the weight tells little, so there the chosen tab takes the
-     * system's own colors for a selection, as the current pill does. A tab is the strip's height,
-     * and a thumb's on a phone, where a short word is still a thumb wide.
+     * Tabs: a row of muted words with the chosen one in the page's text at the heading's weight and
+     * an accent line under it, which three sites drew by hand for a category among categories, a
+     * block of markup beside its React, and a lane among lanes. The classes draw the row alone. A
+     * tab's role and its keys belong to the page that owns the panels, so the chosen tab is
+     * whichever carries the attribute a screen reader already reads: aria-selected true on a tab,
+     * aria-current on a link among pages, or aria-pressed true on a toggle, each drawn alike.
+     * Forced colors paint the line as they paint every edge, and the weight alone tells little, so
+     * there the chosen tab takes the system's selection colors, as the current pill does. A tab is
+     * the strip's height, and a thumb's on a phone, where a short word is still a thumb wide.
      */
     :where(.dk-tabs) {
         display: flex;
