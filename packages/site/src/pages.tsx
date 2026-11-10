@@ -251,7 +251,7 @@ const listed = (names: readonly string[]): readonly Listed[] =>
 const OnThisPage = ({ sections }: { readonly sections: readonly Listed[] }) => (
     <nav className="site-toc" aria-labelledby="site-toc-name">
         <div className="site-toc-words">
-            <p className="site-toc-name" id="site-toc-name">
+            <p className="dk-eyebrow site-toc-name" id="site-toc-name">
                 On this page
             </p>
             <ul role="list">
@@ -338,7 +338,7 @@ const Explainer = ({ build }: { readonly build: Build }) => (
  */
 const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
     <div className={`site-hero-panel site-${theme}`}>
-        <p className="site-hero-theme">{theme === 'light' ? 'Light' : 'Dark'}</p>
+        <p className="dk-eyebrow">{theme === 'light' ? 'Light' : 'Dark'}</p>
         <div className="site-hero-buttons">
             <kit.Button accent>Save rule</kit.Button>
             <kit.Button>Filters</kit.Button>

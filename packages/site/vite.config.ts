@@ -11,6 +11,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { defineConfig, type Plugin } from 'vite';
 
 import { laidOut } from '../design-kit/examples/format.js';
+import { colorOf, declaredIn } from '../design-kit/examples/palette.js';
 import { CHROME, EXPLAINER } from '../design-kit/examples/pieces.js';
 import { CONTROLS } from '../design-kit/examples/states.js';
 import { type Build, codeKey, PAGES } from './src/pages.js';
@@ -24,6 +25,25 @@ const PAGE = '<!-- page -->';
 const TITLE = '<!-- title -->';
 const DESCRIPTION = '<!-- description -->';
 const ICONS = '<!-- icons -->';
+const THEME_COLORS = '<!-- theme-colors -->';
+
+/**
+ * The browser's bar in the page's own ground for each scheme, from the tokens the site pins rather
+ * than a copy of their values, which would go stale when the pin moves. They come before the theme
+ * script, since it reads them as it runs and points both at the theme it draws.
+ *
+ * @param tokens the pinned version's tokens sheet
+ */
+let metas: string | undefined;
+const themeColorMetas = (tokens: string) => {
+    const declared = declaredIn(tokens);
+    return (['light', 'dark'] as const)
+        .map(
+            (theme) =>
+                `<meta name="theme-color" media="(prefers-color-scheme: ${theme})" content="${colorOf(declared, 'bg', theme)}" />`
+        )
+        .join('\n        ');
+};
 
 /**
  * The kit's icon, the same on every page: a 32px `.ico` for a browser that takes no SVG icon, the
@@ -121,12 +141,15 @@ const pagesPlugin = (): Plugin => ({
                 throw new Error(`the site has no page drawn from ${file}`);
             }
             if (
-                ![PAGE, TITLE, DESCRIPTION, ICONS].every((place) => html.includes(place)) ||
+                ![PAGE, TITLE, DESCRIPTION, ICONS, THEME_COLORS].every((place) =>
+                    html.includes(place)
+                ) ||
                 !POLICY_META.test(html)
             ) {
                 throw new Error(`${file} needs a place for each part of its page`);
             }
-            const body = renderToStaticMarkup(PAGES[file](await build()));
+            const made = await build();
+            const body = renderToStaticMarkup(PAGES[file](made));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`
@@ -136,6 +159,7 @@ const pagesPlugin = (): Plugin => ({
                 .replace(TITLE, () => escaped(route.title))
                 .replace(DESCRIPTION, () => escaped(route.description))
                 .replace(ICONS, () => ICON_LINKS)
+                .replace(THEME_COLORS, () => (metas ??= themeColorMetas(made.tokens)))
                 .replace(PAGE, () => body);
         },
     },

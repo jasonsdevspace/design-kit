@@ -47,6 +47,12 @@ const EVERY_PIECE = [
     ...BOTH_THEMES((theme) => `has no audit findings in the ${theme} theme, wide and on a phone`),
 ];
 
+/** The tests that hold every piece the pieces spec draws alike. */
+const PIECES_SPACED_AND_AUDITED = [
+    'cuts no word off the pill, the copy button or the switch under the wider spacing a visitor may set',
+    ...BOTH_THEMES((theme) => `has no audit findings in the ${theme} theme`),
+];
+
 /** The tests that hold a frame, a table's and a code block's alike. */
 const EVERY_FRAME = [
     'sets a frame a short step under its title, a table and a code block alike',
@@ -71,6 +77,7 @@ export const HELD = {
                 "the button calls nothing when pressed while off, and stops a form's submit",
                 'the button hands a ref to the button it draws, for a page that moves focus to it',
                 'the button takes neither a style nor accent and pressed together',
+                'the button draws a large button and a text button by a class each',
             ],
         },
         {
@@ -84,12 +91,18 @@ export const HELD = {
                 'draws an open accent button in the page text on the highlight, so its words stay read',
                 'keeps a pressed toggle that is off told apart from one that is not pressed',
                 'draws the focus ring after the keyboard, on the accent and in every callout',
+                'draws a large button at the target at every width, with wider inline padding and the body text',
+                "draws a text button as a link, at the button's height, with its states",
+                "leaves a toggle's edge as it was after a tap on a touch screen, where no pointer rests",
                 ...EVERY_CONTROL,
             ],
         },
         {
             file: 'e2e/ref.spec.ts',
-            titles: ['moves focus back to the button a ref holds when its panel closes'],
+            titles: [
+                'moves focus back to the button a ref holds when its panel closes',
+                'swallows Enter, Space and a click on an off button alike, and keeps focus on it',
+            ],
         },
     ],
     Fields: [
@@ -105,6 +118,10 @@ export const HELD = {
                 'the field makes an id of its own when the page gives an empty one',
                 "the field passes the control's own attributes through",
                 'the field draws a native select with its options, wired the same way',
+                'the field draws a textarea with its text as a value, wired the same way',
+                'the choice field draws a fieldset with its label as the legend, and a label of a radio and its word for each choice',
+                'the choice field describes the set by its hint, then its error, and marks a radio group invalid only with one',
+                'the choice field draws checkboxes in a row where the field asks, with a gloss after a word, each marked by an error',
             ],
         },
         {
@@ -116,6 +133,11 @@ export const HELD = {
                 'draws the focus ring after the keyboard, on the accent and in every callout',
                 'reads a field by its label, and describes it by its hint and then its error',
                 'draws an invalid control in the danger color, and the error beside the hint',
+                'draws a textarea as a field, three rows tall, that resizes in height alone',
+                "draws a choice at the field height, a thumb's target on a phone, lit under a pointer, and a row on one line",
+                'moves and checks among radios with the arrow keys, ringing the control and lighting its word',
+                'reads a set by its legend, describes it by its hint or error, and marks an invalid set',
+                'cuts no text off a callout or a field under the wider spacing a visitor may set',
                 ...EVERY_CONTROL,
                 'marks an invalid field with a dashed line in forced colors, where its red is gone',
             ],
@@ -150,6 +172,108 @@ export const HELD = {
                 "draws nothing for an empty live callout, and the callout's look once it is filled",
                 ...EVERY_CONTROL,
                 'pads a callout as the other boxed text at its size is padded',
+            ],
+        },
+    ],
+    'Theme switch': [
+        {
+            file: 'src/react.test.tsx',
+            titles: [
+                "the switch, the copy button and the status line take a ref and a class of the page after the kit's, with nothing in the markup moved",
+                'the switch, the copy button and the status line draws the switch as its name, a button naming the choice for the collapsed form, and the group of radios described by the note',
+                'the switch, the copy button and the status line draws a line after the switch for a visitor without script, worded by the page or turned off',
+            ],
+        },
+        {
+            file: 'e2e/pieces.spec.ts',
+            titles: [
+                'marks the chosen theme by an edge in the accent, not by its ground alone',
+                'keeps every word in place as the choice moves',
+                'makes each choice the field height tall, and a thumb wide and tall on a phone',
+                'wraps its choices in a narrow column at a large text size, rather than scroll them away',
+                'keeps its name and choices on one row at the usual text size, phone to wide',
+                "collapses to its name and one button naming the choice in a demo's strip narrower than 20rem",
+                "keeps the row of three choices in a demo's strip at 20rem and wider, and outside the strip at any width",
+                "draws the switch's own ring, on the chosen word, in the focus color",
+                ...PIECES_SPACED_AND_AUDITED,
+            ],
+        },
+        {
+            file: 'e2e/attach.spec.tsx',
+            titles: [
+                'keeps both controls hidden where no script attaches them',
+                'says what sits where the switch would be, only to a visitor without script',
+                'shows the saved choice, then saves and draws a new one, with nothing the policy refuses',
+                'saves once a choice made on a switch attached twice',
+                'follows a choice saved in another tab',
+                'holds a choice the browser will not save, through a page restored by Back',
+                'shows one choice on every switch, one attached through the element that holds it',
+                'hides a switch again once it is taken away',
+                'shows the choice saved meanwhile on a switch attached again after every switch was taken away',
+                'draws a choice the page holds on a switch attached again after every switch was taken away',
+                'reads the switch by its name, and describes it by its note',
+                'collapses the switch in a strip on a screen narrower than 20rem to one button naming the choice shown',
+                'opens the choices under the button, one to a row at the target, and closes on a pick by pointer with focus on the button',
+                'moves the choice with the arrow keys without closing, and closes on Escape or a press outside',
+                'closes the choices where they are when focus leaves the switch, and keeps them when it lands on the button',
+                'moves no focus on a press on the button or a choice, so the choices stay until the click',
+                "keeps the choices open on a press on the list's own padding, and closes them on one on the name",
+            ],
+        },
+    ],
+    'Copy button': [
+        {
+            file: 'src/react.test.tsx',
+            titles: [
+                "the switch, the copy button and the status line take a ref and a class of the page after the kit's, with nothing in the markup moved",
+            ],
+        },
+        {
+            file: 'e2e/pieces.spec.ts',
+            titles: [
+                'keeps the copy button as wide as its longest word, whichever word shows',
+                ...PIECES_SPACED_AND_AUDITED,
+            ],
+        },
+        {
+            file: 'e2e/attach.spec.tsx',
+            titles: [
+                'keeps both controls hidden where no script attaches them',
+                'attaches one element as a copy button though it was attached as a switch first',
+                'puts a copy button back to Copy, hidden, when it is taken away mid-message',
+                'copies the source on a click or on Enter, says Copied on the button and the status line, then Copy again',
+                'selects the source where the clipboard is refused, says how to copy it, and keeps focus on the button pressed by Space',
+            ],
+        },
+    ],
+    Pills: [
+        {
+            file: 'e2e/pieces.spec.ts',
+            titles: [
+                'draws a chip that never reads as a control, and marks the current page by weight',
+                ...PIECES_SPACED_AND_AUDITED,
+            ],
+        },
+    ],
+    Tabs: [
+        {
+            file: 'e2e/pieces.spec.ts',
+            titles: [
+                "marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, with no line under the others",
+                'draws a tab, a link among pages and a toggle alike, chosen or not',
+                'keeps every tab in place as the choice moves',
+                "keeps the chosen link's line on the rule when a neighbor's words wrap",
+                "makes each tab the strip's height, and a thumb wide and tall on a phone",
+                ...PIECES_SPACED_AND_AUDITED,
+            ],
+        },
+    ],
+    Eyebrows: [
+        {
+            file: 'e2e/pieces.spec.ts',
+            titles: [
+                'draws an eyebrow in caps at the caption size in the muted text, tracked, with no margin of its own',
+                ...PIECES_SPACED_AND_AUDITED,
             ],
         },
     ],

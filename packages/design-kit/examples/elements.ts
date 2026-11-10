@@ -1,39 +1,69 @@
 import * as React from 'react';
 import ts from 'typescript';
 
-/** A value an attribute of the React shown is written with: a string, true, false or an element. */
-type Value = string | boolean | React.ReactElement;
+/**
+ * A value an attribute of the React shown is written with: a string, a number, true, false, an
+ * element, or a list or an object of those, as a choice field's choices are.
+ */
+type Value = string | number | boolean | React.ReactElement | readonly Value[] | Values;
+interface Values {
+    readonly [key: string]: Value;
+}
 
 /**
  * The React a page writes for a state, read by TypeScript's parser and built as an element with the
- * components it is given and the DOM's own elements, without running it as code. It reads what the
- * states write: string, boolean and element attributes, text and elements as children, and
- * fragments. The kit's tests build it with the sources' components, and the site's with the version
- * it pins.
+ * components it is given and the DOM's own elements, without running it as code, so the text a page shows is held to draw what the state's own
+ * `draw` draws rather than trusted to. It reads what the
+ * states write: string, number, boolean and element attributes, lists and objects of those, text
+ * and elements as children, and fragments. The kit's tests build it with the sources' components,
+ * and the site's with the version it pins.
  */
 export const elementOf = (react: string, kit: object): React.ReactElement => {
     const file = ts.createSourceFile('state.tsx', `(${react});`, ts.ScriptTarget.Latest, true);
     const valueOf = (node: ts.Node): Value => {
         if (ts.isParenthesizedExpression(node)) return valueOf(node.expression);
-        if (ts.isStringLiteral(node)) return node.text;
+        if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+        if (ts.isNumericLiteral(node)) return Number(node.text);
         if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
         if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+        if (ts.isArrayLiteralExpression(node)) return node.elements.map(valueOf);
+        if (ts.isObjectLiteralExpression(node)) {
+            return Object.fromEntries(
+                node.properties.map((property) => {
+                    if (!ts.isPropertyAssignment(property)) {
+                        throw new Error(`a property this test cannot read: ${property.getText()}`);
+                    }
+                    const key = ts.isStringLiteral(property.name)
+                        ? property.name.text
+                        : property.name.getText();
+                    return [key, valueOf(property.initializer)];
+                })
+            );
+        }
         if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) return build(node);
         if (ts.isJsxFragment(node)) {
             return React.createElement(React.Fragment, null, ...childrenOf(node.children));
         }
         throw new Error(`the React shown writes what this test cannot read: ${node.getText()}`);
     };
+    /** A child as React draws it, which a list or an object is not. */
+    const childOf = (node: ts.Node): React.ReactNode => {
+        const value = valueOf(node);
+        if (typeof value === 'object' && !React.isValidElement(value)) {
+            throw new Error(`a child React cannot draw: ${node.getText()}`);
+        }
+        return value;
+    };
     /** The children of an element or a fragment: its text with the layout's breaks dropped. */
     const childrenOf = (children: ts.NodeArray<ts.JsxChild>): React.ReactNode[] =>
-        children.flatMap((child): Value[] => {
+        children.flatMap((child): React.ReactNode[] => {
             if (ts.isJsxText(child)) {
                 const text = child.text.replaceAll(/\s*\n\s*/g, ' ').trim();
                 return text === '' ? [] : [text];
             }
             if (ts.isJsxExpression(child))
-                return child.expression ? [valueOf(child.expression)] : [];
-            return [valueOf(child)];
+                return child.expression ? [childOf(child.expression)] : [];
+            return [childOf(child)];
         });
     const build = (node: ts.JsxElement | ts.JsxSelfClosingElement): React.ReactElement => {
         const opening = ts.isJsxElement(node) ? node.openingElement : node;

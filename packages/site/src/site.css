@@ -18,14 +18,6 @@ body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
-/*
- * The section the switch fills may be narrower than the switch's words, so on a phone with large
- * text the switch scrolls inside it rather than widening the strip and the page.
- */
-body > .dk-strip .dk-strip-tools {
-    min-width: 0;
-}
-
 /* The site's page reads as one column from the strip to the footer, as a demo's does. */
 .site-main {
     max-width: var(--dk-column);
@@ -224,14 +216,6 @@ body > .dk-strip .dk-strip-tools {
 
 .site-hero-panel > * {
     margin: 0;
-}
-
-.site-hero-theme {
-    color: var(--dk-muted);
-    font-size: var(--dk-text-caption);
-    font-weight: var(--dk-weight-strong);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
 }
 
 .site-hero-buttons {
@@ -503,14 +487,13 @@ body > .dk-strip .dk-strip-tools {
     }
 }
 
+/*
+ * The list's name is the kit's eyebrow, set in as far as the links below it, so its text lines up
+ * with theirs and with the column edge.
+ */
 .site-toc-name {
-    margin: 0 0 var(--dk-space-2);
+    margin-bottom: var(--dk-space-2);
     padding-inline: var(--dk-space-3);
-    color: var(--dk-muted);
-    font-size: var(--dk-text-caption);
-    font-weight: var(--dk-weight-strong);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
 }
 
 .site-toc ul {
@@ -706,15 +689,6 @@ body > .dk-strip .dk-strip-tools {
     border-radius: var(--dk-radius);
     background: var(--dk-surface);
     font-size: var(--dk-text-small);
-}
-
-.site-preview-switch {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--dk-accent);
-    font: inherit;
-    text-decoration: underline;
 }
 
 /*
@@ -1024,26 +998,13 @@ body > .dk-strip .dk-strip-tools {
     border-bottom: 1px solid var(--dk-line);
 }
 
-.site-code-bar [role='tablist'] {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--dk-space-1);
-}
-
-.site-code-tab {
-    min-height: var(--dk-strip);
-    padding: 0 var(--dk-space-3);
-    border: 0;
-    border-bottom: 2px solid transparent;
-    background: none;
-    color: var(--dk-muted);
-    font: inherit;
-    cursor: pointer;
-}
-
-.site-code-tab[aria-selected='true'] {
-    border-bottom-color: var(--dk-accent);
-    color: var(--dk-fg);
+/*
+ * The tabs are the kit's, whose row carries a rule of its own, so in the bar the row's rule is
+ * dropped and the row sits a pixel down, so the chosen tab's line lands on the bar's rule.
+ */
+.site-code-bar > .dk-tabs {
+    margin-bottom: -1px;
+    border-bottom-color: transparent;
 }
 
 .site-code-bar + .site-code-panel .dk-code,
@@ -1106,26 +1067,13 @@ body > .dk-strip .dk-strip-tools {
 }
 
 /*
- * In forced colors every edge takes one color, so the chosen code tab's underline no longer marks
- * it. So it takes the system's own colors for a selection, as the kit's theme switch and current
- * pill do.
- */
-@media (forced-colors: active) {
-    .site-code-tab[aria-selected='true'] {
-        background-color: Highlight;
-        color: HighlightText;
-    }
-}
-
-/*
  * The site's one breakpoint, the kit's: at 48rem wide or less, a phone, every target grows to a
  * thumb's size and each state's copies stack. Wider, the copies share the column, and the strip's
  * links and the theme switch share one row.
  */
 @media (max-width: 48rem) {
     .site-brand,
-    .site-toc a,
-    .site-code-tab {
+    .site-toc a {
         min-height: var(--dk-target);
     }
 
