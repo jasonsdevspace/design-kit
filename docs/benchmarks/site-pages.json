@@ -1,69 +1,69 @@
 {
     "recorded": {
-        "date": "2026-11-09",
-        "commit": "c18ec3c",
-        "machine": "Apple M2 Max, 12 cores",
+        "date": "2026-11-10",
+        "commit": "11f3d66",
+        "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "tools": {
         "lighthouse": "13.5.0",
         "chrome": "156",
-        "kit": "0.2.1"
+        "kit": "0.3.0"
     },
     "pages": [
         {
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 910.2,
+            "paint": 915.9,
             "shift": 0,
-            "bytes": 13007,
-            "requests": 3
+            "bytes": 15132,
+            "requests": 4
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 914.3,
+            "paint": 924.2,
             "shift": 0,
-            "bytes": 16032,
-            "requests": 3
+            "bytes": 18154,
+            "requests": 4
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 913,
+            "paint": 925,
             "shift": 0,
-            "bytes": 16310,
-            "requests": 3
+            "bytes": 18421,
+            "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 911.9,
+            "paint": 923.6,
             "shift": 0,
-            "bytes": 14182,
-            "requests": 3
+            "bytes": 16305,
+            "requests": 4
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 913,
+            "paint": 933.2,
             "shift": 0,
-            "bytes": 14414,
-            "requests": 3
+            "bytes": 16541,
+            "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 907.3,
+            "paint": 917.1,
             "shift": 0,
-            "bytes": 13758,
-            "requests": 3
+            "bytes": 15804,
+            "requests": 4
         }
     ]
 }
