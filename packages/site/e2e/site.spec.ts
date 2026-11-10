@@ -670,14 +670,11 @@ test.describe('the tokens page', () => {
                 };
             })
         );
-        expect(steps.map(({ name }) => name)).toEqual([
-            '--dk-space-1',
-            '--dk-space-2',
-            '--dk-space-3',
-            '--dk-space-4',
-            '--dk-space-5',
-            '--dk-space-6',
-        ]);
+        // The steps in order from the first, however many the pinned sheet declares.
+        expect(steps.length).toBeGreaterThanOrEqual(6);
+        expect(steps.map(({ name }) => name)).toEqual(
+            steps.map((_step, index) => `--dk-space-${String(index + 1)}`)
+        );
         expect(steps.filter(({ sized, value }) => !sized || !/rem$/.test(value))).toEqual([]);
     });
 

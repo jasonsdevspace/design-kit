@@ -67,6 +67,17 @@ test('sets a button and a field level, at the field height wide and the target o
     }
 });
 
+test("starts a field's text where a button's label starts, at either width", async ({ page }) => {
+    for (const width of [1280, 360]) {
+        await open(page, { width });
+        const inset = (locator: Locator) => style(locator, 'padding-left', 'border-left-width');
+        const button = await inset(page.getByRole('button', { name: 'Filters' }));
+        expect(await inset(page.getByLabel('Search words')), `${String(width)}px`).toEqual(button);
+        expect(await inset(page.getByLabel('Sort by')), `${String(width)}px`).toEqual(button);
+        expect(button).toEqual({ 'padding-left': '12px', 'border-left-width': '1px' });
+    }
+});
+
 test('draws text in a field at 16px or more on a phone, so tapping it does not zoom', async ({
     page,
 }) => {

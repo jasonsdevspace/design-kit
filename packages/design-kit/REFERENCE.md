@@ -31,18 +31,19 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
 | `--dk-warning`, `--dk-warning-bg`                                | what needs care before it goes wrong, and its ground         |
 | `--dk-scrim`                                                     | what dims the page behind a dialog                           |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                             |
+| `--dk-space-1` to `--dk-space-8`                                 | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                       |
 | `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
 | `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                              |
 | `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                              |
 | `--dk-text-code`                                                 | 0.9em, a step under the text around it                       |
 | `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                  |
 | `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                             |
+| `--dk-tracking-caps`                                             | 0.06em, the tracking of a label in caps                      |
 | `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                            |
 | `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                       |
 | `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                          |
 | `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                  |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem    |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.75rem   |
 | `--dk-target`                                                    | 2.75rem, the touch target on a phone                         |
 | `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches               |
 | `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                              |
@@ -418,6 +419,19 @@ at the heading's weight, which forced colors keep. A link pill is the field heig
 a phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
 with VoiceOver drops a list's meaning when its markers are gone. Tabs that switch what one part of a
 page shows are not pills, since they take the tab role and its keys.
+
+### Eyebrows
+
+```html
+<p class="dk-eyebrow">Theme</p>
+<h2>Light and dark</h2>
+```
+
+An eyebrow is a small label in caps over a heading or a group, such as a hero's theme or a list's
+name, in the muted text at the caption size and the heading's weight, tracked by
+`--dk-tracking-caps` so the caps read at that size. It is text, not a heading, so it adds nothing
+to the page's outline, and it has no margin of its own, so the page sets its distance from what it
+sits over.
 
 ### React components
 

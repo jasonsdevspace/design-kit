@@ -27,7 +27,7 @@ describe('the tokens', () => {
 
     it('declares the scale a component is built from', () => {
         const scale = [
-            ...[1, 2, 3, 4, 5, 6].map((step) => `space-${String(step)}`),
+            ...[1, 2, 3, 4, 5, 6, 7, 8].map((step) => `space-${String(step)}`),
             ...['caption', 'small', 'body', 'lead', 'title', 'heading', 'display', 'code'].map(
                 (step) => `text-${step}`
             ),
@@ -36,6 +36,7 @@ describe('the tokens', () => {
             'weight-normal',
             'weight-medium',
             'weight-strong',
+            'tracking-caps',
             'radius-small',
             'radius',
             'radius-large',

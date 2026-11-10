@@ -74,6 +74,9 @@
         --dk-space-4: 1rem;
         --dk-space-5: 1.5rem;
         --dk-space-6: 2rem;
+        /* Between sections, so a page does not invent its own. */
+        --dk-space-7: 3rem;
+        --dk-space-8: 4rem;
 
         /* Type. */
         --dk-text-caption: 0.85rem;
@@ -91,6 +94,8 @@
         --dk-weight-medium: 500;
         /* Every heading's weight. */
         --dk-weight-strong: 600;
+        /* The tracking of a label in caps, which read tight at a small size without it. */
+        --dk-tracking-caps: 0.06em;
         --dk-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         --dk-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
@@ -105,9 +110,12 @@
         --dk-ring-width: 2px;
         --dk-ring-offset: 2px;
 
-        /* A field a visitor types into or picks from, and anything a thumb presses on a phone. */
+        /*
+         * A field a visitor types into or picks from, and anything a thumb presses on a phone. The
+         * inline padding is a button's, so a field's text starts where a button's label does.
+         */
         --dk-field-height: 2.25rem;
-        --dk-field-inline: 0.5rem;
+        --dk-field-inline: 0.75rem;
         --dk-target: 2.75rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
