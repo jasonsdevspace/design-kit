@@ -97,6 +97,39 @@ test('makes each choice the field height tall, and a thumb wide and tall on a ph
     }
 });
 
+/** Where each of the switch's choices sits against the switch's own box, and how far it scrolls. */
+const switchFit = (page: Page) =>
+    page.locator('.dk-theme-switch').evaluate((group) => {
+        const room = group.getBoundingClientRect();
+        const choices = [...group.querySelectorAll('.dk-theme-switch-choice')].map((choice) => {
+            const box = choice.getBoundingClientRect();
+            return {
+                inside: box.left >= room.left - 0.5 && box.right <= room.right + 0.5,
+                top: Math.round(box.top),
+            };
+        });
+        return { choices, scrolls: group.scrollWidth > group.clientWidth };
+    });
+
+test('wraps its choices in a narrow column at a large text size, rather than scroll them away', async ({
+    page,
+}) => {
+    // A 320px screen with a 20px gutter, and the browser's text at twice the usual size.
+    await open(page, { width: 320, css: 'html { font-size: 200%; } main { width: 280px; }' });
+    const { choices, scrolls } = await switchFit(page);
+    expect(scrolls).toBe(false);
+    expect(choices.map(({ inside }) => inside)).toEqual([true, true, true]);
+});
+
+test('keeps its choices on one row at the usual text size, at every width', async ({ page }) => {
+    for (const width of [320, 375, 768, 1280]) {
+        await open(page, { width, css: 'main { padding-inline: 20px; }' });
+        const { choices, scrolls } = await switchFit(page);
+        expect(scrolls, `${width}px`).toBe(false);
+        expect(new Set(choices.map(({ top }) => top)).size, `${width}px`).toBe(1);
+    }
+});
+
 test('draws a chip that never reads as a control, and marks the current page by weight', async ({
     page,
 }) => {
