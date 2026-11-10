@@ -199,22 +199,23 @@ for (const [where, own] of [
             const style = getComputedStyle(document.querySelector('.fade') ?? document.body);
             return { duration: style.transitionDuration, delay: style.transitionDelay };
         });
-        expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
+        expect(timing).toEqual({ duration: '1e-05s', delay: '1s' });
     });
 }
 
-test("keeps a page's animation delay for a visitor who wants less motion, and cuts the motion", async ({
+test("keeps a page's delays for a visitor who wants less motion, and cuts the motion", async ({
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    // A waiting line shown only once a load has taken a moment: a zero length animation whose
-    // delay is the timer, as ShelfLens's host pages draw one.
+    // A waiting line shown only once a load has taken a moment, timed by a delay with no motion, as
+    // ShelfLens's host pages draw one, and a spinner whose motion is cut but whose delay holds.
     await open(
         page,
         'light',
-        '<p class="waiting">Waiting</p><p class="spin">Spins</p>',
-        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 0.4s both }' +
-            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 1s infinite }'
+        '<p class="waiting">Waiting</p><p class="spin">Spins</p><p class="fade">Fades</p>',
+        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 2s both }' +
+            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 1s infinite }' +
+            '.fade { opacity: 0; transition: opacity 0s 2s } .fade.shown { opacity: 1 }'
     );
     const timing = await page.evaluate(() =>
         ['.waiting', '.spin'].map((name) => {
@@ -223,15 +224,30 @@ test("keeps a page's animation delay for a visitor who wants less motion, and cu
         })
     );
     expect(timing).toEqual([
-        ['1e-05s', '0.4s', '1'],
+        ['1e-05s', '2s', '1'],
         ['1e-05s', '1s', '1'],
     ]);
-    // The line is still hidden while its delay runs, and shows once it has passed.
-    const shown = () =>
-        page.evaluate(() => getComputedStyle(document.querySelector('.waiting')!).visibility);
-    expect(await shown()).toBe('hidden');
-    await page.waitForTimeout(500);
-    expect(await shown()).toBe('visible');
+    // The line is hidden while its delay runs, and shows once it has passed.
+    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'hidden');
+    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'visible', { timeout: 6000 });
+    // The spinner comes to rest once its delay has passed, having played its cut once.
+    await expect
+        .poll(
+            () =>
+                page.evaluate(() =>
+                    document
+                        .querySelector('.spin')
+                        ?.getAnimations()
+                        .every((animation) => animation.playState === 'finished')
+                ),
+            { timeout: 6000 }
+        )
+        .toBe(true);
+    // A transition's delay holds too, so a timer written as one still waits.
+    const fade = page.locator('.fade');
+    await fade.evaluate((element) => element.classList.add('shown'));
+    await expect(fade).toHaveCSS('opacity', '0');
+    await expect(fade).toHaveCSS('opacity', '1', { timeout: 6000 });
 });
 
 test("gives a page's ::before and ::after the border box, as every element has", async ({
@@ -290,9 +306,9 @@ for (const [where, own] of [
             });
         });
         expect(timing).toEqual([
-            ['1e-05s', '0s', '1'],
-            ['1e-05s', '0s', '1'],
-            ['1e-05s', '0s', '1'],
+            ['1e-05s', '1s', '1'],
+            ['1e-05s', '1s', '1'],
+            ['1e-05s', '1s', '1'],
         ]);
     });
 }

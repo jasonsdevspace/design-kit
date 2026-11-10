@@ -846,13 +846,15 @@ To put the kit's layer over the page's, before the kit's sheets load:
 @layer page, dk;
 ```
 
-For a visitor who asks for less motion, the reduced-motion rule in `base.css` plays every animation
-once, cuts animations and transitions to a hundredth of a millisecond, and turns smooth scrolling
-into a jump. An animation's delay is kept, since it moves nothing and a page may use it as a timer,
-such as a waiting line shown only once a load has taken a moment. It is held with `!important`, since it is the visitor's choice. It wins over every
-normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer after
-the kit's. An important declaration in a `style` attribute still wins over it, as does an important
-rule in a layer the page orders before the kit's.
+For a visitor who asks for less motion, the reduced-motion rule in `base.css` cuts every animation
+and transition to a hundredth of a millisecond, plays every animation once, and turns smooth
+scrolling into a jump. A delay before either is kept, since a delay moves nothing and a page may use
+one as a timer, such as a waiting line shown only once a load has taken a moment. Entrances a page
+staggers by delay come in sequence for this visitor, each at once, so a page that wants them
+together zeroes its own delays under the same query. The rule is held with `!important`, since it is
+the visitor's choice. It wins over every normal rule a page writes, and over an important one in a
+sheet, outside a layer or in a layer after the kit's. An important declaration in a `style`
+attribute still wins over it, as does an important rule in a layer the page orders before the kit's.
 
 Each color role holds its light and its dark value in one `light-dark()`. A page with its own
 palette sets the roles again, with both values at once. Set on `:root`, outside a layer or in one
