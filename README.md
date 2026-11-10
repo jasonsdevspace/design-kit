@@ -165,6 +165,7 @@ follow by area.
 | The strip keeps the room of switches on their way, at the height they give it at every width       | `packages/design-kit/e2e/chrome.spec.tsx` |
 | The skip link is out of sight until the keyboard reaches it, and lands on the content              | `packages/design-kit/e2e/chrome.spec.tsx` |
 | A skip link inside a positioned box stays out of sight and out of the way of a click until focused | `packages/design-kit/e2e/chrome.spec.tsx` |
+| The focused skip link is a box in forced colors, by an edge in the link's color                    | `packages/design-kit/e2e/chrome.spec.tsx` |
 | The footer's rule spans the page, and its text and the strip's links line up in the column         | `packages/design-kit/e2e/chrome.spec.tsx` |
 | The chrome's link to the current page stands apart by its weight, in each theme and forced colors  | `packages/design-kit/e2e/chrome.spec.tsx` |
 | The chrome has no axe findings in either theme, at both widths, on a demo and its explainer        | `packages/design-kit/e2e/chrome.spec.tsx` |

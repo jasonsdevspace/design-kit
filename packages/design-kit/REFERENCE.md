@@ -61,7 +61,8 @@ the markup below, which a page without React writes by hand and the components i
 
 The skip link is the keyboard's first stop, out of sight until it takes focus, and then at the
 column's inset, where the strip's links start. Following it moves focus to the page's main content,
-which has a tabindex of -1 so it can take focus.
+which has a tabindex of -1 so it can take focus. Shown, it has a transparent edge, which forced
+colors draw in the link's color, so a page that resets the link's border loses its box there.
 
 <!-- example: skipLink -->
 
