@@ -131,9 +131,6 @@ export const controlStates: ReactElement = (
                 Open the demo
             </Button>
             <Button text>Show the markup</Button>
-            <Button text pressed>
-                Markup shown
-            </Button>
             <Button text off>
                 No markup
             </Button>

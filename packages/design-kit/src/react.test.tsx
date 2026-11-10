@@ -209,7 +209,7 @@ describe('the button', () => {
         ).toBe('<button type="button" class="dk-button dk-button-accent wide">Save rule</button>');
     });
 
-    it('draws a large button and a text button by a class each, and a text toggle too', () => {
+    it('draws a large button and a text button by a class each', () => {
         expect(renderToStaticMarkup(<Button large>Try it</Button>)).toBe(
             '<button type="button" class="dk-button dk-button-large">Try it</button>'
         );
@@ -223,14 +223,7 @@ describe('the button', () => {
                 </Button>
             )
         ).toContain('class="dk-button dk-button-accent dk-button-large wide"');
-        expect(
-            renderToStaticMarkup(
-                <Button text pressed>
-                    Shown
-                </Button>
-            )
-        ).toContain('class="dk-button dk-button-text" aria-pressed="true"');
-        for (const nothing of [false, undefined]) {
+        for (const nothing of [false, undefined] as const) {
             expect(
                 renderToStaticMarkup(
                     <Button large={nothing} text={nothing}>
@@ -297,6 +290,12 @@ describe('the button', () => {
         // @ts-expect-error The one action a view leads with is not drawn as a link.
         const linked = <Button accent text children="Go" />;
         expect(renderToStaticMarkup(linked)).toBeTruthy();
+        // @ts-expect-error A text button is not a toggle.
+        const toggled = <Button text pressed children="Go" />;
+        expect(renderToStaticMarkup(toggled)).toBeTruthy();
+        // @ts-expect-error A text button is not large.
+        const grown = <Button text large children="Go" />;
+        expect(renderToStaticMarkup(grown)).toBeTruthy();
     });
 });
 

@@ -12,10 +12,9 @@ import { Callout } from '../src/react.js';
  * and the kit's own sheets: each state told apart by more than its color, forced colors included,
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, a large button at the target at every width and a text button drawn as a link at the
- * button's height, an off button the keyboard still reaches, the field's label, hint and error read as its
- * name and description, an empty live callout waiting a pixel out of the flow until it is filled,
- * and no audit
- * findings for any state in either theme.
+ * button's height, an off button the keyboard still reaches, the field's label, hint and error
+ * read as its name and description, an empty live callout waiting a pixel out of the flow until
+ * it is filled, and no audit findings for any state in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -172,7 +171,7 @@ test('keeps a pressed toggle that is off told apart from one that is not pressed
     expect(off['box-shadow']).toBe('none');
 });
 
-test('draws a large button at the target at every width, with wider padding and the body text', async ({
+test('draws a large button at the target at every width, with wider inline padding and the body text', async ({
     page,
 }) => {
     for (const width of [1280, 360]) {
@@ -203,22 +202,22 @@ test("draws a text button as a link, at the button's height, with its states", a
         expect(
             await style(
                 text,
-                'border-top-color',
+                'border-top-width',
                 'padding-left',
+                'min-width',
                 'background-color',
                 'color',
                 'text-decoration-line'
-            )
+            ),
+            `${String(width)}px`
         ).toEqual({
-            'border-top-color': 'rgba(0, 0, 0, 0)',
+            'border-top-width': '0px',
             'padding-left': '0px',
+            'min-width': '0px',
             'background-color': 'rgba(0, 0, 0, 0)',
             color: 'rgb(31, 79, 216)',
             'text-decoration-line': 'underline',
         });
-        // No wider than its words, since it has no minimum width.
-        const box = await text.boundingBox();
-        expect(box?.width ?? 0, `${String(width)}px`).toBeLessThan(tall * 4);
     }
     // Pointed at, the underline thickens, since there is no edge to color.
     const text = page.getByRole('button', { name: 'Show the markup' });
@@ -229,16 +228,24 @@ test("draws a text button as a link, at the button's height, with its states", a
                 (await style(text, 'text-decoration-thickness'))['text-decoration-thickness']
         )
         .toBe('2px');
-    // Pressed, it takes the highlight as a toggle does, and off, it keeps its underline in the
-    // muted text with no edge.
-    const shown = page.getByRole('button', { name: 'Markup shown', pressed: true });
-    expect((await style(shown, 'background-color'))['background-color']).toBe('rgb(227, 234, 251)');
+    // Off, it keeps its underline in the muted text with no edge, and takes no hover.
     const none = page.getByRole('button', { name: 'No markup' });
     await expect(none).toBeDisabled();
-    expect(await style(none, 'color', 'text-decoration-line', 'border-top-color')).toEqual({
+    await none.hover();
+    await page.waitForTimeout(300);
+    expect(
+        await style(
+            none,
+            'color',
+            'text-decoration-line',
+            'text-decoration-thickness',
+            'border-top-width'
+        )
+    ).toEqual({
         color: 'rgb(92, 92, 92)',
         'text-decoration-line': 'underline',
-        'border-top-color': 'rgba(0, 0, 0, 0)',
+        'text-decoration-thickness': 'auto',
+        'border-top-width': '0px',
     });
 });
 
@@ -425,15 +432,15 @@ test.describe('in forced colors', () => {
         expect(await style(locked, 'border-top-color')).not.toEqual(
             await style(loose, 'border-top-color')
         );
-        // A text button keeps its underline, which is what tells it from the text around it.
+        // A text button keeps its underline, which is what tells it from the text around it, and
+        // takes no edge, which the system would paint.
         expect(
-            (
-                await style(
-                    page.getByRole('button', { name: 'Show the markup' }),
-                    'text-decoration-line'
-                )
-            )['text-decoration-line']
-        ).toBe('underline');
+            await style(
+                page.getByRole('button', { name: 'Show the markup' }),
+                'text-decoration-line',
+                'border-top-width'
+            )
+        ).toEqual({ 'text-decoration-line': 'underline', 'border-top-width': '0px' });
         // The select's own arrow comes back, since the drawn one is a background.
         expect((await style(page.getByLabel('Sort by'), 'appearance')).appearance).toBe('auto');
         // Each callout's ground is gone, so its edge marks where it starts and ends.
