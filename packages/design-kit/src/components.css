@@ -268,6 +268,42 @@
     }
 
     /*
+     * A large button, for the one action a page leads with where a bigger target reads as the way
+     * in: a thumb's target tall at every width, with wider inline padding and the body text size.
+     */
+    :where(.dk-button-large) {
+        min-height: var(--dk-target);
+        min-width: var(--dk-target);
+        padding-inline: var(--dk-space-4);
+        font-size: var(--dk-text-body);
+    }
+
+    /*
+     * A text button, drawn as a link beside a block or on a line of its own: no edge, no ground, no
+     * inline padding and no minimum width, in the accent and underlined, at the size of the text
+     * around it. It keeps the button's height, so its target holds where a link's would not, which
+     * is why it sits beside a block rather than in running text, whose line it would push taller.
+     * Pointed at, it has no edge to color, so the underline thickens as a link's would, by a
+     * measure of the text so it grows with it. It is never a toggle, as the sites' text buttons are
+     * not, so the pressed look never has to fit words with no padding around them.
+     */
+    :where(.dk-button-text) {
+        min-width: 0;
+        padding-inline: 0;
+        border: 0;
+        color: var(--dk-accent);
+        font-size: inherit;
+        line-height: inherit;
+        text-decoration: underline;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-text:hover) {
+            text-decoration-thickness: 0.125em;
+        }
+    }
+
+    /*
      * A toggle that is on, a button whose panel is open, and the theme switch's chosen word, on the
      * highlight with an edge twice as thick in the accent and its words in the page's text, the
      * accent button's included. The highlight alone is close to the page's own ground, so the
@@ -297,6 +333,15 @@
         font-weight: var(--dk-weight-normal);
         text-decoration: none;
         cursor: default;
+    }
+
+    /*
+     * An off text button keeps its underline, which is what tells it from the words around it, at
+     * its resting thickness under a pointer, since off takes no hover.
+     */
+    :where(.dk-button-text:disabled, .dk-button-text[aria-disabled='true']) {
+        text-decoration: underline;
+        text-decoration-thickness: auto;
     }
 
     /* An off toggle that is on keeps its thicker edge, in the line's color, so it still tells. */
@@ -571,6 +616,14 @@
 
         :where(.dk-button, .dk-choice) {
             min-width: var(--dk-target);
+        }
+
+        /*
+         * A text button keeps no minimum width here either, since the phone rule above comes
+         * later in the sheet than its own and would win by its order.
+         */
+        :where(.dk-button-text) {
+            min-width: 0;
         }
     }
 

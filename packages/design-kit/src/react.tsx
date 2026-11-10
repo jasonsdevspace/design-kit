@@ -179,20 +179,42 @@ type NativeButton = Omit<
 >;
 
 /**
- * A button's own props: the accent for the one action a view leads with, `pressed` for a toggle
- * that stands alone, and `off`, beside a `<button>`'s own, its `ref` among them, which holds the
- * button drawn for a page that moves focus to it. The accent is never a toggle, so the two do not
- * go together.
+ * A button's own props: the accent for the one action a view leads with, `large` for a bigger
+ * target, `text` for a button drawn as a link, `pressed` for a toggle that stands alone, and
+ * `off`, beside a `<button>`'s own, its `ref` among them, which holds the button drawn for a page
+ * that moves focus to it. The accent is never a toggle and never a text button, and a text button
+ * is never a toggle and never large, so none of those go together.
  */
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
     readonly off?: boolean | undefined;
 } & (
-        | { readonly accent: true; readonly pressed?: undefined }
+        | {
+              /** The one action a view leads with, filled in the accent. */
+              readonly accent?: boolean | undefined;
+              readonly pressed?: undefined;
+              readonly text?: false | undefined;
+              /**
+               * A thumb's target tall at every width, with wider inline padding and the body text
+               * size.
+               */
+              readonly large?: boolean | undefined;
+          }
         | {
               readonly accent?: false | undefined;
               /** Whether the toggle is on. False still marks it a toggle, undefined an action. */
               readonly pressed?: boolean | undefined;
+              readonly text?: false | undefined;
+              readonly large?: boolean | undefined;
+          }
+        | {
+              readonly accent?: false | undefined;
+              readonly pressed?: undefined;
+              /**
+               * Drawn as a link, with no edge and no inline padding, in the accent and underlined.
+               */
+              readonly text: true;
+              readonly large?: undefined;
           }
     );
 
@@ -204,6 +226,8 @@ export type ButtonProps = NativeButton & {
  */
 export const Button = ({
     accent,
+    large,
+    text,
     pressed,
     off = false,
     type = 'button',
@@ -215,7 +239,13 @@ export const Button = ({
     <button
         {...native}
         type={type}
-        className={spaced('dk-button', accent === true && 'dk-button-accent', className)}
+        className={spaced(
+            'dk-button',
+            accent === true && 'dk-button-accent',
+            large === true && 'dk-button-large',
+            text === true && 'dk-button-text',
+            className
+        )}
         aria-pressed={pressed}
         aria-disabled={off ? true : undefined}
         onClick={

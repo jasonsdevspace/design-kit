@@ -246,6 +246,8 @@ explains.
 ```html
 <button type="button" class="dk-button">Filters</button>
 <button type="button" class="dk-button dk-button-accent">Save rule</button>
+<button type="button" class="dk-button dk-button-large">Try it with your own products</button>
+<button type="button" class="dk-button dk-button-text">Show the markup</button>
 <button type="button" class="dk-button" aria-pressed="true">Members only</button>
 <button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
     Previous
@@ -254,8 +256,12 @@ explains.
 ```
 
 A button is `type="button"` unless the page gives it another type, so it never submits a form by
-surprise. `dk-button-accent` fills the one action a view leads with in the accent, and an accent
-button is never a toggle. A link with the class looks the same as a button.
+surprise, and a link with `dk-button` looks the same as a button. `dk-button-accent` fills the one
+action a view leads with in the accent, and an accent button is never a toggle. `dk-button-large` is
+a bigger target for the action a page leads with, such as the way into a demo, with or without the
+accent. `dk-button-text` draws a button as a link, for an action that sits beside a block or on a
+line of its own, such as showing the markup under a demo. It is never the accent button, never a
+toggle and never large.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
@@ -278,14 +284,19 @@ a press shows the errors rather than doing nothing.
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
-takes the ground of whatever it sits on, a callout included. Where a pointer can hover, the edge
-turns to the focus color under it, and the accent button underlines its words instead. Pressed is the
-highlight with an edge twice as thick in the accent, and its words in the page's text, an accent
-button's included. Off is the muted text on no ground with an edge in the line color, rather than a
-fade, so its words keep a ratio the palette measures. An off toggle that is on keeps the thicker
-edge, in the line color. In forced colors a pressed button takes the system's `Highlight`, and an
-off one takes `GrayText` on the page's ground, accent or not. An off toggle that is on keeps an edge
-in `Highlight`.
+takes the ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every
+width, with wider inline padding and the body text size. A text button has no edge, no inline
+padding and no minimum width, in the accent and underlined at the size of the text around it, and
+keeps the button's height, so its target holds, which is why it sits beside a block rather than in
+running text, whose line it would push taller. Pointed at, its underline thickens, since it has no
+edge to color. Off, it keeps its underline, in the muted text and still with no edge. Where a
+pointer can hover, the edge turns to the focus color under it, and the accent button underlines its
+words instead. Pressed is the highlight with an edge twice as thick in the accent, and its words in
+the page's text, an accent button's included. Off is the muted text on no ground with an edge in the
+line color, rather than a fade, so its words keep a ratio the palette measures. An off toggle that
+is on keeps the thicker edge, in the line color. In forced colors a pressed button takes the
+system's `Highlight`, and an off one takes `GrayText` on the page's ground, accent or not. An off
+toggle that is on keeps an edge in `Highlight`.
 
 </details>
 
@@ -589,12 +600,14 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 
 **`Button` props**
 
-| `Button`  | Default    | What it does                                                           |
-| --------- | ---------- | ---------------------------------------------------------------------- |
-| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it together with `pressed` |
-| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action   |
-| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`           |
-| `type`    | `'button'` | The button's type                                                      |
+| `Button`  | Default    | What it does                                                                     |
+| --------- | ---------- | -------------------------------------------------------------------------------- |
+| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`          |
+| `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                        |
+| `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed` or `large` |
+| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action             |
+| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                     |
+| `type`    | `'button'` | The button's type                                                                |
 
 Every other prop goes to the `<button>`, `ref` and `className` included, except `style`, `disabled`,
 `aria-disabled` and `aria-pressed`. A click on an off button calls `preventDefault()`, so a submit
