@@ -97,6 +97,67 @@ test('makes each choice the field height tall, and a thumb wide and tall on a ph
     }
 });
 
+/**
+ * Where the switch's name and each of its choices sit against the switch's own box, how many rows
+ * they take, and whether the switch or the page scrolls sideways.
+ */
+const switchFit = (page: Page, within = '') =>
+    page.locator(`${within} .dk-theme-switch`.trim()).evaluate((group) => {
+        const room = group.getBoundingClientRect();
+        const parts = [...group.querySelectorAll('.dk-theme-switch-name, .dk-theme-switch-choice')];
+        const boxes = parts.map((part) => part.getBoundingClientRect());
+        const page = document.documentElement;
+        return {
+            inside: boxes.map(
+                (box) => box.left >= room.left - 0.5 && box.right <= room.right + 0.5
+            ),
+            // Counted by their middles, since the name is shorter than a choice and centered beside it.
+            rows: new Set(boxes.map((box) => Math.round(box.top + box.height / 2))).size,
+            scrolls: group.scrollWidth > group.clientWidth,
+            pageScrolls: page.scrollWidth > page.clientWidth,
+        };
+    });
+
+test('wraps its choices in a narrow column at a large text size, rather than scroll them away', async ({
+    page,
+}) => {
+    // A 320px screen with a 20px gutter, and the browser's text at twice the usual size.
+    await open(page, { width: 320, css: 'html { font-size: 200%; } main { width: 280px; }' });
+    const fit = await switchFit(page);
+    expect(fit.rows).toBeGreaterThan(1);
+    expect(fit.inside).toEqual([true, true, true, true]);
+    expect(fit.scrolls).toBe(false);
+    expect(fit.pageScrolls).toBe(false);
+});
+
+test('keeps its name and choices on one row at the usual text size, phone to wide', async ({
+    page,
+}) => {
+    for (const width of [320, 375, 400, 700, 768, 1280]) {
+        await open(page, { width, css: 'main { padding-inline: 20px; }' });
+        const fit = await switchFit(page);
+        expect(fit.rows, `${String(width)}px`).toBe(1);
+        expect(fit.scrolls, `${String(width)}px`).toBe(false);
+        expect(fit.pageScrolls, `${String(width)}px`).toBe(false);
+    }
+});
+
+test("keeps one row in a demo's strip, whose room holds one row before it comes", async ({
+    page,
+}) => {
+    await open(page, { width: 320, css: 'html { font-size: 200%; } main { width: 280px; }' });
+    // The switch moved into a strip's section for switches, as a demo's script puts it there.
+    await page.locator('.dk-theme-switch').evaluate((group) => {
+        const tools = document.createElement('section');
+        tools.className = 'dk-strip-tools';
+        group.replaceWith(tools);
+        tools.append(group);
+    });
+    const fit = await switchFit(page, '.dk-strip-tools');
+    expect(fit.rows).toBe(1);
+    expect(fit.pageScrolls).toBe(false);
+});
+
 test('draws a chip that never reads as a control, and marks the current page by weight', async ({
     page,
 }) => {

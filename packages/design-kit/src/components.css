@@ -756,21 +756,29 @@
      * The theme switch: a group named Theme with three choices, System, Light and Dark, each a
      * native radio under its word. The chosen word is marked by an edge twice as thick, in the
      * accent, drawn by the pressed button's own rule, since the highlight alone stands too close to
-     * the page. The
-     * radio fills its word's target, so the whole word takes a press, and the edge sits inside the
-     * word, so no word moves as the choice does. On a phone each choice is a thumb's width.
+     * the page. The radio fills its word's target, so the whole word takes a press, and the edge
+     * sits inside the word, so no word moves as the choice does. On a phone each choice is a
+     * thumb's width. Where its column is too narrow for one row, as at a large text size on a
+     * phone, the choices wrap onto as many rows as they need rather than scroll out of sight, and
+     * only a word wider than the column on its own scrolls. In a demo's strip, which keeps one
+     * row of room for switches on their way, it keeps one row and scrolls, so nothing below the
+     * strip moves as it comes.
      */
     :where(.dk-theme-switch) {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 0 var(--dk-space-1);
+        gap: var(--dk-space-1);
         min-width: 0;
         max-width: 100%;
         overflow-x: auto;
         padding-inline: calc(var(--dk-ring-width) + var(--dk-ring-offset));
         font-size: var(--dk-text-small);
         line-height: var(--dk-leading-tight);
+    }
+
+    :where(.dk-strip-tools .dk-theme-switch) {
+        flex-wrap: nowrap;
     }
 
     :where(.dk-theme-switch-name) {
