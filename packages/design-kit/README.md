@@ -90,8 +90,9 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 | `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`                              |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
-`SelectField`, `Callout`, `ThemeSwitch`, `CopyButton` and `CopyStatus`, the types `ButtonProps`,
-`InputFieldProps`, `SelectFieldProps`, `CalloutProps` and `CalloutTone`, and the URLs the chrome
+`SelectField`, `ChoiceField`, `Callout`, `ThemeSwitch`, `CopyButton` and `CopyStatus`, the types
+`ButtonProps`, `InputFieldProps`, `SelectFieldProps`, `ChoiceFieldProps`, `Choice`, `CalloutProps`
+and `CalloutTone`, and the URLs the chrome
 links, `PORTFOLIO_URL` and `GITHUB_PROFILE_URL`, with `PORTFOLIO_WORK_URL`, the portfolio's list of
 work. The `vite` entry runs in Node, and also exports `THEME_PLACEHOLDER`, the marker
 `<!-- theme-script -->`. Every token's value, each color in both themes, and the contrast of each

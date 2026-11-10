@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
     Button,
     Callout,
+    ChoiceField,
     DemoFooter,
     GITHUB_PROFILE_URL,
     InputField,
@@ -403,6 +404,91 @@ describe('a field', () => {
                 ' aria-invalid="true"><option value="">Choose an order</option>' +
                 '<option value="price">Price</option></select></div>'
         );
+    });
+});
+
+describe('a choice field', () => {
+    const CHOICES = [
+        { value: 'pin', label: 'Pin' },
+        { value: 'hide', label: 'Hide' },
+    ] as const;
+    const rule = (props: Partial<Parameters<typeof ChoiceField>[0]> = {}) =>
+        renderToStaticMarkup(
+            <ChoiceField id="rule" name="rule" label="Rule" choices={CHOICES} {...props} />
+        );
+
+    it('draws a fieldset with its label as the legend, and a label of a radio and its word for each choice', () => {
+        expect(rule()).toBe(
+            '<fieldset class="dk-field dk-choice-field" id="rule">' +
+                '<legend class="dk-field-label">Rule</legend><div class="dk-choices">' +
+                '<label class="dk-choice"><input type="radio" name="rule" value="pin"/><span>Pin</span></label>' +
+                '<label class="dk-choice"><input type="radio" name="rule" value="hide"/><span>Hide</span></label>' +
+                '</div></fieldset>'
+        );
+    });
+
+    it('describes the set by its hint, then its error, and marks the first control invalid only with one', () => {
+        expect(rule({ hint: 'Applies to every search' })).toContain(
+            '<fieldset class="dk-field dk-choice-field" id="rule" aria-describedby="rule-hint">' +
+                '<legend class="dk-field-label">Rule</legend>' +
+                '<p class="dk-field-hint" id="rule-hint">Applies to every search</p>'
+        );
+        const wrong = rule({ hint: 'Applies to every search', error: 'Choose one' });
+        expect(wrong).toContain('aria-describedby="rule-hint rule-error"');
+        expect(wrong).toContain(
+            '<p class="dk-field-error" id="rule-error">' +
+                '<span class="dk-visually-hidden">Error: </span>Choose one</p>'
+        );
+        expect(wrong).toContain(
+            '<input type="radio" aria-invalid="true" name="rule" value="pin"/>'
+        );
+        expect(wrong).toContain('<input type="radio" name="rule" value="hide"/>');
+        expect(rule()).not.toContain('aria-invalid');
+        expect(rule({ error: 'Choose one', 'aria-describedby': 'moved' })).toContain(
+            'aria-describedby="rule-error moved"'
+        );
+    });
+
+    it('draws checkboxes in a row where the field asks, with a gloss after a word', () => {
+        expect(
+            rule({
+                type: 'checkbox',
+                row: true,
+                choices: [
+                    { value: 'brand', label: 'Brand', hint: 'the maker', defaultChecked: true },
+                ],
+            })
+        ).toContain(
+            '<div class="dk-choices dk-choices-row"><label class="dk-choice">' +
+                '<input type="checkbox" name="rule" checked="" value="brand"/>' +
+                '<span>Brand<span class="dk-choice-hint"> the maker</span></span></label></div>'
+        );
+    });
+
+    it("passes a choice's own props to its control, and the fieldset's to the fieldset, refs included", () => {
+        // Only a browser attaches a ref, so ref.spec.ts finds the fieldset and a control through them.
+        const control = createRef<HTMLInputElement>();
+        const set = createRef<HTMLFieldSetElement>();
+        const drawn = renderToStaticMarkup(
+            <ChoiceField
+                ref={set}
+                label="Rule"
+                name="rule"
+                className="wide"
+                choices={[{ value: 'pin', label: 'Pin', ref: control, disabled: true }]}
+            />
+        );
+        expect(drawn).toContain('<fieldset class="dk-field dk-choice-field wide" id="');
+        expect(drawn).toContain('<input type="radio" disabled="" name="rule" value="pin"/>');
+        // @ts-expect-error A choice field's ref is the fieldset drawn, not a control.
+        expect(rule({ ref: control })).toBeTruthy();
+    });
+
+    it('takes neither a style nor a value for aria-invalid of its own', () => {
+        // @ts-expect-error The kit draws markup alone, so a page styles a field by its classes.
+        expect(rule({ style: { color: 'red' } })).toBeTruthy();
+        // @ts-expect-error The first control is marked invalid by the error alone.
+        expect(rule({ 'aria-invalid': true })).toBeTruthy();
     });
 });
 

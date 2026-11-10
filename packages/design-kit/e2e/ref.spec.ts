@@ -4,9 +4,9 @@ import { expect, test } from '@playwright/test';
 import { build } from 'vite';
 
 /*
- * The kit's button and fields with a ref, drawn by React in a browser, since only a browser
- * attaches a ref and moves focus. The page is bundled from ref-page.tsx with React in it, and
- * written into the browser with the bundle as its one script.
+ * The kit's button, fields and choices with a ref, drawn by React in a browser, since only a
+ * browser attaches a ref and moves focus. The page is bundled from ref-page.tsx with React in it,
+ * and written into the browser with the bundle as its one script.
  */
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
@@ -60,4 +60,9 @@ test("moves focus to the control each field's ref holds", async ({ page }) => {
     const size = page.getByLabel('Size');
     await expect(size).toHaveClass('dk-select');
     await expect(size).toBeFocused();
+    // A choice's ref holds its control, which the set marks invalid when the error comes.
+    await page.getByRole('button', { name: 'Go to the color' }).click();
+    const red = page.getByRole('radio', { name: 'Red' });
+    await expect(red).toHaveAttribute('aria-invalid', 'true');
+    await expect(red).toBeFocused();
 });

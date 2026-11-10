@@ -234,6 +234,88 @@ test('draws an invalid control in the danger color, and the error beside the hin
     expect(await word.boundingBox()).toMatchObject({ width: 1, height: 1 });
 });
 
+/** The label around a choice's control. */
+const choiceOf = (page: Page, control: Locator) => page.locator('.dk-choice', { has: control });
+
+test('draws a choice at the field height wide and the target on a phone, lit under a pointer', async ({
+    page,
+}) => {
+    for (const [width, tall] of [
+        [1280, 36],
+        [360, 44],
+    ] as const) {
+        await open(page, { width });
+        const choice = choiceOf(page, page.getByRole('radio', { name: 'Hide' }));
+        expect(await height(choice)).toBe(tall);
+        const ground = async () => (await style(choice, 'background-color'))['background-color'];
+        expect(await ground()).toBe('rgba(0, 0, 0, 0)');
+        await choice.hover();
+        await expect.poll(ground).toBe('rgb(227, 234, 251)');
+    }
+    // A row of checkboxes shares one line where it fits.
+    await open(page);
+    const tops = await Promise.all(
+        ['Brand', 'Price', 'Color'].map(
+            async (name) =>
+                (await choiceOf(page, page.getByRole('checkbox', { name })).boundingBox())?.y
+        )
+    );
+    expect(new Set(tops).size).toBe(1);
+});
+
+test('moves and checks among radios with the arrow keys, ringing the control and lighting its word', async ({
+    page,
+}) => {
+    await open(page);
+    const hide = page.getByRole('radio', { name: 'Hide' });
+    const pin = page.getByRole('radio', { name: /^Pin/ });
+    await hide.focus();
+    await expect(hide).toBeChecked();
+    await page.keyboard.press('ArrowUp');
+    await expect(pin).toBeFocused();
+    await expect(pin).toBeChecked();
+    await expect(hide).not.toBeChecked();
+    expect(await style(pin, 'outline-style', 'outline-width')).toEqual({
+        'outline-style': 'solid',
+        'outline-width': '2px',
+    });
+    // The highlight eases in over the short duration, so it is read once it has settled.
+    await expect
+        .poll(
+            async () => (await style(choiceOf(page, pin), 'background-color'))['background-color']
+        )
+        .toBe('rgb(227, 234, 251)');
+    // A disabled choice is passed over, in the muted text with no highlight.
+    const boost = page.getByRole('radio', { name: 'Boost' });
+    await expect(boost).toBeDisabled();
+    expect((await style(choiceOf(page, boost), 'color')).color).toBe('rgb(92, 92, 92)');
+});
+
+test('reads a set by its legend, describes it by its hint or error, and marks its first control', async ({
+    page,
+}) => {
+    await open(page);
+    const rule = page.getByRole('group', { name: 'What the rule does' });
+    await expect(rule).toHaveAccessibleDescription('A rule applies to every search');
+    await expect(rule.getByRole('radio', { name: /^Pin/ })).toHaveAccessibleName(
+        'Pin to the top of the results'
+    );
+    const when = page.getByRole('group', { name: 'When' });
+    await expect(when).toHaveAccessibleDescription('Error: Choose when the rule runs');
+    const always = when.getByRole('radio', { name: 'Always' });
+    await expect(always).toHaveAttribute('aria-invalid', 'true');
+    await expect(when.getByRole('radio', { name: 'During a sale' })).not.toHaveAttribute(
+        'aria-invalid'
+    );
+    // The invalid control's line in the danger color, which gives way to the ring.
+    expect(await style(always, 'outline-style', 'outline-color')).toEqual({
+        'outline-style': 'solid',
+        'outline-color': 'rgb(179, 38, 30)',
+    });
+    await always.focus();
+    expect((await style(always, 'outline-color'))['outline-color']).toBe('rgb(31, 79, 216)');
+});
+
 test('opens no gap around an empty live callout in a grid, and keeps it for a screen reader', async ({
     page,
 }) => {
@@ -405,6 +487,14 @@ test('marks an invalid field with a dashed line in forced colors, where its red 
         const field = page.locator('.dk-input[aria-invalid="true"]').first();
         await field.focus();
         expect(await style(field, 'outline-style')).toEqual({ 'outline-style': 'solid' });
+        // The first control of a set with an error is marked the same way.
+        const choice = page.locator('.dk-choice > input[aria-invalid="true"]').first();
+        expect(await style(choice, 'outline-style', 'outline-color')).toEqual({
+            'outline-style': 'dashed',
+            'outline-color': text,
+        });
+        await choice.focus();
+        expect(await style(choice, 'outline-style')).toEqual({ 'outline-style': 'solid' });
     } finally {
         await context.close();
     }
