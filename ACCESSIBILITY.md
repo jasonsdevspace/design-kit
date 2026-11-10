@@ -38,7 +38,9 @@ is its CSS transformer, as the package README shows.
 
 - In Firefox 120, which lacks `:has()`, an empty live callout draws its ground and keeps its place
   in the flow until it is filled, so a grid opens its gap around it, and a label that holds a
-  checkbox or a radio shows no pointer, though the box or the dot does.
+  checkbox or a radio shows no pointer, though the box or the dot does. In a choice field there, a
+  choice the keyboard lands on lights no word, so the ring on the control is the one cue, and a
+  disabled choice keeps its word in the text color, with only the control drawn off.
 - The browser tests run only in Chromium, so the other browsers at the floor are held to it by what
   they document rather than by a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and

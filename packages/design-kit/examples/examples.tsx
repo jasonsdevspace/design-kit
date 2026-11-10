@@ -170,6 +170,9 @@ export const controlStates: ReactElement = (
             <Button text off>
                 No markup
             </Button>
+            <Button text aria-expanded>
+                Hide the markup
+            </Button>
         </div>
         <fieldset disabled>
             <legend>Closed</legend>

@@ -281,7 +281,9 @@ toggle and never large.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
-all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one.
+all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one, and a
+text button with it keeps its link look, since it has no padding around its words for the pressed
+look to fill and the open panel is the sign.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -305,7 +307,7 @@ width, with wider inline padding and the body text size. A text button has no ed
 padding and no minimum width, in the accent and underlined at the size of the text around it, and
 keeps the button's height, so its target holds, which is why it sits beside a block rather than in
 running text, whose line it would push taller. Pointed at, its underline thickens, since it has no
-edge to color. Off, it keeps its underline, in the muted text and still with no edge. Where a
+edge to color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the muted text and still with no edge. Where a
 pointer can hover, the edge turns to the focus color under it, and the accent button underlines its
 words instead. Pressed is the highlight with an edge twice as thick in the accent, and its words in
 the page's text, an accent button's included. Off is the muted text on no ground with an edge in the
@@ -405,14 +407,14 @@ would push its column.
     </p>
     <div class="dk-choices">
         <label class="dk-choice">
-            <input type="radio" name="rule" value="pin" />
+            <input type="radio" aria-describedby="rule-error" name="rule" value="pin" />
             <span>
                 Pin
                 <span class="dk-choice-hint"> to the top of the results</span>
             </span>
         </label>
         <label class="dk-choice">
-            <input type="radio" name="rule" value="hide" />
+            <input type="radio" aria-describedby="rule-error" name="rule" value="hide" />
             <span>Hide</span>
         </label>
     </div>
@@ -440,7 +442,8 @@ after the word, inside its span, which is read as part of the choice's name. The
 describe the set, through `aria-describedby` on the fieldset. A set of radios carries
 `role="radiogroup"`, and `aria-invalid="true"` on the fieldset while an error is drawn, since the
 keyboard enters a radio group at the chosen radio, wherever that is, and a radio takes no invalid
-state of its own. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
+state of its own. Each radio is described by the error as well, since a screen reader that lands on
+a radio may read nothing of its group. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
 instead. The arrow keys move and check among radios, as the browser has them, and a choice a visitor
 cannot make uses `disabled` on its control.
 

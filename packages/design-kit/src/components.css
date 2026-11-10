@@ -92,6 +92,7 @@
      * what it holds.
      */
     .dk-strip-tools {
+        position: relative;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -285,7 +286,8 @@
      * is why it sits beside a block rather than in running text, whose line it would push taller.
      * Pointed at, it has no edge to color, so the underline thickens as a link's would, by a
      * measure of the text so it grows with it. It is never a toggle, as the sites' text buttons are
-     * not, so the pressed look never has to fit words with no padding around them.
+     * not, so the pressed look never has to fit words with no padding around them, and one that
+     * opens a panel keeps its link look below.
      */
     :where(.dk-button-text) {
         min-width: 0;
@@ -319,6 +321,18 @@
         background: var(--dk-highlight);
         box-shadow: inset 0 0 0 1px var(--dk-accent);
         color: var(--dk-fg);
+    }
+
+    /*
+     * A text button that opens a panel keeps its link look while the panel is open, with the
+     * underline a pointer brings, since the pressed look has no padding around the words to fit
+     * and the open panel is the sign.
+     */
+    :where(.dk-button-text[aria-expanded='true']) {
+        background: transparent;
+        box-shadow: none;
+        color: var(--dk-accent);
+        text-decoration-thickness: 0.125em;
     }
 
     /*
@@ -404,8 +418,9 @@
 
     /*
      * A textarea is as tall as its rows, and its text sits at the top rather than centered in the
-     * height, so its block padding matches the inline and its lines take the body's leading. It
-     * resizes in height alone, since a wider one would push its column.
+     * height, so its block padding is a step under the inline, which puts its first line nearest
+     * to where an input's sits, and its lines take the body's leading. It resizes in height alone,
+     * since a wider one would push its column.
      */
     :where(.dk-textarea) {
         padding-block: var(--dk-space-2);
@@ -483,9 +498,13 @@
         gap: var(--dk-space-1);
     }
 
+    /*
+     * The row's gap leaves a step between two lit choices, whose highlights reach past their
+     * words.
+     */
     :where(.dk-choices-row) {
         flex-flow: row wrap;
-        gap: var(--dk-space-1) var(--dk-space-4);
+        gap: var(--dk-space-1) var(--dk-space-5);
     }
 
     /*
@@ -652,7 +671,7 @@
     @media (forced-colors: active) {
         :where(
             .dk-button[aria-pressed='true'],
-            .dk-button[aria-expanded='true'],
+            .dk-button:not(.dk-button-text)[aria-expanded='true'],
             .dk-theme-switch-choice > input:checked + span,
             .dk-theme-switch-button
         ) {
@@ -1028,7 +1047,11 @@
 
         :where(.dk-strip-tools .dk-theme-switch-choices) {
             position: absolute;
-            inset-inline-end: 0;
+            /*
+             * The switch's padding leaves room for the ring, so the list's end lands on the
+             * button's.
+             */
+            inset-inline-end: calc(var(--dk-ring-width) + var(--dk-ring-offset));
             top: calc(100% + var(--dk-space-1));
             z-index: 1;
             display: none;
@@ -1062,27 +1085,15 @@
 
     /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
-     * the muted text at the strip's size. In the strip's room it takes the room's own box and keeps
-     * one row, scrolling as the switch would, so nothing below the strip stands anywhere else for a
-     * visitor without script than it does once the switches come.
+     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where the
+     * section is narrow, as at a large text size on a phone, since a line cut off and scrolled
+     * would reach no keyboard, and for this visitor nothing comes later that the strip has to hold
+     * still for.
      */
     :where(.dk-theme-switch-noscript, .dk-strip-noscript) {
         margin: 0;
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
-    }
-
-    :where(.dk-strip-tools:has(> .dk-strip-room)) {
-        position: relative;
-    }
-
-    :where(.dk-strip-noscript) {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        overflow-x: auto;
-        white-space: nowrap;
     }
 
     :where(.dk-theme-switch-name) {

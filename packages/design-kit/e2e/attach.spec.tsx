@@ -478,6 +478,92 @@ test('moves the choice with the arrow keys without closing, and closes on Escape
     await context.close();
 });
 
+test('closes the choices where they are when focus leaves the switch, and keeps them when it lands on the button', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    await button.click();
+    await expect(radio('System')).toBeFocused();
+    // Back to the button, which is the switch's own, so nothing closes.
+    await opened.keyboard.press('Shift+Tab');
+    await expect(button).toBeFocused();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await opened.keyboard.press('Tab');
+    await expect(radio('System')).toBeFocused();
+    // Out of the switch, and the choices close without pulling focus back.
+    await opened.keyboard.press('Tab');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).not.toBeFocused();
+    await expect(radio('System')).toBeHidden();
+    await context.close();
+});
+
+test('moves no focus on a press on the button or a choice, so the choices stay until the click', async ({
+    browser,
+}) => {
+    // A browser that gives a pressed button no focus blurs the open choices as the press begins,
+    // which would close them for the click to open again, so the press moves no focus at all.
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    await button.click();
+    await expect(radio('System')).toBeFocused();
+    const at = async (name: string) => {
+        const box = await (name === 'button' ? button : radio(name)).boundingBox();
+        if (!box) throw new Error(`${name} is not drawn`);
+        return [box.x + box.width / 2, box.y + box.height / 2] as const;
+    };
+    await opened.mouse.move(...(await at('button')));
+    await opened.mouse.down();
+    await expect(radio('System')).toBeFocused();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await opened.mouse.up();
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+    await button.click();
+    await opened.mouse.move(...(await at('Dark')));
+    await opened.mouse.down();
+    await expect(radio('System')).toBeFocused();
+    await opened.mouse.up();
+    await expect(opened.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+    // A press with another button ends in no click, and leaves nothing that holds a later Tab.
+    await button.click();
+    await opened.mouse.move(...(await at('Light')));
+    await opened.mouse.down({ button: 'right' });
+    await opened.mouse.up({ button: 'right' });
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await opened.keyboard.press('Tab');
+    await opened.keyboard.press('Tab');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await context.close();
+});
+
+test("keeps the choices open on a press on the list's own padding, and closes them on one on the name", async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    await button.click();
+    const list = opened.locator('#holder .dk-theme-switch-choices');
+    const box = await list.boundingBox();
+    if (!box) throw new Error('the choices are not drawn');
+    // The list's padding below its last choice, clear of the rounded corners.
+    await opened.mouse.click(box.x + box.width / 2, box.y + box.height - 3);
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    // Focus stays on the chosen radio, so Escape and Tab still reach the choices.
+    await expect(radio('System')).toBeFocused();
+    await opened.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+    await button.click();
+    await opened.locator('#holder .dk-theme-switch-name').click();
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).not.toBeFocused();
+    await context.close();
+});
+
 test('selects the source where the clipboard is refused, says how to copy it, and keeps focus on the button pressed by Space', async ({
     browser,
 }) => {

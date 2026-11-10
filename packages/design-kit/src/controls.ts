@@ -121,21 +121,25 @@ const listen = () => {
     }
 };
 
-/** Each control attached, by its element, one map for each kind so neither answers for the other. */
+/**
+ * Each control attached, by its element, one map for each kind so neither answers for the
+ * other.
+ */
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
 const attachedButtons = new WeakMap<HTMLElement, () => void>();
 
 /**
- * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and draws
- * a choice when a visitor makes one. It takes the switch, or an element that holds it. Attaching one
- * switch again before it is taken away attaches it once, and taking it away hides it again.
+ * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
+ * draws a choice when a visitor makes one. It takes the switch, or an element that holds it.
+ * Attaching one switch again before it is taken away attaches it once, and taking it away hides
+ * it again.
  *
  * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
- * narrower than 20rem, the button names the choice shown and opens the choices under itself, with focus on the
- * chosen one so the arrow keys move the choice without closing them. They close, with focus back
- * on the button, when a choice is picked by a pointer or on Escape, and close where they are on a
- * press outside or when focus leaves the switch. The button is wired on every switch, since the
- * sheet alone decides where it shows.
+ * narrower than 20rem, the button names the choice shown and opens the choices under itself, with
+ * focus on the chosen one so the arrow keys move the choice without closing them. They close, with
+ * focus back on the button, when a choice is picked by a pointer or on Escape, and close where they
+ * are when focus leaves the switch, as it does on a press anywhere else. The button is wired on
+ * every switch, since the sheet alone decides where it shows.
  */
 export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const group = element.matches('.dk-theme-switch')
@@ -159,63 +163,62 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
         if (isChoice(value)) chooseTheme(value);
     };
     const isOpen = () => button?.getAttribute('aria-expanded') === 'true';
+    /*
+     * A press on the button or on the choices moves no focus, since its default is canceled as it
+     * begins, so a browser that gives a pressed button no focus blurs nothing and a press on the
+     * list's own padding leaves focus on the chosen radio, and the click that follows still runs.
+     * So focus leaving the switch is the one path that closes the choices where they are, with a
+     * press anywhere else, which the page is listened to for only while they are open. A press
+     * that started on a choice picks by pointer, and a key pressed after it leaves no such press
+     * set, so a later pick by key is a pick by key.
+     */
+    let pointed = false;
+    const onPointerDown = (event: Event) => {
+        const target = event.target as Node;
+        pointed = choices?.contains(target) ?? false;
+        if (pointed || (button?.contains(target) ?? false)) event.preventDefault();
+        else close(false);
+    };
+    const onDocumentPointerDown = (event: Event) => {
+        if (!group.contains(event.target as Node)) close(false);
+    };
+    const open = () => {
+        button?.setAttribute('aria-expanded', 'true');
+        document.addEventListener('pointerdown', onDocumentPointerDown);
+        (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
+    };
     const close = (back: boolean) => {
         if (!isOpen()) return;
         button?.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('pointerdown', onDocumentPointerDown);
+        pointed = false;
         if (back) button?.focus();
     };
-    const onButton = () => {
-        if (isOpen()) {
-            close(true);
-            return;
-        }
-        button?.setAttribute('aria-expanded', 'true');
-        (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
+    const onButtonClick = () => {
+        if (isOpen()) close(true);
+        else open();
     };
-    /*
-     * A press that started inside the choices picks by pointer, and one outside closes them. While
-     * a press inside the switch is under way, focus leaving the switch is let be, since a browser
-     * that gives a pressed button no focus blurs the open choices first, which would close them
-     * for the press to open again. A press that never ends in a click, or a key pressed after it,
-     * leaves nothing set, so a later key pick is a key pick.
-     */
-    let pointed = false;
-    let pressing = false;
-    const onPointerDown = (event: Event) => {
-        const inside = group.contains(event.target as Node);
-        pressing = inside;
-        pointed = choices?.contains(event.target as Node) ?? false;
-        if (!inside) close(false);
-    };
-    const onPointerEnd = () => {
-        pressing = false;
-    };
-    const onPointerCancel = () => {
-        pressing = false;
+    const onChoicesClick = (event: Event) => {
+        // A click on the list's own padding picks nothing, so it leaves the choices open.
+        const picked = (event.target as Element).closest('.dk-theme-switch-choice') !== null;
+        if (pointed && picked) close(true);
         pointed = false;
     };
-    const onPick = () => {
-        if (pointed) close(true);
-        pointed = false;
-    };
-    const onKey = (event: KeyboardEvent) => {
+    const onKeyDown = (event: KeyboardEvent) => {
         pointed = false;
         if (event.key !== 'Escape' || !isOpen()) return;
         event.preventDefault();
         close(true);
     };
     const onFocusOut = (event: FocusEvent) => {
-        if (pressing) return;
         if (!group.contains(event.relatedTarget as Node | null)) close(false);
     };
     for (const radio of radios) radio.addEventListener('change', onChange);
-    button?.addEventListener('click', onButton);
-    choices?.addEventListener('click', onPick);
-    group.addEventListener('keydown', onKey);
+    button?.addEventListener('click', onButtonClick);
+    choices?.addEventListener('click', onChoicesClick);
+    group.addEventListener('pointerdown', onPointerDown);
+    group.addEventListener('keydown', onKeyDown);
     group.addEventListener('focusout', onFocusOut);
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('pointerup', onPointerEnd);
-    document.addEventListener('pointercancel', onPointerCancel);
     switches.add(show);
     listen();
     show();
@@ -224,17 +227,16 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     group.hidden = false;
     const detach = () => {
         for (const radio of radios) radio.removeEventListener('change', onChange);
-        button?.removeEventListener('click', onButton);
-        choices?.removeEventListener('click', onPick);
-        group.removeEventListener('keydown', onKey);
+        button?.removeEventListener('click', onButtonClick);
+        choices?.removeEventListener('click', onChoicesClick);
+        group.removeEventListener('pointerdown', onPointerDown);
+        group.removeEventListener('keydown', onKeyDown);
         group.removeEventListener('focusout', onFocusOut);
-        document.removeEventListener('pointerdown', onPointerDown);
-        document.removeEventListener('pointerup', onPointerEnd);
-        document.removeEventListener('pointercancel', onPointerCancel);
+        // Closing takes the page's listener away with it.
         close(false);
         switches.delete(show);
-        attachedSwitches.delete(group);
         group.hidden = true;
+        attachedSwitches.delete(group);
     };
     attachedSwitches.set(group, detach);
     return detach;

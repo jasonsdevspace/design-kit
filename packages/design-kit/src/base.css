@@ -48,12 +48,21 @@
      * Selected text stands on the accent in the text the accent carries, in both themes, rather
      * than on the browser's blue, which would be a second accent on a page that keeps one. The
      * highlight would not do, since a callout, a pressed button and a current pill already sit on
-     * it, and a selection there would vanish. The accent is a ground nothing else sits on, and text
-     * on it is a pairing the palette holds to 4.5 to 1.
+     * it, and a selection there would vanish. Text on the accent is a pairing the palette holds to
+     * 4.5 to 1.
      */
     :where(*)::selection {
         background-color: var(--dk-accent);
         color: var(--dk-on-accent);
+    }
+
+    /*
+     * The accent button already sits on the accent, so its selection swaps the pair, on its own
+     * words and on anything inside it, since a selection's colors do not pass to what is inside.
+     */
+    :where(.dk-button-accent, .dk-button-accent *)::selection {
+        background-color: var(--dk-on-accent);
+        color: var(--dk-accent);
     }
 
     :where(code, kbd, pre, samp) {

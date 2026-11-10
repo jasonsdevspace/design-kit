@@ -1327,16 +1327,23 @@ test.describe('the theme switch', () => {
     test('moves nothing below the strip as it comes, at any width or text size', async ({
         browser,
     }) => {
+        // Before the switch comes, the page has run the theme script but not the site's own, which
+        // is what puts the switch in the room, so the room stands as the page serves it.
         const moved: string[] = [];
-        for (const javaScriptEnabled of [false, true]) {
-            const context = await browser.newContext({ javaScriptEnabled });
+        for (const came of [false, true]) {
+            const context = await browser.newContext();
+            if (!came) await context.route('**/assets/script-*.js', (route) => route.abort());
             const page = await context.newPage();
             for (const width of [320, 390, 768, 769, 820, 1280]) {
                 for (const scale of [1, 2]) {
                     await page.setViewportSize({ width, height: 900 });
                     await textSize(page, scale);
                     await page.goto('/design-kit/');
-                    if (javaScriptEnabled) await switchCame(page, width, scale);
+                    if (came) await switchCame(page, width, scale);
+                    else
+                        await expect(page.locator('body > .dk-strip .dk-strip-room')).toHaveCount(
+                            1
+                        );
                     const top = await page
                         .locator('.site-header')
                         .evaluate((nav) => nav.getBoundingClientRect().top);
@@ -2299,6 +2306,33 @@ test.describe('how each state is shown', () => {
 
 test.describe(() => {
     test.use({ javaScriptEnabled: false });
+
+    test("keeps the room's line for a visitor without script inside the strip, on a phone with larger text", async ({
+        page,
+    }) => {
+        // The line comes with the release the strip's room draws it from, so over the pinned
+        // release there may be none, and the page is held to no sideways scroll either way.
+        await page.setViewportSize({ width: 320, height: 900 });
+        await textSize(page, 2);
+        await page.goto('/design-kit/');
+        const line = page.locator('body > .dk-strip .dk-strip-noscript');
+        if ((await line.count()) > 0) {
+            await expect(line).toBeVisible();
+            const fit = await line.evaluate((element) => {
+                const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
+                const own = element.getBoundingClientRect();
+                return {
+                    inside:
+                        section !== undefined &&
+                        own.bottom <= section.bottom + 0.5 &&
+                        own.right <= section.right + 0.5,
+                    cut: element.scrollWidth > element.clientWidth + 1,
+                };
+            });
+            expect(fit).toEqual({ inside: true, cut: false });
+        }
+        expect(await sideways(page)).toBe(0);
+    });
 
     test('says the switch needs scripts, where scripts are off', async ({ page }) => {
         await page.goto('/design-kit/tokens/');
