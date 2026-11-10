@@ -541,6 +541,13 @@ describe('a choice field', () => {
         expect(rule({ hint: 'Applies to every search' })).not.toContain(
             '<input type="radio" aria-describedby'
         );
+        // After a description of the choice's own, as the fieldset keeps the page's after its.
+        expect(
+            rule({
+                error: 'Choose one',
+                choices: [{ value: 'pin', label: 'Pin', 'aria-describedby': 'pin-note' }],
+            })
+        ).toContain('<input type="radio" aria-describedby="rule-error pin-note" name="rule"');
         expect(rule({ error: 'Choose one', 'aria-describedby': 'moved' })).toContain(
             'aria-describedby="rule-error moved"'
         );
@@ -562,10 +569,10 @@ describe('a choice field', () => {
         expect(wrong).not.toContain('role=');
         expect(wrong).toContain('id="rule" aria-describedby="rule-error">');
         expect(wrong).toContain(
-            '<input type="checkbox" aria-invalid="true" name="rule" value="pin"/>'
+            '<input type="checkbox" aria-invalid="true" aria-describedby="rule-error" name="rule" value="pin"/>'
         );
         expect(wrong).toContain(
-            '<input type="checkbox" aria-invalid="true" name="rule" value="hide"/>'
+            '<input type="checkbox" aria-invalid="true" aria-describedby="rule-error" name="rule" value="hide"/>'
         );
     });
 

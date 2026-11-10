@@ -508,9 +508,9 @@ export type ChoiceFieldProps = FieldParts &
  * A set of radios or checkboxes with its label, hint and error: a fieldset whose legend is the
  * label, described by the hint and the error as a control is. A set of radios is a radio group,
  * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
- * chosen radio, wherever that is, and each radio is described by the error too, since a screen
- * reader that lands on a radio may read nothing of its group. Checkboxes are each a stop of their
- * own, so each is marked. The fieldset takes every other prop given, its `ref` among them, and no
+ * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked.
+ * Every control of the set is described by the error too, after any description of its own, since
+ * a screen reader that lands on a control may read nothing of its group. The fieldset takes every other prop given, its `ref` among them, and no
  * role, since the set's role follows its type.
  */
 export const ChoiceField = (props: ChoiceFieldProps) => {
@@ -529,20 +529,22 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
             <legend className="dk-field-label">{props.label}</legend>
             <FieldText parts={props} field={field} />
             <div className={spaced('dk-choices', row && 'dk-choices-row')}>
-                {choices.map(({ value, label: word, hint: gloss, ...input }) => (
-                    <ChoiceLabel
-                        key={value}
-                        className="dk-choice"
-                        word={word}
-                        gloss={gloss}
-                        type={type}
-                        name={name}
-                        value={value}
-                        aria-invalid={type === 'checkbox' && field.error ? true : undefined}
-                        aria-describedby={type === 'radio' ? errorId : undefined}
-                        {...input}
-                    />
-                ))}
+                {choices.map(
+                    ({ value, label: word, hint: gloss, 'aria-describedby': own, ...input }) => (
+                        <ChoiceLabel
+                            key={value}
+                            className="dk-choice"
+                            word={word}
+                            gloss={gloss}
+                            type={type}
+                            name={name}
+                            value={value}
+                            aria-invalid={type === 'checkbox' && field.error ? true : undefined}
+                            aria-describedby={spaced(errorId, own) || undefined}
+                            {...input}
+                        />
+                    )
+                )}
             </div>
         </fieldset>
     );

@@ -671,7 +671,7 @@
     @media (forced-colors: active) {
         :where(
             .dk-button[aria-pressed='true'],
-            .dk-button[aria-expanded='true'],
+            .dk-button:not(.dk-button-text)[aria-expanded='true'],
             .dk-theme-switch-choice > input:checked + span,
             .dk-theme-switch-button
         ) {

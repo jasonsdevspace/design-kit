@@ -56,8 +56,11 @@
         color: var(--dk-on-accent);
     }
 
-    /* The accent button already sits on the accent, so its selection swaps the pair. */
-    :where(.dk-button-accent)::selection {
+    /*
+     * The accent button already sits on the accent, so its selection swaps the pair, on its own
+     * words and on anything inside it, since a selection's colors do not pass to what is inside.
+     */
+    :where(.dk-button-accent, .dk-button-accent *)::selection {
         background-color: var(--dk-on-accent);
         color: var(--dk-accent);
     }

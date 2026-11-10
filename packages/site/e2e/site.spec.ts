@@ -2307,6 +2307,33 @@ test.describe('how each state is shown', () => {
 test.describe(() => {
     test.use({ javaScriptEnabled: false });
 
+    test("keeps the room's line for a visitor without script inside the strip, on a phone with larger text", async ({
+        page,
+    }) => {
+        // The line comes with the release the strip's room draws it from, so over the pinned
+        // release there may be none, and the page is held to no sideways scroll either way.
+        await page.setViewportSize({ width: 320, height: 900 });
+        await textSize(page, 2);
+        await page.goto('/design-kit/');
+        const line = page.locator('body > .dk-strip .dk-strip-noscript');
+        if ((await line.count()) > 0) {
+            await expect(line).toBeVisible();
+            const fit = await line.evaluate((element) => {
+                const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
+                const own = element.getBoundingClientRect();
+                return {
+                    inside:
+                        section !== undefined &&
+                        own.bottom <= section.bottom + 0.5 &&
+                        own.right <= section.right + 0.5,
+                    cut: element.scrollWidth > element.clientWidth + 1,
+                };
+            });
+            expect(fit).toEqual({ inside: true, cut: false });
+        }
+        expect(await sideways(page)).toBe(0);
+    });
+
     test('says the switch needs scripts, where scripts are off', async ({ page }) => {
         await page.goto('/design-kit/tokens/');
         await expect(page.locator('#theme').locator('..')).toContainText('With scripts on');
