@@ -77,8 +77,8 @@ export const rules = ChoiceField({
 // @ts-expect-error A choice field needs its choices, so its props are real too.
 export const choicesWithout = ChoiceField({ label: 'Rule', name: 'rule' });
 
-// @ts-expect-error A choice field's ref is the fieldset drawn, not a control.
 export const wrongChoices = ChoiceField({
+    // @ts-expect-error A choice field's ref is the fieldset drawn, not a control.
     ref: createRef<HTMLInputElement>(),
     label: 'Rule',
     name: 'rule',

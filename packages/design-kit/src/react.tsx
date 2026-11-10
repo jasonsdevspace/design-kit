@@ -365,7 +365,7 @@ export const SelectField = (props: SelectFieldProps) => {
 
 /**
  * One choice among a set: a label holding a native radio or checkbox and its word, with a gloss
- * beside the word when it has one. The theme switch's choices are drawn by it too, under their own
+ * after the word when it has one. The theme switch's choices are drawn by it too, under their own
  * class, so the markup a page wrote by hand for the switch stays as it was.
  */
 const ChoiceLabel = ({

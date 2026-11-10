@@ -237,7 +237,7 @@ test('draws an invalid control in the danger color, and the error beside the hin
 /** The label around a choice's control. */
 const choiceOf = (page: Page, control: Locator) => page.locator('.dk-choice', { has: control });
 
-test('draws a choice at the field height wide and the target on a phone, lit under a pointer', async ({
+test("draws a choice at the field height, a thumb's target on a phone, lit under a pointer, and a row on one line", async ({
     page,
 }) => {
     for (const [width, tall] of [
@@ -285,10 +285,16 @@ test('moves and checks among radios with the arrow keys, ringing the control and
             async () => (await style(choiceOf(page, pin), 'background-color'))['background-color']
         )
         .toBe('rgb(227, 234, 251)');
-    // A disabled choice is passed over, in the muted text with no highlight.
+    // A disabled choice is passed over by the keys, in the muted text with no highlight.
     const boost = page.getByRole('radio', { name: 'Boost' });
     await expect(boost).toBeDisabled();
-    expect((await style(choiceOf(page, boost), 'color')).color).toBe('rgb(92, 92, 92)');
+    await hide.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(pin).toBeFocused();
+    expect(await style(choiceOf(page, boost), 'color', 'background-color')).toEqual({
+        color: 'rgb(92, 92, 92)',
+        'background-color': 'rgba(0, 0, 0, 0)',
+    });
 });
 
 test('reads a set by its legend, describes it by its hint or error, and marks its first control', async ({

@@ -393,13 +393,10 @@
     /*
      * A set of choices: a fieldset whose legend is the field's label, then the hint and the error
      * as a field has them, then each choice a label holding a native radio or checkbox and its
-     * word, with a gloss in the muted text where one helps. The choices stand one under the other,
-     * or in a row that wraps where the field asks for one. A choice is the field's height, and a
-     * thumb's target on a phone, and takes the highlight under a pointer and while its control has
-     * focus, so the whole word reads as one target, with the ring on the control itself. The first
-     * control of a set with an error is marked invalid, and draws a thin line in the danger color
-     * around it, which gives way to the ring. The theme switch's choice is the same label of a
-     * radio and its word, drawn as a pill word with the radio under it, by its own rules below.
+     * word. The whole label takes the highlight under a pointer and while its control has focus, so
+     * the word reads as one target with the control, which keeps the ring. The theme switch's
+     * choice is the same label, drawn as a pill word with the radio under it by its own rules
+     * below.
      */
     :where(.dk-choice-field) {
         min-width: 0;
@@ -408,7 +405,10 @@
         border: 0;
     }
 
-    /* The browser lays a legend out above the field's grid, so it spaces itself from the rest. */
+    /*
+     * The browser lays a legend out above the field's grid, where the gap does not reach it, so it
+     * takes a margin instead.
+     */
     :where(.dk-choice-field > legend) {
         margin-bottom: var(--dk-space-1);
         padding: 0;
@@ -426,7 +426,10 @@
         gap: var(--dk-space-1) var(--dk-space-4);
     }
 
-    /* The highlight reaches past the control by its own padding, so the control stays in line. */
+    /*
+     * The highlight reaches past the control by the choice's own padding, so the control stays in
+     * line with the legend.
+     */
     :where(.dk-choice) {
         display: inline-flex;
         align-items: center;
@@ -548,7 +551,10 @@
         gap: var(--dk-space-2);
     }
 
-    /* On a phone a button, a field and a choice grow to the target a thumb presses, and stay level. */
+    /*
+     * On a phone a button, a field and a choice grow to the target a thumb presses, and stay
+     * level.
+     */
     @media (max-width: 48rem) {
         :where(.dk-button, .dk-input, .dk-select, .dk-choice) {
             min-height: var(--dk-target);
@@ -595,9 +601,9 @@
         }
 
         /*
-         * An invalid field loses its red edge to the system's colors, so it gains a dashed line
-         * around its edge in the text color, which keeps its contrast in every theme and moves
-         * nothing as the error comes and goes. With focus, the ring takes its place, so a
+         * An invalid control loses its line in the danger color to the system's colors, so it gains
+         * a dashed line around its edge in the text color, which keeps its contrast in every theme
+         * and moves nothing as the error comes and goes. With focus, the ring takes its place, so a
          * keyboard sees where it landed.
          */
         :where(
