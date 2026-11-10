@@ -1606,6 +1606,8 @@ test.describe('the state cards', () => {
         await markup.focus();
         await page.keyboard.press('ArrowRight');
         await expect(react).toBeFocused();
+        // The tab the arrow moved focus to keeps the ring, though its tabindex is -1.
+        await expect(react).toHaveCSS('outline-style', 'solid');
         await expect(react).toHaveAttribute('aria-selected', 'true');
         await expect(card.getByRole('region', { name: 'React, An action' })).toBeVisible();
         await expect(card.getByRole('region', { name: 'Markup, An action' })).toBeHidden();
