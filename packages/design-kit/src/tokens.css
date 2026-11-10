@@ -121,8 +121,11 @@
         --dk-measure: 34rem;
         --dk-column: 72rem;
 
-        /* What floats over the page, and what dims the page behind it, darker on a dark page. */
-        --dk-shadow-raised: 0 6px 24px rgb(0 0 0 / 0.18);
+        /*
+         * What floats over the page, and what dims the page behind it, each darker on a dark page,
+         * since a soft shadow cannot show against a dark ground.
+         */
+        --dk-shadow-raised: 0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
         --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
         /* How long a small change of state takes to show, such as a hover. */

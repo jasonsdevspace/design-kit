@@ -57,6 +57,16 @@ describe('the tokens', () => {
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
     });
 
+    it('casts the raised shadow deeper on a dark page, where a soft one cannot show', () => {
+        const shadow = declared.get('--dk-shadow-raised') ?? '';
+        expect(shadow).toContain('light-dark(');
+        const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ ([\d.]+)\)/g)].map((match) =>
+            Number(match[1])
+        );
+        expect(alphas).toHaveLength(2);
+        expect(alphas[1] ?? 0).toBeGreaterThan(alphas[0] ?? 0);
+    });
+
     for (const theme of THEMES) {
         it(`holds every pairing to its ratio in the ${theme} theme`, () => {
             const short = PAIRS.flatMap(([front, back, ratio]) => {
