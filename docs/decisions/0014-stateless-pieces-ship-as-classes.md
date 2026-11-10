@@ -48,7 +48,7 @@ The paths are in `packages/design-kit`.
   examples they are generated from.
 - `e2e/pieces.spec.ts` draws those examples with the kit's sheets in Chromium and finds the chosen
   tab in the page's text over an accent line, and in the system's selection colors in forced
-  colors, whether it is a tab, a link or a toggle, every tab in
-  place as the choice moves, a chip that never reads as a control, the current pill marked by
-  weight, the eyebrow in caps at the caption size in the muted text, and no word cut off under the
-  wider text spacing a visitor may set.
+  colors, whether it is a tab, a link or a toggle, every tab in place as the choice moves, a chip
+  that never reads as a control, the current pill marked by weight, the eyebrow in caps at the
+  caption size in the muted text, and no word cut off under the wider text spacing a visitor may
+  set.

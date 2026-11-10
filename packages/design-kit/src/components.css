@@ -4,10 +4,10 @@
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
  * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields
- * and callouts, then the explainer page and the steps, panel, table and code block it holds, then the
- * theme switch, the eyebrow, the pills, the tabs and the copy button's words. Each piece keeps its
- * rules together, at rest, under a pointer, in its states, on a phone and in forced colors, in that
- * order, and the print rules come last for every piece at once.
+ * and callouts, then the explainer page and the steps, panel, table and code block it holds, then
+ * the theme switch, the eyebrow, the pills, the tabs and the copy button's words. Each piece keeps
+ * its rules together, at rest, under a pointer, in its states, on a phone and in forced colors, in
+ * that order, and the print rules come last for every piece at once.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -386,9 +386,10 @@
     }
 
     /*
-     * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a button
-     * whose panel is open, takes the system's highlight, an off button the system's gray on the page's ground as a disabled one
-     * does, and an off toggle that is on an edge in the highlight.
+     * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
+     * button whose panel is open, takes the system's highlight, an off button the system's gray on
+     * the page's ground as a disabled one does, and an off toggle that is on an edge in the
+     * highlight.
      */
     @media (forced-colors: active) {
         :where(
@@ -1179,8 +1180,8 @@
 
     /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
-     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where the
-     * section is narrow, as at a large text size on a phone, since a line cut off and scrolled
+     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where
+     * the section is narrow, as at a large text size on a phone, since a line cut off and scrolled
      * would reach no keyboard, and for this visitor nothing comes later that the strip has to hold
      * still for.
      */

@@ -4,8 +4,8 @@ import type { Locator, Page } from '@playwright/test';
 
 /*
  * What every spec that draws the kit in a browser needs: the sheets as the source has them, a page
- * written into the browser with them, and the reads of what the browser drew. One copy, so a knob
- * added here reaches every spec.
+ * written into the browser with them, and the reads of what the browser drew. One copy, so a width
+ * or a theme added here reaches every spec.
  */
 
 /** A sheet of the kit's, as the source has it. */
@@ -64,7 +64,10 @@ export const box = async (
     return drawn;
 };
 
-/** How tall the element the locator finds is drawn, to the pixel, or nothing where it is not drawn. */
+/**
+ * How tall the element the locator finds is drawn, to the pixel, or nothing where it is not
+ * drawn.
+ */
 export const height = async (locator: Locator): Promise<number> =>
     Math.round((await locator.boundingBox())?.height ?? 0);
 
