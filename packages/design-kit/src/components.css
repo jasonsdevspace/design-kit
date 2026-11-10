@@ -386,10 +386,10 @@
 
     /*
      * A control a visitor types into or picks from, on the page's own ground, so it reads as a
-     * well on a card or a panel. Its text is never under 16px, in px since it is the size
-     * at which a phone stops zooming the page when the field is tapped.
+     * well on a card or a panel. Its text is never under 16px, in px since it is the size at which
+     * a phone stops zooming the page when the field is tapped.
      */
-    :where(.dk-input, .dk-select) {
+    :where(.dk-input, .dk-select, .dk-textarea) {
         min-width: 0;
         max-width: 100%;
         min-height: var(--dk-field-height);
@@ -399,6 +399,17 @@
         background-color: var(--dk-bg);
         color: var(--dk-fg);
         font-size: max(var(--dk-text-body), 16px);
+    }
+
+    /*
+     * A textarea is as tall as its rows, and its text sits at the top rather than centered in the
+     * height, so its block padding matches the inline and its lines take the body's leading. It
+     * resizes in height alone, since a wider one would push its column.
+     */
+    :where(.dk-textarea) {
+        padding-block: var(--dk-space-2);
+        line-height: var(--dk-leading-body);
+        resize: vertical;
     }
 
     /*
@@ -424,11 +435,15 @@
     }
 
     /* A control with an error shown, its edge in the danger color, beside the error's words. */
-    :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
+    :where(
+        .dk-input[aria-invalid='true'],
+        .dk-select[aria-invalid='true'],
+        .dk-textarea[aria-invalid='true']
+    ) {
         border-color: var(--dk-danger);
     }
 
-    :where(.dk-input:disabled, .dk-select:disabled) {
+    :where(.dk-input:disabled, .dk-select:disabled, .dk-textarea:disabled) {
         border-color: var(--dk-line);
         background-color: var(--dk-surface);
         color: var(--dk-muted);
@@ -610,7 +625,7 @@
      * level.
      */
     @media (max-width: 48rem) {
-        :where(.dk-button, .dk-input, .dk-select, .dk-choice) {
+        :where(.dk-button, .dk-input, .dk-select, .dk-textarea, .dk-choice) {
             min-height: var(--dk-target);
         }
 
@@ -671,6 +686,7 @@
         :where(
             .dk-input[aria-invalid='true'],
             .dk-select[aria-invalid='true'],
+            .dk-textarea[aria-invalid='true'],
             .dk-choice-field[aria-invalid='true'] .dk-choice > input,
             .dk-choice > input[aria-invalid='true']
         ) {
@@ -681,6 +697,7 @@
         :where(
             .dk-input[aria-invalid='true'],
             .dk-select[aria-invalid='true'],
+            .dk-textarea[aria-invalid='true'],
             .dk-choice-field[aria-invalid='true'] .dk-choice > input,
             .dk-choice > input[aria-invalid='true']
         ):focus-visible {

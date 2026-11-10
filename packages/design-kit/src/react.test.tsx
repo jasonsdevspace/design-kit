@@ -13,6 +13,7 @@ import {
     PortfolioStrip,
     SelectField,
     SkipLink,
+    TextareaField,
 } from './react.js';
 
 /*
@@ -420,6 +421,35 @@ describe('a field', () => {
         expect(
             renderToStaticMarkup(<InputField id="q" label="Search" type="search" required />)
         ).toContain('<input class="dk-input" type="search" required="" id="q"/>');
+    });
+
+    it('draws a textarea with its text as a value, wired the same way', () => {
+        expect(
+            renderToStaticMarkup(
+                <TextareaField
+                    id="note"
+                    label="Note"
+                    hint="Shown to the picker"
+                    error="Write a note"
+                    defaultValue="On its way"
+                    rows={3}
+                />
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="note">Note</label>' +
+                '<p class="dk-field-hint" id="note-hint">Shown to the picker</p>' +
+                '<p class="dk-field-error" id="note-error">' +
+                '<span class="dk-visually-hidden">Error: </span>Write a note</p>' +
+                '<textarea class="dk-textarea" rows="3" id="note"' +
+                ' aria-describedby="note-hint note-error" aria-invalid="true">On its way</textarea></div>'
+        );
+        const note = createRef<HTMLTextAreaElement>();
+        expect(renderToStaticMarkup(<TextareaField id="n" label="Note" ref={note} />)).toContain(
+            '<textarea class="dk-textarea" rows="3" id="n"></textarea>'
+        );
+        const wrong = createRef<HTMLInputElement>();
+        // @ts-expect-error A textarea field's ref is the textarea drawn, not the input of another.
+        expect(renderToStaticMarkup(<TextareaField label="Note" ref={wrong} />)).toBeTruthy();
     });
 
     it('draws a native select with its options, wired the same way', () => {
