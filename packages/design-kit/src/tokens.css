@@ -64,6 +64,8 @@
         --dk-success-bg: light-dark(#e8f5ec, #15301f);
         --dk-danger: light-dark(#b3261e, #ff8a80);
         --dk-danger-bg: light-dark(#fbeceb, #3a1f1d);
+        --dk-warning: light-dark(#8a5300, #f0b453);
+        --dk-warning-bg: light-dark(#fdf3e0, #3b2c12);
 
         /* Space, in steps. */
         --dk-space-1: 0.25rem;

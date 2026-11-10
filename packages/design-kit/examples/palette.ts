@@ -68,6 +68,8 @@ export const ROLES: readonly (readonly [string, string])[] = [
     ['success-bg', 'The background of a callout for what went right'],
     ['danger', 'What went wrong'],
     ['danger-bg', 'The background of a callout for what went wrong'],
+    ['warning', 'What needs care before it goes wrong, such as stock running low'],
+    ['warning-bg', 'The background of a callout for what needs care'],
 ];
 
 /** What a page is drawn on: the page itself, a card on it, and what floats over both. */
@@ -85,13 +87,14 @@ export const PAIRS: readonly (readonly [string, string, number])[] = [
         ['accent', ground, 4.5] as const,
         ['success', ground, 4.5] as const,
         ['danger', ground, 4.5] as const,
+        ['warning', ground, 4.5] as const,
         ['control', ground, 3] as const,
         ['focus', ground, 3] as const,
     ]),
     ['on-accent', 'accent', 4.5],
     // A callout's own ground, and what is chosen, carry text, its quieter line, a link and the
     // edge of a button or field drawn inside the callout.
-    ...['highlight', 'success-bg', 'danger-bg'].flatMap((ground) => [
+    ...['highlight', 'success-bg', 'danger-bg', 'warning-bg'].flatMap((ground) => [
         ['fg', ground, 4.5] as const,
         ['muted', ground, 4.5] as const,
         ['accent', ground, 4.5] as const,
@@ -99,4 +102,5 @@ export const PAIRS: readonly (readonly [string, string, number])[] = [
     ]),
     ['success', 'success-bg', 4.5],
     ['danger', 'danger-bg', 4.5],
+    ['warning', 'warning-bg', 4.5],
 ];

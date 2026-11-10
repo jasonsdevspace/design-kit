@@ -963,6 +963,12 @@ body > .dk-strip .dk-strip-tools {
 .site-swatch-danger-bg {
     background: var(--dk-danger-bg);
 }
+.site-swatch-warning {
+    background: var(--dk-warning);
+}
+.site-swatch-warning-bg {
+    background: var(--dk-warning-bg);
+}
 
 /*
  * A state's code across the foot of its card, closed until a reader opens it: a block of markup,

@@ -267,7 +267,7 @@ test('opens no gap around an empty live callout in a grid, and keeps it for a sc
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
     page,
 }) => {
-    const tones = ['info', 'success', 'danger'] as const;
+    const tones = ['info', 'success', 'warning', 'danger'] as const;
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +

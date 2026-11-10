@@ -350,13 +350,17 @@ export const SelectField = (props: SelectFieldProps) => {
     );
 };
 
-/** What a callout is about: news, something that went right, or something that went wrong. */
-export type CalloutTone = 'info' | 'success' | 'danger';
+/**
+ * What a callout is about: news, something that went right, something that went wrong, or
+ * something that needs care before it goes wrong, such as stock running low.
+ */
+export type CalloutTone = 'info' | 'success' | 'warning' | 'danger';
 
 /** The word a screen reader reads before each tone's message, so the tone is not color alone. */
 const TONE_WORDS: Readonly<Record<CalloutTone, string>> = {
     info: '',
     success: 'Success: ',
+    warning: 'Warning: ',
     danger: 'Error: ',
 };
 

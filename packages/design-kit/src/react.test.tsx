@@ -422,6 +422,10 @@ describe('a callout', () => {
         expect(renderToStaticMarkup(<Callout tone="danger">Not loaded.</Callout>)).toContain(
             '<span class="dk-visually-hidden">Error: </span>Not loaded.'
         );
+        expect(renderToStaticMarkup(<Callout tone="warning">Two left.</Callout>)).toBe(
+            '<div class="dk-callout dk-callout-warning"><div class="dk-callout-body">' +
+                '<span class="dk-visually-hidden">Warning: </span>Two left.</div></div>'
+        );
         expect(
             renderToStaticMarkup(
                 <Callout tone="danger" prefix="Warning: ">
@@ -439,7 +443,7 @@ describe('a callout', () => {
     });
 
     it('takes a role only when the page asks for one, whatever its tone', () => {
-        for (const tone of ['info', 'success', 'danger'] as const) {
+        for (const tone of ['info', 'success', 'warning', 'danger'] as const) {
             expect(renderToStaticMarkup(<Callout tone={tone}>Text</Callout>)).not.toMatch(
                 /role=|aria-live/
             );
@@ -623,7 +627,7 @@ describe('the callout, beside the other controls', () => {
     });
 
     it('draws news for a tone plain JavaScript can pass that the kit has no rule for', () => {
-        const tone = 'warning' as unknown as 'info';
+        const tone = 'sepia' as unknown as 'info';
         expect(renderToStaticMarkup(<Callout tone={tone} title="Saved" />)).toBe(
             renderToStaticMarkup(<Callout title="Saved" />)
         );

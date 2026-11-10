@@ -416,6 +416,10 @@
         background: var(--dk-danger-bg);
     }
 
+    :where(.dk-callout-warning) {
+        background: var(--dk-warning-bg);
+    }
+
     /*
      * A callout whose message holds nothing, not even a space, and that has no actions is a live
      * callout a page mounts before it has words. It leaves the flow, drawn as visually hidden text

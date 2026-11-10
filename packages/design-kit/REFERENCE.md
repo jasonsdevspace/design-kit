@@ -29,6 +29,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-highlight`                                                 | what is chosen or pointed at                                 |
 | `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                              |
 | `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
+| `--dk-warning`, `--dk-warning-bg`                                | what needs care before it goes wrong, and its ground         |
 | `--dk-scrim`                                                     | what dims the page behind a dialog                           |
 | `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                             |
 | `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
@@ -366,10 +367,11 @@ as a list, with `multiple` or a `size`, is left as the browser draws it, with no
 ```
 
 A plain `dk-callout` is for information, the `'info'` tone, and sits on the highlight. Add
-`dk-callout-success` or `dk-callout-danger` for something that went right or wrong, and it sits on
-that color's own ground. The words stay in the page's text color in every tone. A success or danger
-callout starts its title, or its message when it has no title, with a visually hidden "Success: " or
-"Error: ", so the tone is not told by color alone. The title is a paragraph, or a heading from `h2`
+`dk-callout-success`, `dk-callout-warning` or `dk-callout-danger` for something that went right,
+that needs care before it goes wrong, such as stock running low, or that went wrong, and it sits on
+that color's own ground. The words stay in the page's text color in every tone. A success, warning
+or danger callout starts its title, or its message when it has no title, with a visually hidden
+"Success: ", "Warning: " or "Error: ", so the tone is not told by color alone. The title is a paragraph, or a heading from `h2`
 to `h6` where the callout is a section a visitor would jump to, and opens `.dk-callout-body`, the
 message. The actions, when there are some, follow the message, outside it.
 
