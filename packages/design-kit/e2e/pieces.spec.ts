@@ -3,14 +3,17 @@ import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { cutOff, SPACED } from './spacing.js';
+
 /*
  * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
  * the kit's sheets, in markup written by hand: the chosen theme told apart by an edge rather
  * than a fill alone, a target the field's height and a thumb's on a phone, no word moving as
  * the choice moves, a chip that never reads as a control, the current page among pills marked
  * by weight, a copy button as wide as its longest word, the chosen tab told by its text, its
- * weight and an accent line whether it is a tab, a page or a toggle, and the focus ring and a
- * button's hover edge in the focus color a page sets, with no audit findings in either theme.
+ * weight and an accent line whether it is a tab, a page or a toggle, no word cut off under the
+ * wider spacing a visitor may set, and the focus ring and a button's hover edge in the focus color
+ * a page sets, with no audit findings in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -310,6 +313,17 @@ test("makes each tab the strip's height, and a thumb wide and tall on a phone", 
         expect(Math.round(box?.height ?? 0), `${String(width)}px`).toBe(size);
         if (width === 375) expect(Math.round(box?.width ?? 0)).toBeGreaterThanOrEqual(size);
     }
+});
+
+test('cuts no word off the pill, the copy button or the switch under the wider spacing a visitor may set', async ({
+    page,
+}) => {
+    // A 320px screen with a 20px gutter.
+    await open(page, { width: 320, css: `main { padding-inline: 20px; } ${SPACED}` });
+    expect(await cutOff(page, '.dk-pill, .dk-copy, .dk-theme-switch')).toEqual([]);
+    const fit = await switchFit(page);
+    expect(fit.inside).toEqual([true, true, true, true]);
+    expect(fit.pageScrolls).toBe(false);
 });
 
 test('keeps the copy button as wide as its longest word, whichever word shows', async ({

@@ -18,9 +18,10 @@ import {
  * that button through its ref. The button is drawn again as the panel opens and closes, so the ref
  * has to hold the button across each drawing. Below it, a form that, once sent, draws each field
  * again with its error and a summary of what is wrong, which moves focus to each field through its
- * ref, a choice field's first control among them. Above the form, a theme switch, a copy button
- * and its status line attached through the refs they hand out, with no wrapper to find them by.
- * Bundled by ref.spec.ts, which writes it into the browser.
+ * ref, a choice field's first control among them, and an off button whose handler would send the
+ * form. Above the form, a theme switch, a copy button and its status line attached through the
+ * refs they hand out, with no wrapper to find them by. Bundled by ref.spec.ts, which writes it
+ * into the browser.
  */
 const Page = () => {
     const opener = useRef<HTMLButtonElement>(null);
@@ -106,6 +107,14 @@ const Page = () => {
                     }}
                 >
                     Send
+                </Button>
+                <Button
+                    off
+                    onClick={() => {
+                        setSent(true);
+                    }}
+                >
+                    Post later
                 </Button>
             </form>
         </main>

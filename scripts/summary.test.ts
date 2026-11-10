@@ -9,8 +9,10 @@ import {
     filesOf,
     lighthouseSummary,
     packageSummary,
+    packedOf,
     playwrightSummary,
     table,
+    withoutComments,
     writeSummary,
 } from './summary.mjs';
 
@@ -184,6 +186,35 @@ describe('the package summary', () => {
         expect(text).toContain('| dist/react.js | 8.0 KB | 2.0 KB |');
         expect(text).toMatch(/<details>\n<summary>Every file in the package<\/summary>/);
         expect(text.indexOf('README.md')).toBeGreaterThan(text.indexOf('<details>'));
+    });
+});
+
+describe('a sheet without its comments', () => {
+    it('loses every comment and blank line, and nothing else', () => {
+        const sheet =
+            '/*\n * The tokens.\n */\n\n@layer dk.tokens {\n    :where(:root) {\n' +
+            '        /* Space. */\n        --dk-space-1: 0.25rem; /* a step */\n    }\n}\n';
+        expect(withoutComments(sheet)).toBe(
+            '@layer dk.tokens {\n    :where(:root) {\n        --dk-space-1: 0.25rem; \n    }\n}\n'
+        );
+    });
+
+    it('is measured for each sheet of a packed tarball, and for no other file', () => {
+        const dir = mkdtempSync(join(tmpdir(), 'packed-'));
+        made.push(dir);
+        mkdirSync(join(dir, 'package', 'dist'), { recursive: true });
+        writeFileSync(join(dir, 'package', 'package.json'), '{"name":"@o/kit","version":"1.0.0"}');
+        writeFileSync(
+            join(dir, 'package', 'dist', 'tokens.css'),
+            '/* A long comment, which a minifier drops. */\n'.repeat(40) + ':root { --a: 1; }\n'
+        );
+        writeFileSync(join(dir, 'package', 'dist', 'theme.js'), 'export const a = 1;\n');
+        const tarball = join(dir, 'kit.tgz');
+        execFileSync('tar', ['-czf', tarball, '-C', dir, 'package']);
+        const { files } = packedOf(tarball);
+        const sheet = files.find((file) => file.path === 'dist/tokens.css');
+        expect(sheet?.stripped).toBeLessThan(sheet?.gzip ?? 0);
+        expect(files.find((file) => file.path === 'dist/theme.js')).not.toHaveProperty('stripped');
     });
 });
 

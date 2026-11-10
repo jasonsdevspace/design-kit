@@ -58,6 +58,10 @@ carry any weight, and that weight counts for nothing against a page's own rule o
   loses to a page's rule outside a layer.
 - The border box reaches a page's `::before` and `::after` too, so one that sets a width or height
   beside padding or a border draws that size including them, as every element does.
+- A page with a reset in a layer of its own, as a framework's base is, has it win over the kit's
+  components wherever its layer comes after `dk`. Such a page imports the components sheet into a
+  layer after the reset's, which keeps the sheet's rules in the kit's layer nested there, and the
+  reference shows the order.
 
 ## How it is tested
 
@@ -74,4 +78,6 @@ The paths are in `packages/design-kit`.
   `dk` last or not at all, and a page's important transition cut short for a visitor who asks for
   less motion, outside a layer and in a layer after the kit's. It finds a page's `::before` and
   `::after` drawn in the border box, their motion and a dialog's `::backdrop` cut short from a plain
-  rule and from an important one in either place, and a view transition's group cut short too.
+  rule and from an important one in either place, and a view transition's group cut short too. It
+  serves the sheets to a page whose reset sits in a layer after the kit's and finds a button's edge
+  cleared, then drawn again once the components sheet is imported into a layer after the reset's.

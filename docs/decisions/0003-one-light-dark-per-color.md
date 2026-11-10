@@ -48,7 +48,9 @@ choose.
 The paths are in `packages/design-kit`.
 
 - `src/tokens.test.ts` reads every color role from the sheet as its light and its dark value, and
-  holds each pairing the palette is meant for to its WCAG ratio in both themes.
+  holds each pairing the palette is meant for to its WCAG ratio in both themes. It holds the raised
+  ground lighter than the surface in the dark theme and no darker than the page in the light one,
+  as the roles' comment promises.
 - `e2e/sheets.spec.ts` draws the page in Chromium and finds the light or the dark background and
   text from the system when nothing is saved and from `data-theme` whatever the system, a page's
   own palette winning even when it loads before the kit's sheets, and a palette set on a container

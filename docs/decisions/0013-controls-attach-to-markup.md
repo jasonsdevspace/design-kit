@@ -70,4 +70,8 @@ The paths are in `packages/design-kit`.
   choice from another tab followed, a choice the browser will not save held through a page restored
   by Back, and a copy saying Copied on the button and the status line, or Selected with the text
   selected where the clipboard is refused, and a copy button put back to Copy when it is taken away.
-- `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn.
+  It finds the switch read by its name and described by its note, and a copy made on Enter as on a
+  click, and on Space where the clipboard is refused, with focus held on the button so the keys the
+  status line names still reach the page.
+- `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, and
+  that none cuts a word off under the wider text spacing a visitor may set, on a phone.

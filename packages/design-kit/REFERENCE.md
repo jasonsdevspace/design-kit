@@ -1060,6 +1060,23 @@ To put the kit's layer over the page's, before the kit's sheets load:
 @layer page, dk;
 ```
 
+Each sheet declares the layer it fills, so a sheet a page imports into a layer of its own keeps its
+rules in the kit's layer nested inside that one. A page with a reset in a layer, as a framework's
+base is, has the reset win over the kit's components wherever its layer comes after `dk`, and a
+button loses its edge. Such a page puts the kit's layer first in its own order, then its reset's, then
+one for the components, and imports the components sheet into that one:
+
+```css
+@layer dk, reset, kit;
+@import '@jasonsdevspace/design-kit/tokens.css';
+@import '@jasonsdevspace/design-kit/base.css';
+@import '@jasonsdevspace/design-kit/components.css' layer(kit);
+```
+
+The tokens and the base stay in `dk`, under the page's own rules, and the components draw over the
+reset. A reset outside any layer wins over every layer, the components' included, so a page keeps
+its reset in one.
+
 For a visitor who asks for less motion, the reduced-motion rule in `base.css` cuts every animation
 and transition to a hundredth of a millisecond, plays every animation once, and turns smooth
 scrolling into a jump. A delay before either is kept, since a delay moves nothing and a page may use

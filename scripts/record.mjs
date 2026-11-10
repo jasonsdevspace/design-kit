@@ -23,6 +23,37 @@ import { join } from 'node:path';
 import { isRunDirectly } from './repository.mjs';
 import { fileRows, isModule, isSheet, kb, packedOf, table } from './summary.mjs';
 
+/**
+ * What the record says of the sheets once they are measured without their comments, for a record
+ * taken since, and nothing for one taken before.
+ *
+ * @param {readonly import('./summary.mjs').PackedFile[]} files
+ */
+const sheetsNote = (files) =>
+    files.some((file) => file.stripped !== undefined)
+        ? ", and each sheet is also shown gzipped without its comments and blank lines, which is most of what a page's minifier takes out, and which the sheets' budget holds for the three together"
+        : '';
+
+/**
+ * The sheets as a table: each path, raw, gzipped, and gzipped without its comments and blank lines,
+ * which the sheets' budget holds for the three together. A record taken before the sheets were
+ * measured that way has no such column.
+ *
+ * @param {readonly import('./summary.mjs').PackedFile[]} sheets
+ */
+const sheetTable = (sheets) => {
+    const measured = sheets.some((sheet) => sheet.stripped !== undefined);
+    return table(
+        ['File', 'Raw', 'Gzipped', ...(measured ? ['Without comments'] : [])],
+        sheets.map((sheet) => [
+            sheet.path,
+            kb(sheet.size),
+            kb(sheet.gzip),
+            ...(measured ? [sheet.stripped === undefined ? '' : kb(sheet.stripped)] : []),
+        ])
+    );
+};
+
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
 /**
@@ -102,14 +133,14 @@ export const packageRecord = (packed, at) => {
 
 Run \`npm run bench:package\` to reproduce it. The raw results are in [package-size.json](package-size.json).
 
-What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches the theme switch or a copy button.
+What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports${sheetsNote(packed.files)}. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches the theme switch or a copy button.
 
 ${recordedTable(at)}
 \`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.
 
 The sheets a page loads:
 
-${files(isSheet)}
+${sheetTable(packed.files.filter((file) => isSheet(file.path)))}
 The modules a page's build imports:
 
 ${files(isModule)}

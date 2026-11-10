@@ -34,7 +34,8 @@ export const colorOf = (
     return theme === 'light' ? pair[1] : pair[2];
 };
 
-const luminance = (hex: string) => {
+/** The relative luminance WCAG defines, 0 for black and 1 for white. */
+export const luminance = (hex: string): number => {
     const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => {
         const channel = parseInt(hex.slice(at, at + 2), 16) / 255;
         return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;

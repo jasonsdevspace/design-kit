@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
+import { cutOff, SPACED } from './spacing.js';
 
 /*
  * The buttons, fields and callouts as a browser draws them, from the markup the components draw
@@ -14,7 +15,8 @@ import { Callout } from '../src/react.js';
  * screen, a large button at the target at every width and a text button drawn as a link at the
  * button's height, an off button the keyboard still reaches, the field's label, hint and error
  * read as its name and description, an empty live callout waiting a pixel out of the flow until
- * it is filled, and no audit findings for any state in either theme.
+ * it is filled, a tap on a touch screen leaving a toggle's edge as it was, no text cut off under
+ * the wider spacing a visitor may set, and no audit findings for any state in either theme.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -30,14 +32,24 @@ const STATES = renderToStaticMarkup(
 
 const open = async (
     page: Page,
-    { width = 1280, theme = 'light' }: { width?: number; theme?: 'light' | 'dark' } = {}
+    {
+        width = 1280,
+        theme = 'light',
+        css = '',
+    }: { width?: number; theme?: 'light' | 'dark'; css?: string } = {}
 ) => {
     await page.setViewportSize({ width, height: 900 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Controls</title>` +
-            `<style>${KIT}</style></head><body>${STATES}</body></html>`
+            `<style>${KIT}${css}</style></head><body>${STATES}</body></html>`
     );
 };
+
+/** Whether the page scrolls sideways. */
+const sideways = (page: Page) =>
+    page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+    );
 
 const style = (locator: Locator, ...names: string[]) =>
     locator.evaluate(
@@ -141,6 +153,36 @@ test('turns the edge to the focus color under a pointer, and underlines the acce
     await page.getByRole('button', { name: 'Previous' }).hover();
     await page.waitForTimeout(300);
     expect(await edge('Previous')()).toBe('rgb(217, 217, 217)');
+});
+
+test("leaves a toggle's edge as it was after a tap on a touch screen, where no pointer rests", async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ hasTouch: true, isMobile: true });
+    try {
+        const page = await context.newPage();
+        await open(page, { width: 360 });
+        // A touch screen reports no pointer that can rest over a button, so the pointer rule is off.
+        expect(await page.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);
+        const toggle = page.getByRole('button', { name: 'Guest', pressed: false });
+        const resting = await style(toggle, 'border-top-color', 'box-shadow');
+        await toggle.tap();
+        await page.waitForTimeout(300);
+        expect(await style(toggle, 'border-top-color', 'box-shadow')).toEqual(resting);
+        expect(resting['border-top-color']).toBe('rgb(133, 133, 133)');
+    } finally {
+        await context.close();
+    }
+});
+
+test('cuts no text off a callout or a field under the wider spacing a visitor may set', async ({
+    page,
+}) => {
+    await open(page, { width: 320, css: SPACED });
+    expect(
+        await cutOff(page, '.dk-callout, .dk-field, .dk-input, .dk-select, .dk-textarea')
+    ).toEqual([]);
+    expect(await sideways(page)).toBe(false);
 });
 
 test("tells a pressed toggle by its edge as well as its color, and keeps the toggle's name", async ({

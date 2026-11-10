@@ -71,6 +71,10 @@ The paths are in `packages/design-kit`.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to
   `dk.components`, its selectors to the kit's own classes or one `:where()` followed at most by a
   focus pseudo-class, and its custom properties to none.
+- `scripts/sheets.test.ts`, from the repository's root beside the record's own test, holds the three
+  sheets together, without their comments and blank lines, to a budget gzipped, as the controls are
+  held to theirs, so the components sheet cannot grow unseen as pieces are added. The package record
+  measures each sheet the same way and shows that figure beside its gzipped one.
 - The oldest Node job in CI installs the packed package into an empty project with React beside
   it, where `smoke/consumer.mjs` finds `components.css` where its export resolves and draws the
   strip from `./react` in plain Node, and `smoke/types.ts` type-checks the strip's props as Node
