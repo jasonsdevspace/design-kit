@@ -54,12 +54,13 @@ test('swallows Enter, Space and a click on an off button alike, and keeps focus 
 }) => {
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: script, type: 'module' });
-    const later = page.getByRole('button', { name: 'Send later' });
+    const later = page.getByRole('button', { name: 'Post later' });
     await expect(later).toHaveAttribute('aria-disabled', 'true');
     await later.focus();
     await page.keyboard.press('Enter');
     await page.keyboard.press('Space');
-    await later.click();
+    // Forced, since the test runner itself holds an aria-disabled button as one it must not press.
+    await later.click({ force: true });
     // The handler would mark every field, so no error shows while it never runs.
     await expect(page.getByText('Enter a name')).toHaveCount(0);
     await expect(later).toBeFocused();

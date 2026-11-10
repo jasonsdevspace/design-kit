@@ -114,7 +114,7 @@ const Page = () => {
                         setSent(true);
                     }}
                 >
-                    Send later
+                    Post later
                 </Button>
             </form>
         </main>

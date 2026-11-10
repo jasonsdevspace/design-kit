@@ -250,10 +250,10 @@ follow by area.
 
 ## What was measured
 
-- **What the kit costs a page.** The three sheets come to about 12 KB gzipped, or about 5 KB
+- **What the kit costs a page.** The three sheets come to about 16 KB gzipped, or about 5 KB
   without their comments as a page's minifier sends them, which a test holds to 6 KB, and the theme
   script goes inline in the page's head. A page that attaches the theme switch or a copy button loads the
-  controls too, about 3 KB more. The package npm publishes is 35 KB packed, the sheets and modules
+  controls too, about 3 KB more. The package npm publishes is 36 KB packed, the sheets and modules
   a page loads together with the README and the types it never does.
   [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, and each sheet
   without its comments.
