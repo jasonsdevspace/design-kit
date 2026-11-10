@@ -19,34 +19,34 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                           | Value or role                                             |
-| ---------------------------------------------------------------- | --------------------------------------------------------- |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
-| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
-| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                    |
-| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it  |
-| `--dk-highlight`                                                 | what is chosen or pointed at                              |
-| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
-| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
-| `--dk-scrim`                                                     | what dims the page behind a dialog                        |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                          |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                        |
-| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                           |
-| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                           |
-| `--dk-text-code`                                                 | 0.9em, a step under the text around it                    |
-| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                               |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
-| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
-| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                       |
-| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
-| `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |
-| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches            |
-| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                           |
-| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                            |
-| `--dk-duration-short`                                            | 150ms                                                     |
+| Tokens                                                           | Value or role                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both                  |
+| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                               |
+| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                                 |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                       |
+| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it     |
+| `--dk-highlight`                                                 | what is chosen or pointed at                                 |
+| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                              |
+| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
+| `--dk-scrim`                                                     | what dims the page behind a dialog                           |
+| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                             |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
+| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                              |
+| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                              |
+| `--dk-text-code`                                                 | 0.9em, a step under the text around it                       |
+| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                  |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                             |
+| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                            |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                       |
+| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                          |
+| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                  |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem    |
+| `--dk-target`                                                    | 2.75rem, the touch target on a phone                         |
+| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches               |
+| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                              |
+| `--dk-shadow-raised`                                             | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))` |
+| `--dk-duration-short`                                            | 150ms                                                        |
 
 </details>
 
@@ -61,7 +61,8 @@ the markup below, which a page without React writes by hand and the components i
 
 The skip link is the keyboard's first stop, out of sight until it takes focus, and then at the
 column's inset, where the strip's links start. Following it moves focus to the page's main content,
-which has a tabindex of -1 so it can take focus.
+which has a tabindex of -1 so it can take focus. Shown, it has a transparent edge, which forced
+colors draw in the link's color, so a page that resets the link's border loses its box there.
 
 <!-- example: skipLink -->
 
@@ -381,13 +382,14 @@ explains. A message that arrives after the page has loaded is made live in three
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
 2. Leave the message empty at first. A live callout whose message holds nothing at all, not even a
-   space, a line break or the tone's word, and that has no actions draws nothing, though it keeps
-   its place in the flow.
+   space, a line break or the tone's word, and that has no actions leaves the flow, drawn as
+   visually hidden text is, so it takes no room and opens no gap, and stays in the tree a screen
+   reader reads.
 3. Fill the message when there is something to say, which is when a screen reader reads it. For
    success or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
-A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
+A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is dropped and
 the edge marks where the callout starts and ends.
 
 ### Pills
@@ -804,7 +806,7 @@ after `--dk-`, and a long expression scrolls the frame as a wide table does.
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself, since wrapping would break its
+A block of code keeps its lines as written and scrolls inside itself on screen and wraps on paper, since wrapping would break its
 indentation and show line breaks the code does not have. It is a named region with a tabindex of 0,
 for the same reasons as a table's frame. Its title says what the code is for, such as "Run it
 yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
@@ -846,12 +848,15 @@ To put the kit's layer over the page's, before the kit's sheets load:
 @layer page, dk;
 ```
 
-For a visitor who asks for less motion, the reduced-motion rule in `base.css` plays every animation
-once, cuts animations and transitions to a hundredth of a millisecond, and turns smooth scrolling
-into a jump. It is held with `!important`, since it is the visitor's choice. It wins over every
-normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer after
-the kit's. An important declaration in a `style` attribute still wins over it, as does an important
-rule in a layer the page orders before the kit's.
+For a visitor who asks for less motion, the reduced-motion rule in `base.css` cuts every animation
+and transition to a hundredth of a millisecond, plays every animation once, and turns smooth
+scrolling into a jump. A delay before either is kept, since a delay moves nothing and a page may use
+one as a timer, such as a waiting line shown only once a load has taken a moment. Entrances a page
+staggers by delay come in sequence for this visitor, each at once, so a page that wants them
+together zeroes its own delays under the same query. The rule is held with `!important`, since it is
+the visitor's choice. It wins over every normal rule a page writes, and over an important one in a
+sheet, outside a layer or in a layer after the kit's. An important declaration in a `style`
+attribute still wins over it, as does an important rule in a layer the page orders before the kit's.
 
 Each color role holds its light and its dark value in one `light-dark()`. A page with its own
 palette sets the roles again, with both values at once. Set on `:root`, outside a layer or in one
@@ -884,7 +889,9 @@ and when the browser restores the page from its back and forward cache. Storage 
 origin, so only a page on the portfolio's origin reads the visitor's choice, and anywhere else
 follows the system. Print always draws the light values, whatever the theme, since paper is light
 and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
-layer sets them back to light in print too.
+layer sets them back to light in print too. On paper a callout and a code block keep an edge in the line
+color, a code block wraps and a scrolling table shows whole with its code and figures wrapping, and
+the theme switch, the copy button, the skip link and a strip's switches do not print.
 
 A page that names its theme color for each scheme, two `<meta name="theme-color">` whose media
 queries are exactly `(prefers-color-scheme: light)` and `(prefers-color-scheme: dark)`, before the

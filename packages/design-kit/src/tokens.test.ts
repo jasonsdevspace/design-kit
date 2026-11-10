@@ -57,6 +57,20 @@ describe('the tokens', () => {
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
     });
 
+    it('casts the raised shadow deeper on a dark page, where a soft one shows little', () => {
+        const shadow = declared.get('--dk-shadow-raised') ?? '';
+        // Each color's alpha, written as a number or a percent, in the order light then dark.
+        const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ (\d+(?:\.\d+)?)(%?)\)/g)].map(
+            ([, value = '0', percent]) => Number(value) / (percent ? 100 : 1)
+        );
+        const [light, dark] = alphas;
+        if (light === undefined || dark === undefined) {
+            throw new Error(`the shadow is not two rgb() blacks in light-dark(): ${shadow}`);
+        }
+        expect(shadow).toContain('light-dark(');
+        expect(dark).toBeGreaterThan(light);
+    });
+
     for (const theme of THEMES) {
         it(`holds every pairing to its ratio in the ${theme} theme`, () => {
             const short = PAIRS.flatMap(([front, back, ratio]) => {
