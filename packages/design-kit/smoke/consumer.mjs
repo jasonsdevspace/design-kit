@@ -36,16 +36,19 @@ assert.match(
 // examples, the tests or this smoke test.
 const installed = join(dirname(fileURLToPath(theme)), '..');
 const shipped = readdirSync(installed, { recursive: true }).map(String);
-for (const wanted of [
-    'dist/theme.d.ts',
-    'dist/vite.d.ts',
-    'README.md',
-    'CHANGELOG.md',
-    'LICENSE',
-]) {
+for (const wanted of ['dist/theme.d.ts', 'dist/vite.d.ts', 'README.md', 'LICENSE']) {
     assert.ok(shipped.includes(wanted), `ships ${wanted}`);
 }
-for (const unwanted of [/^src/, /^examples/, /^smoke/, /^e2e/, /\.test\./, /\.tsbuildinfo$/]) {
+// The changelog is a page on GitHub and each release's notes, which a page that installs never reads.
+for (const unwanted of [
+    /^src/,
+    /^examples/,
+    /^smoke/,
+    /^e2e/,
+    /\.test\./,
+    /\.tsbuildinfo$/,
+    /^CHANGELOG\.md$/,
+]) {
     const found = shipped.filter((path) => unwanted.test(path));
     assert.deepEqual(found, [], `ships nothing matching ${unwanted}`);
 }

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -81,22 +81,30 @@ describe('the published package', () => {
 
     it('packs its build, its README and its license, and no changelog', () => {
         // The changelog is a page on GitHub, which the README links, and each release carries its
-        // entry as its notes, so a page that installs the package never reads it.
-        const listed = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+        // entry as its notes, so a page that installs the package never reads it. The dry run lists
+        // the files from disk without the scripts a pack would run, so nothing is built here.
+        const args = ['pack', '--dry-run', '--json', '--ignore-scripts'];
+        const { stdout, stderr, status, error } = spawnSync('npm', args, {
             cwd: fileURLToPath(new URL('..', import.meta.url)),
             encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'pipe'],
         });
-        const [packed] = JSON.parse(listed) as readonly { files: readonly { path: string }[] }[];
-        const paths = (packed?.files ?? []).map(({ path }) => path);
-        expect(paths).toContain('README.md');
-        expect(paths).toContain('LICENSE');
-        expect(paths).toContain('package.json');
+        if (error !== undefined) throw error;
+        let paths: string[];
+        try {
+            const [packed] = JSON.parse(stdout) as readonly {
+                files: readonly { path: string }[];
+            }[];
+            paths = (packed?.files ?? []).map(({ path }) => path);
+        } catch (cause) {
+            throw new Error(`npm ${args.join(' ')} exited ${String(status)}:\n${stderr}`, {
+                cause,
+            });
+        }
+        const carried = ['README.md', 'LICENSE', 'package.json'];
+        expect(paths).toEqual(expect.arrayContaining(carried));
         expect(
-            paths.filter(
-                (path) =>
-                    !path.startsWith('dist/') &&
-                    !['README.md', 'LICENSE', 'package.json'].includes(path)
-            )
+            paths.filter((path) => !path.startsWith('dist/') && !carried.includes(path))
         ).toEqual([]);
     });
 

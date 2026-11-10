@@ -213,16 +213,16 @@ follow by area.
 <details>
 <summary>The packed package and the markup the docs print</summary>
 
-| Gotcha                                                                                                    | Where it is tested                             |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Each sheet resolves and each module loads from the packed package, on the oldest Node                     | `packages/design-kit/smoke/consumer.mjs`       |
-| The strip draws its markup from the packed package, with the React a page has                             | `packages/design-kit/smoke/consumer.mjs`       |
-| A field makes its ids with `useId` in a server render of the packed package                               | `packages/design-kit/smoke/consumer.mjs`       |
-| Each block of a piece's markup in the reference is what its example draws                                 | `packages/design-kit/examples/readme.test.ts`  |
-| Each state the site shows draws the attribute printed under it                                            | `packages/design-kit/examples/states.test.tsx` |
-| Each state's React draws the state's own markup, laid out as the repository lays out code                 | `packages/design-kit/examples/states.test.tsx` |
-| Each state's React draws what the version the site pins draws for the state                               | `packages/site/src/code.test.ts`               |
-| The package exports what the smoke test loads and nothing else, and has a changelog entry for its version | `packages/design-kit/smoke/package.test.ts`    |
+| Gotcha                                                                                                                                                       | Where it is tested                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node                                                                        | `packages/design-kit/smoke/consumer.mjs`       |
+| The strip draws its markup from the packed package, with the React a page has                                                                                | `packages/design-kit/smoke/consumer.mjs`       |
+| A field makes its ids with `useId` in a server render of the packed package                                                                                  | `packages/design-kit/smoke/consumer.mjs`       |
+| Each block of a piece's markup in the reference is what its example draws                                                                                    | `packages/design-kit/examples/readme.test.ts`  |
+| Each state the site shows draws the attribute printed under it                                                                                               | `packages/design-kit/examples/states.test.tsx` |
+| Each state's React draws the state's own markup, laid out as the repository lays out code                                                                    | `packages/design-kit/examples/states.test.tsx` |
+| Each state's React draws what the version the site pins draws for the state                                                                                  | `packages/site/src/code.test.ts`               |
+| The package exports what the smoke test loads and nothing else, has a changelog entry for its version, and packs its build, its README and its license alone | `packages/design-kit/smoke/package.test.ts`    |
 
 </details>
 
@@ -253,7 +253,7 @@ follow by area.
 - **What the kit costs a page.** The three sheets come to about 12 KB gzipped, and the theme script
   goes inline in the page's head. A page that attaches the theme switch or a copy button loads the
   controls too, about 3 KB more. The package npm publishes is 35 KB packed, the sheets and modules
-  a page loads together with the changelog, the README and the types it never does.
+  a page loads together with the README and the types it never does.
   [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
   its processor slowed, every page scores a hundred for accessibility and performance, shows its
