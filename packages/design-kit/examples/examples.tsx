@@ -4,6 +4,7 @@ import * as kit from '../src/react.js';
 import {
     Button,
     Callout,
+    ChoiceField,
     CopyButton,
     CopyStatus,
     DemoFooter,
@@ -93,6 +94,34 @@ export const fields: ReactElement = (
     </>
 );
 
+/** A set of radios with a hint, a gloss on one choice and an error, and a row of checkboxes. */
+export const choiceField: ReactElement = (
+    <>
+        <ChoiceField
+            id="rule"
+            name="rule"
+            label="What the rule does"
+            hint="A rule applies to every search"
+            error="Choose what the rule does"
+            choices={[
+                { value: 'pin', label: 'Pin', hint: 'to the top of the results' },
+                { value: 'hide', label: 'Hide' },
+            ]}
+        />
+        <ChoiceField
+            id="facets"
+            name="facets"
+            type="checkbox"
+            label="Show"
+            row
+            choices={[
+                { value: 'brand', label: 'Brand', defaultChecked: true },
+                { value: 'price', label: 'Price' },
+            ]}
+        />
+    </>
+);
+
 /** A callout for something that went wrong, with a title and an action. */
 export const callout: ReactElement = (
     <Callout
@@ -159,6 +188,39 @@ export const controlStates: ReactElement = (
                 <option value="new">New</option>
                 <option value="sale">Sale</option>
             </SelectField>
+            <ChoiceField
+                id="state-rule"
+                name="state-rule"
+                label="What the rule does"
+                hint="A rule applies to every search"
+                choices={[
+                    { value: 'pin', label: 'Pin', hint: 'to the top of the results' },
+                    { value: 'hide', label: 'Hide', defaultChecked: true },
+                    { value: 'boost', label: 'Boost', disabled: true },
+                ]}
+            />
+            <ChoiceField
+                id="state-when"
+                name="state-when"
+                label="When"
+                error="Choose when the rule runs"
+                choices={[
+                    { value: 'always', label: 'Always' },
+                    { value: 'sale', label: 'During a sale' },
+                ]}
+            />
+            <ChoiceField
+                id="state-facets"
+                name="state-facets"
+                type="checkbox"
+                label="Show"
+                row
+                choices={[
+                    { value: 'brand', label: 'Brand', defaultChecked: true },
+                    { value: 'price', label: 'Price' },
+                    { value: 'color', label: 'Color' },
+                ]}
+            />
         </form>
         {(['info', 'success', 'warning', 'danger'] as const).map((tone) => (
             <Callout
@@ -258,6 +320,7 @@ export const EXAMPLES = {
     footer,
     buttons,
     fields,
+    choiceField,
     callout,
     themeSwitch,
     copyButton,

@@ -230,13 +230,13 @@ which could send a visitor anywhere.
 
 ## Buttons, fields and callouts
 
-`components.css` styles a button, a text field, a select and a callout by the markup below, each in
-every state on [the controls page](https://jasonsdevspace.com/design-kit/controls/). A control's
-state is the native or ARIA attribute a screen reader already reads, such as `aria-pressed` or
-`aria-invalid`, never a class of the kit's. Every rule for these pieces adds no weight, so a state
-wins over the resting look by coming later in the sheet, and a page's own rule outside a layer wins
-over both, as
-[decision 0006](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0006-a-control-state-is-an-attribute.md)
+`components.css` styles a button, a text field, a select, a set of choices and a callout by the
+markup below, each in every state on [the controls
+page](https://jasonsdevspace.com/design-kit/controls/). A control's state is the native or ARIA
+attribute a screen reader already reads, such as `aria-pressed` or `aria-invalid`, never a class of
+the kit's. Every rule for these pieces adds no weight, so a state wins over the resting look by
+coming later in the sheet, and a page's own rule outside a layer wins over both, as [decision
+0006](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0006-a-control-state-is-an-attribute.md)
 explains.
 
 ### Buttons
@@ -360,6 +360,81 @@ as a list, with `multiple` or a `size`, is left as the browser draws it, with no
 
 </details>
 
+### Choice fields
+
+<!-- example: choiceField -->
+
+```html
+<fieldset
+    class="dk-field dk-choice-field"
+    id="rule"
+    role="radiogroup"
+    aria-describedby="rule-hint rule-error"
+    aria-invalid="true"
+>
+    <legend class="dk-field-label">What the rule does</legend>
+    <p class="dk-field-hint" id="rule-hint">A rule applies to every search</p>
+    <p class="dk-field-error" id="rule-error">
+        <span class="dk-visually-hidden">Error: </span>
+        Choose what the rule does
+    </p>
+    <div class="dk-choices">
+        <label class="dk-choice">
+            <input type="radio" name="rule" value="pin" />
+            <span>
+                Pin
+                <span class="dk-choice-hint"> to the top of the results</span>
+            </span>
+        </label>
+        <label class="dk-choice">
+            <input type="radio" name="rule" value="hide" />
+            <span>Hide</span>
+        </label>
+    </div>
+</fieldset>
+<fieldset class="dk-field dk-choice-field" id="facets">
+    <legend class="dk-field-label">Show</legend>
+    <div class="dk-choices dk-choices-row">
+        <label class="dk-choice">
+            <input type="checkbox" name="facets" checked="" value="brand" />
+            <span>Brand</span>
+        </label>
+        <label class="dk-choice">
+            <input type="checkbox" name="facets" value="price" />
+            <span>Price</span>
+        </label>
+    </div>
+</fieldset>
+```
+
+A set of radios or checkboxes is a `fieldset` with the field's class and `.dk-choice-field`, whose
+legend is the field's label, then the hint and the error as a field has them, then the choices in
+`.dk-choices`, one under the other, or `.dk-choices-row` for a row that wraps. Each choice is a
+`label.dk-choice` holding a native radio or checkbox and its word, with a gloss in `.dk-choice-hint`
+after the word, inside its span, which is read as part of the choice's name. The hint and the error
+describe the set, through `aria-describedby` on the fieldset. A set of radios carries
+`role="radiogroup"`, and `aria-invalid="true"` on the fieldset while an error is drawn, since the
+keyboard enters a radio group at the chosen radio, wherever that is, and a radio takes no invalid
+state of its own. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
+instead. The arrow keys move and check among radios, as the browser has them, and a choice a visitor
+cannot make uses `disabled` on its control.
+
+<details>
+<summary>How a choice is drawn</summary>
+
+A choice is the field's height, and a thumb's target on a phone, and takes the highlight under a
+pointer and after the keyboard, as the ring does, so the whole word reads as one target with the
+ring on the control itself, and a tap leaves no choice lit once it is done. The highlight reaches
+past the control by the choice's own padding, so the control stays in line with the legend, into the
+room around the field, which a container that clips must leave. A gloss is in the muted text at the
+caption size, and a choice whose control is disabled is in the muted text with no highlight. Every
+control of an invalid set draws a thin line in the danger color around it, and a dashed line in
+`CanvasText` in forced colors, each giving way to the ring. The theme switch's choice is the same
+label of a radio and its word, drawn by rules of its own as a pill word with the radio under it, as
+the Theme switch section says.
+
+</details>
+
 ### Callouts
 
 <!-- example: callout -->
@@ -424,11 +499,63 @@ the edge marks where the callout starts and ends.
 A pill is a chip that names something, or a link among others in a row, both `.dk-pill` in a
 `.dk-pills` list. A chip has a faint edge in the line color and no states, so it never reads as a
 control, and it is no target. A link has no edge and steps back in the muted text as the strip's
-links do, and the one that is the current page carries `aria-current` and stands on the highlight
-at the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on
-a phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
-with VoiceOver drops a list's meaning when its markers are gone. Tabs that switch what one part of a
-page shows are not pills, since they take the tab role and its keys.
+links do, and the one that is the current page carries `aria-current` and stands on the highlight at
+the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on a
+phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
+with VoiceOver drops a list's meaning when its markers are gone. A row that switches what one part
+of a page shows, or pages or toggles underlined where chosen, is tabs, below.
+
+### Tabs
+
+```html
+<div class="dk-tabs" role="tablist" aria-label="Code">
+    <button
+        type="button"
+        class="dk-tab"
+        role="tab"
+        id="markup-tab"
+        aria-selected="true"
+        aria-controls="markup"
+    >
+        Markup
+    </button>
+    <button
+        type="button"
+        class="dk-tab"
+        role="tab"
+        id="react-tab"
+        aria-selected="false"
+        aria-controls="react"
+        tabindex="-1"
+    >
+        React
+    </button>
+</div>
+<div id="markup" role="tabpanel" aria-labelledby="markup-tab">…</div>
+<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden>…</div>
+<nav aria-label="Categories">
+    <ul class="dk-tabs" role="list">
+        <li><a class="dk-tab" href="./" aria-current="page">All</a></li>
+        <li><a class="dk-tab" href="./books/">Books</a></li>
+    </ul>
+</nav>
+```
+
+Tabs are a row of muted words with the chosen one in the page's text over an accent line, each
+`.dk-tab` in a `.dk-tabs` row over a rule. The classes draw the row alone, and ship no script and no
+React component, since a tab's role and its keys belong to the page that owns the panels. The chosen
+tab carries the attribute a screen reader already reads for its control: `aria-selected="true"` on a
+tab, `aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike.
+It keeps the resting weight, so no tab moves as the choice does. In forced colors the chosen tab
+stands in the system's selection colors, as the current pill does, and a resting tab has no line for
+them to paint. A tab is the strip's height, and a thumb wide and tall on a phone, and its first word
+sits in from the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as
+the pills do, and each link fills its item down to the rule.
+
+A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab in the tab order,
+the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
+base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so the ring follows the
+arrow keys.
 
 ### React components
 
@@ -499,6 +626,22 @@ themselves.
 Every other prop goes to the control, `ref` and `className` included, except `style` and
 `aria-invalid`. A select field's children are its options. An `aria-describedby` of the page's own
 is listed after the hint and the error.
+
+**`ChoiceField` props**
+
+| `ChoiceField`         | Default      | What it does                                                          |
+| --------------------- | ------------ | --------------------------------------------------------------------- |
+| `label`               | required     | Names the set, as its legend                                          |
+| `name`                | required     | The controls' name, shared by every choice                            |
+| `choices`             | required     | Each a `value`, a `label`, a `hint` and the control's own props       |
+| `type`                | `'radio'`    | `'checkbox'` where any number of choices can be on                    |
+| `row`                 | `false`      | Draws the choices in a row that wraps                                 |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the set, and the id is the fieldset's |
+
+Every other prop goes to the `<fieldset>`, `ref` and `className` included, except `style` and
+`aria-invalid`. A choice's own props go to its control, `ref` among them, except `style`,
+`className` and `aria-invalid`, and `type` and `name`, which the set gives. Its `value` tells the
+choices apart.
 
 **`Callout` props**
 
