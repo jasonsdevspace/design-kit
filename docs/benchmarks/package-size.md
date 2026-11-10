@@ -4,18 +4,18 @@ Run `npm run bench:package` to reproduce it. The raw results are in [package-siz
 
 What a demo installs when it adds the kit, measured from the tarball `npm pack` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports. Of the modules, the plugin in `vite.js` runs only in a build, the theme script from `theme.js` goes inline in the page's head, `react.js` reaches a visitor only on a page that renders React in the browser, and `controls.js` reaches one on a page that attaches the theme switch or a copy button.
 
-| Recorded   | Commit    | Machine                | Node     |
-| ---------- | --------- | ---------------------- | -------- |
-| 2026-11-09 | `c18ec3c` | Apple M2 Max, 12 cores | v24.22.2 |
+| Recorded   | Commit    | Machine                                  | Node     |
+| ---------- | --------- | ---------------------------------------- | -------- |
+| 2026-11-10 | `11f3d66` | AMD EPYC 9V74 80-Core Processor, 4 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.3.0`, 34.9 KB packed.
+`@jasonsdevspace/design-kit@0.3.1`, 35.4 KB packed.
 
 The sheets a page loads:
 
 | File                | Raw     | Gzipped |
 | ------------------- | ------- | ------- |
 | dist/base.css       | 6.0 KB  | 2.1 KB  |
-| dist/components.css | 31.6 KB | 7.5 KB  |
+| dist/components.css | 32.1 KB | 7.6 KB  |
 | dist/tokens.css     | 6.4 KB  | 2.3 KB  |
 
 The modules a page's build imports:
@@ -31,7 +31,7 @@ Every other file the package carries, which a page never loads:
 
 | File               | Raw     | Gzipped |
 | ------------------ | ------- | ------- |
-| CHANGELOG.md       | 19.4 KB | 7.0 KB  |
+| CHANGELOG.md       | 20.5 KB | 7.3 KB  |
 | dist/controls.d.ts | 1.1 KB  | 0.5 KB  |
 | dist/react.d.ts    | 10.1 KB | 3.3 KB  |
 | dist/theme.d.ts    | 1.8 KB  | 0.8 KB  |
