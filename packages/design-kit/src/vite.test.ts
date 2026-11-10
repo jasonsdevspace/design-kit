@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -159,20 +160,29 @@ describe('the browser floor', () => {
 
 /*
  * The hash a page names in its policy changes with the script's text, so the script's hash is held
- * to a committed file and the changelog's entry for the package's version has to say whether it
- * changed. A change to the script then moves the file in the same diff, and the entry says so.
+ * to a committed file, and at a bump the changelog's entry for the new version has to say whether
+ * it changed from the released one, which the site's pinned release carries. Between releases the
+ * script may change with the file, and the bump says so when it comes.
  */
 describe('the hash on record', () => {
     const at = (path: string) => new URL(path, import.meta.url);
+    const released = createRequire(import.meta.url)('design-kit-release/package.json') as {
+        version: string;
+    };
+    const releasedHash = (
+        createRequire(import.meta.url)('design-kit-release/vite') as { themeScriptHash: string }
+    ).themeScriptHash;
 
     it('is the committed hash, so a change to the script moves the file with it', () => {
         expect(readFileSync(at('./theme-script.sha256'), 'utf8').trim()).toBe(themeScriptHash);
     });
 
-    it("is named by the changelog's entry for this version, as changed or the same", () => {
+    it("is named by the changelog's entry for a new version, as changed or the same", () => {
         const { version } = JSON.parse(readFileSync(at('../package.json'), 'utf8')) as {
             version: string;
         };
+        // Until the bump, the released version is this one, and its entry already stands.
+        if (version === released.version) return;
         const changelog = readFileSync(at('../CHANGELOG.md'), 'utf8');
         const start = changelog.indexOf(`## ${version}\n`);
         expect(start, `an entry for ${version}`).toBeGreaterThan(-1);
@@ -180,5 +190,8 @@ describe('the hash on record', () => {
         const end = rest.indexOf('\n## ');
         const entry = end === -1 ? rest : rest.slice(0, end);
         expect(entry).toContain('`themeScriptHash`');
+        if (themeScriptHash === releasedHash)
+            expect(entry).toContain('`themeScriptHash` is the same');
+        else expect(entry).toContain('`themeScriptHash` changed');
     });
 });
