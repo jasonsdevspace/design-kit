@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { SOURCE, steps } from '../examples/examples.js';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
 import { SPACED } from './spacing.js';
+import { textSize } from './text-size.js';
 
 /*
  * An explainer page as a demo writes it by hand, with the kit's sheets: the link to how it works
@@ -102,12 +103,7 @@ const open = async (
     }: { width?: number; theme?: 'light' | 'dark'; text?: number; extra?: string } = {}
 ) => {
     await page.setViewportSize({ width, height: 900 });
-    // The visitor's own text size, as the browser's setting sets it, which every rem is drawn from.
-    const session = await page.context().newCDPSession(page);
-    await session.send('Page.setFontSizes', {
-        fontSizes: { standard: Math.round(16 * text), fixed: Math.round(13 * text) },
-    });
-    await session.detach();
+    await textSize(page, text);
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>How Example works</title>` +
             `<style>${KIT}${extra}</style></head><body>${PAGE}</body></html>`

@@ -172,22 +172,40 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
         button?.setAttribute('aria-expanded', 'true');
         (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
     };
-    // A press that started inside the choices picks by pointer, and one outside closes them.
+    /*
+     * A press that started inside the choices picks by pointer, and one outside closes them. While
+     * a press inside the switch is under way, focus leaving the switch is let be, since a browser
+     * that gives a pressed button no focus blurs the open choices first, which would close them
+     * for the press to open again. A press that never ends in a click, or a key pressed after it,
+     * leaves nothing set, so a later key pick is a key pick.
+     */
     let pointed = false;
+    let pressing = false;
     const onPointerDown = (event: Event) => {
+        const inside = group.contains(event.target as Node);
+        pressing = inside;
         pointed = choices?.contains(event.target as Node) ?? false;
-        if (!pointed && !group.contains(event.target as Node)) close(false);
+        if (!inside) close(false);
+    };
+    const onPointerEnd = () => {
+        pressing = false;
+    };
+    const onPointerCancel = () => {
+        pressing = false;
+        pointed = false;
     };
     const onPick = () => {
         if (pointed) close(true);
         pointed = false;
     };
     const onKey = (event: KeyboardEvent) => {
+        pointed = false;
         if (event.key !== 'Escape' || !isOpen()) return;
         event.preventDefault();
         close(true);
     };
     const onFocusOut = (event: FocusEvent) => {
+        if (pressing) return;
         if (!group.contains(event.relatedTarget as Node | null)) close(false);
     };
     for (const radio of radios) radio.addEventListener('change', onChange);
@@ -196,6 +214,8 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     group.addEventListener('keydown', onKey);
     group.addEventListener('focusout', onFocusOut);
     document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerup', onPointerEnd);
+    document.addEventListener('pointercancel', onPointerCancel);
     switches.add(show);
     listen();
     show();
@@ -209,6 +229,8 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
         group.removeEventListener('keydown', onKey);
         group.removeEventListener('focusout', onFocusOut);
         document.removeEventListener('pointerdown', onPointerDown);
+        document.removeEventListener('pointerup', onPointerEnd);
+        document.removeEventListener('pointercancel', onPointerCancel);
         close(false);
         switches.delete(show);
         attachedSwitches.delete(group);

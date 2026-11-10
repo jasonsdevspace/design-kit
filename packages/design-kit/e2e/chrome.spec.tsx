@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
+import { textSize } from './text-size.js';
 
 /*
  * The page chrome as a browser lays it out, from the markup the components draw and the kit's own
@@ -111,17 +112,6 @@ const open = async (
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
             `<style>${KIT}${css}</style></head><body>${chrome(tools, where, aside)}</body></html>`
     );
-};
-
-/**
- * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from, a
- * media query's included, where a size set on the root reaches no media query.
- */
-const textSize = async (page: Page, scale: number) => {
-    const session = await page.context().newCDPSession(page);
-    await session.send('Page.setFontSizes', {
-        fontSizes: { standard: Math.round(16 * scale), fixed: Math.round(13 * scale) },
-    });
 };
 
 const box = async (locator: Locator, what: string) => {

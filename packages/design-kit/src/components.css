@@ -992,13 +992,13 @@
     }
 
     /*
-     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no longer
-     * fit a row, so the switch shows its name and one button that names the current choice, drawn
-     * as the chosen word is, and the button opens the choices under itself, one to a row, each a
-     * thumb's target the width of the list, over the page rather than in the strip, so opening them
-     * moves nothing. The width is in rem, so the threshold follows the browser's text size and is
-     * decided before any script runs. The switch stands as tall as the room the strip keeps, a
-     * thumb's target, so the strip is one height either way.
+     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no
+     * longer fit a row, so the switch shows its name and one button that names the current choice,
+     * drawn as the chosen word is, and the button opens the choices under itself, one to a row,
+     * each a thumb's target the width of the list, over the page rather than in the strip, so
+     * opening them moves nothing. The width is in rem, so the threshold follows the browser's text
+     * size and is decided before any script runs. The switch stands as tall as the room the strip
+     * keeps, a thumb's target, so the strip is one height either way.
      */
     @media (width < 20rem) {
         :where(.dk-strip-tools .dk-theme-switch) {

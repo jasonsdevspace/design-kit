@@ -4,6 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { cutOff, SPACED } from './spacing.js';
+import { textSize } from './text-size.js';
 
 /*
  * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
@@ -164,17 +165,6 @@ test('keeps its name and choices on one row at the usual text size, phone to wid
         expect(fit.pageScrolls, `${String(width)}px`).toBe(false);
     }
 });
-
-/**
- * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from, a
- * media query's included, where a size set on the root reaches no media query.
- */
-const textSize = async (page: Page, scale: number) => {
-    const session = await page.context().newCDPSession(page);
-    await session.send('Page.setFontSizes', {
-        fontSizes: { standard: Math.round(16 * scale), fixed: Math.round(13 * scale) },
-    });
-};
 
 /** The switch moved into a strip's section for switches, as a demo's script puts it there. */
 const inStrip = (page: Page) =>
