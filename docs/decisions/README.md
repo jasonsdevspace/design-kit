@@ -41,3 +41,6 @@ costs, and the test behind it.
     the theme switch and the copy button as markup from a component and a function a page calls on
     it, from `./controls`, and why a stateful component and a script that builds the DOM were turned
     down.
+14. [A piece with no state of its own ships as classes alone](0014-stateless-pieces-ship-as-classes.md):
+    tabs, pills and the eyebrow as classes a page writes by hand, with the roles and keys the page
+    owns, and why a component for each was turned down.

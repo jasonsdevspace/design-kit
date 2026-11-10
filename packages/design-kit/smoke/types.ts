@@ -1,8 +1,3 @@
-// Compiled in the same empty project as consumer.mjs, against the installed package, once as Node
-// resolves it and once as a bundler does. It fails if the types do not ship or do not resolve, or
-// if a theme's type, the plugin's or a component's props have quietly become `any`. Declaration
-// files are skipped, since the plugin's types name Vite's, and Vite's own need Node's types and a
-// newer library than this check compiles against.
 import {
     Button,
     Callout,
@@ -24,6 +19,14 @@ import {
 } from '@jasonsdevspace/design-kit/vite';
 import { createRef } from 'react';
 import type { UserConfig } from 'vite';
+
+/*
+ * Compiled in the same empty project as consumer.mjs, against the installed package, once as Node
+ * resolves it and once as a bundler does. It fails if the types do not ship or do not resolve, or
+ * if a theme's type, the plugin's or a component's props have quietly become `any`. Declaration
+ * files are skipped, since the plugin's types name Vite's, and Vite's own need Node's types and a
+ * newer library than this check compiles against.
+ */
 
 export const first: Theme = THEMES[0];
 export const key: string = THEME_KEY;

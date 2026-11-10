@@ -1,11 +1,10 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
+import { height, KIT, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 
 /*
@@ -18,9 +17,6 @@ import { cutOff, SPACED } from './spacing.js';
  * it is filled, a tap on a touch screen leaving a toggle's edge as it was, no text cut off under
  * the wider spacing a visitor may set, and no audit findings for any state in either theme.
  */
-
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
 /** Every state of each control, on a page of its own. */
 const STATES = renderToStaticMarkup(
@@ -38,29 +34,8 @@ const open = async (
         css = '',
     }: { width?: number; theme?: 'light' | 'dark'; css?: string } = {}
 ) => {
-    await page.setViewportSize({ width, height: 900 });
-    await page.setContent(
-        `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Controls</title>` +
-            `<style>${KIT}${css}</style></head><body>${STATES}</body></html>`
-    );
+    await writePage(page, { width, theme, css, title: 'Controls', body: STATES });
 };
-
-/** Whether the page scrolls sideways. */
-const sideways = (page: Page) =>
-    page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth
-    );
-
-const style = (locator: Locator, ...names: string[]) =>
-    locator.evaluate(
-        (element, wanted) =>
-            Object.fromEntries(
-                wanted.map((name) => [name, getComputedStyle(element).getPropertyValue(name)])
-            ),
-        names
-    );
-
-const height = async (locator: Locator) => Math.round((await locator.boundingBox())?.height ?? 0);
 
 /** What a control's text starts past: its left padding and the edge outside it. */
 const inset = (locator: Locator) => style(locator, 'padding-left', 'border-left-width');
@@ -182,7 +157,7 @@ test('cuts no text off a callout or a field under the wider spacing a visitor ma
     expect(
         await cutOff(page, '.dk-callout, .dk-field, .dk-input, .dk-select, .dk-textarea')
     ).toEqual([]);
-    expect(await sideways(page)).toBe(false);
+    expect(await sideways(page)).toBe(0);
 });
 
 test("tells a pressed toggle by its edge as well as its color, and keeps the toggle's name", async ({

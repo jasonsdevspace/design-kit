@@ -511,6 +511,8 @@ the edge marks where the callout starts and ends.
 
 ### Pills
 
+<!-- example: pills -->
+
 ```html
 <ul class="dk-pills" role="list">
     <li class="dk-pill">TypeScript</li>
@@ -534,6 +536,8 @@ with VoiceOver drops a list's meaning when its markers are gone. A row that swit
 of a page shows, or pages or toggles underlined where chosen, is tabs, below.
 
 ### Tabs
+
+<!-- example: tabs -->
 
 ```html
 <div class="dk-tabs" role="tablist" aria-label="Code">
@@ -560,13 +564,17 @@ of a page shows, or pages or toggles underlined where chosen, is tabs, below.
     </button>
 </div>
 <div id="markup" role="tabpanel" aria-labelledby="markup-tab">…</div>
-<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden>…</div>
+<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden="">…</div>
 <nav aria-label="Categories">
     <ul class="dk-tabs" role="list">
         <li><a class="dk-tab" href="./" aria-current="page">All</a></li>
         <li><a class="dk-tab" href="./books/">Books</a></li>
     </ul>
 </nav>
+<div class="dk-tabs">
+    <button type="button" class="dk-tab" aria-pressed="true">Open</button>
+    <button type="button" class="dk-tab" aria-pressed="false">Go</button>
+</div>
 ```
 
 Tabs are a row of muted words with the chosen one in the page's text over an accent line, each
@@ -586,6 +594,8 @@ base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so 
 arrow keys.
 
 ### Eyebrows
+
+<!-- example: eyebrow -->
 
 ```html
 <p class="dk-eyebrow">Theme</p>

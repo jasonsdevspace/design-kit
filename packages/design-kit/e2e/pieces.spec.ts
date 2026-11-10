@@ -1,14 +1,16 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import type { ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
+import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
+import { writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
- * the kit's sheets, in markup written by hand: the chosen theme told apart by an edge rather
+ * The theme switch, the pill, the tab, the eyebrow and the copy button's words as a browser draws
+ * them from the kit's sheets, from the examples the reference prints: the chosen theme told apart by an edge rather
  * than a fill alone, a target the field's height and a thumb's on a phone, no word moving as
  * the choice moves, the switch collapsed to its name and one button in a demo's strip on a screen
  * narrower than 20rem and the row of choices everywhere else, a chip that never reads as a
@@ -19,46 +21,17 @@ import { textSize } from './text-size.js';
  * with no audit findings in either theme.
  */
 
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
-
-const SWITCH = `<div class="dk-theme-switch">
-    <span class="dk-theme-switch-name" id="theme-name">Theme</span>
-    <button type="button" class="dk-theme-switch-button" id="theme-button" aria-labelledby="theme-name theme-button" aria-expanded="false" aria-controls="theme-choices">Light</button>
-    <div class="dk-theme-switch-choices" id="theme-choices" role="radiogroup" aria-labelledby="theme-name" aria-describedby="theme-note">
-        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="system"><span>System</span></label>
-        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="light" checked><span>Light</span></label>
-        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="dark"><span>Dark</span></label>
-    </div>
-    <span class="dk-visually-hidden" id="theme-note">Your choice is saved for every page on jasonsdevspace.com.</span>
-</div>`;
-
-const PILLS = `<ul class="dk-pills" role="list"><li class="dk-pill">TypeScript</li><li class="dk-pill">React</li></ul>
-<nav aria-label="Pages"><ul class="dk-pills" role="list">
-    <li><a class="dk-pill" href="#home" aria-current="page">Home</a></li>
-    <li><a class="dk-pill" href="#tokens">Tokens</a></li>
-</ul></nav>`;
-
-const TABS = `<div class="dk-tabs" role="tablist" aria-label="Code">
-    <button type="button" class="dk-tab" role="tab" id="markup-tab" aria-selected="true" aria-controls="markup" tabindex="0">Markup</button>
-    <button type="button" class="dk-tab" role="tab" id="react-tab" aria-selected="false" aria-controls="react" tabindex="-1">React</button>
-</div>
-<div id="markup" role="tabpanel" aria-labelledby="markup-tab"><p>The markup.</p></div>
-<div id="react" role="tabpanel" aria-labelledby="react-tab" hidden><p>The React.</p></div>
-<nav aria-label="Categories"><ul class="dk-tabs" role="list">
-    <li><a class="dk-tab" href="#all" aria-current="page">All</a></li>
-    <li><a class="dk-tab" href="#books">Books</a></li>
-</ul></nav>
-<div class="dk-tabs">
-    <button type="button" class="dk-tab" aria-pressed="true">Open</button>
-    <button type="button" class="dk-tab" aria-pressed="false">Go</button>
-</div>`;
-
-const COPY = `<button type="button" class="dk-button dk-copy">
-    <span class="dk-copy-words"><span>Copy</span><span aria-hidden="true">Copied</span><span aria-hidden="true">Selected</span></span>
-    <span class="dk-visually-hidden"> install command</span>
-</button>
-<p class="dk-visually-hidden" role="status"></p>`;
+/**
+ * Each piece as the reference prints it, shown as a page's script shows the switch and the copy
+ * button.
+ */
+const drawn = (example: ReactElement) => renderToStaticMarkup(example).replaceAll(' hidden=""', '');
+// The switch first, so one Tab reaches it, with Light chosen as the page is parsed, so no
+// transition is under way when a test reads the chosen word.
+const PIECES = [
+    drawn(themeSwitch).replace('value="light"/>', 'value="light" checked=""/>'),
+    ...[pills, tabs, eyebrow, copyButton].map(drawn),
+].join('');
 
 const open = async (
     page: Page,
@@ -66,15 +39,15 @@ const open = async (
         width = 1280,
         theme = 'light',
         css = '',
-    }: { width?: number; theme?: string; css?: string } = {}
+    }: { width?: number; theme?: 'light' | 'dark'; css?: string } = {}
 ) => {
-    await page.setViewportSize({ width, height: 900 });
-    await page.setContent(
-        `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Pieces</title>` +
-            `<style>${KIT}${css}</style></head><body><main><h1>Pieces</h1>${SWITCH}${PILLS}${TABS}${COPY}` +
-            `<p class="dk-eyebrow">Signed in as a guest</p>` +
-            `<button type="button" class="dk-button">Filters</button></main></body></html>`
-    );
+    await writePage(page, {
+        width,
+        theme,
+        css,
+        title: 'Pieces',
+        body: `<main><h1>Pieces</h1>${PIECES}<button type="button" class="dk-button">Filters</button></main>`,
+    });
 };
 
 const word = (page: Page, name: string) =>
@@ -184,7 +157,7 @@ test("collapses to its name and one button naming the choice in a demo's strip n
     await textSize(page, 2);
     await open(page, { width: 320, css: 'main { width: 280px; }' });
     await inStrip(page);
-    const button = page.getByRole('button', { name: 'Theme Light' });
+    const button = page.getByRole('button', { name: 'Theme System' });
     await expect(button).toBeVisible();
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     for (const name of ['System', 'Light', 'Dark']) {
@@ -232,14 +205,14 @@ test("keeps the row of three choices in a demo's strip at 20rem and wider, and o
         await textSize(page, scale);
         await open(page, { width, css: 'main { padding-inline: 20px; }' });
         await inStrip(page);
-        await expect(page.getByRole('button', { name: 'Theme Light' })).toBeHidden();
+        await expect(page.getByRole('button', { name: 'Theme System' })).toBeHidden();
         const fit = await switchFit(page, '.dk-strip-tools');
         expect(fit.rows, `${String(width)}px at text ${String(scale)}`).toBe(1);
         expect(fit.pageScrolls).toBe(false);
     }
     // Outside the strip the switch wraps instead, and draws no button, however narrow its column.
     await open(page, { width: 320, css: 'main { width: 280px; }' });
-    await expect(page.getByRole('button', { name: 'Theme Light' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Theme System' })).toBeHidden();
     expect((await switchFit(page)).rows).toBeGreaterThan(1);
 });
 
@@ -482,7 +455,7 @@ test('rings in the accent a part of the page sets, where the page sets no focus 
     ).toBe('rgb(0, 112, 64)');
 });
 
-for (const theme of ['light', 'dark']) {
+for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme`, async ({ page }) => {
         await open(page, { theme });
         const results = await new AxeBuilder({ page }).analyze();

@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { ReactNode } from 'react';
@@ -7,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
+import { box, KIT, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -24,9 +23,6 @@ import { textSize } from './text-size.js';
  * room and the explainer's chrome included. The same markup is drawn again from an origin of its
  * own under `style-src 'self'`, where any inline style would be refused.
  */
-
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
 /**
  * The demo's switches as a demo draws them, plain buttons or the kit's own, which stand as tall as
@@ -107,17 +103,14 @@ const open = async (
         aside?: boolean;
     }
 ) => {
-    await page.setViewportSize({ width, height: 800 });
-    await page.setContent(
-        `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Example</title>` +
-            `<style>${KIT}${css}</style></head><body>${chrome(tools, where, aside)}</body></html>`
-    );
-};
-
-const box = async (locator: Locator, what: string) => {
-    const drawn = await locator.boundingBox();
-    if (!drawn) throw new Error(`expected ${what} to be drawn`);
-    return drawn;
+    await writePage(page, {
+        width,
+        height: 800,
+        theme,
+        css,
+        title: 'Example',
+        body: chrome(tools, where, aside),
+    });
 };
 
 /** Where the strip's links sit, and how tall the strip is, as the screen draws it. */

@@ -1,6 +1,8 @@
-import { readFileSync } from 'node:fs';
-
 import { expect, type Page, test } from '@playwright/test';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import { CopyButton, ThemeSwitch } from '../src/react.js';
+import { KIT, style } from './page.js';
 
 /*
  * The components on paper, where the browser drops backgrounds: a callout and a
@@ -8,9 +10,6 @@ import { expect, type Page, test } from '@playwright/test';
  * than cut at the frame, and what does nothing on paper, the theme switch, the copy button, the
  * skip link and a strip's switches, does not print.
  */
-
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
 const LONG = 'const answer = '.repeat(20);
 
@@ -23,21 +22,13 @@ const PAGE = `<!doctype html><html lang="en" data-theme="light"><head><title>Pri
 <ol class="dk-steps"><li>The first step</li></ol>
 <div class="dk-table-scroll"><table class="dk-table"><tbody><tr><td><code>${'--dk-'.repeat(40)}</code></td><td class="dk-table-number">1234567890</td></tr></tbody></table></div>
 <div class="dk-strip"><section class="dk-strip-tools" aria-label="Settings"><button type="button" class="dk-button">Members</button></section></div>
-<div class="dk-theme-switch" role="radiogroup" aria-label="Theme">
-<label class="dk-theme-switch-choice"><input type="radio" name="theme" value="light" checked><span>Light</span></label>
-</div>
-<button type="button" class="dk-button dk-copy"><span class="dk-copy-words"><span>Copy</span></span></button>
+${renderToStaticMarkup(
+    <>
+        <ThemeSwitch id="theme" />
+        <CopyButton name="install command" />
+    </>
+).replaceAll(' hidden=""', '')}
 </main></body></html>`;
-
-/** The computed styles named, on the first element the selector finds. */
-const style = (page: Page, selector: string, ...names: string[]) =>
-    page
-        .locator(selector)
-        .first()
-        .evaluate((element, names) => {
-            const computed = getComputedStyle(element);
-            return Object.fromEntries(names.map((name) => [name, computed.getPropertyValue(name)]));
-        }, names);
 
 /** The line color as the page resolves it, from an element asked to take it. */
 const lineColor = (page: Page) =>
@@ -56,7 +47,7 @@ test('prints edges on a callout and a code block, in the line color', async ({ p
     const line = await lineColor(page);
     for (const selector of ['.dk-callout', '.dk-code']) {
         expect(
-            await style(page, selector, 'border-top-style', 'border-top-color'),
+            await style(page.locator(selector).first(), 'border-top-style', 'border-top-color'),
             selector
         ).toEqual({ 'border-top-style': 'solid', 'border-top-color': line });
     }
@@ -68,17 +59,19 @@ test('prints a code block and a scrolling table whole, rather than cut at the fr
     await page.setContent(PAGE);
     // On screen each scrolls inside its frame.
     for (const selector of ['.dk-code', '.dk-table-scroll']) {
-        expect(await style(page, selector, 'overflow-x'), selector).toEqual({
+        expect(await style(page.locator(selector).first(), 'overflow-x'), selector).toEqual({
             'overflow-x': 'auto',
         });
     }
     await page.emulateMedia({ media: 'print' });
     for (const selector of ['.dk-code', '.dk-table-scroll']) {
-        expect(await style(page, selector, 'overflow-x'), selector).toEqual({
+        expect(await style(page.locator(selector).first(), 'overflow-x'), selector).toEqual({
             'overflow-x': 'visible',
         });
     }
-    expect(await style(page, '.dk-code', 'white-space')).toEqual({ 'white-space': 'pre-wrap' });
+    expect(await style(page.locator('.dk-code').first(), 'white-space')).toEqual({
+        'white-space': 'pre-wrap',
+    });
     // Wrapped, neither the code nor the table is wider than its column.
     for (const selector of ['.dk-code', '.dk-table-scroll']) {
         const box = await page.locator(selector).evaluate((element) => ({
@@ -93,6 +86,8 @@ test('prints none of the controls that do nothing on paper', async ({ page }) =>
     await page.setContent(PAGE);
     await page.emulateMedia({ media: 'print' });
     for (const selector of ['.dk-theme-switch', '.dk-copy', '.dk-skip', '.dk-strip-tools']) {
-        expect(await style(page, selector, 'display'), selector).toEqual({ display: 'none' });
+        expect(await style(page.locator(selector).first(), 'display'), selector).toEqual({
+            display: 'none',
+        });
     }
 });
