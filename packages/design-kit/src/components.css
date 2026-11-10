@@ -394,7 +394,8 @@
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
      * something that went right or wrong. Its words stay in the page's own color in every tone,
      * and say the tone themselves, so color is never the only sign of it. The edge draws nothing
-     * until forced colors drop the ground, and then it marks where the callout starts and ends.
+     * until forced colors or paper drop the ground, and then it marks where the callout starts and
+     * ends.
      */
     :where(.dk-callout) {
         display: grid;
@@ -727,7 +728,8 @@
     /*
      * A block of code keeps its lines as written and scrolls inside itself, a named region the
      * keyboard reaches, as a table's frame is. It sits on the card's ground, or on the page's
-     * inside a panel, so it reads as set into what holds it, and its edge shows in forced colors.
+     * inside a panel, so it reads as set into what holds it, and its edge shows in forced colors
+     * and on paper.
      */
     :where(.dk-code) {
         padding: var(--dk-space-3) var(--dk-space-4);
@@ -950,5 +952,36 @@
      */
     :where(.dk-theme-switch[hidden], .dk-copy[hidden]) {
         display: none;
+    }
+
+    /*
+     * Paper is light and the browser drops backgrounds, so on paper a callout and a code block keep
+     * an edge in the line color, where the screen's transparent edge would vanish with the ground.
+     * A code block and a scrolling table show whole rather than cut at the frame, their code and
+     * figures wrapping, and what does nothing on paper does not print: the theme switch, the copy
+     * button, the skip link, and a strip's section of switches with the room it keeps for them.
+     */
+    @media print {
+        :where(.dk-callout, .dk-code) {
+            border-color: var(--dk-line);
+        }
+
+        :where(.dk-code, .dk-table-scroll) {
+            overflow: visible;
+        }
+
+        :where(.dk-code, .dk-table-scroll .dk-table code, .dk-table-number) {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        :where(.dk-theme-switch, .dk-copy, .dk-skip) {
+            display: none;
+        }
+
+        /* Weighted as the section's own rule is, which sets its display outside :where(). */
+        .dk-strip-tools {
+            display: none;
+        }
     }
 }
