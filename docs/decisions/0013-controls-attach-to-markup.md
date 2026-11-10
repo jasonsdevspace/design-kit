@@ -64,9 +64,10 @@ hidden and the group is the row of choices.
   reference shows, since the attach function finds both by class, and a page that finds the group
   by its role finds the div. A page that stacks something over the strip at its own order can cover
   the open choices, which a top layer would have put above.
-- The page's presses are heard only while the choices are open, and a press is over once its click
-  has run, since a browser that gives a pressed button no focus blurs the open choices first and a
-  touch screen lifts the pointer before the click.
+- A press on the button or on a choice cancels its default as it begins, so it moves no focus,
+  since a browser that gives a pressed button no focus would blur the open choices first, and focus
+  leaving the switch is the one path that closes the choices where they are. The page's presses are
+  heard only while the choices are open.
 
 ## How it is tested
 
