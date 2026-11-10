@@ -1,13 +1,13 @@
 /*
- * What every page takes before any component: the page's type and colors, one focus ring for every
- * link and control, and motion cut short for a visitor who asks for less. Every rule sits in the
- * kit's base layer, so a demo's own rule outside a layer wins over the kit's however little it
- * weighs. Every selector is the visually hidden class or one :where(), followed at most by a focus
- * pseudo-class, or by a pseudo-element where a rule for every element has to reach it too, since
- * a pseudo-element inside a :where() matches nothing. The cut to motion is the exception to a
- * demo's rule winning. It is held with !important, so it wins over every normal rule a page writes,
- * and the layer makes it win over a page's important rule outside a layer too, since the visitor's
- * choice outranks the demo's.
+ * What every page takes before any component: the page's type and colors, its selection on the
+ * accent, one focus ring for every link and control, and motion cut short for a visitor who asks
+ * for less. Every rule sits in the kit's base layer, so a demo's own rule outside a layer wins over
+ * the kit's however little it weighs. Every selector is the visually hidden class or one :where(),
+ * followed at most by a focus pseudo-class, or by a pseudo-element where a rule for every element
+ * has to reach it too, since a pseudo-element inside a :where() matches nothing. The cut to motion
+ * is the exception to a demo's rule winning. It is held with !important, so it wins over every
+ * normal rule a page writes, and the layer makes it win over a page's important rule outside a
+ * layer too, since the visitor's choice outranks the demo's.
  *
  * Load tokens.css first, since its first statement declares the order of the kit's layers.
  */
@@ -42,6 +42,18 @@
 
     :where(a) {
         color: var(--dk-accent);
+    }
+
+    /*
+     * Selected text stands on the accent in the text the accent carries, in both themes, rather
+     * than on the browser's blue, which would be a second accent on a page that keeps one. The
+     * highlight would not do, since a callout, a pressed button and a current pill already sit on
+     * it, and a selection there would vanish. The accent is a ground nothing else sits on, and text
+     * on it is a pairing the palette holds to 4.5 to 1.
+     */
+    :where(*)::selection {
+        background-color: var(--dk-accent);
+        color: var(--dk-on-accent);
     }
 
     :where(code, kbd, pre, samp) {
