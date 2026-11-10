@@ -49,6 +49,14 @@ export const fieldWithout = InputField({});
 // @ts-expect-error The one action a view leads with is not a switch.
 export const accentToggle = Button({ accent: true, pressed: true });
 
+// @ts-expect-error The one action a view leads with is not drawn as a link.
+export const accentText = Button({ accent: true, text: true });
+
+// A large button and a text button take their props, and a wrapper can hand each on as undefined.
+const bigger: boolean | undefined = undefined;
+export const lead = Button({ large: bigger, children: 'Try it' });
+export const link = Button({ text: true, children: 'Show the markup' });
+
 // A page moves focus to a button through its ref, which the props name as the button drawn.
 export const opener = Button({ ref: createRef<HTMLButtonElement>(), children: 'Tour' });
 

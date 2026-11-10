@@ -209,6 +209,38 @@ describe('the button', () => {
         ).toBe('<button type="button" class="dk-button dk-button-accent wide">Save rule</button>');
     });
 
+    it('draws a large button and a text button by a class each, and a text toggle too', () => {
+        expect(renderToStaticMarkup(<Button large>Try it</Button>)).toBe(
+            '<button type="button" class="dk-button dk-button-large">Try it</button>'
+        );
+        expect(renderToStaticMarkup(<Button text>Show the markup</Button>)).toBe(
+            '<button type="button" class="dk-button dk-button-text">Show the markup</button>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Button large accent className="wide">
+                    Open
+                </Button>
+            )
+        ).toContain('class="dk-button dk-button-accent dk-button-large wide"');
+        expect(
+            renderToStaticMarkup(
+                <Button text pressed>
+                    Shown
+                </Button>
+            )
+        ).toContain('class="dk-button dk-button-text" aria-pressed="true"');
+        for (const nothing of [false, undefined]) {
+            expect(
+                renderToStaticMarkup(
+                    <Button large={nothing} text={nothing}>
+                        Go
+                    </Button>
+                )
+            ).toBe(renderToStaticMarkup(<Button>Go</Button>));
+        }
+    });
+
     it('says a toggle is a toggle whether it is pressed or not, and leaves an action alone', () => {
         expect(renderToStaticMarkup(<Button pressed>Member</Button>)).toContain(
             'aria-pressed="true"'
@@ -262,6 +294,9 @@ describe('the button', () => {
         // @ts-expect-error The one action a view leads with is not a switch.
         const both = <Button accent pressed children="Go" />;
         expect(renderToStaticMarkup(both)).toBeTruthy();
+        // @ts-expect-error The one action a view leads with is not drawn as a link.
+        const linked = <Button accent text children="Go" />;
+        expect(renderToStaticMarkup(linked)).toBeTruthy();
     });
 });
 

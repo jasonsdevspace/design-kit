@@ -11,7 +11,8 @@ import { Callout } from '../src/react.js';
  * The buttons, fields and callouts as a browser draws them, from the markup the components draw
  * and the kit's own sheets: each state told apart by more than its color, forced colors included,
  * a field and a button level at the target size on a phone and at the field's height on a wide
- * screen, an off button the keyboard still reaches, the field's label, hint and error read as its
+ * screen, a large button at the target at every width and a text button drawn as a link at the
+ * button's height, an off button the keyboard still reaches, the field's label, hint and error read as its
  * name and description, an empty live callout waiting a pixel out of the flow until it is filled,
  * and no audit
  * findings for any state in either theme.
@@ -169,6 +170,76 @@ test('keeps a pressed toggle that is off told apart from one that is not pressed
     const off = await style(page.getByRole('button', { name: 'Locked off' }), 'box-shadow');
     expect(on['box-shadow']).toMatch(/inset/);
     expect(off['box-shadow']).toBe('none');
+});
+
+test('draws a large button at the target at every width, with wider padding and the body text', async ({
+    page,
+}) => {
+    for (const width of [1280, 360]) {
+        await open(page, { width });
+        const large = page.getByRole('button', { name: 'Try it', exact: true });
+        expect(await height(large), `${String(width)}px`).toBe(44);
+        expect(await style(large, 'padding-left', 'font-size')).toEqual({
+            'padding-left': '16px',
+            'font-size': '16px',
+        });
+        // The accent button grows the same way, keeping its fill.
+        const lead = page.getByRole('button', { name: 'Open the demo' });
+        expect(await height(lead), `${String(width)}px`).toBe(44);
+        expect((await style(lead, 'background-color'))['background-color']).toBe(
+            'rgb(31, 79, 216)'
+        );
+    }
+});
+
+test("draws a text button as a link, at the button's height, with its states", async ({ page }) => {
+    for (const [width, tall] of [
+        [1280, 36],
+        [360, 44],
+    ] as const) {
+        await open(page, { width });
+        const text = page.getByRole('button', { name: 'Show the markup' });
+        expect(await height(text), `${String(width)}px`).toBe(tall);
+        expect(
+            await style(
+                text,
+                'border-top-color',
+                'padding-left',
+                'background-color',
+                'color',
+                'text-decoration-line'
+            )
+        ).toEqual({
+            'border-top-color': 'rgba(0, 0, 0, 0)',
+            'padding-left': '0px',
+            'background-color': 'rgba(0, 0, 0, 0)',
+            color: 'rgb(31, 79, 216)',
+            'text-decoration-line': 'underline',
+        });
+        // No wider than its words, since it has no minimum width.
+        const box = await text.boundingBox();
+        expect(box?.width ?? 0, `${String(width)}px`).toBeLessThan(tall * 4);
+    }
+    // Pointed at, the underline thickens, since there is no edge to color.
+    const text = page.getByRole('button', { name: 'Show the markup' });
+    await text.hover();
+    await expect
+        .poll(
+            async () =>
+                (await style(text, 'text-decoration-thickness'))['text-decoration-thickness']
+        )
+        .toBe('2px');
+    // Pressed, it takes the highlight as a toggle does, and off, it keeps its underline in the
+    // muted text with no edge.
+    const shown = page.getByRole('button', { name: 'Markup shown', pressed: true });
+    expect((await style(shown, 'background-color'))['background-color']).toBe('rgb(227, 234, 251)');
+    const none = page.getByRole('button', { name: 'No markup' });
+    await expect(none).toBeDisabled();
+    expect(await style(none, 'color', 'text-decoration-line', 'border-top-color')).toEqual({
+        color: 'rgb(92, 92, 92)',
+        'text-decoration-line': 'underline',
+        'border-top-color': 'rgba(0, 0, 0, 0)',
+    });
 });
 
 test('draws a list that shows its options as the browser does, with no caret', async ({ page }) => {
@@ -354,6 +425,15 @@ test.describe('in forced colors', () => {
         expect(await style(locked, 'border-top-color')).not.toEqual(
             await style(loose, 'border-top-color')
         );
+        // A text button keeps its underline, which is what tells it from the text around it.
+        expect(
+            (
+                await style(
+                    page.getByRole('button', { name: 'Show the markup' }),
+                    'text-decoration-line'
+                )
+            )['text-decoration-line']
+        ).toBe('underline');
         // The select's own arrow comes back, since the drawn one is a background.
         expect((await style(page.getByLabel('Sort by'), 'appearance')).appearance).toBe('auto');
         // Each callout's ground is gone, so its edge marks where it starts and ends.
