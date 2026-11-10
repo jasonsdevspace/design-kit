@@ -30,8 +30,10 @@ for a Content Security Policy.
 Option C. The script runs inline in the head, before the body is parsed. It sets `data-theme` to the
 theme saved, or to the system's when nothing usable is saved, and sets it again when the system's
 changes, when the portfolio saves or clears a choice in another tab, and when the browser restores
-the page from its back and forward cache, where a page hears no storage event. Print always draws
-the light values. A page built with Vite asks for it with `<!-- theme-script -->`, and a page built
+the page from its back and forward cache, where a page hears no storage event. Where the page names
+a theme color for each scheme before it, it points both at the ground of the theme it draws, on the
+first paint and on every change of the root's theme, so the browser's bar follows the theme too.
+Print always draws the light values. A page built with Vite asks for it with `<!-- theme-script -->`, and a page built
 otherwise writes `themeScript` into its head itself.
 
 ## Consequences
@@ -53,6 +55,12 @@ otherwise writes `themeScript` into its head itself.
   installed package.
 - The build fails on a page with no placeholder, which would otherwise draw the system's theme
   rather than the visitor's, and on a page with two.
+- The bar follows the root's `data-theme` through a mutation observer set before the first theme
+  is set, so the switch, which sets the attribute itself, and anything else that sets it reach the
+  bar without a second reading of the contract, and only the two exact scheme queries are read, so
+  a page's other theme colors are left alone. The script's hash is held to a committed file, and at
+  a bump the changelog's entry for the new version has to say whether `themeScriptHash` changed from
+  the released one, so a change to the script cannot ship unsaid.
 
 ## How it is tested
 
@@ -62,12 +70,15 @@ The paths are in `packages/design-kit`.
   that key and those values, finds a rule in the tokens for each theme, and compiles the script and
   finds nothing in it that would end its element.
 - `src/vite.test.ts` finds the script inline where the page asks for it, the build refused for a
-  page with no placeholder and for one with two, and the hash matching the script as the plugin
-  writes it.
+  page with no placeholder and for one with two, the hash matching the script as the plugin writes
+  it and the committed hash file, and at a bump the changelog's entry for the new version saying
+  whether the hash changed from the released one.
 - `e2e/theme.spec.ts` serves the page from an origin of its own in Chromium and finds the saved
   theme drawn whatever the system, the system followed when nothing, `system` or an unknown value is
   saved and when storage is refused, the theme set before the body is parsed, the system followed as
-  it changes, a choice saved or cleared in another tab taken up, the theme saved meanwhile drawn
+  it changes, a choice saved or cleared in another tab taken up, the browser's bar painted in the
+  drawn theme's ground and moved with the system, another tab, a restore and the root's attribute,
+  and left alone without a color for each scheme, the theme saved meanwhile drawn
   when the page is restored from the cache, and light or the saved theme drawn, and a choice from
   another tab still heard, where `matchMedia` is missing, throws, answers with `addListener` alone
   or gives a `matches` that throws. `e2e/chrome.spec.tsx` prints a page in the dark theme and finds

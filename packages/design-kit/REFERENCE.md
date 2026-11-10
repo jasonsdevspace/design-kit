@@ -893,6 +893,14 @@ layer sets them back to light in print too. On paper a callout and a code block 
 color, a code block wraps and a scrolling table shows whole with its code and figures wrapping, and
 the theme switch, the copy button, the skip link and a strip's switches do not print.
 
+A page that names its theme color for each scheme, two `<meta name="theme-color">` whose media
+queries are exactly `(prefers-color-scheme: light)` and `(prefers-color-scheme: dark)`, before the
+script, gets the browser's bar in the ground of the theme the page draws. The script points both at
+that ground on the first paint and on every change of the root's theme, the switch's, another tab's,
+the system's and a page restored by Back included, so the bar never shows the other theme's ground.
+A theme color with any other query is left alone, and so are both when either is missing or without
+content.
+
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed
 version, so the policy reads it from the package rather than keeping a copy that goes stale when the
