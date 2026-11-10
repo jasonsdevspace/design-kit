@@ -61,7 +61,8 @@ the markup below, which a page without React writes by hand and the components i
 
 The skip link is the keyboard's first stop, out of sight until it takes focus, and then at the
 column's inset, where the strip's links start. Following it moves focus to the page's main content,
-which has a tabindex of -1 so it can take focus.
+which has a tabindex of -1 so it can take focus. Shown, it has a transparent edge, which forced
+colors draw in the link's color, so a page that resets the link's border loses its box there.
 
 <!-- example: skipLink -->
 
@@ -381,8 +382,9 @@ explains. A message that arrives after the page has loaded is made live in three
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
 2. Leave the message empty at first. A live callout whose message holds nothing at all, not even a
-   space, a line break or the tone's word, and that has no actions draws nothing, though it keeps
-   its place in the flow.
+   space, a line break or the tone's word, and that has no actions leaves the flow, drawn as
+   visually hidden text is, so it takes no room and opens no gap, and stays in the tree a screen
+   reader reads.
 3. Fill the message when there is something to say, which is when a screen reader reads it. For
    success or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
@@ -846,12 +848,15 @@ To put the kit's layer over the page's, before the kit's sheets load:
 @layer page, dk;
 ```
 
-For a visitor who asks for less motion, the reduced-motion rule in `base.css` plays every animation
-once, cuts animations and transitions to a hundredth of a millisecond, and turns smooth scrolling
-into a jump. It is held with `!important`, since it is the visitor's choice. It wins over every
-normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer after
-the kit's. An important declaration in a `style` attribute still wins over it, as does an important
-rule in a layer the page orders before the kit's.
+For a visitor who asks for less motion, the reduced-motion rule in `base.css` cuts every animation
+and transition to a hundredth of a millisecond, plays every animation once, and turns smooth
+scrolling into a jump. A delay before either is kept, since a delay moves nothing and a page may use
+one as a timer, such as a waiting line shown only once a load has taken a moment. Entrances a page
+staggers by delay come in sequence for this visitor, each at once, so a page that wants them
+together zeroes its own delays under the same query. The rule is held with `!important`, since it is
+the visitor's choice. It wins over every normal rule a page writes, and over an important one in a
+sheet, outside a layer or in a layer after the kit's. An important declaration in a `style`
+attribute still wins over it, as does an important rule in a layer the page orders before the kit's.
 
 Each color role holds its light and its dark value in one `light-dark()`. A page with its own
 palette sets the roles again, with both values at once. Set on `:root`, outside a layer or in one
