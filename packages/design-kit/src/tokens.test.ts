@@ -57,14 +57,18 @@ describe('the tokens', () => {
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
     });
 
-    it('casts the raised shadow deeper on a dark page, where a soft one cannot show', () => {
+    it('casts the raised shadow deeper on a dark page, where a soft one shows little', () => {
         const shadow = declared.get('--dk-shadow-raised') ?? '';
-        expect(shadow).toContain('light-dark(');
-        const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ ([\d.]+)\)/g)].map((match) =>
-            Number(match[1])
+        // Each color's alpha, written as a number or a percent, in the order light then dark.
+        const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ (\d+(?:\.\d+)?)(%?)\)/g)].map(
+            ([, value = '0', percent]) => Number(value) / (percent ? 100 : 1)
         );
-        expect(alphas).toHaveLength(2);
-        expect(alphas[1] ?? 0).toBeGreaterThan(alphas[0] ?? 0);
+        const [light, dark] = alphas;
+        if (light === undefined || dark === undefined) {
+            throw new Error(`the shadow is not two rgb() blacks in light-dark(): ${shadow}`);
+        }
+        expect(shadow).toContain('light-dark(');
+        expect(dark).toBeGreaterThan(light);
     });
 
     for (const theme of THEMES) {
