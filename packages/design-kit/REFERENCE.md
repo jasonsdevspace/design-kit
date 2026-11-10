@@ -19,34 +19,34 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                           | Value or role                                             |
-| ---------------------------------------------------------------- | --------------------------------------------------------- |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both               |
-| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                            |
-| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                              |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                    |
-| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it  |
-| `--dk-highlight`                                                 | what is chosen or pointed at                              |
-| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                           |
-| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                           |
-| `--dk-scrim`                                                     | what dims the page behind a dialog                        |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                          |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                        |
-| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                           |
-| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                           |
-| `--dk-text-code`                                                 | 0.9em, a step under the text around it                    |
-| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                               |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                          |
-| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                         |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                    |
-| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                       |
-| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                               |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem |
-| `--dk-target`                                                    | 2.75rem, the touch target on a phone                      |
-| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches            |
-| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                           |
-| `--dk-shadow-raised`                                             | `0 6px 24px rgb(0 0 0 / 0.18)`                            |
-| `--dk-duration-short`                                            | 150ms                                                     |
+| Tokens                                                           | Value or role                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both                  |
+| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                               |
+| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                                 |
+| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                       |
+| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it     |
+| `--dk-highlight`                                                 | what is chosen or pointed at                                 |
+| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                              |
+| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
+| `--dk-scrim`                                                     | what dims the page behind a dialog                           |
+| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                             |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
+| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                              |
+| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                              |
+| `--dk-text-code`                                                 | 0.9em, a step under the text around it                       |
+| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                  |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                             |
+| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                            |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                       |
+| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                          |
+| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                  |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem    |
+| `--dk-target`                                                    | 2.75rem, the touch target on a phone                         |
+| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches               |
+| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                              |
+| `--dk-shadow-raised`                                             | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))` |
+| `--dk-duration-short`                                            | 150ms                                                        |
 
 </details>
 
