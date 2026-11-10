@@ -1,7 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
+import { colorOf, declaredIn } from '../../design-kit/examples/palette.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
 /*
@@ -222,7 +226,9 @@ for (const path of PAGES) {
         // The script sets the theme only when the policy lets it run, so the theme proves its hash.
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
         // The site's own script fills the strip with the switch only when the policy lets it load.
-        await expect(page.getByRole('radio', { name: 'System' })).toBeChecked();
+        await expect(
+            page.locator('body > .dk-strip').getByRole('radio', { name: 'System' })
+        ).toBeChecked();
         const policy = await page
             .locator('meta[http-equiv="Content-Security-Policy"]')
             .getAttribute('content');
@@ -1164,7 +1170,7 @@ test.describe("the site's header", () => {
         });
         expect(forced).toContain('.dk-theme-switch-choice > input:checked + span');
         expect(forced).toContain('a.dk-pill[aria-current]');
-        expect(forced).toContain('.site-code-tab[aria-selected="true"]');
+        expect(forced).toContain('.dk-tab[aria-selected="true"]');
     });
 
     test('keeps each segment one width as the choice moves', async ({ page }) => {
@@ -1183,13 +1189,115 @@ test.describe("the site's header", () => {
     });
 });
 
+/** The page's ground in each theme, from the tokens of the version the site pins. */
+const GROUNDS = (() => {
+    const declared = declaredIn(
+        readFileSync(
+            createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
+            'utf8'
+        )
+    );
+    return { light: colorOf(declared, 'bg', 'light'), dark: colorOf(declared, 'bg', 'dark') };
+})();
+
+test.describe("the browser's bar", () => {
+    test("names the page's ground for each scheme before the script, from the tokens, and follows the theme drawn", async ({
+        page,
+    }) => {
+        for (const path of PAGES) {
+            await page.addInitScript(() => {
+                localStorage.setItem('theme', 'dark');
+            });
+            await page.goto(path);
+            const metas = page.locator('meta[name="theme-color"][media]');
+            await expect(metas, path).toHaveCount(2);
+            // Written before the script, one for each scheme, from the pinned tokens' ground.
+            const written = await page.evaluate(() =>
+                [
+                    ...document.querySelectorAll<HTMLMetaElement>(
+                        'meta[name="theme-color"][media]'
+                    ),
+                ].map((meta) => [meta.media, meta.content] as const)
+            );
+            expect(written.map(([media]) => media)).toEqual([
+                '(prefers-color-scheme: light)',
+                '(prefers-color-scheme: dark)',
+            ]);
+            const script = page.locator('head script').first();
+            expect(
+                await page.evaluate(() => {
+                    const meta = document.querySelector('meta[name="theme-color"][media]');
+                    const script = document.querySelector('head script');
+                    return meta && script
+                        ? Boolean(
+                              meta.compareDocumentPosition(script) &
+                              Node.DOCUMENT_POSITION_FOLLOWING
+                          )
+                        : false;
+                }),
+                path
+            ).toBe(true);
+            await expect(script).toHaveCount(1);
+            // The theme script points both at the drawn theme's ground, dark here.
+            expect(
+                written.map(([, content]) => content),
+                path
+            ).toEqual([GROUNDS.dark, GROUNDS.dark]);
+        }
+    });
+});
+
 test.describe('the theme switch', () => {
+    /** The strip's section for the page's own switch. */
+    const strip = (page: Page) => page.locator('body > .dk-strip .dk-strip-tools');
+
     /** The radio for each choice, in the strip's section named for the switch. */
     const choice = (page: Page, name: 'System' | 'Light' | 'Dark') =>
-        page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name });
+        strip(page).getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name });
 
     /** What the page saved under the portfolio's key. */
     const saved = (page: Page) => page.evaluate(() => localStorage.getItem('theme'));
+
+    test("draws the switch's state live, showing the page's choice and changing it, and its other copy as a picture of that theme", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const state = page.locator('.site-state', { hasText: 'The switch, attached by the page' });
+        const live = state
+            .locator('.site-copy:not([inert])')
+            .getByRole('radiogroup', { name: 'Theme' });
+        await expect(live).toBeVisible();
+        await expect(live.getByRole('radio', { name: 'System' })).toBeChecked();
+        await live.getByRole('radio', { name: 'Dark' }).check();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+        await expect(choice(page, 'Dark')).toBeChecked();
+        expect(await saved(page)).toBe('dark');
+        // The other theme's copy shows that theme chosen, as a picture, and takes no press.
+        const other = state.locator('.site-other .dk-theme-switch');
+        await expect(other).toBeVisible();
+        expect(
+            await other.evaluate(
+                (group) => group.querySelector<HTMLInputElement>('input[value="light"]')?.checked
+            )
+        ).toBe(true);
+    });
+
+    test("copies the block beside a copy button's state, and shows its other copy as a picture", async ({
+        page,
+        context,
+    }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        const state = page.locator('.site-state', { hasText: 'A button that copies a block' });
+        const button = state.locator('.site-copy:not([inert]) .dk-copy');
+        await expect(button).toHaveAccessibleName('Copy install command');
+        await button.click();
+        await expect(button).toHaveAccessibleName('Copied install command');
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            'npm install @jasonsdevspace/design-kit'
+        );
+        await expect(state.locator('.site-other .dk-copy')).toBeVisible();
+    });
 
     test('shows the theme the portfolio saved, and takes the room the strip kept for it', async ({
         page,
@@ -1300,15 +1408,12 @@ test.describe('the theme switch', () => {
 
     /**
      * The switch as it has come, fitting the width its section keeps for it in this font on either
-     * side, since the section sets what it holds against its end. These tests run over the release
-     * the site pins and over the kit as it is now, which on a screen narrower than 20rem collapses
-     * the switch to its name and one button naming the choice, so until the pin moves to that
-     * release either form is taken there, and the row of choices everywhere else.
+     * side, since the section sets what it holds against its end: on a screen narrower than 20rem
+     * its name and one button naming the choice, and the row of choices everywhere else.
      */
     const switchCame = async (page: Page, width: number, scale: number) => {
-        const button = page.getByRole('button', { name: 'Theme System' });
-        if (width / (16 * scale) < 20 && (await button.count()) > 0) {
-            await expect(button).toBeVisible();
+        if (width / (16 * scale) < 20) {
+            await expect(strip(page).getByRole('button', { name: 'Theme System' })).toBeVisible();
             await expect(choice(page, 'System')).toBeHidden();
         } else {
             await expect(choice(page, 'System')).toBeVisible();
@@ -1402,7 +1507,10 @@ test.describe('the code of each state', () => {
                 };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
-                    // label, and with the ids the code names.
+                    // label, and with the ids the code names. A state the site's script attaches,
+                    // the switch and the copy button, is drawn as the kit's reference prints it,
+                    // which the kit's own test holds, and shown here as a script shows it.
+                    if (state.querySelector('.dk-theme-switch, .dk-copy')) return [];
                     const copy = state.querySelector('.site-copy')?.cloneNode(true);
                     const code = state.querySelector<HTMLElement>('.site-code');
                     const shown = code?.querySelector('pre.dk-code')?.textContent;
@@ -1539,7 +1647,10 @@ test.describe('the code of each state', () => {
             await page.goto('/design-kit/controls/');
             await page.locator('summary', { hasText: 'The code, An action' }).click();
             await expect(page.getByRole('region', { name: 'Markup, An action' })).toBeVisible();
-            await expect(page.locator('.dk-copy')).toHaveCount(0);
+            await expect(page.locator('.site-code .dk-copy')).toHaveCount(0);
+            // The copy button a state shows stays hidden, as the kit draws it until it is attached.
+            await expect(page.locator('.site-copy .dk-copy')).toHaveCount(2);
+            await expect(page.locator('.site-copy .dk-copy').first()).toBeHidden();
         });
 
         test('shows Markup and React one above the other with no script, and no tabs', async ({
@@ -2074,7 +2185,9 @@ test.describe('how each state is shown', () => {
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
         await note.getByRole('button', { name: 'switch to dark' }).click();
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-        await expect(page.getByRole('radio', { name: 'Dark' })).toBeChecked();
+        await expect(
+            page.locator('body > .dk-strip').getByRole('radio', { name: 'Dark' })
+        ).toBeChecked();
         await expect(note).toHaveCount(0);
         await expect(page.getByRole('status')).toHaveText('The theme is dark now.');
         // Focus goes to the live copy beside it, rather than back to the start of the page.
@@ -2142,8 +2255,8 @@ test.describe('how each state is shown', () => {
                     )
                     .map(
                         (element) =>
-                            ['dk-copy', 'site-code-tab', 'site-preview-switch', 'dk-code'].find(
-                                (name) => element.classList.contains(name)
+                            ['dk-copy', 'dk-tab', 'dk-button-text', 'dk-code'].find((name) =>
+                                element.classList.contains(name)
                             ) ?? element.tagName.toLowerCase()
                     )
             );
@@ -2151,7 +2264,10 @@ test.describe('how each state is shown', () => {
         // Only the code's disclosures, tabs, frames and copy buttons, and the tests' links.
         expect(
             before.filter(
-                (name) => !['summary', 'site-code-tab', 'dk-code', 'dk-copy', 'a'].includes(name)
+                (name) =>
+                    !['summary', 'dk-tab', 'dk-code', 'dk-copy', 'a', 'input', 'button'].includes(
+                        name
+                    )
             )
         ).toEqual([]);
         const box = await page
@@ -2162,7 +2278,7 @@ test.describe('how each state is shown', () => {
         if (!box) throw new Error('no preview');
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
         const after = await reached();
-        expect(after.filter((name) => name === 'site-preview-switch')).toHaveLength(1);
+        expect(after.filter((name) => name === 'dk-button-text')).toHaveLength(1);
         expect(after).toHaveLength(before.length + 1);
     });
 

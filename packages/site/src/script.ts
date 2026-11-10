@@ -129,6 +129,7 @@ const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLEleme
  */
 const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: Block) => void) => {
     const list = document.createElement('div');
+    list.className = 'dk-tabs';
     list.setAttribute('role', 'tablist');
     list.setAttribute(
         'aria-label',
@@ -138,7 +139,7 @@ const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: B
         const id = block.block.getAttribute('aria-labelledby') ?? '';
         const tab = document.createElement('button');
         tab.type = 'button';
-        tab.className = 'site-code-tab';
+        tab.className = 'dk-tab';
         tab.id = `${id}-tab`;
         tab.setAttribute('role', 'tab');
         tab.setAttribute('aria-controls', `${id}-panel`);
@@ -210,6 +211,45 @@ for (const code of codes) {
         button
     );
     code.querySelector(':scope > summary')?.after(bar);
+}
+
+/*
+ * The states of the switch and the copy button. The live copy of each is attached as a page
+ * attaches it, so the switch on the page shows the page's choice and saves a new one, and the copy
+ * button copies the block beside it. The copy in the other theme is a picture, shown as a page's
+ * script would show it, with the switch's choice set to that theme.
+ */
+for (const group of document.querySelectorAll<HTMLElement>(
+    'main .site-copy:not([inert]) .dk-theme-switch'
+)) {
+    attachThemeSwitch(group);
+}
+const pictured = document.querySelectorAll<HTMLElement>('main .site-copy[inert] .dk-theme-switch');
+/** Shows each pictured switch with the theme of its copy chosen, which follows the page's theme. */
+const pictureSwitches = () => {
+    const shown = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    for (const group of pictured) {
+        group.hidden = false;
+        const other = group.closest('.site-other') !== null;
+        const choice = other ? (shown === 'dark' ? 'light' : 'dark') : shown;
+        const radio = group.querySelector<HTMLInputElement>(`input[value="${choice}"]`);
+        if (radio) radio.checked = true;
+    }
+};
+if (pictured.length > 0) {
+    pictureSwitches();
+    new MutationObserver(pictureSwitches).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+    });
+}
+for (const button of document.querySelectorAll<HTMLButtonElement>('main .site-copy .dk-copy')) {
+    const block = button.parentElement?.querySelector<HTMLElement>('pre.dk-code');
+    if (button.closest('[inert]') || !block || !status) {
+        button.hidden = false;
+        continue;
+    }
+    attachCopyButton(button, { source: () => block, status });
 }
 
 /*
@@ -287,7 +327,7 @@ if (previews.length > 0) {
         const theme = shown === 'dark' ? 'light' : 'dark';
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'site-preview-switch';
+        button.className = 'dk-button dk-button-text';
         button.textContent = `switch to ${theme}`;
         button.addEventListener('click', () => {
             chooseTheme(theme);

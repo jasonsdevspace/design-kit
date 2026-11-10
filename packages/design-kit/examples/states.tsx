@@ -11,7 +11,16 @@ import type * as React from '../src/react.js';
 
 type Components = Pick<
     typeof React,
-    'Button' | 'Callout' | 'DemoFooter' | 'InputField' | 'PortfolioStrip' | 'SelectField'
+    | 'Button'
+    | 'Callout'
+    | 'ChoiceField'
+    | 'CopyButton'
+    | 'DemoFooter'
+    | 'InputField'
+    | 'PortfolioStrip'
+    | 'SelectField'
+    | 'TextareaField'
+    | 'ThemeSwitch'
 >;
 
 /**
@@ -142,6 +151,18 @@ export const CONTROLS: readonly Control[] = [
                     </>
                 ),
             },
+            {
+                name: 'A larger target, for the one thing a page asks first',
+                attribute: 'class="dk-button dk-button-large"',
+                react: `<Button large>Try it with your own products</Button>`,
+                draw: ({ Button }) => <Button large>Try it with your own products</Button>,
+            },
+            {
+                name: 'A button drawn as a link, beside a block',
+                attribute: 'class="dk-button dk-button-text"',
+                react: `<Button text>Show the markup</Button>`,
+                draw: ({ Button }) => <Button text>Show the markup</Button>,
+            },
         ],
     },
     {
@@ -208,6 +229,96 @@ export const CONTROLS: readonly Control[] = [
                     </SelectField>
                 ),
             },
+            {
+                name: 'A note that grows with its text',
+                attribute: 'class="dk-textarea"',
+                react: `<TextareaField id="note" label="Note" hint="Shown to the picker" />`,
+                draw: ({ TextareaField }, id) => (
+                    <TextareaField id={id('note')} label="Note" hint="Shown to the picker" />
+                ),
+            },
+            {
+                name: 'One choice among a few',
+                attribute: 'role="radiogroup"',
+                react: `<ChoiceField
+    id="rule"
+    name="rule"
+    label="What the rule does"
+    hint="A rule applies to every search"
+    choices={[
+        { value: 'pin', label: 'Pin', hint: 'to the top of the results' },
+        { value: 'hide', label: 'Hide', defaultChecked: true },
+    ]}
+/>`,
+                draw: ({ ChoiceField }, id) => (
+                    <ChoiceField
+                        id={id('rule')}
+                        name={id('rule')}
+                        label="What the rule does"
+                        hint="A rule applies to every search"
+                        choices={[
+                            { value: 'pin', label: 'Pin', hint: 'to the top of the results' },
+                            { value: 'hide', label: 'Hide', defaultChecked: true },
+                        ]}
+                    />
+                ),
+            },
+            {
+                name: 'A set of choices with an error',
+                attribute: 'class="dk-field dk-choice-field"',
+                react: `<ChoiceField
+    id="when"
+    name="when"
+    label="When"
+    error="Choose when the rule runs"
+    choices={[
+        { value: 'always', label: 'Always' },
+        { value: 'sale', label: 'During a sale' },
+    ]}
+/>`,
+                draw: ({ ChoiceField }, id) => (
+                    <ChoiceField
+                        id={id('when')}
+                        name={id('when')}
+                        label="When"
+                        error="Choose when the rule runs"
+                        choices={[
+                            { value: 'always', label: 'Always' },
+                            { value: 'sale', label: 'During a sale' },
+                        ]}
+                    />
+                ),
+            },
+            {
+                name: 'Any number of choices, in a row',
+                attribute: 'class="dk-choices dk-choices-row"',
+                react: `<ChoiceField
+    id="facets"
+    name="facets"
+    type="checkbox"
+    label="Show"
+    row
+    choices={[
+        { value: 'brand', label: 'Brand', defaultChecked: true },
+        { value: 'price', label: 'Price' },
+        { value: 'color', label: 'Color' },
+    ]}
+/>`,
+                draw: ({ ChoiceField }, id) => (
+                    <ChoiceField
+                        id={id('facets')}
+                        name={id('facets')}
+                        type="checkbox"
+                        label="Show"
+                        row
+                        choices={[
+                            { value: 'brand', label: 'Brand', defaultChecked: true },
+                            { value: 'price', label: 'Price' },
+                            { value: 'color', label: 'Color' },
+                        ]}
+                    />
+                ),
+            },
         ],
     },
     {
@@ -256,6 +367,202 @@ export const CONTROLS: readonly Control[] = [
                     >
                         <p>Check the file, then load it again.</p>
                     </Callout>
+                ),
+            },
+            {
+                name: 'Something that needs care',
+                attribute: 'class="dk-callout dk-callout-warning"',
+                react: `<Callout tone="warning" title="Three products are running low">
+    <p>Each has fewer than five left.</p>
+</Callout>`,
+                draw: ({ Callout }) => (
+                    <Callout tone="warning" title="Three products are running low">
+                        <p>Each has fewer than five left.</p>
+                    </Callout>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Theme switch',
+        laidOut: true,
+        states: [
+            {
+                name: 'The switch, attached by the page',
+                attribute: 'class="dk-theme-switch"',
+                react: `<ThemeSwitch id="theme" name="theme" />`,
+                draw: ({ ThemeSwitch }, id) => <ThemeSwitch id={id('theme')} name={id('theme')} />,
+            },
+        ],
+    },
+    {
+        name: 'Copy button',
+        laidOut: true,
+        states: [
+            {
+                name: 'A button that copies a block',
+                attribute: 'class="dk-button dk-copy"',
+                react: `<>
+    <pre
+        className="dk-code"
+        id="install"
+        role="region"
+        aria-label="The install command"
+        tabIndex={0}
+    >
+        <code>npm install @jasonsdevspace/design-kit</code>
+    </pre>
+    <CopyButton name="install command" />
+</>`,
+                draw: ({ CopyButton }, id) => (
+                    <>
+                        <pre
+                            className="dk-code"
+                            id={id('install')}
+                            role="region"
+                            aria-label="The install command"
+                            tabIndex={0}
+                        >
+                            <code>npm install @jasonsdevspace/design-kit</code>
+                        </pre>
+                        <CopyButton name="install command" />
+                    </>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Pills',
+        laidOut: true,
+        states: [
+            {
+                name: 'Chips that name something',
+                attribute: 'class="dk-pill"',
+                react: `<ul className="dk-pills" role="list">
+    <li className="dk-pill">TypeScript</li>
+    <li className="dk-pill">React</li>
+</ul>`,
+                draw: () => (
+                    <ul className="dk-pills" role="list">
+                        <li className="dk-pill">TypeScript</li>
+                        <li className="dk-pill">React</li>
+                    </ul>
+                ),
+            },
+            {
+                name: 'Links among pages, one the current page',
+                attribute: 'aria-current="page"',
+                react: `<nav aria-label="Pages" id="pages">
+    <ul className="dk-pills" role="list">
+        <li>
+            <a className="dk-pill" href="#pages" aria-current="page">
+                Home
+            </a>
+        </li>
+        <li>
+            <a className="dk-pill" href="#pages">
+                Tokens
+            </a>
+        </li>
+    </ul>
+</nav>`,
+                draw: (_kit, id) => (
+                    <nav aria-label="Pages" id={id('pages')}>
+                        <ul className="dk-pills" role="list">
+                            <li>
+                                <a className="dk-pill" href="#pages" aria-current="page">
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <a className="dk-pill" href="#pages">
+                                    Tokens
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Tabs',
+        laidOut: true,
+        states: [
+            {
+                name: 'Links among pages, one the current page',
+                attribute: 'class="dk-tab"',
+                react: `<nav aria-label="Categories" id="categories">
+    <ul className="dk-tabs" role="list">
+        <li>
+            <a className="dk-tab" href="#categories" aria-current="page">
+                All
+            </a>
+        </li>
+        <li>
+            <a className="dk-tab" href="#categories">
+                Books
+            </a>
+        </li>
+    </ul>
+</nav>`,
+                draw: (_kit, id) => (
+                    <nav aria-label="Categories" id={id('categories')}>
+                        <ul className="dk-tabs" role="list">
+                            <li>
+                                <a className="dk-tab" href="#categories" aria-current="page">
+                                    All
+                                </a>
+                            </li>
+                            <li>
+                                <a className="dk-tab" href="#categories">
+                                    Books
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                ),
+            },
+            {
+                name: 'Toggles in a row, one on',
+                attribute: 'aria-pressed="true"',
+                react: `<div className="dk-tabs">
+    <button type="button" className="dk-tab" aria-pressed="true">
+        Open
+    </button>
+    <button type="button" className="dk-tab" aria-pressed="false">
+        Closed
+    </button>
+</div>`,
+                draw: () => (
+                    <div className="dk-tabs">
+                        <button type="button" className="dk-tab" aria-pressed="true">
+                            Open
+                        </button>
+                        <button type="button" className="dk-tab" aria-pressed="false">
+                            Closed
+                        </button>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Eyebrows',
+        laidOut: true,
+        states: [
+            {
+                name: 'A caps label over a heading',
+                attribute: 'class="dk-eyebrow"',
+                react: `<>
+    <p className="dk-eyebrow">Signed in as a guest</p>
+    <h4>Your basket</h4>
+</>`,
+                draw: () => (
+                    <>
+                        <p className="dk-eyebrow">Signed in as a guest</p>
+                        <h4>Your basket</h4>
+                    </>
                 ),
             },
         ],
