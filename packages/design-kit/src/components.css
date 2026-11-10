@@ -980,6 +980,13 @@
         flex-wrap: nowrap;
     }
 
+    /* The line a visitor without script reads where the switch would be, in the muted text. */
+    :where(.dk-theme-switch-noscript) {
+        margin: 0;
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
     :where(.dk-theme-switch-name) {
         flex-shrink: 0;
         margin-inline-end: var(--dk-space-2);

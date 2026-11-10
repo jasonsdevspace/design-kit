@@ -66,7 +66,9 @@ const chrome = (tools: Tools, where: Where = 'demo', aside = false) => {
             <PortfolioStrip
                 about={about}
                 source={SOURCE}
-                tools={SWITCHES[tools]}
+                {...(SWITCHES[tools] === undefined
+                    ? {}
+                    : { tools: SWITCHES[tools], toolsLabel: 'Demo' })}
                 toolsWaiting={tools === 'waiting'}
                 {...current}
             />

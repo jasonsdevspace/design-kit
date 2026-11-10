@@ -98,7 +98,7 @@ section after the links, named for them, and a demo with none leaves the section
         <a href="./about/">How it works</a>
         <a href="https://github.com/jasonsdevspace/example">Source on GitHub</a>
     </nav>
-    <section class="dk-strip-tools" aria-label="Demo">
+    <section class="dk-strip-tools" aria-label="Tour">
         <button type="button" class="dk-button">Tour</button>
     </section>
 </div>
@@ -198,17 +198,19 @@ export const Page = () => (
 
 **`PortfolioStrip` props**
 
-| `PortfolioStrip` | Default  | What it does                                                |
-| ---------------- | -------- | ----------------------------------------------------------- |
-| `about`          | required | The demo's explainer, relative or absolute                  |
-| `source`         | required | The demo's repository                                       |
-| `current`        | none     | `'about'` marks the explainer's link as the current page    |
-| `tools`          | none     | The demo's own switches, in a section after the links       |
-| `toolsLabel`     | `'Demo'` | The name of the switches' landmark                          |
-| `toolsWaiting`   | `false`  | Keeps one row of room, unnamed, while `tools` draws nothing |
+| `PortfolioStrip` | Default               | What it does                                                |
+| ---------------- | --------------------- | ----------------------------------------------------------- |
+| `about`          | required              | The demo's explainer, relative or absolute                  |
+| `source`         | required              | The demo's repository                                       |
+| `current`        | none                  | `'about'` marks the explainer's link as the current page    |
+| `tools`          | none                  | The demo's own switches, in a section after the links       |
+| `toolsLabel`     | required with `tools` | The name of the switches' landmark, such as Settings        |
+| `toolsWaiting`   | `false`               | Keeps one row of room, unnamed, while `tools` draws nothing |
 
 With `tools` undefined, null, false, an empty string, or a list or a fragment of only those, the
-strip draws no section for them, so a demo can pass `hasTour && <Tour />`.
+strip draws no section for them, so a demo can pass `hasTour && <Tour />`. Whenever `tools` is
+given, `toolsLabel` is too, since the name a screen reader hears has to say what the section holds,
+and TypeScript refuses the one without the other.
 
 **`DemoFooter` props**
 
@@ -723,6 +725,9 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
         Your choice is saved for every page of this site.
     </span>
 </div>
+<noscript>
+    <p class="dk-theme-switch-noscript">With scripts on, a Theme switch sits here.</p>
+</noscript>
 ```
 
 The switch is a group named Theme with three native radios, System, Light and Dark, described by a
@@ -738,7 +743,10 @@ which keeps one row of room for switches on their way, the switch keeps one row 
 nothing below the strip moves as it comes. Attaching one switch again before it is taken away
 attaches it once, and taking it away hides it again. A switch attached after every switch was taken
 away shows, and draws, the choice saved meanwhile, or the one the page holds where the browser would
-not save it. Every switch on a page shows one choice, each with radios named for its own id.
+not save it. Every switch on a page shows one choice, each with radios named for its own id. After
+the group the component draws a line inside `noscript`, "With scripts on, a Theme switch sits
+here.", which only a visitor without script sees, and which a page words for itself or turns off
+with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -787,17 +795,25 @@ to Copy.
 
 **`ThemeSwitch` props**
 
-| `ThemeSwitch` | Default                   | What it does                              |
-| ------------- | ------------------------- | ----------------------------------------- |
-| `id`          | from `useId`              | What the name's and note's ids start with |
-| `name`        | the id                    | The radios' name, unique on a page        |
-| `note`        | where the choice is saved | What the group is described by            |
+| `ThemeSwitch` | Default                     | What it does                                                              |
+| ------------- | --------------------------- | ------------------------------------------------------------------------- |
+| `id`          | from `useId`                | What the name's and note's ids start with                                 |
+| `name`        | the id                      | The radios' name, unique on a page                                        |
+| `note`        | where the choice is saved   | What the group is described by                                            |
+| `noscript`    | a sentence about the switch | The line a visitor without script reads after the group. Empty draws none |
+| `className`   | none                        | A page's class, after the kit's                                           |
+| `ref`         | none                        | The group drawn                                                           |
 
 **`CopyButton` props**
 
 | `CopyButton` | Default  | What it does                    |
 | ------------ | -------- | ------------------------------- |
 | `name`       | required | What it copies, read after Copy |
+| `className`  | none     | A page's class, after the kit's |
+| `ref`        | none     | The button drawn                |
+
+`CopyStatus` takes `className` and `ref` the same way, its ref the line drawn, for a page that hands
+it to a copy button's attach function.
 
 ## Explainer pages
 

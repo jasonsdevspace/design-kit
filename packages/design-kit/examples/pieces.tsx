@@ -26,14 +26,20 @@ export const CHROME: readonly Control[] = [
             },
             {
                 name: "The strip with a demo's switches",
-                attribute: 'aria-label="Demo"',
+                attribute: 'aria-label="Tour"',
                 react: `<PortfolioStrip
     about="./about/"
     source="https://github.com/jasonsdevspace/example"
     tools={<Button>Tour</Button>}
+    toolsLabel="Tour"
 />`,
                 draw: ({ Button, PortfolioStrip }) => (
-                    <PortfolioStrip about={ABOUT} source={SOURCE} tools={<Button>Tour</Button>} />
+                    <PortfolioStrip
+                        about={ABOUT}
+                        source={SOURCE}
+                        tools={<Button>Tour</Button>}
+                        toolsLabel="Tour"
+                    />
                 ),
             },
             {

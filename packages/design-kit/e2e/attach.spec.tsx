@@ -91,6 +91,30 @@ test('keeps both controls hidden where no script attaches them', async ({ browse
     await expect(first(opened)).toBeHidden();
     await expect(held(opened)).toBeHidden();
     await expect(opened.locator('.dk-copy')).toBeHidden();
+    // With scripts on and the switch not attached, the line for a visitor without script stays
+    // out of sight, since the browser draws a noscript element's words only where it runs none.
+    await expect(opened.getByText('With scripts on, a Theme switch sits here.')).toHaveCount(0);
+    await context.close();
+});
+
+test('carries a line for a visitor without script, which the page with script never draws', async ({
+    browser,
+}) => {
+    // Chromium keeps a noscript element's words as text while its parser runs with script, which
+    // turning script off for a test does not change, so the line is held in the markup and in what
+    // the page with script draws, which is nothing of it.
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    await expect(first(opened)).toBeVisible();
+    const lines = opened.locator('noscript');
+    await expect(lines).toHaveCount(2);
+    for (const line of await lines.all()) {
+        expect(await line.textContent()).toContain(
+            '<p class="dk-theme-switch-noscript">With scripts on, a Theme switch sits here.</p>'
+        );
+    }
+    await expect(opened.locator('.dk-theme-switch-noscript')).toHaveCount(0);
+    await expect(opened.getByText('With scripts on, a Theme switch sits here.')).toHaveCount(0);
     await context.close();
 });
 
