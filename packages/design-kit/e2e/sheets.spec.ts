@@ -203,6 +203,37 @@ for (const [where, own] of [
     });
 }
 
+test("keeps a page's animation delay for a visitor who wants less motion, and cuts the motion", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // A waiting line shown only once a load has taken a moment: a zero length animation whose
+    // delay is the timer, as ShelfLens's host pages draw one.
+    await open(
+        page,
+        'light',
+        '<p class="waiting">Waiting</p><p class="spin">Spins</p>',
+        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 0.4s both }' +
+            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 1s infinite }'
+    );
+    const timing = await page.evaluate(() =>
+        ['.waiting', '.spin'].map((name) => {
+            const style = getComputedStyle(document.querySelector(name) ?? document.body);
+            return [style.animationDuration, style.animationDelay, style.animationIterationCount];
+        })
+    );
+    expect(timing).toEqual([
+        ['1e-05s', '0.4s', '1'],
+        ['1e-05s', '1s', '1'],
+    ]);
+    // The line is still hidden while its delay runs, and shows once it has passed.
+    const shown = () =>
+        page.evaluate(() => getComputedStyle(document.querySelector('.waiting')!).visibility);
+    expect(await shown()).toBe('hidden');
+    await page.waitForTimeout(500);
+    expect(await shown()).toBe('visible');
+});
+
 test("gives a page's ::before and ::after the border box, as every element has", async ({
     page,
 }) => {

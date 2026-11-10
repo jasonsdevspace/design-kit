@@ -848,7 +848,8 @@ To put the kit's layer over the page's, before the kit's sheets load:
 
 For a visitor who asks for less motion, the reduced-motion rule in `base.css` plays every animation
 once, cuts animations and transitions to a hundredth of a millisecond, and turns smooth scrolling
-into a jump. It is held with `!important`, since it is the visitor's choice. It wins over every
+into a jump. An animation's delay is kept, since it moves nothing and a page may use it as a timer,
+such as a waiting line shown only once a load has taken a moment. It is held with `!important`, since it is the visitor's choice. It wins over every
 normal rule a page writes, and over an important one in a sheet, outside a layer or in a layer after
 the kit's. An important declaration in a `style` attribute still wins over it, as does an important
 rule in a layer the page orders before the kit's.
