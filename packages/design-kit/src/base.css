@@ -182,11 +182,14 @@
     }
 
     /*
-     * A visitor who asks for less motion gets every animation played once and every transition cut
-     * to a hundredth of a millisecond, with no delay before either, and a jump rather than a smooth
-     * scroll. That reaches every element, its ::before and ::after, a dialog's ::backdrop and each
-     * part of a view transition. Marked important, since the visitor's setting outranks a page's
-     * own animation.
+     * A visitor who asks for less motion gets every animation and transition cut to a hundredth of
+     * a millisecond, every animation played once, and a jump rather than a smooth scroll. A delay
+     * before either is kept, since a delay moves nothing and a page may use one as a timer, such as
+     * a waiting line shown only once a load has taken a moment. Entrances a page staggers by delay
+     * come in sequence for this visitor, each at once, and a page that wants them together zeroes
+     * its own delays under the same query. That reaches every element, its ::before and ::after, a
+     * dialog's ::backdrop and each part of a view transition. Marked important, since the visitor's
+     * setting outranks a page's own animation.
      */
     @media (prefers-reduced-motion: reduce) {
         :where(*),
@@ -199,10 +202,8 @@
         :where(:root)::view-transition-old(*),
         :where(:root)::view-transition-new(*) {
             animation-duration: 0.01ms !important;
-            animation-delay: 0s !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
-            transition-delay: 0s !important;
             scroll-behavior: auto !important;
         }
     }
