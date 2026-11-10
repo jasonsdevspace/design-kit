@@ -31,18 +31,19 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
 | `--dk-warning`, `--dk-warning-bg`                                | what needs care before it goes wrong, and its ground         |
 | `--dk-scrim`                                                     | what dims the page behind a dialog                           |
-| `--dk-space-1` to `--dk-space-6`                                 | 0.25, 0.5, 0.75, 1, 1.5 and 2rem                             |
+| `--dk-space-1` to `--dk-space-8`                                 | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                       |
 | `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
 | `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                              |
 | `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                              |
 | `--dk-text-code`                                                 | 0.9em, a step under the text around it                       |
 | `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                  |
 | `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                             |
+| `--dk-tracking-caps`                                             | 0.06em, the tracking of a label in caps                      |
 | `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                            |
 | `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                       |
 | `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                          |
 | `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                  |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.5rem    |
+| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.75rem   |
 | `--dk-target`                                                    | 2.75rem, the touch target on a phone                         |
 | `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches               |
 | `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                              |
@@ -348,8 +349,9 @@ screen reader reads wherever it announces the field.
 <details>
 <summary>How a field is drawn</summary>
 
-A control is as tall as a button, at both widths, and its text is never under 16px, so a phone does
-not zoom the page when the field is tapped. It sits on the page's own ground, so it reads as a well
+A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
+button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
+is tapped. It sits on the page's own ground, so it reads as a well
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
 invalid control's edge in the danger color too. In forced colors, where that color is gone, an
 invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
@@ -556,6 +558,19 @@ A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab
 the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
 base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so the ring follows the
 arrow keys.
+
+### Eyebrows
+
+```html
+<p class="dk-eyebrow">Theme</p>
+<h2>Light and dark</h2>
+```
+
+An eyebrow is a small label in caps over a heading or a group, such as a hero's theme or a list's
+name, in the muted text at the caption size and the heading's weight, tracked by
+`--dk-tracking-caps` so the caps read at that size. It is text, not a heading, so it adds nothing
+to the page's outline, and it has no margin of its own, so the page sets its distance from what it
+sits over.
 
 ### React components
 

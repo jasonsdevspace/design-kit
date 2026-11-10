@@ -192,7 +192,7 @@ const SPACE = /^--dk-space-\d+$/;
  * element through a class under the page's policy. A step the pinned sheet adds fails the build
  * here, rather than drawing as an empty square, until the sheet draws it too.
  */
-const DRAWN = new Set(['1', '2', '3', '4', '5', '6']);
+const DRAWN = new Set(['1', '2', '3', '4', '5', '6', '7', '8']);
 
 /** A step's own class, or a build that fails for a step the sheet cannot draw. */
 const drawnAs = (name: string) => {

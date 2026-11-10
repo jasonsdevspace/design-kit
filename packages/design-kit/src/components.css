@@ -1025,6 +1025,20 @@
     }
 
     /*
+     * An eyebrow: a small label in caps over a heading or a group, such as a hero's theme or a
+     * list's name, in the muted text at the caption size and the heading's weight, tracked so the
+     * caps read at that size. It is text with no margin of its own, so the page sets its distance.
+     */
+    :where(.dk-eyebrow) {
+        margin: 0;
+        color: var(--dk-muted);
+        font-size: var(--dk-text-caption);
+        font-weight: var(--dk-weight-strong);
+        letter-spacing: var(--dk-tracking-caps);
+        text-transform: uppercase;
+    }
+
+    /*
      * A pill: a chip that names something, or a link among others in a row. A chip has a faint
      * edge and no states, so it never reads as a control. A link has no edge, steps back in the
      * muted text as the strip's links do, and the one that is the current page stands on the

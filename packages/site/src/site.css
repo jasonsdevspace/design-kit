@@ -876,6 +876,16 @@ body > .dk-strip .dk-strip-tools {
     height: var(--dk-space-6);
 }
 
+.site-space-7 {
+    width: var(--dk-space-7);
+    height: var(--dk-space-7);
+}
+
+.site-space-8 {
+    width: var(--dk-space-8);
+    height: var(--dk-space-8);
+}
+
 /*
  * In forced colors the bar keeps its edge and its fill in the system's text color, and the mark
  * takes the system's highlight, so it still stands apart from the fill it crosses.
