@@ -82,7 +82,7 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 | Entry                                       | What it gives                                                                                                     |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `@jasonsdevspace/design-kit/tokens.css`     | The layer order and every named value, each under the `--dk-` prefix                                              |
-| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule                      |
+| `@jasonsdevspace/design-kit/base.css`       | Type, colors, the selection, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule       |
 | `@jasonsdevspace/design-kit/components.css` | The page chrome, buttons, fields, callouts and the explainer page                                                 |
 | `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                     |
 | `@jasonsdevspace/design-kit/controls`       | `attachThemeSwitch()`, `attachCopyButton()` and `chooseTheme()`, which make the controls work                     |
