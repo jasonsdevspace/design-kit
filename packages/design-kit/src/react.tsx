@@ -4,6 +4,7 @@ import {
     Fragment,
     isValidElement,
     type ReactNode,
+    type Ref,
     useId,
 } from 'react';
 
@@ -66,16 +67,20 @@ const currentAs = (current: ChromePage | undefined, page: ChromePage) =>
  * which leads to the portfolio as the footer's does, how it works and the source. It is a navigation
  * landmark in a plain div rather than a header, so the demo's own header stays the page's one
  * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
- * named for them, and while they are on their way the strip keeps their room in that section,
- * unnamed and so no landmark.
+ * named for them, since a name a screen reader hears has to say what the section holds, and while
+ * they are on their way the strip keeps their room in that section, unnamed and so no landmark,
+ * with a line in it that only a visitor without script sees, since for them the switches never
+ * come. A switch drawn into a template and copied out by a page's script leaves its own such line
+ * behind, which is why the room carries one.
  */
 export const PortfolioStrip = ({
     about,
     source,
     current,
     tools,
-    toolsLabel = 'Demo',
+    toolsLabel,
     toolsWaiting = false,
+    toolsNoscript = "With scripts on, the demo's switches sit here.",
 }: {
     /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
     readonly about: string;
@@ -83,17 +88,26 @@ export const PortfolioStrip = ({
     readonly source: string;
     /** The link that is the page the strip sits on, marked as the current page. */
     readonly current?: ChromePage | undefined;
-    /** The demo's own switches, drawn beside the links. */
-    readonly tools?: ReactNode;
-    /** The name a screen reader gives the switches' landmark. */
-    readonly toolsLabel?: string | undefined;
     /**
      * The switches are on their way, so the strip keeps the room of one row of the kit's controls
      * in their section, empty and unnamed, so no landmark, until `tools` holds them and the section
      * takes its name.
      */
     readonly toolsWaiting?: boolean | undefined;
-}) => (
+    /**
+     * What a visitor without script reads in the room, since the switches never come for them.
+     * Empty draws no line.
+     */
+    readonly toolsNoscript?: ReactNode;
+} & (
+    | {
+          /** The demo's own switches, drawn beside the links. */
+          readonly tools: ReactNode;
+          /** The name a screen reader hears for the switches' landmark, such as Settings. */
+          readonly toolsLabel: string;
+      }
+    | { readonly tools?: undefined; readonly toolsLabel?: undefined }
+)) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
             <a href={PORTFOLIO_URL}>Jason Poteet</a>
@@ -103,12 +117,22 @@ export const PortfolioStrip = ({
             <a href={source}>Source on GitHub</a>
         </nav>
         {filled(tools) ? (
-            <section className="dk-strip-tools" aria-label={toolsLabel}>
+            // A blank name would be an attribute that names nothing, so the section goes unnamed,
+            // and is no landmark, as the room is.
+            <section
+                className="dk-strip-tools"
+                aria-label={toolsLabel === '' ? undefined : toolsLabel}
+            >
                 {tools}
             </section>
         ) : toolsWaiting ? (
             <section className="dk-strip-tools">
                 <span className="dk-strip-room" />
+                {filled(toolsNoscript) ? (
+                    <noscript>
+                        <p className="dk-strip-noscript">{toolsNoscript}</p>
+                    </noscript>
+                ) : null}
             </section>
         ) : null}
     </div>
@@ -650,15 +674,20 @@ const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
 
 /**
  * The theme switch's markup: a group named Theme with three native radios, described by a note that
- * says where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch` from
- * `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
- * without script meets no control that does nothing. The radios carry no checked prop, so React
- * never undoes what the attach function sets.
+ * says where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch`
+ * from `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
+ * without script meets no control that does nothing, and a line after the group, inside `noscript`
+ * so only a visitor without script sees it, says what sits there with scripts on. The radios carry
+ * no checked prop, so React never undoes what the attach function sets. The group takes a ref and a
+ * page's class after the kit's own, and nothing in its markup moves.
  */
 export const ThemeSwitch = ({
     id,
     name,
     note = 'Your choice is saved for every page of this site.',
+    noscript = 'With scripts on, a Theme switch sits here.',
+    className,
+    ref,
 }: {
     /** What the name's and the note's ids start with, made with useId unless a page gives one. */
     readonly id?: string | undefined;
@@ -666,34 +695,48 @@ export const ThemeSwitch = ({
     readonly name?: string | undefined;
     /** What the group is described by, out of sight. */
     readonly note?: string | undefined;
+    /** What a visitor without script reads where the switch would be. Empty draws no line. */
+    readonly noscript?: ReactNode;
+    /** A page's class, after the kit's. */
+    readonly className?: string | undefined;
+    /** The group drawn, for a page that attaches the switch through it. */
+    readonly ref?: Ref<HTMLDivElement> | undefined;
 }) => {
     const made = useId();
     const base = id ?? made;
     return (
-        <div
-            className="dk-theme-switch"
-            role="radiogroup"
-            aria-labelledby={`${base}-name`}
-            aria-describedby={`${base}-note`}
-            hidden
-        >
-            <span className="dk-theme-switch-name" id={`${base}-name`}>
-                Theme
-            </span>
-            {THEME_CHOICES.map((value) => (
-                <ChoiceLabel
-                    key={value}
-                    className="dk-theme-switch-choice"
-                    type="radio"
-                    name={name ?? base}
-                    value={value}
-                    word={CHOICE_WORDS[value]}
-                />
-            ))}
-            <span className="dk-visually-hidden" id={`${base}-note`}>
-                {note}
-            </span>
-        </div>
+        <>
+            <div
+                ref={ref}
+                className={spaced('dk-theme-switch', className)}
+                role="radiogroup"
+                aria-labelledby={`${base}-name`}
+                aria-describedby={`${base}-note`}
+                hidden
+            >
+                <span className="dk-theme-switch-name" id={`${base}-name`}>
+                    Theme
+                </span>
+                {THEME_CHOICES.map((value) => (
+                    <ChoiceLabel
+                        key={value}
+                        className="dk-theme-switch-choice"
+                        type="radio"
+                        name={name ?? base}
+                        value={value}
+                        word={CHOICE_WORDS[value]}
+                    />
+                ))}
+                <span className="dk-visually-hidden" id={`${base}-note`}>
+                    {note}
+                </span>
+            </div>
+            {filled(noscript) ? (
+                <noscript>
+                    <p className="dk-theme-switch-noscript">{noscript}</p>
+                </noscript>
+            ) : null}
+        </>
     );
 };
 
@@ -704,11 +747,17 @@ export const ThemeSwitch = ({
  */
 export const CopyButton = ({
     name,
+    className,
+    ref,
 }: {
     /** What the button copies, read after Copy, such as "install command". */
     readonly name: string;
+    /** A page's class, after the kit's. */
+    readonly className?: string | undefined;
+    /** The button drawn, for a page that hands it to its attach function. */
+    readonly ref?: Ref<HTMLButtonElement> | undefined;
 }) => (
-    <button type="button" className="dk-button dk-copy" hidden>
+    <button ref={ref} type="button" className={spaced('dk-button', 'dk-copy', className)} hidden>
         <span className="dk-copy-words">
             <span>Copy</span>
             <span aria-hidden="true">Copied</span>
@@ -722,4 +771,12 @@ export const CopyButton = ({
  * The line a screen reader hears a copy button's result on, out of sight. One is enough for a page,
  * and it is on the page from the start, since a line added at the moment it speaks may go unheard.
  */
-export const CopyStatus = () => <p className="dk-visually-hidden" role="status" />;
+export const CopyStatus = ({
+    className,
+    ref,
+}: {
+    /** A page's class, after the kit's. */
+    readonly className?: string | undefined;
+    /** The line drawn, for a page that hands it to a copy button's attach function. */
+    readonly ref?: Ref<HTMLParagraphElement> | undefined;
+} = {}) => <p ref={ref} className={spaced('dk-visually-hidden', className)} role="status" />;

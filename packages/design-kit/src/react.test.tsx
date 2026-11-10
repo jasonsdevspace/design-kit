@@ -6,6 +6,8 @@ import {
     Button,
     Callout,
     ChoiceField,
+    CopyButton,
+    CopyStatus,
     DemoFooter,
     GITHUB_PROFILE_URL,
     InputField,
@@ -14,6 +16,7 @@ import {
     SelectField,
     SkipLink,
     TextareaField,
+    ThemeSwitch,
 } from './react.js';
 
 /*
@@ -56,27 +59,47 @@ describe('the strip', () => {
         );
     });
 
-    it("holds the demo's own switches in a landmark of their own, only when there are some", () => {
+    it("holds the demo's own switches in a landmark named by the demo, only when there are some", () => {
         expect(strip()).not.toContain('dk-strip-tools');
-        expect(strip({ tools: <button type="button">Tour</button> })).toContain(
-            '<section class="dk-strip-tools" aria-label="Demo"><button type="button">Tour</button></section>'
+        expect(strip({ tools: <button type="button">Tour</button>, toolsLabel: 'Tour' })).toContain(
+            '<section class="dk-strip-tools" aria-label="Tour"><button type="button">Tour</button></section>'
         );
         expect(strip({ tools: <span />, toolsLabel: 'Store' })).toContain('aria-label="Store"');
         // As a demo writes `hasTour && <Tour />`, which leaves false or null when there is none.
         for (const nothing of [null, false])
-            expect(strip({ tools: nothing })).not.toContain('dk-strip-tools');
+            expect(strip({ tools: nothing, toolsLabel: 'Tour' })).not.toContain('dk-strip-tools');
+        // @ts-expect-error Switches need the name their landmark is read by.
+        const unnamed = <PortfolioStrip about="./about/" source={SOURCE} tools={<span />} />;
+        expect(renderToStaticMarkup(unnamed)).toBeTruthy();
+        // A blank name, as plain JavaScript can pass, names nothing, so the section is no landmark.
+        expect(strip({ tools: <span />, toolsLabel: '' })).toContain(
+            '<section class="dk-strip-tools"><span></span></section>'
+        );
     });
 
     it('keeps the room of switches on their way, with no landmark and no text until they come', () => {
         expect(strip({ toolsWaiting: true })).toContain(
-            '</nav><section class="dk-strip-tools"><span class="dk-strip-room"></span></section></div>'
+            '</nav><section class="dk-strip-tools"><span class="dk-strip-room"></span>' +
+                '<noscript><p class="dk-strip-noscript">With scripts on, the demo&#x27;s switches sit here.</p>' +
+                '</noscript></section></div>'
         );
+        // Worded by the page, or turned off, as the switch's own line is.
+        expect(strip({ toolsWaiting: true, toolsNoscript: 'Turn scripts on.' })).toContain(
+            '<p class="dk-strip-noscript">Turn scripts on.</p>'
+        );
+        expect(strip({ toolsWaiting: true, toolsNoscript: '' })).not.toContain('noscript');
         // Unnamed, the section is no landmark until the switches come and it takes its name.
-        expect(strip({ toolsWaiting: true })).not.toContain('aria-label="Demo"');
+        expect(strip({ toolsWaiting: true })).not.toContain(
+            '<section class="dk-strip-tools" aria-label'
+        );
         expect(strip({ toolsWaiting: false })).not.toContain('dk-strip-tools');
         // The switches that arrive take the room's place.
         expect(
-            strip({ toolsWaiting: true, tools: <button type="button">Tour</button> })
+            strip({
+                toolsWaiting: true,
+                tools: <button type="button">Tour</button>,
+                toolsLabel: 'Tour',
+            })
         ).not.toContain('dk-strip-room');
     });
 });
@@ -183,6 +206,7 @@ describe('the chrome', () => {
                     about="./about/"
                     source={SOURCE}
                     tools={<button type="button">Tour</button>}
+                    toolsLabel="Tour"
                 />
                 <DemoFooter name="Example" about="./about/" source={SOURCE} />
             </>
@@ -689,6 +713,47 @@ describe('a callout', () => {
     });
 });
 
+describe('the switch, the copy button and the status line', () => {
+    it("take a ref and a class of the page after the kit's, with nothing in the markup moved", () => {
+        const group = createRef<HTMLDivElement>();
+        const drawn = renderToStaticMarkup(<ThemeSwitch id="theme" ref={group} className="site" />);
+        expect(drawn).toContain(
+            '<div class="dk-theme-switch site" role="radiogroup" aria-labelledby="theme-name"' +
+                ' aria-describedby="theme-note" hidden="">'
+        );
+        expect(renderToStaticMarkup(<ThemeSwitch id="theme" />)).toContain(
+            '<div class="dk-theme-switch" role="radiogroup"'
+        );
+        const button = createRef<HTMLButtonElement>();
+        expect(
+            renderToStaticMarkup(<CopyButton name="email address" ref={button} className="wide" />)
+        ).toContain('<button type="button" class="dk-button dk-copy wide" hidden="">');
+        const line = createRef<HTMLParagraphElement>();
+        expect(renderToStaticMarkup(<CopyStatus ref={line} className="site" />)).toBe(
+            '<p class="dk-visually-hidden site" role="status"></p>'
+        );
+        expect(renderToStaticMarkup(<CopyStatus />)).toBe(
+            '<p class="dk-visually-hidden" role="status"></p>'
+        );
+    });
+
+    it('draws a line after the switch for a visitor without script, worded by the page or turned off', () => {
+        expect(renderToStaticMarkup(<ThemeSwitch id="theme" />)).toMatch(
+            /<\/div><noscript><p class="dk-theme-switch-noscript">With scripts on, a Theme switch sits here\.<\/p><\/noscript>$/
+        );
+        expect(
+            renderToStaticMarkup(
+                <ThemeSwitch id="theme" noscript="Turn scripts on for a theme switch." />
+            )
+        ).toContain('<p class="dk-theme-switch-noscript">Turn scripts on for a theme switch.</p>');
+        for (const nothing of [false, null, '']) {
+            expect(
+                renderToStaticMarkup(<ThemeSwitch id="theme" noscript={nothing} />)
+            ).not.toContain('noscript');
+        }
+    });
+});
+
 describe('a page that hands on what it may not have been given', () => {
     /** A value a wrapper passes on as it got it, which may be undefined. */
     const maybe = <T,>(value?: T): T | undefined => value;
@@ -703,7 +768,6 @@ describe('a page that hands on what it may not have been given', () => {
                     about="./about/"
                     source={SOURCE}
                     current={maybe<'about'>()}
-                    toolsLabel={maybe<string>()}
                     toolsWaiting={maybe<boolean>()}
                 />
             )
@@ -803,7 +867,12 @@ describe('an empty slot', () => {
         const none = false as boolean;
         expect(
             renderToStaticMarkup(
-                <PortfolioStrip about="./about/" source={SOURCE} tools={<>{none && 'Tour'}</>} />
+                <PortfolioStrip
+                    about="./about/"
+                    source={SOURCE}
+                    tools={<>{none && 'Tour'}</>}
+                    toolsLabel="Tour"
+                />
             )
         ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
         expect(
@@ -823,7 +892,9 @@ describe('an empty slot', () => {
 
     it('is nothing in the strip and the footer, as it is in a field and a callout', () => {
         expect(
-            renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} tools="" />)
+            renderToStaticMarkup(
+                <PortfolioStrip about="./about/" source={SOURCE} tools="" toolsLabel="Tour" />
+            )
         ).toBe(renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} />));
         expect(
             renderToStaticMarkup(

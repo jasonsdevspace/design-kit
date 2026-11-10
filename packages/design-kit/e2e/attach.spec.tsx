@@ -91,7 +91,34 @@ test('keeps both controls hidden where no script attaches them', async ({ browse
     await expect(first(opened)).toBeHidden();
     await expect(held(opened)).toBeHidden();
     await expect(opened.locator('.dk-copy')).toBeHidden();
+    // With scripts on and the switch not attached, the line for a visitor without script stays
+    // out of sight, since the browser keeps a noscript element's words as text where it runs script.
+    await expect(opened.locator('.dk-theme-switch-noscript')).toHaveCount(0);
     await context.close();
+});
+
+test('says what sits where the switch would be, only to a visitor without script', async ({
+    browser,
+}) => {
+    // The line is found by its class, since the text engine passes a noscript element by.
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const opened = await tab(context);
+    const lines = opened.locator('.dk-theme-switch-noscript');
+    await expect(lines).toHaveCount(2);
+    await expect(lines.first()).toBeVisible();
+    await expect(lines.first()).toHaveText('With scripts on, a Theme switch sits here.');
+    await expect(first(opened)).toBeHidden();
+    await context.close();
+    // With script on, the browser keeps the words as text inside the noscript element, so no page
+    // that runs script draws them, attached or not.
+    const scripted = await browser.newContext();
+    const attached = await tab(scripted);
+    await expect(first(attached)).toBeVisible();
+    await expect(attached.locator('.dk-theme-switch-noscript')).toHaveCount(0);
+    expect(
+        await attached.locator('noscript').evaluateAll((all) => all.map((e) => e.childElementCount))
+    ).toEqual([0, 0]);
+    await scripted.close();
 });
 
 test('shows the saved choice, then saves and draws a new one, with nothing the policy refuses', async ({
