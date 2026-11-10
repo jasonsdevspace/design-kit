@@ -65,8 +65,8 @@ export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), labe
 // @ts-expect-error A select field's ref is the select drawn, not some other element.
 export const wrongSelect = SelectField({ ref: createRef<HTMLInputElement>(), label: 'Size' });
 
-// @ts-expect-error A callout's tone is one of three.
-export const loud = Callout({ tone: 'warning' });
+// @ts-expect-error A callout's tone is one of four.
+export const loud = Callout({ tone: 'sepia' });
 
 // A wrapper hands on an optional prop it may not have been given, as undefined, and it compiles.
 const given: 'about' | undefined = undefined;

@@ -189,12 +189,12 @@ test('draws the focus ring after the keyboard, on the accent and in every callou
     await page.keyboard.press('Tab');
     await expect(accent).toBeFocused();
     expect(await ring(accent)).toEqual({ 'outline-style': 'solid', 'outline-width': '2px' });
-    for (const tone of ['info', 'success', 'danger']) {
+    for (const tone of ['info', 'success', 'warning', 'danger']) {
         await page.getByLabel(`Name in ${tone}`).focus();
         await page.keyboard.press('Tab');
         const again = page
             .locator('.dk-callout-actions button')
-            .nth(['info', 'success', 'danger'].indexOf(tone));
+            .nth(['info', 'success', 'warning', 'danger'].indexOf(tone));
         await expect(again).toBeFocused();
         expect(await ring(again)).toEqual({ 'outline-style': 'solid', 'outline-width': '2px' });
     }
@@ -267,7 +267,7 @@ test('opens no gap around an empty live callout in a grid, and keeps it for a sc
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
     page,
 }) => {
-    const tones = ['info', 'success', 'danger'] as const;
+    const tones = ['info', 'success', 'warning', 'danger'] as const;
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
@@ -300,16 +300,18 @@ test("draws nothing for an empty live callout, and the callout's look once it is
         }
     }
     await page.emulateMedia({ forcedColors: 'none' });
-    // Filled as the reference says a page fills one, with the tone's word for success and danger,
-    // each takes the callout's look again.
+    // Filled as the reference says a page fills one, with the tone's word for success, warning and
+    // danger, each takes the callout's look again.
     await page.evaluate(() => {
         for (const body of document.querySelectorAll('.dk-callout-body')) {
             const callout = body.parentElement;
             const word = callout?.classList.contains('dk-callout-success')
                 ? 'Success: '
-                : callout?.classList.contains('dk-callout-danger')
-                  ? 'Error: '
-                  : '';
+                : callout?.classList.contains('dk-callout-warning')
+                  ? 'Warning: '
+                  : callout?.classList.contains('dk-callout-danger')
+                    ? 'Error: '
+                    : '';
             body.innerHTML = word
                 ? `<span class="dk-visually-hidden">${word}</span>Saved.`
                 : 'Saved.';

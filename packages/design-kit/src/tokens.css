@@ -59,11 +59,13 @@
         /* What is chosen or pointed at, behind text in the page's own color. */
         --dk-highlight: light-dark(#e3eafb, #22305a);
 
-        /* What went right and what went wrong, each with a ground of its own for a callout. */
+        /* What went right, needs care or went wrong, each with a ground of its own for a callout. */
         --dk-success: light-dark(#1d7a3e, #5cc28a);
         --dk-success-bg: light-dark(#e8f5ec, #15301f);
         --dk-danger: light-dark(#b3261e, #ff8a80);
         --dk-danger-bg: light-dark(#fbeceb, #3a1f1d);
+        --dk-warning: light-dark(#8a5300, #f0b453);
+        --dk-warning-bg: light-dark(#fdf3e0, #3b2c12);
 
         /* Space, in steps. */
         --dk-space-1: 0.25rem;

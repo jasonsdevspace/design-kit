@@ -14,18 +14,24 @@ type Components = Pick<
     'Button' | 'Callout' | 'DemoFooter' | 'InputField' | 'PortfolioStrip' | 'SelectField'
 >;
 
-/** Props as a state passes them, with no optional prop set to undefined. */
-type Given<Props> = { [Name in keyof Props]: Exclude<Props[Name], undefined> };
+/**
+ * A function that takes `Props`, checked both ways, so one that takes narrower props fits too. A
+ * method's parameters are checked that way where a function type's are not, which is the point.
+ */
+type Bivariant<Props, Result> = { method(props: Props): Result }['method'];
 
 /**
- * The components a state is drawn with, typed by the props the states pass. The sources take
- * those, and so does the version of the kit the site pins, even one from before its optional props
- * took undefined, so the site can draw the states from it.
+ * The components a state is drawn with, typed by the props the sources take. The version of the
+ * kit the site pins may trail the sources by a release, so one whose props are narrower, from
+ * before a prop took a new value or its optional props took undefined, fits too, since either
+ * direction of the parameter check will do. A state that passes what the pinned version cannot
+ * draw is caught by the site's test that each state draws its attribute, not by the types.
  */
 export type Kit = {
-    readonly [Name in keyof Components]: (
-        props: Given<Parameters<Components[Name]>[0]>
-    ) => ReturnType<Components[Name]>;
+    readonly [Name in keyof Components]: Bivariant<
+        Parameters<Components[Name]>[0],
+        ReturnType<Components[Name]>
+    >;
 };
 
 /**

@@ -150,7 +150,7 @@ export const controlStates: ReactElement = (
                 <option value="sale">Sale</option>
             </SelectField>
         </form>
-        {(['info', 'success', 'danger'] as const).map((tone) => (
+        {(['info', 'success', 'warning', 'danger'] as const).map((tone) => (
             <Callout
                 key={tone}
                 tone={tone}
