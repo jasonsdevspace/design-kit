@@ -230,13 +230,13 @@ which could send a visitor anywhere.
 
 ## Buttons, fields and callouts
 
-`components.css` styles a button, a text field, a select and a callout by the markup below, each in
-every state on [the controls page](https://jasonsdevspace.com/design-kit/controls/). A control's
-state is the native or ARIA attribute a screen reader already reads, such as `aria-pressed` or
-`aria-invalid`, never a class of the kit's. Every rule for these pieces adds no weight, so a state
-wins over the resting look by coming later in the sheet, and a page's own rule outside a layer wins
-over both, as
-[decision 0006](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0006-a-control-state-is-an-attribute.md)
+`components.css` styles a button, a text field, a select, a set of choices and a callout by the
+markup below, each in every state on [the controls
+page](https://jasonsdevspace.com/design-kit/controls/). A control's state is the native or ARIA
+attribute a screen reader already reads, such as `aria-pressed` or `aria-invalid`, never a class of
+the kit's. Every rule for these pieces adds no weight, so a state wins over the resting look by
+coming later in the sheet, and a page's own rule outside a layer wins over both, as [decision
+0006](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0006-a-control-state-is-an-attribute.md)
 explains.
 
 ### Buttons
@@ -346,6 +346,81 @@ error comes and goes, and gives way to the focus ring when it has focus. A disab
 on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
 background, and in forced colors the browser's own arrow comes back. A select that shows its options
 as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret.
+
+</details>
+
+### Choice fields
+
+<!-- example: choiceField -->
+
+```html
+<fieldset
+    class="dk-field dk-choice-field"
+    id="rule"
+    role="radiogroup"
+    aria-describedby="rule-hint rule-error"
+    aria-invalid="true"
+>
+    <legend class="dk-field-label">What the rule does</legend>
+    <p class="dk-field-hint" id="rule-hint">A rule applies to every search</p>
+    <p class="dk-field-error" id="rule-error">
+        <span class="dk-visually-hidden">Error: </span>
+        Choose what the rule does
+    </p>
+    <div class="dk-choices">
+        <label class="dk-choice">
+            <input type="radio" name="rule" value="pin" />
+            <span>
+                Pin
+                <span class="dk-choice-hint"> to the top of the results</span>
+            </span>
+        </label>
+        <label class="dk-choice">
+            <input type="radio" name="rule" value="hide" />
+            <span>Hide</span>
+        </label>
+    </div>
+</fieldset>
+<fieldset class="dk-field dk-choice-field" id="facets">
+    <legend class="dk-field-label">Show</legend>
+    <div class="dk-choices dk-choices-row">
+        <label class="dk-choice">
+            <input type="checkbox" name="facets" checked="" value="brand" />
+            <span>Brand</span>
+        </label>
+        <label class="dk-choice">
+            <input type="checkbox" name="facets" value="price" />
+            <span>Price</span>
+        </label>
+    </div>
+</fieldset>
+```
+
+A set of radios or checkboxes is a `fieldset` with the field's class and `.dk-choice-field`, whose
+legend is the field's label, then the hint and the error as a field has them, then the choices in
+`.dk-choices`, one under the other, or `.dk-choices-row` for a row that wraps. Each choice is a
+`label.dk-choice` holding a native radio or checkbox and its word, with a gloss in `.dk-choice-hint`
+after the word, inside its span, which is read as part of the choice's name. The hint and the error
+describe the set, through `aria-describedby` on the fieldset. A set of radios carries
+`role="radiogroup"`, and `aria-invalid="true"` on the fieldset while an error is drawn, since the
+keyboard enters a radio group at the chosen radio, wherever that is, and a radio takes no invalid
+state of its own. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
+instead. The arrow keys move and check among radios, as the browser has them, and a choice a visitor
+cannot make uses `disabled` on its control.
+
+<details>
+<summary>How a choice is drawn</summary>
+
+A choice is the field's height, and a thumb's target on a phone, and takes the highlight under a
+pointer and after the keyboard, as the ring does, so the whole word reads as one target with the
+ring on the control itself, and a tap leaves no choice lit once it is done. The highlight reaches
+past the control by the choice's own padding, so the control stays in line with the legend, into the
+room around the field, which a container that clips must leave. A gloss is in the muted text at the
+caption size, and a choice whose control is disabled is in the muted text with no highlight. Every
+control of an invalid set draws a thin line in the danger color around it, and a dashed line in
+`CanvasText` in forced colors, each giving way to the ring. The theme switch's choice is the same
+label of a radio and its word, drawn by rules of its own as a pill word with the radio under it, as
+the Theme switch section says.
 
 </details>
 
@@ -538,6 +613,22 @@ themselves.
 Every other prop goes to the control, `ref` and `className` included, except `style` and
 `aria-invalid`. A select field's children are its options. An `aria-describedby` of the page's own
 is listed after the hint and the error.
+
+**`ChoiceField` props**
+
+| `ChoiceField`         | Default      | What it does                                                          |
+| --------------------- | ------------ | --------------------------------------------------------------------- |
+| `label`               | required     | Names the set, as its legend                                          |
+| `name`                | required     | The controls' name, shared by every choice                            |
+| `choices`             | required     | Each a `value`, a `label`, a `hint` and the control's own props       |
+| `type`                | `'radio'`    | `'checkbox'` where any number of choices can be on                    |
+| `row`                 | `false`      | Draws the choices in a row that wraps                                 |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the set, and the id is the fieldset's |
+
+Every other prop goes to the `<fieldset>`, `ref` and `className` included, except `style` and
+`aria-invalid`. A choice's own props go to its control, `ref` among them, except `style`,
+`className` and `aria-invalid`, and `type` and `name`, which the set gives. Its `value` tells the
+choices apart.
 
 **`Callout` props**
 

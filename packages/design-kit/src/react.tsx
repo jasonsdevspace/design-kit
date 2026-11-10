@@ -232,7 +232,10 @@ export const Button = ({
 
 /** What a field draws around its control. */
 type FieldParts = {
-    /** The label, which names the control and focuses it when pressed. */
+    /**
+     * The label, which names the control and focuses it when pressed, or names a set as its
+     * legend.
+     */
     readonly label: ReactNode;
     /** What helps a visitor fill the field, read as its description. */
     readonly hint?: ReactNode;
@@ -278,11 +281,34 @@ const useField = (
 };
 
 /**
- * A field's label, hint and error around its control. The error sits above the control, so a
- * phone's keyboard never covers it, and starts with a word a screen reader reads, so the error is
- * told from the hint by more than its color. It is not live, since a form that fails in several
- * fields at once would speak over itself, so the page says when an error appears.
+ * A field's hint and error, each drawn only when it holds something. The error sits above the
+ * control, so a phone's keyboard never covers it, and starts with a word a screen reader reads, so
+ * the error is told from the hint by more than its color. It is not live, since a form that fails
+ * in several fields at once would speak over itself, so the page says when an error appears.
  */
+const FieldText = ({
+    parts,
+    field,
+}: {
+    readonly parts: FieldParts;
+    readonly field: ReturnType<typeof useField>;
+}) => (
+    <>
+        {field.hint ? (
+            <p className="dk-field-hint" id={`${field.id}-hint`}>
+                {parts.hint}
+            </p>
+        ) : null}
+        {field.error ? (
+            <p className="dk-field-error" id={`${field.id}-error`}>
+                <span className="dk-visually-hidden">Error: </span>
+                {parts.error}
+            </p>
+        ) : null}
+    </>
+);
+
+/** A field's label, hint and error around its control. */
 const Field = ({
     parts,
     field,
@@ -296,17 +322,7 @@ const Field = ({
         <label className="dk-field-label" htmlFor={field.id}>
             {parts.label}
         </label>
-        {field.hint ? (
-            <p className="dk-field-hint" id={`${field.id}-hint`}>
-                {parts.hint}
-            </p>
-        ) : null}
-        {field.error ? (
-            <p className="dk-field-error" id={`${field.id}-error`}>
-                <span className="dk-visually-hidden">Error: </span>
-                {parts.error}
-            </p>
-        ) : null}
+        <FieldText parts={parts} field={field} />
         {children}
     </div>
 );
@@ -347,6 +363,106 @@ export const SelectField = (props: SelectFieldProps) => {
                 {children}
             </select>
         </Field>
+    );
+};
+
+/**
+ * One choice among a set: a label holding a native radio or checkbox and its word, with a gloss
+ * after the word when it has one. The theme switch's choices are drawn by it too, under their own
+ * class, so the markup a page wrote by hand for the switch stays as it was.
+ */
+const ChoiceLabel = ({
+    className,
+    word,
+    gloss,
+    ...input
+}: Omit<ComponentPropsWithRef<'input'>, 'className' | 'children'> & {
+    readonly className: string;
+    readonly word: ReactNode;
+    readonly gloss?: ReactNode;
+}) => (
+    <label className={className}>
+        <input {...input} />
+        <span>
+            {word}
+            {filled(gloss) ? <span className="dk-choice-hint"> {gloss}</span> : null}
+        </span>
+    </label>
+);
+
+/** A choice in a choice field, beside its control's own props, such as `checked` or `disabled`. */
+export type Choice = Omit<
+    ComponentPropsWithRef<'input'>,
+    'style' | 'type' | 'name' | 'aria-invalid' | 'className' | 'children' | 'value' | 'key'
+> & {
+    /** What the control submits, and what tells the choices apart. */
+    readonly value: string;
+    /** The word beside the control, which names it. */
+    readonly label: ReactNode;
+    /** A gloss after the word, in the muted text, read as part of the choice's name. */
+    readonly hint?: ReactNode;
+};
+
+export type ChoiceFieldProps = FieldParts &
+    Omit<ComponentPropsWithRef<'fieldset'>, 'style' | 'id' | 'aria-invalid' | 'children'> & {
+        /** The controls' name, shared by every choice in the set. */
+        readonly name: string;
+        /** Radios, where one choice is on, or checkboxes, where any number are. */
+        readonly type?: 'radio' | 'checkbox' | undefined;
+        readonly choices: readonly Choice[];
+        /** The choices in a row that wraps, rather than one under the other. */
+        readonly row?: boolean | undefined;
+    };
+
+/**
+ * A set of radios or checkboxes with its label, hint and error: a fieldset whose legend is the
+ * label, described by the hint and the error as a control is. A set of radios is a radio group,
+ * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
+ * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked. The
+ * fieldset takes every other prop given, its `ref` among them.
+ */
+export const ChoiceField = (props: ChoiceFieldProps) => {
+    const {
+        label,
+        hint: _hint,
+        error: _error,
+        id: _id,
+        name,
+        type = 'radio',
+        choices,
+        row = false,
+        className,
+        ...rest
+    } = props;
+    const { 'aria-describedby': own, ...native } = rest;
+    const field = useField(props, own);
+    return (
+        <fieldset
+            {...native}
+            className={spaced('dk-field', 'dk-choice-field', className)}
+            id={field.id}
+            role={type === 'radio' ? 'radiogroup' : undefined}
+            aria-describedby={field.wired['aria-describedby']}
+            aria-invalid={type === 'radio' && field.error ? true : undefined}
+        >
+            <legend className="dk-field-label">{label}</legend>
+            <FieldText parts={props} field={field} />
+            <div className={spaced('dk-choices', row && 'dk-choices-row')}>
+                {choices.map(({ value, label: word, hint: gloss, ...input }) => (
+                    <ChoiceLabel
+                        key={value}
+                        className="dk-choice"
+                        word={word}
+                        gloss={gloss}
+                        type={type}
+                        name={name}
+                        value={value}
+                        aria-invalid={type === 'checkbox' && field.error ? true : undefined}
+                        {...input}
+                    />
+                ))}
+            </div>
+        </fieldset>
     );
 };
 
@@ -502,10 +618,14 @@ export const ThemeSwitch = ({
                 Theme
             </span>
             {THEME_CHOICES.map((value) => (
-                <label className="dk-theme-switch-choice" key={value}>
-                    <input type="radio" name={name ?? base} value={value} />
-                    <span>{CHOICE_WORDS[value]}</span>
-                </label>
+                <ChoiceLabel
+                    key={value}
+                    className="dk-theme-switch-choice"
+                    type="radio"
+                    name={name ?? base}
+                    value={value}
+                    word={CHOICE_WORDS[value]}
+                />
             ))}
             <span className="dk-visually-hidden" id={`${base}-note`}>
                 {note}

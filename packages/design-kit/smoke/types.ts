@@ -6,6 +6,7 @@
 import {
     Button,
     Callout,
+    ChoiceField,
     InputField,
     PortfolioStrip,
     SelectField,
@@ -64,6 +65,25 @@ export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), labe
 
 // @ts-expect-error A select field's ref is the select drawn, not some other element.
 export const wrongSelect = SelectField({ ref: createRef<HTMLInputElement>(), label: 'Size' });
+
+// A choice field needs its name and its choices beside its label, and its ref is the fieldset drawn.
+export const rules = ChoiceField({
+    ref: createRef<HTMLFieldSetElement>(),
+    label: 'Rule',
+    name: 'rule',
+    choices: [{ value: 'pin', label: 'Pin' }],
+});
+
+// @ts-expect-error A choice field needs its choices, so its props are real too.
+export const choicesWithout = ChoiceField({ label: 'Rule', name: 'rule' });
+
+export const wrongChoices = ChoiceField({
+    // @ts-expect-error A choice field's ref is the fieldset drawn, not a control.
+    ref: createRef<HTMLInputElement>(),
+    label: 'Rule',
+    name: 'rule',
+    choices: [],
+});
 
 // @ts-expect-error A callout's tone is one of four.
 export const loud = Callout({ tone: 'sepia' });

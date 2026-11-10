@@ -1,19 +1,21 @@
 import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Button, InputField, SelectField } from '../src/react.js';
+import { Button, ChoiceField, InputField, SelectField } from '../src/react.js';
 
 /*
  * A page that opens a panel from the kit's button and, when the panel closes, moves focus back to
  * that button through its ref. The button is drawn again as the panel opens and closes, so the ref
  * has to hold the button across each drawing. Below it, a form that, once sent, draws each field
  * again with its error and a summary of what is wrong, which moves focus to each field through its
- * ref. Bundled by ref.spec.ts, which writes it into the browser.
+ * ref, a choice field's first control among them. Bundled by ref.spec.ts, which writes it into the
+ * browser.
  */
 const Page = () => {
     const opener = useRef<HTMLButtonElement>(null);
     const name = useRef<HTMLInputElement>(null);
     const size = useRef<HTMLSelectElement>(null);
+    const color = useRef<HTMLInputElement>(null);
     const [open, setOpen] = useState(false);
     const [sent, setSent] = useState(false);
     return (
@@ -47,6 +49,9 @@ const Page = () => {
                         <li>
                             <Button onClick={() => size.current?.focus()}>Go to the size</Button>
                         </li>
+                        <li>
+                            <Button onClick={() => color.current?.focus()}>Go to the color</Button>
+                        </li>
                     </ul>
                 ) : null}
                 <InputField ref={name} label="Name" error={sent && 'Enter a name'} />
@@ -54,6 +59,15 @@ const Page = () => {
                     <option value="">Choose</option>
                     <option value="s">Small</option>
                 </SelectField>
+                <ChoiceField
+                    label="Color"
+                    name="color"
+                    error={sent && 'Choose a color'}
+                    choices={[
+                        { value: 'red', label: 'Red', ref: color },
+                        { value: 'blue', label: 'Blue' },
+                    ]}
+                />
                 <Button
                     onClick={() => {
                         setSent(true);
