@@ -57,6 +57,22 @@ for (const system of ['light', 'dark'] as const) {
     });
 }
 
+/**
+ * The outline on whatever has focus, and whether the browser would show focus on it, so a missing
+ * ring is told apart from focus the browser does not show.
+ */
+const ring = (page: Page) =>
+    page.evaluate(() => {
+        const element = document.activeElement ?? document.body;
+        const style = getComputedStyle(element);
+        return {
+            style: style.outlineStyle,
+            color: style.outlineColor,
+            width: style.outlineWidth,
+            visible: element.matches(':focus-visible'),
+        };
+    });
+
 for (const [theme, accent] of [
     ['light', 'rgb(31, 79, 216)'],
     ['dark', 'rgb(143, 176, 255)'],
@@ -70,22 +86,55 @@ for (const [theme, accent] of [
             '<a href="#next">Next</a><section id="next" tabindex="-1">Next</section>'
         );
         await page.keyboard.press('Tab');
-        const ring = () =>
-            page.evaluate(() => {
-                const style = getComputedStyle(document.activeElement ?? document.body);
-                return {
-                    style: style.outlineStyle,
-                    color: style.outlineColor,
-                    width: style.outlineWidth,
-                };
-            });
-        expect(await ring()).toEqual({ style: 'solid', color: accent, width: '2px' });
+        expect(await ring(page)).toEqual({
+            style: 'solid',
+            color: accent,
+            width: '2px',
+            visible: true,
+        });
         // Moved there from the keyboard, as a skip link moves it, so the browser would show focus.
         await page.keyboard.press('Enter');
         await expect(page.locator('#next')).toBeFocused();
-        expect((await ring()).style).toBe('none');
+        expect(await ring(page)).toMatchObject({ style: 'none', visible: true });
     });
 }
+
+test('keeps the ring on a control a roving widget gives a tabindex of -1', async ({ page }) => {
+    await open(
+        page,
+        'light',
+        '<div role="tablist"><button role="tab" tabindex="0" aria-selected="true">Markup</button>' +
+            '<button role="tab" tabindex="-1">React</button></div>' +
+            '<div role="tablist"><div role="tab" tabindex="0" aria-selected="true">One</div>' +
+            '<div role="tab" tabindex="-1">Two</div></div>' +
+            '<section id="next" tabindex="-1">Next</section>'
+    );
+    // The page's own script moves focus to the next tab on the right arrow, as a tab strip does.
+    await page.evaluate(() => {
+        for (const list of document.querySelectorAll('[role="tablist"]')) {
+            list.addEventListener('keydown', (event) => {
+                if ((event as KeyboardEvent).key !== 'ArrowRight') return;
+                const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
+                const at = tabs.indexOf(document.activeElement as HTMLElement);
+                tabs[(at + 1) % tabs.length]?.focus();
+            });
+        }
+    });
+    const ringed = { style: 'solid', color: 'rgb(31, 79, 216)', width: '2px', visible: true };
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'React' })).toBeFocused();
+    expect(await ring(page), 'a button tab').toEqual(ringed);
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Two' })).toBeFocused();
+    expect(await ring(page), 'a div tab').toEqual(ringed);
+    // A section with no widget role, moved to the same way, still draws none, though the browser
+    // would show focus on it.
+    await page.evaluate(() => document.getElementById('next')?.focus());
+    await expect(page.locator('#next')).toBeFocused();
+    expect(await ring(page), 'a section').toMatchObject({ style: 'none', visible: true });
+});
 
 test("takes a demo's own palette whichever sheet loads first", async ({ page }) => {
     await open(
@@ -199,9 +248,56 @@ for (const [where, own] of [
             const style = getComputedStyle(document.querySelector('.fade') ?? document.body);
             return { duration: style.transitionDuration, delay: style.transitionDelay };
         });
-        expect(timing).toEqual({ duration: '1e-05s', delay: '0s' });
+        expect(timing).toEqual({ duration: '1e-05s', delay: '1s' });
     });
 }
+
+test("keeps a page's delays for a visitor who wants less motion, and cuts the motion", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // A waiting line shown only once a load has taken a moment, timed by a delay with no motion, as
+    // ShelfLens's host pages draw one, and a spinner whose motion is cut but whose delay holds.
+    await open(
+        page,
+        'light',
+        '<p class="waiting">Waiting</p><p class="spin">Spins</p><p class="fade">Fades</p>',
+        '@keyframes waiting { from { visibility: hidden } } .waiting { animation: waiting 0s 2s both }' +
+            '@keyframes spin { to { rotate: 1turn } } .spin { animation: spin 2s 1s infinite }' +
+            '.fade { opacity: 0; transition: opacity 0s 2s } .fade.shown { opacity: 1 }'
+    );
+    const timing = await page.evaluate(() =>
+        ['.waiting', '.spin'].map((name) => {
+            const style = getComputedStyle(document.querySelector(name) ?? document.body);
+            return [style.animationDuration, style.animationDelay, style.animationIterationCount];
+        })
+    );
+    expect(timing).toEqual([
+        ['1e-05s', '2s', '1'],
+        ['1e-05s', '1s', '1'],
+    ]);
+    // The line is hidden while its delay runs, and shows once it has passed.
+    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'hidden');
+    await expect(page.locator('.waiting')).toHaveCSS('visibility', 'visible', { timeout: 6000 });
+    // The spinner comes to rest once its delay has passed, having played its cut once.
+    await expect
+        .poll(
+            () =>
+                page.evaluate(() =>
+                    document
+                        .querySelector('.spin')
+                        ?.getAnimations()
+                        .every((animation) => animation.playState === 'finished')
+                ),
+            { timeout: 6000 }
+        )
+        .toBe(true);
+    // A transition's delay holds too, so a timer written as one still waits.
+    const fade = page.locator('.fade');
+    await fade.evaluate((element) => element.classList.add('shown'));
+    await expect(fade).toHaveCSS('opacity', '0');
+    await expect(fade).toHaveCSS('opacity', '1', { timeout: 6000 });
+});
 
 test("gives a page's ::before and ::after the border box, as every element has", async ({
     page,
@@ -259,9 +355,9 @@ for (const [where, own] of [
             });
         });
         expect(timing).toEqual([
-            ['1e-05s', '0s', '1'],
-            ['1e-05s', '0s', '1'],
-            ['1e-05s', '0s', '1'],
+            ['1e-05s', '1s', '1'],
+            ['1e-05s', '1s', '1'],
+            ['1e-05s', '1s', '1'],
         ]);
     });
 }
