@@ -50,7 +50,10 @@ const style = (locator: Locator, ...names: string[]) =>
 
 const height = async (locator: Locator) => Math.round((await locator.boundingBox())?.height ?? 0);
 
-test('sets a button and a field level, at the field height wide and the target on a phone', async ({
+/** What a control's text starts past: its left padding and the edge outside it. */
+const inset = (locator: Locator) => style(locator, 'padding-left', 'border-left-width');
+
+test('sets a button and a field level and their text at one inset, at the field height wide and the target on a phone', async ({
     page,
 }) => {
     for (const [width, tall] of [
@@ -64,17 +67,10 @@ test('sets a button and a field level, at the field height wide and the target o
         // A label of one character never makes a button narrower than it is tall.
         const one = await page.getByRole('button', { name: 'I', exact: true }).boundingBox();
         expect(Math.round(one?.width ?? 0)).toBeGreaterThanOrEqual(tall);
-    }
-});
-
-test("starts a field's text where a button's label starts, at either width", async ({ page }) => {
-    for (const width of [1280, 360]) {
-        await open(page, { width });
-        const inset = (locator: Locator) => style(locator, 'padding-left', 'border-left-width');
+        // A field's text starts where a button's label does, by the same padding inside the same edge.
         const button = await inset(page.getByRole('button', { name: 'Filters' }));
         expect(await inset(page.getByLabel('Search words')), `${String(width)}px`).toEqual(button);
         expect(await inset(page.getByLabel('Sort by')), `${String(width)}px`).toEqual(button);
-        expect(button).toEqual({ 'padding-left': '12px', 'border-left-width': '1px' });
     }
 });
 

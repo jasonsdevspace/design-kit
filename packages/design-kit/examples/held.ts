@@ -76,7 +76,7 @@ export const HELD = {
         {
             file: 'e2e/controls.spec.tsx',
             titles: [
-                'sets a button and a field level, at the field height wide and the target on a phone',
+                'sets a button and a field level and their text at one inset, at the field height wide and the target on a phone',
                 'keeps an off button in the tab order, and skips a disabled one, drawn alike',
                 'draws a button in a disabled fieldset as off, and keeps the keyboard off it',
                 'turns the edge to the focus color under a pointer, and underlines the accent instead',
@@ -110,7 +110,7 @@ export const HELD = {
         {
             file: 'e2e/controls.spec.tsx',
             titles: [
-                'sets a button and a field level, at the field height wide and the target on a phone',
+                'sets a button and a field level and their text at one inset, at the field height wide and the target on a phone',
                 'draws text in a field at 16px or more on a phone, so tapping it does not zoom',
                 'draws a list that shows its options as the browser does, with no caret',
                 'draws the focus ring after the keyboard, on the accent and in every callout',

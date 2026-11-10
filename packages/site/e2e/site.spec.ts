@@ -670,11 +670,24 @@ test.describe('the tokens page', () => {
                 };
             })
         );
-        // The steps in order from the first, however many the pinned sheet declares.
-        expect(steps.length).toBeGreaterThanOrEqual(6);
-        expect(steps.map(({ name }) => name)).toEqual(
-            steps.map((_step, index) => `--dk-space-${String(index + 1)}`)
-        );
+        // Every step the pinned sheet declares, in order from the first, which the sheet is asked
+        // for by probing each name until one draws nothing.
+        const declared = await page.evaluate(() => {
+            const names: string[] = [];
+            // An inline block, so a name the sheet does not declare leaves it no width at all.
+            const probe = document.createElement('span');
+            probe.style.display = 'inline-block';
+            document.body.append(probe);
+            for (let step = 1; step < 100; step += 1) {
+                probe.style.width = `var(--dk-space-${String(step)})`;
+                if (probe.getBoundingClientRect().width === 0) break;
+                names.push(`--dk-space-${String(step)}`);
+            }
+            probe.remove();
+            return names;
+        });
+        expect(declared.length).toBeGreaterThanOrEqual(6);
+        expect(steps.map(({ name }) => name)).toEqual(declared);
         expect(steps.filter(({ sized, value }) => !sized || !/rem$/.test(value))).toEqual([]);
     });
 

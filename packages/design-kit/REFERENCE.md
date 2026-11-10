@@ -338,8 +338,9 @@ screen reader reads wherever it announces the field.
 <details>
 <summary>How a field is drawn</summary>
 
-A control is as tall as a button, at both widths, and its text is never under 16px, so a phone does
-not zoom the page when the field is tapped. It sits on the page's own ground, so it reads as a well
+A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
+button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
+is tapped. It sits on the page's own ground, so it reads as a well
 on a card. The hint and the error are in the caption size, the error in the danger color, and an
 invalid control's edge in the danger color too. In forced colors, where that color is gone, an
 invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the

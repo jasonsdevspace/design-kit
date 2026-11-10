@@ -58,6 +58,10 @@ describe('the tokens', () => {
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
     });
 
+    it('pads a field inline by the step a button is padded by, so their text starts level', () => {
+        expect(declared.get('--dk-field-inline')).toBe(declared.get('--dk-space-3'));
+    });
+
     it('casts the raised shadow deeper on a dark page, where a soft one shows little', () => {
         const shadow = declared.get('--dk-shadow-raised') ?? '';
         // Each color's alpha, written as a number or a percent, in the order light then dark.
