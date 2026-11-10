@@ -13,16 +13,18 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   a wide screen.
 - **Contrast.** Every pairing of colors the kit is meant for is measured in both themes: text at 4.5
   to 1 against every ground it sits on, and the edge of a control at 3 to 1. The focus ring is drawn
-  in the accent, so it meets the ratio a link does.
+  in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
+  native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
+  cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is.
 - **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen and 44 on a phone.
   On the site, the page tabs, the theme switch, the list of a page's sections and the controls of
   each code panel are at least 24 pixels tall on a wide screen and 44 on a phone.
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG asks
   a page to allow.
-- **Forced colors.** A pressed or unavailable button, an invalid field, the edge of a callout or a
-  panel, the chrome's link to the current page, and the site's chosen theme and tab keep what sets
-  them apart when the system draws its own colors.
+- **Forced colors.** A pressed or unavailable button, an invalid field, the edge of a callout, a
+  panel or a focused skip link, the chrome's link to the current page, and the site's chosen theme
+  and tab keep what sets them apart when the system draws its own colors.
 - **Lighthouse.** Every page of the site scores a hundred for accessibility.
 
 ## Where it works
@@ -34,8 +36,9 @@ is its CSS transformer, as the package README shows.
 
 ## Known limitations
 
-- In Firefox 120, which lacks `:has()`, an empty live callout draws its ground until it is filled,
-  and a label that holds a checkbox or a radio shows no pointer, though the box or the dot does.
+- In Firefox 120, which lacks `:has()`, an empty live callout draws its ground and keeps its place
+  in the flow until it is filled, so a grid opens its gap around it, and a label that holds a
+  checkbox or a radio shows no pointer, though the box or the dot does.
 - The browser tests run only in Chromium, so the other browsers at the floor are held to it by what
   they document rather than by a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and

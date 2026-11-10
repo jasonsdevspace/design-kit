@@ -12,7 +12,8 @@ import { Callout } from '../src/react.js';
  * and the kit's own sheets: each state told apart by more than its color, forced colors included,
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, an off button the keyboard still reaches, the field's label, hint and error read as its
- * name and description, an empty live callout drawn at no height until it is filled, and no audit
+ * name and description, an empty live callout waiting a pixel out of the flow until it is filled,
+ * and no audit
  * findings for any state in either theme.
  */
 
@@ -233,6 +234,36 @@ test('draws an invalid control in the danger color, and the error beside the hin
     expect(await word.boundingBox()).toMatchObject({ width: 1, height: 1 });
 });
 
+test('opens no gap around an empty live callout in a grid, and keeps it for a screen reader', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+            `<style>${KIT} .grid { display: grid; gap: 16px; }</style>` +
+            `</head><body><main class="grid">` +
+            '<div id="before">Before</div>' +
+            renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
+            '<div id="after">After</div>' +
+            '</main></body></html>'
+    );
+    const apart = async () => {
+        const before = await page.locator('#before').boundingBox();
+        const after = await page.locator('#after').boundingBox();
+        return Math.round((after?.y ?? 0) - ((before?.y ?? 0) + (before?.height ?? 0)));
+    };
+    // One gap, as if the callout were not there, while it waits for its words.
+    expect(await apart()).toBe(16);
+    await expect(page.getByRole('alert')).toBeAttached();
+    // Filled, it takes its cell and its look.
+    await page.evaluate(() => {
+        const body = document.querySelector('.dk-callout-body');
+        if (body) body.innerHTML = '<span class="dk-visually-hidden">Error: </span>Saved.';
+    });
+    expect(await apart()).toBeGreaterThan(32);
+    await expect(page.getByRole('alert')).toBeVisible();
+});
+
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
     page,
 }) => {
@@ -256,10 +287,11 @@ test("draws nothing for an empty live callout, and the callout's look once it is
     for (const forcedColors of ['none', 'active'] as const) {
         await page.emulateMedia({ forcedColors });
         for (const callout of await callouts.all()) {
-            // Drawn at no size rather than hidden, so it has a box and stays in the tree a screen
-            // reader reads, which a role query leaves out for an element that is hidden.
+            // Drawn as visually hidden text is, a pixel out of the flow, rather than hidden, so it
+            // has a box and stays in the tree a screen reader reads, which a role query leaves out
+            // for an element that is hidden.
             expect(await callout.boundingBox()).not.toBeNull();
-            expect(await height(callout)).toBe(0);
+            expect(await height(callout)).toBeLessThanOrEqual(1);
             const drawn = await style(callout, 'background-color', 'border-top-width');
             // No ground, whatever color forced colors give the transparent one.
             expect(drawn['background-color']).toMatch(/^rgba\(\d+, \d+, \d+, 0\)$/);

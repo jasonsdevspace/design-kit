@@ -36,7 +36,7 @@ choose.
   writing a color is a change to the test as well. The scrim, written in `rgb()`, is not among the
   roles it lists, so it is not measured.
 - `light-dark()` takes colors, so in a value that is more than a color, such as a shadow, only the
-  color inside it can vary by theme. The kit's shadow does not, and is the same in both.
+  color inside it can vary by theme. The kit's shadow varies there, a deeper black on a dark page.
 - A role a page sets to one color, rather than to a `light-dark()`, draws that color in both
   themes.
 - A page sets its own palette once, with both values. Set on the root, it wins over the kit's
