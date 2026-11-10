@@ -303,6 +303,54 @@ test('keeps the skip link out of sight until the keyboard reaches it, and lands 
     await expect(page.locator('#main-content')).toBeFocused();
 });
 
+test("draws the focused skip link as a box in forced colors, by an edge in the link's color", async ({
+    page,
+}) => {
+    await open(page, { width: 1280 });
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    const look = () =>
+        skip.evaluate((link) => {
+            const style = getComputedStyle(link);
+            return {
+                edge: style.borderTopStyle,
+                edgeColor: style.borderTopColor,
+                color: style.color,
+                ground: style.backgroundColor,
+            };
+        });
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.keyboard.press('Tab');
+    await expect(skip).toBeFocused();
+    // The system draws the edge in the color it gives the link's words, which its ground is not.
+    const forced = await look();
+    expect(forced.edge).toBe('solid');
+    expect(forced.edgeColor).toBe(forced.color);
+    expect(forced.edgeColor).not.toBe(forced.ground);
+    // Outside forced colors the edge is transparent and the box is the size it was.
+    await page.emulateMedia({ forcedColors: 'none' });
+    expect((await look()).edgeColor).toBe('rgba(0, 0, 0, 0)');
+    // The same size as a link drawn by 0.3.1's rule, padding alone and no edge, in the same page.
+    const shown = await box(skip, 'the skip link');
+    const before = await page.evaluate(() => {
+        const probe = document.createElement('a');
+        probe.className = 'dk-skip';
+        probe.href = '#main-content';
+        probe.textContent = 'Skip to content';
+        // Positioned as the link is, so both are blocks, and hidden rather than moved.
+        probe.style.cssText =
+            'visibility: hidden; width: auto; height: auto; overflow: visible; clip-path: none;' +
+            ' padding: var(--dk-space-2) var(--dk-space-4); border: 0;';
+        document.body.append(probe);
+        const { width, height } = probe.getBoundingClientRect();
+        probe.remove();
+        return { width, height };
+    });
+    expect([Math.round(shown.width), Math.round(shown.height)]).toEqual([
+        Math.round(before.width),
+        Math.round(before.height),
+    ]);
+});
+
 test('keeps a skip link inside a positioned box out of sight and out of the way of a click', async ({
     page,
 }) => {
