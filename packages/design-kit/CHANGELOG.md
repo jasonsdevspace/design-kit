@@ -12,29 +12,32 @@ entry as the notes.
 The kit adds tabs, a choice field, a textarea field, a large button and a text button, an eyebrow, a
 warning tone and two spacing steps, draws selected text on the accent, collapses the theme switch to
 one button in a demo's strip on a screen narrower than 20rem, and paints the browser's bar from the
-theme script. No token is renamed, though `--dk-field-inline` changed its value. The theme script's
-text changed, so `themeScriptHash` changed too. This changelog no longer ships in the package: it
-lives on GitHub, linked from the package README, and each release carries its entry as the notes.
+theme script. No token is renamed, though `--dk-field-inline` and `--dk-shadow-raised` changed their
+values. The theme script's text changed, so `themeScriptHash` changed too. This changelog no longer
+ships in the package: it lives on GitHub, linked from the package README, and each release carries
+its entry as the notes.
 
 - **Upgrading.** A page that copies `themeScriptHash` into its policy rather than reading it from
   the package takes the new hash. A page that wants the browser's bar to follow the theme names two
-  `theme-color` metas before the script, one for each scheme. `PortfolioStrip` refuses `tools`
-  without `toolsLabel`, so a page that passed switches without a name names them. A switch, and a
-  strip waiting for its switches, now draw a line inside `noscript` unless a page empties `noscript`
-  or `toolsNoscript`, so a test that counts their children allows for it. The theme switch's markup
-  changed: the group's role, name and note moved from `.dk-theme-switch` onto a
-  `.dk-theme-switch-choices` div around the radios, and a `.dk-theme-switch-button` sits between the
-  name and the choices, so a page that writes the switch by hand adds both as the reference gives
-  them, while a page that draws it with `ThemeSwitch` or finds the group by its role changes
-  nothing, and the ref holds the switch as before. In a demo's strip the kit no longer keeps the
-  switch on one row by itself, so a page that set a scroll allowance on the strip's section for it
-  can drop that rule. `--dk-field-inline` moved from 0.5rem to 0.75rem, the step a button is padded
-  by, so a page that lined something up to a field's padding checks it. `--dk-shadow-raised` is
-  deeper on a dark page, in one `light-dark()`, so a page that copied its value as one color writes
-  the light value as a fallback and the pair where `light-dark()` is supported. Under reduced motion
-  the kit keeps a page's delays and cuts only the motion, so a page that staggers entrances by delay
-  zeroes its own delays under the same query if it wants them together. A holder a page added to
-  hide a waiting live callout can go, and a page with a selection rule of its own can drop it.
+  `theme-color` metas before the script, each with `content` and a `media` of exactly
+  `(prefers-color-scheme: light)` or `(prefers-color-scheme: dark)`. `PortfolioStrip`'s types refuse
+  `tools` without `toolsLabel`, and a page that passes them without a name draws their section
+  unnamed and so no landmark, so such a page names them. A switch, and a strip waiting for its
+  switches, now draw a line inside `noscript` unless a page empties `noscript` or `toolsNoscript`,
+  so a test that counts their children allows for it. The theme switch's markup changed: the group's
+  role, name and note moved from `.dk-theme-switch` onto a `.dk-theme-switch-choices` div around the
+  radios, and a `.dk-theme-switch-button` sits between the name and the choices, so a page that
+  writes the switch by hand adds both as the reference gives them, while a page that draws it with
+  `ThemeSwitch` or finds the group by its role changes nothing, and the new `ref` holds the switch
+  itself. In a demo's strip the kit no longer keeps the switch on one row by itself, so a page that
+  set a scroll allowance on the strip's section for it can drop that rule. `--dk-field-inline` moved
+  from 0.5rem to 0.75rem, the step a button is padded by, so a page that lined something up to a
+  field's padding checks it. `--dk-shadow-raised` is deeper on a dark page, in one `light-dark()`,
+  so a page that copied its value as one color writes the light value as a fallback and the pair
+  where `light-dark()` is supported. Under reduced motion the kit keeps a page's delays and cuts
+  only the motion, so a page that staggers entrances by delay zeroes its own delays under the same
+  query if it wants them together. A holder a page added to hide a waiting live callout can go, and
+  a page with a selection rule of its own can drop it.
 - **Theme script.** Where the page names a `theme-color` meta for each scheme before the script, it
   points both at the ground of the theme it draws, on the first paint and on every change of the
   root's theme, so the browser's bar follows the theme too.
@@ -58,8 +61,9 @@ lives on GitHub, linked from the package README, and each release carries its en
   `CopyStatusProps` among them.
 - **Tokens.** `--dk-warning` and `--dk-warning-bg` are new, for a callout about something that needs
   care. `--dk-space-7` and `--dk-space-8` are new, for the space between a page's own sections, and
-  `--dk-tracking-caps` is the tracking of a label in caps. `--dk-raised` is lighter than the surface
-  in the dark theme and no darker than the page in the light one, which a test holds.
+  `--dk-tracking-caps` is the tracking of a label in caps. A test holds `--dk-raised`, which is
+  unchanged, lighter than the surface in the dark theme and no darker than the page in the light
+  one.
 - **Sheets.** `.dk-tabs` and `.dk-tab` draw a row of muted words with the chosen one, marked by
   `aria-selected`, `aria-current` or `aria-pressed`, in the page's text over an accent line, the
   page owning the roles and keys. `.dk-choice-field`, `.dk-choices`, `.dk-choices-row`, `.dk-choice`
@@ -74,8 +78,9 @@ lives on GitHub, linked from the package README, and each release carries its en
   widget gives a tabindex of -1. On paper a callout and a code block keep an edge, a code block and
   a scrolling table show whole, and the controls that do nothing there do not print. The reference's
   layers section shows what a page with a reset in a layer writes.
-- **Package.** `CHANGELOG.md` is no longer in the package, and the record of the package's size
-  shows each sheet gzipped without its comments, and a test holds the three together to a budget.
+- **Package.** `CHANGELOG.md` is no longer in the package, and the record of the package's size that
+  the release takes shows each sheet gzipped without its comments, with a test holding the three
+  together to a budget.
 
 ## 0.3.1
 
