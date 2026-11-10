@@ -7,6 +7,19 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.3.1
+
+The theme switch's choices wrap where its column is too narrow for one row, rather than scroll out of
+sight. No token is renamed and the theme script is unchanged, so `themeScriptHash` is the same.
+
+- **Upgrading.** A page that wraps `.dk-theme-switch` with its own classes, so every choice stays in
+  sight at a large text size, can drop them.
+- **Sheets.** The switch keeps one row wherever it fits, and wraps its choices onto as many rows as
+  they need where it does not, as at a large text size on a phone, with the same gap between rows as
+  between choices. Only a word wider than the column on its own still scrolls. In a demo's strip,
+  which keeps one row of room for switches on their way, the switch keeps one row and scrolls as
+  before, so nothing below the strip moves as it comes.
+
 ## 0.3.0
 
 The kit ships a theme switch, a copy button, a pill and a focus color of its own, and the theme
