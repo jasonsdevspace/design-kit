@@ -371,9 +371,10 @@ A plain `dk-callout` is for information, the `'info'` tone, and sits on the high
 that needs care before it goes wrong, such as stock running low, or that went wrong, and it sits on
 that color's own ground. The words stay in the page's text color in every tone. A success, warning
 or danger callout starts its title, or its message when it has no title, with a visually hidden
-"Success: ", "Warning: " or "Error: ", so the tone is not told by color alone. The title is a paragraph, or a heading from `h2`
-to `h6` where the callout is a section a visitor would jump to, and opens `.dk-callout-body`, the
-message. The actions, when there are some, follow the message, outside it.
+"Success: ", "Warning: " or "Error: ", so the tone is not told by color alone. The title is a
+paragraph, or a heading from `h2` to `h6` where the callout is a section a visitor would jump to,
+and opens `.dk-callout-body`, the message. The actions, when there are some, follow the message,
+outside it.
 
 A callout has no role unless the page gives it one, whatever its tone, so a message on the page when
 it loads is read in its place rather than over the page's title, as
@@ -388,7 +389,7 @@ explains. A message that arrives after the page has loaded is made live in three
    visually hidden text is, so it takes no room and opens no gap, and stays in the tree a screen
    reader reads.
 3. Fill the message when there is something to say, which is when a screen reader reads it. For
-   success or danger, put the hidden word in with it, as
+   success, warning or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
 A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is dropped and
@@ -488,14 +489,14 @@ is listed after the hint and the error.
 
 **`Callout` props**
 
-| `Callout`      | Default         | What it does                                           |
-| -------------- | --------------- | ------------------------------------------------------ |
-| `tone`         | `'info'`        | `'success'` or `'danger'` for what went right or wrong |
-| `title`        | none            | Drawn at the start of the message                      |
-| `headingLevel` | none            | 2 to 6 draws the title as that heading                 |
-| `live`         | none            | `'status'` or `'alert'`, the role the message takes    |
-| `prefix`       | the tone's word | The word read first. An empty string drops it          |
-| `actions`      | none            | Drawn after the message, outside it                    |
+| `Callout`      | Default         | What it does                                                                         |
+| -------------- | --------------- | ------------------------------------------------------------------------------------ |
+| `tone`         | `'info'`        | `'success'`, `'warning'` or `'danger'` for what went right, needs care or went wrong |
+| `title`        | none            | Drawn at the start of the message                                                    |
+| `headingLevel` | none            | 2 to 6 draws the title as that heading                                               |
+| `live`         | none            | `'status'` or `'alert'`, the role the message takes                                  |
+| `prefix`       | the tone's word | The word read first. An empty string drops it                                        |
+| `actions`      | none            | Drawn after the message, outside it                                                  |
 
 A live callout's message is drawn even when it is empty, so the page can fill it later. Every other
 prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except `style`, `role`,

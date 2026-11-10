@@ -392,7 +392,8 @@
 
     /*
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
-     * something that went right or wrong. Its words stay in the page's own color in every tone,
+     * something that went right, needs care or went wrong. Its words stay in the page's own color
+     * in every tone,
      * and say the tone themselves, so color is never the only sign of it. The edge draws nothing
      * until forced colors or paper drop the ground, and then it marks where the callout starts and
      * ends.

@@ -151,7 +151,7 @@ follow by area.
 | Focus moved through a field's ref, after the field is drawn again, lands on its control       | `packages/design-kit/e2e/ref.spec.ts`    |
 | A field lists only what it draws in `aria-describedby`, and is invalid only with an error     | `packages/design-kit/src/react.test.tsx` |
 | A callout has a role only when the page asks, and its actions sit outside the message         | `packages/design-kit/src/react.test.tsx` |
-| A live callout is drawn empty, and success and danger say their tone in words                 | `packages/design-kit/src/react.test.tsx` |
+| A live callout is drawn empty, and success, warning and danger say their tone in words        | `packages/design-kit/src/react.test.tsx` |
 
 </details>
 
