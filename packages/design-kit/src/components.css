@@ -980,6 +980,31 @@
         flex-wrap: nowrap;
     }
 
+    /*
+     * The line a visitor without script reads where the switch, or a strip's switches, would be, in
+     * the muted text at the strip's size. In the strip's room it takes the room's own box and keeps
+     * one row, scrolling as the switch would, so nothing below the strip stands anywhere else for a
+     * visitor without script than it does once the switches come.
+     */
+    :where(.dk-theme-switch-noscript, .dk-strip-noscript) {
+        margin: 0;
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    :where(.dk-strip-tools:has(> .dk-strip-room)) {
+        position: relative;
+    }
+
+    :where(.dk-strip-noscript) {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
     :where(.dk-theme-switch-name) {
         flex-shrink: 0;
         margin-inline-end: var(--dk-space-2);

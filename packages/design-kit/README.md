@@ -108,7 +108,12 @@ const source = 'https://github.com/jasonsdevspace/example';
 export const Page = () => (
     <>
         <SkipLink />
-        <PortfolioStrip about="./about/" source={source} tools={<Button>Tour</Button>} />
+        <PortfolioStrip
+            about="./about/"
+            source={source}
+            tools={<Button>Tour</Button>}
+            toolsLabel="Tour"
+        />
         <main id="main-content" tabIndex={-1}>
             <h1>Example</h1>
         </main>

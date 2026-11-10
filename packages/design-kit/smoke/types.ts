@@ -7,10 +7,13 @@ import {
     Button,
     Callout,
     ChoiceField,
+    CopyButton,
+    CopyStatus,
     InputField,
     PortfolioStrip,
     SelectField,
     TextareaField,
+    ThemeSwitch,
 } from '@jasonsdevspace/design-kit/react';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import {
@@ -44,6 +47,23 @@ export const notAName: number = themeScriptPlugin().name;
 
 // @ts-expect-error The strip needs the demo's explainer and source, so its props are real too.
 export const stripWithout = PortfolioStrip({});
+
+// @ts-expect-error Switches in the strip need the name their landmark is read by.
+export const unnamedTools = PortfolioStrip({ about: './about/', source: './', tools: 'Tour' });
+export const namedTools = PortfolioStrip({
+    about: './about/',
+    source: './',
+    tools: 'Tour',
+    toolsLabel: 'Settings',
+});
+
+// The switch, the copy button and the status line take a ref and a page's class.
+export const switchRef = ThemeSwitch({ ref: createRef<HTMLDivElement>(), className: 'site' });
+export const copyRef = CopyButton({ name: 'email', ref: createRef<HTMLButtonElement>() });
+export const statusRef = CopyStatus({ ref: createRef<HTMLParagraphElement>() });
+
+// @ts-expect-error A copy button's ref is the button drawn, not some other element.
+export const wrongCopy = CopyButton({ name: 'email', ref: createRef<HTMLDivElement>() });
 
 // @ts-expect-error A field needs its label, so its props are real too.
 export const fieldWithout = InputField({});

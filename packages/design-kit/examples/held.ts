@@ -177,7 +177,7 @@ export const HELD = {
             titles: [
                 "the strip links the author's portfolio by name, how it works and where the source is, in that order",
                 'the strip marks the explainer as the current page when the strip sits on it',
-                "the strip holds the demo's own switches in a landmark of their own, only when there are some",
+                "the strip holds the demo's own switches in a landmark named by the demo, only when there are some",
                 'the strip keeps the room of switches on their way, with no landmark and no text until they come',
                 ...STRIP_AND_FOOTER.unit,
             ],

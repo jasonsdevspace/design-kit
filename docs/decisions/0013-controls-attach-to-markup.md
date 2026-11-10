@@ -61,7 +61,8 @@ The paths are in `packages/design-kit`.
   gzipped.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
-  It finds both controls hidden with no script, the saved choice shown once attached, a new one
+  It finds both controls hidden with no script, the switch's line for a visitor without script in
+  the markup and none of it drawn with script on, the saved choice shown once attached, a new one
   saved and drawn with nothing refused, a switch attached again saving once, a switch attached
   through the element that holds it, one choice shown on every switch, a switch hidden again once
   taken away, the choice saved meanwhile or held by the page shown and drawn on a switch attached
