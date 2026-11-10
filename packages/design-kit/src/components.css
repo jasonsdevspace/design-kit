@@ -413,13 +413,21 @@
     }
 
     /*
-     * A callout whose message holds nothing, not even a space, and that has no actions draws
-     * nothing, no ground, padding or edge. That is a live callout a page mounts before it has
-     * words, and it stays in the page so a screen reader reads what fills it. It comes after the
-     * tones, so it wins over each of them by its order.
+     * A callout whose message holds nothing, not even a space, and that has no actions is a live
+     * callout a page mounts before it has words. It leaves the flow, drawn as visually hidden text
+     * is, so it takes no room and opens no gap in a grid or a column, and it stays in the page so a
+     * screen reader reads what fills it. It comes after the tones, so it wins over each of them by
+     * its order, and once the message has words the tone's rules draw it in place.
      */
     :where(.dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions))) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
         padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
         border-width: 0;
         background: none;
     }
