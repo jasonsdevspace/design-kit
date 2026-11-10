@@ -268,6 +268,42 @@
     }
 
     /*
+     * A large button, for the one action a page leads with where a bigger target reads as the way
+     * in: a thumb's target tall at every width, with wider inline padding and the body text size.
+     */
+    :where(.dk-button-large) {
+        min-height: var(--dk-target);
+        min-width: var(--dk-target);
+        padding-inline: var(--dk-space-4);
+        font-size: var(--dk-text-body);
+    }
+
+    /*
+     * A text button, drawn as a link beside a block or on a line of its own: no edge, no ground, no
+     * inline padding and no minimum width, in the accent and underlined, at the size of the text
+     * around it. It keeps the button's height, so its target holds where a link's would not, which
+     * is why it sits beside a block rather than in running text, whose line it would push taller.
+     * Pointed at, it has no edge to color, so the underline thickens as a link's would, by a
+     * measure of the text so it grows with it. It is never a toggle, as the sites' text buttons are
+     * not, so the pressed look never has to fit words with no padding around them.
+     */
+    :where(.dk-button-text) {
+        min-width: 0;
+        padding-inline: 0;
+        border: 0;
+        color: var(--dk-accent);
+        font-size: inherit;
+        line-height: inherit;
+        text-decoration: underline;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-text:hover) {
+            text-decoration-thickness: 0.125em;
+        }
+    }
+
+    /*
      * A toggle that is on, a button whose panel is open, and the theme switch's chosen word, on the
      * highlight with an edge twice as thick in the accent and its words in the page's text, the
      * accent button's included. The highlight alone is close to the page's own ground, so the
@@ -297,6 +333,15 @@
         font-weight: var(--dk-weight-normal);
         text-decoration: none;
         cursor: default;
+    }
+
+    /*
+     * An off text button keeps its underline, which is what tells it from the words around it, at
+     * its resting thickness under a pointer, since off takes no hover.
+     */
+    :where(.dk-button-text:disabled, .dk-button-text[aria-disabled='true']) {
+        text-decoration: underline;
+        text-decoration-thickness: auto;
     }
 
     /* An off toggle that is on keeps its thicker edge, in the line's color, so it still tells. */
@@ -391,6 +436,104 @@
     }
 
     /*
+     * A set of choices: a fieldset whose legend is the field's label, then the hint and the error
+     * as a field has them, then each choice a label holding a native radio or checkbox and its
+     * word. The whole label takes the highlight under a pointer and after the keyboard, so the word
+     * reads as one target with the control, which keeps the ring. The highlight reaches past the
+     * control into the room around the field, which a container that clips must leave. The theme
+     * switch's choice is the same label, drawn as a pill word with the radio under it by its own
+     * rules below.
+     */
+    :where(.dk-choice-field) {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    /*
+     * The browser lays a legend out above the field's grid, where the gap does not reach it, so it
+     * takes a margin instead.
+     */
+    :where(.dk-choice-field > legend) {
+        margin-bottom: var(--dk-space-1);
+        padding: 0;
+    }
+
+    :where(.dk-choices) {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--dk-space-1);
+    }
+
+    :where(.dk-choices-row) {
+        flex-flow: row wrap;
+        gap: var(--dk-space-1) var(--dk-space-4);
+    }
+
+    /*
+     * The highlight reaches past the control by the choice's own padding, so the control stays in
+     * line with the legend.
+     */
+    :where(.dk-choice) {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--dk-space-2);
+        min-height: var(--dk-field-height);
+        margin-inline: calc(-1 * var(--dk-space-2));
+        padding-inline: var(--dk-space-2);
+        border-radius: var(--dk-radius);
+        transition: background-color var(--dk-duration-short);
+    }
+
+    :where(.dk-choice > input) {
+        flex-shrink: 0;
+        width: 1rem;
+        height: 1rem;
+        margin: 0;
+    }
+
+    :where(.dk-choice-hint) {
+        color: var(--dk-muted);
+        font-size: var(--dk-text-caption);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-choice:hover) {
+            background-color: var(--dk-highlight);
+        }
+    }
+
+    /* After the keyboard, as the ring is, so a tap leaves no choice lit once it is done. */
+    :where(.dk-choice:has(> input:focus-visible)) {
+        background-color: var(--dk-highlight);
+    }
+
+    :where(.dk-choice:has(> input:disabled)) {
+        background-color: transparent;
+        color: var(--dk-muted);
+    }
+
+    /* Every control of an invalid set, a radio group marked as one or checkboxes marked each. */
+    :where(
+        .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+        .dk-choice > input[aria-invalid='true']
+    ) {
+        outline: 1px solid var(--dk-danger);
+        outline-offset: 2px;
+    }
+
+    /* The ring takes the line's place, as it does on an invalid field in forced colors. */
+    :where(
+        .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+        .dk-choice > input[aria-invalid='true']
+    ):focus-visible {
+        outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+        outline-offset: var(--dk-ring-offset);
+    }
+
+    /*
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
      * something that went right, needs care or went wrong. Its words stay in the page's own color
      * in every tone,
@@ -462,14 +605,25 @@
         gap: var(--dk-space-2);
     }
 
-    /* On a phone a button and a field grow to the target a thumb presses, and stay level. */
+    /*
+     * On a phone a button, a field and a choice grow to the target a thumb presses, and stay
+     * level.
+     */
     @media (max-width: 48rem) {
-        :where(.dk-button, .dk-input, .dk-select) {
+        :where(.dk-button, .dk-input, .dk-select, .dk-choice) {
             min-height: var(--dk-target);
         }
 
-        :where(.dk-button) {
+        :where(.dk-button, .dk-choice) {
             min-width: var(--dk-target);
+        }
+
+        /*
+         * A text button keeps no minimum width here either, since the phone rule above comes
+         * later in the sheet than its own and would win by its order.
+         */
+        :where(.dk-button-text) {
+            min-width: 0;
         }
     }
 
@@ -509,17 +663,27 @@
         }
 
         /*
-         * An invalid field loses its red edge to the system's colors, so it gains a dashed line
-         * around its edge in the text color, which keeps its contrast in every theme and moves
-         * nothing as the error comes and goes. With focus, the ring takes its place, so a
+         * An invalid control loses its line in the danger color to the system's colors, so it gains
+         * a dashed line around its edge in the text color, which keeps its contrast in every theme
+         * and moves nothing as the error comes and goes. With focus, the ring takes its place, so a
          * keyboard sees where it landed.
          */
-        :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']) {
+        :where(
+            .dk-input[aria-invalid='true'],
+            .dk-select[aria-invalid='true'],
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+            .dk-choice > input[aria-invalid='true']
+        ) {
             outline: var(--dk-ring-width) dashed CanvasText;
             outline-offset: 1px;
         }
 
-        :where(.dk-input[aria-invalid='true'], .dk-select[aria-invalid='true']):focus-visible {
+        :where(
+            .dk-input[aria-invalid='true'],
+            .dk-select[aria-invalid='true'],
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+            .dk-choice > input[aria-invalid='true']
+        ):focus-visible {
             outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
             outline-offset: var(--dk-ring-offset);
         }
@@ -942,6 +1106,85 @@
 
     @media (forced-colors: active) {
         :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
+            background: Highlight;
+            color: HighlightText;
+        }
+    }
+
+    /*
+     * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
+     * three sites drew by hand for a category among categories, a block of markup beside its React,
+     * and a lane among lanes. The classes draw the row alone. A tab's role and its keys belong to
+     * the page that owns the panels, so the chosen tab is whichever carries the attribute a screen
+     * reader already reads: aria-selected true on a tab, aria-current on a link among pages, or
+     * aria-pressed true on a toggle, each drawn alike. The chosen tab keeps the resting weight,
+     * since a heavier word is a wider one and the tabs after it would shift as the choice moves.
+     * Only the chosen tab has a line, the others padded to its depth, so forced colors, which paint
+     * every edge in a system color, draw no line under a resting tab and fill the chosen one in the
+     * system's selection colors, as the current pill does. A tab is the strip's height, and a
+     * thumb's on a phone, where a short word is still a thumb wide. A row of links wraps each in an
+     * item, which stretches its link to the rule.
+     */
+    :where(.dk-tabs) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dk-space-1);
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--dk-line);
+        list-style: none;
+    }
+
+    :where(.dk-tabs > li) {
+        display: flex;
+    }
+
+    :where(.dk-tab) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--dk-strip);
+        padding: 0 var(--dk-space-3) 2px;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        color: var(--dk-muted);
+        font: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: color var(--dk-duration-short);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-tab:hover) {
+            color: var(--dk-fg);
+        }
+    }
+
+    :where(
+        .dk-tab[aria-selected='true'],
+        .dk-tab[aria-current]:not([aria-current='false']),
+        .dk-tab[aria-pressed='true']
+    ) {
+        padding-bottom: 0;
+        border-bottom: 2px solid var(--dk-accent);
+        color: var(--dk-fg);
+    }
+
+    @media (max-width: 48rem) {
+        :where(.dk-tab) {
+            min-width: var(--dk-target);
+            min-height: var(--dk-target);
+        }
+    }
+
+    @media (forced-colors: active) {
+        :where(
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true']
+        ) {
             background: Highlight;
             color: HighlightText;
         }
