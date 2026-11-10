@@ -884,7 +884,9 @@ and when the browser restores the page from its back and forward cache. Storage 
 origin, so only a page on the portfolio's origin reads the visitor's choice, and anywhere else
 follows the system. Print always draws the light values, whatever the theme, since paper is light
 and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
-layer sets them back to light in print too.
+layer sets them back to light in print too. On paper a callout, a code block and a step keep an edge
+in the line color, a code block wraps and a scrolling table shows whole, and the theme switch, the
+copy button and the skip link do not print.
 
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed

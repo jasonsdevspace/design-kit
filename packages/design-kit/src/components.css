@@ -940,4 +940,30 @@
     :where(.dk-theme-switch[hidden], .dk-copy[hidden]) {
         display: none;
     }
+
+    /*
+     * Paper is light and the browser drops backgrounds, so on paper a callout, a code block and a
+     * step keep an edge in the line color, where the screen's transparent or filled edge would
+     * vanish. A code block and a scrolling table show whole rather than cut at the frame, and the
+     * controls that do nothing on paper, the theme switch, the copy button and the skip link, do
+     * not print.
+     */
+    @media print {
+        :where(.dk-callout, .dk-code, .dk-steps > li) {
+            border-color: var(--dk-line);
+        }
+
+        :where(.dk-code, .dk-table-scroll) {
+            overflow: visible;
+        }
+
+        :where(.dk-code) {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        :where(.dk-theme-switch, .dk-copy, .dk-skip) {
+            display: none;
+        }
+    }
 }
