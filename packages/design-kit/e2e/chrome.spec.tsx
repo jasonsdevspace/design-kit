@@ -6,7 +6,8 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE } from '../examples/examples.js';
-import { Button, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
+import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
+import { textSize } from './text-size.js';
 
 /*
  * The page chrome as a browser lays it out, from the markup the components draw and the kit's own
@@ -31,7 +32,7 @@ const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
  * The demo's switches as a demo draws them, plain buttons or the kit's own, which stand as tall as
  * the room the strip keeps for them while they are on their way, or none yet.
  */
-type Tools = 'none' | 'plain' | 'kit' | 'waiting';
+type Tools = 'none' | 'plain' | 'kit' | 'switch' | 'waiting';
 
 const SWITCHES: Readonly<Record<Tools, ReactNode>> = {
     none: null,
@@ -48,6 +49,7 @@ const SWITCHES: Readonly<Record<Tools, ReactNode>> = {
             <Button pressed={false}>Tour</Button>
         </>
     ),
+    switch: <ThemeSwitch />,
 };
 
 /** Where the chrome sits: on a demo, or on its explainer, where it marks the explainer's link. */
@@ -259,6 +261,39 @@ test('keeps the room of switches on their way, so nothing below the strip moves 
         expect(Math.round((await box(page.locator('main'), 'the content')).y)).toBe(
             Math.round(main.y)
         );
+    }
+});
+
+test("keeps the strip's height and the content's place as the kit's own switch comes, at any width and text size", async ({
+    page,
+}) => {
+    for (const scale of [1, 1.5, 2]) {
+        await textSize(page, scale);
+        for (const width of [1280, 760, 412, 360, 320]) {
+            await open(page, { width, tools: 'waiting' });
+            const waiting = await box(page.locator('.dk-strip'), 'the waiting strip');
+            const main = await box(page.locator('main'), 'the content');
+            await open(page, { width, tools: 'switch' });
+            // Shown as the attach function shows it, since the page runs no script.
+            await page.locator('.dk-theme-switch').evaluate((group: HTMLElement) => {
+                group.hidden = false;
+            });
+            const where = `${String(width)}px at text ${String(scale)}`;
+            const arrived = await box(page.locator('.dk-strip'), 'the strip with its switch');
+            expect(Math.round(arrived.height), where).toBe(Math.round(waiting.height));
+            expect(Math.round((await box(page.locator('main'), 'the content')).y), where).toBe(
+                Math.round(main.y)
+            );
+            // Collapsed or not, every part of the switch sits inside the page.
+            const inside = await page.locator('.dk-theme-switch').evaluate((group) => {
+                const page = document.documentElement.clientWidth;
+                return [...group.querySelectorAll('*')]
+                    .map((part) => part.getBoundingClientRect())
+                    .filter((box) => box.width > 0)
+                    .every((box) => box.left >= 0 && box.right <= page + 0.5);
+            });
+            expect(inside, where).toBe(true);
+        }
     }
 });
 

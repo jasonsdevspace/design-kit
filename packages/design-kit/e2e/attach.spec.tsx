@@ -13,9 +13,11 @@ import { themeScriptHash } from '../src/vite.js';
  * under a policy that allows scripts only from that origin or by the theme script's hash and styles
  * only from that origin: hidden with no script, showing the saved choice once attached, saving and
  * drawing a new one, following another tab, holding a choice the browser will not save through a
- * Back, attaching once however often it is asked, the switch read by its name and its note, and
- * copying, from a pointer or the keyboard, or selecting where the clipboard is refused, with the
- * button and the status line saying which and focus held on the button.
+ * Back, attaching once however often it is asked, the switch read by its name and its note, the
+ * collapsed switch in a strip on a screen narrower than 20rem opening its choices under one button
+ * and closing them again, and copying, from a pointer or the keyboard, or selecting where the
+ * clipboard is refused, with the button and the status line saying which and focus held on the
+ * button.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -31,8 +33,10 @@ const MARKUP = renderToStaticMarkup(
     <main>
         <h1>Controls</h1>
         <ThemeSwitch />
-        <div id="holder">
-            <ThemeSwitch />
+        <div className="dk-strip">
+            <section id="holder" className="dk-strip-tools">
+                <ThemeSwitch />
+            </section>
         </div>
         <pre id="code">npm install @jasonsdevspace/design-kit</pre>
         <CopyButton name="install command" />
@@ -362,6 +366,114 @@ test('reads the switch by its name, and describes it by its note', async ({ brow
     await expect(group).toHaveAccessibleName('Theme');
     await expect(group).toHaveAccessibleDescription(
         'Your choice is saved for every page of this site.'
+    );
+    await context.close();
+});
+
+/** The switch in the strip's section, collapsed to one button on a screen narrower than 20rem. */
+const collapsed = async (context: BrowserContext) => {
+    const opened = await tab(context);
+    await opened.setViewportSize({ width: 300, height: 600 });
+    const strip = opened.locator('#holder');
+    return {
+        opened,
+        button: strip.getByRole('button'),
+        radio: (name: string) => strip.getByRole('radio', { name }),
+    };
+};
+
+test('collapses the switch in a strip on a screen narrower than 20rem to one button naming the choice shown', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.addInitScript((key) => {
+        localStorage.setItem(key, 'dark');
+    }, THEME_KEY);
+    const { opened, button, radio } = await collapsed(context);
+    await expect(button).toHaveAccessibleName('Theme Dark');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(radio('Dark')).toBeHidden();
+    // The switch outside the strip keeps its row, and the button names the choice as it moves.
+    await first(opened).getByRole('radio', { name: 'Light' }).check();
+    await expect(button).toHaveAccessibleName('Theme Light');
+    // At 20rem the strip's switch is the row of choices again, with no button.
+    await opened.setViewportSize({ width: 320, height: 600 });
+    await expect(button).toBeHidden();
+    await expect(radio('Light')).toBeChecked();
+    await expect(radio('Light')).toBeVisible();
+    await context.close();
+});
+
+test('opens the choices under the button, one to a row at the target, and closes on a pick by pointer with focus on the button', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    const below = await opened
+        .locator('main')
+        .evaluate((main) => main.getBoundingClientRect().bottom);
+    await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(radio('System')).toBeFocused();
+    const boxes = await Promise.all(
+        ['System', 'Light', 'Dark'].map(async (name) => {
+            const box = await opened
+                .locator('#holder .dk-theme-switch-choice', { hasText: name })
+                .boundingBox();
+            return {
+                height: Math.round(box?.height ?? 0),
+                width: Math.round(box?.width ?? 0),
+                top: box?.y ?? 0,
+            };
+        })
+    );
+    for (const box of boxes) expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(new Set(boxes.map((box) => box.width)).size).toBe(1);
+    const tops = boxes.map((box) => box.top);
+    expect(tops).toEqual([...tops].sort((a, b) => a - b));
+    // Over the page, so nothing below the strip moved.
+    expect(
+        await opened.locator('main').evaluate((main) => main.getBoundingClientRect().bottom)
+    ).toBe(below);
+    await radio('Dark').click();
+    await expect(opened.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(button).toHaveAccessibleName('Theme Dark');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+    await expect(radio('Dark')).toBeHidden();
+    await context.close();
+});
+
+test('moves the choice with the arrow keys without closing, and closes on Escape or a press outside', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    await button.click();
+    await opened.keyboard.press('ArrowDown');
+    await expect(radio('Light')).toBeChecked();
+    await expect(opened.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(radio('Light')).toBeFocused();
+    await opened.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+    await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await opened.locator('h1').click();
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    // Focus left the switch with the press, and is not pulled back to the button.
+    await expect(button).not.toBeFocused();
+    // Taken away, the switch closes what it had open and hides.
+    await button.click();
+    await opened.evaluate(() => {
+        (window as unknown as { detachHeld: () => void }).detachHeld();
+    });
+    await expect(opened.locator('#holder .dk-theme-switch')).toBeHidden();
+    // Found by its class, since a hidden button has no role to find it by.
+    await expect(opened.locator('#holder .dk-theme-switch-button')).toHaveAttribute(
+        'aria-expanded',
+        'false'
     );
     await context.close();
 });

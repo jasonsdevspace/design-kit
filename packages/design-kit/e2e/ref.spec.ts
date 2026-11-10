@@ -40,9 +40,8 @@ test('attaches the switch and the copy button through the refs they hand out', a
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: script, type: 'module' });
     // Each is hidden until attached, so being visible shows the ref held the element drawn.
-    const group = page.getByRole('radiogroup', { name: 'Theme' });
-    await expect(group).toBeVisible();
-    await expect(group).toHaveClass('dk-theme-switch page-switch');
+    await expect(page.getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
+    await expect(page.locator('.page-switch')).toHaveClass('dk-theme-switch page-switch');
     const copy = page.getByRole('button', { name: 'Copy install command' });
     await expect(copy).toBeVisible();
     await expect(copy).toHaveClass('dk-button dk-copy page-copy');

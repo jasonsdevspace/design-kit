@@ -673,13 +673,16 @@ const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
 };
 
 /**
- * The theme switch's markup: a group named Theme with three native radios, described by a note that
- * says where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch`
- * from `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
- * without script meets no control that does nothing, and a line after the group, inside `noscript`
+ * The theme switch's markup: its name, Theme, a button that names the current choice for the
+ * collapsed form, and a group named Theme of three native radios, described by a note that says
+ * where the choice is kept. It is hidden and no radio is checked until `attachThemeSwitch` from
+ * `@jasonsdevspace/design-kit/controls` shows it with the choice the page draws, so a visitor
+ * without script meets no control that does nothing, and a line after the switch, inside `noscript`
  * so only a visitor without script sees it, says what sits there with scripts on. The radios carry
- * no checked prop, so React never undoes what the attach function sets. The group takes a ref and a
- * page's class after the kit's own, and nothing in its markup moves.
+ * no checked prop, so React never undoes what the attach function sets. The button is drawn in
+ * every switch and shown by the sheet alone, in a demo's strip on a screen narrower than 20rem,
+ * where it opens the group under itself, so the markup is one whatever the width. The switch takes
+ * a ref and a page's class after the kit's own, and nothing in its markup moves.
  */
 export const ThemeSwitch = ({
     id,
@@ -699,34 +702,45 @@ export const ThemeSwitch = ({
     readonly noscript?: ReactNode;
     /** A page's class, after the kit's. */
     readonly className?: string | undefined;
-    /** The group drawn, for a page that attaches the switch through it. */
+    /** The switch drawn, for a page that attaches it through the element. */
     readonly ref?: Ref<HTMLDivElement> | undefined;
 }) => {
     const made = useId();
     const base = id ?? made;
     return (
         <>
-            <div
-                ref={ref}
-                className={spaced('dk-theme-switch', className)}
-                role="radiogroup"
-                aria-labelledby={`${base}-name`}
-                aria-describedby={`${base}-note`}
-                hidden
-            >
+            <div ref={ref} className={spaced('dk-theme-switch', className)} hidden>
                 <span className="dk-theme-switch-name" id={`${base}-name`}>
                     Theme
                 </span>
-                {THEME_CHOICES.map((value) => (
-                    <ChoiceLabel
-                        key={value}
-                        className="dk-theme-switch-choice"
-                        type="radio"
-                        name={name ?? base}
-                        value={value}
-                        word={CHOICE_WORDS[value]}
-                    />
-                ))}
+                <button
+                    type="button"
+                    className="dk-theme-switch-button"
+                    id={`${base}-button`}
+                    aria-labelledby={`${base}-name ${base}-button`}
+                    aria-expanded={false}
+                    aria-controls={`${base}-choices`}
+                >
+                    {CHOICE_WORDS.system}
+                </button>
+                <div
+                    className="dk-theme-switch-choices"
+                    id={`${base}-choices`}
+                    role="radiogroup"
+                    aria-labelledby={`${base}-name`}
+                    aria-describedby={`${base}-note`}
+                >
+                    {THEME_CHOICES.map((value) => (
+                        <ChoiceLabel
+                            key={value}
+                            className="dk-theme-switch-choice"
+                            type="radio"
+                            name={name ?? base}
+                            value={value}
+                            word={CHOICE_WORDS[value]}
+                        />
+                    ))}
+                </div>
                 <span className="dk-visually-hidden" id={`${base}-note`}>
                     {note}
                 </span>

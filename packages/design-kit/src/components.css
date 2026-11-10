@@ -312,7 +312,8 @@
     :where(
         .dk-button[aria-pressed='true'],
         .dk-button[aria-expanded='true'],
-        .dk-theme-switch-choice > input:checked + span
+        .dk-theme-switch-choice > input:checked + span,
+        .dk-theme-switch-button
     ) {
         border-color: var(--dk-accent);
         background: var(--dk-highlight);
@@ -652,7 +653,8 @@
         :where(
             .dk-button[aria-pressed='true'],
             .dk-button[aria-expanded='true'],
-            .dk-theme-switch-choice > input:checked + span
+            .dk-theme-switch-choice > input:checked + span,
+            .dk-theme-switch-button
         ) {
             background: Highlight;
             color: HighlightText;
@@ -959,9 +961,9 @@
      * sits inside the word, so no word moves as the choice does. On a phone each choice is a
      * thumb's width. Where its column is too narrow for one row, as at a large text size on a
      * phone, the choices wrap onto as many rows as they need rather than scroll out of sight, and
-     * only a word wider than the column on its own scrolls. In a demo's strip, which keeps one
-     * row of room for switches on their way, it keeps one row and scrolls, so nothing below the
-     * strip moves as it comes.
+     * only a word wider than the column on its own scrolls. In a demo's strip on a screen narrower
+     * than 20rem, which is a phone with the browser's text set larger, the switch collapses to its
+     * name and one button instead, below, so it stays one row tall in the room the strip keeps.
      */
     :where(.dk-theme-switch) {
         display: flex;
@@ -976,8 +978,86 @@
         line-height: var(--dk-leading-tight);
     }
 
-    :where(.dk-strip-tools .dk-theme-switch) {
-        flex-wrap: nowrap;
+    /*
+     * The button of the collapsed form, drawn in every switch for one markup, and its group of
+     * choices: the group lays its choices out as the switch's own, and the button stays out of the
+     * layout until the strip's rule below shows it.
+     */
+    :where(.dk-theme-switch-button) {
+        display: none;
+    }
+
+    :where(.dk-theme-switch-choices) {
+        display: contents;
+    }
+
+    /*
+     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no
+     * longer fit a row, so the switch shows its name and one button that names the current choice,
+     * drawn as the chosen word is, and the button opens the choices under itself, one to a row,
+     * each a thumb's target the width of the list, over the page rather than in the strip, so
+     * opening them moves nothing. The width is in rem, so the threshold follows the browser's text
+     * size and is decided before any script runs. The switch stands as tall as the room the strip
+     * keeps, a thumb's target, so the strip is one height either way.
+     */
+    @media (width < 20rem) {
+        :where(.dk-strip-tools .dk-theme-switch) {
+            position: relative;
+            flex-wrap: nowrap;
+            min-height: var(--dk-target);
+            overflow: visible;
+        }
+
+        /* Sized as the chosen word is, inside the row the switch keeps at a thumb's target. */
+        :where(.dk-strip-tools .dk-theme-switch-button) {
+            display: inline-flex;
+            align-items: center;
+            min-height: var(--dk-field-height);
+            padding: var(--dk-space-1) var(--dk-space-2);
+            border-width: 1px;
+            border-style: solid;
+            border-radius: var(--dk-radius-pill);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-button:focus-visible) {
+            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+            outline-offset: var(--dk-ring-offset);
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices) {
+            position: absolute;
+            inset-inline-end: 0;
+            top: calc(100% + var(--dk-space-1));
+            z-index: 1;
+            display: none;
+            flex-direction: column;
+            gap: var(--dk-space-1);
+            min-width: max-content;
+            padding: var(--dk-space-2);
+            border: 1px solid var(--dk-line);
+            border-radius: var(--dk-radius-large);
+            background: var(--dk-raised);
+            box-shadow: var(--dk-shadow-raised);
+        }
+
+        :where(
+            .dk-strip-tools .dk-theme-switch-button[aria-expanded='true'] + .dk-theme-switch-choices
+        ) {
+            display: flex;
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice) {
+            display: flex;
+            min-height: var(--dk-target);
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice > span) {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+        }
     }
 
     /*

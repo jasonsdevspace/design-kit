@@ -712,26 +712,38 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
 <!-- example: themeSwitch -->
 
 ```html
-<div
-    class="dk-theme-switch"
-    role="radiogroup"
-    aria-labelledby="theme-name"
-    aria-describedby="theme-note"
-    hidden=""
->
+<div class="dk-theme-switch" hidden="">
     <span class="dk-theme-switch-name" id="theme-name">Theme</span>
-    <label class="dk-theme-switch-choice">
-        <input type="radio" name="theme" value="system" />
-        <span>System</span>
-    </label>
-    <label class="dk-theme-switch-choice">
-        <input type="radio" name="theme" value="light" />
-        <span>Light</span>
-    </label>
-    <label class="dk-theme-switch-choice">
-        <input type="radio" name="theme" value="dark" />
-        <span>Dark</span>
-    </label>
+    <button
+        type="button"
+        class="dk-theme-switch-button"
+        id="theme-button"
+        aria-labelledby="theme-name theme-button"
+        aria-expanded="false"
+        aria-controls="theme-choices"
+    >
+        System
+    </button>
+    <div
+        class="dk-theme-switch-choices"
+        id="theme-choices"
+        role="radiogroup"
+        aria-labelledby="theme-name"
+        aria-describedby="theme-note"
+    >
+        <label class="dk-theme-switch-choice">
+            <input type="radio" name="theme" value="system" />
+            <span>System</span>
+        </label>
+        <label class="dk-theme-switch-choice">
+            <input type="radio" name="theme" value="light" />
+            <span>Light</span>
+        </label>
+        <label class="dk-theme-switch-choice">
+            <input type="radio" name="theme" value="dark" />
+            <span>Dark</span>
+        </label>
+    </div>
     <span class="dk-visually-hidden" id="theme-note">
         Your choice is saved for every page of this site.
     </span>
@@ -741,23 +753,36 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
 </noscript>
 ```
 
-The switch is a group named Theme with three native radios, System, Light and Dark, described by a
-note that the choice is saved for every page of the site, which a page can word for itself.
-`attachThemeSwitch(element)` takes the switch, or an element that holds it, checks the choice the
-page draws, shows the switch, and saves and draws a choice under the theme contract's key, `system`
-following the system's scheme. It follows a choice saved in another tab and a page restored by Back,
-and where the browser refuses storage it holds the choice for as long as the page is open. The
-chosen word is drawn as a pressed button is, with an edge twice as thick in the accent. The choices
-keep one row wherever it fits, and wrap onto as many as they need where the switch's column is
-narrower, as at a large text size on a phone, so every choice stays in sight. In a demo's strip,
-which keeps one row of room for switches on their way, the switch keeps one row and scrolls, so
-nothing below the strip moves as it comes. Attaching one switch again before it is taken away
-attaches it once, and taking it away hides it again. A switch attached after every switch was taken
-away shows, and draws, the choice saved meanwhile, or the one the page holds where the browser would
-not save it. Every switch on a page shows one choice, each with radios named for its own id. After
-the group the component draws a line inside `noscript`, "With scripts on, a Theme switch sits
-here.", which only a visitor without script sees, and which a page words for itself or turns off
-with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
+The switch is its name, Theme, a button for the collapsed form, and a group named Theme of three
+native radios, System, Light and Dark, described by a note that the choice is saved for every page
+of the site, which a page can word for itself. `attachThemeSwitch(element)` takes the switch, or
+an element that holds it, checks the choice the page draws, shows the switch, and saves and draws a
+choice under the theme contract's key, `system` following the system's scheme. It follows a choice
+saved in another tab and a page restored by Back, and where the browser refuses storage it holds
+the choice for as long as the page is open. The chosen word is drawn as a pressed button is, with an
+edge twice as thick in the accent. The choices keep one row wherever it fits, and wrap onto as many
+as they need where the switch's column is narrower, as at a large text size on a phone, so every
+choice stays in sight.
+
+In a demo's strip on a screen narrower than 20rem, which is a phone with the browser's text set
+larger, three choices at a thumb's target no longer fit the row, so the sheet collapses the switch
+to its name and the button. The button names the current choice, is drawn as the chosen word is, and
+is heard as the switch's name and the choice, "Theme System". It is in every switch's markup and
+shown by the sheet alone, so the markup is one whatever the width, and the strip's room of one row
+holds the switch either way. Pressed, the button opens the group under itself, over the page, one
+choice to a row at a thumb's target and focus on the chosen one, so the arrow keys move the choice
+without closing it. A choice picked by a pointer closes the group with focus back on the button, as
+Escape does, and a press outside or focus leaving the switch closes it where it is. At 20rem and
+wider, and outside a strip at any width, the button stays hidden and the choices keep their row,
+wrapping as they do outside a strip where the column is narrower.
+
+Attaching one switch again before it is taken away attaches it once, and taking it away hides it
+again. A switch attached after every switch was taken away shows, and draws, the choice saved
+meanwhile, or the one the page holds where the browser would not save it. Every switch on a page
+shows one choice, each with radios named for its own id. After the switch the component draws a
+line inside `noscript`, "With scripts on, a Theme switch sits here.", which only a visitor without
+script sees, and which a page words for itself or turns off with an empty `noscript`. A page that
+writes the switch by hand adds the line as it likes.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -776,8 +801,10 @@ export const Settings = () => {
 ```
 
 In a demo's strip it goes in `tools`, with `toolsLabel="Settings"`, so its landmark is not named
-Theme as its group is. `chooseTheme(choice)` saves and draws a choice from anywhere else on the
-page, and every switch on the page shows it.
+Theme as its group is. A page that writes the switch by hand writes the button and the group around
+the radios as the markup above has them, since the attach function wires the button it finds.
+`chooseTheme(choice)` saves and draws a choice from anywhere else on the page, and every switch on
+the page shows it.
 
 **`ThemeSwitch` props**
 
@@ -788,7 +815,7 @@ page, and every switch on the page shows it.
 | `note`        | where the choice is saved   | What the group is described by                                            |
 | `noscript`    | a sentence about the switch | The line a visitor without script reads after the group. Empty draws none |
 | `className`   | none                        | A page's class, after the kit's                                           |
-| `ref`         | none                        | The group drawn                                                           |
+| `ref`         | none                        | The switch drawn                                                          |
 
 ### Copy button
 
