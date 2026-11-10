@@ -87,6 +87,43 @@ for (const [theme, accent] of [
     });
 }
 
+test('keeps the ring on a control a roving widget gives a tabindex of -1', async ({ page }) => {
+    await open(
+        page,
+        'light',
+        '<div role="tablist"><button role="tab" tabindex="0" aria-selected="true">Markup</button>' +
+            '<button role="tab" tabindex="-1">React</button></div>' +
+            '<div role="tablist"><div role="tab" tabindex="0" aria-selected="true">One</div>' +
+            '<div role="tab" tabindex="-1">Two</div></div>' +
+            '<section id="next" tabindex="-1">Next</section>'
+    );
+    // The page's own script moves focus to the next tab on the right arrow, as a tab strip does.
+    await page.evaluate(() => {
+        for (const list of document.querySelectorAll('[role="tablist"]')) {
+            list.addEventListener('keydown', (event) => {
+                if ((event as KeyboardEvent).key !== 'ArrowRight') return;
+                const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
+                const at = tabs.indexOf(document.activeElement as HTMLElement);
+                tabs[(at + 1) % tabs.length]?.focus();
+            });
+        }
+    });
+    const ring = () =>
+        page.evaluate(() => getComputedStyle(document.activeElement ?? document.body).outlineStyle);
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'React' })).toBeFocused();
+    expect(await ring(), 'a button tab').toBe('solid');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Two' })).toBeFocused();
+    expect(await ring(), 'a div tab').toBe('solid');
+    // A section with no widget role, moved to the same way, still draws none.
+    await page.evaluate(() => document.getElementById('next')?.focus());
+    await expect(page.locator('#next')).toBeFocused();
+    expect(await ring(), 'a section').toBe('none');
+});
+
 test("takes a demo's own palette whichever sheet loads first", async ({ page }) => {
     await open(
         page,
