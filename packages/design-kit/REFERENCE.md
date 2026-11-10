@@ -180,7 +180,12 @@ const source = 'https://github.com/jasonsdevspace/example';
 export const Page = () => (
     <>
         <SkipLink />
-        <PortfolioStrip about="./about/" source={source} tools={<Button>Tour</Button>} />
+        <PortfolioStrip
+            about="./about/"
+            source={source}
+            tools={<Button>Tour</Button>}
+            toolsLabel="Tour"
+        />
         <main id="main-content" tabIndex={-1}>
             <h1>Example</h1>
         </main>
@@ -198,19 +203,25 @@ export const Page = () => (
 
 **`PortfolioStrip` props**
 
-| `PortfolioStrip` | Default               | What it does                                                |
-| ---------------- | --------------------- | ----------------------------------------------------------- |
-| `about`          | required              | The demo's explainer, relative or absolute                  |
-| `source`         | required              | The demo's repository                                       |
-| `current`        | none                  | `'about'` marks the explainer's link as the current page    |
-| `tools`          | none                  | The demo's own switches, in a section after the links       |
-| `toolsLabel`     | required with `tools` | The name of the switches' landmark, such as Settings        |
-| `toolsWaiting`   | `false`               | Keeps one row of room, unnamed, while `tools` draws nothing |
+| `PortfolioStrip` | Default                       | What it does                                                          |
+| ---------------- | ----------------------------- | --------------------------------------------------------------------- |
+| `about`          | required                      | The demo's explainer, relative or absolute                            |
+| `source`         | required                      | The demo's repository                                                 |
+| `current`        | none                          | `'about'` marks the explainer's link as the current page              |
+| `tools`          | none                          | The demo's own switches, in a section after the links                 |
+| `toolsLabel`     | required with `tools`         | The name of the switches' landmark, such as Settings                  |
+| `toolsWaiting`   | `false`                       | Keeps one row of room, unnamed, while `tools` draws nothing           |
+| `toolsNoscript`  | a sentence about the switches | The line a visitor without script reads in the room. Empty draws none |
 
 With `tools` undefined, null, false, an empty string, or a list or a fragment of only those, the
 strip draws no section for them, so a demo can pass `hasTour && <Tour />`. Whenever `tools` is
 given, `toolsLabel` is too, since the name a screen reader hears has to say what the section holds,
-and TypeScript refuses the one without the other.
+and TypeScript refuses the one without the other. A blank name, as plain JavaScript can pass,
+names nothing, so the section goes unnamed and is no landmark, as the room is. The room carries a
+line inside `noscript`, "With scripts on, the demo's switches sit here.", for the visitor the
+switches never come for, which a page words for itself or turns off with an empty `toolsNoscript`.
+A switch drawn into a template and copied out by the page's script leaves its own such line behind,
+which is why the room has one.
 
 **`DemoFooter` props**
 
@@ -768,6 +779,17 @@ In a demo's strip it goes in `tools`, with `toolsLabel="Settings"`, so its landm
 Theme as its group is. `chooseTheme(choice)` saves and draws a choice from anywhere else on the
 page, and every switch on the page shows it.
 
+**`ThemeSwitch` props**
+
+| `ThemeSwitch` | Default                     | What it does                                                              |
+| ------------- | --------------------------- | ------------------------------------------------------------------------- |
+| `id`          | from `useId`                | What the name's and note's ids start with                                 |
+| `name`        | the id                      | The radios' name, unique on a page                                        |
+| `note`        | where the choice is saved   | What the group is described by                                            |
+| `noscript`    | a sentence about the switch | The line a visitor without script reads after the group. Empty draws none |
+| `className`   | none                        | A page's class, after the kit's                                           |
+| `ref`         | none                        | The group drawn                                                           |
+
 ### Copy button
 
 <!-- example: copyButton -->
@@ -792,17 +814,6 @@ line says which to a screen reader, with how to copy a selection with the keys o
 command. One status line serves every button on a page, and it is on the page from the start, since
 a line added at the moment it speaks may go unheard. Taking a button away hides it and puts it back
 to Copy.
-
-**`ThemeSwitch` props**
-
-| `ThemeSwitch` | Default                     | What it does                                                              |
-| ------------- | --------------------------- | ------------------------------------------------------------------------- |
-| `id`          | from `useId`                | What the name's and note's ids start with                                 |
-| `name`        | the id                      | The radios' name, unique on a page                                        |
-| `note`        | where the choice is saved   | What the group is described by                                            |
-| `noscript`    | a sentence about the switch | The line a visitor without script reads after the group. Empty draws none |
-| `className`   | none                        | A page's class, after the kit's                                           |
-| `ref`         | none                        | The group drawn                                                           |
 
 **`CopyButton` props**
 

@@ -4,9 +4,9 @@ import { expect, test } from '@playwright/test';
 import { build } from 'vite';
 
 /*
- * The kit's button, fields and choices with a ref, drawn by React in a browser, since only a
- * browser attaches a ref and moves focus. The page is bundled from ref-page.tsx with React in it,
- * and written into the browser with the bundle as its one script.
+ * The kit's button, fields, choices, switch and copy button with a ref, drawn by React in a browser,
+ * since only a browser attaches a ref, moves focus or attaches a control. The page is bundled from
+ * ref-page.tsx with React in it, and written into the browser with the bundle as its one script.
  */
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
@@ -33,6 +33,19 @@ let script = '';
 test.beforeAll(async () => {
     test.setTimeout(120_000);
     script = await bundle();
+});
+
+test('attaches the switch and the copy button through the refs they hand out', async ({ page }) => {
+    await page.setContent('<div id="root"></div>');
+    await page.addScriptTag({ content: script, type: 'module' });
+    // Each is hidden until attached, so being visible shows the ref held the element drawn.
+    const group = page.getByRole('radiogroup', { name: 'Theme' });
+    await expect(group).toBeVisible();
+    await expect(group).toHaveClass('dk-theme-switch page-switch');
+    const copy = page.getByRole('button', { name: 'Copy install command' });
+    await expect(copy).toBeVisible();
+    await expect(copy).toHaveClass('dk-button dk-copy page-copy');
+    await expect(page.getByRole('status')).toHaveClass('dk-visually-hidden page-status');
 });
 
 test('moves focus back to the button a ref holds when its panel closes', async ({ page }) => {

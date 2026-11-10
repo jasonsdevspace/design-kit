@@ -60,15 +60,14 @@ type Where = 'demo' | 'about';
 const chrome = (tools: Tools, where: Where = 'demo', aside = false) => {
     const about = where === 'about' ? './' : './about/';
     const current = where === 'about' ? { current: 'about' as const } : {};
+    const switches = SWITCHES[tools];
     return renderToStaticMarkup(
         <>
             <SkipLink />
             <PortfolioStrip
                 about={about}
                 source={SOURCE}
-                {...(SWITCHES[tools] === undefined
-                    ? {}
-                    : { tools: SWITCHES[tools], toolsLabel: 'Demo' })}
+                {...(switches === undefined ? {} : { tools: switches, toolsLabel: 'Settings' })}
                 toolsWaiting={tools === 'waiting'}
                 {...current}
             />
@@ -183,7 +182,7 @@ test("puts the demo's switches beside the links on a wide screen and below them 
     page,
 }) => {
     await open(page, { width: 1280, tools: 'plain' });
-    const tools = page.getByRole('region', { name: 'Demo' });
+    const tools = page.getByRole('region', { name: 'Settings' });
     const links = page.getByRole('navigation', { name: 'Portfolio' });
     const [wideTools, wideLinks] = [
         await box(tools, 'the switches'),
@@ -202,6 +201,42 @@ test("puts the demo's switches beside the links on a wide screen and below them 
     ];
     expect(phoneTools.y).toBeGreaterThanOrEqual(phoneLinks.y + phoneLinks.height);
     expect(Math.round(phoneTools.x)).toBe(16);
+});
+
+test("tells a visitor without script what the room is for, in the room's own box", async ({
+    browser,
+}) => {
+    const scripted = await browser.newContext();
+    const plain = await browser.newContext({ javaScriptEnabled: false });
+    try {
+        for (const width of [320, 768, 1280]) {
+            const withScript = await scripted.newPage();
+            await open(withScript, { width, tools: 'waiting' });
+            const withoutScript = await plain.newPage();
+            await open(withoutScript, { width, tools: 'waiting' });
+            const line = withoutScript.locator('.dk-strip-noscript');
+            await expect(line).toHaveText("With scripts on, the demo's switches sit here.");
+            await expect(line).toBeVisible();
+            await expect(withScript.locator('.dk-strip-noscript')).toHaveCount(0);
+            // The line takes the room's box, so the strip is as tall either way, and the words stay
+            // inside the section rather than push it taller where they would wrap.
+            expect(await stripLayout(withoutScript), `${String(width)}px`).toEqual(
+                await stripLayout(withScript)
+            );
+            const inside = await line.evaluate((element) => {
+                // The parent is the noscript element, which has no box of its own.
+                const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
+                const own = element.getBoundingClientRect();
+                return section !== undefined && own.bottom <= section.bottom + 0.5;
+            });
+            expect(inside, `${String(width)}px`).toBe(true);
+            await withScript.close();
+            await withoutScript.close();
+        }
+    } finally {
+        await scripted.close();
+        await plain.close();
+    }
 });
 
 test('keeps the room of switches on their way, so nothing below the strip moves when they come', async ({

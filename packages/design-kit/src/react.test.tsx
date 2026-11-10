@@ -71,14 +71,27 @@ describe('the strip', () => {
         // @ts-expect-error Switches need the name their landmark is read by.
         const unnamed = <PortfolioStrip about="./about/" source={SOURCE} tools={<span />} />;
         expect(renderToStaticMarkup(unnamed)).toBeTruthy();
+        // A blank name, as plain JavaScript can pass, names nothing, so the section is no landmark.
+        expect(strip({ tools: <span />, toolsLabel: '' })).toContain(
+            '<section class="dk-strip-tools"><span></span></section>'
+        );
     });
 
     it('keeps the room of switches on their way, with no landmark and no text until they come', () => {
         expect(strip({ toolsWaiting: true })).toContain(
-            '</nav><section class="dk-strip-tools"><span class="dk-strip-room"></span></section></div>'
+            '</nav><section class="dk-strip-tools"><span class="dk-strip-room"></span>' +
+                '<noscript><p class="dk-strip-noscript">With scripts on, the demo&#x27;s switches sit here.</p>' +
+                '</noscript></section></div>'
         );
+        // Worded by the page, or turned off, as the switch's own line is.
+        expect(strip({ toolsWaiting: true, toolsNoscript: 'Turn scripts on.' })).toContain(
+            '<p class="dk-strip-noscript">Turn scripts on.</p>'
+        );
+        expect(strip({ toolsWaiting: true, toolsNoscript: '' })).not.toContain('noscript');
         // Unnamed, the section is no landmark until the switches come and it takes its name.
-        expect(strip({ toolsWaiting: true })).not.toContain('aria-label="Demo"');
+        expect(strip({ toolsWaiting: true })).not.toContain(
+            '<section class="dk-strip-tools" aria-label'
+        );
         expect(strip({ toolsWaiting: false })).not.toContain('dk-strip-tools');
         // The switches that arrive take the room's place.
         expect(

@@ -1,15 +1,26 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Button, ChoiceField, InputField, SelectField, TextareaField } from '../src/react.js';
+import { attachCopyButton, attachThemeSwitch } from '../src/controls.js';
+import {
+    Button,
+    ChoiceField,
+    CopyButton,
+    CopyStatus,
+    InputField,
+    SelectField,
+    TextareaField,
+    ThemeSwitch,
+} from '../src/react.js';
 
 /*
  * A page that opens a panel from the kit's button and, when the panel closes, moves focus back to
  * that button through its ref. The button is drawn again as the panel opens and closes, so the ref
  * has to hold the button across each drawing. Below it, a form that, once sent, draws each field
  * again with its error and a summary of what is wrong, which moves focus to each field through its
- * ref, a choice field's first control among them. Bundled by ref.spec.ts, which writes it into the
- * browser.
+ * ref, a choice field's first control among them. Above the form, a theme switch, a copy button
+ * and its status line attached through the refs they hand out, with no wrapper to find them by.
+ * Bundled by ref.spec.ts, which writes it into the browser.
  */
 const Page = () => {
     const opener = useRef<HTMLButtonElement>(null);
@@ -17,10 +28,26 @@ const Page = () => {
     const size = useRef<HTMLSelectElement>(null);
     const color = useRef<HTMLInputElement>(null);
     const note = useRef<HTMLTextAreaElement>(null);
+    const group = useRef<HTMLDivElement>(null);
+    const copy = useRef<HTMLButtonElement>(null);
+    const status = useRef<HTMLParagraphElement>(null);
     const [open, setOpen] = useState(false);
+    useEffect(() => (group.current ? attachThemeSwitch(group.current) : undefined), []);
+    useEffect(() => {
+        const button = copy.current;
+        const line = status.current;
+        const source = document.getElementById('code');
+        return button && line && source
+            ? attachCopyButton(button, { source: () => source, status: line })
+            : undefined;
+    }, []);
     const [sent, setSent] = useState(false);
     return (
         <main>
+            <ThemeSwitch ref={group} className="page-switch" />
+            <pre id="code">npm install @jasonsdevspace/design-kit</pre>
+            <CopyButton ref={copy} name="install command" className="page-copy" />
+            <CopyStatus ref={status} className="page-status" />
             <Button
                 ref={opener}
                 aria-expanded={open}

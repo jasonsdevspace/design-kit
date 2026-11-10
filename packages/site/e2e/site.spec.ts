@@ -720,9 +720,11 @@ test.describe('the page chrome page', () => {
         const fits = await page.locator('.site-copy .dk-strip-tools').evaluateAll((sections) =>
             sections.map((section) => {
                 const gap = parseFloat(getComputedStyle(section).columnGap) || 0;
-                const children = [...section.children].map(
-                    (child) => child.getBoundingClientRect().width
-                );
+                // Only what the browser lays out, since the room carries a line for a visitor without
+                // script that a browser with script keeps out of the flow.
+                const children = [...section.children]
+                    .filter((child) => child.getClientRects().length > 0)
+                    .map((child) => child.getBoundingClientRect().width);
                 const content =
                     children.reduce((sum, width) => sum + width, 0) +
                     gap * Math.max(0, children.length - 1);
