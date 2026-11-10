@@ -178,12 +178,23 @@ export const playwrightSummary = (report, { title, runUrl, root = '', failed = f
 export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 
 /**
- * @typedef {{ path: string, size: number, gzip: number }} PackedFile
+ * @typedef {{ path: string, size: number, gzip: number, stripped?: number }} PackedFile a file of
+ *     the package, raw and gzipped, and a sheet gzipped without its comments too
  * @typedef {{ name: string, version: string, size: number, files: PackedFile[] }} Packed
  */
 
 /** Whether a file of the package is a sheet, which a page loads. */
 export const isSheet = (/** @type {string} */ path) => path.endsWith('.css');
+
+/**
+ * A sheet without its comments and the blank lines they leave, which is what a page's minifier
+ * sends a visitor, so the sheets' budget and the record measure what a visitor downloads rather
+ * than what a reader of the source reads.
+ *
+ * @param {string} sheet
+ */
+export const withoutComments = (sheet) =>
+    sheet.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\n/gm, '');
 
 /** Whether a file of the package is a module, which a page's build imports. */
 export const isModule = (/** @type {string} */ path) => /\.(js|mjs)$/.test(path);
@@ -301,7 +312,14 @@ export const packedOf = (tarball) => {
         version,
         size: statSync(tarball).size,
         files: files
-            .map(({ path, bytes }) => ({ path, size: bytes.length, gzip: gzipSync(bytes).length }))
+            .map(({ path, bytes }) => ({
+                path,
+                size: bytes.length,
+                gzip: gzipSync(bytes).length,
+                ...(isSheet(path)
+                    ? { stripped: gzipSync(withoutComments(bytes.toString('utf8'))).length }
+                    : {}),
+            }))
             .sort((a, b) => a.path.localeCompare(b.path)),
     };
 };

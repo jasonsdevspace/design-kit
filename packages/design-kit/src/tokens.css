@@ -34,7 +34,10 @@
         /*
          * What a page is drawn on: the page itself, a card on it, and what floats over both. In the
          * dark theme each steps lighter than the last, since a shadow shows little there, so the
-         * step, not the shadow, is what tells them apart.
+         * step, not the shadow, is what tells them apart. Raised promises to stand above the
+         * surface: lighter than the surface in the dark theme, and no darker than the page in the
+         * light one, where its shadow does the lifting. A page that moves it keeps that promise, or
+         * a card's shadow falls on a ground the card cannot rise from.
          */
         --dk-bg: light-dark(#ffffff, #121212);
         --dk-surface: light-dark(#f5f5f5, #1e1e1e);

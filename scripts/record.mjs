@@ -23,6 +23,20 @@ import { join } from 'node:path';
 import { isRunDirectly } from './repository.mjs';
 import { fileRows, isModule, isSheet, kb, packedOf, table } from './summary.mjs';
 
+/**
+ * Each sheet as a row of a table: its path, raw, gzipped, and gzipped without its comments, as a
+ * page's minifier sends it, which is the figure the sheets' budget holds.
+ *
+ * @param {readonly import('./summary.mjs').PackedFile[]} sheets
+ */
+const sheetRows = (sheets) =>
+    sheets.map((sheet) => [
+        sheet.path,
+        kb(sheet.size),
+        kb(sheet.gzip),
+        sheet.stripped === undefined ? '' : kb(sheet.stripped),
+    ]);
+
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
 /**
@@ -102,14 +116,14 @@ export const packageRecord = (packed, at) => {
 
 Run \`npm run bench:package\` to reproduce it. The raw results are in [package-size.json](package-size.json).
 
-What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches the theme switch or a copy button.
+What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports, and each sheet is also shown gzipped without its comments, as a page's minifier sends it, which is the figure the sheets' budget holds. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches the theme switch or a copy button.
 
 ${recordedTable(at)}
 \`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.
 
 The sheets a page loads:
 
-${files(isSheet)}
+${table(['File', 'Raw', 'Gzipped', 'Without comments'], sheetRows(packed.files.filter((file) => isSheet(file.path))))}
 The modules a page's build imports:
 
 ${files(isModule)}

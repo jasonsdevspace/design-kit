@@ -13,8 +13,9 @@ import { themeScriptHash } from '../src/vite.js';
  * under a policy that allows scripts only from that origin or by the theme script's hash and styles
  * only from that origin: hidden with no script, showing the saved choice once attached, saving and
  * drawing a new one, following another tab, holding a choice the browser will not save through a
- * Back, attaching once however often it is asked, and copying, or selecting where the clipboard is
- * refused, with the button and the status line saying which.
+ * Back, attaching once however often it is asked, the switch read by its name and its note, and
+ * copying, from a pointer or the keyboard, or selecting where the clipboard is refused, with the
+ * button and the status line saying which and focus held on the button.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -346,6 +347,53 @@ test('copies the source, says Copied on the button and the status line, then Cop
     );
     await expect(button).toHaveAccessibleName('Copy install command', { timeout: 4000 });
     await context.close();
+});
+
+test('reads the switch by its name, and describes it by its note', async ({ browser }) => {
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    const group = first(opened);
+    await expect(group).toHaveAccessibleName('Theme');
+    await expect(group).toHaveAccessibleDescription(
+        'Your choice is saved for every page of this site.'
+    );
+    await context.close();
+});
+
+test('copies on Enter and on Space, and keeps focus on the button where the clipboard is refused', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const opened = await tab(context);
+    const button = opened.locator('.dk-copy');
+    await button.focus();
+    await opened.keyboard.press('Enter');
+    await expect(button).toHaveAccessibleName('Copied install command');
+    await expect(opened.getByRole('status')).toHaveText('Copied.');
+    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe(
+        'npm install @jasonsdevspace/design-kit'
+    );
+    await context.close();
+    const refused = await browser.newContext();
+    await refused.addInitScript(() => {
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: () => Promise.reject(new Error('refused')) },
+        });
+    });
+    const other = await tab(refused);
+    const copy = other.locator('.dk-copy');
+    await copy.focus();
+    await other.keyboard.press('Space');
+    await expect(copy).toHaveAccessibleName('Selected install command');
+    await expect(other.getByRole('status')).toContainText('Selected.');
+    expect(await other.evaluate(() => window.getSelection()?.toString())).toBe(
+        'npm install @jasonsdevspace/design-kit'
+    );
+    // Selecting the source moves focus nowhere, so the keys the status line names still reach the
+    // page, and a screen reader stays where the visitor was.
+    await expect(copy).toBeFocused();
+    await refused.close();
 });
 
 test('selects the source where the clipboard is refused, and says how to copy it', async ({

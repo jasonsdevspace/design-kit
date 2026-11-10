@@ -76,7 +76,12 @@ The paths are in `packages/design-kit`.
   disabled fieldset is drawn as off. A pointer turns a button's edge to the accent, underlines the
   accent button's words and leaves an off button as it is. A pressed toggle has an inset edge on the
   highlight and an unpressed one none, an invalid control's edge is in the danger color, and in
-  forced colors pressed differs from unpressed and off matches disabled.
+  forced colors pressed differs from unpressed and off matches disabled. On a touch screen a tap
+  leaves an unpressed toggle's edge as it was, since the pointer rule applies only where a pointer
+  can rest, and under the wider text spacing a visitor may set a callout and a field cut no text
+  off on a phone.
+- `e2e/ref.spec.ts` draws `Button` with React in Chromium and finds an off button swallowing Enter,
+  Space and a click alike, with focus held on it and the page's handler never run.
 - `src/scope.test.ts` holds every selector in `components.css` to a kit class alone or one
   `:where()` followed at most by a focus pseudo-class, and allows a bare class only for the page
   chrome, so every rule for a button, a field or a callout sits in `:where()`.

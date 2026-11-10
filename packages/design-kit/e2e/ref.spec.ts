@@ -5,8 +5,9 @@ import { build } from 'vite';
 
 /*
  * The kit's button, fields, choices, switch and copy button with a ref, drawn by React in a browser,
- * since only a browser attaches a ref, moves focus or attaches a control. The page is bundled from
- * ref-page.tsx with React in it, and written into the browser with the bundle as its one script.
+ * since only a browser attaches a ref, moves focus, attaches a control or presses a key. The page
+ * is bundled from ref-page.tsx with React in it, and written into the browser with the bundle as
+ * its one script.
  */
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
@@ -46,6 +47,25 @@ test('attaches the switch and the copy button through the refs they hand out', a
     await expect(copy).toBeVisible();
     await expect(copy).toHaveClass('dk-button dk-copy page-copy');
     await expect(page.getByRole('status')).toHaveClass('dk-visually-hidden page-status');
+});
+
+test('swallows Enter, Space and a click on an off button alike, and keeps focus on it', async ({
+    page,
+}) => {
+    await page.setContent('<div id="root"></div>');
+    await page.addScriptTag({ content: script, type: 'module' });
+    const later = page.getByRole('button', { name: 'Send later' });
+    await expect(later).toHaveAttribute('aria-disabled', 'true');
+    await later.focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Space');
+    await later.click();
+    // The handler would mark every field, so no error shows while it never runs.
+    await expect(page.getByText('Enter a name')).toHaveCount(0);
+    await expect(later).toBeFocused();
+    // The page's own Send still runs its handler, so the off button alone is swallowing.
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(page.getByText('Enter a name')).toBeVisible();
 });
 
 test('moves focus back to the button a ref holds when its panel closes', async ({ page }) => {

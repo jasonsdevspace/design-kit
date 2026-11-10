@@ -250,11 +250,13 @@ follow by area.
 
 ## What was measured
 
-- **What the kit costs a page.** The three sheets come to about 12 KB gzipped, and the theme script
-  goes inline in the page's head. A page that attaches the theme switch or a copy button loads the
+- **What the kit costs a page.** The three sheets come to about 12 KB gzipped, or about 5 KB
+  without their comments as a page's minifier sends them, which a test holds to 6 KB, and the theme
+  script goes inline in the page's head. A page that attaches the theme switch or a copy button loads the
   controls too, about 3 KB more. The package npm publishes is 35 KB packed, the sheets and modules
   a page loads together with the README and the types it never does.
-  [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped.
+  [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, and each sheet
+  without its comments.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
   its processor slowed, every page scores a hundred for accessibility and performance, shows its
   main content in about 0.9 seconds with nothing jumping as it loads, and downloads 13 to 16 KB in

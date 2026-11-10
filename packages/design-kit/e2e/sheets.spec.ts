@@ -5,8 +5,10 @@ import { expect, type Page, test } from '@playwright/test';
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
  * saved none, picks the page's background and text, a demo's own palette and rules win over the
- * kit's wherever its sheets load, the order of a page's own layers places the kit's, selected text
- * stands on the accent, and the focus ring lands where it should in both themes.
+ * kit's wherever its sheets load, the order of a page's own layers places the kit's, a reset in a
+ * layer after the kit's clears a button's edge until the components sheet is imported into a layer
+ * after the reset's, selected text stands on the accent, and the focus ring lands where it should
+ * in both themes.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -200,6 +202,53 @@ test('puts the kit over a page whose layers load first without naming dk', async
     // kit's layers land after the page's, and a page meaning its own to win names dk first.
     await open(page, 'light', '', PAGE_LAYER);
     expect((await drawn(page)).background).toBe('rgb(255, 255, 255)');
+});
+
+/** A page's reset, in a layer of its own as a framework's base is. */
+const RESET = '@layer reset { button { border: 0 } }';
+
+/**
+ * A button drawn on a page that imports the kit's sheets from a sheet of its own, served from an
+ * origin of its own, since only an import takes a sheet into a layer. Gives the edge the button
+ * is drawn with.
+ */
+const edgeUnder = async (page: Page, own: string) => {
+    const origin = 'https://layers.test';
+    await page.route(`${origin}/**`, (route) => {
+        const name = new URL(route.request().url()).pathname.slice(1);
+        if (name === 'page.css') return route.fulfill({ body: own, contentType: 'text/css' });
+        if (name.endsWith('.css'))
+            return route.fulfill({ body: sheet(name), contentType: 'text/css' });
+        return route.fulfill({
+            body:
+                '<!doctype html><html lang="en" data-theme="light"><head><title>Layers</title>' +
+                '<link rel="stylesheet" href="/page.css"></head>' +
+                '<body><button type="button" class="dk-button">Filters</button></body></html>',
+            contentType: 'text/html',
+        });
+    });
+    await page.goto(`${origin}/`);
+    const edge = await page
+        .getByRole('button')
+        .evaluate((element) => getComputedStyle(element).borderTopWidth);
+    await page.unroute(`${origin}/**`);
+    return edge;
+};
+
+test("draws a button's edge again from the components sheet in a layer after the reset that cleared it", async ({
+    page,
+}) => {
+    const kit = "@import url('/tokens.css'); @import url('/base.css');";
+    // The reset's layer is named after the kit's, so it wins over every rule of the kit's.
+    expect(await edgeUnder(page, `${kit} @import url('/components.css'); ${RESET}`)).toBe('0px');
+    // The order the reference gives: the kit's layer, the reset's, then the components in a layer
+    // of their own after it, which keeps their rules in the kit's layer nested there.
+    expect(
+        await edgeUnder(
+            page,
+            `@layer dk, reset, kit; ${kit} @import url('/components.css') layer(kit); ${RESET}`
+        )
+    ).toBe('1px');
 });
 
 test("lets a page's own rule outside a layer win, however little it weighs", async ({ page }) => {

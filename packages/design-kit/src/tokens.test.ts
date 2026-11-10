@@ -2,7 +2,15 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { colorOf, contrast, declaredIn, PAIRS, ROLES, THEMES } from '../examples/palette.js';
+import {
+    colorOf,
+    contrast,
+    declaredIn,
+    luminance,
+    PAIRS,
+    ROLES,
+    THEMES,
+} from '../examples/palette.js';
 
 /*
  * The tokens as a page reads them, from the sheet itself. Every color role holds its light and its
@@ -74,6 +82,16 @@ describe('the tokens', () => {
         }
         expect(shadow).toContain('light-dark(');
         expect(dark).toBeGreaterThan(light);
+    });
+
+    it('lifts the raised ground above the surface in the dark theme, and no lower than the page in the light one', () => {
+        // In the dark theme the step is what tells a card from the page, since its shadow shows
+        // little, and in the light one the shadow does, so raised only has to sit no lower than
+        // the page.
+        const lit = (role: string, theme: (typeof THEMES)[number]) =>
+            luminance(colorOf(declared, role, theme));
+        expect(lit('raised', 'dark')).toBeGreaterThan(lit('surface', 'dark'));
+        expect(lit('raised', 'light')).toBeGreaterThanOrEqual(lit('bg', 'light'));
     });
 
     for (const theme of THEMES) {
