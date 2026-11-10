@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
 
 /*
- * The components on paper, where the browser drops backgrounds: a callout, a code block and a
- * step keep an edge in the line color, a code block and a scrolling table show whole rather than
- * cut at the frame, and the controls that do nothing on paper, the theme switch, the copy button
- * and the skip link, do not print.
+ * The components on paper, where the browser drops backgrounds: a callout and a
+ * code block keep an edge in the line color, a code block and a scrolling table show whole rather
+ * than cut at the frame, and what does nothing on paper, the theme switch, the copy button, the
+ * skip link and a strip's switches, does not print.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -21,7 +21,8 @@ const PAGE = `<!doctype html><html lang="en" data-theme="light"><head><title>Pri
 <div class="dk-callout"><div class="dk-callout-body">Saved.</div></div>
 <pre class="dk-code"><code>${LONG}</code></pre>
 <ol class="dk-steps"><li>The first step</li></ol>
-<div class="dk-table-scroll"><table class="dk-table"><tbody><tr><td>${LONG}</td></tr></tbody></table></div>
+<div class="dk-table-scroll"><table class="dk-table"><tbody><tr><td><code>${'--dk-'.repeat(40)}</code></td><td class="dk-table-number">1234567890</td></tr></tbody></table></div>
+<div class="dk-strip"><section class="dk-strip-tools" aria-label="Settings"><button type="button" class="dk-button">Members</button></section></div>
 <div class="dk-theme-switch" role="radiogroup" aria-label="Theme">
 <label class="dk-theme-switch-choice"><input type="radio" name="theme" value="light" checked><span>Light</span></label>
 </div>
@@ -49,11 +50,11 @@ const lineColor = (page: Page) =>
         return color;
     });
 
-test('prints edges on a callout, a code block and a step, in the line color', async ({ page }) => {
+test('prints edges on a callout and a code block, in the line color', async ({ page }) => {
     await page.setContent(PAGE);
     await page.emulateMedia({ media: 'print' });
     const line = await lineColor(page);
-    for (const selector of ['.dk-callout', '.dk-code', '.dk-steps > li']) {
+    for (const selector of ['.dk-callout', '.dk-code']) {
         expect(
             await style(page, selector, 'border-top-style', 'border-top-color'),
             selector
@@ -78,18 +79,20 @@ test('prints a code block and a scrolling table whole, rather than cut at the fr
         });
     }
     expect(await style(page, '.dk-code', 'white-space')).toEqual({ 'white-space': 'pre-wrap' });
-    // Wrapped, the code is no wider than its column.
-    const code = await page.locator('.dk-code').evaluate((element) => ({
-        scroll: element.scrollWidth,
-        client: element.clientWidth,
-    }));
-    expect(code.scroll).toBeLessThanOrEqual(code.client);
+    // Wrapped, neither the code nor the table is wider than its column.
+    for (const selector of ['.dk-code', '.dk-table-scroll']) {
+        const box = await page.locator(selector).evaluate((element) => ({
+            scroll: element.scrollWidth,
+            client: element.clientWidth,
+        }));
+        expect(box.scroll, selector).toBeLessThanOrEqual(box.client);
+    }
 });
 
 test('prints none of the controls that do nothing on paper', async ({ page }) => {
     await page.setContent(PAGE);
     await page.emulateMedia({ media: 'print' });
-    for (const selector of ['.dk-theme-switch', '.dk-copy', '.dk-skip']) {
+    for (const selector of ['.dk-theme-switch', '.dk-copy', '.dk-skip', '.dk-strip-tools']) {
         expect(await style(page, selector, 'display'), selector).toEqual({ display: 'none' });
     }
 });

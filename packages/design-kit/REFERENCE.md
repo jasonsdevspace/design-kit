@@ -387,7 +387,7 @@ explains. A message that arrives after the page has loaded is made live in three
    success or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
-A callout's edge is transparent, and shows only in forced colors, where the ground is dropped and
+A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is dropped and
 the edge marks where the callout starts and ends.
 
 ### Pills
@@ -804,7 +804,7 @@ after `--dk-`, and a long expression scrolls the frame as a wide table does.
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself, since wrapping would break its
+A block of code keeps its lines as written and scrolls inside itself on screen and wraps on paper, since wrapping would break its
 indentation and show line breaks the code does not have. It is a named region with a tabindex of 0,
 for the same reasons as a table's frame. Its title says what the code is for, such as "Run it
 yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
@@ -884,9 +884,9 @@ and when the browser restores the page from its back and forward cache. Storage 
 origin, so only a page on the portfolio's origin reads the visitor's choice, and anywhere else
 follows the system. Print always draws the light values, whatever the theme, since paper is light
 and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
-layer sets them back to light in print too. On paper a callout, a code block and a step keep an edge
-in the line color, a code block wraps and a scrolling table shows whole, and the theme switch, the
-copy button and the skip link do not print.
+layer sets them back to light in print too. On paper a callout and a code block keep an edge in the line
+color, a code block wraps and a scrolling table shows whole with its code and figures wrapping, and
+the theme switch, the copy button, the skip link and a strip's switches do not print.
 
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed
