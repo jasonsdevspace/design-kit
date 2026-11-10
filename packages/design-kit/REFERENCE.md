@@ -8,7 +8,8 @@ each piece live in both themes.
 ## The sheets
 
 `base.css` and `components.css` load after `tokens.css`, since the tokens' first statement declares
-the kit's layer order. `base.css` sets inline code a step smaller than the text around it and lets a
+the kit's layer order. `base.css` draws selected text on the highlight in the page's text, rather
+than on the browser's blue, sets inline code a step smaller than the text around it and lets a
 long name break anywhere rather than push a narrow column wider. Inside a `pre` code takes the
 block's size, and inside a link it keeps the link's underline. The base also puts a pointer cursor
 on a `<summary>`, and on a checkbox or radio and the label around it.

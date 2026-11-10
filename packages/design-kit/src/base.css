@@ -1,6 +1,7 @@
 /*
- * What every page takes before any component: the page's type and colors, one focus ring for every
- * link and control, and motion cut short for a visitor who asks for less. Every rule sits in the
+ * What every page takes before any component: the page's type and colors, its selection in the
+ * highlight, one focus ring for every link and control, and motion cut short for a visitor who asks
+ * for less. Every rule sits in the
  * kit's base layer, so a demo's own rule outside a layer wins over the kit's however little it
  * weighs. Every selector is the visually hidden class or one :where(), followed at most by a focus
  * pseudo-class, or by a pseudo-element where a rule for every element has to reach it too, since
@@ -42,6 +43,16 @@
 
     :where(a) {
         color: var(--dk-accent);
+    }
+
+    /*
+     * Selected text stands on the highlight in the page's text, in both themes, rather than on the
+     * browser's blue, which would be a second accent on a page that keeps one. The pairing is one
+     * the palette holds to a readable ratio.
+     */
+    :where(*)::selection {
+        background-color: var(--dk-highlight);
+        color: var(--dk-fg);
     }
 
     :where(code, kbd, pre, samp) {

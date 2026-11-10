@@ -5,8 +5,8 @@ import { expect, type Page, test } from '@playwright/test';
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
  * saved none, picks the page's background and text, a demo's own palette and rules win over the
- * kit's wherever its sheets load, the order of a page's own layers places the kit's, and the focus
- * ring lands where it should in both themes.
+ * kit's wherever its sheets load, the order of a page's own layers places the kit's, selected text
+ * stands on the highlight, and the focus ring lands where it should in both themes.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -405,4 +405,39 @@ test('shows a pointer on what takes a click, and the arrow on a choice that is u
     expect(await cursor('#off')).toBe('default');
     // A label for a text field only moves focus to it, so it keeps the browser's own cursor.
     expect(await cursor('#text')).not.toBe('pointer');
+});
+
+/** The highlight and the text color as the page resolves them. */
+const pair = (page: Page) =>
+    page.evaluate(() => {
+        const probe = document.createElement('span');
+        document.body.append(probe);
+        probe.style.backgroundColor = 'var(--dk-highlight)';
+        probe.style.color = 'var(--dk-fg)';
+        const style = getComputedStyle(probe);
+        const colors = { background: style.backgroundColor, color: style.color };
+        probe.remove();
+        return colors;
+    });
+
+test("draws selected text on the highlight in the page's text, in both themes", async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, theme, '<p id="words">Selected words</p>');
+        await page.evaluate(() => {
+            const words = document.getElementById('words');
+            if (words) document.getSelection()?.selectAllChildren(words);
+        });
+        const selection = await page.evaluate(() => {
+            const style = getComputedStyle(
+                document.getElementById('words') ?? document.body,
+                '::selection'
+            );
+            return { background: style.backgroundColor, color: style.color };
+        });
+        const expected = await pair(page);
+        expect(selection, theme).toEqual(expected);
+        expect(expected.background, theme).not.toBe('rgba(0, 0, 0, 0)');
+    }
 });
