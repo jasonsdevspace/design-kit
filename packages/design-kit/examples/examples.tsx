@@ -16,9 +16,8 @@ import {
     ThemeSwitch,
 } from '../src/react.js';
 import * as pieces from './pieces.js';
-import { asWritten, SOURCE } from './pieces.js';
 
-export { SOURCE };
+export { SOURCE } from './pieces.js';
 
 /*
  * The markup each piece of the kit draws, in one place, so the reference prints what the components
@@ -45,7 +44,7 @@ export const skipLink: ReactElement = (
 export const strip: ReactElement = (
     <PortfolioStrip
         about="./about/"
-        source={SOURCE}
+        source={pieces.SOURCE}
         tools={<Button>Tour</Button>}
         toolsLabel="Tour"
     />
@@ -60,7 +59,12 @@ export const stripWaiting: ReactElement = (
 
 /** The footer. */
 export const footer: ReactElement = (
-    <DemoFooter name="Example" about="./about/" source={SOURCE} aside="Built at commit abc1234." />
+    <DemoFooter
+        name="Example"
+        about="./about/"
+        source={pieces.SOURCE}
+        aside="Built at commit abc1234."
+    />
 );
 
 /**
@@ -300,16 +304,16 @@ export const explainerPage: ReactElement = (
 );
 
 /** The steps of a flow, each a title and a note, with an arrow from the step before. */
-export const steps: ReactElement = pieces.steps.draw(kit, asWritten);
+export const steps: ReactElement = pieces.steps.draw(kit, pieces.asWritten);
 
 /** A panel set apart from the prose, with its title. */
-export const panel: ReactElement = pieces.panel.draw(kit, asWritten);
+export const panel: ReactElement = pieces.panel.draw(kit, pieces.asWritten);
 
 /** A table of figures, titled, in a frame that scrolls inside itself. */
-export const table: ReactElement = pieces.table.draw(kit, asWritten);
+export const table: ReactElement = pieces.table.draw(kit, pieces.asWritten);
 
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
-export const code: ReactElement = pieces.code.draw(kit, asWritten);
+export const code: ReactElement = pieces.code.draw(kit, pieces.asWritten);
 
 /** Pills: chips that name something, and a row of links among pages, the current one marked. */
 export const pills: ReactElement = (
@@ -398,8 +402,8 @@ export const tabs: ReactElement = (
 /** An eyebrow over a heading. */
 export const eyebrow: ReactElement = (
     <>
-        <p className="dk-eyebrow">Theme</p>
-        <h2>Light and dark</h2>
+        <p className="dk-eyebrow">Signed in as a guest</p>
+        <h2>Your basket</h2>
     </>
 );
 

@@ -30,6 +30,9 @@ ${renderToStaticMarkup(
 ).replaceAll(' hidden=""', '')}
 </main></body></html>`;
 
+/** The first element the selector finds. */
+const first = (page: Page, selector: string) => page.locator(selector).first();
+
 /** The line color as the page resolves it, from an element asked to take it. */
 const lineColor = (page: Page) =>
     page.evaluate(() => {
@@ -47,7 +50,7 @@ test('prints edges on a callout and a code block, in the line color', async ({ p
     const line = await lineColor(page);
     for (const selector of ['.dk-callout', '.dk-code']) {
         expect(
-            await style(page.locator(selector).first(), 'border-top-style', 'border-top-color'),
+            await style(first(page, selector), 'border-top-style', 'border-top-color'),
             selector
         ).toEqual({ 'border-top-style': 'solid', 'border-top-color': line });
     }
@@ -59,17 +62,17 @@ test('prints a code block and a scrolling table whole, rather than cut at the fr
     await page.setContent(PAGE);
     // On screen each scrolls inside its frame.
     for (const selector of ['.dk-code', '.dk-table-scroll']) {
-        expect(await style(page.locator(selector).first(), 'overflow-x'), selector).toEqual({
+        expect(await style(first(page, selector), 'overflow-x'), selector).toEqual({
             'overflow-x': 'auto',
         });
     }
     await page.emulateMedia({ media: 'print' });
     for (const selector of ['.dk-code', '.dk-table-scroll']) {
-        expect(await style(page.locator(selector).first(), 'overflow-x'), selector).toEqual({
+        expect(await style(first(page, selector), 'overflow-x'), selector).toEqual({
             'overflow-x': 'visible',
         });
     }
-    expect(await style(page.locator('.dk-code').first(), 'white-space')).toEqual({
+    expect(await style(first(page, '.dk-code'), 'white-space')).toEqual({
         'white-space': 'pre-wrap',
     });
     // Wrapped, neither the code nor the table is wider than its column.
@@ -86,7 +89,7 @@ test('prints none of the controls that do nothing on paper', async ({ page }) =>
     await page.setContent(PAGE);
     await page.emulateMedia({ media: 'print' });
     for (const selector of ['.dk-theme-switch', '.dk-copy', '.dk-skip', '.dk-strip-tools']) {
-        expect(await style(page.locator(selector).first(), 'display'), selector).toEqual({
+        expect(await style(first(page, selector), 'display'), selector).toEqual({
             display: 'none',
         });
     }

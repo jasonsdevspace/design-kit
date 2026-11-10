@@ -74,10 +74,7 @@ test('draws text in a field at 16px or more on a phone, so tapping it does not z
 
 test('fits a phone 320px wide without scrolling the page sideways', async ({ page }) => {
     await open(page, { width: 320 });
-    const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
-    );
-    expect(overflow).toBe(0);
+    expect(await sideways(page)).toBe(0);
 });
 
 test('keeps an off button in the tab order, and skips a disabled one, drawn alike', async ({

@@ -25,12 +25,25 @@ import { textSize } from './text-size.js';
  * Each piece as the reference prints it, shown as a page's script shows the switch and the copy
  * button.
  */
-const drawn = (example: ReactElement) => renderToStaticMarkup(example).replaceAll(' hidden=""', '');
-// The switch first, so one Tab reaches it, with Light chosen as the page is parsed, so no
-// transition is under way when a test reads the chosen word.
+const drawn = (example: ReactElement) => renderToStaticMarkup(example);
+/** A control shown, as a page's script shows it once attached. */
+const shown = (markup: string) => {
+    if (!markup.includes(' hidden=""')) throw new Error('the control is not hidden to show');
+    return markup.replaceAll(' hidden=""', '');
+};
+/** The switch with Light chosen as the page is parsed, so no transition is under way when read. */
+const withLight = (markup: string) => {
+    const checked = markup.replace('value="light"/>', 'value="light" checked=""/>');
+    if (checked === markup) throw new Error('the switch draws no Light radio to check');
+    return checked;
+};
+// The switch first, so one Tab reaches it.
 const PIECES = [
-    drawn(themeSwitch).replace('value="light"/>', 'value="light" checked=""/>'),
-    ...[pills, tabs, eyebrow, copyButton].map(drawn),
+    withLight(shown(drawn(themeSwitch))),
+    drawn(pills),
+    drawn(tabs),
+    drawn(eyebrow),
+    shown(drawn(copyButton)),
 ].join('');
 
 const open = async (

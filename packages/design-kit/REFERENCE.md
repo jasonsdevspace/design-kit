@@ -598,8 +598,8 @@ arrow keys.
 <!-- example: eyebrow -->
 
 ```html
-<p class="dk-eyebrow">Theme</p>
-<h2>Light and dark</h2>
+<p class="dk-eyebrow">Signed in as a guest</p>
+<h2>Your basket</h2>
 ```
 
 An eyebrow is a small label in caps over a heading or a group, such as a hero's theme or a list's

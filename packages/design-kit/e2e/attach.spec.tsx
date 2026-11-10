@@ -7,7 +7,7 @@ import ts from 'typescript';
 import { CopyButton, CopyStatus, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { sheet, themeOf } from './page.js';
+import { KIT, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -63,7 +63,7 @@ const page = (attach: boolean) =>
     `</body></html>`;
 
 const FILES: Readonly<Record<string, readonly [string, string]>> = {
-    '/kit.css': [['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n'), 'text/css'],
+    '/kit.css': [KIT, 'text/css'],
     '/controls.js': [js('controls.ts'), 'text/javascript'],
     '/theme.js': [js('theme.ts'), 'text/javascript'],
     '/page.js': [ATTACH, 'text/javascript'],
