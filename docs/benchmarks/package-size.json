@@ -1,63 +1,61 @@
 {
     "recorded": {
         "date": "2026-11-10",
-        "commit": "11f3d66",
-        "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
+        "commit": "b412755",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.3.1",
-    "size": 36250,
+    "version": "0.4.0",
+    "size": 38321,
     "files": [
         {
-            "path": "CHANGELOG.md",
-            "size": 20987,
-            "gzip": 7516
-        },
-        {
             "path": "dist/base.css",
-            "size": 6181,
-            "gzip": 2183
+            "size": 8531,
+            "gzip": 2878,
+            "stripped": 1053
         },
         {
             "path": "dist/components.css",
-            "size": 32860,
-            "gzip": 7821
+            "size": 50037,
+            "gzip": 11341,
+            "stripped": 3885
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 1107,
-            "gzip": 523
+            "size": 1671,
+            "gzip": 758
         },
         {
             "path": "dist/controls.js",
-            "size": 9407,
-            "gzip": 3054
+            "size": 13458,
+            "gzip": 4082
         },
         {
             "path": "dist/react.d.ts",
-            "size": 10377,
-            "gzip": 3329
+            "size": 15974,
+            "gzip": 4705
         },
         {
             "path": "dist/react.js",
-            "size": 13282,
-            "gzip": 4610
+            "size": 16120,
+            "gzip": 5105
         },
         {
             "path": "dist/theme.d.ts",
-            "size": 1792,
-            "gzip": 771
+            "size": 2515,
+            "gzip": 1059
         },
         {
             "path": "dist/theme.js",
-            "size": 2874,
-            "gzip": 1131
+            "size": 4813,
+            "gzip": 1739
         },
         {
             "path": "dist/tokens.css",
-            "size": 6523,
-            "gzip": 2388
+            "size": 7644,
+            "gzip": 2754,
+            "stripped": 838
         },
         {
             "path": "dist/vite.d.ts",
@@ -76,13 +74,13 @@
         },
         {
             "path": "package.json",
-            "size": 2142,
-            "gzip": 719
+            "size": 2162,
+            "gzip": 724
         },
         {
             "path": "README.md",
-            "size": 12491,
-            "gzip": 4321
+            "size": 12453,
+            "gzip": 4307
         }
     ]
 }
