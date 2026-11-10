@@ -36,8 +36,9 @@ is its CSS transformer, as the package README shows.
 
 ## Known limitations
 
-- In Firefox 120, which lacks `:has()`, an empty live callout draws its ground until it is filled,
-  and a label that holds a checkbox or a radio shows no pointer, though the box or the dot does.
+- In Firefox 120, which lacks `:has()`, an empty live callout draws its ground and keeps its place
+  in the flow until it is filled, so a grid opens its gap around it, and a label that holds a
+  checkbox or a radio shows no pointer, though the box or the dot does.
 - The browser tests run only in Chromium, so the other browsers at the floor are held to it by what
   they document rather than by a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
