@@ -1045,6 +1045,85 @@
     }
 
     /*
+     * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
+     * three sites drew by hand for a category among categories, a block of markup beside its React,
+     * and a lane among lanes. The classes draw the row alone. A tab's role and its keys belong to
+     * the page that owns the panels, so the chosen tab is whichever carries the attribute a screen
+     * reader already reads: aria-selected true on a tab, aria-current on a link among pages, or
+     * aria-pressed true on a toggle, each drawn alike. The chosen tab keeps the resting weight,
+     * since a heavier word is a wider one and the tabs after it would shift as the choice moves.
+     * Only the chosen tab has a line, the others padded to its depth, so forced colors, which paint
+     * every edge in a system color, draw no line under a resting tab and fill the chosen one in the
+     * system's selection colors, as the current pill does. A tab is the strip's height, and a
+     * thumb's on a phone, where a short word is still a thumb wide. A row of links wraps each in an
+     * item, which stretches its link to the rule.
+     */
+    :where(.dk-tabs) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dk-space-1);
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--dk-line);
+        list-style: none;
+    }
+
+    :where(.dk-tabs > li) {
+        display: flex;
+    }
+
+    :where(.dk-tab) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--dk-strip);
+        padding: 0 var(--dk-space-3) 2px;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        color: var(--dk-muted);
+        font: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: color var(--dk-duration-short);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-tab:hover) {
+            color: var(--dk-fg);
+        }
+    }
+
+    :where(
+        .dk-tab[aria-selected='true'],
+        .dk-tab[aria-current]:not([aria-current='false']),
+        .dk-tab[aria-pressed='true']
+    ) {
+        padding-bottom: 0;
+        border-bottom: 2px solid var(--dk-accent);
+        color: var(--dk-fg);
+    }
+
+    @media (max-width: 48rem) {
+        :where(.dk-tab) {
+            min-width: var(--dk-target);
+            min-height: var(--dk-target);
+        }
+    }
+
+    @media (forced-colors: active) {
+        :where(
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true']
+        ) {
+            background: Highlight;
+            color: HighlightText;
+        }
+    }
+
+    /*
      * A copy button's words share one cell, so the button is as wide as its longest word whatever
      * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
      * from the button's name.
