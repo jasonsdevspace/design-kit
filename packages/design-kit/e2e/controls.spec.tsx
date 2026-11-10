@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
+import { cutOff, SPACED } from './spacing.js';
 
 /*
  * The buttons, fields and callouts as a browser draws them, from the markup the components draw
@@ -43,25 +44,6 @@ const open = async (
             `<style>${KIT}${css}</style></head><body>${STATES}</body></html>`
     );
 };
-
-/** The spacing WCAG asks a page to survive, as a visitor's own style sheet sets it. */
-const SPACED =
-    '* { line-height: 1.5 !important; letter-spacing: 0.12em !important;' +
-    ' word-spacing: 0.16em !important } p { margin-bottom: 2em !important }';
-
-/** The classes of the elements given that cut their own content off, by width or by height. */
-const cutOff = (page: Page, selector: string) =>
-    page.evaluate(
-        (wanted) =>
-            [...document.querySelectorAll<HTMLElement>(wanted)]
-                .filter(
-                    (element) =>
-                        element.scrollWidth > element.clientWidth + 1 ||
-                        element.scrollHeight > element.clientHeight + 1
-                )
-                .map((element) => element.className),
-        selector
-    );
 
 /** Whether the page scrolls sideways. */
 const sideways = (page: Page) =>

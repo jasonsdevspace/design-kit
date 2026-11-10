@@ -187,9 +187,9 @@ export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 export const isSheet = (/** @type {string} */ path) => path.endsWith('.css');
 
 /**
- * A sheet without its comments and the blank lines they leave, which is what a page's minifier
- * sends a visitor, so the sheets' budget and the record measure what a visitor downloads rather
- * than what a reader of the source reads.
+ * A sheet without its comments and blank lines, which is most of what a page's minifier takes out
+ * and all of what the kit writes for a reader, so the sheets' budget and the record measure close
+ * to what a visitor downloads rather than what a reader of the source reads.
  *
  * @param {string} sheet
  */

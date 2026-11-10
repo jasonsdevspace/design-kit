@@ -1063,8 +1063,8 @@ To put the kit's layer over the page's, before the kit's sheets load:
 Each sheet declares the layer it fills, so a sheet a page imports into a layer of its own keeps its
 rules in the kit's layer nested inside that one. A page with a reset in a layer, as a framework's
 base is, has the reset win over the kit's components wherever its layer comes after `dk`, and a
-button loses its edge. Such a page names the kit's layer first, then its reset's, then one for the
-components, and imports the components sheet into that one:
+button loses its edge. Such a page puts the kit's layer first in its own order, then its reset's, then
+one for the components, and imports the components sheet into that one:
 
 ```css
 @layer dk, reset, kit;

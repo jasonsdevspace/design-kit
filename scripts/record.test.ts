@@ -53,7 +53,19 @@ describe('a record', () => {
         expect(markdown).toContain('| File | Raw | Gzipped | Without comments |');
         expect(markdown).toContain('| dist/tokens.css | 6.0 KB | 2.0 KB | 1.0 KB |');
         expect(markdown).toContain('| dist/react.js | 10.0 KB | 3.0 KB |\n');
-        expect(markdown).toContain('without its comments');
+        expect(markdown).toContain('without its comments and blank lines');
+        // A record taken before the sheets were measured without comments keeps its three columns.
+        const earlier = packageRecord(
+            {
+                name: '@jasonsdevspace/design-kit',
+                version: '0.1.0',
+                size: 40960,
+                files: [{ path: 'dist/tokens.css', size: 6144, gzip: 2048 }],
+            },
+            RECORDED
+        ).markdown;
+        expect(earlier).toContain('| File | Raw | Gzipped |\n');
+        expect(earlier).not.toContain('Without comments');
         const at = (text: string) => markdown.indexOf(text);
         expect(at('The sheets a page loads')).toBeLessThan(at('dist/tokens.css'));
         expect(at('dist/tokens.css')).toBeLessThan(at('The modules a page'));

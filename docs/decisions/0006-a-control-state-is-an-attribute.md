@@ -78,8 +78,8 @@ The paths are in `packages/design-kit`.
   highlight and an unpressed one none, an invalid control's edge is in the danger color, and in
   forced colors pressed differs from unpressed and off matches disabled. On a touch screen a tap
   leaves an unpressed toggle's edge as it was, since the pointer rule applies only where a pointer
-  can rest, and under the wider text spacing a visitor may set a callout and a field cut no text
-  off on a phone.
+  can rest. Under the wider text spacing a visitor may set, a callout and a field cut no text off
+  on a phone.
 - `e2e/ref.spec.ts` draws `Button` with React in Chromium and finds an off button swallowing Enter,
   Space and a click alike, with focus held on it and the page's handler never run.
 - `src/scope.test.ts` holds every selector in `components.css` to a kit class alone or one

@@ -331,7 +331,7 @@ test('puts a copy button back to Copy, hidden, when it is taken away mid-message
     await context.close();
 });
 
-test('copies the source, says Copied on the button and the status line, then Copy again', async ({
+test('copies the source on a click or on Enter, says Copied on the button and the status line, then Copy again', async ({
     browser,
 }) => {
     const context = await browser.newContext();
@@ -346,13 +346,19 @@ test('copies the source, says Copied on the button and the status line, then Cop
         'npm install @jasonsdevspace/design-kit'
     );
     await expect(button).toHaveAccessibleName('Copy install command', { timeout: 4000 });
+    // From the keyboard too, which reaches the button as a button and so the same press.
+    await button.focus();
+    await opened.keyboard.press('Enter');
+    await expect(button).toHaveAccessibleName('Copied install command');
+    await expect(opened.getByRole('status')).toHaveText('Copied.');
     await context.close();
 });
 
 test('reads the switch by its name, and describes it by its note', async ({ browser }) => {
     const context = await browser.newContext();
     const opened = await tab(context);
-    const group = first(opened);
+    // Found by its role alone, so the name is what is held, not what found it.
+    const group = opened.getByRole('radiogroup').first();
     await expect(group).toHaveAccessibleName('Theme');
     await expect(group).toHaveAccessibleDescription(
         'Your choice is saved for every page of this site.'
@@ -360,43 +366,7 @@ test('reads the switch by its name, and describes it by its note', async ({ brow
     await context.close();
 });
 
-test('copies on Enter and on Space, and keeps focus on the button where the clipboard is refused', async ({
-    browser,
-}) => {
-    const context = await browser.newContext();
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
-    const opened = await tab(context);
-    const button = opened.locator('.dk-copy');
-    await button.focus();
-    await opened.keyboard.press('Enter');
-    await expect(button).toHaveAccessibleName('Copied install command');
-    await expect(opened.getByRole('status')).toHaveText('Copied.');
-    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe(
-        'npm install @jasonsdevspace/design-kit'
-    );
-    await context.close();
-    const refused = await browser.newContext();
-    await refused.addInitScript(() => {
-        Object.defineProperty(navigator, 'clipboard', {
-            value: { writeText: () => Promise.reject(new Error('refused')) },
-        });
-    });
-    const other = await tab(refused);
-    const copy = other.locator('.dk-copy');
-    await copy.focus();
-    await other.keyboard.press('Space');
-    await expect(copy).toHaveAccessibleName('Selected install command');
-    await expect(other.getByRole('status')).toContainText('Selected.');
-    expect(await other.evaluate(() => window.getSelection()?.toString())).toBe(
-        'npm install @jasonsdevspace/design-kit'
-    );
-    // Selecting the source moves focus nowhere, so the keys the status line names still reach the
-    // page, and a screen reader stays where the visitor was.
-    await expect(copy).toBeFocused();
-    await refused.close();
-});
-
-test('selects the source where the clipboard is refused, and says how to copy it', async ({
+test('selects the source where the clipboard is refused, says how to copy it, and keeps focus on the button pressed by Space', async ({
     browser,
 }) => {
     const context = await browser.newContext();
@@ -407,11 +377,15 @@ test('selects the source where the clipboard is refused, and says how to copy it
     });
     const opened = await tab(context);
     const button = opened.locator('.dk-copy');
-    await button.click();
+    await button.focus();
+    await opened.keyboard.press('Space');
     await expect(button).toHaveAccessibleName('Selected install command');
     await expect(opened.getByRole('status')).toContainText('Selected.');
     expect(await opened.evaluate(() => window.getSelection()?.toString())).toBe(
         'npm install @jasonsdevspace/design-kit'
     );
+    // Selecting the source moves focus nowhere, so the keys the status line names still reach the
+    // page, and a screen reader stays where the visitor was.
+    await expect(button).toBeFocused();
     await context.close();
 });

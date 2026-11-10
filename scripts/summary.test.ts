@@ -190,7 +190,7 @@ describe('the package summary', () => {
 });
 
 describe('a sheet without its comments', () => {
-    it('loses every comment and the blank line each leaves, and nothing else', () => {
+    it('loses every comment and blank line, and nothing else', () => {
         const sheet =
             '/*\n * The tokens.\n */\n\n@layer dk.tokens {\n    :where(:root) {\n' +
             '        /* Space. */\n        --dk-space-1: 0.25rem; /* a step */\n    }\n}\n';

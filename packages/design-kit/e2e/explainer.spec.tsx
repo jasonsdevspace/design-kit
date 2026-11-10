@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE, steps } from '../examples/examples.js';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
+import { SPACED } from './spacing.js';
 
 /*
  * An explainer page as a demo writes it by hand, with the kit's sheets: the link to how it works
@@ -294,13 +295,7 @@ test('never scrolls the page sideways, at any width or text size, but the frames
 });
 
 test('clips no text when a visitor spaces it out further', async ({ page }) => {
-    // The spacing WCAG asks a page to survive, as a visitor's own style sheet sets it.
-    await open(page, {
-        width: 320,
-        extra:
-            '* { line-height: 1.5 !important; letter-spacing: 0.12em !important;' +
-            ' word-spacing: 0.16em !important } p { margin-bottom: 2em !important }',
-    });
+    await open(page, { width: 320, extra: SPACED });
     const clipped = await page.evaluate(() =>
         [...document.querySelectorAll('main *')]
             .filter((element) => /hidden|clip/.test(getComputedStyle(element).overflowY))

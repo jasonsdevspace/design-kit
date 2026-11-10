@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { cutOff, SPACED } from './spacing.js';
+
 /*
  * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
  * the kit's sheets, in markup written by hand: the chosen theme told apart by an edge rather
@@ -316,24 +318,9 @@ test("makes each tab the strip's height, and a thumb wide and tall on a phone", 
 test('cuts no word off the pill, the copy button or the switch under the wider spacing a visitor may set', async ({
     page,
 }) => {
-    // A 320px screen with a 20px gutter, and the spacing WCAG asks a page to survive, as a
-    // visitor's own style sheet sets it.
-    await open(page, {
-        width: 320,
-        css:
-            'main { padding-inline: 20px; } * { line-height: 1.5 !important;' +
-            ' letter-spacing: 0.12em !important; word-spacing: 0.16em !important }',
-    });
-    const cutOff = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLElement>('.dk-pill, .dk-copy, .dk-theme-switch')]
-            .filter(
-                (element) =>
-                    element.scrollWidth > element.clientWidth + 1 ||
-                    element.scrollHeight > element.clientHeight + 1
-            )
-            .map((element) => element.className)
-    );
-    expect(cutOff).toEqual([]);
+    // A 320px screen with a 20px gutter.
+    await open(page, { width: 320, css: `main { padding-inline: 20px; } ${SPACED}` });
+    expect(await cutOff(page, '.dk-pill, .dk-copy, .dk-theme-switch')).toEqual([]);
     const fit = await switchFit(page);
     expect(fit.inside).toEqual([true, true, true, true]);
     expect(fit.pageScrolls).toBe(false);
