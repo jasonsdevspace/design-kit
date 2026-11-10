@@ -156,3 +156,29 @@ describe('the browser floor', () => {
         30_000
     );
 });
+
+/*
+ * The hash a page names in its policy changes with the script's text, so the script's hash is held
+ * to a committed file and the changelog's entry for the package's version has to say whether it
+ * changed. A change to the script then moves the file in the same diff, and the entry says so.
+ */
+describe('the hash on record', () => {
+    const at = (path: string) => new URL(path, import.meta.url);
+
+    it('is the committed hash, so a change to the script moves the file with it', () => {
+        expect(readFileSync(at('./theme-script.sha256'), 'utf8').trim()).toBe(themeScriptHash);
+    });
+
+    it("is named by the changelog's entry for this version, as changed or the same", () => {
+        const { version } = JSON.parse(readFileSync(at('../package.json'), 'utf8')) as {
+            version: string;
+        };
+        const changelog = readFileSync(at('../CHANGELOG.md'), 'utf8');
+        const start = changelog.indexOf(`## ${version}\n`);
+        expect(start, `an entry for ${version}`).toBeGreaterThan(-1);
+        const rest = changelog.slice(start + version.length + 4);
+        const end = rest.indexOf('\n## ');
+        const entry = end === -1 ? rest : rest.slice(0, end);
+        expect(entry).toContain('`themeScriptHash`');
+    });
+});

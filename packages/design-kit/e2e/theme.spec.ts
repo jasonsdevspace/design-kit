@@ -57,6 +57,84 @@ for (const system of ['light', 'dark'] as const) {
     });
 }
 
+/** A page that names a theme color for each scheme before the script, as a demo's head does. */
+const GROUNDS = { light: '#fcfcfc', dark: '#121212' } as const;
+const BAR_PAGE =
+    `<!doctype html><html lang="en"><head>` +
+    `<meta name="theme-color" content="${GROUNDS.light}" media="(prefers-color-scheme: light)">` +
+    `<meta name="theme-color" content="${GROUNDS.dark}" media="(prefers-color-scheme: dark)">` +
+    `<script>${themeScript}</script></head><body></body></html>`;
+
+/** The theme colors as the page's metas name them now, in the order written. */
+const barOf = (page: Page) =>
+    page.evaluate(() =>
+        [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')].map((meta) =>
+            meta.getAttribute('content')
+        )
+    );
+
+test("paints the browser's bar in the saved theme's ground, whatever the system", async ({
+    browser,
+}) => {
+    for (const [system, saved] of [
+        ['light', 'dark'],
+        ['dark', 'light'],
+    ] as const) {
+        const context = await browser.newContext({ colorScheme: system });
+        await context.addInitScript(([key, value]) => localStorage.setItem(key, value), [
+            THEME_KEY,
+            saved,
+        ] as const);
+        const page = await tab(context, BAR_PAGE);
+        expect(await barOf(page)).toEqual([GROUNDS[saved], GROUNDS[saved]]);
+        await context.close();
+    }
+});
+
+test("moves the bar with the theme: the system's change, another tab, a restore and the switch", async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const demo = await tab(context, BAR_PAGE);
+    expect(await barOf(demo)).toEqual([GROUNDS.light, GROUNDS.light]);
+    await demo.emulateMedia({ colorScheme: 'dark' });
+    await expect.poll(() => barOf(demo)).toEqual([GROUNDS.dark, GROUNDS.dark]);
+    // Another tab saves a choice.
+    const portfolio = await context.newPage();
+    await portfolio.goto(`${ORIGIN}/`);
+    await portfolio.evaluate((key) => localStorage.setItem(key, 'light'), THEME_KEY);
+    await expect.poll(() => barOf(demo)).toEqual([GROUNDS.light, GROUNDS.light]);
+    // Saved while the page was in the cache, then restored.
+    await demo.evaluate((key) => {
+        localStorage.setItem(key, 'dark');
+        window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    }, THEME_KEY);
+    expect(await barOf(demo)).toEqual([GROUNDS.dark, GROUNDS.dark]);
+    // The switch sets the root's theme itself, as chooseTheme does, and the bar follows it.
+    await demo.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+    await expect.poll(() => barOf(demo)).toEqual([GROUNDS.light, GROUNDS.light]);
+    await context.close();
+});
+
+test('leaves the metas alone where the page names no color for each scheme', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    await context.addInitScript(([key]) => localStorage.setItem(key, 'dark'), [THEME_KEY] as const);
+    const one = await tab(
+        context,
+        `<!doctype html><html lang="en"><head>` +
+            `<meta name="theme-color" content="${GROUNDS.light}" media="(prefers-color-scheme: light)">` +
+            `<script>${themeScript}</script></head><body></body></html>`
+    );
+    expect(await themeOf(one)).toBe('dark');
+    expect(await barOf(one)).toEqual([GROUNDS.light]);
+    const none = await tab(context);
+    expect(await themeOf(none)).toBe('dark');
+    expect(await barOf(none)).toEqual([]);
+    await context.close();
+});
+
 test('sets the theme before the body is parsed', async ({ browser }) => {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await tab(

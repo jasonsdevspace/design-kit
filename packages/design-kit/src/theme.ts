@@ -32,11 +32,37 @@ const quoted = (text: string) => JSON.stringify(text);
  * scheme, with no matchMedia, one that throws, or a result whose matches throws, the script reads
  * it as light, as the portfolio's own script does. It listens for another tab's choice before
  * anything else, and for a change of scheme only where the browser offers addEventListener for it,
- * so an older browser still hears the other tab. It is written with var and a named catch, so an
- * older engine still parses it.
+ * so an older browser still hears the other tab. Where the page names a theme color for each
+ * scheme, two `meta[name="theme-color"]` with a `prefers-color-scheme` query before the script, it
+ * points both at the ground of the theme it draws, on the first paint and on every change of the
+ * root's theme, the switch's included, which it watches with a mutation observer, so the browser's
+ * bar follows the theme rather than the system alone. With either meta missing or without content
+ * it leaves them alone. It is written with var and a named catch, so an older engine still parses
+ * it.
  */
 export const themeScript = `(function () {
     var root = document.documentElement;
+    var metas = [];
+    var grounds = {};
+    try {
+        var found = document.querySelectorAll('meta[name="theme-color"][media]');
+        for (var i = 0; i < found.length; i += 1) {
+            var query = (found[i].getAttribute('media') || '').replace(/\\s/g, '');
+            var content = found[i].getAttribute('content');
+            if (!content) continue;
+            if (query.indexOf('prefers-color-scheme:light') !== -1) grounds.light = content;
+            else if (query.indexOf('prefers-color-scheme:dark') !== -1) grounds.dark = content;
+            metas.push(found[i]);
+        }
+    } catch (error) {
+        metas = [];
+    }
+    var paint = function () {
+        if (!grounds.light || !grounds.dark) return;
+        var ground = grounds[root.getAttribute('data-theme')];
+        if (!ground) return;
+        for (var j = 0; j < metas.length; j += 1) metas[j].setAttribute('content', ground);
+    };
     var media = null;
     try {
         media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -60,6 +86,7 @@ export const themeScript = `(function () {
     };
     var apply = function () {
         root.setAttribute('data-theme', saved() || (dark() ? ${quoted(DARK)} : ${quoted(LIGHT)}));
+        paint();
     };
     apply();
     window.addEventListener('storage', function (event) {
@@ -70,6 +97,9 @@ export const themeScript = `(function () {
     });
     if (media && typeof media.addEventListener === 'function') {
         media.addEventListener('change', apply);
+    }
+    if (typeof MutationObserver === 'function') {
+        new MutationObserver(paint).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
     }
 })();
 `;
