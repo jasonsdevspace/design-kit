@@ -445,7 +445,7 @@ describe('a field', () => {
         );
         const note = createRef<HTMLTextAreaElement>();
         expect(renderToStaticMarkup(<TextareaField id="n" label="Note" ref={note} />)).toContain(
-            '<textarea class="dk-textarea" id="n"></textarea>'
+            '<textarea class="dk-textarea" rows="3" id="n"></textarea>'
         );
         const wrong = createRef<HTMLInputElement>();
         // @ts-expect-error A textarea field's ref is the textarea drawn, not the input of another.

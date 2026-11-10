@@ -385,9 +385,9 @@
     }
 
     /*
-     * A control a visitor types into or picks from, a textarea included, on the page's own
-     * ground, so it reads as a well on a card or a panel. Its text is never under 16px, in px since
-     * it is the size at which a phone stops zooming the page when the field is tapped.
+     * A control a visitor types into or picks from, on the page's own ground, so it reads as a
+     * well on a card or a panel. Its text is never under 16px, in px since it is the size at which
+     * a phone stops zooming the page when the field is tapped.
      */
     :where(.dk-input, .dk-select, .dk-textarea) {
         min-width: 0;
@@ -402,11 +402,11 @@
     }
 
     /*
-     * A textarea takes the field's look and the body's line height for its lines, starts a few
-     * lines tall, and resizes down its height alone, since a wider one would push its column.
+     * A textarea is as tall as its rows, and its text sits at the top rather than centered in the
+     * height, so its block padding matches the inline and its lines take the body's leading. It
+     * resizes in height alone, since a wider one would push its column.
      */
     :where(.dk-textarea) {
-        min-height: calc(var(--dk-field-height) * 2);
         padding-block: var(--dk-space-2);
         line-height: var(--dk-leading-body);
         resize: vertical;
@@ -625,7 +625,7 @@
      * level.
      */
     @media (max-width: 48rem) {
-        :where(.dk-button, .dk-input, .dk-select, .dk-choice) {
+        :where(.dk-button, .dk-input, .dk-select, .dk-textarea, .dk-choice) {
             min-height: var(--dk-target);
         }
 

@@ -333,17 +333,17 @@ toggle that is on keeps an edge in `Highlight`.
 <div class="dk-field">
     <label class="dk-field-label" for="note">Note</label>
     <p class="dk-field-hint" id="note-hint">Shown to the picker</p>
-    <textarea class="dk-textarea" id="note" aria-describedby="note-hint"></textarea>
+    <textarea class="dk-textarea" rows="3" id="note" aria-describedby="note-hint"></textarea>
 </div>
 ```
 
 A field is its label, a hint when it has one, an error when it has one, and then the control,
-`.dk-input`, `.dk-select` or `.dk-textarea`. The error sits above the control, so a phone's keyboard or an open list
-never covers it, and the hint stays while the error shows, since it often says how to put the error
-right. The error starts with a visually hidden "Error: ", so it is told from the hint by more than
-its color. `aria-describedby` lists only what is drawn, the hint and then the error, followed by any
-description of the page's own, and is left off when there is none. `aria-invalid="true"` is there
-only while an error is drawn.
+`.dk-input`, `.dk-select` or `.dk-textarea`. The error sits above the control, so a phone's keyboard
+or an open list never covers it, and the hint stays while the error shows, since it often says how
+to put the error right. The error starts with a visually hidden "Error: ", so it is told from the
+hint by more than its color. `aria-describedby` lists only what is drawn, the hint and then the
+error, followed by any description of the page's own, and is left off when there is none.
+`aria-invalid="true"` is there only while an error is drawn.
 
 The error is not live, since a form that fails in several fields at once would speak over itself.
 The page says when errors appear, and on a submit that fails it moves focus to the first invalid
@@ -366,8 +366,9 @@ error comes and goes, and gives way to the focus ring when it has focus. A disab
 on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
 background, and in forced colors the browser's own arrow comes back. A select that shows its options
 as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
-takes the same look at the body's line height, starts a few lines tall, and resizes down its height
-alone, since a wider one would push its column.
+takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
+and its text at the top rather than centered, and it resizes in height alone, since a wider one
+would push its column.
 
 </details>
 
@@ -649,8 +650,8 @@ themselves.
 
 Every other prop goes to the control, `ref` and `className` included, except `style` and
 `aria-invalid`. A select field's children are its options, and a textarea field's text is its
-`defaultValue` or `value`, never children. An `aria-describedby` of the page's own is listed after
-the hint and the error.
+`defaultValue` or `value`, never children, with three rows unless given `rows`. An `aria-describedby`
+of the page's own is listed after the hint and the error.
 
 **`ChoiceField` props**
 

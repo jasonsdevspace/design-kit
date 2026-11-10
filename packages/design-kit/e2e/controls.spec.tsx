@@ -257,7 +257,7 @@ test("draws a text button as a link, at the button's height, with its states", a
     });
 });
 
-test('draws a textarea as a field, taller, that resizes down its height alone', async ({
+test('draws a textarea as a field, three rows tall, that resizes in height alone', async ({
     page,
 }) => {
     await open(page);
@@ -266,8 +266,19 @@ test('draws a textarea as a field, taller, that resizes down its height alone', 
     const look = ['border-top-color', 'background-color', 'color', 'padding-left', 'font-size'];
     expect(await style(note, ...look)).toEqual(await style(field, ...look));
     expect(await height(note)).toBeGreaterThan(await height(field));
+    await expect(note).toHaveAttribute('rows', '3');
+    // Whole lines, with the padding and the edge around them, so no line is cut at the foot.
+    const lines = await note.evaluate((element) => {
+        const style = getComputedStyle(element);
+        const inside =
+            element.clientHeight -
+            Number.parseFloat(style.paddingTop) -
+            Number.parseFloat(style.paddingBottom);
+        return inside / Number.parseFloat(style.lineHeight);
+    });
+    expect(lines).toBe(3);
     expect(await style(note, 'resize')).toEqual({ resize: 'vertical' });
-    // An error turns its edge, and disabled takes the surface, as a field's do.
+    // An error turns its edge, and disabled takes the surface, as an input's do.
     const message = page.getByLabel('Message');
     await expect(message).toHaveAccessibleDescription('Error: Write a message');
     expect(await style(message, 'border-top-color')).toEqual(
