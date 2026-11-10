@@ -1299,13 +1299,16 @@ test.describe('the theme switch', () => {
     });
 
     /**
-     * The switch as it has come: narrower than 20rem its name and one button, which names the
-     * choice, and the row of choices otherwise, fitting the width its section keeps for it in this
-     * font on either side, since the section sets what it holds against its end.
+     * The switch as it has come, fitting the width its section keeps for it in this font on either
+     * side, since the section sets what it holds against its end. These tests run over the release
+     * the site pins and over the kit as it is now, which on a screen narrower than 20rem collapses
+     * the switch to its name and one button naming the choice, so until the pin moves to that
+     * release either form is taken there, and the row of choices everywhere else.
      */
     const switchCame = async (page: Page, width: number, scale: number) => {
-        if (width / (16 * scale) < 20) {
-            await expect(page.getByRole('button', { name: 'Theme System' })).toBeVisible();
+        const button = page.getByRole('button', { name: 'Theme System' });
+        if (width / (16 * scale) < 20 && (await button.count()) > 0) {
+            await expect(button).toBeVisible();
             await expect(choice(page, 'System')).toBeHidden();
         } else {
             await expect(choice(page, 'System')).toBeVisible();

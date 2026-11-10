@@ -961,9 +961,9 @@
      * sits inside the word, so no word moves as the choice does. On a phone each choice is a
      * thumb's width. Where its column is too narrow for one row, as at a large text size on a
      * phone, the choices wrap onto as many rows as they need rather than scroll out of sight, and
-     * only a word wider than the column on its own scrolls. In a demo's strip narrower than 20rem,
-     * which is a phone with the browser's text set larger, the switch collapses to its name and one
-     * button instead, below, so it stays one row tall in the room the strip keeps for it.
+     * only a word wider than the column on its own scrolls. In a demo's strip on a screen narrower
+     * than 20rem, which is a phone with the browser's text set larger, the switch collapses to its
+     * name and one button instead, below, so it stays one row tall in the room the strip keeps.
      */
     :where(.dk-theme-switch) {
         display: flex;
@@ -992,15 +992,15 @@
     }
 
     /*
-     * In a demo's strip narrower than 20rem, three choices at a thumb's target no longer fit a
-     * row, so the switch shows its name and one button that names the current choice, drawn as the
-     * chosen word is, and the button opens the choices under itself, one to a row, each a thumb's
-     * target the width of the list, over the page rather than in the strip, so opening them moves
-     * nothing. The width is in rem, so the threshold follows the browser's text size and is decided
-     * before any script runs, and the switch keeps one row of the strip's room either way.
+     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no longer
+     * fit a row, so the switch shows its name and one button that names the current choice, drawn
+     * as the chosen word is, and the button opens the choices under itself, one to a row, each a
+     * thumb's target the width of the list, over the page rather than in the strip, so opening them
+     * moves nothing. The width is in rem, so the threshold follows the browser's text size and is
+     * decided before any script runs. The switch stands as tall as the room the strip keeps, a
+     * thumb's target, so the strip is one height either way.
      */
     @media (width < 20rem) {
-        /* As tall as the room the strip keeps, a thumb's target, so the strip is one height either way. */
         :where(.dk-strip-tools .dk-theme-switch) {
             position: relative;
             flex-wrap: nowrap;
@@ -1008,10 +1008,7 @@
             overflow: visible;
         }
 
-        /*
-         * Sized as the chosen word is, which is a thumb's target wherever the switch collapses,
-         * since the text is set large there.
-         */
+        /* Sized as the chosen word is, inside the row the switch keeps at a thumb's target. */
         :where(.dk-strip-tools .dk-theme-switch-button) {
             display: inline-flex;
             align-items: center;

@@ -130,8 +130,8 @@ const attachedButtons = new WeakMap<HTMLElement, () => void>();
  * a choice when a visitor makes one. It takes the switch, or an element that holds it. Attaching one
  * switch again before it is taken away attaches it once, and taking it away hides it again.
  *
- * Where the sheet collapses the switch to its name and one button, in a demo's strip narrower than
- * 20rem, the button names the choice shown and opens the choices under itself, with focus on the
+ * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
+ * narrower than 20rem, the button names the choice shown and opens the choices under itself, with focus on the
  * chosen one so the arrow keys move the choice without closing them. They close, with focus back
  * on the button, when a choice is picked by a pointer or on Escape, and close where they are on a
  * press outside or when focus leaves the switch. The button is wired on every switch, since the

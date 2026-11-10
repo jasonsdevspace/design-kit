@@ -680,9 +680,9 @@ const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
  * without script meets no control that does nothing, and a line after the switch, inside `noscript`
  * so only a visitor without script sees it, says what sits there with scripts on. The radios carry
  * no checked prop, so React never undoes what the attach function sets. The button is drawn in
- * every switch and shown by the sheet alone, in a demo's strip narrower than 20rem, where it opens
- * the group under itself, so the markup is one whatever the width. The switch takes a ref and a
- * page's class after the kit's own, and nothing in its markup moves.
+ * every switch and shown by the sheet alone, in a demo's strip on a screen narrower than 20rem,
+ * where it opens the group under itself, so the markup is one whatever the width. The switch takes
+ * a ref and a page's class after the kit's own, and nothing in its markup moves.
  */
 export const ThemeSwitch = ({
     id,

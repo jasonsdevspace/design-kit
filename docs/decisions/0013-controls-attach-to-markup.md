@@ -81,4 +81,3 @@ The paths are in `packages/design-kit`.
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem
   and keeps its row everywhere else.
-  switch collapsed in a strip narrower than 20rem and a row everywhere else among them.
