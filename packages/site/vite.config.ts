@@ -29,7 +29,8 @@ const THEME_COLORS = '<!-- theme-colors -->';
 
 /**
  * The browser's bar in the page's own ground for each scheme, from the tokens the site pins rather
- * than a copy of their values, before the theme script, which points both at the theme it draws.
+ * than a copy of their values, which would go stale when the pin moves. They come before the theme
+ * script, since it reads them as it runs and points both at the theme it draws.
  *
  * @param tokens the pinned version's tokens sheet
  */

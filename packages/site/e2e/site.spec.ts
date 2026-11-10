@@ -1143,7 +1143,9 @@ test.describe("the site's header", () => {
         expect(room).toBe(true);
     });
 
-    test('shows the chosen theme and the current tab in forced colors', async ({ page }) => {
+    test('shows the chosen theme, the current page and the chosen tab in forced colors', async ({
+        page,
+    }) => {
         await page.goto('/design-kit/controls/');
         // A browser reports the author's colors to a script even while it forces its own, so the
         // test reads the rules the sheet keeps for forced colors, which set the system's own.
@@ -1201,7 +1203,7 @@ const GROUNDS = (() => {
 })();
 
 test.describe("the browser's bar", () => {
-    test("names the page's ground for each scheme before the script, from the tokens, and follows the theme drawn", async ({
+    test("names the page's ground for each scheme from the tokens, before the script, which points both at the theme drawn", async ({
         page,
     }) => {
         for (const path of PAGES) {
@@ -1258,11 +1260,13 @@ test.describe('the theme switch', () => {
     /** What the page saved under the portfolio's key. */
     const saved = (page: Page) => page.evaluate(() => localStorage.getItem('theme'));
 
-    test("draws the switch's state live, showing the page's choice and changing it, and its other copy as a picture of that theme", async ({
+    test("draws the switch live, showing the page's choice and taking a new one, and its other copy as a picture of that theme", async ({
         page,
     }) => {
         await page.goto('/design-kit/controls/');
-        const state = page.locator('.site-state', { hasText: 'The switch, attached by the page' });
+        const state = page.locator('.site-state', {
+            hasText: 'The choice of theme, saved for every page',
+        });
         const live = state
             .locator('.site-copy:not([inert])')
             .getByRole('radiogroup', { name: 'Theme' });
@@ -1280,23 +1284,6 @@ test.describe('the theme switch', () => {
                 (group) => group.querySelector<HTMLInputElement>('input[value="light"]')?.checked
             )
         ).toBe(true);
-    });
-
-    test("copies the block beside a copy button's state, and shows its other copy as a picture", async ({
-        page,
-        context,
-    }) => {
-        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-        await page.goto('/design-kit/controls/');
-        const state = page.locator('.site-state', { hasText: 'A button that copies a block' });
-        const button = state.locator('.site-copy:not([inert]) .dk-copy');
-        await expect(button).toHaveAccessibleName('Copy install command');
-        await button.click();
-        await expect(button).toHaveAccessibleName('Copied install command');
-        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-            'npm install @jasonsdevspace/design-kit'
-        );
-        await expect(state.locator('.site-other .dk-copy')).toBeVisible();
     });
 
     test('shows the theme the portfolio saved, and takes the room the strip kept for it', async ({
@@ -1666,6 +1653,23 @@ test.describe('the code of each state', () => {
 });
 
 test.describe('the state cards', () => {
+    test("copies the block beside a copy button's state, and shows its other copy as a picture", async ({
+        page,
+        context,
+    }) => {
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+        await page.goto('/design-kit/controls/');
+        const state = page.locator('.site-state', { hasText: 'A button that copies a block' });
+        const button = state.locator('.site-copy:not([inert]) .dk-copy');
+        await expect(button).toHaveAccessibleName('Copy install command');
+        await button.click();
+        await expect(button).toHaveAccessibleName('Copied install command');
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            'npm install @jasonsdevspace/design-kit'
+        );
+        await expect(state.locator('.site-other .dk-copy')).toBeVisible();
+    });
+
     /** The pages that draw states, each in its own card. */
     const STATED = [
         '/design-kit/controls/',

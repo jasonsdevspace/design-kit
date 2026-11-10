@@ -487,7 +487,10 @@ body > .dk-strip {
     }
 }
 
-/* The list's name is the kit's eyebrow, set in from the edge as the links below it are. */
+/*
+ * The list's name is the kit's eyebrow, set in as far as the links below it, so its text lines up
+ * with theirs and with the column edge.
+ */
 .site-toc-name {
     margin-bottom: var(--dk-space-2);
     padding-inline: var(--dk-space-3);

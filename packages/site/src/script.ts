@@ -216,8 +216,9 @@ for (const code of codes) {
 /*
  * The states of the switch and the copy button. The live copy of each is attached as a page
  * attaches it, so the switch on the page shows the page's choice and saves a new one, and the copy
- * button copies the block beside it. The copy in the other theme is a picture, shown as a page's
- * script would show it, with the switch's choice set to that theme.
+ * button copies the block beside it. The copy in the other theme is inert, so it is not attached,
+ * and since the kit keeps a switch hidden until a script attaches it, the picture is shown by hand
+ * with its own theme chosen, so it never shows a choice its colors are not in.
  */
 for (const group of document.querySelectorAll<HTMLElement>(
     'main .site-copy:not([inert]) .dk-theme-switch'
@@ -225,7 +226,10 @@ for (const group of document.querySelectorAll<HTMLElement>(
     attachThemeSwitch(group);
 }
 const pictured = document.querySelectorAll<HTMLElement>('main .site-copy[inert] .dk-theme-switch');
-/** Shows each pictured switch with the theme of its copy chosen, which follows the page's theme. */
+/**
+ * Shows each pictured switch with its copy's theme chosen, again on every change of the page's
+ * theme, so a picture never shows a choice its colors are not in.
+ */
 const pictureSwitches = () => {
     const shown = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     for (const group of pictured) {

@@ -370,7 +370,7 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'Something that needs care',
+                name: 'Something that could go wrong',
                 attribute: 'class="dk-callout dk-callout-warning"',
                 react: `<Callout tone="warning" title="Three products are running low">
     <p>Each has fewer than five left.</p>
@@ -388,7 +388,7 @@ export const CONTROLS: readonly Control[] = [
         laidOut: true,
         states: [
             {
-                name: 'The switch, attached by the page',
+                name: 'The choice of theme, saved for every page',
                 attribute: 'class="dk-theme-switch"',
                 react: `<ThemeSwitch id="theme" name="theme" />`,
                 draw: ({ ThemeSwitch }, id) => <ThemeSwitch id={id('theme')} name={id('theme')} />,
@@ -436,7 +436,7 @@ export const CONTROLS: readonly Control[] = [
         laidOut: true,
         states: [
             {
-                name: 'Chips that name something',
+                name: 'Pills that only name something',
                 attribute: 'class="dk-pill"',
                 react: `<ul className="dk-pills" role="list">
     <li className="dk-pill">TypeScript</li>
@@ -490,7 +490,7 @@ export const CONTROLS: readonly Control[] = [
         laidOut: true,
         states: [
             {
-                name: 'Links among pages, one the current page',
+                name: 'Links in a row, the current page underlined',
                 attribute: 'class="dk-tab"',
                 react: `<nav aria-label="Categories" id="categories">
     <ul className="dk-tabs" role="list">

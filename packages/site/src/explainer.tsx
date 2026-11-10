@@ -77,8 +77,8 @@ export const HowItWorks = ({
                     for the theme the page is marked with.
                 </Step>
                 <Step title="The base styles set the page.">
-                    Its type and colors, the text you select on the accent, one focus ring for every
-                    link and control, and less motion if you ask your system for it.
+                    Its type and colors, the accent behind the text you select, one focus ring for
+                    every link and control, and less motion if you ask your system for it.
                 </Step>
                 <Step title="Each control looks like what it tells a screen reader.">
                     A pressed button looks pressed because of the attribute a screen reader reads as

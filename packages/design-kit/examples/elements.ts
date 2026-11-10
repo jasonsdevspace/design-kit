@@ -12,7 +12,8 @@ interface Values {
 
 /**
  * The React a page writes for a state, read by TypeScript's parser and built as an element with the
- * components it is given and the DOM's own elements, without running it as code. It reads what the
+ * components it is given and the DOM's own elements, without running it as code, so the text a page shows is held to draw what the state's own
+ * `draw` draws rather than trusted to. It reads what the
  * states write: string, number, boolean and element attributes, lists and objects of those, text
  * and elements as children, and fragments. The kit's tests build it with the sources' components,
  * and the site's with the version it pins.
