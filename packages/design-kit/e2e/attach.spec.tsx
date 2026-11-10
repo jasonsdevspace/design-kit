@@ -13,9 +13,11 @@ import { themeScriptHash } from '../src/vite.js';
  * under a policy that allows scripts only from that origin or by the theme script's hash and styles
  * only from that origin: hidden with no script, showing the saved choice once attached, saving and
  * drawing a new one, following another tab, holding a choice the browser will not save through a
- * Back, attaching once however often it is asked, the switch read by its name and its note, and
- * copying, from a pointer or the keyboard, or selecting where the clipboard is refused, with the
- * button and the status line saying which and focus held on the button.
+ * Back, attaching once however often it is asked, the switch read by its name and its note, the
+ * collapsed switch in a strip on a screen narrower than 20rem opening its choices under one button
+ * and closing them again, and copying, from a pointer or the keyboard, or selecting where the
+ * clipboard is refused, with the button and the status line saying which and focus held on the
+ * button.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -31,8 +33,10 @@ const MARKUP = renderToStaticMarkup(
     <main>
         <h1>Controls</h1>
         <ThemeSwitch />
-        <div id="holder">
-            <ThemeSwitch />
+        <div className="dk-strip">
+            <section id="holder" className="dk-strip-tools">
+                <ThemeSwitch />
+            </section>
         </div>
         <pre id="code">npm install @jasonsdevspace/design-kit</pre>
         <CopyButton name="install command" />

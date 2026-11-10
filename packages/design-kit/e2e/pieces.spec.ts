@@ -9,7 +9,8 @@ import { cutOff, SPACED } from './spacing.js';
  * The theme switch, the pill, the tab and the copy button's words as a browser draws them from
  * the kit's sheets, in markup written by hand: the chosen theme told apart by an edge rather
  * than a fill alone, a target the field's height and a thumb's on a phone, no word moving as
- * the choice moves, a chip that never reads as a control, the current page among pills marked
+ * the choice moves, the switch collapsed to its name and one button in a demo's strip narrower
+ * than 20rem and the row of choices everywhere else, a chip that never reads as a control, the current page among pills marked
  * by weight, a copy button as wide as its longest word, the chosen tab told by its text, its
  * weight and an accent line whether it is a tab, a page or a toggle, no word cut off under the
  * wider spacing a visitor may set, and the focus ring and a button's hover edge in the focus color
@@ -19,11 +20,14 @@ import { cutOff, SPACED } from './spacing.js';
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
-const SWITCH = `<div class="dk-theme-switch" role="radiogroup" aria-labelledby="theme-name" aria-describedby="theme-note">
+const SWITCH = `<div class="dk-theme-switch">
     <span class="dk-theme-switch-name" id="theme-name">Theme</span>
-    <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="system"><span>System</span></label>
-    <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="light" checked><span>Light</span></label>
-    <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="dark"><span>Dark</span></label>
+    <button type="button" class="dk-theme-switch-button" id="theme-button" aria-labelledby="theme-name theme-button" aria-expanded="false" aria-controls="theme-choices">Light</button>
+    <div class="dk-theme-switch-choices" id="theme-choices" role="radiogroup" aria-labelledby="theme-name" aria-describedby="theme-note">
+        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="system"><span>System</span></label>
+        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="light" checked><span>Light</span></label>
+        <label class="dk-theme-switch-choice"><input type="radio" name="dk-theme" value="dark"><span>Dark</span></label>
+    </div>
     <span class="dk-visually-hidden" id="theme-note">Your choice is saved for every page on jasonsdevspace.com.</span>
 </div>`;
 
@@ -161,20 +165,90 @@ test('keeps its name and choices on one row at the usual text size, phone to wid
     }
 });
 
-test("keeps one row in a demo's strip, whose room holds one row before it comes", async ({
-    page,
-}) => {
-    await open(page, { width: 320, css: 'html { font-size: 200%; } main { width: 280px; }' });
-    // The switch moved into a strip's section for switches, as a demo's script puts it there.
-    await page.locator('.dk-theme-switch').evaluate((group) => {
+/**
+ * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from, a
+ * media query's included, where a size set on the root reaches no media query.
+ */
+const textSize = async (page: Page, scale: number) => {
+    const session = await page.context().newCDPSession(page);
+    await session.send('Page.setFontSizes', {
+        fontSizes: { standard: Math.round(16 * scale), fixed: Math.round(13 * scale) },
+    });
+};
+
+/** The switch moved into a strip's section for switches, as a demo's script puts it there. */
+const inStrip = (page: Page) =>
+    page.locator('.dk-theme-switch').evaluate((group) => {
         const tools = document.createElement('section');
         tools.className = 'dk-strip-tools';
         group.replaceWith(tools);
         tools.append(group);
     });
-    const fit = await switchFit(page, '.dk-strip-tools');
-    expect(fit.rows).toBe(1);
-    expect(fit.pageScrolls).toBe(false);
+
+test("collapses to its name and one button naming the choice in a demo's strip narrower than 20rem", async ({
+    page,
+}) => {
+    // A 320px screen with the browser's text at twice the usual size is 10rem wide.
+    await textSize(page, 2);
+    await open(page, { width: 320, css: 'main { width: 280px; }' });
+    await inStrip(page);
+    const button = page.getByRole('button', { name: 'Theme Light' });
+    await expect(button).toBeVisible();
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    for (const name of ['System', 'Light', 'Dark']) {
+        await expect(page.getByRole('radio', { name })).toBeHidden();
+    }
+    // The name and the button on one row, inside the strip's section, and drawn as the chosen
+    // word is, with the same edge.
+    const fit = await page.locator('.dk-strip-tools').evaluate((tools) => {
+        const room = tools.getBoundingClientRect();
+        const parts = [...tools.querySelectorAll('.dk-theme-switch-name, .dk-theme-switch-button')];
+        const boxes = parts.map((part) => part.getBoundingClientRect());
+        return {
+            inside: boxes.map(
+                (box) => box.left >= room.left - 0.5 && box.right <= room.right + 0.5
+            ),
+            rows: new Set(boxes.map((box) => Math.round(box.top + box.height / 2))).size,
+            pageScrolls:
+                document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        };
+    });
+    expect(fit).toEqual({ inside: [true, true], rows: 1, pageScrolls: false });
+    const look = await button.evaluate((element: HTMLElement) => {
+        const style = getComputedStyle(element);
+        return {
+            edge: style.borderTopColor,
+            shadow: style.boxShadow,
+            height: element.offsetHeight,
+        };
+    });
+    expect(look.edge).toBe('rgb(31, 79, 216)');
+    expect(look.shadow).toContain('inset');
+    // One control tall, so the room the strip keeps holds it.
+    expect(look.height).toBeGreaterThanOrEqual(44);
+});
+
+test("keeps the row of three choices in a demo's strip at 20rem and wider, and outside the strip at any width", async ({
+    page,
+}) => {
+    // 320px at the usual text size is 20rem, where every phone sits, and a wide screen at twice
+    // the text is 40rem.
+    for (const [width, scale] of [
+        [320, 1],
+        [1280, 2],
+    ] as const) {
+        await textSize(page, scale);
+        await open(page, { width, css: 'main { padding-inline: 20px; }' });
+        await inStrip(page);
+        await expect(page.getByRole('button', { name: 'Theme Light' })).toBeHidden();
+        const fit = await switchFit(page, '.dk-strip-tools');
+        expect(fit.rows, `${String(width)}px at text ${String(scale)}`).toBe(1);
+        expect(fit.pageScrolls).toBe(false);
+    }
+    // Outside the strip the switch wraps instead, and draws no button, however narrow its column.
+    await open(page, { width: 320, css: 'main { width: 280px; }' });
+    await expect(page.getByRole('button', { name: 'Theme Light' })).toBeHidden();
+    expect((await switchFit(page)).rows).toBeGreaterThan(1);
 });
 
 test('draws a chip that never reads as a control, and marks the current page by weight', async ({

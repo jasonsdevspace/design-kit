@@ -129,6 +129,13 @@ const attachedButtons = new WeakMap<HTMLElement, () => void>();
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and draws
  * a choice when a visitor makes one. It takes the switch, or an element that holds it. Attaching one
  * switch again before it is taken away attaches it once, and taking it away hides it again.
+ *
+ * Where the sheet collapses the switch to its name and one button, in a demo's strip narrower than
+ * 20rem, the button names the choice shown and opens the choices under itself, with focus on the
+ * chosen one so the arrow keys move the choice without closing them. They close, with focus back
+ * on the button, when a choice is picked by a pointer or on Escape, and close where they are on a
+ * press outside or when focus leaves the switch. The button is wired on every switch, since the
+ * sheet alone decides where it shows.
  */
 export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const group = element.matches('.dk-theme-switch')
@@ -137,15 +144,58 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const already = attachedSwitches.get(group);
     if (already) return already;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    const button = group.querySelector<HTMLButtonElement>('.dk-theme-switch-button');
+    const choices = group.querySelector<HTMLElement>('.dk-theme-switch-choices');
     const show = () => {
         const choice = current();
         for (const radio of radios) radio.checked = radio.value === choice;
+        // The button says the chosen word as the switch writes it, so a switch worded by hand is
+        // named in its own words.
+        const word = radios.find((radio) => radio.checked)?.nextElementSibling?.textContent;
+        if (button && word) button.textContent = word;
     };
     const onChange = (event: Event) => {
         const { value } = event.target as HTMLInputElement;
         if (isChoice(value)) chooseTheme(value);
     };
+    const isOpen = () => button?.getAttribute('aria-expanded') === 'true';
+    const close = (back: boolean) => {
+        if (!isOpen()) return;
+        button?.setAttribute('aria-expanded', 'false');
+        if (back) button?.focus();
+    };
+    const onButton = () => {
+        if (isOpen()) {
+            close(true);
+            return;
+        }
+        button?.setAttribute('aria-expanded', 'true');
+        (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
+    };
+    // A press that started inside the choices picks by pointer, and one outside closes them.
+    let pointed = false;
+    const onPointerDown = (event: Event) => {
+        pointed = choices?.contains(event.target as Node) ?? false;
+        if (!pointed && !group.contains(event.target as Node)) close(false);
+    };
+    const onPick = () => {
+        if (pointed) close(true);
+        pointed = false;
+    };
+    const onKey = (event: KeyboardEvent) => {
+        if (event.key !== 'Escape' || !isOpen()) return;
+        event.preventDefault();
+        close(true);
+    };
+    const onFocusOut = (event: FocusEvent) => {
+        if (!group.contains(event.relatedTarget as Node | null)) close(false);
+    };
     for (const radio of radios) radio.addEventListener('change', onChange);
+    button?.addEventListener('click', onButton);
+    choices?.addEventListener('click', onPick);
+    group.addEventListener('keydown', onKey);
+    group.addEventListener('focusout', onFocusOut);
+    document.addEventListener('pointerdown', onPointerDown);
     switches.add(show);
     listen();
     show();
@@ -154,6 +204,12 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     group.hidden = false;
     const detach = () => {
         for (const radio of radios) radio.removeEventListener('change', onChange);
+        button?.removeEventListener('click', onButton);
+        choices?.removeEventListener('click', onPick);
+        group.removeEventListener('keydown', onKey);
+        group.removeEventListener('focusout', onFocusOut);
+        document.removeEventListener('pointerdown', onPointerDown);
+        close(false);
         switches.delete(show);
         attachedSwitches.delete(group);
         group.hidden = true;

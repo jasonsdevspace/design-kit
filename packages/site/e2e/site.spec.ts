@@ -1298,6 +1298,29 @@ test.describe('the theme switch', () => {
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     });
 
+    /**
+     * The switch as it has come: narrower than 20rem its name and one button, which names the
+     * choice, and the row of choices otherwise, fitting the width its section keeps for it in this
+     * font on either side, since the section sets what it holds against its end.
+     */
+    const switchCame = async (page: Page, width: number, scale: number) => {
+        if (width / (16 * scale) < 20) {
+            await expect(page.getByRole('button', { name: 'Theme System' })).toBeVisible();
+            await expect(choice(page, 'System')).toBeHidden();
+        } else {
+            await expect(choice(page, 'System')).toBeVisible();
+        }
+        const spills = await page
+            .locator('body > .dk-strip .dk-strip-tools')
+            .evaluate((section) => {
+                const outer = section.getBoundingClientRect();
+                const group = section.querySelector('.dk-theme-switch');
+                const inner = group?.getBoundingClientRect();
+                return !inner || inner.left < outer.left - 1 || inner.right > outer.right + 1;
+            });
+        expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
+    };
+
     test('moves nothing below the strip as it comes, at any width or text size', async ({
         browser,
     }) => {
@@ -1310,24 +1333,7 @@ test.describe('the theme switch', () => {
                     await page.setViewportSize({ width, height: 900 });
                     await textSize(page, scale);
                     await page.goto('/design-kit/');
-                    if (javaScriptEnabled) {
-                        await expect(choice(page, 'System')).toBeVisible();
-                        // The switch's words fit the width its section keeps for it, in this font,
-                        // on either side, since the section sets what it holds against its end.
-                        const spills = await page
-                            .locator('body > .dk-strip .dk-strip-tools')
-                            .evaluate((section) => {
-                                const outer = section.getBoundingClientRect();
-                                const group = section.querySelector('.dk-theme-switch');
-                                const inner = group?.getBoundingClientRect();
-                                return (
-                                    !inner ||
-                                    inner.left < outer.left - 1 ||
-                                    inner.right > outer.right + 1
-                                );
-                            });
-                        expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
-                    }
+                    if (javaScriptEnabled) await switchCame(page, width, scale);
                     const top = await page
                         .locator('.site-header')
                         .evaluate((nav) => nav.getBoundingClientRect().top);

@@ -717,12 +717,9 @@ describe('the switch, the copy button and the status line', () => {
     it("take a ref and a class of the page after the kit's, with nothing in the markup moved", () => {
         const group = createRef<HTMLDivElement>();
         const drawn = renderToStaticMarkup(<ThemeSwitch id="theme" ref={group} className="site" />);
-        expect(drawn).toContain(
-            '<div class="dk-theme-switch site" role="radiogroup" aria-labelledby="theme-name"' +
-                ' aria-describedby="theme-note" hidden="">'
-        );
+        expect(drawn).toContain('<div class="dk-theme-switch site" hidden="">');
         expect(renderToStaticMarkup(<ThemeSwitch id="theme" />)).toContain(
-            '<div class="dk-theme-switch" role="radiogroup"'
+            '<div class="dk-theme-switch" hidden="">'
         );
         const button = createRef<HTMLButtonElement>();
         expect(
@@ -734,6 +731,26 @@ describe('the switch, the copy button and the status line', () => {
         );
         expect(renderToStaticMarkup(<CopyStatus />)).toBe(
             '<p class="dk-visually-hidden" role="status"></p>'
+        );
+    });
+
+    it('draws the switch as its name, a button naming the choice for the collapsed form, and the group of radios described by the note', () => {
+        expect(renderToStaticMarkup(<ThemeSwitch id="theme" name="t" note="Kept here." />)).toBe(
+            '<div class="dk-theme-switch" hidden="">' +
+                '<span class="dk-theme-switch-name" id="theme-name">Theme</span>' +
+                '<button type="button" class="dk-theme-switch-button" id="theme-button"' +
+                ' aria-labelledby="theme-name theme-button" aria-expanded="false"' +
+                ' aria-controls="theme-choices">System</button>' +
+                '<div class="dk-theme-switch-choices" id="theme-choices" role="radiogroup"' +
+                ' aria-labelledby="theme-name" aria-describedby="theme-note">' +
+                '<label class="dk-theme-switch-choice"><input type="radio" name="t" value="system"/>' +
+                '<span>System</span></label>' +
+                '<label class="dk-theme-switch-choice"><input type="radio" name="t" value="light"/>' +
+                '<span>Light</span></label>' +
+                '<label class="dk-theme-switch-choice"><input type="radio" name="t" value="dark"/>' +
+                '<span>Dark</span></label></div>' +
+                '<span class="dk-visually-hidden" id="theme-note">Kept here.</span></div>' +
+                '<noscript><p class="dk-theme-switch-noscript">With scripts on, a Theme switch sits here.</p></noscript>'
         );
     });
 

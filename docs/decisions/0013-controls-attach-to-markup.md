@@ -72,6 +72,13 @@ The paths are in `packages/design-kit`.
   selected where the clipboard is refused, and a copy button put back to Copy when it is taken away.
   It finds the switch read by its name and described by its note, and a copy made on Enter as on a
   click, and on Space where the clipboard is refused, with focus held on the button so the keys the
-  status line names still reach the page.
-- `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, and
-  that none cuts a word off under the wider text spacing a visitor may set, on a phone.
+  status line names still reach the page. In a strip on a screen narrower than 20rem it finds the
+  switch collapsed to one button naming the choice shown, the choices opened under it one to a row
+  at the target with nothing below the strip moved, a pick by pointer closing them with focus on
+  the button, the arrow keys moving the choice without closing them, Escape and a press outside
+  closing them, and the row of choices back at 20rem.
+- `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
+  none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
+  switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem
+  and keeps its row everywhere else.
+  switch collapsed in a strip narrower than 20rem and a row everywhere else among them.
