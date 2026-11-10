@@ -1,68 +1,68 @@
 {
     "recorded": {
         "date": "2026-11-10",
-        "commit": "11f3d66",
-        "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
+        "commit": "b412755",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "tools": {
         "lighthouse": "13.5.0",
         "chrome": "156",
-        "kit": "0.3.0"
+        "kit": "0.3.1"
     },
     "pages": [
         {
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 915.9,
+            "paint": 930.8,
             "shift": 0,
-            "bytes": 15132,
+            "bytes": 15172,
             "requests": 4
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 924.2,
+            "paint": 933.1,
             "shift": 0,
-            "bytes": 18154,
+            "bytes": 18195,
             "requests": 4
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 925,
+            "paint": 932.7,
             "shift": 0,
-            "bytes": 18421,
+            "bytes": 18455,
             "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 923.6,
+            "paint": 922.8,
             "shift": 0,
-            "bytes": 16305,
+            "bytes": 16350,
             "requests": 4
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 933.2,
+            "paint": 922.5,
             "shift": 0,
-            "bytes": 16541,
+            "bytes": 16584,
             "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 917.1,
+            "paint": 927.9,
             "shift": 0,
-            "bytes": 15804,
+            "bytes": 15845,
             "requests": 4
         }
     ]
