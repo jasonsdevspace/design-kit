@@ -55,10 +55,12 @@ otherwise writes `themeScript` into its head itself.
   installed package.
 - The build fails on a page with no placeholder, which would otherwise draw the system's theme
   rather than the visitor's, and on a page with two.
-- The bar follows the root's `data-theme` through a mutation observer, so the switch, which sets
-  the attribute itself, and anything else that sets it reach the bar without a second reading of
-  the contract. The script's hash is held to a committed file, and the changelog's entry for the
-  package's version has to name `themeScriptHash`, so a change to the script cannot ship unsaid.
+- The bar follows the root's `data-theme` through a mutation observer set before the first theme
+  is set, so the switch, which sets the attribute itself, and anything else that sets it reach the
+  bar without a second reading of the contract, and only the two exact scheme queries are read, so
+  a page's other theme colors are left alone. The script's hash is held to a committed file, and at
+  a bump the changelog's entry for the new version has to say whether `themeScriptHash` changed from
+  the released one, so a change to the script cannot ship unsaid.
 
 ## How it is tested
 
@@ -69,7 +71,8 @@ The paths are in `packages/design-kit`.
   finds nothing in it that would end its element.
 - `src/vite.test.ts` finds the script inline where the page asks for it, the build refused for a
   page with no placeholder and for one with two, the hash matching the script as the plugin writes
-  it and the committed hash file, and the changelog's entry for the version naming the hash.
+  it and the committed hash file, and at a bump the changelog's entry for the new version saying
+  whether the hash changed from the released one.
 - `e2e/theme.spec.ts` serves the page from an origin of its own in Chromium and finds the saved
   theme drawn whatever the system, the system followed when nothing, `system` or an unknown value is
   saved and when storage is refused, the theme set before the body is parsed, the system followed as

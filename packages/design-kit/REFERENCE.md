@@ -886,12 +886,13 @@ follows the system. Print always draws the light values, whatever the theme, sin
 and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
 layer sets them back to light in print too.
 
-A page that names its theme color for each scheme, two `<meta name="theme-color">` with
-`media="(prefers-color-scheme: light)"` and `dark` before the script, gets the browser's bar in the
-ground of the theme the page draws. The script points both at that ground on the first paint and on
-every change of the root's theme, the switch's, another tab's, the system's and a page restored by
-Back included, so the bar never shows the other theme's ground. With either meta missing or without
-content, it leaves them alone.
+A page that names its theme color for each scheme, two `<meta name="theme-color">` whose media
+queries are exactly `(prefers-color-scheme: light)` and `(prefers-color-scheme: dark)`, before the
+script, gets the browser's bar in the ground of the theme the page draws. The script points both at
+that ground on the first paint and on every change of the root's theme, the switch's, another tab's,
+the system's and a page restored by Back included, so the bar never shows the other theme's ground.
+A theme color with any other query is left alone, and so are both when either is missing or without
+content.
 
 A page whose Content Security Policy allows inline script only by its hash names the script with
 `themeScriptHash`, already quoted as a policy source. It is the hash of the script in the installed

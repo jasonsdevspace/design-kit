@@ -116,11 +116,29 @@ test("moves the bar with the theme: the system's change, another tab, a restore 
     await context.close();
 });
 
-test('leaves the metas alone where the page names no color for each scheme', async ({
+test('leaves alone a meta with another query, and both where the page names no color for each scheme', async ({
     browser,
 }) => {
     const context = await browser.newContext({ colorScheme: 'light' });
     await context.addInitScript(([key]) => localStorage.setItem(key, 'dark'), [THEME_KEY] as const);
+    // A third color for a narrow screen, and a light color written as "not dark", which is not
+    // the query the script reads, so the pair is incomplete and nothing is painted.
+    const others = await tab(
+        context,
+        `<!doctype html><html lang="en"><head>` +
+            `<meta name="theme-color" content="#abcdef" media="(max-width: 600px)">` +
+            `<meta name="theme-color" content="${GROUNDS.light}" media="not (prefers-color-scheme: dark)">` +
+            `<meta name="theme-color" content="${GROUNDS.dark}" media="(prefers-color-scheme: dark)">` +
+            `<script>${themeScript}</script></head><body></body></html>`
+    );
+    expect(await themeOf(others)).toBe('dark');
+    expect(await barOf(others)).toEqual(['#abcdef', GROUNDS.light, GROUNDS.dark]);
+    // A root theme that is neither, as a stray script could set, paints nothing.
+    const pair = await tab(context, BAR_PAGE);
+    expect(await barOf(pair)).toEqual([GROUNDS.dark, GROUNDS.dark]);
+    await pair.evaluate(() => document.documentElement.setAttribute('data-theme', 'constructor'));
+    await pair.evaluate(() => new Promise((resolve) => setTimeout(resolve, 50)));
+    expect(await barOf(pair)).toEqual([GROUNDS.dark, GROUNDS.dark]);
     const one = await tab(
         context,
         `<!doctype html><html lang="en"><head>` +
