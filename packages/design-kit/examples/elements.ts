@@ -46,6 +46,14 @@ export const elementOf = (react: string, kit: object): React.ReactElement => {
         }
         throw new Error(`the React shown writes what this test cannot read: ${node.getText()}`);
     };
+    /** A child as React draws it, which a list or an object is not. */
+    const childOf = (node: ts.Node): React.ReactNode => {
+        const value = valueOf(node);
+        if (typeof value === 'object' && !React.isValidElement(value)) {
+            throw new Error(`a child React cannot draw: ${node.getText()}`);
+        }
+        return value;
+    };
     /** The children of an element or a fragment: its text with the layout's breaks dropped. */
     const childrenOf = (children: ts.NodeArray<ts.JsxChild>): React.ReactNode[] =>
         children.flatMap((child): React.ReactNode[] => {
@@ -54,8 +62,8 @@ export const elementOf = (react: string, kit: object): React.ReactElement => {
                 return text === '' ? [] : [text];
             }
             if (ts.isJsxExpression(child))
-                return child.expression ? [valueOf(child.expression) as React.ReactNode] : [];
-            return [valueOf(child) as React.ReactNode];
+                return child.expression ? [childOf(child.expression)] : [];
+            return [childOf(child)];
         });
     const build = (node: ts.JsxElement | ts.JsxSelfClosingElement): React.ReactElement => {
         const opening = ts.isJsxElement(node) ? node.openingElement : node;

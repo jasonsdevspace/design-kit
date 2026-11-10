@@ -390,8 +390,18 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'The choice of theme, saved for every page',
                 attribute: 'class="dk-theme-switch"',
-                react: `<ThemeSwitch id="theme" name="theme" />`,
-                draw: ({ ThemeSwitch }, id) => <ThemeSwitch id={id('theme')} name={id('theme')} />,
+                react: `<ThemeSwitch
+    id="theme"
+    name="theme"
+    note="Your choice is saved for every page on jasonsdevspace.com."
+/>`,
+                draw: ({ ThemeSwitch }, id) => (
+                    <ThemeSwitch
+                        id={id('theme')}
+                        name={id('theme')}
+                        note="Your choice is saved for every page on jasonsdevspace.com."
+                    />
+                ),
             },
         ],
     },

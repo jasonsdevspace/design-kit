@@ -34,6 +34,7 @@ const THEME_COLORS = '<!-- theme-colors -->';
  *
  * @param tokens the pinned version's tokens sheet
  */
+let metas: string | undefined;
 const themeColorMetas = (tokens: string) => {
     const declared = declaredIn(tokens);
     return (['light', 'dark'] as const)
@@ -147,8 +148,8 @@ const pagesPlugin = (): Plugin => ({
             ) {
                 throw new Error(`${file} needs a place for each part of its page`);
             }
-            const built = await build();
-            const body = renderToStaticMarkup(PAGES[file](built));
+            const made = await build();
+            const body = renderToStaticMarkup(PAGES[file](made));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`
@@ -158,7 +159,7 @@ const pagesPlugin = (): Plugin => ({
                 .replace(TITLE, () => escaped(route.title))
                 .replace(DESCRIPTION, () => escaped(route.description))
                 .replace(ICONS, () => ICON_LINKS)
-                .replace(THEME_COLORS, () => themeColorMetas(built.tokens))
+                .replace(THEME_COLORS, () => (metas ??= themeColorMetas(made.tokens)))
                 .replace(PAGE, () => body);
         },
     },

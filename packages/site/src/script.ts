@@ -234,8 +234,8 @@ const pictureSwitches = () => {
     const shown = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     for (const group of pictured) {
         group.hidden = false;
-        const other = group.closest('.site-other') !== null;
-        const choice = other ? (shown === 'dark' ? 'light' : 'dark') : shown;
+        // Only the copy in the other theme is pictured, since the live copy is attached.
+        const choice = shown === 'dark' ? 'light' : 'dark';
         const radio = group.querySelector<HTMLInputElement>(`input[value="${choice}"]`);
         if (radio) radio.checked = true;
     }

@@ -1225,11 +1225,11 @@ test.describe("the browser's bar", () => {
                 '(prefers-color-scheme: light)',
                 '(prefers-color-scheme: dark)',
             ]);
-            const script = page.locator('head script').first();
             expect(
                 await page.evaluate(() => {
                     const meta = document.querySelector('meta[name="theme-color"][media]');
-                    const script = document.querySelector('head script');
+                    // The theme script, inline, which the site's module script is not.
+                    const script = document.querySelector('head script:not([src])');
                     return meta && script
                         ? Boolean(
                               meta.compareDocumentPosition(script) &
@@ -1239,7 +1239,6 @@ test.describe("the browser's bar", () => {
                 }),
                 path
             ).toBe(true);
-            await expect(script).toHaveCount(1);
             // The theme script points both at the drawn theme's ground, dark here.
             expect(
                 written.map(([, content]) => content),
@@ -1494,15 +1493,19 @@ test.describe('the code of each state', () => {
                 };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
-                    // label, and with the ids the code names. A state the site's script attaches,
-                    // the switch and the copy button, is drawn as the kit's reference prints it,
-                    // which the kit's own test holds, and shown here as a script shows it.
-                    if (state.querySelector('.dk-theme-switch, .dk-copy')) return [];
+                    // label, and with the ids the code names. A control the site's script attaches,
+                    // the switch and the copy button, is shown, so the hidden the code prints is
+                    // read as shown too, and the choice the script checks is a property the markup
+                    // never carries.
                     const copy = state.querySelector('.site-copy')?.cloneNode(true);
                     const code = state.querySelector<HTMLElement>('.site-code');
-                    const shown = code?.querySelector('pre.dk-code')?.textContent;
+                    const shown = code
+                        ?.querySelector('pre.dk-code')
+                        ?.textContent.replaceAll(' hidden=""', '');
                     if (!(copy instanceof HTMLElement) || !code || shown === undefined) return [];
                     copy.querySelector('.site-copy-label')?.remove();
+                    for (const hidden of copy.querySelectorAll('[hidden]'))
+                        hidden.removeAttribute('hidden');
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
@@ -2268,10 +2271,7 @@ test.describe('how each state is shown', () => {
         // Only the code's disclosures, tabs, frames and copy buttons, and the tests' links.
         expect(
             before.filter(
-                (name) =>
-                    !['summary', 'dk-tab', 'dk-code', 'dk-copy', 'a', 'input', 'button'].includes(
-                        name
-                    )
+                (name) => !['summary', 'dk-tab', 'dk-code', 'dk-copy', 'a'].includes(name)
             )
         ).toEqual([]);
         const box = await page
