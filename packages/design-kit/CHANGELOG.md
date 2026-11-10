@@ -7,6 +7,81 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.4.0
+
+The kit adds tabs, a choice field, a textarea field, a large button and a text button, an eyebrow, a
+warning tone and two spacing steps, draws selected text on the accent, collapses the theme switch to
+one button in a demo's strip on a screen narrower than 20rem, and paints the browser's bar from the
+theme script. No token is renamed, though `--dk-field-inline` and `--dk-shadow-raised` changed their
+values. The theme script's text changed, so `themeScriptHash` changed too. This changelog no longer
+ships in the package: it lives on GitHub, linked from the package README, and each release carries
+its entry as the notes.
+
+- **Upgrading.** A page that copies `themeScriptHash` into its policy rather than reading it from
+  the package takes the new hash. A page that wants the browser's bar to follow the theme names two
+  `theme-color` metas before the script, each with `content` and a `media` of exactly
+  `(prefers-color-scheme: light)` or `(prefers-color-scheme: dark)`. `PortfolioStrip`'s types refuse
+  `tools` without `toolsLabel`, and a page that passes them without a name draws their section
+  unnamed and so no landmark, so such a page names them. A switch, and a strip waiting for its
+  switches, now draw a line inside `noscript` unless a page empties `noscript` or `toolsNoscript`,
+  so a test that counts their children allows for it. The theme switch's markup changed: the group's
+  role, name and note moved from `.dk-theme-switch` onto a `.dk-theme-switch-choices` div around the
+  radios, and a `.dk-theme-switch-button` sits between the name and the choices, so a page that
+  writes the switch by hand adds both as the reference gives them, while a page that draws it with
+  `ThemeSwitch` or finds the group by its role changes nothing, and the new `ref` holds the switch
+  itself. In a demo's strip the kit no longer keeps the switch on one row by itself, so a page that
+  set a scroll allowance on the strip's section for it can drop that rule. `--dk-field-inline` moved
+  from 0.5rem to 0.75rem, the step a button is padded by, so a page that lined something up to a
+  field's padding checks it. `--dk-shadow-raised` is deeper on a dark page, in one `light-dark()`,
+  so a page that copied its value as one color writes the light value as a fallback and the pair
+  where `light-dark()` is supported. Under reduced motion the kit keeps a page's delays and cuts
+  only the motion, so a page that staggers entrances by delay zeroes its own delays under the same
+  query if it wants them together. A holder a page added to hide a waiting live callout can go, and
+  a page with a selection rule of its own can drop it.
+- **Theme script.** Where the page names a `theme-color` meta for each scheme before the script, it
+  points both at the ground of the theme it draws, on the first paint and on every change of the
+  root's theme, so the browser's bar follows the theme too.
+- **Controls.** `attachThemeSwitch` wires the switch's new button. In a demo's strip on a screen
+  narrower than 20rem, a media query in rem that follows the browser's text size, the sheet shows
+  the switch as its name and one button naming the choice, which opens the three radios under itself
+  one to a row at a thumb's target, with focus on the chosen one so the arrow keys move the choice
+  without closing them. A pick by pointer and Escape close them with focus back on the button, and a
+  press elsewhere or focus leaving the switch closes them where they are. At 20rem and wider, and
+  outside a strip, the switch is the row it was.
+- **React.** `ChoiceField` draws radios or checkboxes in a fieldset with its legend, hint and error
+  wired as the other fields are, each control described by the error while one shows, with the type
+  `Choice` for each choice. `TextareaField` draws a textarea as tall as its rows, three unless
+  given. `Callout` takes `tone="warning"`, read as "Warning: " before its message. `Button` takes
+  `large` and `text`, and refuses `text` with `accent`, a toggle or `large`. `ThemeSwitch`,
+  `CopyButton` and `CopyStatus` take `ref` and `className`. `ThemeSwitch` draws a line inside
+  `noscript` after the switch, and `PortfolioStrip` one in the room `toolsWaiting` keeps, each for a
+  visitor without script, worded by `noscript` and `toolsNoscript` or turned off, and a blank
+  `toolsLabel` draws no landmark. Every component has a props type named after it, `SkipLinkProps`,
+  `PortfolioStripProps`, `DemoFooterProps`, `ThemeSwitchProps`, `CopyButtonProps` and
+  `CopyStatusProps` among them.
+- **Tokens.** `--dk-warning` and `--dk-warning-bg` are new, for a callout about something that needs
+  care. `--dk-space-7` and `--dk-space-8` are new, for the space between a page's own sections, and
+  `--dk-tracking-caps` is the tracking of a label in caps. A test holds `--dk-raised`, which is
+  unchanged, lighter than the surface in the dark theme and no darker than the page in the light
+  one.
+- **Sheets.** `.dk-tabs` and `.dk-tab` draw a row of muted words with the chosen one, marked by
+  `aria-selected`, `aria-current` or `aria-pressed`, in the page's text over an accent line, the
+  page owning the roles and keys. `.dk-choice-field`, `.dk-choices`, `.dk-choices-row`, `.dk-choice`
+  and `.dk-choice-hint` draw the choice field, and the theme switch's choice is the same label under
+  its own class, drawn as it was. `.dk-textarea` joins the field's rules and resizes in height
+  alone. `.dk-button-large` draws a button at the target with wider padding and the body text, and
+  `.dk-button-text` draws one as a link, which keeps its link look when its panel is open.
+  `.dk-eyebrow` draws a caps label in the muted text at the caption size. `.dk-callout-warning`
+  draws the warning tone. The base draws selected text on the accent in the text the accent carries,
+  with the pair swapped on the accent button. The skip link takes an edge, so forced colors draw it.
+  An empty live callout waits a pixel out of the flow. The focus ring stays on a control a roving
+  widget gives a tabindex of -1. On paper a callout and a code block keep an edge, a code block and
+  a scrolling table show whole, and the controls that do nothing there do not print. The reference's
+  layers section shows what a page with a reset in a layer writes.
+- **Package.** `CHANGELOG.md` is no longer in the package, and the record of the package's size that
+  the release takes shows each sheet gzipped without its comments, with a test holding the three
+  together to a budget.
+
 ## 0.3.1
 
 Outside a demo's strip, the theme switch's choices wrap where its column is too narrow for one row,
