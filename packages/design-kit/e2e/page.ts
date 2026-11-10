@@ -12,12 +12,12 @@ import type { Locator, Page } from '@playwright/test';
 export const sheet = (name: string): string =>
     readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 
-/** The three sheets a page loads, in their order. */
+/** The kit's sheets, in the order a page loads them. */
 export const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
 /**
- * A page written into the browser at the width given, in the theme given, with the kit's sheets
- * and any rules of the page's own after them, and the body given.
+ * A page written into the browser at the width and height given, in the theme given, with the
+ * kit's sheets and any rules of the page's own after them, and the title and body given.
  */
 export const writePage = async (
     page: Page,
@@ -64,7 +64,7 @@ export const box = async (
     return drawn;
 };
 
-/** How tall the element the locator finds is drawn, to the pixel. */
+/** How tall the element the locator finds is drawn, to the pixel, or nothing where it is not drawn. */
 export const height = async (locator: Locator): Promise<number> =>
     Math.round((await locator.boundingBox())?.height ?? 0);
 

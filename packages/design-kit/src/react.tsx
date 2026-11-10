@@ -16,8 +16,8 @@ import { THEME_CHOICES, type ThemeChoice } from './theme.js';
  * its own and no style attribute, so a page without React writes the same markup by hand, and a
  * page whose policy allows styles only from its own origin draws it. A control's state is a
  * native or ARIA attribute, never a class of the kit's. A component trusts its types, and guards
- * at run time only where a value plain JavaScript can pass would become a class or an element of
- * its own, as a callout's tone and heading level would.
+ * at run time only where a value plain JavaScript can pass would become a class, an element or an
+ * attribute of its own, as a callout's tone, heading level, role and live region would.
  */
 
 /**
@@ -77,9 +77,9 @@ const currentAs = (current: ChromePage | undefined, page: ChromePage) =>
  * Whose demo this is, above the page, with three links together on the left: the author's name,
  * which leads to the portfolio as the footer's does, how it works and the source. It is a
  * navigation landmark in a plain div rather than a header, so the demo's own header stays the
- * page's one
- * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
- * named for them, since a name a screen reader hears has to say what the section holds, and while
+ * page's one banner. A demo with switches of its own puts them beside the links, in a landmark of
+ * their own named for them, since a name a screen reader hears has to say what the section holds,
+ * and while
  * they are on their way the strip keeps their room in that section, unnamed and so no landmark,
  * with a line in it that only a visitor without script sees, since for them the switches never
  * come. A switch drawn into a template and copied out by a page's script leaves its own such line
@@ -519,8 +519,8 @@ export type ChoiceFieldProps = FieldParts &
  * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
  * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked.
  * Every control of the set is described by the error too, after any description of its own, since
- * a screen reader that lands on a control may read nothing of its group. The fieldset takes every other prop given, its `ref` among them, and no
- * role, since the set's role follows its type.
+ * a screen reader that lands on a control may read nothing of its group. The fieldset takes every
+ * other prop given, its `ref` among them, and no role, since the set's role follows its type.
  */
 export const ChoiceField = (props: ChoiceFieldProps) => {
     const { native, field } = useControl(props);
@@ -714,7 +714,8 @@ export const ThemeSwitch = ({
     ref,
 }: ThemeSwitchProps) => {
     const made = useId();
-    // An empty id would name nothing, so it is made as one left out is, as a field's is.
+    // An empty id would start every part's id with a hyphen, which two switches on a page would
+    // share, so it is made as one left out is, as a field's is.
     const base = id === undefined || id === '' ? made : id;
     return (
         <>

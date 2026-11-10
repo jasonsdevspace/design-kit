@@ -5,7 +5,7 @@
 ## Context
 
 Three sites drew tabs by hand, for a category among categories, a block of markup beside its React
-and a lane among lanes, and two drew rows of pills and small caps labels over headings. Each is a
+and a lane among lanes, and two drew rows of pills and caps labels over headings. Each is a
 look with no state the kit keeps: a tab's role and the keys that move among tabs belong to the page
 that owns the panels, a pill names something or links somewhere, and an eyebrow is text. The kit
 had to give the sites one look for each without taking over what the page already does.
@@ -47,7 +47,8 @@ The paths are in `packages/design-kit`.
 - `examples/readme.test.ts` holds the reference's blocks for tabs, pills and the eyebrow to the
   examples they are generated from.
 - `e2e/pieces.spec.ts` draws those examples with the kit's sheets in Chromium and finds the chosen
-  tab in the page's text over an accent line whether it is a tab, a link or a toggle, every tab in
+  tab in the page's text over an accent line, and in the system's selection colors in forced
+  colors, whether it is a tab, a link or a toggle, every tab in
   place as the choice moves, a chip that never reads as a control, the current pill marked by
   weight, the eyebrow in caps at the caption size in the muted text, and no word cut off under the
   wider text spacing a visitor may set.
