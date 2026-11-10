@@ -5,8 +5,8 @@ import { expect, type Page, test } from '@playwright/test';
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
  * saved none, picks the page's background and text, a demo's own palette and rules win over the
- * kit's wherever its sheets load, the order of a page's own layers places the kit's, and the focus
- * ring lands where it should in both themes.
+ * kit's wherever its sheets load, the order of a page's own layers places the kit's, selected text
+ * stands on the accent, and the focus ring lands where it should in both themes.
  */
 
 const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
@@ -406,3 +406,30 @@ test('shows a pointer on what takes a click, and the arrow on a choice that is u
     // A label for a text field only moves focus to it, so it keeps the browser's own cursor.
     expect(await cursor('#text')).not.toBe('pointer');
 });
+
+/** The selection's ground and text in each theme: the accent, and the text it carries. */
+const SELECTION = {
+    light: { background: 'rgb(31, 79, 216)', color: 'rgb(255, 255, 255)' },
+    dark: { background: 'rgb(143, 176, 255)', color: 'rgb(18, 18, 18)' },
+} as const;
+
+for (const theme of ['light', 'dark'] as const) {
+    test(`draws selected text on the accent in the text it carries, in the ${theme} theme`, async ({
+        page,
+    }) => {
+        await open(page, theme, '<p id="words">Selected words</p>');
+        // The pseudo-element's style is read as the browser resolves it, whether or not a selection
+        // is made, so none is.
+        const drawn = await page.evaluate(() => {
+            const words = document.getElementById('words');
+            if (!words) throw new Error('the words are not on the page');
+            const style = getComputedStyle(words, '::selection');
+            return {
+                selection: { background: style.backgroundColor, color: style.color },
+                ground: getComputedStyle(document.body).backgroundColor,
+            };
+        });
+        expect(drawn.selection).toEqual(SELECTION[theme]);
+        expect(drawn.selection.background).not.toBe(drawn.ground);
+    });
+}
