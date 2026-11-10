@@ -12,6 +12,7 @@ import {
     PortfolioStrip,
     SelectField,
     SkipLink,
+    TextareaField,
     ThemeSwitch,
 } from '../src/react.js';
 import * as pieces from './pieces.js';
@@ -77,7 +78,7 @@ export const buttons: ReactElement = (
     </>
 );
 
-/** A text field with a hint and an error, and a select with neither. */
+/** A text field with a hint and an error, a select with neither, and a textarea with a hint. */
 export const fields: ReactElement = (
     <>
         <InputField
@@ -91,6 +92,7 @@ export const fields: ReactElement = (
             <option value="">Choose an order</option>
             <option value="price">Price</option>
         </SelectField>
+        <TextareaField id="note" label="Note" hint="Shown to the picker" />
     </>
 );
 
@@ -221,6 +223,9 @@ export const controlStates: ReactElement = (
                     { value: 'color', label: 'Color' },
                 ]}
             />
+            <TextareaField id="note" label="Note" hint="Shown to the picker" />
+            <TextareaField id="message" label="Message" error="Write a message" />
+            <TextareaField id="closed-note" label="Closed note" disabled defaultValue="Closed" />
         </form>
         {(['info', 'success', 'warning', 'danger'] as const).map((tone) => (
             <Callout

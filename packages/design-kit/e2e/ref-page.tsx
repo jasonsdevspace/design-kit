@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Button, ChoiceField, InputField, SelectField } from '../src/react.js';
+import { Button, ChoiceField, InputField, SelectField, TextareaField } from '../src/react.js';
 
 /*
  * A page that opens a panel from the kit's button and, when the panel closes, moves focus back to
@@ -16,6 +16,7 @@ const Page = () => {
     const name = useRef<HTMLInputElement>(null);
     const size = useRef<HTMLSelectElement>(null);
     const color = useRef<HTMLInputElement>(null);
+    const note = useRef<HTMLTextAreaElement>(null);
     const [open, setOpen] = useState(false);
     const [sent, setSent] = useState(false);
     return (
@@ -52,6 +53,9 @@ const Page = () => {
                         <li>
                             <Button onClick={() => color.current?.focus()}>Go to the color</Button>
                         </li>
+                        <li>
+                            <Button onClick={() => note.current?.focus()}>Go to the note</Button>
+                        </li>
                     </ul>
                 ) : null}
                 <InputField ref={name} label="Name" error={sent && 'Enter a name'} />
@@ -68,6 +72,7 @@ const Page = () => {
                         { value: 'blue', label: 'Blue' },
                     ]}
                 />
+                <TextareaField ref={note} label="Note" error={sent && 'Write a note'} />
                 <Button
                     onClick={() => {
                         setSent(true);

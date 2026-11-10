@@ -357,6 +357,18 @@ const Field = ({
     </div>
 );
 
+/**
+ * What a field hands its control: every prop but the field's own parts, with the page's own
+ * description taken out for the wiring, and the wiring itself.
+ */
+const useControl = <P extends FieldParts & { readonly 'aria-describedby'?: string | undefined }>(
+    props: P
+) => {
+    const { label: _label, hint: _hint, error: _error, id: _id, ...rest } = props;
+    const { 'aria-describedby': own, ...native } = rest;
+    return { native, field: useField(props, own) };
+};
+
 export type InputFieldProps = FieldParts &
     Omit<ComponentPropsWithRef<'input'>, 'style' | 'id' | 'aria-invalid' | 'children'>;
 
@@ -365,12 +377,11 @@ export type InputFieldProps = FieldParts &
  * among them, which holds the input drawn for a page that moves focus to it.
  */
 export const InputField = (props: InputFieldProps) => {
-    const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;
-    const { 'aria-describedby': own, ...native } = rest;
-    const field = useField(props, own);
+    const { native, field } = useControl(props);
+    const { className, ...rest } = native;
     return (
         <Field parts={props} field={field}>
-            <input className={spaced('dk-input', className)} {...native} {...field.wired} />
+            <input className={spaced('dk-input', className)} {...rest} {...field.wired} />
         </Field>
     );
 };
@@ -384,14 +395,36 @@ export type SelectFieldProps = FieldParts &
  * focus to it.
  */
 export const SelectField = (props: SelectFieldProps) => {
-    const { label: _label, hint: _hint, error: _error, id: _id, className, ...rest } = props;
-    const { 'aria-describedby': own, children, ...native } = rest;
-    const field = useField(props, own);
+    const { native, field } = useControl(props);
+    const { className, children, ...rest } = native;
     return (
         <Field parts={props} field={field}>
-            <select className={spaced('dk-select', className)} {...native} {...field.wired}>
+            <select className={spaced('dk-select', className)} {...rest} {...field.wired}>
                 {children}
             </select>
+        </Field>
+    );
+};
+
+export type TextareaFieldProps = FieldParts &
+    Omit<ComponentPropsWithRef<'textarea'>, 'style' | 'id' | 'aria-invalid' | 'children'>;
+
+/**
+ * A textarea with its label, hint and error, three rows tall unless given its rows, the textarea
+ * taking every other prop given, its `ref` among them, which holds the textarea drawn for a page
+ * that moves focus to it. Its text is `defaultValue` or `value`, never children, as React has it.
+ */
+export const TextareaField = (props: TextareaFieldProps) => {
+    const { native, field } = useControl(props);
+    const { className, rows = 3, ...rest } = native;
+    return (
+        <Field parts={props} field={field}>
+            <textarea
+                className={spaced('dk-textarea', className)}
+                rows={rows}
+                {...rest}
+                {...field.wired}
+            />
         </Field>
     );
 };

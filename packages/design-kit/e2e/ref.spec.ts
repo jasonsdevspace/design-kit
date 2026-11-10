@@ -67,4 +67,8 @@ test("moves focus to the control each field's ref holds", async ({ page }) => {
         'true'
     );
     await expect(page.getByRole('radio', { name: 'Red' })).toBeFocused();
+    await page.getByRole('button', { name: 'Go to the note' }).click();
+    const note = page.getByLabel('Note');
+    await expect(note).toHaveClass('dk-textarea');
+    await expect(note).toBeFocused();
 });

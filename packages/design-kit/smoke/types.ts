@@ -10,6 +10,7 @@ import {
     InputField,
     PortfolioStrip,
     SelectField,
+    TextareaField,
 } from '@jasonsdevspace/design-kit/react';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import {
@@ -74,6 +75,10 @@ export const wrongRef = Button({ ref: createRef<HTMLInputElement>(), children: '
 // A page moves focus to a field through its ref, which the props name as the control drawn.
 export const nameField = InputField({ ref: createRef<HTMLInputElement>(), label: 'Name' });
 export const sizeField = SelectField({ ref: createRef<HTMLSelectElement>(), label: 'Size' });
+export const noteField = TextareaField({ ref: createRef<HTMLTextAreaElement>(), label: 'Note' });
+
+// @ts-expect-error A textarea field's ref is the textarea drawn, not some other element.
+export const wrongNote = TextareaField({ ref: createRef<HTMLInputElement>(), label: 'Note' });
 
 // @ts-expect-error An input field's ref is the input drawn, not some other element.
 export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), label: 'Name' });
