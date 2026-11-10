@@ -9,8 +9,11 @@ import type { Control, State } from './states.js';
  */
 
 /** A demo's repository and its explainer, as the examples name them. */
-const SOURCE = 'https://github.com/jasonsdevspace/example';
+export const SOURCE = 'https://github.com/jasonsdevspace/example';
 const ABOUT = './about/';
+
+/** Each id a piece names, as written, for a page that draws one copy of it. */
+export const asWritten = (name: string): string => name;
 
 export const CHROME: readonly Control[] = [
     {

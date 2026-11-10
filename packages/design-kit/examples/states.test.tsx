@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import * as kit from '../src/react.js';
 import { elementOf } from './elements.js';
-import { CHROME, EXPLAINER } from './pieces.js';
+import { asWritten, CHROME, EXPLAINER } from './pieces.js';
 import { CONTROLS } from './states.js';
 
 /*
@@ -22,7 +22,7 @@ describe('the states a page shows', () => {
     it('each draw the attribute printed under them', () => {
         expect(states.length).toBeGreaterThan(0);
         for (const state of states) {
-            const markup = renderToStaticMarkup(state.draw(kit, (name) => name));
+            const markup = renderToStaticMarkup(state.draw(kit, asWritten));
             // An attribute with a value is found whole, its closing quote included, and one with
             // none by its own name, not as the end of another such as aria-disabled.
             const drawn = state.attribute.includes('=')
@@ -37,7 +37,7 @@ describe('the states a page shows', () => {
         expect(shown.length).toBeGreaterThan(0);
         for (const state of shown) {
             expect(renderToStaticMarkup(elementOf(state.react ?? '', kit)), state.name).toBe(
-                renderToStaticMarkup(state.draw(kit, (name) => name))
+                renderToStaticMarkup(state.draw(kit, asWritten))
             );
         }
     });

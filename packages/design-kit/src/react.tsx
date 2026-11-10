@@ -15,7 +15,9 @@ import { THEME_CHOICES, type ThemeChoice } from './theme.js';
  * Each component draws the markup components.css styles and nothing else, with no stylesheet of
  * its own and no style attribute, so a page without React writes the same markup by hand, and a
  * page whose policy allows styles only from its own origin draws it. A control's state is a
- * native or ARIA attribute, never a class of the kit's.
+ * native or ARIA attribute, never a class of the kit's. A component trusts its types, and guards
+ * at run time only where a value plain JavaScript can pass would become a class, an element or an
+ * attribute of its own, as a callout's tone, heading level, role and live region would.
  */
 
 /**
@@ -31,6 +33,13 @@ const filled = (node: ReactNode): boolean =>
             : child !== ''
     );
 
+/**
+ * A list of names an attribute holds, such as the classes a component draws, its own first and a
+ * page's after them, or the ids that describe a control, with any left out or empty dropped.
+ */
+const spaced = (...names: readonly (string | false | undefined)[]): string =>
+    names.filter((name) => typeof name === 'string' && name !== '').join(' ');
+
 /** Where the portfolio is, and the section of it that lists the work. */
 export const PORTFOLIO_URL = 'https://jasonsdevspace.com/';
 export const PORTFOLIO_WORK_URL = 'https://jasonsdevspace.com/#work';
@@ -42,14 +51,16 @@ export const GITHUB_PROFILE_URL = 'https://github.com/jasonsdevspace';
  * inset. Following it moves focus past the strip to the element whose id it names, the page's main
  * content, which has a tabindex of -1 so it can take focus.
  */
-export const SkipLink = ({
-    target = 'main-content',
-    children = 'Skip to content',
-}: {
+export type SkipLinkProps = {
     /** The id of the element the link leads to. */
     readonly target?: string | undefined;
     readonly children?: ReactNode;
-}) => (
+};
+
+export const SkipLink = ({
+    target = 'main-content',
+    children = 'Skip to content',
+}: SkipLinkProps) => (
     <a className="dk-skip" href={`#${target}`}>
         {children}
     </a>
@@ -64,24 +75,17 @@ const currentAs = (current: ChromePage | undefined, page: ChromePage) =>
 
 /**
  * Whose demo this is, above the page, with three links together on the left: the author's name,
- * which leads to the portfolio as the footer's does, how it works and the source. It is a navigation
- * landmark in a plain div rather than a header, so the demo's own header stays the page's one
- * banner. A demo with switches of its own puts them beside the links, in a landmark of their own
- * named for them, since a name a screen reader hears has to say what the section holds, and while
+ * which leads to the portfolio as the footer's does, how it works and the source. It is a
+ * navigation landmark in a plain div rather than a header, so the demo's own header stays the
+ * page's one banner. A demo with switches of its own puts them beside the links, in a landmark of
+ * their own named for them, since a name a screen reader hears has to say what the section holds,
+ * and while
  * they are on their way the strip keeps their room in that section, unnamed and so no landmark,
  * with a line in it that only a visitor without script sees, since for them the switches never
  * come. A switch drawn into a template and copied out by a page's script leaves its own such line
  * behind, which is why the room carries one.
  */
-export const PortfolioStrip = ({
-    about,
-    source,
-    current,
-    tools,
-    toolsLabel,
-    toolsWaiting = false,
-    toolsNoscript = "With scripts on, the demo's switches sit here.",
-}: {
+export type PortfolioStripProps = {
     /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
     readonly about: string;
     /** The demo's repository, written by the demo's author. */
@@ -107,7 +111,17 @@ export const PortfolioStrip = ({
           readonly toolsLabel: string;
       }
     | { readonly tools?: undefined; readonly toolsLabel?: undefined }
-)) => (
+);
+
+export const PortfolioStrip = ({
+    about,
+    source,
+    current,
+    tools,
+    toolsLabel,
+    toolsWaiting = false,
+    toolsNoscript = "With scripts on, the demo's switches sit here.",
+}: PortfolioStripProps) => (
     <div className="dk-strip">
         <nav className="dk-strip-links" aria-label="Portfolio">
             <a href={PORTFOLIO_URL}>Jason Poteet</a>
@@ -142,16 +156,7 @@ export const PortfolioStrip = ({
  * The exit after a long scroll: whose project this is, how it works, where the source and the rest
  * of the work are, and the license, with anything the demo adds of its own after them.
  */
-export const DemoFooter = ({
-    name,
-    about,
-    source,
-    current,
-    license = `${source.endsWith('/') ? source.slice(0, -1) : source}/blob/main/LICENSE`,
-    licenseName = 'MIT license',
-    children,
-    aside,
-}: {
+export type DemoFooterProps = {
     /** The demo's name, as the footer's text opens with it. */
     readonly name: string;
     /** The demo's explainer, relative to the page or absolute, written by the demo's author. */
@@ -175,7 +180,18 @@ export const DemoFooter = ({
      * holds text, links and code, never a block.
      */
     readonly aside?: ReactNode;
-}) => (
+};
+
+export const DemoFooter = ({
+    name,
+    about,
+    source,
+    current,
+    license = `${source.endsWith('/') ? source.slice(0, -1) : source}/blob/main/LICENSE`,
+    licenseName = 'MIT license',
+    children,
+    aside,
+}: DemoFooterProps) => (
     <footer className="dk-footer">
         <p>
             {name} is a portfolio project by <a href={PORTFOLIO_URL}>Jason Poteet</a>, who has{' '}
@@ -189,13 +205,6 @@ export const DemoFooter = ({
         {filled(aside) ? <p className="dk-footer-aside">{aside}</p> : null}
     </footer>
 );
-
-/**
- * A list of names an attribute holds, such as the classes a component draws, its own first and a
- * page's after them, or the ids that describe a control, with any left out or empty dropped.
- */
-const spaced = (...names: readonly (string | false | undefined)[]): string =>
-    names.filter((name) => typeof name === 'string' && name !== '').join(' ');
 
 type NativeButton = Omit<
     ComponentPropsWithRef<'button'>,
@@ -510,8 +519,8 @@ export type ChoiceFieldProps = FieldParts &
  * which is marked invalid as a whole while an error is drawn, since the keyboard enters it at the
  * chosen radio, wherever that is. Checkboxes are each a stop of their own, so each is marked.
  * Every control of the set is described by the error too, after any description of its own, since
- * a screen reader that lands on a control may read nothing of its group. The fieldset takes every other prop given, its `ref` among them, and no
- * role, since the set's role follows its type.
+ * a screen reader that lands on a control may read nothing of its group. The fieldset takes every
+ * other prop given, its `ref` among them, and no role, since the set's role follows its type.
  */
 export const ChoiceField = (props: ChoiceFieldProps) => {
     const { native, field } = useControl(props);
@@ -681,14 +690,7 @@ const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
  * where it opens the group under itself, so the markup is one whatever the width. The switch takes
  * a ref and a page's class after the kit's own, and nothing in its markup moves.
  */
-export const ThemeSwitch = ({
-    id,
-    name,
-    note = 'Your choice is saved for every page of this site.',
-    noscript = 'With scripts on, a Theme switch sits here.',
-    className,
-    ref,
-}: {
+export type ThemeSwitchProps = {
     /** What the name's and the note's ids start with, made with useId unless a page gives one. */
     readonly id?: string | undefined;
     /** The radios' name, unique on the page, the id unless a page gives one. */
@@ -701,9 +703,20 @@ export const ThemeSwitch = ({
     readonly className?: string | undefined;
     /** The switch drawn, for a page that attaches it through the element. */
     readonly ref?: Ref<HTMLDivElement> | undefined;
-}) => {
+};
+
+export const ThemeSwitch = ({
+    id,
+    name,
+    note = 'Your choice is saved for every page of this site.',
+    noscript = 'With scripts on, a Theme switch sits here.',
+    className,
+    ref,
+}: ThemeSwitchProps) => {
     const made = useId();
-    const base = id ?? made;
+    // An empty id would start every part's id with a hyphen, which two switches on a page would
+    // share, so it is made as one left out is, as a field's is.
+    const base = id === undefined || id === '' ? made : id;
     return (
         <>
             <div ref={ref} className={spaced('dk-theme-switch', className)} hidden>
@@ -756,18 +769,16 @@ export const ThemeSwitch = ({
  * `@jasonsdevspace/design-kit/controls` shows it, and its three words share one cell, so it keeps
  * the width of the longest whichever shows.
  */
-export const CopyButton = ({
-    name,
-    className,
-    ref,
-}: {
+export type CopyButtonProps = {
     /** What the button copies, read after Copy, such as "install command". */
     readonly name: string;
     /** A page's class, after the kit's. */
     readonly className?: string | undefined;
     /** The button drawn, for a page that hands it to its attach function. */
     readonly ref?: Ref<HTMLButtonElement> | undefined;
-}) => (
+};
+
+export const CopyButton = ({ name, className, ref }: CopyButtonProps) => (
     <button ref={ref} type="button" className={spaced('dk-button', 'dk-copy', className)} hidden>
         <span className="dk-copy-words">
             <span>Copy</span>
@@ -782,12 +793,13 @@ export const CopyButton = ({
  * The line a screen reader hears a copy button's result on, out of sight. One is enough for a page,
  * and it is on the page from the start, since a line added at the moment it speaks may go unheard.
  */
-export const CopyStatus = ({
-    className,
-    ref,
-}: {
+export type CopyStatusProps = {
     /** A page's class, after the kit's. */
     readonly className?: string | undefined;
     /** The line drawn, for a page that hands it to a copy button's attach function. */
     readonly ref?: Ref<HTMLParagraphElement> | undefined;
-} = {}) => <p ref={ref} className={spaced('dk-visually-hidden', className)} role="status" />;
+};
+
+export const CopyStatus = ({ className, ref }: CopyStatusProps = {}) => (
+    <p ref={ref} className={spaced('dk-visually-hidden', className)} role="status" />
+);

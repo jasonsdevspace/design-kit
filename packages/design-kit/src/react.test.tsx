@@ -6,6 +6,7 @@ import {
     Button,
     Callout,
     ChoiceField,
+    type ChoiceFieldProps,
     CopyButton,
     CopyStatus,
     DemoFooter,
@@ -13,6 +14,7 @@ import {
     InputField,
     PORTFOLIO_URL,
     PortfolioStrip,
+    type PortfolioStripProps,
     SelectField,
     SkipLink,
     TextareaField,
@@ -40,7 +42,7 @@ describe('the skip link', () => {
 });
 
 describe('the strip', () => {
-    const strip = (props: Partial<Parameters<typeof PortfolioStrip>[0]> = {}) =>
+    const strip = (props: Partial<PortfolioStripProps> = {}) =>
         renderToStaticMarkup(<PortfolioStrip about="./about/" source={SOURCE} {...props} />);
 
     it("links the author's portfolio by name, how it works and where the source is, in that order", () => {
@@ -325,7 +327,7 @@ describe('the button', () => {
     });
 });
 
-describe('a field', () => {
+describe('the field', () => {
     it('takes a ref typed as the control it draws, and refuses one of another element', () => {
         // Only a browser attaches a ref, so ref.spec.ts finds focus on the control through it.
         const name = createRef<HTMLInputElement>();
@@ -495,12 +497,12 @@ describe('a field', () => {
     });
 });
 
-describe('a choice field', () => {
+describe('the choice field', () => {
     const CHOICES = [
         { value: 'pin', label: 'Pin' },
         { value: 'hide', label: 'Hide' },
     ] as const;
-    const rule = (props: Partial<Parameters<typeof ChoiceField>[0]> = {}) =>
+    const rule = (props: Partial<ChoiceFieldProps> = {}) =>
         renderToStaticMarkup(
             <ChoiceField id="rule" name="rule" label="Rule" choices={CHOICES} {...props} />
         );
@@ -605,7 +607,7 @@ describe('a choice field', () => {
     });
 });
 
-describe('a callout', () => {
+describe('the callout', () => {
     it('draws the info tone by default, with no role, so nothing reads it out of turn', () => {
         expect(renderToStaticMarkup(<Callout>Your edited rules are in effect.</Callout>)).toBe(
             '<div class="dk-callout"><div class="dk-callout-body">Your edited rules are in effect.' +
@@ -729,6 +731,53 @@ describe('a callout', () => {
                 '<button type="button" class="dk-button">Try again</button></div></div>'
         );
     });
+
+    it('takes an id and a class of the page, after its own, as a button and a field do', () => {
+        expect(
+            renderToStaticMarkup(
+                <Callout id="problems" className="summary" tone="danger" title="Two problems" />
+            )
+        ).toMatch(/^<div id="problems" class="dk-callout dk-callout-danger summary">/);
+    });
+
+    it('hands a ref to the callout it draws, for a page that moves focus to it', () => {
+        const ref = createRef<HTMLDivElement>();
+        const callout = Callout({ ref, title: 'Two problems' });
+        expect((callout.props as { ref?: unknown }).ref).toBe(ref);
+        // A page that hands on a ref it may not have been given, as a wrapper does, compiles too.
+        const Summary = ({ ref: handed }: { readonly ref?: Ref<HTMLDivElement> | undefined }) => (
+            <Callout ref={handed} title="Two problems" />
+        );
+        expect(renderToStaticMarkup(<Summary />)).toContain('dk-callout');
+    });
+
+    it('takes no props of its own that would break it, and drops a role or style plain JavaScript passes', () => {
+        // @ts-expect-error A callout draws its own children, so it takes no inner HTML.
+        expect(Callout({ dangerouslySetInnerHTML: { __html: 'x' } })).toBeTruthy();
+        const loose = {
+            role: 'alert',
+            style: { color: 'red' },
+            dangerouslySetInnerHTML: { __html: 'x' },
+            'aria-live': 'polite',
+        } as unknown as object;
+        expect(renderToStaticMarkup(<Callout {...loose} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
+    it('draws news for a tone plain JavaScript can pass that the kit has no rule for', () => {
+        const tone = 'sepia' as unknown as 'info';
+        expect(renderToStaticMarkup(<Callout tone={tone} title="Saved" />)).toBe(
+            renderToStaticMarkup(<Callout title="Saved" />)
+        );
+    });
+
+    it('draws a paragraph for a heading level plain JavaScript can pass that names no heading', () => {
+        const level = 'constructor' as unknown as 2;
+        expect(renderToStaticMarkup(<Callout headingLevel={level} title="Saved" />)).toContain(
+            '<p class="dk-callout-title">'
+        );
+    });
 });
 
 describe('the switch, the copy button and the status line', () => {
@@ -845,55 +894,6 @@ describe('a page that hands on what it may not have been given', () => {
                 />
             )
         ).toBe(renderToStaticMarkup(<Callout title="Saved" />));
-    });
-});
-
-describe('the callout, beside the other controls', () => {
-    it('takes an id and a class of the page, after its own, as a button and a field do', () => {
-        expect(
-            renderToStaticMarkup(
-                <Callout id="problems" className="summary" tone="danger" title="Two problems" />
-            )
-        ).toMatch(/^<div id="problems" class="dk-callout dk-callout-danger summary">/);
-    });
-
-    it('hands a ref to the callout it draws, for a page that moves focus to it', () => {
-        const ref = createRef<HTMLDivElement>();
-        const callout = Callout({ ref, title: 'Two problems' });
-        expect((callout.props as { ref?: unknown }).ref).toBe(ref);
-        // A page that hands on a ref it may not have been given, as a wrapper does, compiles too.
-        const Summary = ({ ref: handed }: { readonly ref?: Ref<HTMLDivElement> | undefined }) => (
-            <Callout ref={handed} title="Two problems" />
-        );
-        expect(renderToStaticMarkup(<Summary />)).toContain('dk-callout');
-    });
-
-    it('takes no props of its own that would break it, and drops a role or style plain JavaScript passes', () => {
-        // @ts-expect-error A callout draws its own children, so it takes no inner HTML.
-        expect(Callout({ dangerouslySetInnerHTML: { __html: 'x' } })).toBeTruthy();
-        const loose = {
-            role: 'alert',
-            style: { color: 'red' },
-            dangerouslySetInnerHTML: { __html: 'x' },
-            'aria-live': 'polite',
-        } as unknown as object;
-        expect(renderToStaticMarkup(<Callout {...loose} title="Saved" />)).toBe(
-            renderToStaticMarkup(<Callout title="Saved" />)
-        );
-    });
-
-    it('draws news for a tone plain JavaScript can pass that the kit has no rule for', () => {
-        const tone = 'sepia' as unknown as 'info';
-        expect(renderToStaticMarkup(<Callout tone={tone} title="Saved" />)).toBe(
-            renderToStaticMarkup(<Callout title="Saved" />)
-        );
-    });
-
-    it('draws a paragraph for a heading level plain JavaScript can pass that names no heading', () => {
-        const level = 'constructor' as unknown as 2;
-        expect(renderToStaticMarkup(<Callout headingLevel={level} title="Saved" />)).toContain(
-            '<p class="dk-callout-title">'
-        );
     });
 });
 

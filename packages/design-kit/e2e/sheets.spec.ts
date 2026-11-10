@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
-
 import { expect, type Page, test } from '@playwright/test';
+
+import { sheet } from './page.js';
 
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
@@ -11,8 +11,8 @@ import { expect, type Page, test } from '@playwright/test';
  * in both themes.
  */
 
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = `${sheet('tokens.css')}\n${sheet('base.css')}`;
+/** The tokens and the base alone, since the components are held by their own specs. */
+const BASE = `${sheet('tokens.css')}\n${sheet('base.css')}`;
 
 /**
  * A page with the theme given saved on its root, the markup given, and the demo's own rules loaded
@@ -27,7 +27,7 @@ const open = async (
 ) => {
     const { css, loads } = typeof own === 'string' ? { css: own, loads: 'before' } : own;
     const theme = saved ? ` data-theme="${saved}"` : '';
-    const styles = loads === 'before' ? `${css}${KIT}` : `${KIT}${css}`;
+    const styles = loads === 'before' ? `${css}${BASE}` : `${BASE}${css}`;
     await page.setContent(
         `<!doctype html><html lang="en"${theme}><head><style>${styles}</style></head>` +
             `<body>${body}</body></html>`

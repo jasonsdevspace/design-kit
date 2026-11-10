@@ -4,7 +4,10 @@
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
  * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields
- * and callouts, then the explainer page and the panel, table and code block it holds.
+ * and callouts, then the explainer page and the steps, panel, table and code block it holds, then
+ * the theme switch, the eyebrow, the pills, the tabs and the copy button's words. Each piece keeps
+ * its rules together, at rest, under a pointer, in its states, on a phone and in forced colors, in
+ * that order, and the print rules come last for every piece at once.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -17,8 +20,8 @@
      * positioned box of the page's own draws nothing, takes no click and covers nothing a screen
      * reader's touch finds wherever the box starts, and shows at the top of that box once a
      * keyboard reaches it. Shown, it takes a transparent edge inside its padding, so forced colors
-     * draw it in the link's color and the link reads as a box there, where its fill and the page are
-     * both Canvas, and outside them its size is as it was.
+     * draw it in the link's color and the link reads as a box there, where its fill and the page
+     * are both Canvas, and outside them its size is as it was.
      */
     .dk-skip {
         position: absolute;
@@ -175,7 +178,7 @@
      * with the switches on a row below them, at its start and its full width whatever width a demo
      * names.
      */
-    @media (max-width: 48rem) {
+    @media (width <= 48rem) {
         .dk-strip {
             font-size: var(--dk-text-caption);
         }
@@ -367,6 +370,50 @@
         box-shadow: inset 0 0 0 1px var(--dk-line);
     }
 
+    @media (width <= 48rem) {
+        :where(.dk-button) {
+            min-height: var(--dk-target);
+            min-width: var(--dk-target);
+        }
+
+        /*
+         * A text button keeps no minimum width here either, since this rule comes later in the
+         * sheet than its own and would win by its order.
+         */
+        :where(.dk-button-text) {
+            min-width: 0;
+        }
+    }
+
+    /*
+     * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
+     * button whose panel is open, takes the system's highlight, an off button the system's gray on
+     * the page's ground as a disabled one does, and an off toggle that is on an edge in the
+     * highlight.
+     */
+    @media (forced-colors: active) {
+        :where(
+            .dk-button[aria-pressed='true'],
+            .dk-button:not(.dk-button-text)[aria-expanded='true']
+        ) {
+            background: Highlight;
+            color: HighlightText;
+        }
+
+        :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
+            border-color: GrayText;
+            background: Canvas;
+            color: GrayText;
+        }
+
+        :where(
+            .dk-button[aria-pressed='true']:disabled,
+            .dk-button[aria-pressed='true'][aria-disabled='true']
+        ) {
+            border-color: Highlight;
+        }
+    }
+
     /*
      * A field: its label, a hint when it has one, an error when it has one, and then the control.
      * The error sits above the control, so a phone's keyboard or an open list never covers it, and
@@ -464,6 +511,45 @@
         background-color: var(--dk-surface);
         color: var(--dk-muted);
         cursor: default;
+    }
+
+    @media (width <= 48rem) {
+        :where(.dk-input, .dk-select, .dk-textarea) {
+            min-height: var(--dk-target);
+        }
+    }
+
+    /*
+     * In forced colors the select takes the browser's own arrow, since the drawn caret is a
+     * background. An invalid control loses its line in the danger color to the system's colors, so
+     * it gains a dashed line around its edge in the text color, which keeps its contrast in every
+     * theme and moves nothing as the error comes and goes. With focus, the ring takes its place, so
+     * a keyboard sees where it landed.
+     */
+    @media (forced-colors: active) {
+        :where(.dk-select) {
+            appearance: auto;
+            padding-inline-end: var(--dk-field-inline);
+            background-image: none;
+        }
+
+        :where(
+            .dk-input[aria-invalid='true'],
+            .dk-select[aria-invalid='true'],
+            .dk-textarea[aria-invalid='true']
+        ) {
+            outline: var(--dk-ring-width) dashed CanvasText;
+            outline-offset: 1px;
+        }
+
+        :where(
+            .dk-input[aria-invalid='true'],
+            .dk-select[aria-invalid='true'],
+            .dk-textarea[aria-invalid='true']
+        ):focus-visible {
+            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+            outline-offset: var(--dk-ring-offset);
+        }
     }
 
     /*
@@ -568,11 +654,40 @@
         outline-offset: var(--dk-ring-offset);
     }
 
+    @media (width <= 48rem) {
+        :where(.dk-choice) {
+            min-height: var(--dk-target);
+            min-width: var(--dk-target);
+        }
+    }
+
+    /*
+     * In forced colors every control of an invalid set takes the dashed line a field's control
+     * does, in the text color, and the ring in its place with focus.
+     */
+    @media (forced-colors: active) {
+        :where(
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+            .dk-choice > input[aria-invalid='true']
+        ) {
+            outline: var(--dk-ring-width) dashed CanvasText;
+            outline-offset: 1px;
+        }
+
+        :where(
+            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
+            .dk-choice > input[aria-invalid='true']
+        ):focus-visible {
+            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+            outline-offset: var(--dk-ring-offset);
+        }
+    }
+
     /*
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
      * something that went right, needs care or went wrong. Its words stay in the page's own color
-     * in every tone,
-     * and say the tone themselves, so color is never the only sign of it. The edge draws nothing
+     * in every tone, and say the tone themselves, so color is never the only sign of it. The edge
+     * draws nothing
      * until forced colors or paper drop the ground, and then it marks where the callout starts and
      * ends.
      */
@@ -638,93 +753,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: var(--dk-space-2);
-    }
-
-    /*
-     * On a phone a button, a field and a choice grow to the target a thumb presses, and stay
-     * level.
-     */
-    @media (max-width: 48rem) {
-        :where(.dk-button, .dk-input, .dk-select, .dk-textarea, .dk-choice) {
-            min-height: var(--dk-target);
-        }
-
-        :where(.dk-button, .dk-choice) {
-            min-width: var(--dk-target);
-        }
-
-        /*
-         * A text button keeps no minimum width here either, since the phone rule above comes
-         * later in the sheet than its own and would win by its order.
-         */
-        :where(.dk-button-text) {
-            min-width: 0;
-        }
-    }
-
-    /*
-     * In forced colors the page's own grounds and shadows are gone, so a pressed toggle takes the
-     * system's highlight, an off button the system's gray on the page's ground as a disabled one
-     * does, an off toggle that is on an edge in the highlight, and the select the browser's own
-     * arrow, since the drawn caret is a background.
-     */
-    @media (forced-colors: active) {
-        :where(
-            .dk-button[aria-pressed='true'],
-            .dk-button:not(.dk-button-text)[aria-expanded='true'],
-            .dk-theme-switch-choice > input:checked + span,
-            .dk-theme-switch-button
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
-        :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
-            border-color: GrayText;
-            background: Canvas;
-            color: GrayText;
-        }
-
-        :where(
-            .dk-button[aria-pressed='true']:disabled,
-            .dk-button[aria-pressed='true'][aria-disabled='true']
-        ) {
-            border-color: Highlight;
-        }
-
-        :where(.dk-select) {
-            appearance: auto;
-            padding-inline-end: var(--dk-field-inline);
-            background-image: none;
-        }
-
-        /*
-         * An invalid control loses its line in the danger color to the system's colors, so it gains
-         * a dashed line around its edge in the text color, which keeps its contrast in every theme
-         * and moves nothing as the error comes and goes. With focus, the ring takes its place, so a
-         * keyboard sees where it landed.
-         */
-        :where(
-            .dk-input[aria-invalid='true'],
-            .dk-select[aria-invalid='true'],
-            .dk-textarea[aria-invalid='true'],
-            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
-            .dk-choice > input[aria-invalid='true']
-        ) {
-            outline: var(--dk-ring-width) dashed CanvasText;
-            outline-offset: 1px;
-        }
-
-        :where(
-            .dk-input[aria-invalid='true'],
-            .dk-select[aria-invalid='true'],
-            .dk-textarea[aria-invalid='true'],
-            .dk-choice-field[aria-invalid='true'] .dk-choice > input,
-            .dk-choice > input[aria-invalid='true']
-        ):focus-visible {
-            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
-            outline-offset: var(--dk-ring-offset);
-        }
     }
 
     /*
@@ -966,7 +994,7 @@
         margin-block-start: var(--dk-space-2);
     }
 
-    @media (max-width: 48rem) {
+    @media (width <= 48rem) {
         :where(.dk-panel) {
             padding: var(--dk-space-4);
         }
@@ -1008,92 +1036,6 @@
 
     :where(.dk-theme-switch-choices) {
         display: contents;
-    }
-
-    /*
-     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no
-     * longer fit a row, so the switch shows its name and one button that names the current choice,
-     * drawn as the chosen word is, and the button opens the choices under itself, one to a row,
-     * each a thumb's target the width of the list, over the page rather than in the strip, so
-     * opening them moves nothing. The width is in rem, so the threshold follows the browser's text
-     * size and is decided before any script runs. The switch stands as tall as the room the strip
-     * keeps, a thumb's target, so the strip is one height either way.
-     */
-    @media (width < 20rem) {
-        :where(.dk-strip-tools .dk-theme-switch) {
-            position: relative;
-            flex-wrap: nowrap;
-            min-height: var(--dk-target);
-            overflow: visible;
-        }
-
-        /* Sized as the chosen word is, inside the row the switch keeps at a thumb's target. */
-        :where(.dk-strip-tools .dk-theme-switch-button) {
-            display: inline-flex;
-            align-items: center;
-            min-height: var(--dk-field-height);
-            padding: var(--dk-space-1) var(--dk-space-2);
-            border-width: 1px;
-            border-style: solid;
-            border-radius: var(--dk-radius-pill);
-            font: inherit;
-            cursor: pointer;
-        }
-
-        :where(.dk-strip-tools .dk-theme-switch-button:focus-visible) {
-            outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
-            outline-offset: var(--dk-ring-offset);
-        }
-
-        :where(.dk-strip-tools .dk-theme-switch-choices) {
-            position: absolute;
-            /*
-             * The switch's padding leaves room for the ring, so the list's end lands on the
-             * button's.
-             */
-            inset-inline-end: calc(var(--dk-ring-width) + var(--dk-ring-offset));
-            top: calc(100% + var(--dk-space-1));
-            z-index: 1;
-            display: none;
-            flex-direction: column;
-            gap: var(--dk-space-1);
-            min-width: max-content;
-            padding: var(--dk-space-2);
-            border: 1px solid var(--dk-line);
-            border-radius: var(--dk-radius-large);
-            background: var(--dk-raised);
-            box-shadow: var(--dk-shadow-raised);
-        }
-
-        :where(
-            .dk-strip-tools .dk-theme-switch-button[aria-expanded='true'] + .dk-theme-switch-choices
-        ) {
-            display: flex;
-        }
-
-        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice) {
-            display: flex;
-            min-height: var(--dk-target);
-        }
-
-        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice > span) {
-            flex: 1 1 auto;
-            display: flex;
-            align-items: center;
-        }
-    }
-
-    /*
-     * The line a visitor without script reads where the switch, or a strip's switches, would be, in
-     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where the
-     * section is narrow, as at a large text size on a phone, since a line cut off and scrolled
-     * would reach no keyboard, and for this visitor nothing comes later that the strip has to hold
-     * still for.
-     */
-    :where(.dk-theme-switch-noscript, .dk-strip-noscript) {
-        margin: 0;
-        color: var(--dk-muted);
-        font-size: var(--dk-text-small);
     }
 
     :where(.dk-theme-switch-name) {
@@ -1150,11 +1092,103 @@
         outline-offset: var(--dk-ring-offset);
     }
 
-    @media (max-width: 48rem) {
+    @media (width <= 48rem) {
         :where(.dk-theme-switch-choice) {
             min-width: var(--dk-target);
             min-height: var(--dk-target);
         }
+    }
+
+    /*
+     * In a demo's strip on a screen narrower than 20rem, three choices at a thumb's target no
+     * longer fit a row, so the switch shows its name and one button that names the current choice,
+     * drawn as the chosen word is, and the button opens the choices under itself, one to a row,
+     * each a thumb's target the width of the list, over the page rather than in the strip, so
+     * opening them moves nothing. The width is in rem, so the threshold follows the browser's text
+     * size and is decided before any script runs. The switch stands as tall as the room the strip
+     * keeps, a thumb's target, so the strip is one height either way.
+     */
+    @media (width < 20rem) {
+        :where(.dk-strip-tools .dk-theme-switch) {
+            position: relative;
+            flex-wrap: nowrap;
+            min-height: var(--dk-target);
+            overflow: visible;
+        }
+
+        /* Sized as the chosen word is, inside the row the switch keeps at a thumb's target. */
+        :where(.dk-strip-tools .dk-theme-switch-button) {
+            display: inline-flex;
+            align-items: center;
+            min-height: var(--dk-field-height);
+            padding: var(--dk-space-1) var(--dk-space-2);
+            border-width: 1px;
+            border-style: solid;
+            border-radius: var(--dk-radius-pill);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices) {
+            position: absolute;
+            /*
+             * The switch's padding leaves room for the ring, so the list's end lands on the
+             * button's.
+             */
+            inset-inline-end: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+            top: calc(100% + var(--dk-space-1));
+            z-index: 1;
+            display: none;
+            flex-direction: column;
+            gap: var(--dk-space-1);
+            min-width: max-content;
+            padding: var(--dk-space-2);
+            border: 1px solid var(--dk-line);
+            border-radius: var(--dk-radius-large);
+            background: var(--dk-raised);
+            box-shadow: var(--dk-shadow-raised);
+        }
+
+        :where(
+            .dk-strip-tools .dk-theme-switch-button[aria-expanded='true'] + .dk-theme-switch-choices
+        ) {
+            display: flex;
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice) {
+            display: flex;
+            min-height: var(--dk-target);
+        }
+
+        :where(.dk-strip-tools .dk-theme-switch-choices > .dk-theme-switch-choice > span) {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    /*
+     * In forced colors the chosen word, and the button that names it, take the system's
+     * selection.
+     */
+    @media (forced-colors: active) {
+        :where(.dk-theme-switch-choice > input:checked + span, .dk-theme-switch-button) {
+            background: Highlight;
+            color: HighlightText;
+        }
+    }
+
+    /*
+     * The line a visitor without script reads where the switch, or a strip's switches, would be, in
+     * the muted text at the strip's size. In a strip it takes the switches' place and wraps where
+     * the section is narrow, as at a large text size on a phone, since a line cut off and scrolled
+     * would reach no keyboard, and for this visitor nothing comes later that the strip has to hold
+     * still for.
+     */
+    :where(.dk-theme-switch-noscript, .dk-strip-noscript) {
+        margin: 0;
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
     }
 
     /*
@@ -1223,7 +1257,7 @@
         font-weight: var(--dk-weight-strong);
     }
 
-    @media (max-width: 48rem) {
+    @media (width <= 48rem) {
         :where(.dk-pill) {
             white-space: normal;
         }
@@ -1247,10 +1281,11 @@
     /*
      * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
      * three sites drew by hand for a category among categories, a block of markup beside its React,
-     * and a lane among lanes. The classes draw the row alone. A tab's role and its keys belong to
-     * the page that owns the panels, so the chosen tab is whichever carries the attribute a screen
-     * reader already reads: aria-selected true on a tab, aria-current on a link among pages, or
-     * aria-pressed true on a toggle, each drawn alike. The chosen tab keeps the resting weight,
+     * and a lane among lanes. The classes draw the row alone, as decision record 14 has it. A tab's
+     * role and its keys belong to the page that owns the panels, so the chosen tab is whichever
+     * carries the attribute a screen reader already reads: aria-selected true on a tab,
+     * aria-current on a link among pages, or aria-pressed true on a toggle, each drawn alike. The
+     * chosen tab keeps the resting weight,
      * since a heavier word is a wider one and the tabs after it would shift as the choice moves.
      * Only the chosen tab has a line, the others padded to its depth, so forced colors, which paint
      * every edge in a system color, draw no line under a resting tab and fill the chosen one in the
@@ -1305,7 +1340,7 @@
         color: var(--dk-fg);
     }
 
-    @media (max-width: 48rem) {
+    @media (width <= 48rem) {
         :where(.dk-tab) {
             min-width: var(--dk-target);
             min-height: var(--dk-target);

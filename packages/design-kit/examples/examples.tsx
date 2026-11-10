@@ -17,6 +17,8 @@ import {
 } from '../src/react.js';
 import * as pieces from './pieces.js';
 
+export { SOURCE } from './pieces.js';
+
 /*
  * The markup each piece of the kit draws, in one place, so the reference prints what the components
  * draw and the browser tests import it rather than keep copies. A piece is drawn by its component
@@ -27,9 +29,6 @@ import * as pieces from './pieces.js';
  * each control, which the browser tests draw from `controlStates` and the site from `states.tsx`.
  * The package ships none of this.
  */
-
-/** A demo's repository, as the examples name it. */
-export const SOURCE = 'https://github.com/jasonsdevspace/example';
 
 /** The skip link, and the main content it leads to. */
 export const skipLink: ReactElement = (
@@ -45,7 +44,7 @@ export const skipLink: ReactElement = (
 export const strip: ReactElement = (
     <PortfolioStrip
         about="./about/"
-        source={SOURCE}
+        source={pieces.SOURCE}
         tools={<Button>Tour</Button>}
         toolsLabel="Tour"
     />
@@ -60,7 +59,12 @@ export const stripWaiting: ReactElement = (
 
 /** The footer. */
 export const footer: ReactElement = (
-    <DemoFooter name="Example" about="./about/" source={SOURCE} aside="Built at commit abc1234." />
+    <DemoFooter
+        name="Example"
+        about="./about/"
+        source={pieces.SOURCE}
+        aside="Built at commit abc1234."
+    />
 );
 
 /**
@@ -299,20 +303,109 @@ export const explainerPage: ReactElement = (
     </>
 );
 
-/** Each id a piece names, as written. */
-const asWritten = (name: string) => name;
-
 /** The steps of a flow, each a title and a note, with an arrow from the step before. */
-export const steps: ReactElement = pieces.steps.draw(kit, asWritten);
+export const steps: ReactElement = pieces.steps.draw(kit, pieces.asWritten);
 
 /** A panel set apart from the prose, with its title. */
-export const panel: ReactElement = pieces.panel.draw(kit, asWritten);
+export const panel: ReactElement = pieces.panel.draw(kit, pieces.asWritten);
 
 /** A table of figures, titled, in a frame that scrolls inside itself. */
-export const table: ReactElement = pieces.table.draw(kit, asWritten);
+export const table: ReactElement = pieces.table.draw(kit, pieces.asWritten);
 
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
-export const code: ReactElement = pieces.code.draw(kit, asWritten);
+export const code: ReactElement = pieces.code.draw(kit, pieces.asWritten);
+
+/** Pills: chips that name something, and a row of links among pages, the current one marked. */
+export const pills: ReactElement = (
+    <>
+        <ul className="dk-pills" role="list">
+            <li className="dk-pill">TypeScript</li>
+            <li className="dk-pill">React</li>
+        </ul>
+        <nav aria-label="Pages">
+            <ul className="dk-pills" role="list">
+                <li>
+                    <a className="dk-pill" href="./" aria-current="page">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <a className="dk-pill" href="./tokens/">
+                        Tokens
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </>
+);
+
+/**
+ * Tabs: a row the page owns the roles and keys of, a row of links among pages, and a row of
+ * toggles, the chosen one of each drawn alike.
+ */
+export const tabs: ReactElement = (
+    <>
+        <div className="dk-tabs" role="tablist" aria-label="Code">
+            <button
+                type="button"
+                className="dk-tab"
+                role="tab"
+                id="markup-tab"
+                aria-selected="true"
+                aria-controls="markup"
+            >
+                Markup
+            </button>
+            <button
+                type="button"
+                className="dk-tab"
+                role="tab"
+                id="react-tab"
+                aria-selected="false"
+                aria-controls="react"
+                tabIndex={-1}
+            >
+                React
+            </button>
+        </div>
+        <div id="markup" role="tabpanel" aria-labelledby="markup-tab">
+            …
+        </div>
+        <div id="react" role="tabpanel" aria-labelledby="react-tab" hidden>
+            …
+        </div>
+        <nav aria-label="Categories">
+            <ul className="dk-tabs" role="list">
+                <li>
+                    <a className="dk-tab" href="./" aria-current="page">
+                        All
+                    </a>
+                </li>
+                <li>
+                    <a className="dk-tab" href="./books/">
+                        Books
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div className="dk-tabs">
+            <button type="button" className="dk-tab" aria-pressed="true">
+                Open
+            </button>
+            <button type="button" className="dk-tab" aria-pressed="false">
+                Go
+            </button>
+        </div>
+    </>
+);
+
+/** An eyebrow over a heading. */
+export const eyebrow: ReactElement = (
+    <>
+        <p className="dk-eyebrow">Signed in as a guest</p>
+        <h2>Your basket</h2>
+    </>
+);
 
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
@@ -335,6 +428,9 @@ export const EXAMPLES = {
     fields,
     choiceField,
     callout,
+    pills,
+    tabs,
+    eyebrow,
     themeSwitch,
     copyButton,
     explainerPage,

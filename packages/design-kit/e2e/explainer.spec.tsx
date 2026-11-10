@@ -1,11 +1,10 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE, steps } from '../examples/examples.js';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
+import { box, KIT, sideways, style, writePage } from './page.js';
 import { SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -16,9 +15,6 @@ import { textSize } from './text-size.js';
  * inside themselves, each a named region the keyboard reaches, so the page itself never scrolls
  * sideways, at any width or text size. A section is not a landmark, and the steps stay a list.
  */
-
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
-const KIT = ['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n');
 
 const PITCH =
     'Example takes an order for a product and holds the stock for it until the order is paid for, ' +
@@ -102,35 +98,11 @@ const open = async (
         extra = '',
     }: { width?: number; theme?: 'light' | 'dark'; text?: number; extra?: string } = {}
 ) => {
-    await page.setViewportSize({ width, height: 900 });
     await textSize(page, text);
-    await page.setContent(
-        `<!doctype html><html lang="en" data-theme="${theme}"><head><title>How Example works</title>` +
-            `<style>${KIT}${extra}</style></head><body>${PAGE}</body></html>`
-    );
+    await writePage(page, { width, theme, css: extra, title: 'How Example works', body: PAGE });
 };
-
-const box = async (locator: Locator) => {
-    const drawn = await locator.boundingBox();
-    if (!drawn) throw new Error('expected the element to be drawn');
-    return drawn;
-};
-
-const style = (locator: Locator, ...names: string[]) =>
-    locator.evaluate(
-        (element, wanted) =>
-            Object.fromEntries(
-                wanted.map((name) => [name, getComputedStyle(element).getPropertyValue(name)])
-            ),
-        names
-    );
 
 /** How far the page itself scrolls sideways, which is nothing when it reflows. */
-const sideways = (page: Page) =>
-    page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
-    );
-
 test('marks the link to how it works as the current page in the strip and the footer alike', async ({
     page,
 }) => {

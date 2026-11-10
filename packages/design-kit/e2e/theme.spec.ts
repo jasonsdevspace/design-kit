@@ -1,6 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 
 import { THEME_KEY, themeScript } from '../src/theme.js';
+import { themeOf } from './page.js';
 
 /*
  * The theme script as a visitor's browser runs it: the theme the portfolio saved, or the system's
@@ -22,9 +23,6 @@ const tab = async (context: BrowserContext, body = PAGE): Promise<Page> => {
     await page.goto(`${ORIGIN}/`);
     return page;
 };
-
-const themeOf = (page: Page) =>
-    page.evaluate(() => document.documentElement.getAttribute('data-theme'));
 
 /** A page whose visitor saved the value given before it loaded, or saved nothing. */
 const savedThen = async (context: BrowserContext, saved: string | null) => {

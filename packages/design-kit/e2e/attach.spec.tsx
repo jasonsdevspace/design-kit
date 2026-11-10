@@ -7,6 +7,7 @@ import ts from 'typescript';
 import { CopyButton, CopyStatus, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
+import { KIT, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -27,7 +28,6 @@ const js = (file: string) =>
     ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
         compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
     }).outputText;
-const sheet = (name: string) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 
 const MARKUP = renderToStaticMarkup(
     <main>
@@ -63,7 +63,7 @@ const page = (attach: boolean) =>
     `</body></html>`;
 
 const FILES: Readonly<Record<string, readonly [string, string]>> = {
-    '/kit.css': [['tokens.css', 'base.css', 'components.css'].map(sheet).join('\n'), 'text/css'],
+    '/kit.css': [KIT, 'text/css'],
     '/controls.js': [js('controls.ts'), 'text/javascript'],
     '/theme.js': [js('theme.ts'), 'text/javascript'],
     '/page.js': [ATTACH, 'text/javascript'],
@@ -86,9 +86,6 @@ const first = (opened: Page) => opened.getByRole('radiogroup', { name: 'Theme' }
 
 /** The switch inside the holder, attached through the element that holds it. */
 const held = (opened: Page) => opened.locator('#holder').getByRole('radiogroup', { name: 'Theme' });
-
-const themeOf = (opened: Page) =>
-    opened.evaluate(() => document.documentElement.getAttribute('data-theme'));
 
 test('keeps both controls hidden where no script attaches them', async ({ browser }) => {
     const context = await browser.newContext();
