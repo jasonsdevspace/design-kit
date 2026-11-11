@@ -5,14 +5,21 @@ import { box, style, writePage } from './page.js';
 
 /*
  * A table that pins its first column, as a browser draws it: the column naming each row in view
- * while the rest scrolls sideways, the cells passing under it never showing through, on the page's
- * ground and on a panel's, in both themes and in forced colors, its rule traveling with it, its
+ * while the rest scrolls sideways, the cells passing under it never showing through, its head
+ * included, on the page's ground, a panel's or one a page sets, in both themes and in forced
+ * colors, its rule traveling with it, what the keyboard reaches in a cell kept clear of it, its
  * frame named and scrolled by the keyboard, a table without the class unchanged, and no audit
  * findings in either theme.
  */
 
 const PLAYERS = ['Ana', 'Ben', 'Cal', 'Dee', 'Eli', 'Fay', 'Gus', 'Hal'];
 const ROUNDS = 12;
+
+/** A score in Ana's sixth round is a link, as a page that edits a score in place writes it. */
+const score = (row: number, round: number): string =>
+    row === 0 && round === 5
+        ? `<td class="dk-table-number"><a href="#edit" id="edit">${String(round + 3)}</a></td>`
+        : `<td class="dk-table-number">${String((row + 1) * (round + 3))}</td>`;
 
 const table = (
     pinned: boolean
@@ -25,9 +32,8 @@ const table = (
 ).join('')}</tr></thead>
 <tbody>${PLAYERS.map(
     (player, row) =>
-        `<tr><th scope="row">${player}</th>${Array.from(
-            { length: ROUNDS },
-            (_, round) => `<td class="dk-table-number">${String((row + 1) * (round + 3))}</td>`
+        `<tr><th scope="row">${player}</th>${Array.from({ length: ROUNDS }, (_, round) =>
+            score(row, round)
         ).join('')}</tr>`
 ).join('')}</tbody></table></div>`;
 
@@ -37,16 +43,19 @@ const open = async (
         theme = 'light',
         pinned = true,
         panel = false,
+        css = '',
     }: {
         readonly theme?: 'light' | 'dark';
         readonly pinned?: boolean;
         readonly panel?: boolean;
+        readonly css?: string;
     } = {}
 ): Promise<void> => {
     const held = table(pinned);
     await writePage(page, {
         width: 360,
         theme,
+        css,
         title: 'Scores',
         body: `<main><h1>Scores</h1>${panel ? `<div class="dk-panel">${held}</div>` : held}</main>`,
     });
@@ -55,13 +64,14 @@ const open = async (
 const frame = (page: Page): Locator => page.getByRole('region', { name: 'Scores by round' });
 const cell = (page: Page, name: string): Locator =>
     page.getByRole('rowheader', { name, exact: true });
+const head = (page: Page): Locator => page.getByRole('columnheader', { name: 'Player' });
 
 const scrollBy = (page: Page, across: number): Promise<void> =>
     frame(page).evaluate((element, by) => {
         element.scrollLeft += by;
     }, across);
 
-/** The element drawn on top at the middle of the one the locator finds. */
+/** The cell hit at the middle of the element the locator finds, which is the one on top. */
 const onTop = async (page: Page, locator: Locator): Promise<string> => {
     const drawn = await box(locator, 'the cell');
     return page.evaluate(
@@ -73,6 +83,9 @@ const onTop = async (page: Page, locator: Locator): Promise<string> => {
     );
 };
 
+const ground = (locator: Locator): Promise<string> =>
+    style(locator, 'background-color').then((read) => read['background-color'] ?? '');
+
 test('keeps the column naming each row in view while the rest scrolls sideways', async ({
     page,
 }) => {
@@ -82,11 +95,9 @@ test('keeps the column naming each row in view while the rest scrolls sideways',
     const before = await box(round, 'a round');
     await scrollBy(page, 200);
     expect(await frame(page).evaluate((element) => element.scrollLeft)).toBe(200);
-    expect((await box(cell(page, 'Ana'), 'the pinned cell')).x).toBe(start.x);
-    expect((await box(round, 'a round')).x).toBe(before.x - 200);
-    expect((await box(page.getByRole('columnheader', { name: 'Player' }), 'its head')).x).toBe(
-        start.x
-    );
+    expect((await box(cell(page, 'Ana'), 'the pinned cell')).x).toBeCloseTo(start.x, 0);
+    expect((await box(head(page), 'its head')).x).toBeCloseTo(start.x, 0);
+    expect((await box(round, 'a round')).x).toBeCloseTo(before.x - 200, 0);
 });
 
 test('lets nothing that passes under the pinned cells show through, on a page and on a panel, in both themes', async ({
@@ -100,25 +111,30 @@ test('lets nothing that passes under the pinned cells show through, on a page an
             for (const player of PLAYERS) {
                 expect(await onTop(page, cell(page, player)), what).toBe(player);
             }
+            expect(await onTop(page, head(page)), what).toBe('Player');
             // The pinned cells take the ground of what holds the table, which is opaque.
-            const ground = (
-                await style(page.locator(panel ? '.dk-panel' : 'body'), 'background-color')
-            )['background-color'];
-            expect(
-                (await style(cell(page, 'Ana'), 'background-color'))['background-color'],
-                what
-            ).toBe(ground);
+            const held = await ground(page.locator(panel ? '.dk-panel' : 'body'));
+            expect(await ground(cell(page, 'Ana')), what).toBe(held);
+            expect(await ground(head(page)), what).toBe(held);
         }
     }
 });
 
-test('keeps the pinned cells on top in forced colors', async ({ browser }) => {
+test('takes the ground a page sets for a table on a ground of its own', async ({ page }) => {
+    await open(page, { css: '.dk-table-scroll { --dk-table-ground: rgb(1, 2, 3); }' });
+    expect(await ground(cell(page, 'Ana'))).toBe('rgb(1, 2, 3)');
+});
+
+test('keeps the pinned cells on top, on a ground that hides what passes under, in forced colors', async ({
+    browser,
+}) => {
     const context = await browser.newContext({ forcedColors: 'active' });
     try {
         const page = await context.newPage();
         await open(page);
         await scrollBy(page, 120);
         for (const player of PLAYERS) expect(await onTop(page, cell(page, player))).toBe(player);
+        expect(await ground(cell(page, 'Ana'))).not.toBe('rgba(0, 0, 0, 0)');
     } finally {
         await context.close();
     }
@@ -129,20 +145,36 @@ test("draws each row's rule under a pinned cell as it travels, and a rule where 
 }) => {
     await open(page);
     await scrollBy(page, 120);
-    const pinned = await box(cell(page, 'Ana'), 'the pinned cell');
-    const next = await box(page.getByRole('cell').first(), 'a cell');
     expect(
         await style(cell(page, 'Ana'), 'border-bottom-width', 'border-inline-end-style')
     ).toEqual({ 'border-bottom-width': '1px', 'border-inline-end-style': 'solid' });
-    // The pinned cell's rule lies level with the rule of the cells beside it.
-    expect(pinned.y + pinned.height).toBe(next.y + next.height);
+    // The pinned cell's rule lies level with the rule of the cells beside it in its row.
+    const pinned = await box(cell(page, 'Ana'), 'the pinned cell');
+    const beside = await box(
+        page.getByRole('row', { name: /^Ana/ }).getByRole('cell').first(),
+        "a cell in Ana's row"
+    );
+    expect(pinned.y + pinned.height).toBeCloseTo(beside.y + beside.height, 0);
+});
+
+test('scrolls what the keyboard reaches in a cell clear of the pinned column', async ({ page }) => {
+    await open(page, { css: '.dk-table-scroll { --dk-table-pinned-size: 5rem; }' });
+    const link = page.locator('#edit');
+    // Scrolled until the link sits under the pinned cell, still inside the frame, where a browser
+    // takes it as in view and would not scroll to it.
+    const under = (await box(link, 'the link')).x - (await box(cell(page, 'Ana'), 'the cell')).x;
+    await scrollBy(page, Math.round(under) - 8);
+    expect(await onTop(page, link)).toBe('Ana');
+    await link.focus();
+    const pinned = await box(cell(page, 'Ana'), 'the pinned cell');
+    expect((await box(link, 'the link')).x).toBeGreaterThanOrEqual(pinned.x + pinned.width - 1);
+    expect(await onTop(page, link)).not.toBe('Ana');
 });
 
 test('takes the keyboard into its frame, named, and scrolls by the arrow keys', async ({
     page,
 }) => {
     await open(page);
-    await expect(frame(page)).toBeVisible();
     await page.keyboard.press('Tab');
     await expect(frame(page)).toBeFocused();
     await page.keyboard.press('ArrowRight');
@@ -164,6 +196,9 @@ test('leaves a table without the class as it was', async ({ page }) => {
     expect((await style(page.locator('table'), 'border-collapse'))['border-collapse']).toBe(
         'collapse'
     );
+    expect(
+        (await style(frame(page), 'scroll-padding-inline-start'))['scroll-padding-inline-start']
+    ).toBe('auto');
     await scrollBy(page, 120);
     expect((await box(cell(page, 'Ana'), 'the cell')).x).toBeLessThan(
         (await box(frame(page), 'the frame')).x

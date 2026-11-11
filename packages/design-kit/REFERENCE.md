@@ -58,6 +58,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                        |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                         |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                    |
+| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's or a panel's, and its width, read as 8rem                           |
 
 </details>
 
@@ -1101,11 +1102,17 @@ stays one table in its named frame, so a screen reader reads its heads as before
 </div>
 ```
 
-The pinned cells take the ground of what holds the table, the page's or a panel's, so the cells
-passing under them never show through, and a rule at their end says where the pinned column stops.
-The table draws its borders cell by cell, so a pinned cell's rule travels with it. Only the first
-column is pinned, and the header row scrolls with the table, since a table of a few rows needs no
-pinned header.
+The pinned cells take the page's ground, or a panel's, so the cells passing under them never show
+through, and a rule at their end says where the pinned column stops. A table on a ground of its own,
+such as a callout's, sets that ground in `--dk-table-ground`. The table draws its borders cell by
+cell, so a pinned cell's rule travels with it. Only the first column is pinned, and the header row
+scrolls with the table, since a table of a few rows needs no pinned header.
+
+A table whose cells hold a link or a button sets `--dk-table-pinned-size` on its frame to the pinned
+column's width, 8rem unless it does, so what the keyboard reaches stops beside the pinned column and
+never under it. The names in the pinned column are kept short, since a long one widens the column
+and leaves little of the table to scroll on a phone, and no cell in the first column spans rows,
+since the cell after it would be the one pinned.
 
 ### Code blocks
 

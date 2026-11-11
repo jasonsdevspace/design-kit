@@ -1014,10 +1014,12 @@
     /*
      * A table that pins its first column keeps the cells naming each row in view while the rest
      * scrolls sideways under them, so a reader in the middle of it still knows whose row it is.
-     * The pinned cells take the ground of what holds the table, the page's or a panel's, so the
-     * cells passing under them never show through, with a rule at their end that says where the
-     * pinned column stops. Its borders are drawn apart, cell by cell, since a border shared
-     * between cells stays where the table drew it and would not travel with a pinned one.
+     * The pinned cells take the page's ground, or a panel's, or whatever a page sets in
+     * --dk-table-ground for a table on a ground of its own, so the cells passing under them never
+     * show through, with a rule at their end that says where the pinned column stops. Its borders
+     * are drawn apart, cell by cell, since a border shared between cells stays where the table
+     * drew it and would not travel with a pinned one. What the keyboard reaches in the frame stops
+     * short of the pinned column, by its width in --dk-table-pinned-size, 8rem unless a page says.
      */
     :where(.dk-table-pinned) {
         border-collapse: separate;
@@ -1029,11 +1031,15 @@
         inset-inline-start: 0;
         z-index: var(--dk-stack-pinned);
         border-inline-end: 1px solid var(--dk-line);
-        background: var(--dk-bg);
+        background: var(--dk-table-ground, var(--dk-bg));
     }
 
     :where(.dk-panel .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-surface);
+        background: var(--dk-table-ground, var(--dk-surface));
+    }
+
+    :where(.dk-table-scroll:has(> .dk-table-pinned)) {
+        scroll-padding-inline-start: var(--dk-table-pinned-size, 8rem);
     }
 
     /*
