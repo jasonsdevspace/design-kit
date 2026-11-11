@@ -1101,6 +1101,70 @@ what holds it. Its edge is transparent, and shows only in forced colors.
 
 </details>
 
+## Rows
+
+A list of rows holds the games played, the players or the steps to install: each row a title, a
+muted line of detail under it, and room at its end for a figure, a tag or one button, with a rule
+between rows. It is classes alone, since a row holds no state of its own.
+
+<!-- example: rows -->
+
+```html
+<ul class="dk-rows" role="list">
+    <li>
+        <a class="dk-row" href="/games/12/">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Flip 7</span>
+                <span class="dk-row-detail">Four players, won by Ana</span>
+            </span>
+            <span class="dk-row-figure">212</span>
+        </a>
+    </li>
+    <li>...</li>
+</ul>
+<ul class="dk-rows" role="list">
+    <li>
+        <div class="dk-row">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Ana</span>
+                <span class="dk-row-detail">Played 12 games</span>
+            </span>
+            <button type="button" class="dk-button dk-button-text">
+                Remove
+                <span class="dk-visually-hidden"> Ana</span>
+            </button>
+        </div>
+    </li>
+    <li>...</li>
+</ul>
+```
+
+The list is a `ul` with `role="list"`, since Safari drops a list's role from one drawn with no
+bullets, and with it the number of rows a screen reader says. A list with nothing in it is not
+drawn, so a page writes no items rather than an empty one.
+
+A row is a link or holds a button, never both, so a tap never does two things. A row that leads
+somewhere is one `a.dk-row` across its width, one stop for the keyboard, named by all of its words
+with the title first, so a screen reader says the title before the rest, and a visitor who speaks
+to their device can say any of what they see. A row with an action of its own, such as
+removing it, is a `div.dk-row` with the button at its end, named for what it does and to which row,
+with the row's name out of sight where the button's face says only the action. A figure at the end
+is a `dk-row-figure`, and a tag a pill.
+
+<details>
+<summary>How the rows are drawn</summary>
+
+Each row is at least `--dk-target` tall, and at least `--dk-target-large` in a list that also has
+`dk-rows-tall`. The rule between rows is in the line color, which forced colors keep as an edge, and
+a row takes no ground of its own, so a list sits on a page or a panel alike. The end sits on the line
+of the title's first line, so a long title wraps and the row grows with its end still beside where
+the title starts, and a row of one line sits in the middle of its height.
+
+A link row's focus ring is drawn inside it, around the whole row, and a pointer over it underlines
+the title. A figure is in the mono face with figures of one width, so a column of them lines up.
+
+</details>
+
 ## Button grid
 
 A grid of buttons is a set picked from, such as the cards in a hand, each a toggle that says

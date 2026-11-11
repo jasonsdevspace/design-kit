@@ -1789,6 +1789,86 @@
     }
 
     /*
+     * A list of rows: the games played, the players, the steps to install. Each row has a title, a
+     * muted line of detail under it, and room at its end for a figure, a tag or one button. A rule
+     * runs between rows and none after the last, in the line color, and a row takes no ground of
+     * its own, so a list sits on a page or a panel alike. A list with nothing in it is not drawn.
+     */
+    :where(.dk-rows) {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    :where(.dk-rows:empty) {
+        display: none;
+    }
+
+    :where(.dk-rows > li + li) {
+        border-top: 1px solid var(--dk-line);
+    }
+
+    /*
+     * A row: its text, then its end. The end sits on the line of the title's first line, so a
+     * long title wraps and the row grows with the end still beside where it starts, and a row of
+     * one line sits in the middle of its height. A row is at least the target tall, or the larger
+     * target in a tall list.
+     */
+    :where(.dk-row) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-content: center;
+        align-items: baseline;
+        gap: var(--dk-space-3);
+        box-sizing: border-box;
+        min-height: var(--dk-target);
+        padding-block: var(--dk-space-2);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    :where(.dk-rows-tall .dk-row) {
+        min-height: var(--dk-target-large);
+    }
+
+    /*
+     * A row that leads somewhere is one link across its width, its focus ring inside it so the
+     * ring is drawn around the whole row and never cut by what holds the list. Pointed at, its
+     * title is underlined, as a link's words are.
+     */
+    :where(a.dk-row):focus-visible {
+        outline-offset: calc(-1 * var(--dk-ring-width));
+    }
+
+    @media (hover: hover) {
+        :where(a.dk-row:hover .dk-row-title) {
+            text-decoration: underline;
+        }
+    }
+
+    :where(.dk-row-text) {
+        display: grid;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    :where(.dk-row-title) {
+        font-weight: var(--dk-weight-medium);
+    }
+
+    :where(.dk-row-detail) {
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
+    :where(.dk-row-figure) {
+        font-family: var(--dk-font-mono);
+        font-variant-numeric: tabular-nums;
+        text-align: end;
+    }
+
+    /*
      * A grid of buttons: a set picked from, such as the cards in a hand, each a toggle that says
      * whether it is on, or a pad of plain keys that act when pressed. The page names the group and
      * sets how many columns it wants in --dk-button-grid-columns, three unless it does. Where that
