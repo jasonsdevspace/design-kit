@@ -66,6 +66,9 @@ describe('the tokens', () => {
             'strip',
             'measure',
             'column',
+            'app-column',
+            'app-bar',
+            ...['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) => `stack-${layer}`),
             'shadow-raised',
             'scrim',
             'duration-short',
@@ -102,6 +105,15 @@ describe('the tokens', () => {
         const sized = steps.filter((name) => !Number.isNaN(rem(name)));
         expect(sized.length).toBe(steps.length - 1);
         for (const name of sized) expect(rem('--dk-text-numeral'), name).toBeGreaterThan(rem(name));
+    });
+
+    it('stacks a pinned cell under a list, a list under a bar, a bar under a toast, and the skip link over all', () => {
+        const order = ['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) =>
+            Number(declared.get(`--dk-stack-${layer}`))
+        );
+        expect(order.every(Number.isInteger)).toBe(true);
+        expect(order).toEqual([...order].sort((first, second) => first - second));
+        expect(new Set(order).size).toBe(order.length);
     });
 
     it('takes longer over a surface that travels than over a small change of state', () => {

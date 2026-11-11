@@ -405,6 +405,8 @@ describe('the workflows', () => {
         expect(holding).toEqual(['deploy']);
     });
 
+    // Ubuntu, but for CI's job that draws in WebKit, on a Mac, where WebKit needs no system
+    // packages.
     it('run every job on a named image, with a name and a time limit of its own', () => {
         const unready = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
@@ -412,10 +414,14 @@ describe('the workflows', () => {
                 // jobs in it.
                 .filter(({ body }) => !/^ {8}uses:/m.test(body))
                 .filter(
-                    ({ body }) =>
+                    ({ id, body }) =>
                         !/^ {8}name: \S/m.test(body) ||
                         !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
-                        !/^ {8}runs-on: ubuntu-26\.04\s*$/m.test(body)
+                        !(
+                            path === '.github/workflows/ci.yml' && id === 'webkit'
+                                ? /^ {8}runs-on: macos-26\s*$/m
+                                : /^ {8}runs-on: ubuntu-26\.04\s*$/m
+                        ).test(body)
                 )
                 .map(({ id }) => `${path} ${id}`)
         );
