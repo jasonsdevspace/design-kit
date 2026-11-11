@@ -526,6 +526,39 @@ export const stepper: ReactElement = (
 /** A toast, as the component draws it before a page attaches it. */
 export const toast: ReactElement = <Toast />;
 
+/**
+ * A dialog that asks a question over the page, its answers in a form that closes it, and a sheet
+ * of a round's options from the bottom of a phone.
+ */
+export const dialog: ReactElement = (
+    <>
+        <dialog className="dk-dialog" id="end-game" aria-labelledby="end-game-title">
+            <h2 className="dk-dialog-title" id="end-game-title">
+                End the game now?
+            </h2>
+            <p>The scores so far are kept in the history.</p>
+            <form method="dialog" className="dk-dialog-actions">
+                <button type="submit" className="dk-button" value="keep">
+                    Keep playing
+                </button>
+                <button type="submit" className="dk-button dk-button-accent" value="end">
+                    End the game
+                </button>
+            </form>
+        </dialog>
+        <dialog
+            className="dk-dialog dk-dialog-sheet"
+            id="round-options"
+            aria-labelledby="round-options-title"
+        >
+            <h2 className="dk-dialog-title" id="round-options-title">
+                Round options
+            </h2>
+            ...
+        </dialog>
+    </>
+);
+
 /** A grid of toggles for the cards in a hand, one of them off, and a pad of plain keys. */
 export const buttonGrid: ReactElement = (
     <>
@@ -628,6 +661,7 @@ export const EXAMPLES = {
     toast,
     buttonGrid,
     rows,
+    dialog,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;

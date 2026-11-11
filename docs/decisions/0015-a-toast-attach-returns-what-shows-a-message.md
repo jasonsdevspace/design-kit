@@ -53,8 +53,10 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 
 - A page attaches a toast once and calls what it returns for every message, in React from an effect,
   as it attaches any control.
-- Record 13 holds for the switch and the copy button. The toast is the one control whose attach
-  function returns something other than what takes it away.
+- Record 13 holds for the switch, the copy button and the stepper. The toast's attach function
+  returns something other than what takes it away, and the dialog's does the same for the same
+  reason: it returns what opens it, since a page calls that each time and the dialog's listeners
+  are on its own element.
 - A page that shows a message with no action over one with an action takes that way back away, so
   a page shows one after another only once the first is done with.
 - A page on which every visitor loads the controls loads the toast's behavior too.

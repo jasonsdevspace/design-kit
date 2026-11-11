@@ -21,6 +21,7 @@ describe('the controls', () => {
         const controls = await import('./controls.js');
         expect(Object.keys(controls).sort()).toEqual([
             'attachCopyButton',
+            'attachDialog',
             'attachStepper',
             'attachThemeSwitch',
             'attachToast',

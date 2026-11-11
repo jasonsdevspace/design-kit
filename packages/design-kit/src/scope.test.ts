@@ -9,8 +9,9 @@ import { describe, expect, it } from 'vitest';
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
  * pseudo-class. The base alone may follow its :where() with a pseudo-element instead, since a
  * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
- * it too. The components may follow theirs with a number field's own spin buttons, the one part of
- * a browser's control a component has to take away and only a pseudo-element reaches. So only those
+ * it too. The components may follow theirs with a number field's own spin buttons or a dialog's
+ * backdrop, the parts of a browser's own element a component has to draw or take away and only a
+ * pseudo-element reaches. So only those
  * classes, the focus rules and those pseudo-elements carry any weight, and none of it counts
  * against a page's own rule outside a layer.
  */
@@ -82,8 +83,11 @@ const closing = (text: string, open: number): number => {
     return -1;
 };
 
-/** The parts of a browser's own control a component may reach, a number field's spin buttons. */
-const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button'];
+/**
+ * The parts of a browser's own element a component may reach, a number field's spin buttons and a
+ * dialog's backdrop.
+ */
+const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button', '::backdrop'];
 
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a

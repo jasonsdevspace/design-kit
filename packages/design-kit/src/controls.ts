@@ -1,13 +1,14 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button, stepper and toast do, for a page to attach to the
- * markup the components draw or a page writes by hand. Each attach function finds its control's
+ * What the kit's theme switch, copy button, stepper, toast and dialog do, for a page to attach to
+ * the markup the components draw or a page writes by hand. Each attach function finds its control's
  * parts by their classes. The switch, the copy button and the stepper show their control, which the
  * markup keeps hidden so a visitor without script meets no control that does nothing, and return a
- * function that takes it away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
- * when the module is imported, and nothing here sets a style, so a page's policy can refuse every
- * style it did not serve.
+ * function that takes it away again. `attachToast` returns instead the function that shows a
+ * message in it, and `attachDialog` the function that opens it. Nothing runs when the module is
+ * imported, and nothing here sets a style, so a page's policy can refuse every style it did not
+ * serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -590,4 +591,64 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     };
     attachedSteppers.set(stepper, detach);
     return detach;
+};
+
+/**
+ * Opens a dialog as a modal, over the page, remembering where focus goes back to: the element whose
+ * event opened it, when it is a page's listener, else the one given, else what had focus.
+ */
+export type OpenDialog = (from?: Event | Element) => void;
+
+const attachedDialogs = new WeakMap<HTMLDialogElement, OpenDialog>();
+
+/**
+ * Makes a dialog do the two things the native element does not do alone, and returns the function
+ * that opens it. The element holds focus inside, closes on Escape and makes the page behind it
+ * inert. This closes it on a tap on the scrim around it, one that starts and ends there so a drag
+ * out of the dialog closes nothing, and on close returns focus to what opened it: the element whose
+ * click opened it, since a browser that gives a pressed button no focus would leave nothing else to
+ * return to, or what had focus. A dialog that must be answered stays open on Escape and on the scrim when asked to stay.
+ * Its listeners are on the dialog, so a dialog taken from the page takes them with it, and
+ * attaching it again returns the same function.
+ */
+export const attachDialog = (
+    dialog: HTMLDialogElement,
+    { stay = false }: { readonly stay?: boolean } = {}
+): OpenDialog => {
+    const already = attachedDialogs.get(dialog);
+    if (already) return already;
+    let opener: Element | null = null;
+    let startedOutside = false;
+    const outside = (event: MouseEvent) => {
+        if (event.target !== dialog) return false;
+        const box = dialog.getBoundingClientRect();
+        return (
+            event.clientX < box.left ||
+            event.clientX > box.right ||
+            event.clientY < box.top ||
+            event.clientY > box.bottom
+        );
+    };
+    dialog.addEventListener('pointerdown', (event) => {
+        startedOutside = outside(event);
+    });
+    dialog.addEventListener('click', (event) => {
+        if (!stay && startedOutside && outside(event)) dialog.close();
+        startedOutside = false;
+    });
+    dialog.addEventListener('cancel', (event) => {
+        if (stay) event.preventDefault();
+    });
+    dialog.addEventListener('close', () => {
+        if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+        opener = null;
+    });
+    const open: OpenDialog = (from) => {
+        if (dialog.open) return;
+        const target = from instanceof Event ? from.currentTarget : from;
+        opener = target instanceof Element ? target : document.activeElement;
+        dialog.showModal();
+    };
+    attachedDialogs.set(dialog, open);
+    return open;
 };
