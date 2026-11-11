@@ -36,9 +36,17 @@ describe('the tokens', () => {
     it('declares the scale a component is built from', () => {
         const scale = [
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((step) => `space-${String(step)}`),
-            ...['caption', 'small', 'body', 'lead', 'title', 'heading', 'display', 'code'].map(
-                (step) => `text-${step}`
-            ),
+            ...[
+                'caption',
+                'small',
+                'body',
+                'lead',
+                'title',
+                'heading',
+                'display',
+                'numeral',
+                'code',
+            ].map((step) => `text-${step}`),
             'leading-tight',
             'leading-body',
             'weight-normal',
@@ -54,16 +62,55 @@ describe('the tokens', () => {
             'field-height',
             'field-inline',
             'target',
+            'target-large',
             'strip',
             'measure',
             'column',
             'shadow-raised',
             'scrim',
             'duration-short',
+            'duration-medium',
+            ...['top', 'right', 'bottom', 'left'].map((edge) => `safe-${edge}`),
             'font-sans',
             'font-mono',
         ];
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
+    });
+
+    it("reads each safe area from the browser's own inset, and is zero where it reports none", () => {
+        for (const edge of ['top', 'right', 'bottom', 'left'])
+            expect(declared.get(`--dk-safe-${edge}`), edge).toBe(
+                `env(safe-area-inset-${edge}, 0px)`
+            );
+    });
+
+    /** A token's value in rem, or NaN when it is written in another unit. */
+    const rem = (name: string) => {
+        const [, value] = /^(\d+(?:\.\d+)?)rem$/.exec(declared.get(name) ?? '') ?? [];
+        return Number(value ?? Number.NaN);
+    };
+
+    it('sets the larger target above the target, in the same unit', () => {
+        expect(rem('--dk-target-large')).toBeGreaterThan(rem('--dk-target'));
+    });
+
+    it('sets the numeral above every step of text', () => {
+        const steps = [...declared.keys()].filter(
+            (name) => name.startsWith('--dk-text-') && name !== '--dk-text-numeral'
+        );
+        // The step for code is in em, a share of the text around it, and is no size of its own.
+        const sized = steps.filter((name) => !Number.isNaN(rem(name)));
+        expect(sized.length).toBe(steps.length - 1);
+        for (const name of sized) expect(rem('--dk-text-numeral'), name).toBeGreaterThan(rem(name));
+    });
+
+    it('takes longer over a surface that travels than over a small change of state', () => {
+        /** A duration in milliseconds, whichever of the two units it is written in. */
+        const ms = (name: string) => {
+            const [, value, unit] = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(declared.get(name) ?? '') ?? [];
+            return Number(value ?? Number.NaN) * (unit === 's' ? 1000 : 1);
+        };
+        expect(ms('--dk-duration-medium')).toBeGreaterThan(ms('--dk-duration-short'));
     });
 
     it('pads a field inline by the step a button is padded by, so their text starts level', () => {

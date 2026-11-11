@@ -68,14 +68,17 @@ export const footer: ReactElement = (
 );
 
 /**
- * An action, the one action a view leads with, a large button, a text button, a toggle that is on,
- * and a button that is off, with the text beside it that says why.
+ * An action, the one action a view leads with, a large button, a tall one, a text button, a toggle
+ * that is on, and a button that is off, with the text beside it that says why.
  */
 export const buttons: ReactElement = (
     <>
         <Button>Filters</Button>
         <Button accent>Save rule</Button>
         <Button large>Try it with your own products</Button>
+        <Button large tall accent>
+            Save the round
+        </Button>
         <Button text>Show the markup</Button>
         <Button pressed>Members only</Button>
         <Button off aria-describedby="previous-why">
@@ -169,6 +172,10 @@ export const controlStates: ReactElement = (
             <Button large>Try it</Button>
             <Button large accent>
                 Open the demo
+            </Button>
+            <Button tall>Start the round</Button>
+            <Button large tall accent>
+                Save the round
             </Button>
             <Button text>Show the markup</Button>
             <Button text off>

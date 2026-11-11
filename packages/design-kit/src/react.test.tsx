@@ -254,12 +254,32 @@ describe('the button', () => {
         for (const nothing of [false, undefined] as const) {
             expect(
                 renderToStaticMarkup(
-                    <Button large={nothing} text={nothing}>
+                    <Button large={nothing} tall={nothing} text={nothing}>
                         Go
                     </Button>
                 )
             ).toBe(renderToStaticMarkup(<Button>Go</Button>));
         }
+    });
+
+    it('draws a tall button by its class, with the large button or without', () => {
+        expect(renderToStaticMarkup(<Button tall>Save the round</Button>)).toBe(
+            '<button type="button" class="dk-button dk-button-tall">Save the round</button>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Button large tall accent>
+                    Save the round
+                </Button>
+            )
+        ).toContain('class="dk-button dk-button-accent dk-button-large dk-button-tall"');
+        expect(
+            renderToStaticMarkup(
+                <Button tall pressed>
+                    Bust
+                </Button>
+            )
+        ).toContain('class="dk-button dk-button-tall" aria-pressed="true"');
     });
 
     it('says a toggle is a toggle whether it is pressed or not, and leaves an action alone', () => {
@@ -324,6 +344,9 @@ describe('the button', () => {
         // @ts-expect-error A text button is not large.
         const grown = <Button text large children="Go" />;
         expect(renderToStaticMarkup(grown)).toBeTruthy();
+        // @ts-expect-error A text button is not tall.
+        const raised = <Button text tall children="Go" />;
+        expect(renderToStaticMarkup(raised)).toBeTruthy();
     });
 });
 

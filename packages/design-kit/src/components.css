@@ -238,9 +238,25 @@
         line-height: var(--dk-leading-tight);
         text-decoration: none;
         cursor: pointer;
+        /*
+         * A page with a look of its own for a button, such as a hard edge under it that reads as
+         * something to press, sets a shadow and how a press moves the button, and writes no rule
+         * over this class. Neither is set here, so a button has no shadow and is never moved.
+         */
+        box-shadow: var(--dk-button-shadow, none);
         transition:
             border-color var(--dk-duration-short),
             background-color var(--dk-duration-short);
+    }
+
+    /*
+     * Held down, a button moves by the press a page sets, onto where its shadow was. The press is
+     * a whole translate, such as 0 2px, so with none set the button is not translated at all and
+     * nothing about how it is stacked or what it holds changes while it is held.
+     */
+    :where(.dk-button:active) {
+        box-shadow: none;
+        translate: var(--dk-button-press, none);
     }
 
     /*
@@ -296,6 +312,9 @@
         min-width: 0;
         padding-inline: 0;
         border: 0;
+        /* A link has no edge to lift, so it takes no shadow and does not move when pressed. */
+        box-shadow: none;
+        translate: none;
         color: var(--dk-accent);
         font-size: inherit;
         line-height: inherit;
@@ -327,6 +346,15 @@
     }
 
     /*
+     * A toggle that is on, or a button whose panel is open, rests where a held button lands, so
+     * a page's shadow is not left under a button that looks pressed and holding it down moves it
+     * no further.
+     */
+    :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+        translate: var(--dk-button-press, none);
+    }
+
+    /*
      * A text button that opens a panel keeps its link look while the panel is open, with the
      * underline a pointer brings, since the pressed look has no padding around the words to fit
      * and the open panel is the sign.
@@ -334,6 +362,7 @@
     :where(.dk-button-text[aria-expanded='true']) {
         background: transparent;
         box-shadow: none;
+        translate: none;
         color: var(--dk-accent);
         text-decoration-thickness: 0.125em;
     }
@@ -346,7 +375,9 @@
     :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
         border-color: var(--dk-line);
         background: transparent;
+        /* Off, a button offers nothing to press, so it has no shadow and does not move. */
         box-shadow: none;
+        translate: none;
         color: var(--dk-muted);
         font-weight: var(--dk-weight-normal);
         text-decoration: none;
@@ -386,12 +417,30 @@
     }
 
     /*
+     * A tall button, at the larger target at every width, for what a screen is for where it is
+     * pressed at arm's length. It sets the height, and the least width with it so it is never
+     * narrower than it is tall, and nothing else, so it goes with the large button's padding and
+     * text or without. It comes after the rule for a narrow screen, which would otherwise win by
+     * its order and bring a tall button back down to the target. A text button is never tall, and
+     * is left out here, so the pair written by hand does not give a link a box around it.
+     */
+    :where(.dk-button-tall:not(.dk-button-text)) {
+        min-height: var(--dk-target-large);
+        min-width: var(--dk-target-large);
+    }
+
+    /*
      * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
      * button whose panel is open, takes the system's highlight, an off button the system's gray on
      * the page's ground as a disabled one does, and an off toggle that is on an edge in the
      * highlight.
      */
     @media (forced-colors: active) {
+        /* The browser draws no shadow here, so a button has nothing to land on and stays put. */
+        :where(.dk-button) {
+            translate: none;
+        }
+
         :where(
             .dk-button[aria-pressed='true'],
             .dk-button:not(.dk-button-text)[aria-expanded='true']

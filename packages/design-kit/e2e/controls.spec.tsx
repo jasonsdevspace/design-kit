@@ -213,6 +213,103 @@ test('draws a large button at the target at every width, with wider inline paddi
     }
 });
 
+test('draws a tall button at the larger target at every width, alone and with the large button', async ({
+    page,
+}) => {
+    for (const width of [1280, 360]) {
+        await open(page, { width });
+        // Alone it takes the height and keeps the button's own padding and text size.
+        const tall = page.getByRole('button', { name: 'Start the round' });
+        expect(await height(tall), `${String(width)}px`).toBe(56);
+        expect(await style(tall, 'padding-left', 'font-size')).toEqual({
+            'padding-left': '12px',
+            'font-size': '14.4px',
+        });
+        // With the large button it takes that one's padding and text, and keeps the accent's fill.
+        const lead = page.getByRole('button', { name: 'Save the round' });
+        expect(await height(lead), `${String(width)}px`).toBe(56);
+        expect(await style(lead, 'padding-left', 'font-size', 'background-color')).toEqual({
+            'padding-left': '16px',
+            'font-size': '16px',
+            'background-color': 'rgb(31, 79, 216)',
+        });
+        // A large button without it is the height it was.
+        expect(await height(page.getByRole('button', { name: 'Try it', exact: true }))).toBe(44);
+    }
+    // It is never narrower than it is tall, however short its words.
+    const short = await page.evaluate(() => {
+        const button = document.createElement('button');
+        button.className = 'dk-button dk-button-tall';
+        button.textContent = 'OK';
+        document.body.append(button);
+        const { width, height: tall } = button.getBoundingClientRect();
+        // A text button written with the class by hand keeps its link look, with no box.
+        button.className = 'dk-button dk-button-text dk-button-tall';
+        const link = button.getBoundingClientRect();
+        button.remove();
+        return { width, tall, linkWidth: link.width, linkTall: link.height };
+    });
+    expect(short.width).toBe(56);
+    expect(short.tall).toBe(56);
+    expect(short.linkWidth).toBeLessThan(56);
+    expect(short.linkTall).toBeLessThan(56);
+});
+
+test('draws a shadow under a button and moves it when pressed, where a page sets the two, and neither where it does not', async ({
+    page,
+}) => {
+    await open(page, { width: 1280 });
+    const plain = page.getByRole('button', { name: 'Filters' });
+    const drawn = (locator: Locator) => style(locator, 'box-shadow', 'translate');
+    // With neither set, a button has no shadow and stays put, held down or not.
+    expect(await drawn(plain)).toEqual({ 'box-shadow': 'none', translate: 'none' });
+    await plain.hover();
+    await page.mouse.down();
+    expect(await drawn(plain)).toEqual({ 'box-shadow': 'none', translate: 'none' });
+    await page.mouse.up();
+    // A toggle that is on is not moved either, and keeps its own inner edge.
+    const toggle = page.getByRole('button', { name: 'Member', exact: true });
+    expect((await drawn(toggle)).translate).toBe('none');
+
+    // A page sets the two on its root and writes no rule over the kit's class.
+    await page.addStyleTag({
+        content: ':root { --dk-button-shadow: 0 2px 0 rgb(0 0 0); --dk-button-press: 0 2px; }',
+    });
+    expect(await drawn(plain)).toEqual({
+        'box-shadow': 'rgb(0, 0, 0) 0px 2px 0px 0px',
+        translate: 'none',
+    });
+    // Held down, it moves by the press, onto where its shadow was.
+    await plain.hover();
+    await page.mouse.down();
+    expect(await drawn(plain)).toEqual({ 'box-shadow': 'none', translate: '0px 2px' });
+    await page.mouse.up();
+
+    // A toggle that is on rests where a held button lands, with its inner edge in place of the
+    // shadow, and holding it down moves it no further.
+    const resting = await drawn(toggle);
+    expect(resting.translate).toBe('0px 2px');
+    expect(resting['box-shadow']).toContain('inset');
+    await toggle.hover();
+    await page.mouse.down();
+    expect((await drawn(toggle)).translate).toBe('0px 2px');
+    await page.mouse.up();
+
+    // A button that is off, and one drawn as a link, offer nothing to press, so each has no
+    // shadow and does not move, an open one drawn as a link included.
+    for (const name of ['Previous', 'Show the markup', 'Hide the markup']) {
+        const still = page.getByRole('button', { name, exact: true }).first();
+        expect(await drawn(still), name).toEqual({ 'box-shadow': 'none', translate: 'none' });
+    }
+
+    // In forced colors the browser draws no shadow, so a held button has nothing to land on.
+    await page.emulateMedia({ forcedColors: 'active' });
+    await plain.hover();
+    await page.mouse.down();
+    expect((await drawn(plain)).translate).toBe('none');
+    await page.mouse.up();
+});
+
 test("draws a text button as a link, at the button's height, with its states", async ({ page }) => {
     for (const [width, tall] of [
         [1280, 36],

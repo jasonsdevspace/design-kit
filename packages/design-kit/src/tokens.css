@@ -92,6 +92,12 @@
         --dk-text-title: 1.25rem;
         --dk-text-heading: 1.5rem;
         --dk-text-display: 1.75rem;
+        /*
+         * A figure read from across a room, such as a score on a phone left on a table. It is a
+         * size for numbers alone, far past any step a heading takes, and is meant for the mono
+         * face with tabular figures, which the page that draws the figure sets with it.
+         */
+        --dk-text-numeral: 3.5rem;
         /* Code, a step under the text around it, since mono type looks larger at the same size. */
         --dk-text-code: 0.9em;
         --dk-leading-tight: 1.2;
@@ -124,6 +130,11 @@
         --dk-field-height: 2.25rem;
         --dk-field-inline: 0.75rem;
         --dk-target: 2.75rem;
+        /*
+         * A larger target, for what a screen is for where it is pressed at arm's length, as a
+         * phone passed around a table is. The target above stays the floor for every control.
+         */
+        --dk-target-large: 3.5rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
         /*
@@ -146,8 +157,23 @@
         --dk-shadow-raised: 0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
         --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
-        /* How long a small change of state takes to show, such as a hover. */
+        /*
+         * How long a small change of state takes to show, such as a hover, and how long a surface
+         * that travels takes to arrive, such as a sheet. The base cuts both under reduced motion.
+         */
         --dk-duration-short: 150ms;
+        --dk-duration-medium: 250ms;
+
+        /*
+         * What a phone keeps for itself at each edge of the screen: a notch, a rounded corner, the
+         * bar a thumb swipes home on. Each is zero where the browser reports none, and stays zero
+         * on a phone unless the page's viewport meta says viewport-fit=cover. A rule reads the one
+         * name and never the browser's own.
+         */
+        --dk-safe-top: env(safe-area-inset-top, 0px);
+        --dk-safe-right: env(safe-area-inset-right, 0px);
+        --dk-safe-bottom: env(safe-area-inset-bottom, 0px);
+        --dk-safe-left: env(safe-area-inset-left, 0px);
     }
 
     /* A theme set on the root wins over the system's. */
