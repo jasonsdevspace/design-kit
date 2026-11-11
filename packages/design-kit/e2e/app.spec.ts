@@ -47,7 +47,7 @@ const screen = ({
 <h1 class="dk-app-title">${title}</h1>
 <button type="button" class="dk-button dk-button-text">Scores</button>
 </header>
-<main class="dk-app-body" id="main-content" tabindex="-1">
+<main class="dk-app-body" id="main-content" tabindex="0">
 <p><a href="#rules">How a round is scored</a></p>
 ${LINES}
 <p id="last">The last line.</p>
@@ -55,10 +55,10 @@ ${LINES}
 ${toast ? '<div class="dk-app-toast"><p id="toast" role="status">Round saved.</p></div>' : ''}
 ${
     dock > 0
-        ? `<div class="dk-app-dock">
+        ? `<section class="dk-app-dock" aria-label="Actions">
 <button type="button" class="dk-button dk-button-accent dk-button-tall">Save the round</button>
 ${dock > 1 ? '<button type="button" class="dk-button dk-button-tall">Skip a player</button>' : ''}
-</div>`
+</section>`
         : ''
 }
 ${
@@ -248,14 +248,18 @@ test('takes the keyboard through the bar, then the body, then the dock', async (
     // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
     const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
     const reached: string[] = [];
-    for (let stop = 0; stop < 5; stop += 1) {
+    for (let stop = 0; stop < 6; stop += 1) {
         await page.keyboard.press(tab);
         reached.push(
-            await page.evaluate(() => document.activeElement?.textContent.trim() ?? 'nothing')
+            await page.evaluate(() => {
+                const at = document.activeElement;
+                return at?.tagName === 'MAIN' ? 'the body' : (at?.textContent.trim() ?? 'nothing');
+            })
         );
     }
     expect(reached).toEqual([
         'Scores',
+        'the body',
         'How a round is scored',
         'Save the round',
         'Game',
@@ -263,10 +267,76 @@ test('takes the keyboard through the bar, then the body, then the dock', async (
     ]);
 });
 
-test('prints as long as what it holds, with the body whole', async ({ page }) => {
+test("scrolls the body by the keyboard once it has focus, with its ring inside the screen's edges", async ({
+    page,
+}) => {
     await open(page);
+    await body(page).focus();
+    await page.keyboard.press('End');
+    await expect(page.locator('#last')).toBeInViewport();
+    const ring = await style(body(page), 'outline-offset', 'outline-width');
+    expect(parseFloat(ring['outline-offset'] ?? '')).toBe(-parseFloat(ring['outline-width'] ?? ''));
+});
+
+test('lets the page scroll whole on a screen too short for a body between the bar and the dock', async ({
+    page,
+}) => {
+    // A window of 1280 by 1024 zoomed to four times, and a small phone on its side.
+    for (const [width, height] of [
+        [320, 256],
+        [568, 320],
+    ] as const) {
+        await open(page, { width, height, dock: 2, toast: true, tabs: true });
+        const size = `${String(width)} by ${String(height)}`;
+        expect(await pageScroll(page), size).toBeGreaterThan(0);
+        expect((await style(body(page), 'overflow-y'))['overflow-y'], size).toBe('visible');
+        // Every line of the body is drawn, the first under the bar and the last over the toast.
+        const held = await box(body(page), 'the body');
+        expect(held.y, size).toBeGreaterThanOrEqual(bottom(await box(bar(page), 'the bar')));
+        expect(bottom(await box(page.locator('#last'), 'the last line')), size).toBeLessThanOrEqual(
+            (await box(page.locator('.dk-app-toast'), 'the toast')).y
+        );
+        expect(await sideways(page), size).toBe(0);
+    }
+    // One step taller and the frame holds the screen again.
+    await open(page, { width: 568, height: 385 });
+    expect(await pageScroll(page)).toBe(0);
+});
+
+test('pads past a side safe area only by what the column leaves uncleared, on a phone on its side', async ({
+    page,
+}) => {
+    const sides = ':root { --dk-safe-left: 47px; --dk-safe-right: 47px; }';
+    // The column's margin, 198px, clears the notch, so the dock is the column's full width.
+    await open(page, { width: 844, height: 390, css: sides });
+    const wide = await box(dock(page), 'the dock');
+    expect(wide.x).toBe((844 - 448) / 2);
+    expect(wide.width).toBe(448);
+    // A margin of 20px clears that much of it, and the frame pads the rest.
+    await open(page, { width: 488, height: 390, css: sides });
+    expect((await box(dock(page), 'the dock')).x).toBe(47);
+});
+
+test('draws the skip link below the top safe area', async ({ page }) => {
+    await writePage(page, {
+        width: 390,
+        height: 700,
+        css: SAFE_CSS,
+        title: 'Round 3',
+        body: `<a class="dk-skip" href="#main-content">Skip to content</a>${screen()}`,
+    });
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    await skip.focus();
+    expect((await box(skip, 'the skip link')).y).toBeGreaterThanOrEqual(SAFE.top);
+});
+
+test('prints as long and as wide as what it holds, with the body whole', async ({ page }) => {
+    await open(page, { width: 1280, css: SAFE_CSS });
     await page.emulateMedia({ media: 'print' });
-    expect((await box(page.locator('.dk-app'), 'the frame')).height).toBeGreaterThan(700);
+    const frame = await box(page.locator('.dk-app'), 'the frame');
+    expect(frame.height).toBeGreaterThan(700);
+    expect(frame.width).toBeGreaterThan(448);
+    expect(frame.x).toBeLessThan(100);
     expect((await style(body(page), 'overflow-y'))['overflow-y']).toBe('visible');
 });
 

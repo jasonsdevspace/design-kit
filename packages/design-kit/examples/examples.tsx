@@ -423,15 +423,15 @@ export const appFrame: ReactElement = (
                 Scores
             </button>
         </header>
-        <main id="main-content" tabIndex={-1} className="dk-app-body">
+        <main id="main-content" tabIndex={0} className="dk-app-body">
             ...
         </main>
         <div className="dk-app-toast">...</div>
-        <div className="dk-app-dock">
+        <section className="dk-app-dock" aria-label="Actions">
             <button type="button" className="dk-button dk-button-accent dk-button-tall">
                 Save the round
             </button>
-        </div>
+        </section>
         <nav className="dk-app-tabs" aria-label="Sections">
             ...
         </nav>

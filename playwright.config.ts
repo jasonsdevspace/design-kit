@@ -4,8 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
  * The sheets, the theme script and the components in a real browser, since only a browser resolves
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
- * it into the browser. An app's frame is drawn in WebKit as well. The site's tests open the built site, which the config builds and serves
- * under the path GitHub Pages gives it.
+ * it into the browser. An app's frame is drawn in WebKit as well. The site's tests open the built
+ * site, which the config builds and serves under the path GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;

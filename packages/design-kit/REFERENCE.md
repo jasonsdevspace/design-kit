@@ -1104,7 +1104,9 @@ what holds it. Its edge is transparent, and shows only in forced colors.
 
 An app's screen is a frame as tall as the screen: a bar across the top that says where the visitor
 is, a body that scrolls between, and a dock at the bottom for what the screen is for. `components.css`
-styles the markup below with no script.
+styles the markup below with no script. The frame is the page's whole content, with nothing above or
+below it but a skip link, since anything else would add to the screen's height and push the dock out
+of view.
 
 <!-- example: appFrame -->
 
@@ -1114,22 +1116,24 @@ styles the markup below with no script.
         <h1 class="dk-app-title">Round 3</h1>
         <button type="button" class="dk-button dk-button-text">Scores</button>
     </header>
-    <main id="main-content" tabindex="-1" class="dk-app-body">...</main>
+    <main id="main-content" tabindex="0" class="dk-app-body">...</main>
     <div class="dk-app-toast">...</div>
-    <div class="dk-app-dock">
+    <section class="dk-app-dock" aria-label="Actions">
         <button type="button" class="dk-button dk-button-accent dk-button-tall">
             Save the round
         </button>
-    </div>
+    </section>
     <nav class="dk-app-tabs" aria-label="Sections">...</nav>
 </div>
 ```
 
-The bar's title is the page's only `h1`, so each screen has one and a screen reader lands on it. The
-bar has room for a mark before the title and one action after it. The body is the page's `main`, and
-the one part that scrolls, so the bar and the dock stay in view. A body that holds nothing the
-keyboard reaches takes `tabindex="0"` in place of `-1`, so the arrow keys scroll it. The dock holds
-the screen's main button, at the larger target, and a second one below it where a screen has two.
+The bar's title is the page's only `h1`, so each screen has one and a screen reader finds it by its
+heading. The bar has room for a mark before the title and one action after it. The body is the
+page's `main`, and the one part that scrolls, so the bar and the dock stay in view. It has
+`tabindex="0"` on every screen, so the keyboard reaches it and the arrow keys scroll it whatever it
+holds, as a frame that scrolls always does in the kit. The dock is a `section` named for what it
+holds, so a screen reader moving by landmark finds the screen's main button after the body. It holds
+that button at the larger target, and a second one below it where a screen has two.
 
 `dk-app-toast` is a toast's place, above the dock, and `dk-app-tabs` is a tab bar's, at the bottom
 edge. A screen leaves out any part it does not have, the dock included, and its row closes to
@@ -1159,7 +1163,13 @@ indicator.
 The bar is `--dk-app-bar` tall, 4rem, or taller where a long title wraps, which it does within the
 room the mark and the action leave. On a wide screen the frame stays within `--dk-app-column`,
 28rem, in the middle. The body keeps its scrolling to itself, so reaching its end does not move the
-page behind it. On paper the frame is as long as what it holds and the body prints whole.
+page behind it, which also means pulling down on the body does not reload the page.
+
+On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
+lines tall, the frame is as long as what it holds and the page scrolls whole, so the bar and the
+dock never squeeze the body out of reach. On a phone on its side the frame pads past a side safe
+area only by what the column's own margin does not already clear. On paper the frame is as long and
+as wide as what it holds and the body prints whole.
 
 </details>
 

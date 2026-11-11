@@ -26,7 +26,8 @@
     .dk-skip {
         position: absolute;
         left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
-        top: var(--dk-space-4);
+        /* Below what a phone keeps at its top edge, which is nothing on a page that does not ask. */
+        top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
         height: 1px;
         padding: 0;
@@ -1444,9 +1445,10 @@
      * a height: the body ends where the rows below it begin, and a toast has a row of its own
      * above the dock, which keeps it clear of both whatever their size.
      *
-     * The frame is as tall as the screen that is left, by the dynamic height, so a phone
-     * browser's own bars coming and going do not push the dock out of view. It clears what the
-     * phone keeps for itself at each edge, and on a wide screen it is a column in the middle.
+     * The frame is as tall as the screen, by the dynamic height, so a phone browser's own bars
+     * coming and going do not push the dock out of view. It is the page's whole content, with
+     * nothing above or below it but a skip link. It clears what the phone keeps for itself at
+     * each edge, and on a wide screen it is a column in the middle.
      */
     :where(.dk-app) {
         display: grid;
@@ -1463,9 +1465,16 @@
         height: 100dvh;
         max-width: var(--dk-app-column);
         margin-inline: auto;
-        padding-right: var(--dk-safe-right);
+        /*
+         * At each side, what the phone keeps less what the column's own margin already clears, so
+         * a phone on its side does not pay for the notch twice.
+         */
+        padding-right: max(
+            0px,
+            var(--dk-safe-right) - max(0px, (100vw - var(--dk-app-column)) / 2)
+        );
         padding-bottom: var(--dk-safe-bottom);
-        padding-left: var(--dk-safe-left);
+        padding-left: max(0px, var(--dk-safe-left) - max(0px, (100vw - var(--dk-app-column)) / 2));
     }
 
     /*
@@ -1511,6 +1520,11 @@
         overscroll-behavior: contain;
     }
 
+    /* The body takes focus so the keys scroll it, and its ring sits inside the screen's edges. */
+    :where(.dk-app-body):focus-visible {
+        outline-offset: calc(-1 * var(--dk-ring-width));
+    }
+
     /* A toast's place, above the dock, as wide as the frame and as tall as the toast in it. */
     :where(.dk-app-toast) {
         grid-area: toast;
@@ -1529,6 +1543,24 @@
     /* A tab bar's place, last, at the bottom edge. */
     :where(.dk-app-tabs) {
         grid-area: tabs;
+    }
+
+    /*
+     * A screen too short to hold the bar, the dock and a body worth scrolling: a phone on its
+     * side, or a page zoomed until its window is a few lines tall. There the frame is as long as
+     * what it holds and the page scrolls whole, so nothing is squeezed out of reach. The height
+     * is in rems, so a larger text size in the browser's settings reaches it sooner.
+     */
+    @media (max-height: 24rem) {
+        :where(.dk-app) {
+            height: auto;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        :where(.dk-app-body) {
+            overflow: visible;
+        }
     }
 
     /*
@@ -1561,6 +1593,9 @@
         :where(.dk-app) {
             display: block;
             height: auto;
+            min-height: 0;
+            max-width: none;
+            padding: 0;
         }
 
         :where(.dk-app-body) {
