@@ -1,11 +1,11 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button and toast do, for a page to attach to the markup the
- * components draw or a page writes by hand. Each attach function finds its control's parts by their
- * classes. The switch and the copy button show their control, which the markup keeps hidden so a
- * visitor without script meets no control that does nothing, and return a function that takes it
- * away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
+ * What the kit's theme switch, copy button, stepper and toast do, for a page to attach to the
+ * markup the components draw or a page writes by hand. Each attach function finds its control's
+ * parts by their classes. The switch, the copy button and the stepper show their control, which the
+ * markup keeps hidden so a visitor without script meets no control that does nothing, and return a
+ * function that takes it away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
  * when the module is imported, and nothing here sets a style, so a page's policy can refuse every
  * style it did not serve.
  */
@@ -468,4 +468,126 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     });
     attachedToasts.set(element, show);
     return show;
+};
+
+const attachedSteppers = new WeakMap<HTMLElement, () => void>();
+
+/**
+ * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
+ * script meets the number field alone, and steps the value by the field's step when one is
+ * pressed. A press that changes the value fires the input and change events a typed value fires,
+ * and says the new value on the stepper's status line, since focus stays on the button. A button
+ * that would pass the field's least or greatest value is marked off, aria-disabled so focus stays
+ * on it, as both are on a field that is disabled or read only, and a press of an off button does
+ * nothing. Each is read again as a press lands, so a value a script or a form's reset set is
+ * followed. A typed value the field refuses, or none at all, shows the stepper's own error once the
+ * value is changed and says it on the status line, and the error is cleared as soon as the value is
+ * right again. Only the error's own id and the invalid state it set are added and taken away, so a
+ * hint or an error the page draws keeps its place. It takes the stepper's field or the stepper,
+ * attaches each stepper once whichever it is given, and returns what takes it away again.
+ */
+export const attachStepper = (element: HTMLElement): (() => void) => {
+    const field = element.closest<HTMLElement>('.dk-field') ?? element;
+    const stepper = element.matches('.dk-stepper')
+        ? element
+        : (field.querySelector<HTMLElement>('.dk-stepper') ?? element);
+    const already = attachedSteppers.get(stepper);
+    if (already) return already;
+    const input = field.querySelector<HTMLInputElement>('.dk-stepper-value');
+    const down = field.querySelector<HTMLButtonElement>('.dk-stepper-down');
+    const up = field.querySelector<HTMLButtonElement>('.dk-stepper-up');
+    if (!input || !down || !up) throw new Error('a stepper needs its value and its two buttons');
+    const range = field.querySelector<HTMLElement>('.dk-stepper-range');
+    const status = field.querySelector<HTMLElement>('.dk-stepper-status');
+    const limit = (value: string, fallback: number) => (value === '' ? fallback : Number(value));
+    const locked = () => input.disabled || input.readOnly;
+    const off = (button: HTMLButtonElement, stop: boolean) => {
+        if (stop) button.setAttribute('aria-disabled', 'true');
+        else button.removeAttribute('aria-disabled');
+    };
+    const mark = () => {
+        const value = input.valueAsNumber;
+        const known = !Number.isNaN(value);
+        off(down, locked() || (known && value <= limit(input.min, -Infinity)));
+        off(up, locked() || (known && value >= limit(input.max, Infinity)));
+    };
+    let setInvalid = false;
+    const report = (wrong: boolean) => {
+        if (!range) return;
+        range.hidden = !wrong;
+        const ids = (input.getAttribute('aria-describedby') ?? '')
+            .split(/\s+/)
+            .filter((id) => id !== '' && id !== range.id);
+        if (wrong) ids.push(range.id);
+        if (ids.length > 0) input.setAttribute('aria-describedby', ids.join(' '));
+        else input.removeAttribute('aria-describedby');
+        const pageError = [...field.querySelectorAll<HTMLElement>('.dk-field-error')].some(
+            (error) => error !== range && !error.hidden
+        );
+        if (wrong && input.getAttribute('aria-invalid') !== 'true') {
+            input.setAttribute('aria-invalid', 'true');
+            setInvalid = true;
+        } else if (!wrong && setInvalid && !pageError) {
+            input.removeAttribute('aria-invalid');
+            setInvalid = false;
+        }
+    };
+    const wrong = () => input.value === '' || !input.validity.valid;
+    const press = (raise: boolean) => () => {
+        mark();
+        const button = raise ? up : down;
+        if (button.getAttribute('aria-disabled') === 'true') return;
+        const before = input.value;
+        try {
+            if (raise) input.stepUp();
+            else input.stepDown();
+        } catch {
+            // A field whose step is any has nothing to step by.
+            return;
+        }
+        if (input.value === before) return;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        if (status) say(status, input.value, true);
+    };
+    const lower = press(false);
+    const raise = press(true);
+    const onInput = () => {
+        mark();
+        if (!wrong()) report(false);
+    };
+    const onChange = () => {
+        const bad = wrong();
+        report(bad);
+        if (bad && status && range) say(status, range.textContent, true);
+    };
+    const onReset = () => {
+        window.setTimeout(() => {
+            mark();
+            report(false);
+        });
+    };
+    down.addEventListener('click', lower);
+    up.addEventListener('click', raise);
+    input.addEventListener('input', onInput);
+    input.addEventListener('change', onChange);
+    stepper.addEventListener('focusin', mark);
+    input.form?.addEventListener('reset', onReset);
+    mark();
+    down.hidden = false;
+    up.hidden = false;
+    const detach = () => {
+        down.removeEventListener('click', lower);
+        up.removeEventListener('click', raise);
+        input.removeEventListener('input', onInput);
+        input.removeEventListener('change', onChange);
+        stepper.removeEventListener('focusin', mark);
+        input.form?.removeEventListener('reset', onReset);
+        report(false);
+        down.hidden = true;
+        up.hidden = true;
+        attachedSteppers.delete(stepper);
+    };
+    attachedSteppers.set(stepper, detach);
+    return detach;
 };

@@ -29,6 +29,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'code',
     'appFrame',
     'tabBar',
+    'stepper',
     'toast',
     'buttonGrid',
     'rows',

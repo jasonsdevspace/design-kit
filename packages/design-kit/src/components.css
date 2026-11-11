@@ -27,7 +27,7 @@
     .dk-skip {
         position: absolute;
         left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
-        /* Below what a phone keeps at its top edge, which is nothing on a page that does not ask. */
+        /* Below what a phone keeps at its top edge, nothing on a page that does not ask. */
         top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
         height: 1px;
@@ -1459,11 +1459,11 @@
     }
 
     /*
-     * A theme switch or a copy button stays hidden until a page's script attaches it, and a
-     * toast's buttons until it shows a message, since the display these pieces take would
-     * otherwise win over the browser's own rule for hidden.
+     * A theme switch, a copy button or a stepper's buttons stay hidden until a page's script
+     * attaches them, and a toast's buttons until it shows a message, since the display these
+     * pieces take would otherwise win over the browser's own rule for hidden.
      */
-    :where(.dk-theme-switch[hidden], .dk-copy[hidden], .dk-toast [hidden]) {
+    :where(.dk-theme-switch[hidden], .dk-copy[hidden], .dk-toast [hidden], .dk-stepper > [hidden]) {
         display: none;
     }
 
@@ -1991,9 +1991,9 @@
 
     /*
      * A row that leads somewhere is one link across its width, ending in a muted chevron that says
-     * so on a phone, where nothing hovers, hidden from a screen reader in the markup. Its focus ring is
-     * inside it, around the whole row and never cut by what holds the list. Pointed at, or pressed
-     * under a thumb, its title is underlined, as a link's words are.
+     * so on a phone, where nothing hovers, hidden from a screen reader in the markup. Its focus
+     * ring is inside it, around the whole row and never cut by what holds the list. Pointed at, or
+     * pressed under a thumb, its title is underlined, as a link's words are.
      */
     :where(.dk-row-sign) {
         color: var(--dk-muted);
@@ -2033,6 +2033,93 @@
         font-family: var(--dk-font-mono);
         font-variant-numeric: tabular-nums;
         text-align: end;
+    }
+
+    /*
+     * A stepper: a number field with a button to lower the value before it and one to raise it
+     * after, for a small whole number that is quicker to step than to type on a phone. The buttons
+     * are as tall as the field and as wide as they are tall, and the value is in the mono face with
+     * figures of one width, two wide unless --dk-stepper-digits says more, so the field never
+     * changes width as the value does. A button at a limit is off and drawn as any off button. In a
+     * tall stepper the buttons and the value take the larger target, and the value a larger size.
+     */
+    :where(.dk-stepper) {
+        display: flex;
+        align-items: stretch;
+        gap: var(--dk-space-2);
+        max-width: 100%;
+    }
+
+    :where(.dk-stepper > .dk-button) {
+        min-width: var(--dk-target);
+        min-height: var(--dk-target);
+        padding-inline: 0;
+        font-size: var(--dk-text-title);
+    }
+
+    :where(.dk-stepper-value) {
+        box-sizing: content-box;
+        width: calc(var(--dk-stepper-digits, 2) * 1ch);
+        min-height: var(--dk-target);
+        padding-block: 0;
+        font-family: var(--dk-font-mono);
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+        appearance: textfield;
+    }
+
+    /*
+     * The field's own spin buttons, which the stepper's buttons stand in for, are taken away, since
+     * they keep their room even out of sight and would cut a value two figures wide.
+     */
+    :where(.dk-stepper-value)::-webkit-inner-spin-button,
+    :where(.dk-stepper-value)::-webkit-outer-spin-button {
+        margin: 0;
+        appearance: none;
+    }
+
+    :where(.dk-stepper-tall > .dk-button) {
+        min-width: var(--dk-target-large);
+        min-height: var(--dk-target-large);
+    }
+
+    :where(.dk-stepper-tall > .dk-stepper-value) {
+        min-height: var(--dk-target-large);
+        font-size: var(--dk-text-heading);
+    }
+
+    /*
+     * With its label to the left, a stepper's field is one line, the label taking the room the
+     * stepper leaves and wrapping within it, and the stepper moving under the label where a large
+     * text size leaves no room for both. Its errors sit on lines above it, as every field's do, so
+     * a phone's keyboard never covers them, and its hint on a line below.
+     */
+    :where(.dk-stepper-inline) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--dk-space-1) var(--dk-space-3);
+    }
+
+    :where(.dk-stepper-inline > .dk-field-label) {
+        flex: 1 1 4rem;
+        min-width: 0;
+    }
+
+    :where(.dk-stepper-inline > .dk-stepper) {
+        flex: none;
+    }
+
+    :where(.dk-stepper-inline > .dk-field-hint, .dk-stepper-inline > .dk-field-error) {
+        flex-basis: 100%;
+    }
+
+    :where(.dk-stepper-inline > .dk-field-error) {
+        order: -1;
+    }
+
+    :where(.dk-stepper-inline > .dk-field-hint) {
+        order: 1;
     }
 
     /*

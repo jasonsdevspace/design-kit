@@ -12,6 +12,7 @@ import {
     PortfolioStrip,
     SelectField,
     SkipLink,
+    StepperField,
     TextareaField,
     ThemeSwitch,
     Toast,
@@ -508,6 +509,20 @@ export const tabBar: ReactElement = (
     </nav>
 );
 
+/** A stepper for the number of players, its label beside it, before a page attaches it. */
+export const stepper: ReactElement = (
+    <StepperField
+        id="players"
+        label="Players"
+        subject="the number of players"
+        min={2}
+        max={8}
+        defaultValue={4}
+        inline
+        tall
+    />
+);
+
 /** A toast, as the component draws it before a page attaches it. */
 export const toast: ReactElement = <Toast />;
 
@@ -609,6 +624,7 @@ export const EXAMPLES = {
     code,
     appFrame,
     tabBar,
+    stepper,
     toast,
     buttonGrid,
     rows,
