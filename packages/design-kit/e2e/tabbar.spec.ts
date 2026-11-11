@@ -65,7 +65,7 @@ const open = async (
         theme,
         css,
         title: 'History',
-        body: `<main><h1>History</h1><p><a href="#first">The first game</a></p>${lines(count)}<p id="last">The last line.</p></main>${tabBar(places)}`,
+        body: `<main><h1>History</h1><p><a href="#first">The first game</a></p>${lines(count / 2)}<p><a href="#middle">A game in the middle</a></p>${lines(count / 2)}<p id="last">The last line.</p></main>${tabBar(places)}`,
     });
     await page.evaluate(() => {
         document.body.classList.add('dk-tabbar-page');
@@ -140,10 +140,57 @@ test('tells the current link apart by its weight and a line, forced colors inclu
     expect((await box(current.locator('svg'), 'the icon')).y).toBe(
         (await box(other.locator('svg'), 'the icon')).y
     );
+});
 
-    await page.emulateMedia({ forcedColors: 'active' });
-    expect((await style(current, 'border-top-width'))['border-top-width']).toBe('2px');
-    expect((await style(other, 'border-top-width'))['border-top-width']).toBe('0px');
+test('draws one line in forced colors, over the current link, in a system color', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        const edge = (name: string) =>
+            style(
+                page.getByRole('link', { name, exact: true }),
+                'border-top-width',
+                'border-top-style',
+                'border-top-color',
+                'color'
+            );
+        // A solid line in the color forced colors give the link's own words, where the accent
+        // is gone, and no edge at all on a link at rest for forced colors to paint.
+        const current = await edge('Play');
+        expect([current['border-top-width'], current['border-top-style']]).toEqual([
+            '2px',
+            'solid',
+        ]);
+        expect(current['border-top-color']).toBe(current['color']);
+        expect((await edge('History'))['border-top-style']).toBe('none');
+    } finally {
+        await context.close();
+    }
+});
+
+test('takes no placing of its own in a wrapper, so a frame clears the home indicator once', async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        height: 700,
+        css: SAFE_CSS,
+        title: 'Round 3',
+        body: `<div class="dk-app">
+<header class="dk-app-bar"><h1 class="dk-app-title">Round 3</h1></header>
+<main class="dk-app-body" tabindex="0">${lines(40)}</main>
+<div class="dk-app-tabs">${tabBar(PLACES.slice(0, 3))}</div>
+</div>`,
+    });
+    const drawn = await box(bar(page), 'the bar');
+    expect(bottom(drawn)).toBe(700 - SAFE_BOTTOM);
+    expect(bottom(await box(links(page).first(), 'a link'))).toBe(bottom(drawn));
+    expect((await style(bar(page), 'position'))['position']).toBe('static');
 });
 
 test("shares a phone's narrowest width evenly, from two links to five", async ({ page }) => {
@@ -197,12 +244,60 @@ test('draws every link at the larger target or taller, with its icon over its la
     }
 });
 
-test("is the app's column in the middle of a wide screen", async ({ page }) => {
-    await open(page, { width: 1280 });
+test("is the app's column in the middle of a wide screen, with the page held to it", async ({
+    page,
+}) => {
+    // A page that does not scroll, so a scrollbar takes no part of the width measured.
+    await open(page, { width: 1280, count: 1 });
     const wide = await box(bar(page), 'the bar');
     expect(wide.width).toBe(448);
     expect(wide.x).toBe((1280 - 448) / 2);
     expect(bottom(wide)).toBe(700);
+    const content = await box(page.locator('main'), 'the content');
+    expect([content.x, content.width]).toEqual([wide.x, wide.width]);
+});
+
+test('scrolls what takes focus clear of the bar, so the bar never covers it', async ({ page }) => {
+    await open(page, { css: SAFE_CSS });
+    const link = page.getByRole('link', { name: 'A game in the middle' });
+    // The link scrolled to the foot of the screen, where the bar is drawn over it.
+    await link.evaluate((element) => {
+        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+    });
+    const top = (await box(bar(page), 'the bar')).y;
+    expect(bottom(await box(link, 'the link'))).toBeGreaterThan(top);
+    await link.focus();
+    expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(top);
+});
+
+test('scrolls with the page on a screen too short to give it a row of its own', async ({
+    page,
+}) => {
+    // A small phone on its side, and a window of 1280 by 1024 zoomed to four times.
+    for (const [width, height] of [
+        [568, 320],
+        [320, 256],
+    ] as const) {
+        await open(page, { width, height });
+        const size = `${String(width)} by ${String(height)}`;
+        await expect(bar(page), size).not.toBeInViewport();
+        await scrollToEnd(page);
+        // To the pixel, since the page's end can fall on a part of one.
+        expect(Math.round(bottom(await box(bar(page), 'the bar'))), size).toBe(height);
+        expect(bottom(await box(page.locator('#last'), 'the last line')), size).toBeLessThanOrEqual(
+            (await box(bar(page), 'the bar')).y
+        );
+    }
+});
+
+test('stays as tall as the screen on a page with padding of its own', async ({ page }) => {
+    await open(page, { count: 1, css: '.dk-tabbar-page { padding-top: 40px; }' });
+    expect(bottom(await box(bar(page), 'the bar'))).toBe(700);
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollHeight - document.documentElement.clientHeight
+        )
+    ).toBe(0);
 });
 
 test("is the last row of an app's frame, clear of the home indicator once, and the keyboard's last stops", async ({
@@ -253,10 +348,14 @@ test("draws a link's focus ring inside the bar, where the screen's edge would cu
     expect(parseFloat(ring['outline-offset'] ?? '')).toBe(-parseFloat(ring['outline-width'] ?? ''));
 });
 
-test('does not print', async ({ page }) => {
-    await open(page);
+test('does not print, and leaves a page as long and as wide as what it holds', async ({ page }) => {
+    await open(page, { width: 1280, count: 1 });
     await page.emulateMedia({ media: 'print' });
     await expect(bar(page)).toBeHidden();
+    const held = await box(page.locator('body'), 'the page');
+    expect(held.width).toBe(1280);
+    expect(held.height).toBeLessThan(700);
+    expect((await style(page.locator('body'), 'display'))['display']).toBe('block');
 });
 
 for (const theme of ['light', 'dark'] as const) {

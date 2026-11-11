@@ -1208,9 +1208,11 @@ holding a list of links, from two to five, each a label with room for an icon ov
 ```
 
 Each place has an address, so the links are links and take no tab role. The link for the place the
-visitor is in carries `aria-current="page"`, and is drawn in the page's text color at the strong
-weight under an accent line, so it is told apart by more than its color. Every link has a label. An
-icon is an `svg` before the label, hidden from a screen reader, which the bar draws at 1.5rem.
+visitor is in carries `aria-current="page"`, or `aria-current="true"` on a page beneath that place,
+and is drawn in the page's text color at the strong weight under an accent line, so it is told apart
+by more than its color. Every link has a label, one short word where it can be, since five links
+share a phone's width. An icon is an `svg` before the label, hidden from a screen reader, which the
+bar draws at 1.5rem.
 
 In an app's frame the bar is the frame's last part, `class="dk-app-tabs dk-tabbar"`, after the dock
 in the keyboard's order, and the frame keeps it clear of the home indicator. On a page that scrolls
@@ -1223,20 +1225,31 @@ whole, the bar is the last child of an element with `dk-tabbar-page`, the `body`
 </body>
 ```
 
+Such a page says `viewport-fit=cover` in its viewport meta, as a frame's does, which is what gives
+the safe area tokens their values. `dk-tabbar-page` makes its element a column, so the page's other
+children are that column's items, each as wide as the column unless it sets a width of its own.
+
 <details>
 <summary>How the bar is drawn</summary>
 
 The links share the bar's width evenly, and each is at least `--dk-target-large` tall. A label
 wraps within its share at a large text size and the bar grows with it, so nothing is cut off.
 
-Outside a frame the bar sticks to the bottom of the screen while the page scrolls, over the page at
-`--dk-stack-bar`. At the page's end it sits after the last of the content and never over it, so the
-page pads by no height. `dk-tabbar-page` makes the page a column at least as tall as the screen, so
-on a short page the bar is still at the bottom. The bar pads itself past `--dk-safe-bottom` and the
-side safe areas, and on a wide screen it stays within `--dk-app-column` in the middle.
+`dk-tabbar` draws the bar and places nothing. `dk-tabbar-page` is the app's column, as a frame is:
+`--dk-app-column` wide at most, in the middle of a wide screen, at least as tall as the screen, and
+padded past the side safe areas. The bar in it sticks to the bottom of the screen while the page
+scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. On a short page
+it is still at the bottom. At the page's end it sits after the last of the content and never over
+it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's least
+height, so what the keyboard reaches, or a link within the page leads to, stops short of the bar and
+is never under it.
+
+On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
+lines tall, the bar scrolls with the page and waits at its end, so it takes no part of a screen that
+short.
 
 Only the current link has a line, and the others are padded to its depth, so forced colors draw one
-line. A tab bar does not print.
+line. A tab bar does not print, and a page that ends in one prints as long as what it holds.
 
 </details>
 
