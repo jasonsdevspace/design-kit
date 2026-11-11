@@ -476,41 +476,6 @@ export const tabBar: ReactElement = (
 /** A toast, as the component draws it before a page attaches it. */
 export const toast: ReactElement = <Toast />;
 
-/**
- * A list of games played, each row a link named by its words, title first, and a list of players,
- * each row with a button of its own at its end.
- */
-export const rows: ReactElement = (
-    <>
-        <ul className="dk-rows" role="list">
-            <li>
-                <a className="dk-row" href="/games/12/">
-                    <span className="dk-row-text">
-                        <span className="dk-row-title">Flip 7</span>
-                        <span className="dk-row-detail">Four players, won by Ana</span>
-                    </span>
-                    <span className="dk-row-figure">212</span>
-                </a>
-            </li>
-            <li>...</li>
-        </ul>
-        <ul className="dk-rows" role="list">
-            <li>
-                <div className="dk-row">
-                    <span className="dk-row-text">
-                        <span className="dk-row-title">Ana</span>
-                        <span className="dk-row-detail">Played 12 games</span>
-                    </span>
-                    <Button text>
-                        Remove<span className="dk-visually-hidden"> Ana</span>
-                    </Button>
-                </div>
-            </li>
-            <li>...</li>
-        </ul>
-    </>
-);
-
 /** A grid of toggles for the cards in a hand, one of them off, and a pad of plain keys. */
 export const buttonGrid: ReactElement = (
     <>
@@ -530,6 +495,48 @@ export const buttonGrid: ReactElement = (
                 <span className="dk-visually-hidden">Delete</span>
             </Button>
         </div>
+    </>
+);
+
+/**
+ * A list of games played, each row a link named by its words, title first, and a list of players,
+ * each row with a button of its own at its end.
+ */
+export const rows: ReactElement = (
+    <>
+        <ul className="dk-rows" role="list">
+            <li>
+                <a className="dk-row" href="/games/12/">
+                    <span className="dk-row-text">
+                        <span className="dk-row-title">Flip 7</span>
+                        <span className="dk-visually-hidden">, </span>
+                        <span className="dk-row-detail">Four players, won by Ana</span>
+                    </span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-figure">
+                        212<span className="dk-visually-hidden"> points</span>
+                    </span>
+                    <span className="dk-row-sign" aria-hidden="true">
+                        ›
+                    </span>
+                </a>
+            </li>
+            <li>...</li>
+        </ul>
+        <ul className="dk-rows" role="list">
+            <li>
+                <div className="dk-row">
+                    <span className="dk-row-text">
+                        <span className="dk-row-title">Ana</span>
+                        <span className="dk-row-detail">Played 12 games</span>
+                    </span>
+                    <Button text>
+                        Remove<span className="dk-visually-hidden"> Ana</span>
+                    </Button>
+                </div>
+            </li>
+            <li>...</li>
+        </ul>
     </>
 );
 

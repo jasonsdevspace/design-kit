@@ -27,8 +27,11 @@ const gameRows = GAMES.map(
     ([id, title, detail, score]) =>
         `<li><a class="dk-row" href="#game-${id}">` +
         `<span class="dk-row-text"><span class="dk-row-title" id="g${id}">${title}</span>` +
+        `<span class="dk-visually-hidden">, </span>` +
         `<span class="dk-row-detail" id="g${id}-d">${detail}</span></span>` +
-        `<span class="dk-row-figure" id="g${id}-s">${score}</span></a></li>`
+        `<span class="dk-visually-hidden">, </span>` +
+        `<span class="dk-row-figure" id="g${id}-s">${score}<span class="dk-visually-hidden"> points</span></span>` +
+        `<span class="dk-row-sign" aria-hidden="true">›</span></a></li>`
 ).join('');
 
 const playerRows = ['Ana', 'Ben']
@@ -55,7 +58,9 @@ const open = async (
         body:
             `<main><h1>History</h1><ul class="dk-rows${tall ? ' dk-rows-tall' : ''}" role="list" aria-label="Games">${gameRows}</ul>` +
             `<h2>Players</h2><ul class="dk-rows" role="list" aria-label="Players">${playerRows}</ul>` +
-            '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty"></ul></main>',
+            '<ul class="dk-rows" role="list" aria-label="Places"><li><a class="dk-row" href="#home" id="one-line">' +
+            '<span class="dk-row-text"><span class="dk-row-title">Home</span></span></a></li></ul>' +
+            '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty">\n    \n</ul></main>',
     });
 };
 
@@ -81,6 +86,10 @@ test('draws a rule between rows and none after the last, in both themes and forc
         ['solid', 'none'],
         ['solid', 'none'],
     ];
+    const ruleColor = (on: Page) =>
+        items(games(on))
+            .nth(1)
+            .evaluate((row) => getComputedStyle(row).borderTopColor);
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
         expect(await rules(page), theme).toEqual(expected);
@@ -90,6 +99,16 @@ test('draws a rule between rows and none after the last, in both themes and forc
         const forced = await context.newPage();
         await open(forced);
         expect(await rules(forced)).toEqual(expected);
+        // The rule takes the system's text color, so it is drawn and seen.
+        const text = await forced.evaluate(() => {
+            const probe = document.createElement('span');
+            probe.style.color = 'CanvasText';
+            document.body.append(probe);
+            const resolved = getComputedStyle(probe).color;
+            probe.remove();
+            return resolved;
+        });
+        expect(await ruleColor(forced)).toBe(text);
     } finally {
         await context.close();
     }
@@ -115,7 +134,16 @@ test('makes a link row one stop named by its words, title first, with its ring a
 }) => {
     await open(page);
     const link = games(page).getByRole('link').first();
-    await expect(link).toHaveAccessibleName(/^Flip 7\s*Four players, won by Ana\s*212$/);
+    // A comma between the parts, with the space a browser may put before it, which is not read.
+    await expect(link).toHaveAccessibleName(/^Flip 7 ?, Four players, won by Ana ?, 212 points$/);
+    // A chevron says it leads somewhere, and is passed over by a screen reader.
+    const sign = link.locator('.dk-row-sign');
+    await expect(sign).toBeVisible();
+    await expect(sign).toHaveAttribute('aria-hidden', 'true');
+    // It sits at the row's end, after the figure.
+    expect((await box(sign, 'the sign')).x).toBeGreaterThan(
+        (await box(link.locator('.dk-row-figure'), 'the figure')).x
+    );
     await page.keyboard.press('Tab');
     await expect(link).toBeFocused();
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
@@ -174,9 +202,10 @@ test('wraps a long title, and keeps the end beside its first line', async ({ pag
 test('lines a row of one line up in the middle of its height, and its figures in one width', async ({
     page,
 }) => {
-    await open(page, { tall: true });
-    const row = await box(games(page).locator('.dk-row').first(), 'the row');
-    const text = await box(games(page).locator('.dk-row-text').first(), 'the text');
+    await open(page);
+    const row = await box(page.locator('#one-line'), 'the row');
+    const text = await box(page.locator('#one-line .dk-row-text'), 'the text');
+    expect(row.height).toBeGreaterThan(text.height + 8);
     expect(Math.abs(text.y - row.y - (bottom(row) - bottom(text)))).toBeLessThanOrEqual(1);
     expect(await style(page.locator('#g12-s'), 'font-variant-numeric', 'text-align')).toEqual({
         'font-variant-numeric': 'tabular-nums',
@@ -187,7 +216,24 @@ test('lines a row of one line up in the middle of its height, and its figures in
 test('says how many rows a list holds, and draws an empty list not at all', async ({ page }) => {
     await open(page);
     await expect(items(games(page))).toHaveCount(GAMES.length);
-    await expect(page.locator('#empty')).toBeHidden();
+    // Not drawn, though a line break sits in it, and so not a list a screen reader finds.
+    expect((await style(page.locator('#empty'), 'display')).display).toBe('none');
+    await expect(page.getByRole('list', { name: 'Nothing yet' })).toHaveCount(0);
+});
+
+test('keeps a row with a button as tall as one without, the button in the middle and every ring off the words', async ({
+    page,
+}) => {
+    await open(page);
+    const player = page.getByRole('list', { name: 'Players' }).locator('.dk-row').first();
+    const game = games(page).locator('.dk-row').first();
+    const button = await box(player.getByRole('button'), 'the button');
+    const held = await box(player, 'the row');
+    expect(held.height).toBeLessThanOrEqual((await box(game, 'a game')).height + 2);
+    expect(Math.abs(button.y - held.y - (bottom(held) - bottom(button)))).toBeLessThanOrEqual(1);
+    // The row's words start past the room a ring drawn inside it takes.
+    const ring = await style(game, 'outline-width', 'outline-offset', 'padding-left');
+    expect(parseFloat(ring['padding-left'] ?? '')).toBeGreaterThanOrEqual(4);
 });
 
 for (const theme of ['light', 'dark'] as const) {

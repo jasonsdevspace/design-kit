@@ -5,9 +5,10 @@
  * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
  * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields
  * and callouts, then the explainer page and the steps, panel, table and code block it holds, then
- * the theme switch, the eyebrow, the pills, the tabs and the copy button's words. Each piece keeps
- * its rules together, at rest, under a pointer, in its states, on a phone and in forced colors, in
- * that order, and the print rules come last for every piece at once.
+ * the theme switch, the eyebrow, the pills, the tabs and the copy button's words, and then the
+ * pieces an app is made of: its frame, the tab bar, the toast, the grid of buttons and the rows.
+ * Each piece keeps its rules together, at rest, under a pointer, in its states, on a phone and in
+ * forced colors, in that order, and the print rules come last for every piece at once.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -1789,86 +1790,6 @@
     }
 
     /*
-     * A list of rows: the games played, the players, the steps to install. Each row has a title, a
-     * muted line of detail under it, and room at its end for a figure, a tag or one button. A rule
-     * runs between rows and none after the last, in the line color, and a row takes no ground of
-     * its own, so a list sits on a page or a panel alike. A list with nothing in it is not drawn.
-     */
-    :where(.dk-rows) {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    :where(.dk-rows:empty) {
-        display: none;
-    }
-
-    :where(.dk-rows > li + li) {
-        border-top: 1px solid var(--dk-line);
-    }
-
-    /*
-     * A row: its text, then its end. The end sits on the line of the title's first line, so a
-     * long title wraps and the row grows with the end still beside where it starts, and a row of
-     * one line sits in the middle of its height. A row is at least the target tall, or the larger
-     * target in a tall list.
-     */
-    :where(.dk-row) {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-content: center;
-        align-items: baseline;
-        gap: var(--dk-space-3);
-        box-sizing: border-box;
-        min-height: var(--dk-target);
-        padding-block: var(--dk-space-2);
-        color: inherit;
-        text-decoration: none;
-    }
-
-    :where(.dk-rows-tall .dk-row) {
-        min-height: var(--dk-target-large);
-    }
-
-    /*
-     * A row that leads somewhere is one link across its width, its focus ring inside it so the
-     * ring is drawn around the whole row and never cut by what holds the list. Pointed at, its
-     * title is underlined, as a link's words are.
-     */
-    :where(a.dk-row):focus-visible {
-        outline-offset: calc(-1 * var(--dk-ring-width));
-    }
-
-    @media (hover: hover) {
-        :where(a.dk-row:hover .dk-row-title) {
-            text-decoration: underline;
-        }
-    }
-
-    :where(.dk-row-text) {
-        display: grid;
-        min-width: 0;
-        overflow-wrap: anywhere;
-    }
-
-    :where(.dk-row-title) {
-        font-weight: var(--dk-weight-medium);
-    }
-
-    :where(.dk-row-detail) {
-        color: var(--dk-muted);
-        font-size: var(--dk-text-small);
-    }
-
-    /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
-    :where(.dk-row-figure) {
-        font-family: var(--dk-font-mono);
-        font-variant-numeric: tabular-nums;
-        text-align: end;
-    }
-
-    /*
      * A grid of buttons: a set picked from, such as the cards in a hand, each a toggle that says
      * whether it is on, or a pad of plain keys that act when pressed. The page names the group and
      * sets how many columns it wants in --dk-button-grid-columns, three unless it does. Where that
@@ -1983,6 +1904,104 @@
         ) {
             border-color: Highlight;
         }
+    }
+
+    /*
+     * A list of rows: the games played, the players, the steps to install. Each row has a title, a
+     * muted line of detail under it, and room at its end for a figure, a tag or one button. A rule
+     * runs between rows and none after the last, in the line color, and a row takes no ground of
+     * its own, so a list sits on a page or a panel alike. A list with no rows is not drawn, even
+     * one a template has left a line break in.
+     */
+    :where(.dk-rows) {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    :where(.dk-rows:not(:has(> li))) {
+        display: none;
+    }
+
+    :where(.dk-rows > li + li) {
+        border-top: 1px solid var(--dk-line);
+    }
+
+    /*
+     * A row: its text, then its end, then a link row's sign. The end sits on the line of the
+     * title's first line, so a long title wraps and the row grows with the end still beside where
+     * it starts, and a row of one line sits in the middle of its height. A button at the end sits
+     * in the middle of the row, since its target is taller than a line. A row is at least the
+     * target tall, or the larger target in a tall list, and is inset by the room a focus ring
+     * takes, so a ring drawn inside it never covers its words.
+     */
+    :where(.dk-row) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-auto-columns: auto;
+        grid-auto-flow: column;
+        align-content: center;
+        align-items: baseline;
+        gap: var(--dk-space-3);
+        box-sizing: border-box;
+        min-height: var(--dk-target);
+        padding: var(--dk-space-2) calc(var(--dk-ring-width) + var(--dk-ring-offset));
+        color: inherit;
+        text-decoration: none;
+    }
+
+    :where(.dk-row > .dk-button) {
+        align-self: center;
+    }
+
+    :where(.dk-rows-tall .dk-row) {
+        min-height: var(--dk-target-large);
+    }
+
+    /*
+     * A row that leads somewhere is one link across its width, ending in a muted chevron that says
+     * so on a phone, where nothing hovers, hidden from a screen reader in the markup. Its focus ring is
+     * inside it, around the whole row and never cut by what holds the list. Pointed at, or pressed
+     * under a thumb, its title is underlined, as a link's words are.
+     */
+    :where(.dk-row-sign) {
+        color: var(--dk-muted);
+    }
+
+    :where(a.dk-row):focus-visible {
+        outline-offset: calc(-1 * var(--dk-ring-width));
+    }
+
+    :where(a.dk-row:active .dk-row-title) {
+        text-decoration: underline;
+    }
+
+    @media (hover: hover) {
+        :where(a.dk-row:hover .dk-row-title) {
+            text-decoration: underline;
+        }
+    }
+
+    :where(.dk-row-text) {
+        display: grid;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    :where(.dk-row-title) {
+        font-weight: var(--dk-weight-medium);
+    }
+
+    :where(.dk-row-detail) {
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
+    :where(.dk-row-figure) {
+        font-family: var(--dk-font-mono);
+        font-variant-numeric: tabular-nums;
+        text-align: end;
     }
 
     /*
