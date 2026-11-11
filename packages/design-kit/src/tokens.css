@@ -94,8 +94,8 @@
         --dk-text-display: 1.75rem;
         /*
          * A figure read from across a room, such as a score on a phone left on a table. It is a
-         * size for numbers alone, set in the mono face with tabular figures, and far past any step
-         * a heading takes.
+         * size for numbers alone, far past any step a heading takes, and is meant for the mono
+         * face with tabular figures, which the page that draws the figure sets with it.
          */
         --dk-text-numeral: 3.5rem;
         /* Code, a step under the text around it, since mono type looks larger at the same size. */
@@ -131,8 +131,8 @@
         --dk-field-inline: 0.75rem;
         --dk-target: 2.75rem;
         /*
-         * A larger target, for the one thing a screen is for where it is pressed at arm's length,
-         * as a phone passed around a table is. The target above stays the floor for every control.
+         * A larger target, for what a screen is for where it is pressed at arm's length, as a
+         * phone passed around a table is. The target above stays the floor for every control.
          */
         --dk-target-large: 3.5rem;
         /* The height of the portfolio strip's row, and of each link in it. */

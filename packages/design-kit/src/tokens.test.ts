@@ -84,16 +84,33 @@ describe('the tokens', () => {
             );
     });
 
-    it('sets the larger target above the target, and the numeral above every step of text', () => {
-        const rem = (name: string) => Number.parseFloat(declared.get(`--dk-${name}`) ?? '');
-        expect(declared.get('--dk-target-large')).toMatch(/rem$/);
-        expect(rem('target-large')).toBeGreaterThan(rem('target'));
-        expect(rem('text-numeral')).toBeGreaterThan(rem('text-display'));
+    /** A token's value in rem, or NaN when it is written in another unit. */
+    const rem = (name: string) => {
+        const [, value] = /^(\d+(?:\.\d+)?)rem$/.exec(declared.get(name) ?? '') ?? [];
+        return Number(value ?? Number.NaN);
+    };
+
+    it('sets the larger target above the target, in the same unit', () => {
+        expect(rem('--dk-target-large')).toBeGreaterThan(rem('--dk-target'));
+    });
+
+    it('sets the numeral above every step of text', () => {
+        const steps = [...declared.keys()].filter(
+            (name) => name.startsWith('--dk-text-') && name !== '--dk-text-numeral'
+        );
+        // The step for code is in em, a share of the text around it, and is no size of its own.
+        const sized = steps.filter((name) => !Number.isNaN(rem(name)));
+        expect(sized.length).toBe(steps.length - 1);
+        for (const name of sized) expect(rem('--dk-text-numeral'), name).toBeGreaterThan(rem(name));
     });
 
     it('takes longer over a surface that travels than over a small change of state', () => {
-        const ms = (name: string) => Number.parseFloat(declared.get(`--dk-${name}`) ?? '');
-        expect(ms('duration-medium')).toBeGreaterThan(ms('duration-short'));
+        /** A duration in milliseconds, whichever of the two units it is written in. */
+        const ms = (name: string) => {
+            const [, value, unit] = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(declared.get(name) ?? '') ?? [];
+            return Number(value ?? Number.NaN) * (unit === 's' ? 1000 : 1);
+        };
+        expect(ms('--dk-duration-medium')).toBeGreaterThan(ms('--dk-duration-short'));
     });
 
     it('pads a field inline by the step a button is padded by, so their text starts level', () => {

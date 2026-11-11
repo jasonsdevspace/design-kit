@@ -240,8 +240,8 @@
         cursor: pointer;
         /*
          * A page with a look of its own for a button, such as a hard edge under it that reads as
-         * something to press, sets a shadow and how far a press moves the button, and writes no
-         * rule over this class. Neither is set here, so a button has no shadow and stays put.
+         * something to press, sets a shadow and how a press moves the button, and writes no rule
+         * over this class. Neither is set here, so a button has no shadow and is never moved.
          */
         box-shadow: var(--dk-button-shadow, none);
         transition:
@@ -249,10 +249,14 @@
             background-color var(--dk-duration-short);
     }
 
-    /* Held down, a button moves by the press a page sets, onto where its shadow was. */
+    /*
+     * Held down, a button moves by the press a page sets, onto where its shadow was. The press is
+     * a whole translate, such as 0 2px, so with none set the button is not translated at all and
+     * nothing about how it is stacked or what it holds changes while it is held.
+     */
     :where(.dk-button:active) {
         box-shadow: none;
-        translate: 0 var(--dk-button-press, 0);
+        translate: var(--dk-button-press, none);
     }
 
     /*
@@ -342,6 +346,15 @@
     }
 
     /*
+     * A toggle that is on, or a button whose panel is open, rests where a held button lands, so
+     * a page's shadow is not left under a button that looks pressed and holding it down moves it
+     * no further.
+     */
+    :where(.dk-button[aria-pressed='true'], .dk-button[aria-expanded='true']) {
+        translate: var(--dk-button-press, none);
+    }
+
+    /*
      * A text button that opens a panel keeps its link look while the panel is open, with the
      * underline a pointer brings, since the pressed look has no padding around the words to fit
      * and the open panel is the sign.
@@ -349,6 +362,7 @@
     :where(.dk-button-text[aria-expanded='true']) {
         background: transparent;
         box-shadow: none;
+        translate: none;
         color: var(--dk-accent);
         text-decoration-thickness: 0.125em;
     }
@@ -403,12 +417,14 @@
     }
 
     /*
-     * A tall button, at the larger target at every width, for the one thing a screen is for where
-     * it is pressed at arm's length. It sets a height and nothing else, so it goes with the large
-     * button's padding and text or without. It comes after the rule for a narrow screen, which
-     * would otherwise win by its order and bring a tall button back down to the target.
+     * A tall button, at the larger target at every width, for what a screen is for where it is
+     * pressed at arm's length. It sets the height, and the least width with it so it is never
+     * narrower than it is tall, and nothing else, so it goes with the large button's padding and
+     * text or without. It comes after the rule for a narrow screen, which would otherwise win by
+     * its order and bring a tall button back down to the target. A text button is never tall, and
+     * is left out here, so the pair written by hand does not give a link a box around it.
      */
-    :where(.dk-button-tall) {
+    :where(.dk-button-tall:not(.dk-button-text)) {
         min-height: var(--dk-target-large);
         min-width: var(--dk-target-large);
     }
@@ -420,6 +436,11 @@
      * highlight.
      */
     @media (forced-colors: active) {
+        /* The browser draws no shadow here, so a button has nothing to land on and stays put. */
+        :where(.dk-button) {
+            translate: none;
+        }
+
         :where(
             .dk-button[aria-pressed='true'],
             .dk-button:not(.dk-button-text)[aria-expanded='true']

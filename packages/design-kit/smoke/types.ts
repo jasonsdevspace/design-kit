@@ -90,7 +90,12 @@ export const textToggle = Button({ text: true, pressed: true });
 export const textLarge = Button({ text: true, large: true });
 
 // A tall button takes its prop alone or with the large button's, and a wrapper can hand it on.
-export const lead = Button({ tall: true, large: grown, accent: true, children: 'Save the round' });
+export const tallLead = Button({
+    tall: true,
+    large: grown,
+    accent: true,
+    children: 'Save the round',
+});
 
 // @ts-expect-error A text button is not tall.
 export const textTall = Button({ text: true, tall: true });

@@ -213,7 +213,7 @@ type NativeButton = Omit<
 
 /**
  * A button's own props: the accent for the one action a view leads with, `large` for a bigger
- * target, `tall` for the larger target a screen's one action takes, `text` for a button drawn as
+ * target, `tall` for the larger target what a screen is for takes, `text` for a button drawn as
  * a link, `pressed` for a toggle that stands alone, and `off`, beside a `<button>`'s own, its
  * `ref` among them, which holds the button drawn for a page that moves focus to it. The accent is
  * never a toggle and never a text button, and a text button is never a toggle, never large and
@@ -234,8 +234,8 @@ export type ButtonProps = NativeButton & {
                */
               readonly large?: boolean | undefined;
               /**
-               * The larger target tall at every width, for the one thing a screen is for. It sets
-               * the height alone, so it goes with `large` or without.
+               * The larger target tall at every width, for what a screen is for. It sets the
+               * height, and the least width with it, so it goes with `large` or without.
                */
               readonly tall?: boolean | undefined;
           }
