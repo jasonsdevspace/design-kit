@@ -91,9 +91,9 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
 `SelectField`, `TextareaField`, `ChoiceField`, `Callout`, `ThemeSwitch`, `CopyButton`,
-`CopyStatus` and `Toast`, a props type for each named after it, such as `ButtonProps`, the `Choice` and
-`CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
-`PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
+`CopyStatus` and `Toast`, a props type for each named after it, such as `ButtonProps`, the
+`Choice` and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome
+links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ## Using it
 

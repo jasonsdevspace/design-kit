@@ -41,8 +41,8 @@ so the same words shown twice are heard twice.
 A toast with an action stays until its close button, its action, Escape with focus in it or the
 next message dismisses it, since a timer would take the way back from anyone slower than it. One
 with no action also leaves after five seconds, a wait held while the pointer is over it or focus is
-in it. Focus in a toast that leaves goes back to where it was when the message was shown. What
-dismisses a message never dismisses a later one.
+in it. Focus in a toast that leaves goes back to where it was the last time a message arrived while
+focus was outside the toast. What dismisses a message never dismisses a later one.
 
 The toast's listeners are on its own elements, so a toast taken from the page takes them with it,
 and there is nothing for a page to take away. Its behavior ships in the controls module beside the
