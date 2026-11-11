@@ -9,6 +9,7 @@ import {
     SelectField,
     TextareaField,
     ThemeSwitch,
+    Toast,
 } from '@jasonsdevspace/design-kit/react';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import {
@@ -60,10 +61,11 @@ export const namedTools = PortfolioStrip({
     toolsLabel: 'Settings',
 });
 
-// The switch, the copy button and the status line take a ref and a page's class.
+// The switch, the copy button, the status line and the toast take a ref and a page's class.
 export const switchRef = ThemeSwitch({ ref: createRef<HTMLDivElement>(), className: 'site' });
 export const copyRef = CopyButton({ name: 'email', ref: createRef<HTMLButtonElement>() });
 export const statusRef = CopyStatus({ ref: createRef<HTMLParagraphElement>() });
+export const toastRef = Toast({ ref: createRef<HTMLDivElement>(), className: 'site' });
 
 // @ts-expect-error A copy button's ref is the button drawn, not some other element.
 export const wrongCopy = CopyButton({ name: 'email', ref: createRef<HTMLDivElement>() });

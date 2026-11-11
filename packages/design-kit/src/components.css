@@ -1427,10 +1427,11 @@
     }
 
     /*
-     * A theme switch or a copy button stays hidden until a page's script attaches it, since the
-     * display these pieces take would otherwise win over the browser's own rule for hidden.
+     * A theme switch or a copy button stays hidden until a page's script attaches it, and a
+     * toast's buttons until it shows a message, since the display these pieces take would
+     * otherwise win over the browser's own rule for hidden.
      */
-    :where(.dk-theme-switch[hidden], .dk-copy[hidden]) {
+    :where(.dk-theme-switch[hidden], .dk-copy[hidden], .dk-toast [hidden]) {
         display: none;
     }
 
@@ -1695,11 +1696,90 @@
     }
 
     /*
+     * A toast: a short message that appears over the page, says what just happened and offers one
+     * action, such as Undo. Its live region, its action and its close button are in the page from
+     * the start, empty and hidden, and the attach function sets their words and marks the toast
+     * shown, so until then it draws nothing and covers nothing.
+     *
+     * On a page it sits at the bottom of the screen, clear of the home indicator, in the app's
+     * column, over the page. In an app's frame it sits in the frame's place for it, above the
+     * dock, so it covers neither the dock nor the body's last line.
+     */
+    :where(.dk-toast) {
+        position: fixed;
+        right: 0;
+        bottom: calc(var(--dk-safe-bottom) + var(--dk-space-4));
+        left: 0;
+        z-index: var(--dk-stack-toast);
+        box-sizing: border-box;
+        width: calc(100% - 2 * var(--dk-space-4));
+        max-width: calc(var(--dk-app-column) - 2 * var(--dk-space-4));
+        margin-inline: auto;
+    }
+
+    :where(.dk-app .dk-toast) {
+        position: static;
+        width: auto;
+        max-width: none;
+    }
+
+    /*
+     * Shown, a raised card with an edge, which forced colors draw where the shadow is gone. A
+     * message of a few lines wraps beside its buttons, and at a large text size the buttons wrap
+     * under it. It rises into place as it arrives.
+     */
+    :where(.dk-toast-shown) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--dk-space-2);
+        padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4);
+        border: 1px solid var(--dk-line);
+        border-radius: var(--dk-radius-large);
+        background: var(--dk-raised);
+        box-shadow: var(--dk-shadow-raised);
+        transition:
+            opacity var(--dk-duration-medium),
+            translate var(--dk-duration-medium);
+    }
+
+    @starting-style {
+        :where(.dk-toast-shown) {
+            opacity: 0;
+            translate: 0 var(--dk-space-2);
+        }
+    }
+
+    :where(.dk-app .dk-toast-shown) {
+        margin-block: var(--dk-space-2);
+    }
+
+    :where(.dk-toast-message) {
+        flex: 1 1 10rem;
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    :where(.dk-toast-shown > .dk-toast-message) {
+        padding-block: var(--dk-space-2);
+    }
+
+    :where(.dk-toast-action) {
+        padding-inline: var(--dk-space-2);
+    }
+
+    :where(.dk-toast-close) {
+        min-width: var(--dk-target);
+        text-decoration: none;
+    }
+
+    /*
      * Paper is light and the browser drops backgrounds, so on paper a callout and a code block keep
      * an edge in the line color, where the screen's transparent edge would vanish with the ground.
      * A code block and a scrolling table show whole rather than cut at the frame, their code and
      * figures wrapping, and what does nothing on paper does not print: the theme switch, the copy
-     * button, the skip link, a tab bar, and a strip's section of switches with the room it keeps for
+     * button, the skip link, a tab bar, a toast, and a strip's section of switches with the room it keeps for
      * them.
      * An app's frame prints as a page, as long as what it holds.
      */
@@ -1717,7 +1797,7 @@
             overflow-wrap: anywhere;
         }
 
-        :where(.dk-theme-switch, .dk-copy, .dk-skip, .dk-tabbar) {
+        :where(.dk-theme-switch, .dk-copy, .dk-skip, .dk-tabbar, .dk-toast) {
             display: none;
         }
 

@@ -347,3 +347,117 @@ export const attachCopyButton = (
     attachedButtons.set(button, detach);
     return detach;
 };
+
+/** How long a toast with no action stays while nothing holds it, in milliseconds. */
+const TOAST_FOR = 5000;
+
+/** What a toast offers beside its message: the action's words, and what choosing it does. */
+export type ToastAction = { readonly label: string; readonly onAction: () => void };
+
+/** Shows a message in a toast, with one action or none, and returns what dismisses that message. */
+export type ShowToast = (message: string, action?: ToastAction) => () => void;
+
+const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
+
+/**
+ * Makes a toast work, and returns the function that shows a message in it. The message is set as
+ * the text of the toast's live region, which is on the page from the start, so a screen reader
+ * hears it without focus moving, and the same words shown twice are emptied and put back so they
+ * are heard again. The action's button takes the action's words, and the close button shows.
+ *
+ * A toast leaves when its close button, its action or Escape dismisses it, or the next message
+ * replaces it. One with an action stays until then, since a timer would take the action away from
+ * anyone slower than it. One with no action also leaves after five seconds, a wait held while the
+ * pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes back to
+ * where it was when the message was shown. Attaching a toast again returns the same function.
+ */
+export const attachToast = (element: HTMLElement): ShowToast => {
+    const already = attachedToasts.get(element);
+    if (already) return already;
+    const part = <T extends HTMLElement>(name: string) => {
+        const found = element.querySelector<T>(`.dk-toast-${name}`);
+        if (!found) throw new Error(`a toast needs its ${name}`);
+        return found;
+    };
+    const message = part('message');
+    const actionButton = part<HTMLButtonElement>('action');
+    const close = part<HTMLButtonElement>('close');
+    let timer = 0;
+    let shown = 0;
+    let hovered = false;
+    let focused = false;
+    let onAction: (() => void) | undefined;
+    let returnTo: HTMLElement | undefined;
+    const wait = () => {
+        window.clearTimeout(timer);
+        if (shown > 0 && !onAction && !hovered && !focused) {
+            timer = window.setTimeout(dismiss, TOAST_FOR);
+        }
+    };
+    const dismiss = () => {
+        window.clearTimeout(timer);
+        const hadFocus = element.contains(document.activeElement);
+        shown = 0;
+        hovered = false;
+        focused = false;
+        onAction = undefined;
+        message.textContent = '';
+        actionButton.textContent = '';
+        actionButton.hidden = true;
+        close.hidden = true;
+        element.classList.remove('dk-toast-shown');
+        if (hadFocus && returnTo?.isConnected) returnTo.focus();
+    };
+    const show: ShowToast = (words, action) => {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && !element.contains(active)) returnTo = active;
+        const id = (shown = Math.max(shown, 0) + 1);
+        if (message.textContent === words) {
+            message.textContent = '';
+            window.setTimeout(() => {
+                if (shown === id) message.textContent = words;
+            }, 100);
+        } else {
+            message.textContent = words;
+        }
+        // Focus on an action that this message does not have moves to the close button.
+        if (!action && document.activeElement === actionButton) close.focus();
+        onAction = action?.onAction;
+        actionButton.textContent = action?.label ?? '';
+        actionButton.hidden = !action;
+        close.hidden = false;
+        element.classList.add('dk-toast-shown');
+        wait();
+        return () => {
+            if (shown === id) dismiss();
+        };
+    };
+    actionButton.addEventListener('click', () => {
+        const chosen = onAction;
+        dismiss();
+        chosen?.();
+    });
+    close.addEventListener('click', dismiss);
+    element.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && shown > 0) dismiss();
+    });
+    const hold = (over: boolean, inside: boolean) => {
+        hovered = over;
+        focused = inside;
+        wait();
+    };
+    element.addEventListener('pointerenter', () => {
+        hold(true, focused);
+    });
+    element.addEventListener('pointerleave', () => {
+        hold(false, focused);
+    });
+    element.addEventListener('focusin', () => {
+        hold(hovered, true);
+    });
+    element.addEventListener('focusout', (event) => {
+        hold(hovered, event.relatedTarget instanceof Node && element.contains(event.relatedTarget));
+    });
+    attachedToasts.set(element, show);
+    return show;
+};

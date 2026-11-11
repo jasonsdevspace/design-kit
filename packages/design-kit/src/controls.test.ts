@@ -10,7 +10,11 @@ import { describe, expect, it } from 'vitest';
  * visitor of a page with a switch.
  */
 
-const BUDGET = 3 * 1024;
+/*
+ * Raised from 3 KB for the behavior of the pieces an app is made of, which ships in this module
+ * beside the rest rather than in one of its own, as their rules ship in the components sheet.
+ */
+const BUDGET = 5 * 1024;
 
 describe('the controls', () => {
     it('load in plain Node without reaching for the browser', async () => {
@@ -18,6 +22,7 @@ describe('the controls', () => {
         expect(Object.keys(controls).sort()).toEqual([
             'attachCopyButton',
             'attachThemeSwitch',
+            'attachToast',
             'chooseTheme',
         ]);
     });
