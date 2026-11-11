@@ -30,6 +30,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'tabBar',
     'toast',
     'buttonGrid',
+    'rows',
 ]);
 
 /** An example's markup as a page writes it, laid out as the repository's formatter lays out. */

@@ -1101,75 +1101,6 @@ what holds it. Its edge is transparent, and shows only in forced colors.
 
 </details>
 
-## Button grid
-
-A grid of buttons is a set picked from, such as the cards in a hand, each a toggle that says
-whether it is on, or a pad of plain keys that act when pressed, as a number pad's do. It is classes
-alone, since the cells' state is the page's.
-
-<!-- example: buttonGrid -->
-
-```html
-<div class="dk-button-grid" role="group" aria-label="Cards in hand">
-    <button type="button" class="dk-button" aria-pressed="true">7</button>
-    <button type="button" class="dk-button" aria-pressed="false">8</button>
-    <button type="button" class="dk-button" aria-pressed="true">9</button>
-    <button type="button" class="dk-button" aria-pressed="false" aria-disabled="true">10</button>
-</div>
-<div class="dk-button-grid dk-button-grid-tall" role="group" aria-label="Score">
-    <button type="button" class="dk-button">1</button>
-    <button type="button" class="dk-button">2</button>
-    <button type="button" class="dk-button">
-        <span aria-hidden="true">⌫</span>
-        <span class="dk-visually-hidden">Delete</span>
-    </button>
-</div>
-```
-
-The grid is a `role="group"` named for what it holds, by `aria-labelledby` where the screen shows
-that name already, and each cell is a kit button, never an accent one, since a filled cell reads as
-a toggle that is on. A toggle carries `aria-pressed`, so a screen reader says whether it is on, and
-acts at once, so it is never a checkbox in a form. A plain key carries no pressed state, and is
-named for what it enters, with a name out of sight where its face is a symbol, as Delete is above. A
-grid where only one can be on is a choice field.
-
-A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
-page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
-Tab key. A page with many cells may give the group one stop instead, with a roving tabindex, so the
-arrow keys move between cells and Home and End reach the ends. That is the page's to write, as a
-tab list's keys are.
-
-The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
-unless it does:
-
-```css
-.hand {
-    --dk-button-grid-columns: 6;
-}
-```
-
-<details>
-<summary>How the grid is drawn</summary>
-
-Where the columns asked for would make a cell narrower than `--dk-target`, the grid draws as many as
-fit, so six asked for in an app's frame on a phone 320px wide, inside its 1rem gutters, draws five.
-Each cell is at least the target tall. In a `dk-button-grid-tall` grid each is at least
-`--dk-target-large` both ways, for keys pressed at arm's length, and a `dk-button-tall` cell is that
-tall in any grid. The cells are spaced by 0.5rem, and a label wraps within its cell at a large text
-size. The grid takes the width of what holds it, so it sits in a block with a width of its own,
-never in a box that shrinks to fit what it holds, where it would draw one column.
-
-A toggle that is on is filled in the accent with its words at the strong weight, so on and off
-differ by how light the cell is and by weight, not by hue alone, and forced colors fill it in the
-system's selection colors. A cell that is off, by `disabled` or by `aria-disabled`, has a dashed
-edge and keeps the page's text color, where a faded one is hard to tell from a toggle that is only
-not pressed, and in forced colors takes the system's gray as any off button does. One that is off
-and on keeps a thicker edge in the control's color, or in the highlight in forced colors. A cell reads the button's `--dk-button-shadow` and `--dk-button-press`, so a page that
-sets them gives every cell a shadow and a press, and a toggle that is on rests where a held one
-lands.
-
-</details>
-
 ## App frame
 
 An app's screen is a frame as tall as the screen: a bar across the top that says where the visitor
@@ -1404,6 +1335,150 @@ colors draw where the shadow is gone, and it rises into place over `--dk-duratio
 it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside the buttons, and at a
 large text size the buttons wrap under it. The close button is at least the target wide. Outside a
 frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not print.
+
+</details>
+
+## Button grid
+
+A grid of buttons is a set picked from, such as the cards in a hand, each a toggle that says
+whether it is on, or a pad of plain keys that act when pressed, as a number pad's do. It is classes
+alone, since the cells' state is the page's.
+
+<!-- example: buttonGrid -->
+
+```html
+<div class="dk-button-grid" role="group" aria-label="Cards in hand">
+    <button type="button" class="dk-button" aria-pressed="true">7</button>
+    <button type="button" class="dk-button" aria-pressed="false">8</button>
+    <button type="button" class="dk-button" aria-pressed="true">9</button>
+    <button type="button" class="dk-button" aria-pressed="false" aria-disabled="true">10</button>
+</div>
+<div class="dk-button-grid dk-button-grid-tall" role="group" aria-label="Score">
+    <button type="button" class="dk-button">1</button>
+    <button type="button" class="dk-button">2</button>
+    <button type="button" class="dk-button">
+        <span aria-hidden="true">⌫</span>
+        <span class="dk-visually-hidden">Delete</span>
+    </button>
+</div>
+```
+
+The grid is a `role="group"` named for what it holds, by `aria-labelledby` where the screen shows
+that name already, and each cell is a kit button, never an accent one, since a filled cell reads as
+a toggle that is on. A toggle carries `aria-pressed`, so a screen reader says whether it is on, and
+acts at once, so it is never a checkbox in a form. A plain key carries no pressed state, and is
+named for what it enters, with a name out of sight where its face is a symbol, as Delete is above. A
+grid where only one can be on is a choice field.
+
+A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
+page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
+Tab key. A page with many cells may give the group one stop instead, with a roving tabindex, so the
+arrow keys move between cells and Home and End reach the ends. That is the page's to write, as a
+tab list's keys are.
+
+The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
+unless it does:
+
+```css
+.hand {
+    --dk-button-grid-columns: 6;
+}
+```
+
+<details>
+<summary>How the grid is drawn</summary>
+
+Where the columns asked for would make a cell narrower than `--dk-target`, the grid draws as many as
+fit, so six asked for in an app's frame on a phone 320px wide, inside its 1rem gutters, draws five.
+Each cell is at least the target tall. In a `dk-button-grid-tall` grid each is at least
+`--dk-target-large` both ways, for keys pressed at arm's length, and a `dk-button-tall` cell is that
+tall in any grid. The cells are spaced by 0.5rem, and a label wraps within its cell at a large text
+size. The grid takes the width of what holds it, so it sits in a block with a width of its own,
+never in a box that shrinks to fit what it holds, where it would draw one column.
+
+A toggle that is on is filled in the accent with its words at the strong weight, so on and off
+differ by how light the cell is and by weight, not by hue alone, and forced colors fill it in the
+system's selection colors. A cell that is off, by `disabled` or by `aria-disabled`, has a dashed
+edge and keeps the page's text color, where a faded one is hard to tell from a toggle that is only
+not pressed, and in forced colors takes the system's gray as any off button does. One that is off
+and on keeps a thicker edge in the control's color, or in the highlight in forced colors. A cell reads the button's `--dk-button-shadow` and `--dk-button-press`, so a page that
+sets them gives every cell a shadow and a press, and a toggle that is on rests where a held one
+lands.
+
+</details>
+
+## Rows
+
+A list of rows holds the games played, the players or the steps to install: each row a title, a
+muted line of detail under it, and room at its end for a figure, a tag or one button, with a rule
+between rows. It is classes alone, since a row holds no state of its own.
+
+<!-- example: rows -->
+
+```html
+<ul class="dk-rows" role="list">
+    <li>
+        <a class="dk-row" href="/games/12/">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Flip 7</span>
+                <span class="dk-visually-hidden">, </span>
+                <span class="dk-row-detail">Four players, won by Ana</span>
+            </span>
+            <span class="dk-visually-hidden">, </span>
+            <span class="dk-row-figure">
+                212
+                <span class="dk-visually-hidden"> points</span>
+            </span>
+            <span class="dk-row-sign" aria-hidden="true">›</span>
+        </a>
+    </li>
+    <li>...</li>
+</ul>
+<ul class="dk-rows" role="list">
+    <li>
+        <div class="dk-row">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Ana</span>
+                <span class="dk-row-detail">Played 12 games</span>
+            </span>
+            <button type="button" class="dk-button dk-button-text">
+                Remove
+                <span class="dk-visually-hidden"> Ana</span>
+            </button>
+        </div>
+    </li>
+    <li>...</li>
+</ul>
+```
+
+The list is a `ul` with `role="list"`, since Safari drops a list's role from one drawn with no
+bullets, and with it the number of rows a screen reader says. A list with no rows is not drawn, so
+a page puts a sentence in its place that says what is missing and how to add one.
+
+A row is a link or holds a button, never both, so a tap never does two things. A row that leads
+somewhere is one `a.dk-row` across its width, one stop for the keyboard, ending in a chevron, a
+`dk-row-sign` hidden from a screen reader, that says so on a phone, where nothing hovers. It is named by all of its words with the title first, so a screen reader says the title
+before the rest, and a visitor who speaks to their device can say any of what they see. A comma out
+of sight after the title and before the figure makes a pause between them when read aloud, and a
+figure's unit out of sight says what it counts. A row with an action of its own, such as
+removing it, is a `div.dk-row` with the button at its end, named for what it does and to which row,
+with the row's name out of sight where the button's face says only the action. An action that
+removes a row acts at once with a toast that offers Undo, as the kit's app does in place of asking
+first. A figure at the end is a `dk-row-figure`, and a tag a `dk-pill`.
+
+<details>
+<summary>How the rows are drawn</summary>
+
+Each row is at least `--dk-target` tall, and at least `--dk-target-large` in a list whose classes
+are `dk-rows dk-rows-tall`. A row is inset at each side by the room a focus ring takes, and a button
+at its end sits in the middle of its height. The rule between rows is in the line color, which forced colors keep as an edge, and
+a row takes no ground of its own, so a list sits on a page or a panel alike. The end sits on the line
+of the title's first line, so a long title wraps and the row grows with its end still beside where
+the title starts, and a row of one line sits in the middle of its height.
+
+A link row's chevron is in the muted color. Its focus ring is
+drawn inside it, around the whole row, and a pointer over it, or a thumb pressing it, underlines the
+title. A figure is in the mono face with figures of one width, so a column of them lines up.
 
 </details>
 
