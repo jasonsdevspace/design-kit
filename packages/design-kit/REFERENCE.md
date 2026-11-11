@@ -738,7 +738,7 @@ its role from `live` alone.
 
 ## Theme switch and copy button
 
-The kit's two controls that do something in the browser: a switch for the theme a visitor saves,
+Two of the kit's controls that do something in the browser: a switch for the theme a visitor saves,
 and a button that copies a block's text. Each is markup the components draw, or a page writes by
 hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
 returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
@@ -1307,10 +1307,10 @@ A toast leaves when its close button, its action, or Escape with focus in it dis
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
 while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes
-back to where it was when the message was shown. An action runs after the toast has left, so where
-it takes away what focus came from, it moves focus itself. A message with no action replaces one
-with an action and its way back, so a page shows one after another only when the first is done
-with. More than one action is a dialog's job.
+back to where it was the last time a message arrived while focus was outside the toast. An action
+runs after the toast has left, so where it takes away what focus came from, it moves focus itself.
+A message with no action replaces one with an action and its way back, so a page shows one after
+another only when the first is done with. More than one action is a dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 above the dock, so it covers neither the dock nor the body's last line. On a page with no frame it

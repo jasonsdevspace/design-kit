@@ -1,12 +1,13 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch and copy button do, for a page to attach to the markup the
+ * What the kit's theme switch, copy button and toast do, for a page to attach to the markup the
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
- * classes, shows the control, which the markup keeps hidden so a visitor without script meets no
- * control that does nothing, and returns a function that takes it away again. Nothing runs when the
- * module is imported, and nothing here sets a style, so a page's policy can refuse every style it
- * did not serve.
+ * classes. The switch and the copy button show their control, which the markup keeps hidden so a
+ * visitor without script meets no control that does nothing, and return a function that takes it
+ * away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
+ * when the module is imported, and nothing here sets a style, so a page's policy can refuse every
+ * style it did not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -376,9 +377,9 @@ const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
  * next message replaces it. One with an action stays until then, since a timer would take the
  * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
- * goes back to where it was when the message was shown. Attaching a toast again returns the same
- * function. Its listeners are on the toast's own elements, so a toast taken from the page takes
- * them with it.
+ * goes back to where it was the last time a message arrived while focus was outside the toast.
+ * Attaching a toast again returns the same function. Its listeners are on the toast's own
+ * elements, so a toast taken from the page takes them with it.
  */
 export const attachToast = (element: HTMLElement): ShowToast => {
     const already = attachedToasts.get(element);

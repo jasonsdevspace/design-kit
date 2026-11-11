@@ -11,8 +11,8 @@ import { describe, expect, it } from 'vitest';
  */
 
 /*
- * Raised from 3 KB for the behavior of the pieces an app is made of, which ships in this module
- * beside the rest rather than in one of its own, as their rules ship in the components sheet.
+ * Raised from 3 KB for the toast, whose behavior ships in this module beside the rest rather than
+ * in one of its own, as its rules ship in the components sheet, as record 15 has it.
  */
 const BUDGET = 5 * 1024;
 

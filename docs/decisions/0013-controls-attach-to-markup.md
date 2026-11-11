@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted
+**Status:** accepted, amended by record 15, for the toast, whose attach function returns what shows a message
 
 ## Context
 
@@ -73,9 +73,9 @@ hidden and the group is the row of choices.
 
 The paths are in `packages/design-kit`.
 
-- `src/controls.test.ts` imports the module in plain Node, finds only the three functions, and holds
-  it with the theme module it imports, without their comments as a bundler sends them, to 3 KB
-  gzipped.
+- `src/controls.test.ts` imports the module in plain Node, finds no export but its functions, and
+  holds it with the theme module it imports, without their comments as a bundler sends them, to its
+  budget, which record 15 raised from 3 KB to 5 KB.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the switch's line for a visitor without script in
