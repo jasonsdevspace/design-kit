@@ -36,7 +36,7 @@
         border-radius: var(--dk-radius);
         background: var(--dk-accent);
         color: var(--dk-on-accent);
-        z-index: 10;
+        z-index: var(--dk-stack-skip);
     }
 
     :where(.dk-skip):focus-visible {
@@ -1186,7 +1186,7 @@
              */
             inset-inline-end: calc(var(--dk-ring-width) + var(--dk-ring-offset));
             top: calc(100% + var(--dk-space-1));
-            z-index: 1;
+            z-index: var(--dk-stack-raised);
             display: none;
             flex-direction: column;
             gap: var(--dk-space-1);
@@ -1434,11 +1434,110 @@
     }
 
     /*
+     * An app's frame: a bar across the top that says where the visitor is, a body that scrolls
+     * between, and a dock at the bottom for what the screen is for, with a place above the dock
+     * for a toast and one below it for a tab bar. It is a grid of rows, and each part names its
+     * row, so a screen leaves out what it does not have and the row closes to nothing.
+     *
+     * Only the body scrolls. A dock grows with what it holds and a tab bar grows at a large text
+     * size, and a sheet with no script cannot report a height that changes. So nothing here reads
+     * a height: the body ends where the rows below it begin, and a toast has a row of its own
+     * above the dock, which keeps it clear of both whatever their size.
+     *
+     * The frame is as tall as the screen that is left, by the dynamic height, so a phone
+     * browser's own bars coming and going do not push the dock out of view. It clears what the
+     * phone keeps for itself at each edge, and on a wide screen it is a column in the middle.
+     */
+    :where(.dk-app) {
+        display: grid;
+        grid-template:
+            'bar' auto
+            'body' minmax(0, 1fr)
+            'toast' auto
+            'dock' auto
+            'tabs' auto
+            / minmax(0, 1fr);
+        box-sizing: border-box;
+        /* For a browser with no dynamic height, the screen's own, which the line after replaces. */
+        height: 100vh;
+        height: 100dvh;
+        max-width: var(--dk-app-column);
+        margin-inline: auto;
+        padding-right: var(--dk-safe-right);
+        padding-bottom: var(--dk-safe-bottom);
+        padding-left: var(--dk-safe-left);
+    }
+
+    /*
+     * The bar: the screen's name, with room for a mark before it and one action after it, over a
+     * rule. It pads itself past the top safe area, so its ground runs up under a notch and its
+     * words start below it.
+     */
+    :where(.dk-app-bar) {
+        grid-area: bar;
+        display: flex;
+        align-items: center;
+        gap: var(--dk-space-3);
+        box-sizing: content-box;
+        min-height: var(--dk-app-bar);
+        padding: var(--dk-safe-top) var(--dk-space-4) 0;
+        border-bottom: 1px solid var(--dk-line);
+    }
+
+    /*
+     * The bar's title is the page's top heading, at the size of a title and not of a page's
+     * opening, since the bar is the frame and not the content. It takes the room the mark and
+     * the action leave and wraps within it, so a long name or a large text size cuts nothing off.
+     */
+    :where(.dk-app-title) {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: var(--dk-text-title);
+        font-weight: var(--dk-weight-strong);
+        line-height: var(--dk-leading-tight);
+        overflow-wrap: anywhere;
+    }
+
+    /*
+     * The body, the one part that scrolls. It keeps its scrolling to itself, so reaching its end
+     * does not start the page behind it moving.
+     */
+    :where(.dk-app-body) {
+        grid-area: body;
+        min-height: 0;
+        padding: var(--dk-space-4);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    /* A toast's place, above the dock, as wide as the frame and as tall as the toast in it. */
+    :where(.dk-app-toast) {
+        grid-area: toast;
+        padding-inline: var(--dk-space-4);
+    }
+
+    /* The dock: what the screen is for, over a rule, under the thumb. */
+    :where(.dk-app-dock) {
+        grid-area: dock;
+        display: grid;
+        gap: var(--dk-space-2);
+        padding: var(--dk-space-3) var(--dk-space-4);
+        border-top: 1px solid var(--dk-line);
+    }
+
+    /* A tab bar's place, last, at the bottom edge. */
+    :where(.dk-app-tabs) {
+        grid-area: tabs;
+    }
+
+    /*
      * Paper is light and the browser drops backgrounds, so on paper a callout and a code block keep
      * an edge in the line color, where the screen's transparent edge would vanish with the ground.
      * A code block and a scrolling table show whole rather than cut at the frame, their code and
      * figures wrapping, and what does nothing on paper does not print: the theme switch, the copy
      * button, the skip link, and a strip's section of switches with the room it keeps for them.
+     * An app's frame prints as a page, as long as what it holds.
      */
     @media print {
         :where(.dk-callout, .dk-code) {
@@ -1456,6 +1555,16 @@
 
         :where(.dk-theme-switch, .dk-copy, .dk-skip) {
             display: none;
+        }
+
+        /* On paper a frame is as long as what it holds, and its body shows whole. */
+        :where(.dk-app) {
+            display: block;
+            height: auto;
+        }
+
+        :where(.dk-app-body) {
+            overflow: visible;
         }
 
         /* Weighted as the section's own rule is, which sets its display outside :where(). */

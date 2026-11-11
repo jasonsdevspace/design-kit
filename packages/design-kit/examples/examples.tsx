@@ -414,6 +414,30 @@ export const eyebrow: ReactElement = (
     </>
 );
 
+/** A screen in an app's frame, with the parts a screen fills in left as an ellipsis. */
+export const appFrame: ReactElement = (
+    <div className="dk-app">
+        <header className="dk-app-bar">
+            <h1 className="dk-app-title">Round 3</h1>
+            <button type="button" className="dk-button dk-button-text">
+                Scores
+            </button>
+        </header>
+        <main id="main-content" tabIndex={-1} className="dk-app-body">
+            ...
+        </main>
+        <div className="dk-app-toast">...</div>
+        <div className="dk-app-dock">
+            <button type="button" className="dk-button dk-button-accent dk-button-tall">
+                Save the round
+            </button>
+        </div>
+        <nav className="dk-app-tabs" aria-label="Sections">
+            ...
+        </nav>
+    </div>
+);
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -445,6 +469,7 @@ export const EXAMPLES = {
     panel,
     table,
     code,
+    appFrame,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;

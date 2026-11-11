@@ -405,6 +405,7 @@ describe('the workflows', () => {
         expect(holding).toEqual(['deploy']);
     });
 
+    // Ubuntu, or a Mac for the job that draws in WebKit, which needs no system packages there.
     it('run every job on a named image, with a name and a time limit of its own', () => {
         const unready = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
@@ -415,7 +416,7 @@ describe('the workflows', () => {
                     ({ body }) =>
                         !/^ {8}name: \S/m.test(body) ||
                         !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
-                        !/^ {8}runs-on: ubuntu-26\.04\s*$/m.test(body)
+                        !/^ {8}runs-on: (?:ubuntu-26\.04|macos-26)\s*$/m.test(body)
                 )
                 .map(({ id }) => `${path} ${id}`)
         );
