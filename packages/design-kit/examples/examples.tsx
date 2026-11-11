@@ -320,6 +320,41 @@ export const panel: ReactElement = pieces.panel.draw(kit, pieces.asWritten);
 /** A table of figures, titled, in a frame that scrolls inside itself. */
 export const table: ReactElement = pieces.table.draw(kit, pieces.asWritten);
 
+/** A table of scores that keeps each player's name in view while the rounds scroll sideways. */
+export const pinnedTable: ReactElement = (
+    <>
+        <p className="dk-table-title" id="scores-title">
+            Scores by round
+        </p>
+        <div className="dk-table-scroll" role="region" aria-labelledby="scores-title" tabIndex={0}>
+            <table className="dk-table dk-table-pinned" aria-labelledby="scores-title">
+                <thead>
+                    <tr>
+                        <th scope="col">Player</th>
+                        <th scope="col" className="dk-table-number">
+                            Round 1
+                        </th>
+                        <th scope="col" className="dk-table-number">
+                            Round 2
+                        </th>
+                        <th scope="col" className="dk-table-number">
+                            ...
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Ana</th>
+                        <td className="dk-table-number">24</td>
+                        <td className="dk-table-number">31</td>
+                        <td className="dk-table-number">...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </>
+);
+
 /** A block of code, titled, that keeps its lines and scrolls inside itself. */
 export const code: ReactElement = pieces.code.draw(kit, pieces.asWritten);
 
@@ -570,6 +605,7 @@ export const EXAMPLES = {
     steps,
     panel,
     table,
+    pinnedTable,
     code,
     appFrame,
     tabBar,
