@@ -1,10 +1,11 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch and copy button do, for a page to attach to the markup the
+ * What the kit's theme switch, copy button and toast do, for a page to attach to the markup the
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
- * classes, shows the control, which the markup keeps hidden so a visitor without script meets no
- * control that does nothing, and returns a function that takes it away again. Nothing runs when the
+ * classes. The switch and the copy button show their control, which the markup keeps hidden so a
+ * visitor without script meets no control that does nothing, and return a function that takes it
+ * away again. `attachToast` returns instead the function that shows a message in it. Nothing runs when the
  * module is imported, and nothing here sets a style, so a page's policy can refuse every style it
  * did not serve.
  */

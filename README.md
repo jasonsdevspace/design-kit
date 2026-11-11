@@ -251,8 +251,9 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets are a few kilobytes gzipped without their
-  comments, which a test holds to a budget, and the theme script goes inline in the page's head. A page that attaches the theme switch or a copy button loads the
-  controls too, about 3 KB more. The package npm publishes is 37 KB packed, the sheets and modules
+  comments, which a test holds to a budget, and the theme script goes inline in the page's head. A
+  page that attaches a control loads the controls too, which a test holds to 5 KB gzipped without
+  their comments. The package npm publishes is 37 KB packed, the sheets and modules
   a page loads together with the README and the types it never does.
   [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, and from the
   next release each sheet without its comments.
@@ -312,8 +313,16 @@ options rejected, what the choice costs, and the test behind it.
     moving when the switch comes, at the cost of a policy written for jasonsdevspace.com alone, so
     a build served anywhere else, as the tests and the audit serve theirs, names its own origin.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](docs/decisions/0013-controls-attach-to-markup.md).
-    The theme switch and the copy button work the same on a page with React and one without, from
-    one copy of their behavior, at the cost of a second script in the browser, held to a budget.
+    The theme switch, the copy button and the toast work the same on a page with React and one
+    without, from one copy of their behavior, at the cost of a second script in the browser, held
+    to a budget.
+14. [A piece with no state of its own ships as classes alone](docs/decisions/0014-stateless-pieces-ship-as-classes.md).
+    Tabs, pills and the eyebrow look the same on every site from classes a page writes, at the cost
+    of each page running its own tabs' keys.
+15. [A toast's attach function returns what shows a message](docs/decisions/0015-a-toast-attach-returns-what-shows-a-message.md).
+    A page attaches a toast once and calls one function for every message, which a screen reader
+    hears with its way back, at the cost of the one control whose attach function takes nothing
+    away.
 
 </details>
 

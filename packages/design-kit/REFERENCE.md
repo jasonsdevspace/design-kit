@@ -738,7 +738,7 @@ its role from `live` alone.
 
 ## Theme switch and copy button
 
-The kit's two controls that do something in the browser: a switch for the theme a visitor saves,
+Two of the kit's controls that do something in the browser: a switch for the theme a visitor saves,
 and a button that copies a block's text. Each is markup the components draw, or a page writes by
 hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
 returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
