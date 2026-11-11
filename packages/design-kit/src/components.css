@@ -1566,11 +1566,128 @@
     }
 
     /*
+     * A tab bar: an app's top-level places at the bottom of a phone, under the thumb. It is a nav
+     * holding a list of links and never tabs by role, since each place has an address. The link
+     * for the place the visitor is in carries aria-current, and is told apart by its weight and a
+     * line over it as well as its color. Only that link has the line, the others padded to its
+     * depth, so forced colors draw one line and not a row of them.
+     *
+     * The bar sticks to the bottom of what scrolls, so it stays in view while the page moves and
+     * at the page's end sits after the last of the content, never over it, with no height for
+     * the page to pad by. It clears the home indicator and the sides a phone keeps, and on a
+     * wide screen it is the app's column, in the middle.
+     */
+    :where(.dk-tabbar) {
+        position: sticky;
+        bottom: 0;
+        z-index: var(--dk-stack-bar);
+        box-sizing: border-box;
+        width: 100%;
+        max-width: var(--dk-app-column);
+        /* Pushed to the end of a page shorter than the screen, where the page is a column. */
+        margin: auto auto 0;
+        padding-right: max(
+            0px,
+            var(--dk-safe-right) - max(0px, (100vw - var(--dk-app-column)) / 2)
+        );
+        padding-bottom: var(--dk-safe-bottom);
+        padding-left: max(0px, var(--dk-safe-left) - max(0px, (100vw - var(--dk-app-column)) / 2));
+        border-top: 1px solid var(--dk-line);
+        background: var(--dk-bg);
+    }
+
+    /*
+     * In an app's frame the bar is the frame's last row, which already stays put, and the frame
+     * clears the phone's edges for it.
+     */
+    :where(.dk-app > .dk-tabbar) {
+        position: static;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    /*
+     * A page that scrolls whole and ends in a tab bar: a column at least as tall as the screen,
+     * so on a short page the bar is still at the bottom.
+     */
+    :where(.dk-tabbar-page) {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    /* The links share the width evenly, however many there are and however long their labels. */
+    :where(.dk-tabbar > ul) {
+        display: grid;
+        grid-auto-columns: minmax(0, 1fr);
+        grid-auto-flow: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    :where(.dk-tabbar > ul > li) {
+        display: flex;
+        min-width: 0;
+    }
+
+    /*
+     * A link: room for an icon over its label, at the larger target or taller, so a label that
+     * wraps at a large text size grows the bar and cuts nothing off.
+     */
+    :where(.dk-tabbar a) {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--dk-space-1);
+        box-sizing: border-box;
+        min-width: 0;
+        min-height: var(--dk-target-large);
+        padding: calc(var(--dk-space-1) + 2px) var(--dk-space-1) var(--dk-space-1);
+        color: var(--dk-muted);
+        font-size: var(--dk-text-caption);
+        line-height: var(--dk-leading-tight);
+        text-align: center;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+        transition: color var(--dk-duration-short);
+    }
+
+    /* Its ring sits inside it, since the bar runs to the screen's edges. */
+    :where(.dk-tabbar a):focus-visible {
+        outline-offset: calc(-1 * var(--dk-ring-width));
+    }
+
+    :where(.dk-tabbar a > svg) {
+        flex: none;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-tabbar a:hover) {
+            color: var(--dk-fg);
+        }
+    }
+
+    :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+        padding-top: var(--dk-space-1);
+        border-top: 2px solid var(--dk-accent);
+        color: var(--dk-fg);
+        font-weight: var(--dk-weight-strong);
+    }
+
+    /*
      * Paper is light and the browser drops backgrounds, so on paper a callout and a code block keep
      * an edge in the line color, where the screen's transparent edge would vanish with the ground.
      * A code block and a scrolling table show whole rather than cut at the frame, their code and
      * figures wrapping, and what does nothing on paper does not print: the theme switch, the copy
-     * button, the skip link, and a strip's section of switches with the room it keeps for them.
+     * button, the skip link, a tab bar, and a strip's section of switches with the room it keeps for
+     * them.
      * An app's frame prints as a page, as long as what it holds.
      */
     @media print {
@@ -1587,7 +1704,7 @@
             overflow-wrap: anywhere;
         }
 
-        :where(.dk-theme-switch, .dk-copy, .dk-skip) {
+        :where(.dk-theme-switch, .dk-copy, .dk-skip, .dk-tabbar) {
             display: none;
         }
 

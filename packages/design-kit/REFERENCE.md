@@ -1123,7 +1123,7 @@ of view.
             Save the round
         </button>
     </section>
-    <nav class="dk-app-tabs" aria-label="Sections">...</nav>
+    <nav class="dk-app-tabs dk-tabbar" aria-label="Sections">...</nav>
 </div>
 ```
 
@@ -1172,6 +1172,71 @@ lines tall, the frame is as long as what it holds and the page scrolls whole, so
 dock never squeeze the body out of reach. On a phone on its side the frame pads past a side safe
 area only by what the column's own margin does not already clear. On paper the frame is as long and
 as wide as what it holds and the body prints whole.
+
+</details>
+
+## Tab bar
+
+A tab bar holds an app's top-level places at the bottom of a phone, under the thumb. It is a `nav`
+holding a list of links, from two to five, each a label with room for an icon over it.
+
+<!-- example: tabBar -->
+
+```html
+<nav class="dk-tabbar" aria-label="Sections">
+    <ul>
+        <li>
+            <a href="/" aria-current="page">
+                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                Play
+            </a>
+        </li>
+        <li>
+            <a href="/history/">
+                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                History
+            </a>
+        </li>
+        <li>
+            <a href="/players/">
+                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                Players
+            </a>
+        </li>
+    </ul>
+</nav>
+```
+
+Each place has an address, so the links are links and take no tab role. The link for the place the
+visitor is in carries `aria-current="page"`, and is drawn in the page's text color at the strong
+weight under an accent line, so it is told apart by more than its color. Every link has a label. An
+icon is an `svg` before the label, hidden from a screen reader, which the bar draws at 1.5rem.
+
+In an app's frame the bar is the frame's last part, `class="dk-app-tabs dk-tabbar"`, after the dock
+in the keyboard's order, and the frame keeps it clear of the home indicator. On a page that scrolls
+whole, the bar is the last child of an element with `dk-tabbar-page`, the `body` as a rule:
+
+```html
+<body class="dk-tabbar-page">
+    <main>...</main>
+    <nav class="dk-tabbar" aria-label="Sections">...</nav>
+</body>
+```
+
+<details>
+<summary>How the bar is drawn</summary>
+
+The links share the bar's width evenly, and each is at least `--dk-target-large` tall. A label
+wraps within its share at a large text size and the bar grows with it, so nothing is cut off.
+
+Outside a frame the bar sticks to the bottom of the screen while the page scrolls, over the page at
+`--dk-stack-bar`. At the page's end it sits after the last of the content and never over it, so the
+page pads by no height. `dk-tabbar-page` makes the page a column at least as tall as the screen, so
+on a short page the bar is still at the bottom. The bar pads itself past `--dk-safe-bottom` and the
+side safe areas, and on a wide screen it stays within `--dk-app-column` in the middle.
+
+Only the current link has a line, and the others are padded to its depth, so forced colors draw one
+line. A tab bar does not print.
 
 </details>
 

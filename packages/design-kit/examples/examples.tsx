@@ -432,10 +432,42 @@ export const appFrame: ReactElement = (
                 Save the round
             </button>
         </section>
-        <nav className="dk-app-tabs" aria-label="Sections">
+        <nav className="dk-app-tabs dk-tabbar" aria-label="Sections">
             ...
         </nav>
     </div>
+);
+
+/** A tab bar of three places, the first the one the visitor is in. */
+export const tabBar: ReactElement = (
+    <nav className="dk-tabbar" aria-label="Sections">
+        <ul>
+            <li>
+                <a href="/" aria-current="page">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                        ...
+                    </svg>
+                    Play
+                </a>
+            </li>
+            <li>
+                <a href="/history/">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                        ...
+                    </svg>
+                    History
+                </a>
+            </li>
+            <li>
+                <a href="/players/">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                        ...
+                    </svg>
+                    Players
+                </a>
+            </li>
+        </ul>
+    </nav>
 );
 
 /** The theme switch, as the component draws it before a page attaches it. */
@@ -470,6 +502,7 @@ export const EXAMPLES = {
     table,
     code,
     appFrame,
+    tabBar,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;
