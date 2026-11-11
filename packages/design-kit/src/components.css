@@ -27,7 +27,7 @@
     .dk-skip {
         position: absolute;
         left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
-        /* Below what a phone keeps at its top edge, which is nothing on a page that does not ask. */
+        /* Below what a phone keeps at its top edge, nothing on a page that does not ask. */
         top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
         height: 1px;
@@ -1460,8 +1460,8 @@
 
     /*
      * A theme switch, a copy button or a stepper's buttons stay hidden until a page's script
-     * attaches them, and a toast's buttons until it shows a message, since the display these pieces take would
-     * otherwise win over the browser's own rule for hidden.
+     * attaches them, and a toast's buttons until it shows a message, since the display these
+     * pieces take would otherwise win over the browser's own rule for hidden.
      */
     :where(.dk-theme-switch[hidden], .dk-copy[hidden], .dk-toast [hidden], .dk-stepper > [hidden]) {
         display: none;
@@ -1991,9 +1991,9 @@
 
     /*
      * A row that leads somewhere is one link across its width, ending in a muted chevron that says
-     * so on a phone, where nothing hovers, hidden from a screen reader in the markup. Its focus ring is
-     * inside it, around the whole row and never cut by what holds the list. Pointed at, or pressed
-     * under a thumb, its title is underlined, as a link's words are.
+     * so on a phone, where nothing hovers, hidden from a screen reader in the markup. Its focus
+     * ring is inside it, around the whole row and never cut by what holds the list. Pointed at, or
+     * pressed under a thumb, its title is underlined, as a link's words are.
      */
     :where(.dk-row-sign) {
         color: var(--dk-muted);
@@ -2090,8 +2090,9 @@
 
     /*
      * With its label to the left, a stepper's field is one line, the label taking the room the
-     * stepper leaves and wrapping within it. Its errors sit on lines above it, as every field's
-     * do, so a phone's keyboard never covers them, and its hint on a line below.
+     * stepper leaves and wrapping within it, and the stepper moving under the label where a large
+     * text size leaves no room for both. Its errors sit on lines above it, as every field's do, so
+     * a phone's keyboard never covers them, and its hint on a line below.
      */
     :where(.dk-stepper-inline) {
         display: flex;
@@ -2101,7 +2102,7 @@
     }
 
     :where(.dk-stepper-inline > .dk-field-label) {
-        flex: 1 1 0;
+        flex: 1 1 4rem;
         min-width: 0;
     }
 

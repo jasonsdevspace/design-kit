@@ -82,6 +82,9 @@ const closing = (text: string, open: number): number => {
     return -1;
 };
 
+/** The parts of a browser's own control a component may reach, a number field's spin buttons. */
+const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button'];
+
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
  * pseudo-element, followed by at most a focus pseudo-class, so nothing outside it but the focus
@@ -89,8 +92,6 @@ const closing = (text: string, open: number): number => {
  * the :where() with a pseudo-element instead. A quoted string is read as empty first, so a ::
  * inside one is text.
  */
-/** The parts of a browser's own control a component may reach, a number field's spin buttons. */
-const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button'];
 
 const scoped = (
     selector: string,

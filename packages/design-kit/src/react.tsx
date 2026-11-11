@@ -843,40 +843,56 @@ export const Toast = ({ className, ref }: ToastProps = {}) => (
     </div>
 );
 
-export type StepperFieldProps = FieldParts &
+/** What a stepper adds to a field's props. */
+type StepperOwn = {
+    /** The least value. */
+    readonly min: number;
+    /** The greatest value. */
+    readonly max: number;
+    /** What a press adds or takes away, 1 unless given. */
+    readonly step?: number | undefined;
+    /** What a value outside the limits, or none, is told, shown once the value is changed. */
+    readonly rangeError?: ReactNode;
+    /** Buttons and value at the larger target, for a count pressed at arm's length. */
+    readonly tall?: boolean | undefined;
+    /** The label to the left of the stepper, on one line with it. */
+    readonly inline?: boolean | undefined;
+};
+
+/**
+ * What names the buttons, read after Lower and Raise. A label in plain words names them unless a
+ * subject is given, and a label that is more than words needs a subject, so no two steppers'
+ * buttons are named alike.
+ */
+type StepperSubject =
+    | {
+          readonly label: string;
+          /** The words after Lower and Raise in the buttons' names, such as "Ana's bid". */
+          readonly subject?: string | undefined;
+      }
+    | { readonly label: ReactNode; readonly subject: string };
+
+export type StepperFieldProps = Omit<FieldParts, 'label'> &
+    StepperSubject &
+    StepperOwn &
     Omit<
         ComponentPropsWithRef<'input'>,
-        'style' | 'id' | 'aria-invalid' | 'children' | 'type' | 'min' | 'max'
-    > & {
-        /** The least value. */
-        readonly min: number;
-        /** The greatest value. */
-        readonly max: number;
-        /**
-         * What the field counts, read after Lower and Raise to name the buttons, such as "Ana's
-         * bid". The label, where it is text, unless given.
-         */
-        readonly subject?: string | undefined;
-        /** What a value outside the limits is told, shown once the value is changed. */
-        readonly rangeError?: ReactNode;
-        /** Buttons and value at the larger target, for a count pressed at arm's length. */
-        readonly tall?: boolean | undefined;
-        /** The label to the left of the stepper, on one line with it. */
-        readonly inline?: boolean | undefined;
-    };
+        'style' | 'id' | 'aria-invalid' | 'children' | 'type' | 'min' | 'max' | 'step'
+    >;
 
 /**
  * A stepper for a small whole number: a number field with a button either side, in the kit's field
  * with its label, hint and error, the input taking every other prop given, its `ref` among them.
  * The buttons are hidden until `attachStepper` from `@jasonsdevspace/design-kit/controls` shows
  * them, so without script the field is a number field alone. Each button is named for what it does
- * and to which field, and the error for a value outside the limits waits, hidden, for the attach
- * function to show it.
+ * and to which field, a status line out of sight says the value a press sets, and the error for a
+ * value outside the limits waits, hidden, for the attach function to show it. A field whose least
+ * value is below nothing asks a phone for its full keyboard, since the numeric one has no minus.
  */
 export const StepperField = (props: StepperFieldProps) => {
-    const { min, max, subject, rangeError, tall, inline, ...forField } = props;
+    const { min, max, step = 1, subject, rangeError, tall, inline, ...forField } = props;
     const { native, field } = useControl(forField);
-    const { className, step = 1, ...rest } = native;
+    const { className, ...rest } = native;
     const named = subject ?? (typeof props.label === 'string' ? props.label : '');
     return (
         <Field
@@ -886,7 +902,7 @@ export const StepperField = (props: StepperFieldProps) => {
         >
             <p className="dk-field-error dk-stepper-range" id={`${field.id}-range`} hidden>
                 <span className="dk-visually-hidden">Error: </span>
-                {rangeError ?? `Enter a whole number from ${String(min)} to ${String(max)}.`}
+                {rangeError ?? `Enter a number from ${String(min)} to ${String(max)}.`}
             </p>
             <div className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}>
                 <button
@@ -901,7 +917,7 @@ export const StepperField = (props: StepperFieldProps) => {
                 <input
                     className={spaced('dk-input', 'dk-stepper-value', className)}
                     type="number"
-                    inputMode="numeric"
+                    inputMode={min < 0 ? undefined : 'numeric'}
                     min={min}
                     max={max}
                     step={step}
@@ -917,6 +933,7 @@ export const StepperField = (props: StepperFieldProps) => {
                     <span aria-hidden="true">+</span>
                     <span className="dk-visually-hidden">Raise {named}</span>
                 </button>
+                <span className="dk-visually-hidden dk-stepper-status" role="status" />
             </div>
         </Field>
     );

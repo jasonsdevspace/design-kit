@@ -19,7 +19,7 @@ import {
     themeScriptHash,
     themeScriptPlugin,
 } from '@jasonsdevspace/design-kit/vite';
-import { createRef } from 'react';
+import { createElement, createRef } from 'react';
 import type { UserConfig } from 'vite';
 
 /*
@@ -67,6 +67,11 @@ export const switchRef = ThemeSwitch({ ref: createRef<HTMLDivElement>(), classNa
 export const copyRef = CopyButton({ name: 'email', ref: createRef<HTMLButtonElement>() });
 export const statusRef = CopyStatus({ ref: createRef<HTMLParagraphElement>() });
 export const toastRef = Toast({ ref: createRef<HTMLDivElement>(), className: 'site' });
+// A label that is more than words needs a subject, so the buttons are named for their field.
+const boldLabel = createElement('b', null, 'Bid');
+// @ts-expect-error The buttons would be named Lower and Raise alone.
+export const unnamedStepper = StepperField({ label: boldLabel, min: 0, max: 10 });
+export const namedStepper = StepperField({ label: boldLabel, subject: 'the bid', min: 0, max: 10 });
 export const stepperRef = StepperField({
     label: 'Bid',
     min: 0,
