@@ -237,7 +237,22 @@ test('wraps a long title at a large text size, and cuts nothing off', async ({ p
         await heading.evaluate((element) => element.scrollWidth - element.clientWidth)
     ).toBeLessThanOrEqual(0);
     expect(await sideways(page)).toBe(0);
-    expect(await pageScroll(page)).toBe(0);
+});
+
+test('squeezes no row where the bar and the dock come to more than the screen, and scrolls the page', async ({
+    page,
+}) => {
+    const title = 'The seventeenth round of a very long game of Wizard. '.repeat(3);
+    await open(page, { width: 320, css: DOUBLED, title, dock: 2 });
+    const top = await box(bar(page), 'the bar');
+    expect(bottom(await box(page.locator('.dk-app-title'), 'the title'))).toBeLessThanOrEqual(
+        bottom(top)
+    );
+    // The dock starts where the bar ends, whole, and the page scrolls down to it.
+    const low = await box(dock(page), 'the dock');
+    expect(low.y).toBeGreaterThanOrEqual(bottom(top));
+    expect(bottom(low)).toBeGreaterThan(700);
+    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(low) - 700);
 });
 
 test('takes the keyboard through the bar, then the body, then the dock', async ({

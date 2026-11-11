@@ -1443,7 +1443,9 @@
      * Only the body scrolls. A dock grows with what it holds and a tab bar grows at a large text
      * size, and a sheet with no script cannot report a height that changes. So nothing here reads
      * a height: the body ends where the rows below it begin, and a toast has a row of its own
-     * above the dock, which keeps it clear of both whatever their size.
+     * above the dock, which keeps it clear of both whatever their size. Each row but the body's
+     * is as tall as what it holds and never less, so where they come to more than the screen the
+     * page scrolls and no row is squeezed over its neighbor.
      *
      * The frame is as tall as the screen, by the dynamic height, so a phone browser's own bars
      * coming and going do not push the dock out of view. It is the page's whole content, with
@@ -1453,11 +1455,11 @@
     :where(.dk-app) {
         display: grid;
         grid-template:
-            'bar' auto
+            'bar' max-content
             'body' minmax(0, 1fr)
-            'toast' auto
-            'dock' auto
-            'tabs' auto
+            'toast' max-content
+            'dock' max-content
+            'tabs' max-content
             / minmax(0, 1fr);
         box-sizing: border-box;
         /* For a browser with no dynamic height, the screen's own, which the line after replaces. */

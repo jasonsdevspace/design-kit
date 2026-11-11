@@ -1152,7 +1152,9 @@ safe area tokens their values:
 
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
-the body ends where the rows below it begin, and a toast sits in a row of its own, clear of both.
+the body ends where the rows below it begin, and a toast sits in a row of its own, clear of both. Each
+row but the body's is never shorter than what it holds, so where the bar and the dock come to more
+than the screen, the page scrolls and no row covers its neighbor.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A browser without that unit reads `100vh`. The bar pads itself
