@@ -7,6 +7,7 @@ import {
     InputField,
     PortfolioStrip,
     SelectField,
+    StepperField,
     TextareaField,
     ThemeSwitch,
     Toast,
@@ -66,6 +67,12 @@ export const switchRef = ThemeSwitch({ ref: createRef<HTMLDivElement>(), classNa
 export const copyRef = CopyButton({ name: 'email', ref: createRef<HTMLButtonElement>() });
 export const statusRef = CopyStatus({ ref: createRef<HTMLParagraphElement>() });
 export const toastRef = Toast({ ref: createRef<HTMLDivElement>(), className: 'site' });
+export const stepperRef = StepperField({
+    label: 'Bid',
+    min: 0,
+    max: 10,
+    ref: createRef<HTMLInputElement>(),
+});
 
 // @ts-expect-error A copy button's ref is the button drawn, not some other element.
 export const wrongCopy = CopyButton({ name: 'email', ref: createRef<HTMLDivElement>() });

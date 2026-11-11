@@ -1,9 +1,9 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button and toast do, for a page to attach to the markup the
+ * What the kit's theme switch, copy button, stepper and toast do, for a page to attach to the markup the
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
- * classes. The switch and the copy button show their control, which the markup keeps hidden so a
+ * classes. The switch, the copy button and the stepper show their control, which the markup keeps hidden so a
  * visitor without script meets no control that does nothing, and return a function that takes it
  * away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
  * when the module is imported, and nothing here sets a style, so a page's policy can refuse every
@@ -468,4 +468,82 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     });
     attachedToasts.set(element, show);
     return show;
+};
+
+const attachedSteppers = new WeakMap<HTMLElement, () => void>();
+
+/**
+ * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
+ * script meets the number field alone, and steps the value by the field's step when one is
+ * pressed. Each press fires the input and change events a typed value fires. At the field's least
+ * or greatest value the button that would pass it is marked off, aria-disabled so focus stays on
+ * it, and a press of it does nothing. A typed value the field refuses shows the stepper's own error
+ * once the value is changed, and is cleared as soon as the value is right again. It takes the
+ * stepper's field or the stepper, and returns what takes it away again.
+ */
+export const attachStepper = (element: HTMLElement): (() => void) => {
+    const already = attachedSteppers.get(element);
+    if (already) return already;
+    const field = element.closest<HTMLElement>('.dk-field') ?? element;
+    const input = field.querySelector<HTMLInputElement>('.dk-stepper-value');
+    const down = field.querySelector<HTMLButtonElement>('.dk-stepper-down');
+    const up = field.querySelector<HTMLButtonElement>('.dk-stepper-up');
+    if (!input || !down || !up) throw new Error('a stepper needs its value and its two buttons');
+    const range = field.querySelector<HTMLElement>('.dk-stepper-range');
+    const described = input.getAttribute('aria-describedby');
+    const invalid = input.getAttribute('aria-invalid');
+    const limit = (value: string, fallback: number) => (value === '' ? fallback : Number(value));
+    const mark = () => {
+        const value = input.valueAsNumber;
+        const at = (button: HTMLButtonElement, stop: boolean) => {
+            if (stop) button.setAttribute('aria-disabled', 'true');
+            else button.removeAttribute('aria-disabled');
+        };
+        at(down, !Number.isNaN(value) && value <= limit(input.min, -Infinity));
+        at(up, !Number.isNaN(value) && value >= limit(input.max, Infinity));
+    };
+    const report = (wrong: boolean) => {
+        if (!range) return;
+        range.hidden = !wrong;
+        const ids = [described, wrong ? range.id : ''].filter(Boolean).join(' ');
+        if (ids) input.setAttribute('aria-describedby', ids);
+        else input.removeAttribute('aria-describedby');
+        if (wrong || invalid === 'true') input.setAttribute('aria-invalid', 'true');
+        else input.removeAttribute('aria-invalid');
+    };
+    const press = (button: HTMLButtonElement, raise: boolean) => () => {
+        if (button.getAttribute('aria-disabled') === 'true') return;
+        if (raise) input.stepUp();
+        else input.stepDown();
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    const lower = press(down, false);
+    const raise = press(up, true);
+    const onInput = () => {
+        mark();
+        if (input.validity.valid) report(false);
+    };
+    const onChange = () => {
+        report(!input.validity.valid);
+    };
+    down.addEventListener('click', lower);
+    up.addEventListener('click', raise);
+    input.addEventListener('input', onInput);
+    input.addEventListener('change', onChange);
+    mark();
+    down.hidden = false;
+    up.hidden = false;
+    const detach = () => {
+        down.removeEventListener('click', lower);
+        up.removeEventListener('click', raise);
+        input.removeEventListener('input', onInput);
+        input.removeEventListener('change', onChange);
+        report(false);
+        down.hidden = true;
+        up.hidden = true;
+        attachedSteppers.delete(element);
+    };
+    attachedSteppers.set(element, detach);
+    return detach;
 };

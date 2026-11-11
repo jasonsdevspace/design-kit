@@ -9,8 +9,10 @@ import { describe, expect, it } from 'vitest';
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
  * pseudo-class. The base alone may follow its :where() with a pseudo-element instead, since a
  * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
- * it too. So only those classes, the focus rules and the base's pseudo-elements carry any weight,
- * and none of it counts against a page's own rule outside a layer.
+ * it too. The components may follow theirs with a number field's own spin buttons, the one part of
+ * a browser's control a component has to take away and only a pseudo-element reaches. So only those
+ * classes, the focus rules and those pseudo-elements carry any weight, and none of it counts
+ * against a page's own rule outside a layer.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -87,9 +89,15 @@ const closing = (text: string, open: number): number => {
  * the :where() with a pseudo-element instead. A quoted string is read as empty first, so a ::
  * inside one is text.
  */
+/** The parts of a browser's own control a component may reach, a number field's spin buttons. */
+const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button'];
+
 const scoped = (
     selector: string,
-    { pseudo = false }: { readonly pseudo?: boolean } = {}
+    {
+        pseudo = false,
+        parts = [],
+    }: { readonly pseudo?: boolean; readonly parts?: readonly string[] } = {}
 ): boolean => {
     if (/^\.dk-[\w-]+$/.test(selector)) return true;
     if (!selector.startsWith(':where(')) return false;
@@ -104,7 +112,8 @@ const scoped = (
         return false;
     const focus = '(?::focus(?:-visible|-within)?)';
     const after = pseudo ? `(?:${focus}|::[\\w-]+(?:\\([^)]*\\))?)` : focus;
-    return new RegExp(`^${after}?$`).test(selector.slice(end + 1));
+    const rest = selector.slice(end + 1);
+    return parts.includes(rest) || new RegExp(`^${after}?$`).test(rest);
 };
 
 describe('what the sheets style', () => {
@@ -156,7 +165,11 @@ describe('what the sheets style', () => {
                 selectorsOf(css)
                     .flatMap(split)
                     .filter(
-                        (selector) => !scoped(selector, { pseudo: layerOf(name) === 'dk.base' })
+                        (selector) =>
+                            !scoped(selector, {
+                                pseudo: layerOf(name) === 'dk.base',
+                                parts: layerOf(name) === 'dk.components' ? CONTROL_PARTS : [],
+                            })
                     )
             ).toEqual([]);
         });
@@ -195,8 +208,20 @@ describe('what the sheets style', () => {
             ':where(*)::backdrop',
             ':where(:root)::view-transition-group(*)',
         ]);
-        // A component styles no pseudo-element, so its arrows and marks are elements of their own.
+        // A component styles no pseudo-element, so its arrows and marks are elements of their own,
+        // but a number field's spin buttons, which only a pseudo-element reaches.
         expect(candidates.filter((selector) => scoped(selector))).toEqual([]);
+        expect(
+            [
+                ':where(.dk-stepper-value)::-webkit-inner-spin-button',
+                ':where(.dk-stepper-value)::-webkit-outer-spin-button',
+                ':where(.dk-stepper-value)::before',
+                ':where(.dk-stepper-value)::-webkit-inner-spin-button:hover',
+            ].filter((selector) => scoped(selector, { parts: CONTROL_PARTS }))
+        ).toEqual([
+            ':where(.dk-stepper-value)::-webkit-inner-spin-button',
+            ':where(.dk-stepper-value)::-webkit-outer-spin-button',
+        ]);
         // A :: inside a quoted value is text, not a pseudo-element.
         expect(scoped(':where([data-sep="::"])')).toBe(true);
     });

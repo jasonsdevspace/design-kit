@@ -18,6 +18,7 @@ export const VALUE_EXPORTS = {
         'PortfolioStrip',
         'SelectField',
         'SkipLink',
+        'StepperField',
         'TextareaField',
         'ThemeSwitch',
         'Toast',
@@ -25,6 +26,7 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/controls': [
         'attachCopyButton',
+        'attachStepper',
         'attachThemeSwitch',
         'attachToast',
         'chooseTheme',

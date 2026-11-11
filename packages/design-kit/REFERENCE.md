@@ -59,6 +59,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                         |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                    |
 | `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's or a panel's, and its width, read as 8rem                           |
+| `--dk-stepper-digits`                                                                             | unset, and read as 2, how many figures a stepper's value has room for                                                           |
 
 </details>
 
@@ -1311,6 +1312,92 @@ short.
 
 Only the current link has a line, and the others are padded to its depth, so forced colors draw one
 line. A tab bar does not print, and a page that ends in one prints as long as what it holds.
+
+</details>
+
+## Stepper
+
+A stepper is a field for a small whole number, such as a bid from nothing to ten, that is quicker
+to step than to type on a phone: a number field with a button to lower the value before it and one
+to raise it after.
+
+<!-- example: stepper -->
+
+```html
+<div class="dk-field dk-stepper-inline">
+    <label class="dk-field-label" for="players">Players</label>
+    <p class="dk-field-error dk-stepper-range" id="players-range" hidden="">
+        <span class="dk-visually-hidden">Error: </span>
+        Enter a whole number from 2 to 8.
+    </p>
+    <div class="dk-stepper dk-stepper-tall">
+        <button type="button" class="dk-button dk-stepper-down" aria-controls="players" hidden="">
+            <span aria-hidden="true">−</span>
+            <span class="dk-visually-hidden">Lower the number of players</span>
+        </button>
+        <input
+            class="dk-input dk-stepper-value"
+            type="number"
+            inputmode="numeric"
+            min="2"
+            max="8"
+            step="1"
+            id="players"
+            value="4"
+        />
+        <button type="button" class="dk-button dk-stepper-up" aria-controls="players" hidden="">
+            <span aria-hidden="true">+</span>
+            <span class="dk-visually-hidden">Raise the number of players</span>
+        </button>
+    </div>
+</div>
+```
+
+```js
+import { attachStepper } from '@jasonsdevspace/design-kit/controls';
+
+attachStepper(document.querySelector('.dk-stepper'));
+```
+
+It is the kit's field, so its label, hint and error work as every field's do, around a native
+`input type="number"` that says its value and its limits to a screen reader. The buttons are hidden
+until `attachStepper(element)` shows them, so without script it is a number field alone, and they
+are named for what they do and to which field, "Lower the number of players" and "Raise the number
+of players". `StepperField`
+draws it, taking `min`, `max` and a `step` of 1 unless given, with `subject` for the words after
+Lower and Raise where the label is not text, `inline` for the label to the left on one line with the
+stepper, and `tall` for buttons at the larger target.
+
+A press steps the value by the step and fires the `input` and `change` events a typed value fires.
+At the least or the greatest value the button that would pass it is off, by `aria-disabled` so
+focus stays on it, and a press of it does nothing. The field still takes a typed value. One outside
+the limits shows the stepper's own error, which waits hidden in the markup, once the value is
+changed, and it is cleared as soon as the value is right again. The attach function takes the
+stepper or its field and returns what takes it away again.
+
+**`StepperField` props**
+
+| `StepperField`        | Default                                 | What it does                                          |
+| --------------------- | --------------------------------------- | ----------------------------------------------------- |
+| `label`               | required                                | names the field                                       |
+| `min`, `max`          | required                                | the least and the greatest value                      |
+| `step`                | 1                                       | what a press adds or takes away                       |
+| `subject`             | the label, where it is text             | the words after Lower and Raise in the buttons' names |
+| `rangeError`          | "Enter a whole number from min to max." | what a value outside the limits is told               |
+| `inline`              | false                                   | the label to the left, on one line with the stepper   |
+| `tall`                | false                                   | buttons and value at `--dk-target-large`              |
+| `hint`, `error`, `id` | none                                    | as for every field                                    |
+
+<details>
+<summary>How a stepper is drawn</summary>
+
+The buttons are at least `--dk-target` both ways, or `--dk-target-large` in a tall stepper. The value
+is in the mono face with figures of one width, centered, with room for two figures unless
+`--dk-stepper-digits` says more, so the field does not change width as the value changes, and in a
+tall stepper it is at the heading size. With its label to the left the label takes the room the
+stepper leaves and wraps within it. Its errors sit on lines above it, as every field's do, and its
+hint on a line below. The number field's own spin buttons are taken away, since the stepper's
+buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 

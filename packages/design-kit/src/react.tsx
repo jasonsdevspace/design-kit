@@ -385,13 +385,15 @@ const FieldText = ({
 const Field = ({
     parts,
     field,
+    className,
     children,
 }: {
     readonly parts: FieldParts;
     readonly field: ReturnType<typeof useField>;
+    readonly className?: string | undefined;
     readonly children: ReactNode;
 }) => (
-    <div className="dk-field">
+    <div className={spaced('dk-field', className)}>
         <label className="dk-field-label" htmlFor={field.id}>
             {parts.label}
         </label>
@@ -840,3 +842,82 @@ export const Toast = ({ className, ref }: ToastProps = {}) => (
         </button>
     </div>
 );
+
+export type StepperFieldProps = FieldParts &
+    Omit<
+        ComponentPropsWithRef<'input'>,
+        'style' | 'id' | 'aria-invalid' | 'children' | 'type' | 'min' | 'max'
+    > & {
+        /** The least value. */
+        readonly min: number;
+        /** The greatest value. */
+        readonly max: number;
+        /**
+         * What the field counts, read after Lower and Raise to name the buttons, such as "Ana's
+         * bid". The label, where it is text, unless given.
+         */
+        readonly subject?: string | undefined;
+        /** What a value outside the limits is told, shown once the value is changed. */
+        readonly rangeError?: ReactNode;
+        /** Buttons and value at the larger target, for a count pressed at arm's length. */
+        readonly tall?: boolean | undefined;
+        /** The label to the left of the stepper, on one line with it. */
+        readonly inline?: boolean | undefined;
+    };
+
+/**
+ * A stepper for a small whole number: a number field with a button either side, in the kit's field
+ * with its label, hint and error, the input taking every other prop given, its `ref` among them.
+ * The buttons are hidden until `attachStepper` from `@jasonsdevspace/design-kit/controls` shows
+ * them, so without script the field is a number field alone. Each button is named for what it does
+ * and to which field, and the error for a value outside the limits waits, hidden, for the attach
+ * function to show it.
+ */
+export const StepperField = (props: StepperFieldProps) => {
+    const { min, max, subject, rangeError, tall, inline, ...forField } = props;
+    const { native, field } = useControl(forField);
+    const { className, step = 1, ...rest } = native;
+    const named = subject ?? (typeof props.label === 'string' ? props.label : '');
+    return (
+        <Field
+            parts={props}
+            field={field}
+            className={inline === true ? 'dk-stepper-inline' : undefined}
+        >
+            <p className="dk-field-error dk-stepper-range" id={`${field.id}-range`} hidden>
+                <span className="dk-visually-hidden">Error: </span>
+                {rangeError ?? `Enter a whole number from ${String(min)} to ${String(max)}.`}
+            </p>
+            <div className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}>
+                <button
+                    type="button"
+                    className="dk-button dk-stepper-down"
+                    aria-controls={field.id}
+                    hidden
+                >
+                    <span aria-hidden="true">−</span>
+                    <span className="dk-visually-hidden">Lower {named}</span>
+                </button>
+                <input
+                    className={spaced('dk-input', 'dk-stepper-value', className)}
+                    type="number"
+                    inputMode="numeric"
+                    min={min}
+                    max={max}
+                    step={step}
+                    {...rest}
+                    {...field.wired}
+                />
+                <button
+                    type="button"
+                    className="dk-button dk-stepper-up"
+                    aria-controls={field.id}
+                    hidden
+                >
+                    <span aria-hidden="true">+</span>
+                    <span className="dk-visually-hidden">Raise {named}</span>
+                </button>
+            </div>
+        </Field>
+    );
+};
