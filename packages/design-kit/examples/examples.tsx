@@ -476,6 +476,28 @@ export const tabBar: ReactElement = (
 /** A toast, as the component draws it before a page attaches it. */
 export const toast: ReactElement = <Toast />;
 
+/** A grid of toggles for the cards in a hand, one of them off, and a pad of plain keys. */
+export const buttonGrid: ReactElement = (
+    <>
+        <div className="dk-button-grid" role="group" aria-label="Cards in hand">
+            <Button pressed>7</Button>
+            <Button pressed={false}>8</Button>
+            <Button pressed>9</Button>
+            <Button pressed={false} off>
+                10
+            </Button>
+        </div>
+        <div className="dk-button-grid dk-button-grid-tall" role="group" aria-label="Score">
+            <Button>1</Button>
+            <Button>2</Button>
+            <Button>
+                <span aria-hidden="true">⌫</span>
+                <span className="dk-visually-hidden">Delete</span>
+            </Button>
+        </div>
+    </>
+);
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -510,6 +532,7 @@ export const EXAMPLES = {
     appFrame,
     tabBar,
     toast,
+    buttonGrid,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;

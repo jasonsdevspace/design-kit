@@ -57,6 +57,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                       |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                        |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                         |
+| `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                    |
 
 </details>
 
@@ -1097,6 +1098,75 @@ beyond the theme script, so a block has no copy button.
 
 A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set into
 what holds it. Its edge is transparent, and shows only in forced colors.
+
+</details>
+
+## Button grid
+
+A grid of buttons is a set picked from, such as the cards in a hand, each a toggle that says
+whether it is on, or a pad of plain keys that act when pressed, as a number pad's do. It is classes
+alone, since the cells' state is the page's.
+
+<!-- example: buttonGrid -->
+
+```html
+<div class="dk-button-grid" role="group" aria-label="Cards in hand">
+    <button type="button" class="dk-button" aria-pressed="true">7</button>
+    <button type="button" class="dk-button" aria-pressed="false">8</button>
+    <button type="button" class="dk-button" aria-pressed="true">9</button>
+    <button type="button" class="dk-button" aria-pressed="false" aria-disabled="true">10</button>
+</div>
+<div class="dk-button-grid dk-button-grid-tall" role="group" aria-label="Score">
+    <button type="button" class="dk-button">1</button>
+    <button type="button" class="dk-button">2</button>
+    <button type="button" class="dk-button">
+        <span aria-hidden="true">⌫</span>
+        <span class="dk-visually-hidden">Delete</span>
+    </button>
+</div>
+```
+
+The grid is a `role="group"` named for what it holds, by `aria-labelledby` where the screen shows
+that name already, and each cell is a kit button, never an accent one, since a filled cell reads as
+a toggle that is on. A toggle carries `aria-pressed`, so a screen reader says whether it is on, and
+acts at once, so it is never a checkbox in a form. A plain key carries no pressed state, and is
+named for what it enters, with a name out of sight where its face is a symbol, as Delete is above. A
+grid where only one can be on is a choice field.
+
+A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
+page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
+Tab key. A page with many cells may give the group one stop instead, with a roving tabindex, so the
+arrow keys move between cells and Home and End reach the ends. That is the page's to write, as a
+tab list's keys are.
+
+The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
+unless it does:
+
+```css
+.hand {
+    --dk-button-grid-columns: 6;
+}
+```
+
+<details>
+<summary>How the grid is drawn</summary>
+
+Where the columns asked for would make a cell narrower than `--dk-target`, the grid draws as many as
+fit, so six asked for in an app's frame on a phone 320px wide, inside its 1rem gutters, draws five.
+Each cell is at least the target tall. In a `dk-button-grid-tall` grid each is at least
+`--dk-target-large` both ways, for keys pressed at arm's length, and a `dk-button-tall` cell is that
+tall in any grid. The cells are spaced by 0.5rem, and a label wraps within its cell at a large text
+size. The grid takes the width of what holds it, so it sits in a block with a width of its own,
+never in a box that shrinks to fit what it holds, where it would draw one column.
+
+A toggle that is on is filled in the accent with its words at the strong weight, so on and off
+differ by how light the cell is and by weight, not by hue alone, and forced colors fill it in the
+system's selection colors. A cell that is off, by `disabled` or by `aria-disabled`, has a dashed
+edge and keeps the page's text color, where a faded one is hard to tell from a toggle that is only
+not pressed, and in forced colors takes the system's gray as any off button does. One that is off
+and on keeps a thicker edge in the control's color, or in the highlight in forced colors. A cell reads the button's `--dk-button-shadow` and `--dk-button-press`, so a page that
+sets them gives every cell a shadow and a press, and a toggle that is on rests where a held one
+lands.
 
 </details>
 
