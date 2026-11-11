@@ -1682,6 +1682,11 @@
         }
     }
 
+    /* Under a thumb, where nothing hovers, a press shows as it lands. */
+    :where(.dk-tabbar a:active) {
+        color: var(--dk-fg);
+    }
+
     :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
         padding-top: var(--dk-space-1);
         border-top: 2px solid var(--dk-accent);
