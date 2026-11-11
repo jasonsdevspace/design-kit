@@ -1012,6 +1012,31 @@
     }
 
     /*
+     * A table that pins its first column keeps the cells naming each row in view while the rest
+     * scrolls sideways under them, so a reader in the middle of it still knows whose row it is.
+     * The pinned cells take the ground of what holds the table, the page's or a panel's, so the
+     * cells passing under them never show through, with a rule at their end that says where the
+     * pinned column stops. Its borders are drawn apart, cell by cell, since a border shared
+     * between cells stays where the table drew it and would not travel with a pinned one.
+     */
+    :where(.dk-table-pinned) {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    :where(.dk-table-pinned :is(th, td):first-child) {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: var(--dk-stack-pinned);
+        border-inline-end: 1px solid var(--dk-line);
+        background: var(--dk-bg);
+    }
+
+    :where(.dk-panel .dk-table-pinned :is(th, td):first-child) {
+        background: var(--dk-surface);
+    }
+
+    /*
      * A block of code keeps its lines as written and scrolls inside itself, a named region the
      * keyboard reaches, as a table's frame is. It sits on the card's ground, or on the page's
      * inside a panel, so it reads as set into what holds it, and its edge shows in forced colors

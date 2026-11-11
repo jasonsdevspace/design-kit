@@ -1068,6 +1068,45 @@ after `--dk-`, and a long expression scrolls the frame as a wide table does.
 
 </details>
 
+#### A pinned first column
+
+A table wider than a phone, such as the scores of each player across every round, can keep the
+cells that name its rows in view while the rest scrolls sideways under them, so a reader in the
+middle of it still knows whose row it is. The table takes `dk-table-pinned` beside `dk-table`, and
+stays one table in its named frame, so a screen reader reads its heads as before.
+
+<!-- example: pinnedTable -->
+
+```html
+<p class="dk-table-title" id="scores-title">Scores by round</p>
+<div class="dk-table-scroll" role="region" aria-labelledby="scores-title" tabindex="0">
+    <table class="dk-table dk-table-pinned" aria-labelledby="scores-title">
+        <thead>
+            <tr>
+                <th scope="col">Player</th>
+                <th scope="col" class="dk-table-number">Round 1</th>
+                <th scope="col" class="dk-table-number">Round 2</th>
+                <th scope="col" class="dk-table-number">...</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">Ana</th>
+                <td class="dk-table-number">24</td>
+                <td class="dk-table-number">31</td>
+                <td class="dk-table-number">...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+```
+
+The pinned cells take the ground of what holds the table, the page's or a panel's, so the cells
+passing under them never show through, and a rule at their end says where the pinned column stops.
+The table draws its borders cell by cell, so a pinned cell's rule travels with it. Only the first
+column is pinned, and the header row scrolls with the table, since a table of a few rows needs no
+pinned header.
+
 ### Code blocks
 
 <!-- example: code -->
