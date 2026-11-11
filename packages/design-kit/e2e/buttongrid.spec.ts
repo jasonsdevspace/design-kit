@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { contrast as ratio } from '../examples/palette.js';
 import { box, sideways, style, writePage } from './page.js';
 
 /*
@@ -8,19 +9,20 @@ import { box, sideways, style, writePage } from './page.js';
  * cell would be under the target, every cell at the target both ways or the larger one in a tall
  * grid, a group named for what it holds with each toggle saying whether it is on and each plain key
  * named for what it enters, a toggle that is on told apart by how light it is and its weight, in
- * forced colors too, a cell that is off dashed, unpressable and at full contrast, the button's
+ * forced colors too, a cell that is off dashed, unpressable and at full contrast, one that is off
+ * and on keeping an edge that is seen, a tall button tall in any grid, the button's
  * shadow and press read by each cell, the keyboard reaching and pressing each one, and no audit
  * findings in either theme.
  */
 
 const CARDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
-/** A page with a hand of toggles, one on and one off, and a pad of plain keys. */
+/** A page with a hand of toggles, one on, one off and one both, and a pad of plain keys. */
 const body = (columns: number, tall = false): string => `<main><h1>Round 3</h1>
 <div class="dk-button-grid${tall ? ' dk-button-grid-tall' : ''}" role="group" aria-label="Cards in hand" style="--dk-button-grid-columns: ${String(columns)}">
 ${CARDS.map(
     (card) =>
-        `<button type="button" class="dk-button" aria-pressed="${card === '7' ? 'true' : 'false'}"${card === '12' ? ' disabled' : ''}>${card}</button>`
+        `<button type="button" class="dk-button" aria-pressed="${card === '7' || card === '11' ? 'true' : 'false'}"${card === '11' || card === '12' ? ' disabled' : ''}>${card}</button>`
 ).join('')}
 </div>
 <div class="dk-button-grid dk-button-grid-tall" role="group" aria-label="Score">
@@ -59,24 +61,35 @@ const columnsOf = async (grid: Locator): Promise<number> => {
     return starts.filter((y) => y === starts[0]).length;
 };
 
-/** The contrast between two colors the browser resolved to rgb. */
+/** The contrast between two colors the browser resolved to rgb, by the measure the tokens use. */
 const contrast = (first: string, second: string): number => {
-    const luminance = (color: string) => {
-        const [r = 0, g = 0, b = 0] = (color.match(/[\d.]+/g) ?? []).map(Number).map((part) => {
-            const channel = part / 255;
-            return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-        });
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    const [light, dark] = [luminance(first), luminance(second)].sort((a, b) => b - a);
-    return ((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05);
+    const hex = (color: string) =>
+        `#${(color.match(/[\d.]+/g) ?? [])
+            .slice(0, 3)
+            .map((part) => Math.round(Number(part)).toString(16).padStart(2, '0'))
+            .join('')}`;
+    return ratio(hex(first), hex(second));
 };
+
+/** A system color as the page resolves it, from an element asked to take it. */
+const systemColor = (page: Page, name: string): Promise<string> =>
+    page.evaluate((color) => {
+        const probe = document.createElement('span');
+        probe.style.color = color;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+    }, name);
 
 test('draws the columns asked for where they fit, and fewer where a cell would be under the target', async ({
     page,
 }) => {
-    await open(page, { width: 1280 });
-    expect(await columnsOf(hand(page))).toBe(6);
+    // Every width a share might round up at draws all six.
+    for (let width = 600; width <= 1280; width += 7) {
+        await open(page, { width });
+        expect(await columnsOf(hand(page)), `${String(width)}px`).toBe(6);
+    }
     for (const [tall, least] of [
         [false, 44],
         [true, 56],
@@ -110,8 +123,8 @@ test('names the group, says whether each toggle is on, and names each plain key 
 }) => {
     await open(page);
     await expect(hand(page)).toBeVisible();
-    await expect(hand(page).getByRole('button', { pressed: true })).toHaveText('7');
-    await expect(hand(page).getByRole('button', { pressed: false })).toHaveCount(CARDS.length - 1);
+    await expect(hand(page).getByRole('button', { pressed: true })).toHaveText(['7', '11']);
+    await expect(hand(page).getByRole('button', { pressed: false })).toHaveCount(CARDS.length - 2);
     const keys = page.getByRole('group', { name: 'Score' }).getByRole('button');
     for (const key of await keys.all()) {
         await expect(key).not.toHaveAttribute('aria-pressed');
@@ -140,9 +153,35 @@ test('tells a toggle that is on by how light it is and its weight, in forced col
     try {
         const forced = await context.newPage();
         await open(forced);
-        const on = await style(card(forced, '7'), 'background-color');
-        const off = await style(card(forced, '8'), 'background-color');
-        expect(on['background-color']).not.toBe(off['background-color']);
+        // The highlight resolved as a ground, set on an element of the page's own.
+        const highlight = await forced.evaluate(() => {
+            const probe = document.createElement('span');
+            probe.style.backgroundColor = 'Highlight';
+            document.body.append(probe);
+            const resolved = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return resolved;
+        });
+        expect(await style(card(forced, '7'), 'background-color', 'border-top-color')).toEqual({
+            'background-color': highlight,
+            'border-top-color': highlight,
+        });
+        expect((await style(card(forced, '8'), 'background-color'))['background-color']).not.toBe(
+            highlight
+        );
+        // A cell that is off takes the system's gray, and one that is off and on an edge in the
+        // highlight.
+        const gray = await systemColor(forced, 'GrayText');
+        expect(
+            await style(card(forced, '12'), 'color', 'border-top-color', 'border-top-style')
+        ).toEqual({
+            color: gray,
+            'border-top-color': gray,
+            'border-top-style': 'dashed',
+        });
+        expect((await style(card(forced, '11'), 'border-top-color'))['border-top-color']).toBe(
+            await systemColor(forced, 'Highlight')
+        );
     } finally {
         await context.close();
     }
@@ -163,6 +202,18 @@ test('draws a cell that is off with a dashed edge, at full contrast, and lets no
         );
         expect(contrast(drawn['color'] ?? '', ground ?? ''), theme).toBeGreaterThanOrEqual(4.5);
     }
+    // One that is off and on keeps a thicker edge, seen against the page.
+    const both = await style(card(page, '11'), 'box-shadow', 'background-color');
+    expect(both['background-color']).toBe('rgba(0, 0, 0, 0)');
+    const edge = /rgb\([^)]*\)/.exec(both['box-shadow'] ?? '')?.[0] ?? '';
+    expect(both['box-shadow']).toContain('inset');
+    expect(
+        contrast(
+            edge,
+            (await style(page.locator('body'), 'background-color'))['background-color'] ?? ''
+        )
+    ).toBeGreaterThanOrEqual(3);
+
     // One marked aria-disabled, as the kit's component marks it, is drawn alike.
     await page.evaluate(() => {
         const cell = document.querySelector<HTMLButtonElement>('[aria-pressed]');
@@ -207,17 +258,31 @@ test('reaches each cell by Tab, past one that is off, and presses it by Space an
         }
     });
     const reached: string[] = [];
-    for (let stop = 0; stop < CARDS.length; stop += 1) {
+    for (let stop = 0; stop < CARDS.length - 1; stop += 1) {
         await page.keyboard.press('Tab');
         reached.push(await page.evaluate(() => document.activeElement?.textContent ?? ''));
     }
-    expect(reached).toEqual([...CARDS.slice(0, -1), '1']);
+    expect(reached).toEqual([...CARDS.slice(0, -2), '1']);
 
     await card(page, '8').focus();
     await page.keyboard.press('Space');
     await expect(card(page, '8')).toHaveAttribute('aria-pressed', 'true');
     await page.keyboard.press('Enter');
     await expect(card(page, '8')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('draws a tall button at the larger target in a grid that is not tall', async ({ page }) => {
+    await writePage(page, {
+        width: 1280,
+        title: 'Keys',
+        body:
+            '<div class="dk-button-grid" role="group" aria-label="Keys">' +
+            '<button type="button" class="dk-button">1</button>' +
+            '<button type="button" class="dk-button dk-button-tall">Enter</button></div>',
+    });
+    const keys = page.getByRole('group', { name: 'Keys' }).getByRole('button');
+    expect((await box(keys.nth(0), 'a key')).height).toBeGreaterThanOrEqual(44);
+    expect((await box(keys.nth(1), 'a key')).height).toBeGreaterThanOrEqual(56);
 });
 
 for (const theme of ['light', 'dark'] as const) {

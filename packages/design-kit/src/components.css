@@ -1793,8 +1793,10 @@
      * whether it is on, or a pad of plain keys that act when pressed. The page names the group and
      * sets how many columns it wants in --dk-button-grid-columns, three unless it does. Where that
      * many would make a cell narrower than the target, the grid draws as many as fit, so a cell is
-     * never too small to tap. Each cell is at least the target tall, or the larger target in a tall
-     * grid, which is narrower than that never.
+     * never too small to tap. A column's least width is a pixel short of an even share, so a share
+     * that rounds up never costs a column. Each cell is at least the target tall, or the larger
+     * target in a tall grid or on a tall button, and its label has room to wrap at a large text
+     * size. The grid takes the width of what holds it, which needs a width of its own.
      */
     :where(.dk-button-grid) {
         display: grid;
@@ -1804,7 +1806,7 @@
                 max(
                     var(--dk-target),
                     (100% - (var(--dk-button-grid-columns, 3) - 1) * var(--dk-space-2)) /
-                        var(--dk-button-grid-columns, 3)
+                        var(--dk-button-grid-columns, 3) - 1px
                 ),
                 1fr
             )
@@ -1819,7 +1821,7 @@
                 max(
                     var(--dk-target-large),
                     (100% - (var(--dk-button-grid-columns, 3) - 1) * var(--dk-space-2)) /
-                        var(--dk-button-grid-columns, 3)
+                        var(--dk-button-grid-columns, 3) - 1px
                 ),
                 1fr
             )
@@ -1828,6 +1830,10 @@
 
     :where(.dk-button-grid > .dk-button) {
         min-width: 0;
+        padding-inline: var(--dk-space-1);
+    }
+
+    :where(.dk-button-grid > .dk-button:not(.dk-button-tall)) {
         min-height: var(--dk-target);
     }
 
@@ -1849,8 +1855,8 @@
 
     /*
      * A cell that is off has a dashed edge and keeps the page's text, where a faded one is hard to
-     * tell from a toggle that is only not pressed. One that is on keeps the thicker edge an off
-     * toggle has.
+     * tell from a toggle that is only not pressed. One that is on keeps a thicker edge, in the
+     * control's color so it is seen against the page.
      */
     :where(
         .dk-button-grid > .dk-button:disabled,
@@ -1861,6 +1867,42 @@
         background: transparent;
         color: var(--dk-fg);
         font-weight: var(--dk-weight-normal);
+    }
+
+    :where(
+        .dk-button-grid > .dk-button[aria-pressed='true']:disabled,
+        .dk-button-grid > .dk-button[aria-pressed='true'][aria-disabled='true']
+    ) {
+        box-shadow: inset 0 0 0 1px var(--dk-control);
+    }
+
+    /*
+     * In forced colors a toggle that is on takes the system's highlight, a cell that is off the
+     * system's gray with its dashed edge, and one that is both an edge in the highlight, as every
+     * button does, which the grid's own rules above would otherwise replace.
+     */
+    @media (forced-colors: active) {
+        :where(.dk-button-grid > .dk-button[aria-pressed='true']) {
+            border-color: Highlight;
+            background: Highlight;
+            color: HighlightText;
+        }
+
+        :where(
+            .dk-button-grid > .dk-button:disabled,
+            .dk-button-grid > .dk-button[aria-disabled='true']
+        ) {
+            border-color: GrayText;
+            background: Canvas;
+            color: GrayText;
+        }
+
+        :where(
+            .dk-button-grid > .dk-button[aria-pressed='true']:disabled,
+            .dk-button-grid > .dk-button[aria-pressed='true'][aria-disabled='true']
+        ) {
+            border-color: Highlight;
+        }
     }
 
     /*
