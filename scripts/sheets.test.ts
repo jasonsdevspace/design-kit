@@ -13,7 +13,13 @@ import { withoutComments } from './summary.mjs';
  * the one held here.
  */
 
-const BUDGET = 6 * 1024;
+/*
+ * Raised from 6 KB for the pieces an app is made of, which ship in the components sheet beside the
+ * rest rather than in a sheet of their own, so a page loads one sheet whatever it draws. The figure
+ * holds every piece the release that adds them plans, with room for the dialog, which is the
+ * largest of them.
+ */
+const BUDGET = 9 * 1024;
 const SHEETS = ['tokens.css', 'base.css', 'components.css'];
 
 describe('the sheets', () => {
