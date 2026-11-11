@@ -1119,7 +1119,8 @@ of view.
     <main id="main-content" tabindex="0" class="dk-app-body">...</main>
     <div class="dk-app-toast">
         <div class="dk-toast">
-            <p class="dk-toast-message" role="status"></p>
+            <p class="dk-toast-message" aria-hidden="true"></p>
+            <p class="dk-visually-hidden dk-toast-status" role="status"></p>
             <button
                 type="button"
                 class="dk-button dk-button-text dk-toast-action"
@@ -1276,7 +1277,8 @@ and its two buttons, empty and hidden, and draws nothing until a message is show
 
 ```html
 <div class="dk-toast">
-    <p class="dk-toast-message" role="status"></p>
+    <p class="dk-toast-message" aria-hidden="true"></p>
+    <p class="dk-visually-hidden dk-toast-status" role="status"></p>
     <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
     <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
         <span aria-hidden="true">×</span>
@@ -1292,21 +1294,30 @@ const show = attachToast(document.querySelector('.dk-toast'));
 show('Round 3 saved.', { label: 'Undo', onAction: () => undoLastRound() });
 ```
 
-`attachToast(element)` returns the function that shows a message, with one action or none. It sets
-the message as the text of the live region, so a screen reader hears it without focus moving, and
-the same words shown twice are heard twice. The function returns what dismisses that message, which
-does nothing once another has replaced it.
+`attachToast(element)` returns the function that shows a message, with one action or none. The
+message is drawn in the toast and said on its status line, which is out of sight and on the page
+from the start, so a screen reader hears it without focus moving. The line keeps the message until
+the toast leaves, and is the one copy a screen reader reads, since the words drawn are hidden from
+it. With an action, the line says its
+name too, as in "Round 3 saved. Undo is available.", so a visitor who cannot see the toast learns
+there is a way back, and the same words shown twice are heard twice. The function returns what
+dismisses that message, which does nothing once another has replaced it or it has gone.
 
-A toast leaves when its close button, its action or Escape dismisses it, or the next message
-replaces it. One with an action stays until then, since a timer would take the action away from
-anyone slower than it. One with no action also leaves after five seconds, a wait held while the
-pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes back to where
-it was when the message was shown. More than one action is a dialog's job.
+A toast leaves when its close button, its action, or Escape with focus in it dismisses it, or the
+next message replaces it. One with an action stays until then, since a timer would take the action
+away from anyone slower than it. One with no action also leaves after five seconds, a wait held
+while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes
+back to where it was when the message was shown. An action runs after the toast has left, so where
+it takes away what focus came from, it moves focus itself. A message with no action replaces one
+with an action and its way back, so a page shows one after another only when the first is done
+with. More than one action is a dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 above the dock, so it covers neither the dock nor the body's last line. On a page with no frame it
-sits at the bottom of the screen, over the page and clear of the home indicator, in the app's column.
-A page that ends in a tab bar and shows toasts is drawn in the frame, where the toast clears the bar.
+sits at the bottom of the screen, over the page and clear of the safe areas, in the app's column.
+While it is shown there, what the keyboard reaches stops short of a toast of one line, and the
+page's end scrolls clear of it. A page that ends in a tab bar and shows toasts is drawn in the
+frame, where the toast clears the bar.
 
 **`Toast` props**
 
@@ -1319,8 +1330,8 @@ A page that ends in a tab bar and shows toasts is drawn in the frame, where the 
 <summary>How the toast is drawn</summary>
 
 Shown, the toast is a raised card on `--dk-raised` with an edge in the line color, which forced
-colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium`, at once
-for a visitor who asks for less motion. A message of a few lines wraps beside the buttons, and at a
+colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium` each time
+it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside the buttons, and at a
 large text size the buttons wrap under it. The close button is at least the target wide. Outside a
 frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not print.
 

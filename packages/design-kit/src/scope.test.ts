@@ -42,11 +42,15 @@ const topLevel = (css: string): string[] => {
 const folder = new URL('./', import.meta.url);
 const sheets = readdirSync(folder).filter((name) => name.endsWith('.css'));
 
-/** Each rule's selector list, from a sheet with its comments, statements and at-rules left out. */
+/**
+ * Each rule's selector list, from a sheet with its comments, statements and at-rules left out, and
+ * an animation's frames, whose from and to name points in time rather than anything on the page.
+ */
 const selectorsOf = (css: string): string[] =>
     [
         ...withoutComments(css)
             .replace(/@[\w-]+[^{};]*;/g, '')
+            .replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
             .matchAll(/([^{}]+)\{/g),
     ]
         .map(([, selector = '']) => selector.replace(/\s+/g, ' ').trim())
@@ -121,6 +125,14 @@ describe('what the sheets style', () => {
                 .map((part) => `${name}: ${part}`)
         );
         expect(statements).toEqual([`tokens.css: ${ORDER}`]);
+    });
+
+    it("passes over an animation's frames, and reads the rules after them", () => {
+        expect(
+            selectorsOf(
+                '@keyframes rise { from { opacity: 0; } to { opacity: 1; } } .dk-a { b: c; }'
+            )
+        ).toEqual(['.dk-a']);
     });
 
     it('reads a brace or a semicolon inside a quoted string as text', () => {

@@ -1707,20 +1707,36 @@
      */
     :where(.dk-toast) {
         position: fixed;
-        right: 0;
+        right: calc(var(--dk-safe-right) + var(--dk-space-4));
         bottom: calc(var(--dk-safe-bottom) + var(--dk-space-4));
-        left: 0;
+        left: calc(var(--dk-safe-left) + var(--dk-space-4));
         z-index: var(--dk-stack-toast);
         box-sizing: border-box;
-        width: calc(100% - 2 * var(--dk-space-4));
         max-width: calc(var(--dk-app-column) - 2 * var(--dk-space-4));
         margin-inline: auto;
     }
 
     :where(.dk-app .dk-toast) {
         position: static;
-        width: auto;
         max-width: none;
+    }
+
+    /*
+     * On a page with no frame, while a toast is shown, what the keyboard reaches or a link leads
+     * to stops short of a toast of one line, and the page's end scrolls clear of it.
+     */
+    :where(:root:has(.dk-toast-shown):not(:has(.dk-app))) {
+        scroll-padding-bottom: calc(
+            var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
+                var(--dk-space-4)
+        );
+    }
+
+    :where(:root:has(.dk-toast-shown):not(:has(.dk-app)) > body) {
+        padding-bottom: calc(
+            var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
+                var(--dk-space-4)
+        );
     }
 
     /*
@@ -1738,13 +1754,11 @@
         border-radius: var(--dk-radius-large);
         background: var(--dk-raised);
         box-shadow: var(--dk-shadow-raised);
-        transition:
-            opacity var(--dk-duration-medium),
-            translate var(--dk-duration-medium);
+        animation: dk-toast-rise var(--dk-duration-medium);
     }
 
-    @starting-style {
-        :where(.dk-toast-shown) {
+    @keyframes dk-toast-rise {
+        from {
             opacity: 0;
             translate: 0 var(--dk-space-2);
         }
@@ -1779,9 +1793,8 @@
      * an edge in the line color, where the screen's transparent edge would vanish with the ground.
      * A code block and a scrolling table show whole rather than cut at the frame, their code and
      * figures wrapping, and what does nothing on paper does not print: the theme switch, the copy
-     * button, the skip link, a tab bar, a toast, and a strip's section of switches with the room it keeps for
-     * them.
-     * An app's frame prints as a page, as long as what it holds.
+     * button, the skip link, a tab bar, a toast, and a strip's section of switches with the room it
+     * keeps for them. An app's frame prints as a page, as long as what it holds.
      */
     @media print {
         :where(.dk-callout, .dk-code) {

@@ -122,7 +122,14 @@ interface Kit {
 }
 
 const toast = (page: Page): Locator => page.locator('.dk-toast');
-const message = (page: Page): Locator => page.getByRole('status');
+
+/** Waits for the toast's entrance to end, so it is measured, and audited, where it comes to rest. */
+const settle = (page: Page): Promise<unknown> =>
+    toast(page).evaluate((element) =>
+        Promise.all(element.getAnimations().map((animation) => animation.finished))
+    );
+const message = (page: Page): Locator => page.locator('.dk-toast-message');
+const said = (page: Page): Locator => page.getByRole('status');
 const undo = (page: Page): Locator => page.getByRole('button', { name: 'Undo' });
 const dismiss = (page: Page): Locator => page.getByRole('button', { name: 'Dismiss' });
 
@@ -154,18 +161,17 @@ test('draws a message and says it politely, without moving focus or adding an el
     await open(page);
     await page.locator('#save').focus();
     const before = await elements(page);
-    // The region is in the page from the start, polite, and the message is its text.
-    await expect(message(page)).toHaveCount(1);
-    await expect(message(page)).toHaveText('');
+    // The status line is in the page from the start, and says the message with its action.
+    await expect(said(page)).toHaveCount(1);
+    await expect(said(page)).toHaveText('');
     await page.keyboard.press('Enter');
     await expect(message(page)).toHaveText('Round 3 saved.');
+    await expect(said(page)).toHaveText('Round 3 saved. Undo is available.');
     await expect(toast(page)).toBeVisible();
     await expect(page.locator('#save')).toBeFocused();
     expect(await elements(page)).toBe(before);
-    // The action and the close button are named, and outside what the region says.
     await expect(undo(page)).toBeVisible();
     await expect(dismiss(page)).toBeVisible();
-    await expect(message(page)).not.toContainText('Undo');
 });
 
 test('reaches the action by the keyboard, and choosing it runs it and dismisses the toast', async ({
@@ -249,35 +255,76 @@ test('holds the wait while the toast is hovered or has focus, and starts it agai
 test('replaces one message with the next, and says the same words again', async ({ page }) => {
     await open(page, { clock: true });
     await page.evaluate(() => {
-        const said: string[] = [];
-        (window as unknown as { said: string[] }).said = said;
-        const region = document.querySelector('[role="status"]');
-        if (!region) return;
+        const heard: string[] = [];
+        (window as unknown as { heard: string[] }).heard = heard;
+        const line = document.querySelector('[role="status"]');
+        if (!line) return;
         new MutationObserver(() => {
-            said.push(region.textContent);
-        }).observe(region, { childList: true, characterData: true, subtree: true });
+            if (line.textContent) heard.push(line.textContent);
+        }).observe(line, { childList: true, characterData: true, subtree: true });
     });
-    await show(page, 'Round 3 saved.', 'Undo');
-    await show(page, 'Round 4 saved.', 'Undo');
-    await expect(message(page)).toHaveText('Round 4 saved.');
-    await show(page, 'Round 4 saved.', 'Undo');
-    await page.clock.runFor(200);
-    await expect(message(page)).toHaveText('Round 4 saved.');
-    expect(await page.evaluate(() => (window as unknown as { said: string[] }).said)).toEqual([
-        'Round 3 saved.',
-        'Round 4 saved.',
-        '',
-        'Round 4 saved.',
+    for (const [words, action] of [
+        ['Round 3 saved.', 'Undo'],
+        ['Round 4 saved.', 'Undo'],
+        ['Round 4 saved.', 'Undo'],
+        ['Players saved.', undefined],
+    ] as const) {
+        await show(page, words, action);
+        await expect(message(page)).toHaveText(words);
+        await page.clock.runFor(200);
+    }
+    expect(await page.evaluate(() => (window as unknown as { heard: string[] }).heard)).toEqual([
+        'Round 3 saved. Undo is available.',
+        'Round 4 saved. Undo is available.',
+        'Round 4 saved. Undo is available.',
+        'Players saved.',
     ]);
-    // What dismisses a message replaced by another does nothing, and the page's own attach
-    // function, called twice, shows in the one toast.
+});
+
+test('dismisses only its own message, by what showing it returned', async ({ page }) => {
+    await open(page);
     await page.evaluate(() => {
         const kit = (window as unknown as { kit: Kit }).kit;
-        const first = kit.again('Round 5 saved.');
+        // A message replaced, and a message dismissed before the next, each leave the next alone.
+        const replaced = kit.again('Round 5 saved.');
         kit.show('Round 6 saved.');
-        first();
+        replaced();
+        const gone = kit.show('Round 7 saved.');
+        gone();
+        kit.show('Round 8 saved.');
+        gone();
     });
-    await expect(message(page)).toHaveText('Round 6 saved.');
+    await expect(message(page)).toHaveText('Round 8 saved.');
+});
+
+test('holds a toast that appears under a pointer resting where the last one was', async ({
+    page,
+}) => {
+    await open(page, { clock: true });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).hover();
+    await page.evaluate(() => {
+        const kit = (window as unknown as { kit: Kit }).kit;
+        document.querySelector<HTMLButtonElement>('.dk-toast-action')?.click();
+        kit.show('Round 3 restored.');
+    });
+    await page.clock.runFor(20_000);
+    await expect(message(page)).toHaveText('Round 3 restored.');
+});
+
+test('rises into place each time it is shown', async ({ page }) => {
+    await open(page);
+    for (const words of ['Round 3 saved.', 'Round 4 saved.']) {
+        await show(page, words, 'Undo');
+        expect(
+            await toast(page).evaluate((element) =>
+                element
+                    .getAnimations()
+                    .map((animation) => (animation as CSSAnimation).animationName)
+            )
+        ).toEqual(['dk-toast-rise']);
+        await page.locator('.dk-toast-close').click();
+    }
 });
 
 test('moves focus off an action the next message does not have', async ({ page, browserName }) => {
@@ -300,6 +347,7 @@ test('wraps a message of three lines inside the toast, with its action still in 
         'Round 3 saved. Ana leads with 142, Ben is at 128, and the game ends at 200 points, so two more rounds may settle it.',
         'Undo'
     );
+    await settle(page);
     const card = await box(toast(page), 'the toast');
     const words = await box(message(page), 'the message');
     expect(words.height).toBeGreaterThan(60);
@@ -314,9 +362,13 @@ test('wraps a message of three lines inside the toast, with its action still in 
     expect(await sideways(page)).toBe(0);
 });
 
-test("sits in an app's frame above the dock, clear of the body's last line", async ({ page }) => {
+test("sits in an app's frame above the dock, its action one step back from the dock's button", async ({
+    page,
+    browserName,
+}) => {
     await open(page, { body: FRAME });
     await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
     await page.locator('.dk-app-body').evaluate((element) => {
         element.scrollTop = element.scrollHeight;
     });
@@ -325,6 +377,12 @@ test("sits in an app's frame above the dock, clear of the body's last line", asy
         (await box(page.locator('.dk-app-dock'), 'the dock')).y
     );
     expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(card.y);
+    // A keyboard on the dock's button reaches the toast's action, and its way back, one step back.
+    await page.locator('#save').focus();
+    await page.keyboard.press(`Shift+${tabKey(browserName)}`);
+    await expect(dismiss(page)).toBeFocused();
+    await page.keyboard.press(`Shift+${tabKey(browserName)}`);
+    await expect(undo(page)).toBeFocused();
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
@@ -332,16 +390,61 @@ test('sits at the foot of a page clear of the home indicator, in the app column'
 }) => {
     await open(page, { css: ':root { --dk-safe-bottom: 34px; }' });
     await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
     const card = await box(toast(page), 'the toast');
     expect(bottom(card)).toBe(700 - 34 - 16);
     expect(card.x).toBe(16);
     expect(card.width).toBe(390 - 32);
 
+    // A phone on its side, clear of the notch at either side.
+    await open(page, {
+        width: 844,
+        height: 390,
+        css: ':root { --dk-safe-left: 47px; --dk-safe-right: 47px; }',
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    const side = await box(toast(page), 'the toast');
+    expect(side.x).toBeGreaterThanOrEqual(47 + 16);
+    expect(side.x + side.width).toBeLessThanOrEqual(844 - 47 - 16);
+
     await open(page, { width: 1280, height: 700 });
     await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
     const wide = await box(toast(page), 'the toast');
     expect(wide.width).toBe(448 - 32);
     expect(wide.x).toBe((1280 - wide.width) / 2);
+});
+
+test('keeps what the keyboard reaches, and the end of the page, clear of the toast on a page', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        body: PAGE.replace(
+            '<p id="last">',
+            '<p><a href="#earlier" id="above">Earlier rounds</a></p>' +
+                '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
+        ),
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    const card = await box(toast(page), 'the toast');
+    // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
+    await page.locator('#foot').evaluate((element) => {
+        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+    });
+    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeGreaterThan(card.y);
+    await page.locator('#above').evaluate((element) => {
+        element.focus({ preventScroll: true });
+    });
+    await page.keyboard.press(tabKey(browserName));
+    await expect(page.locator('#foot')).toBeFocused();
+    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(card.y);
+    await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(card.y);
 });
 
 for (const theme of ['light', 'dark'] as const) {
@@ -349,6 +452,7 @@ for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
         await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }
