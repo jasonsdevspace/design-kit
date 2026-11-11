@@ -238,9 +238,21 @@
         line-height: var(--dk-leading-tight);
         text-decoration: none;
         cursor: pointer;
+        /*
+         * A page with a look of its own for a button, such as a hard edge under it that reads as
+         * something to press, sets a shadow and how far a press moves the button, and writes no
+         * rule over this class. Neither is set here, so a button has no shadow and stays put.
+         */
+        box-shadow: var(--dk-button-shadow, none);
         transition:
             border-color var(--dk-duration-short),
             background-color var(--dk-duration-short);
+    }
+
+    /* Held down, a button moves by the press a page sets, onto where its shadow was. */
+    :where(.dk-button:active) {
+        box-shadow: none;
+        translate: 0 var(--dk-button-press, 0);
     }
 
     /*
@@ -296,6 +308,9 @@
         min-width: 0;
         padding-inline: 0;
         border: 0;
+        /* A link has no edge to lift, so it takes no shadow and does not move when pressed. */
+        box-shadow: none;
+        translate: none;
         color: var(--dk-accent);
         font-size: inherit;
         line-height: inherit;
@@ -346,7 +361,9 @@
     :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
         border-color: var(--dk-line);
         background: transparent;
+        /* Off, a button offers nothing to press, so it has no shadow and does not move. */
         box-shadow: none;
+        translate: none;
         color: var(--dk-muted);
         font-weight: var(--dk-weight-normal);
         text-decoration: none;
@@ -383,6 +400,17 @@
         :where(.dk-button-text) {
             min-width: 0;
         }
+    }
+
+    /*
+     * A tall button, at the larger target at every width, for the one thing a screen is for where
+     * it is pressed at arm's length. It sets a height and nothing else, so it goes with the large
+     * button's padding and text or without. It comes after the rule for a narrow screen, which
+     * would otherwise win by its order and bring a tall button back down to the target.
+     */
+    :where(.dk-button-tall) {
+        min-height: var(--dk-target-large);
+        min-width: var(--dk-target-large);
     }
 
     /*

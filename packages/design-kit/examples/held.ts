@@ -78,6 +78,7 @@ export const HELD = {
                 'the button hands a ref to the button it draws, for a page that moves focus to it',
                 'the button takes neither a style nor accent and pressed together',
                 'the button draws a large button and a text button by a class each',
+                'the button draws a tall button by its class, with the large button or without',
             ],
         },
         {
@@ -93,6 +94,8 @@ export const HELD = {
                 'draws the focus ring after the keyboard, on the accent and in every callout',
                 'draws a large button at the target at every width, with wider inline padding and the body text',
                 "draws a text button as a link, at the button's height, with its states",
+                'draws a tall button at the larger target at every width, alone and with the large button',
+                'draws a shadow under a button and moves it when pressed, where a page sets the two, and neither where it does not',
                 "leaves a toggle's edge as it was after a tap on a touch screen, where no pointer rests",
                 ...EVERY_CONTROL,
             ],

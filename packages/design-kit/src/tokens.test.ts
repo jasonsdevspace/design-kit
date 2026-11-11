@@ -36,9 +36,17 @@ describe('the tokens', () => {
     it('declares the scale a component is built from', () => {
         const scale = [
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((step) => `space-${String(step)}`),
-            ...['caption', 'small', 'body', 'lead', 'title', 'heading', 'display', 'code'].map(
-                (step) => `text-${step}`
-            ),
+            ...[
+                'caption',
+                'small',
+                'body',
+                'lead',
+                'title',
+                'heading',
+                'display',
+                'numeral',
+                'code',
+            ].map((step) => `text-${step}`),
             'leading-tight',
             'leading-body',
             'weight-normal',
@@ -54,16 +62,38 @@ describe('the tokens', () => {
             'field-height',
             'field-inline',
             'target',
+            'target-large',
             'strip',
             'measure',
             'column',
             'shadow-raised',
             'scrim',
             'duration-short',
+            'duration-medium',
+            ...['top', 'right', 'bottom', 'left'].map((edge) => `safe-${edge}`),
             'font-sans',
             'font-mono',
         ];
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
+    });
+
+    it("reads each safe area from the browser's own inset, and is zero where it reports none", () => {
+        for (const edge of ['top', 'right', 'bottom', 'left'])
+            expect(declared.get(`--dk-safe-${edge}`), edge).toBe(
+                `env(safe-area-inset-${edge}, 0px)`
+            );
+    });
+
+    it('sets the larger target above the target, and the numeral above every step of text', () => {
+        const rem = (name: string) => Number.parseFloat(declared.get(`--dk-${name}`) ?? '');
+        expect(declared.get('--dk-target-large')).toMatch(/rem$/);
+        expect(rem('target-large')).toBeGreaterThan(rem('target'));
+        expect(rem('text-numeral')).toBeGreaterThan(rem('text-display'));
+    });
+
+    it('takes longer over a surface that travels than over a small change of state', () => {
+        const ms = (name: string) => Number.parseFloat(declared.get(`--dk-${name}`) ?? '');
+        expect(ms('duration-medium')).toBeGreaterThan(ms('duration-short'));
     });
 
     it('pads a field inline by the step a button is padded by, so their text starts level', () => {

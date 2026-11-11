@@ -21,36 +21,40 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                           | Value or role                                                |
-| ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                         | the page, a card, and what floats over both                  |
-| `--dk-fg`, `--dk-muted`                                          | text, and text that steps back                               |
-| `--dk-line`, `--dk-control`                                      | a rule, and a control's edge                                 |
-| `--dk-accent`, `--dk-on-accent`                                  | links, the lead action, and text on it                       |
-| `--dk-focus`                                                     | unset, the focus ring and hover edge when a page sets it     |
-| `--dk-highlight`                                                 | what is chosen or pointed at                                 |
-| `--dk-success`, `--dk-success-bg`                                | what went right, and its ground                              |
-| `--dk-danger`, `--dk-danger-bg`                                  | what went wrong, and its ground                              |
-| `--dk-warning`, `--dk-warning-bg`                                | what needs care before it goes wrong, and its ground         |
-| `--dk-scrim`                                                     | what dims the page behind a dialog                           |
-| `--dk-space-1` to `--dk-space-8`                                 | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                       |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`         | 0.85, 0.9 and 1rem                                           |
-| `--dk-text-lead`, `--dk-text-title`                              | 1.1 and 1.25rem                                              |
-| `--dk-text-heading`, `--dk-text-display`                         | 1.5 and 1.75rem                                              |
-| `--dk-text-code`                                                 | 0.9em, a step under the text around it                       |
-| `--dk-leading-tight`, `--dk-leading-body`                        | 1.2 and 1.5                                                  |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong` | 400, 500 and 600                                             |
-| `--dk-tracking-caps`                                             | 0.06em, the tracking of a label in caps                      |
-| `--dk-font-sans`, `--dk-font-mono`                               | the system's sans and mono stacks                            |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`          | 0.25, 0.375 and 0.5rem                                       |
-| `--dk-radius-pill`                                               | 999px, round ends on a tab or a tag                          |
-| `--dk-ring-width`, `--dk-ring-offset`                            | 2px and 2px                                                  |
-| `--dk-field-height`, `--dk-field-inline`                         | a field's height, 2.25rem, and its inline padding, 0.75rem   |
-| `--dk-target`                                                    | 2.75rem, the touch target on a phone                         |
-| `--dk-strip`, `--dk-strip-tools`                                 | 2.5rem, and `auto`, the room kept for switches               |
-| `--dk-measure`, `--dk-column`                                    | 34rem and 72rem                                              |
-| `--dk-shadow-raised`                                             | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))` |
-| `--dk-duration-short`                                            | 150ms                                                        |
+| Tokens                                                                   | Value or role                                                |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                                 | the page, a card, and what floats over both                  |
+| `--dk-fg`, `--dk-muted`                                                  | text, and text that steps back                               |
+| `--dk-line`, `--dk-control`                                              | a rule, and a control's edge                                 |
+| `--dk-accent`, `--dk-on-accent`                                          | links, the lead action, and text on it                       |
+| `--dk-focus`                                                             | unset, the focus ring and hover edge when a page sets it     |
+| `--dk-highlight`                                                         | what is chosen or pointed at                                 |
+| `--dk-success`, `--dk-success-bg`                                        | what went right, and its ground                              |
+| `--dk-danger`, `--dk-danger-bg`                                          | what went wrong, and its ground                              |
+| `--dk-warning`, `--dk-warning-bg`                                        | what needs care before it goes wrong, and its ground         |
+| `--dk-scrim`                                                             | what dims the page behind a dialog                           |
+| `--dk-space-1` to `--dk-space-8`                                         | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                       |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`                 | 0.85, 0.9 and 1rem                                           |
+| `--dk-text-lead`, `--dk-text-title`                                      | 1.1 and 1.25rem                                              |
+| `--dk-text-heading`, `--dk-text-display`                                 | 1.5 and 1.75rem                                              |
+| `--dk-text-numeral`                                                      | 3.5rem, a figure read from across a room                     |
+| `--dk-text-code`                                                         | 0.9em, a step under the text around it                       |
+| `--dk-leading-tight`, `--dk-leading-body`                                | 1.2 and 1.5                                                  |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong`         | 400, 500 and 600                                             |
+| `--dk-tracking-caps`                                                     | 0.06em, the tracking of a label in caps                      |
+| `--dk-font-sans`, `--dk-font-mono`                                       | the system's sans and mono stacks                            |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`                  | 0.25, 0.375 and 0.5rem                                       |
+| `--dk-radius-pill`                                                       | 999px, round ends on a tab or a tag                          |
+| `--dk-ring-width`, `--dk-ring-offset`                                    | 2px and 2px                                                  |
+| `--dk-field-height`, `--dk-field-inline`                                 | a field's height, 2.25rem, and its inline padding, 0.75rem   |
+| `--dk-target`                                                            | 2.75rem, the touch target on a phone                         |
+| `--dk-target-large`                                                      | 3.5rem, a target pressed at arm's length                     |
+| `--dk-strip`, `--dk-strip-tools`                                         | 2.5rem, and `auto`, the room kept for switches               |
+| `--dk-measure`, `--dk-column`                                            | 34rem and 72rem                                              |
+| `--dk-shadow-raised`                                                     | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))` |
+| `--dk-duration-short`, `--dk-duration-medium`                            | 150ms and 250ms, a change of state and a surface arriving    |
+| `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left` | what a phone keeps at each edge, zero where there is none    |
+| `--dk-button-shadow`, `--dk-button-press`                                | unset, a shadow under a button and how far a press moves it  |
 
 </details>
 
@@ -263,6 +267,9 @@ explains.
 <button type="button" class="dk-button">Filters</button>
 <button type="button" class="dk-button dk-button-accent">Save rule</button>
 <button type="button" class="dk-button dk-button-large">Try it with your own products</button>
+<button type="button" class="dk-button dk-button-accent dk-button-large dk-button-tall">
+    Save the round
+</button>
 <button type="button" class="dk-button dk-button-text">Show the markup</button>
 <button type="button" class="dk-button" aria-pressed="true">Members only</button>
 <button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
@@ -275,9 +282,11 @@ A button is `type="button"` unless the page gives it another type, so it never s
 surprise, and a link with `dk-button` looks the same as a button. `dk-button-accent` fills the one
 action a view leads with in the accent, and an accent button is never a toggle. `dk-button-large` is
 a bigger target for the action a page leads with, such as the way into a demo, with or without the
-accent. `dk-button-text` draws a button as a link, for an action that sits beside a block or on a
+accent. `dk-button-tall` takes the larger target, `--dk-target-large`, for the one thing a screen
+is for where it is pressed at arm's length, as on a phone passed around a table. It sets the height
+alone, so it goes with `dk-button-large` or without. `dk-button-text` draws a button as a link, for an action that sits beside a block or on a
 line of its own, such as showing the markup under a demo. It is never the accent button, never a
-toggle and never large.
+toggle, never large and never tall.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
@@ -303,7 +312,8 @@ a press shows the errors rather than doing nothing.
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
 takes the ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every
-width, with wider inline padding and the body text size. A text button has no edge, no inline
+width, with wider inline padding and the body text size. A tall button is 3.5rem tall at every
+width, and changes nothing else. A text button has no edge, no inline
 padding and no minimum width, in the accent and underlined at the size of the text around it, and
 keeps the button's height, so its target holds, which is why it sits beside a block rather than in
 running text, whose line it would push taller. Pointed at, its underline thickens, since it has no
@@ -315,6 +325,13 @@ line color, rather than a fade, so its words keep a ratio the palette measures. 
 is on keeps the thicker edge, in the line color. In forced colors a pressed button takes the
 system's `Highlight`, and an off one takes `GrayText` on the page's ground, accent or not. An off
 toggle that is on keeps an edge in `Highlight`.
+
+A page with a look of its own for a button sets two custom properties and writes no rule over the
+kit's class. `--dk-button-shadow` is a shadow drawn under a button at rest, such as a hard edge
+that reads as something to press, and `--dk-button-press` is how far down a button moves while it
+is held. Held down, the shadow is dropped, so the button lands where its shadow was. Neither is set
+by the kit, so a button has no shadow and stays put. A pressed toggle keeps its own inner edge in
+place of the shadow, and an off button and a text button take neither.
 
 </details>
 
