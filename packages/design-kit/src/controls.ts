@@ -245,15 +245,20 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
 /** How long a copy button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
-/** Each status line's timer, so one message never empties the next and a second is heard too. */
+/**
+ * Each status line's timer, so one message never empties the next and a second is heard too. A
+ * message is put in a moment after the line is emptied, so the same words twice are heard twice,
+ * and leaves after a while unless it is kept, as a toast keeps its own until the toast leaves.
+ */
 const statusTimers = new WeakMap<HTMLElement, number>();
-const say = (status: HTMLElement, message: string) => {
+const say = (status: HTMLElement, message: string, keep = false) => {
     window.clearTimeout(statusTimers.get(status));
     status.textContent = '';
     statusTimers.set(
         status,
         window.setTimeout(() => {
             status.textContent = message;
+            if (keep) return;
             statusTimers.set(
                 status,
                 window.setTimeout(() => {
@@ -346,4 +351,120 @@ export const attachCopyButton = (
     };
     attachedButtons.set(button, detach);
     return detach;
+};
+
+/** How long a toast with no action stays while nothing holds it, in milliseconds. */
+const TOAST_FOR = 5000;
+
+/** What a toast offers beside its message: the action's words, and what choosing it does. */
+export type ToastAction = { readonly label: string; readonly onAction: () => void };
+
+/** Shows a message in a toast, with one action or none, and returns what dismisses that message. */
+export type ShowToast = (message: string, action?: ToastAction) => () => void;
+
+const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
+
+/**
+ * Makes a toast work, and returns the function that shows a message in it. The message is drawn in
+ * the toast and said on its status line, which is on the page from the start, so a screen reader
+ * hears it without focus moving, with the action's name when it has one, so a visitor who cannot
+ * see it learns there is a way back. The line keeps it until the toast leaves, and is what a screen
+ * reader reads in the toast, since the words drawn are hidden from it. The same words shown twice
+ * are heard twice.
+ *
+ * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
+ * next message replaces it. One with an action stays until then, since a timer would take the
+ * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
+ * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
+ * goes back to where it was when the message was shown. Attaching a toast again returns the same
+ * function. Its listeners are on the toast's own elements, so a toast taken from the page takes
+ * them with it.
+ */
+export const attachToast = (element: HTMLElement): ShowToast => {
+    const already = attachedToasts.get(element);
+    if (already) return already;
+    const part = <T extends HTMLElement>(name: string) => {
+        const found = element.querySelector<T>(`.dk-toast-${name}`);
+        if (!found) throw new Error(`a toast needs its ${name}`);
+        return found;
+    };
+    const message = part('message');
+    const status = part('status');
+    const actionButton = part<HTMLButtonElement>('action');
+    const close = part<HTMLButtonElement>('close');
+    let timer = 0;
+    // Each message's number, which only grows, so what dismisses one never dismisses a later one.
+    let count = 0;
+    let shown = 0;
+    let hovered = false;
+    let focused = false;
+    let onAction: (() => void) | undefined;
+    let returnTo: HTMLElement | undefined;
+    const wait = () => {
+        window.clearTimeout(timer);
+        if (shown && !onAction && !hovered && !focused) {
+            timer = window.setTimeout(dismiss, TOAST_FOR);
+        }
+    };
+    const dismiss = () => {
+        window.clearTimeout(timer);
+        const hadFocus = element.contains(document.activeElement);
+        shown = 0;
+        focused = false;
+        onAction = undefined;
+        message.textContent = '';
+        actionButton.textContent = '';
+        actionButton.hidden = true;
+        close.hidden = true;
+        element.classList.remove('dk-toast-shown');
+        window.clearTimeout(statusTimers.get(status));
+        status.textContent = '';
+        if (hadFocus && returnTo?.isConnected) returnTo.focus();
+    };
+    const show: ShowToast = (words, action) => {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && !element.contains(active)) returnTo = active;
+        const id = (shown = count += 1);
+        message.textContent = words;
+        say(status, action ? `${words} ${action.label} is available.` : words, true);
+        // Focus on an action that this message does not have moves to the close button.
+        if (!action && document.activeElement === actionButton) close.focus();
+        onAction = action?.onAction;
+        actionButton.textContent = action?.label ?? '';
+        actionButton.hidden = !action;
+        close.hidden = false;
+        element.classList.add('dk-toast-shown');
+        wait();
+        return () => {
+            if (shown === id) dismiss();
+        };
+    };
+    actionButton.addEventListener('click', () => {
+        const chosen = onAction;
+        dismiss();
+        chosen?.();
+    });
+    close.addEventListener('click', dismiss);
+    element.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && shown) dismiss();
+    });
+    // A pointer that rests where a toast was keeps holding the next one, until it moves away.
+    element.addEventListener('pointerenter', () => {
+        hovered = true;
+        wait();
+    });
+    element.addEventListener('pointerleave', () => {
+        hovered = false;
+        wait();
+    });
+    element.addEventListener('focusin', () => {
+        focused = true;
+        wait();
+    });
+    element.addEventListener('focusout', (event) => {
+        focused = event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
+        wait();
+    });
+    attachedToasts.set(element, show);
+    return show;
 };

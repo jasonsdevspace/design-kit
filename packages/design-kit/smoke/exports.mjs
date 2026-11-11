@@ -20,9 +20,15 @@ export const VALUE_EXPORTS = {
         'SkipLink',
         'TextareaField',
         'ThemeSwitch',
+        'Toast',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
-    '@jasonsdevspace/design-kit/controls': ['attachCopyButton', 'attachThemeSwitch', 'chooseTheme'],
+    '@jasonsdevspace/design-kit/controls': [
+        'attachCopyButton',
+        'attachThemeSwitch',
+        'attachToast',
+        'chooseTheme',
+    ],
     '@jasonsdevspace/design-kit/vite': [
         'browserFloor',
         'lightningcssFloor',

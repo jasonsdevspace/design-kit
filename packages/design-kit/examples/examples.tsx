@@ -14,6 +14,7 @@ import {
     SkipLink,
     TextareaField,
     ThemeSwitch,
+    Toast,
 } from '../src/react.js';
 import * as pieces from './pieces.js';
 
@@ -426,7 +427,9 @@ export const appFrame: ReactElement = (
         <main id="main-content" tabIndex={0} className="dk-app-body">
             ...
         </main>
-        <div className="dk-app-toast">...</div>
+        <div className="dk-app-toast">
+            <Toast />
+        </div>
         <section className="dk-app-dock" aria-label="Actions">
             <button type="button" className="dk-button dk-button-accent dk-button-tall">
                 Save the round
@@ -470,6 +473,9 @@ export const tabBar: ReactElement = (
     </nav>
 );
 
+/** A toast, as the component draws it before a page attaches it. */
+export const toast: ReactElement = <Toast />;
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -503,6 +509,7 @@ export const EXAMPLES = {
     code,
     appFrame,
     tabBar,
+    toast,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;

@@ -28,6 +28,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'code',
     'appFrame',
     'tabBar',
+    'toast',
 ]);
 
 /** An example's markup as a page writes it, laid out as the repository's formatter lays out. */
