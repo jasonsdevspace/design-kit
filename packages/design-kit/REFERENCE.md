@@ -386,7 +386,8 @@ or an open list never covers it, and the hint stays while the error shows, since
 to put the error right. The error starts with a visually hidden "Error: ", so it is told from the
 hint by more than its color. `aria-describedby` lists only what is drawn, the hint and then the
 error, followed by any description of the page's own, and is left off when there is none.
-`aria-invalid="true"` is there only while an error is drawn.
+`aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
+class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
 The error is not live, since a form that fails in several fields at once would speak over itself.
 The page says when errors appear, and on a submit that fails it moves focus to the first invalid
@@ -559,9 +560,11 @@ A pill is a chip that names something, or a link among others in a row, both `.d
 control, and it is no target. A link has no edge and steps back in the muted text as the strip's
 links do, and the one that is the current page carries `aria-current` and stands on the highlight at
 the heading's weight, which forced colors keep. A link pill is the field height, and a thumb's on a
-phone. The list keeps room for the focus ring on every side, and keeps `role="list"`, since WebKit
-with VoiceOver drops a list's meaning when its markers are gone. A row that switches what one part
-of a page shows, or pages or toggles underlined where chosen, is tabs, below.
+phone. The list keeps room for the focus ring at its sides, its text still on the column's line, and
+no margin above or below, so a container's step stands it from what is around it. It keeps
+`role="list"`, since WebKit with VoiceOver drops a list's meaning when its markers are gone. A row
+that switches what one part of a page shows, or pages or toggles underlined where chosen, is tabs,
+below.
 
 ### Tabs
 
@@ -632,9 +635,9 @@ arrow keys.
 
 An eyebrow is a small label in caps over a heading or a group, such as a hero's theme or a list's
 name, in the muted text at the caption size and the heading's weight, tracked by
-`--dk-tracking-caps` so the caps read at that size. It is text, not a heading, so it adds nothing
-to the page's outline, and it has no margin of its own, so the page sets its distance from what it
-sits over.
+`--dk-tracking-caps` so the caps read at that size. It is text, not a heading, so it adds nothing to
+the page's outline, and it has no margin of its own, so in the explainer, a panel, an app's body or
+a dialog it stands one of the container's steps from what is around it.
 
 ### React components
 
@@ -1194,11 +1197,13 @@ of view.
 
 The bar's title is the page's only `h1`, so each screen has one and a screen reader finds it by its
 heading. The bar has room for a mark before the title and one action after it. The body is the
-page's `main`, and the one part that scrolls, so the bar and the dock stay in view. It has
-`tabindex="0"` on every screen, so the keyboard reaches it and the arrow keys scroll it whatever it
-holds, as a frame that scrolls always does in the kit. The dock is a `section` named for what it
-holds, so a screen reader moving by landmark finds the screen's main button after the body. It holds
-that button at the larger target, and a second one below it where a screen has two.
+page's `main`, and the one part that scrolls, so the bar and the dock stay in view. It stands what
+it holds `--dk-space-4` apart, as an explainer does, and its padding puts the first of it that far
+under the bar. It has `tabindex="0"` on every screen, so the keyboard reaches it and the arrow keys
+scroll it whatever it holds, as a frame that scrolls always does in the kit. The dock is a `section`
+named for what it holds, so a screen reader moving by landmark finds the screen's main button after
+the body. It holds that button at the larger target, and a second one below it where a screen has
+two.
 
 `dk-app-toast` is a toast's place, above the dock, and `dk-app-tabs` is a tab bar's, at the bottom
 edge. A screen leaves out any part it does not have, the dock included, and its row closes to
@@ -1739,9 +1744,10 @@ asks in a dialog only where nothing could undo the answer.
 A dialog sits in the middle of the screen, at most 32rem wide, on the raised ground with the raised
 shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls inside itself when
 it holds more than the screen does, and while one is open as a modal the page behind it does not
-scroll, in a browser with `:has()`. Its title is at the title size, and its actions sit at its end,
-wrapping under one another where the room runs out. Its margins and its padding stop growing with
-the text past their usual size, so on a phone at a large text size what it holds, such as a stepper,
+scroll, in a browser with `:has()`. It stands what it holds `--dk-space-3` apart, and its actions
+further. Its title is at the title size, and its actions sit at its end, wrapping under one another
+where the room runs out. Its margins from the screen's edges and its padding stop growing with the
+text past their usual size, so on a phone at a large text size what it holds, such as a stepper,
 keeps its room. They stop there too where a page sets the space tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
