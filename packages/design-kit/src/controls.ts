@@ -14,6 +14,25 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 const isChoice = (value: string | null): value is ThemeChoice =>
     THEME_CHOICES.some((choice) => choice === value);
 
+/** What has focus, or null where nothing does and the page's body stands in for it. */
+const focusedNow = (): Element | null => {
+    const active = document.activeElement;
+    return active === document.body ? null : active;
+};
+
+/**
+ * Focuses the first of the elements given that takes focus, one that is hidden, off or gone from
+ * the page being passed over, so focus never falls to nowhere while a place for it is named.
+ */
+const focusFirst = (...places: readonly (Element | null | undefined)[]) => {
+    for (const place of places) {
+        if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
+            continue;
+        place.focus({ preventScroll: place.matches('.dk-app-body') });
+        if (document.activeElement === place) return;
+    }
+};
+
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */
 let media: MediaQueryList | null | undefined;
 const scheme = () => {
@@ -67,8 +86,15 @@ const draw = (choice: ThemeChoice) => {
     );
 };
 
-/** Saves a choice where the browser allows it, shows it on every switch, and draws it. */
+/**
+ * Saves a choice where the browser allows it, shows it on every switch, and draws it. It listens as
+ * a switch does, so on a page with no switch a choice saved in another tab is followed and one the
+ * browser will not save is held. A value that is not a choice, as plain JavaScript can pass, is
+ * ignored.
+ */
 export const chooseTheme = (choice: ThemeChoice): void => {
+    if (!isChoice(choice)) return;
+    listen();
     chosen = choice;
     try {
         localStorage.setItem(THEME_KEY, choice);
@@ -106,19 +132,21 @@ const listen = () => {
     };
     window.addEventListener('storage', (event) => {
         if (event.key !== null && event.key !== THEME_KEY) return;
-        if (switches.size > 0) catchUp();
+        // The theme script draws what the other tab saved, so a choice held here is drawn again.
+        if (heldHere) draw(current());
+        else if (switches.size > 0) catchUp();
         else forget();
     });
     window.addEventListener('pageshow', (event) => {
         if (!event.persisted) return;
-        if (switches.size === 0) forget();
-        else if (heldHere) draw(current());
+        if (heldHere) draw(current());
+        else if (switches.size === 0) forget();
         else catchUp();
     });
     const system = scheme();
     if (typeof system?.addEventListener === 'function') {
         system.addEventListener('change', () => {
-            if (switches.size > 0) draw(current());
+            if (switches.size > 0 || heldHere) draw(current());
         });
     }
 };
@@ -140,8 +168,9 @@ const attachedButtons = new WeakMap<HTMLElement, () => void>();
  * narrower than 20rem, the button names the choice shown and opens the choices under itself, with
  * focus on the chosen one so the arrow keys move the choice without closing them. They close, with
  * focus back on the button, when a choice is picked by a pointer or on Escape, and close where they
- * are when focus leaves the switch, as it does on a press anywhere else. The button is wired on
- * every switch, since the sheet alone decides where it shows.
+ * are when focus leaves the switch or on a tap anywhere else, though not on a swipe, so a touch can
+ * scroll to choices below the screen's edge. The button is wired on every switch, since the sheet
+ * alone decides where it shows. A switch with no choices yet is left hidden and unattached.
  */
 export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const group = element.matches('.dk-theme-switch')
@@ -150,6 +179,9 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const already = attachedSwitches.get(group);
     if (already) return already;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    // A switch with no choices yet is left hidden and unattached, so a page that attaches it before
+    // its choices are drawn shows no empty control and can attach it again once they are.
+    if (radios.length === 0) return () => undefined;
     const button = group.querySelector<HTMLButtonElement>('.dk-theme-switch-button');
     const choices = group.querySelector<HTMLElement>('.dk-theme-switch-choices');
     const show = () => {
@@ -169,30 +201,47 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
      * A press on the button or on the choices moves no focus, since its default is canceled as it
      * begins, so a browser that gives a pressed button no focus blurs nothing and a press on the
      * list's own padding leaves focus on the chosen radio, and the click that follows still runs.
-     * So focus leaving the switch is the one path that closes the choices where they are, with a
-     * press anywhere else, which the page is listened to for only while they are open. A press
-     * that started on a choice picks by pointer, and a key pressed after it leaves no such press
-     * set, so a later pick by key is a pick by key.
+     * So the choices close where they are only when focus leaves the switch or on a tap anywhere
+     * else, which the page is listened to for only while they are open. A press that started on a
+     * choice picks by pointer, and a key pressed after it leaves no such press set, so a later pick
+     * by key is a pick by key.
      */
     let pointed = false;
+    // A press that began on the switch, which a pointer lifted outside it does not close.
+    let pressedHere = false;
+    /** Closes the choices where they are, and keeps focus on the switch if it was in them. */
+    const closeHere = () => {
+        const held = group.contains(document.activeElement);
+        close(false);
+        if (held) button?.focus({ preventScroll: true });
+    };
     const onPointerDown = (event: Event) => {
         const target = event.target as Node;
+        pressedHere = true;
         pointed = choices?.contains(target) ?? false;
         if (pointed || (button?.contains(target) ?? false)) event.preventDefault();
-        else close(false);
+        else closeHere();
     };
-    const onDocumentPointerDown = (event: Event) => {
-        if (!group.contains(event.target as Node)) close(false);
+    // A tap outside closes the choices, heard as its pointer is lifted, before any of the page's
+    // own handlers can stop it, and on a control that is off. A swipe, which the browser takes for
+    // a scroll and cancels rather than lifts, leaves them open, so a touch can scroll down to
+    // choices below the screen's edge.
+    const onDocumentLift = (event: Event) => {
+        const fromHere = pressedHere;
+        pressedHere = false;
+        if (!fromHere && !group.contains(event.target as Node)) closeHere();
     };
     const open = () => {
         button?.setAttribute('aria-expanded', 'true');
-        document.addEventListener('pointerdown', onDocumentPointerDown);
+        // The press that opened them was lifted before the page was listened to.
+        pressedHere = false;
+        document.addEventListener('pointerup', onDocumentLift, true);
         (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
     };
     const close = (back: boolean) => {
         if (!isOpen()) return;
         button?.setAttribute('aria-expanded', 'false');
-        document.removeEventListener('pointerdown', onDocumentPointerDown);
+        document.removeEventListener('pointerup', onDocumentLift, true);
         pointed = false;
         if (back) button?.focus();
     };
@@ -253,9 +302,14 @@ const SAID_FOR = 2000;
  * and leaves after a while unless it is kept, as a toast keeps its own until the toast leaves.
  */
 const statusTimers = new WeakMap<HTMLElement, number>();
-const say = (status: HTMLElement, message: string, keep = false) => {
+/** Empties a status line, and drops what it was about to say. */
+const hush = (status: HTMLElement) => {
     window.clearTimeout(statusTimers.get(status));
     status.textContent = '';
+};
+
+const say = (status: HTMLElement, message: string, keep = false) => {
+    hush(status);
     statusTimers.set(
         status,
         window.setTimeout(() => {
@@ -378,7 +432,9 @@ const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
  * next message replaces it. One with an action stays until then, since a timer would take the
  * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
- * goes back to where it was the last time a message arrived while focus was outside the toast.
+ * goes back to the last control outside the toast that had focus when a message arrived, and where
+ * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
+ * frame to its main content.
  * Attaching a toast again returns the same function. Its listeners are on the toast's own
  * elements, so a toast taken from the page takes them with it.
  */
@@ -419,13 +475,21 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = true;
         close.hidden = true;
         element.classList.remove('dk-toast-shown');
-        window.clearTimeout(statusTimers.get(status));
-        status.textContent = '';
-        if (hadFocus && returnTo?.isConnected) returnTo.focus();
+        hush(status);
+        // Focus that was in the toast goes back where it came from, and where nothing had focus or
+        // that no longer takes it, to the body of the app's frame or the page's main content rather
+        // than to nowhere.
+        if (hadFocus)
+            focusFirst(
+                returnTo,
+                element.closest('.dk-app')?.querySelector('.dk-app-body') ??
+                    document.querySelector('main')
+            );
     };
     const show: ShowToast = (words, action) => {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement && !element.contains(active)) returnTo = active;
+        const active = focusedNow();
+        if (!active || !element.contains(active))
+            returnTo = active instanceof HTMLElement ? active : undefined;
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
@@ -436,6 +500,15 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = !action;
         close.hidden = false;
         element.classList.add('dk-toast-shown');
+        // A control that had focus and that the toast now covers is scrolled clear of it, by the
+        // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
+        // taller than the room above the toast, such as the frame's body, stays where it is.
+        if (returnTo === active) {
+            const control = returnTo.getBoundingClientRect();
+            const card = element.getBoundingClientRect();
+            if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
+                returnTo.scrollIntoView({ block: 'nearest' });
+        }
         wait();
         return () => {
             if (shown === id) dismiss();
@@ -554,6 +627,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     const lower = press(false);
     const raise = press(true);
     const onInput = () => {
+        if (status) hush(status);
         mark();
         if (!wrong()) report(false);
     };
@@ -564,6 +638,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     };
     const onReset = () => {
         window.setTimeout(() => {
+            if (status) hush(status);
             mark();
             report(false);
         });
@@ -585,6 +660,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         stepper.removeEventListener('focusin', mark);
         input.form?.removeEventListener('reset', onReset);
         report(false);
+        if (status) hush(status);
         down.hidden = true;
         up.hidden = true;
         attachedSteppers.delete(stepper);
@@ -624,13 +700,16 @@ const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]
 
 /** The element focus goes back to, from what the page handed over, else what had focus. */
 const openerOf = (from: DialogOpener | undefined): Element | null => {
-    if (from instanceof Element) return from;
-    if (from) {
-        const target = from.target instanceof Element ? from.target.closest(FOCUSABLE) : null;
-        if (target) return target;
-        if (from.currentTarget instanceof Element) return from.currentTarget;
-    }
-    return document.activeElement;
+    const found =
+        from instanceof Element
+            ? from
+            : from
+              ? ((from.target instanceof Element ? from.target.closest(FOCUSABLE) : null) ??
+                (from.currentTarget instanceof Element ? from.currentTarget : null))
+              : null;
+    if (found && found !== document.body) return found;
+    // The page's body, where nothing has focus, is no opener, so focus goes where returnTo says.
+    return focusedNow();
 };
 
 /**
@@ -640,7 +719,7 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * dialog closes nothing, and on close returns focus to what opened it. That is the element the
  * press that opened it landed on, found from the event a page's listener or React's hands over,
  * since a browser that gives a pressed button no focus leaves nothing else, or else what had
- * focus. Where that is gone from the page, focus goes where `returnTo` says.
+ * focus. Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -690,9 +769,7 @@ export const attachDialog = (
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
         if (dialog.open) return;
-        const back =
-            opener instanceof HTMLElement && opener.isConnected ? opener : settings.returnTo?.();
-        back?.focus();
+        focusFirst(opener, settings.returnTo?.());
         opener = null;
     });
     const open: OpenDialog = (from) => {

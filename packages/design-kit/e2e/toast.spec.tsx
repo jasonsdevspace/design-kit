@@ -480,6 +480,102 @@ test("stops what the keyboard reaches in the frame's body short of a toast float
     }
 });
 
+test("sends focus to the frame's body when its action is chosen and nothing had focus before", async ({
+    page,
+}) => {
+    await open(page, { body: FRAME });
+    // Shown as the page loads, with nothing holding focus, then reached by the keyboard.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.dk-app-body')).toBeFocused();
+});
+
+test("sends focus to the frame's body, not to an earlier message's control, when the latest arrived with nothing focused", async ({
+    page,
+}) => {
+    await open(page, { body: FRAME });
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await show(page, 'Round 4 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.dk-app-body')).toBeFocused();
+});
+
+test("sends focus to the frame's body where what it would go back to no longer takes focus", async ({
+    page,
+}) => {
+    await open(page, { body: FRAME });
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    // The action hides what focus came from rather than taking it from the page.
+    await page.locator('#save').evaluate((element) => {
+        (element as HTMLElement).hidden = true;
+    });
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.dk-app-body')).toBeFocused();
+});
+
+test("sends focus to the page's main content when its action is chosen and nothing had focus before", async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('<main>', '<main tabindex="-1">') });
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('main')).toBeFocused();
+});
+
+test('leaves the page where it is when what has focus is not under the toast or is taller than the room above it', async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('<main>', '<main tabindex="-1">') });
+    // The page's main content holds focus, as a click on its text gives it, scrolled part way.
+    await page.locator('main').evaluate((element) => {
+        window.scrollTo(0, 120);
+        (element as HTMLElement).focus({ preventScroll: true });
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    expect(await page.evaluate(() => window.scrollY)).toBe(120);
+});
+
+test('keeps what had focus in view, clear of the toast, as it shows on a page', async ({
+    page,
+}) => {
+    await open(page, {
+        body: PAGE.replace(
+            '<p id="last">',
+            '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
+        ),
+    });
+    // The link at the foot of the screen, where the toast is about to come, holding focus.
+    await page.locator('#foot').evaluate((element) => {
+        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+        element.focus({ preventScroll: true });
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(
+        (await box(toast(page), 'the toast')).y
+    );
+});
+
 test('puts its buttons together on a row under its message on a phone at a large text size', async ({
     page,
     browserName,

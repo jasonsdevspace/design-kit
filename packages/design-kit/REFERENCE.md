@@ -813,7 +813,8 @@ shown by the sheet alone, so the markup is one whatever the width, and the strip
 holds the switch either way. Pressed, the button opens the group under itself, over the page, one
 choice to a row at a thumb's target and focus on the chosen one, so the arrow keys move the choice
 without closing it. A choice picked by a pointer closes the group with focus back on the button, as
-Escape does, and a press outside or focus leaving the switch closes it where it is. At 20rem and
+Escape does, and a tap outside or focus leaving the switch closes it where it is, while a swipe
+beside it leaves it open so a touch can scroll to choices below the screen's edge. At 20rem and
 wider, and outside a strip at any width, the button stays hidden and the choices keep their row,
 wrapping as they do outside a strip where the column is narrower.
 
@@ -845,7 +846,9 @@ In a demo's strip it goes in `tools`, with `toolsLabel="Settings"`, so its landm
 Theme as its group is. A page that writes the switch by hand writes the button and the group around
 the radios as the markup above has them, since the attach function wires the button it finds.
 `chooseTheme(choice)` saves and draws a choice from anywhere else on the page, and every switch on
-the page shows it.
+the page shows it. It listens as a switch does, so on a page with no switch a choice saved in
+another tab is followed, and one the browser will not save is held on the page. A value that is
+not `light`, `dark` or `system` is ignored.
 
 **`ThemeSwitch` props**
 
@@ -1214,36 +1217,36 @@ safe area tokens their values:
 
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
-the body ends where the rows below it begin. A toast floats over the foot of the body, just above the
-dock, so showing or hiding one never moves the dock under a thumb about to press it again. While one
-is shown its place opens on a rule, under which the body scrolls as it does under the bar, and the
-body leaves room for a toast of two rows after its last element, so its last line scrolls clear of
-the toast and what the keyboard reaches in it stops short of the toast, in a browser with `:has()`.
-The room is that element's margin, so the body ends in a block, such as a paragraph or a list, as
-its content does. On a screen too short for the frame the toast takes its row above the dock, and
-the page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll
-position by what is on screen, as Chrome and Firefox do.
-Each row but the body's is never shorter than what it holds, and the body keeps 8rem, a few lines,
-so where the rows come to more than the screen the page scrolls and no row covers its neighbor or
-squeezes the body to nothing. What the body holds out of
-sight, such as a row's words for a screen reader, scrolls with it and never lengthens the page.
+the body ends where the rows below it begin. A toast floats over the foot of the body, just above
+the dock, so showing or hiding one never moves the dock under a thumb about to press it again. While
+one is shown its place opens on a rule, under which the body scrolls as it does under the bar, and
+the body leaves room for a toast of two rows after its last element, so its last line scrolls clear
+of the toast and what the keyboard reaches in it stops short of the toast, in a browser with
+`:has()`. The room is that element's margin, so the body ends in a block, such as a paragraph or a
+list, as its content does. On a screen too short for the frame the toast takes its row above the
+dock, and the page keeps the dock in place as the toast comes and goes, in a browser that keeps a
+scroll position by what is on screen, as Chrome and Firefox do. Each row but the body's is never
+shorter than what it holds, and the body keeps 8rem, a few lines, so where the rows come to more
+than the screen the page scrolls and no row covers its neighbor or squeezes the body to nothing.
+What the body holds out of sight, such as a row's words for a screen reader, scrolls with it and
+never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A browser without that unit reads `100vh`. The bar pads itself
 past `--dk-safe-top`, so its ground runs up under a notch and its title starts below it. The frame
-pads itself past the side safe areas, and its lowest part, the tab bar, or the dock or the body where nothing comes after it, pads
-itself past `--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds
-stays clear of it, even where the page scrolls whole.
+pads itself past the side safe areas, and its lowest part, the tab bar, or the dock or the body
+where nothing comes after it, pads itself past `--dk-safe-bottom`, so its ground runs down under the
+home indicator and what it holds stays clear of it, even where the page scrolls whole.
 
 The bar is `--dk-app-bar` tall, 4rem, or taller where a long title wraps, which it does within the
 room the mark and the action leave. On a phone at a large text size, under 16rem wide, the title
 takes a row of its own under the mark and the action, across the bar's whole width, keeping its size
-and every word, and it stays first in the markup. On a wide screen the frame stays within `--dk-app-column`,
-28rem, in the middle. Where the rows come to more than the screen and the page scrolls whole, a
-swipe that reaches the body's end carries on to the page, so the dock and the tab bar below are
-reached the same way. The page under the frame neither reloads on a pull past the top of the body nor
-bounces. The body is the containing block for what it holds, so a menu that should draw
-over the frame is drawn in the top layer, as a `popover` is, not by `position: absolute` alone.
+and every word, and it stays first in the markup. On a wide screen the frame stays within
+`--dk-app-column`, 28rem, in the middle. Where the rows come to more than the screen and the page
+scrolls whole, a swipe that reaches the body's end carries on to the page, so the dock and the tab
+bar below are reached the same way. The page under the frame neither reloads on a pull past the top
+of the body nor bounces. The body is the containing block for what it holds, so a menu that should
+draw over the frame is drawn in the top layer, as a `popover` is, not by `position: absolute` alone.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
 lines tall, the frame is as long as what it holds and the page scrolls whole, so the bar and the
@@ -1383,7 +1386,8 @@ It is the kit's field, so its label, hint and error work as every field's do, ar
 limits, so where they matter the hint states them. The buttons are hidden until
 `attachStepper(element)` shows them, so without script it is a number field alone, and they are
 named for what they do and to which field, "Lower the number of players" and "Raise the number of
-players". A status line out of sight says the value a press sets, since focus stays on the button.
+players". A status line out of sight says the value a press sets, since focus stays on the button,
+and is emptied once the value is typed over, its form is reset or the stepper is taken away.
 
 `StepperField` draws it, taking `min`, `max` and a `step` of 1 unless given. Its `subject` is the
 words after Lower and Raise, the label unless given, and a label that is more than words needs one.
@@ -1472,11 +1476,14 @@ dismisses that message, which does nothing once another has replaced it or it ha
 A toast leaves when its close button, its action, or Escape with focus in it dismisses it, or the
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
-while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes
-back to where it was the last time a message arrived while focus was outside the toast. An action
-runs after the toast has left, so where it takes away what focus came from, it moves focus itself.
-A message with no action replaces one with an action and its way back, so a page shows one after
-another only when the first is done with. More than one action is a dialog's job.
+while the pointer is over it or focus is in it. When a message arrives, what has focus stays in
+view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
+it, focus goes back to the last control outside the toast that had focus when a message arrived, and
+where there was none, or it no longer takes focus, to the body of the app's frame, or on a page with
+no frame to its main content where that takes focus. An action runs after the toast has left, so
+where it takes away what focus came from, it moves focus itself. A message with no action replaces
+one with an action and its way back, so a page shows one another only when the first is done with.
+More than one action is a dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -1710,10 +1717,11 @@ at its top with its title said, rather than scrolled to a control further down.
 `attachDialog(dialog)` returns the function that opens it, and focus goes back to what opened it
 when the dialog closes, however it is closed. Handed the event of the press that opened it, from a
 listener on the button, on a part of the page that holds it or in React, it finds the button the
-press landed on, since Safari gives a clicked button no focus to remember. Called otherwise, it takes
-the element to return to, or remembers what had focus. Where that is gone from the page by the time
-the dialog closes, focus goes to what `returnTo` gives. It also closes the dialog on a tap on the
-scrim around it, one that starts and ends there so a drag out of the dialog closes nothing.
+press landed on, since Safari gives a clicked button no focus to remember. Called otherwise, it
+takes the element to return to, or remembers what had focus. Where nothing had focus, or what it
+returns to is gone from the page by the time the dialog closes, focus goes to what `returnTo` gives.
+It also closes the dialog on a tap on the scrim around it, one that starts and ends there so a drag
+out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads

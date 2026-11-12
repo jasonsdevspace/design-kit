@@ -65,9 +65,11 @@ hidden and the group is the row of choices.
   by its role finds the div. A page that stacks something over the strip at its own order can cover
   the open choices, which a top layer would have put above.
 - A press on the button or on a choice cancels its default as it begins, so it moves no focus,
-  since a browser that gives a pressed button no focus would blur the open choices first, and focus
-  leaving the switch is the one path that closes the choices where they are. The page's presses are
-  heard only while the choices are open.
+  since a browser that gives a pressed button no focus would blur the open choices first, and the
+  choices close where they are only when focus leaves the switch or on a tap outside it. The page's
+  lifted pointers are heard only while the choices are open, before any handler of the page's can
+  stop them, so a swipe beside the choices, which the browser cancels as a scroll, leaves them open
+  for a touch to scroll to. A switch with no choices yet is left hidden and unattached.
 
 ## How it is tested
 
@@ -75,7 +77,8 @@ The paths are in `packages/design-kit`.
 
 - `src/controls.test.ts` imports the module in plain Node, finds no export but its functions, and
   holds it with the theme module it imports, without their comments as a bundler sends them, to its
-  budget, which record 15 raised from 3 KB to 5 KB.
+  budget, which record 15 raised from 3 KB to 5 KB, and 0.5.1 to 6 KB for the focus and theme
+  fixes.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the switch's line for a visitor without script in
@@ -92,8 +95,8 @@ The paths are in `packages/design-kit`.
   status line names still reach the page. In a strip on a screen narrower than 20rem it finds the
   switch collapsed to one button naming the choice shown, the choices opened under it one to a row
   at the target with nothing below the strip moved, a pick by pointer closing them with focus on
-  the button, the arrow keys moving the choice without closing them, Escape and a press outside
-  closing them, and the row of choices back at 20rem.
+  the button, the arrow keys moving the choice without closing them, Escape and a tap outside
+  closing them, a swipe beside them leaving them open, and the row of choices back at 20rem.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

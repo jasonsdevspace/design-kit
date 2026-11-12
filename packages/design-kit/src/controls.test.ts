@@ -11,10 +11,11 @@ import { describe, expect, it } from 'vitest';
  */
 
 /*
- * Raised from 3 KB for the toast, whose behavior ships in this module beside the rest rather than
- * in one of its own, as its rules ship in the components sheet, as record 15 has it.
+ * Raised from 3 KB to 5 KB for the toast, whose behavior ships in this module beside the rest
+ * rather than in one of its own, as its rules ship in the components sheet, as record 15 has it,
+ * and to 6 KB in 0.5.1 for the focus and theme fixes, as record 13 has it.
  */
-const BUDGET = 5 * 1024;
+const BUDGET = 6 * 1024;
 
 describe('the controls', () => {
     it('load in plain Node without reaching for the browser', async () => {
