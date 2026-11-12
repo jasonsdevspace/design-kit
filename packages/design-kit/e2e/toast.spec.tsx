@@ -495,6 +495,38 @@ test("sends focus to the frame's body when its action is chosen and nothing had 
     await expect(page.locator('.dk-app-body')).toBeFocused();
 });
 
+test("sends focus to the frame's body, not to an earlier message's control, when the latest arrived with nothing focused", async ({
+    page,
+}) => {
+    await open(page, { body: FRAME });
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await show(page, 'Round 4 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.dk-app-body')).toBeFocused();
+});
+
+test("sends focus to the frame's body where what it would go back to no longer takes focus", async ({
+    page,
+}) => {
+    await open(page, { body: FRAME });
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    // The action hides what focus came from rather than taking it from the page.
+    await page.locator('#save').evaluate((element) => {
+        (element as HTMLElement).hidden = true;
+    });
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.dk-app-body')).toBeFocused();
+});
+
 test('keeps what had focus in view, clear of the toast, as it shows on a page', async ({
     page,
 }) => {

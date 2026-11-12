@@ -666,24 +666,52 @@ test('ignores a theme that is no choice, as plain JavaScript can pass', async ({
     await context.close();
 });
 
-test('refuses to attach a theme switch with no choices, as a toast or a stepper refuses a missing part', async ({
+test('leaves a theme switch with no choices hidden and unattached, to be attached once they are drawn', async ({
     browser,
 }) => {
     const context = await browser.newContext();
     const opened = await tab(context);
     expect(
         await opened.evaluate(() => {
-            try {
-                (
-                    window as unknown as {
-                        kit: { attachThemeSwitch: (element: HTMLElement) => void };
-                    }
-                ).kit.attachThemeSwitch(document.createElement('div'));
-                return 'attached';
-            } catch (error) {
-                return error instanceof Error ? error.message : 'thrown';
-            }
+            const empty = document.createElement('div');
+            empty.className = 'dk-theme-switch';
+            empty.hidden = true;
+            document.querySelector('main')?.append(empty);
+            (
+                window as unknown as { kit: { attachThemeSwitch: (element: HTMLElement) => void } }
+            ).kit.attachThemeSwitch(empty);
+            return empty.hidden;
         })
-    ).toBe('a theme switch needs its choices');
+    ).toBe(true);
+    await context.close();
+});
+
+test('keeps a choice the browser will not save drawn over one another tab saves', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context, true, BARE);
+    // Storage that reads but will not take this page's choice, as a full quota does, while the
+    // other tab's saves still go through.
+    await opened.evaluate(() => {
+        Object.defineProperty(localStorage, 'setItem', {
+            value: () => {
+                throw new Error('full');
+            },
+        });
+    });
+    await choose(opened, 'dark');
+    const other = await context.newPage();
+    await other.goto(`${ORIGIN}/`);
+    await other.evaluate((key) => {
+        localStorage.setItem(key, 'light');
+    }, THEME_KEY);
+    // Once this page has heard the other tab's save, and the theme script has drawn it, the
+    // choice held here is drawn again over it.
+    await expect
+        .poll(() => opened.evaluate((key) => localStorage.getItem(key), THEME_KEY))
+        .toBe('light');
+    await opened.evaluate(() => new Promise((done) => setTimeout(done, 50)));
+    expect(await themeOf(opened)).toBe('dark');
     await context.close();
 });

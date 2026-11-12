@@ -425,6 +425,16 @@ test('empties its status line once the value is typed over, and once it is taken
     await expect(line(page, 'bid')).toHaveText('');
 });
 
+test('empties its status line when its form is reset', async ({ page }) => {
+    await open(page);
+    const score = page.getByRole('spinbutton', { name: 'Score' });
+    await page.getByRole('button', { name: 'Lower Score' }).click();
+    await expect(line(page, 'score')).toHaveText('10');
+    await page.getByRole('button', { name: 'Reset' }).click();
+    await expect(score).toHaveValue('11');
+    await expect(line(page, 'score')).toHaveText('');
+});
+
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
     await open(page, { width: 1280 });
     for (const [name, least] of [
