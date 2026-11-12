@@ -91,14 +91,14 @@ floor, and what no test here covers, is under
 Each promise the kit makes is held by a test. These are the ones a page leans on most, and the rest
 follow by area.
 
-| Gotcha                                                                                               | Where it is tested                          |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| A page's own rule outside a layer wins, however little it weighs                                     | `packages/design-kit/e2e/sheets.spec.ts`    |
-| Every measured pairing passes its WCAG ratio in both themes                                          | `packages/design-kit/src/tokens.test.ts`    |
-| The theme is set before the body is parsed                                                           | `packages/design-kit/e2e/theme.spec.ts`     |
-| A button and a field stand level, at the field height wide and the target on a phone                 | `packages/design-kit/e2e/controls.spec.tsx` |
-| A build that takes the kit's floor keeps each `light-dark()` as written, with either CSS transformer | `packages/design-kit/src/vite.test.ts`      |
-| Every page of the site meets the Lighthouse gates ShelfLens is held to                               | `packages/site/bench/lighthouse.ts`         |
+| Gotcha                                                                                                    | Where it is tested                          |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs, and a kit piece marked `hidden` is gone | `packages/design-kit/e2e/sheets.spec.ts`    |
+| Every measured pairing passes its WCAG ratio in both themes                                               | `packages/design-kit/src/tokens.test.ts`    |
+| The theme is set before the body is parsed                                                                | `packages/design-kit/e2e/theme.spec.ts`     |
+| A button and a field stand level, at the field height wide and the target on a phone                      | `packages/design-kit/e2e/controls.spec.tsx` |
+| A build that takes the kit's floor keeps each `light-dark()` as written, with either CSS transformer      | `packages/design-kit/src/vite.test.ts`      |
+| Every page of the site meets the Lighthouse gates ShelfLens is held to                                    | `packages/site/bench/lighthouse.ts`         |
 
 <details>
 <summary>Cascade layers, weight and contrast</summary>
