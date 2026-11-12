@@ -1695,7 +1695,7 @@
             pointer-events: none;
         }
 
-        :where(.dk-app > .dk-app-toast:has(> .dk-toast-shown)) {
+        :where(.dk-app > .dk-app-toast:has(> .dk-toast[data-shown])) {
             pointer-events: auto;
         }
 
@@ -1704,7 +1704,7 @@
          * edge a reader can see, as it does under the bar. The bar is drawn over the place, so
          * where the body is at its least the place never hides the bar's rule.
          */
-        :where(.dk-app > .dk-app-toast:has(> .dk-toast-shown)) {
+        :where(.dk-app > .dk-app-toast:has(> .dk-toast[data-shown])) {
             border-top: 1px solid var(--dk-line);
         }
 
@@ -1722,7 +1722,7 @@
          * attribute, up to five, or two where none is marked, while the toast floats over the body.
          */
         :where(
-            .dk-app:has(.dk-toast-shown:not([data-row]))
+            .dk-app:has(.dk-toast[data-shown]:not([data-row]))
                 > .dk-app-body
                 > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))
         ) {
@@ -1731,14 +1731,14 @@
             );
         }
 
-        :where(.dk-app:has(.dk-toast-shown:not([data-row])) > .dk-app-body) {
+        :where(.dk-app:has(.dk-toast[data-shown]:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
                 2 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app:has(.dk-toast-shown[data-rows='1']:not([data-row]))
+            .dk-app:has(.dk-toast[data-shown][data-rows='1']:not([data-row]))
                 > .dk-app-body
                 > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))
         ) {
@@ -1748,7 +1748,7 @@
         }
 
         :where(
-            .dk-app:has(.dk-toast-shown[data-rows='3']:not([data-row]))
+            .dk-app:has(.dk-toast[data-shown][data-rows='3']:not([data-row]))
                 > .dk-app-body
                 > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))
         ) {
@@ -1757,20 +1757,20 @@
             );
         }
 
-        :where(.dk-app:has(.dk-toast-shown[data-rows='1']:not([data-row])) > .dk-app-body) {
+        :where(.dk-app:has(.dk-toast[data-shown][data-rows='1']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
                 1 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
-        :where(.dk-app:has(.dk-toast-shown[data-rows='3']:not([data-row])) > .dk-app-body) {
+        :where(.dk-app:has(.dk-toast[data-shown][data-rows='3']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
                 3 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app:has(.dk-toast-shown[data-rows='4']:not([data-row]))
+            .dk-app:has(.dk-toast[data-shown][data-rows='4']:not([data-row]))
                 > .dk-app-body
                 > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))
         ) {
@@ -1779,14 +1779,14 @@
             );
         }
 
-        :where(.dk-app:has(.dk-toast-shown[data-rows='4']:not([data-row])) > .dk-app-body) {
+        :where(.dk-app:has(.dk-toast[data-shown][data-rows='4']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
                 4 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app:has(.dk-toast-shown[data-rows='5']:not([data-row]))
+            .dk-app:has(.dk-toast[data-shown][data-rows='5']:not([data-row]))
                 > .dk-app-body
                 > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))
         ) {
@@ -1795,7 +1795,7 @@
             );
         }
 
-        :where(.dk-app:has(.dk-toast-shown[data-rows='5']:not([data-row])) > .dk-app-body) {
+        :where(.dk-app:has(.dk-toast[data-shown][data-rows='5']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
                 5 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
@@ -2059,56 +2059,56 @@
      * the toast's attach function marked in its rows attribute, from two to five, or two, a line
      * of message over its buttons, where none is marked.
      */
-    :where(:root:has(.dk-toast-shown):not(:has(.dk-app))) {
+    :where(:root:has(.dk-toast[data-shown]):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
             2 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown):not(:has(.dk-app)) > body) {
+    :where(:root:has(.dk-toast[data-shown]):not(:has(.dk-app)) > body) {
         padding-bottom: calc(
             2 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='3']):not(:has(.dk-app))) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='3']):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
             3 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='3']):not(:has(.dk-app)) > body) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='3']):not(:has(.dk-app)) > body) {
         padding-bottom: calc(
             3 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='4']):not(:has(.dk-app))) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='4']):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
             4 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='4']):not(:has(.dk-app)) > body) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='4']):not(:has(.dk-app)) > body) {
         padding-bottom: calc(
             4 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='5']):not(:has(.dk-app))) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='5']):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
             5 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
                 var(--dk-space-4)
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='5']):not(:has(.dk-app)) > body) {
+    :where(:root:has(.dk-toast[data-shown][data-rows='5']):not(:has(.dk-app)) > body) {
         padding-bottom: calc(
             5 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
                 var(--dk-space-4)
@@ -2120,7 +2120,7 @@
      * message of a few lines wraps beside its buttons, and at a large text size the buttons wrap
      * under it. It rises into place as it arrives.
      */
-    :where(.dk-toast-shown) {
+    :where(.dk-toast[data-shown]) {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -2140,7 +2140,7 @@
         }
     }
 
-    :where(.dk-app .dk-toast-shown) {
+    :where(.dk-app .dk-toast[data-shown]) {
         margin-block: var(--dk-space-2);
     }
 
@@ -2151,7 +2151,7 @@
         overflow-wrap: anywhere;
     }
 
-    :where(.dk-toast-shown > .dk-toast-message) {
+    :where(.dk-toast[data-shown] > .dk-toast-message) {
         padding-block: var(--dk-space-2);
     }
 
@@ -2172,11 +2172,11 @@
      * buttons that usually sit there.
      */
     @media (width < 20rem) {
-        :where(.dk-toast-shown) {
+        :where(.dk-toast[data-shown]) {
             justify-content: flex-end;
         }
 
-        :where(.dk-toast-shown > .dk-toast-message) {
+        :where(.dk-toast[data-shown] > .dk-toast-message) {
             flex-basis: 100%;
             padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
         }

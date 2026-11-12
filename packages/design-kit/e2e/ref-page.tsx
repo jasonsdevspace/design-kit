@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { attachCopyButton, attachThemeSwitch } from '../src/controls.js';
+import {
+    attachCopyButton,
+    attachStepper,
+    attachThemeSwitch,
+    attachToast,
+    type ShowToast,
+} from '../src/controls.js';
 import {
     Button,
     ChoiceField,
@@ -9,8 +15,10 @@ import {
     CopyStatus,
     InputField,
     SelectField,
+    StepperField,
     TextareaField,
     ThemeSwitch,
+    Toast,
 } from '../src/react.js';
 
 /*
@@ -20,7 +28,9 @@ import {
  * again with its error and a summary of what is wrong, which moves focus to each field through its
  * ref, a choice field's first control among them, and an off button whose handler would send the
  * form. Above the form, a theme switch, a copy button and its status line attached through the
- * refs they hand out, with no wrapper to find them by. Bundled by ref.spec.ts, which writes it
+ * refs they hand out, with no wrapper to find them by. Below the form, a stepper whose own error
+ * the page's error comes and goes beside, and a toast whose class the page changes while it is
+ * shown, each drawn again by React after it is attached. Bundled by ref.spec.ts, which writes it
  * into the browser.
  */
 const Page = () => {
@@ -43,6 +53,15 @@ const Page = () => {
             : undefined;
     }, []);
     const [sent, setSent] = useState(false);
+    const bid = useRef<HTMLInputElement>(null);
+    const toast = useRef<HTMLDivElement>(null);
+    const show = useRef<ShowToast>(undefined);
+    const [taken, setTaken] = useState(false);
+    const [loud, setLoud] = useState(false);
+    useEffect(() => (bid.current ? attachStepper(bid.current) : undefined), []);
+    useEffect(() => {
+        if (toast.current) show.current = attachToast(toast.current);
+    }, []);
     return (
         <main>
             <ThemeSwitch ref={group} className="page-switch" />
@@ -117,6 +136,38 @@ const Page = () => {
                     Post later
                 </Button>
             </form>
+            <StepperField
+                ref={bid}
+                id="bid"
+                label="Ana's bid"
+                min={0}
+                max={10}
+                defaultValue={5}
+                error={taken && 'Ben has bid that already'}
+            />
+            <Button
+                onClick={() => {
+                    setTaken(!taken);
+                }}
+            >
+                Check the bid
+            </Button>
+            <Toast ref={toast} className={loud ? 'page-toast page-toast-loud' : 'page-toast'} />
+            <Button
+                onClick={() => {
+                    // With an action, so it stays until dismissed rather than for five seconds.
+                    show.current?.('Round saved.', { label: 'Undo', onAction: () => undefined });
+                }}
+            >
+                Save the round
+            </Button>
+            <Button
+                onClick={() => {
+                    setLoud(!loud);
+                }}
+            >
+                Restyle the toast
+            </Button>
         </main>
     );
 };
