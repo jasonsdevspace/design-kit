@@ -1,14 +1,15 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { sheet } from './page.js';
+import { KIT, sheet } from './page.js';
 
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
  * saved none, picks the page's background and text, a demo's own palette and rules win over the
  * kit's wherever its sheets load, the order of a page's own layers places the kit's, a reset in a
  * layer after the kit's clears a button's edge until the components sheet is imported into a layer
- * after the reset's, selected text stands on the accent, and the focus ring lands where it should
- * in both themes.
+ * after the reset's, selected text stands on the accent, the focus ring lands where it should
+ * in both themes, and a kit piece a page marks hidden, or anything hidden inside one, is gone under
+ * the page's own display rules.
  */
 
 /** The tokens and the base alone, since the components are held by their own specs. */
@@ -489,3 +490,55 @@ for (const theme of ['light', 'dark'] as const) {
         expect(drawn.selection.background).not.toBe(drawn.ground);
     });
 }
+
+test("hides every kit piece a page marks hidden, and anything hidden inside one, under the page's display rules", async ({
+    page,
+}) => {
+    await page.setContent(
+        '<!doctype html><html lang="en"><head><style>' +
+            KIT +
+            // A page's own rules outside a layer, which beat the kit's display rules.
+            ' button, a, li { display: inline-flex } div { display: grid }' +
+            '</style></head><body>' +
+            '<button type="button" class="dk-button" hidden>Retry</button>' +
+            '<div class="dk-callout" hidden><p>Saved.</p></div>' +
+            '<div class="dk-field" hidden><label class="dk-field-label" for="n">Name</label>' +
+            '<input class="dk-input" id="n"></div>' +
+            '<ul class="dk-rows" role="list"><li><a class="dk-row" href="#" hidden>Ana</a></li></ul>' +
+            '<div class="dk-theme-switch" hidden></div>' +
+            '<button type="button" class="dk-button dk-copy" hidden>Copy</button>' +
+            '<div class="dk-stepper"><button type="button" class="dk-button dk-stepper-down" hidden>' +
+            '-</button><input class="dk-input dk-stepper-value" type="number">' +
+            '<button type="button" class="dk-button dk-stepper-up" hidden>+</button></div>' +
+            '<div class="dk-toast"><p class="dk-toast-message"></p>' +
+            '<button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button>' +
+            '<button type="button" hidden>Later</button></div>' +
+            '<ul class="dk-tabs" role="list"><li hidden><a class="dk-tab" href="#">Admin</a></li></ul>' +
+            '<nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#" hidden>Admin</a></li></ul></nav>' +
+            '<div class="dk-panel" hidden="until-found"><p>Found</p></div>' +
+            '<div class="dk-panel" hidden="Until-Found"><p>Found too</p></div>' +
+            '<div class="sdk-widget" id="theirs" hidden></div>' +
+            '</body></html>'
+    );
+    const shown = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[hidden]')]
+            .filter(
+                (element) =>
+                    element.getAttribute('hidden')?.toLowerCase() !== 'until-found' &&
+                    element.id !== 'theirs' &&
+                    getComputedStyle(element).display !== 'none'
+            )
+            .map((element) => element.outerHTML.slice(0, 60))
+    );
+    expect(shown).toEqual([]);
+    // Hidden until found is left to the browser, however it is written, which keeps the box.
+    for (const found of await page.locator('.dk-panel').all()) {
+        expect(await found.evaluate((element) => getComputedStyle(element).display)).not.toBe(
+            'none'
+        );
+    }
+    // A page's own class that only holds dk- is the page's to draw, as the browser's rule says.
+    expect(
+        await page.locator('#theirs').evaluate((element) => getComputedStyle(element).display)
+    ).toBe('grid');
+});
