@@ -43,6 +43,16 @@ const FRAME = `<div class="dk-app">
 <section class="dk-app-dock" aria-label="Actions"><button type="button" class="dk-button dk-button-accent dk-button-tall" id="save">Save the round</button></section>
 </div>`;
 
+// A screen as full as an app's gets: a long title, a dock of two and a tab bar, so at twice
+// the text size the body is at its least and a row for the toast would push the dock down.
+const FULL = FRAME.replace('Round 3</h1>', 'Round 3 of the game at the cabin</h1>').replace(
+    '</section>',
+    '<button type="button" class="dk-button dk-button-tall">Skip a player</button></section>' +
+        '<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul>' +
+        '<li><a href="#play" aria-current="page">Play</a></li><li><a href="#games">Games</a></li>' +
+        '</ul></nav>'
+);
+
 const ATTACH = `import { attachToast } from './controls.js';
 const kit = (window.kit = { done: [], last: undefined });
 kit.show = attachToast(document.querySelector('.dk-toast'));
@@ -390,17 +400,8 @@ test("never moves the frame's dock as it shows and leaves, at the usual and at t
     page,
     browserName,
 }) => {
-    // A screen as full as an app's gets: a long title, a dock of two and a tab bar, so at twice
-    // the text size the body is at its least and a row for the toast would push the dock down.
-    const full = FRAME.replace('Round 3</h1>', 'Round 3 of the game at the cabin</h1>').replace(
-        '</section>',
-        '<button type="button" class="dk-button dk-button-tall">Skip a player</button></section>' +
-            '<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul>' +
-            '<li><a href="#play" aria-current="page">Play</a></li><li><a href="#games">Games</a></li>' +
-            '</ul></nav>'
-    );
     for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
-        await open(page, { body: full, height: 844 });
+        await open(page, { body: FULL, height: 844 });
         if (scale === 2) await textSize(page, 2);
         const save = page.locator('#save');
         const before = await box(save, "the dock's button");
@@ -409,6 +410,73 @@ test("never moves the frame's dock as it shows and leaves, at the usual and at t
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
         await dismiss(page).click();
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
+    }
+});
+
+test("keeps the frame's dock in place on a phone on its side at a large text size, where the page scrolls whole", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'chromium',
+        'the text size is set through Chromium, and Safari keeps no scroll position this way'
+    );
+    await open(page, { body: FRAME, width: 844, height: 390 });
+    await textSize(page, 1.5);
+    // Scrolled to the end, with the dock's button in view, where a thumb has just pressed it.
+    await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    const before = await page
+        .locator('#save')
+        .evaluate((element) => element.getBoundingClientRect().top);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    expect(
+        await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
+    ).toBeCloseTo(before, 0);
+    await dismiss(page).click();
+    expect(
+        await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
+    ).toBeCloseTo(before, 0);
+});
+
+test("stops what the keyboard reaches in the frame's body short of a toast floating over it", async ({
+    page,
+    browserName,
+}) => {
+    for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
+        await open(page, { body: FULL, height: 844 });
+        if (scale === 2) await textSize(page, 2);
+        await page.locator('.dk-app-body').evaluate((element) => {
+            // A paragraph with a link in it, as a body holds.
+            const line = document.createElement('p');
+            const link = document.createElement('a');
+            link.href = '#end';
+            link.id = 'end';
+            link.textContent = 'The end of the round';
+            line.append(link);
+            // In the middle of the body, out of sight below its fold, as most of what it holds is.
+            element.children[Math.floor(element.children.length / 2)]?.after(line);
+        });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        // The body scrolled so the link sits at its foot, under the toast, then reached by the
+        // keyboard from the body itself, as a visitor tabbing on through the screen reaches it.
+        await page.locator('.dk-app-body').evaluate((element) => {
+            const link = element.querySelector('#end');
+            if (!link) return;
+            element.scrollTop +=
+                link.getBoundingClientRect().bottom - element.getBoundingClientRect().bottom;
+            element.focus({ preventScroll: true });
+        });
+        await page.keyboard.press(tabKey(browserName));
+        await expect(page.locator('#end')).toBeFocused();
+        const card = await box(toast(page), 'the toast');
+        expect(
+            bottom(await box(page.locator('#end'), 'the link')),
+            `at ${String(scale)}x`
+        ).toBeLessThanOrEqual(card.y);
     }
 });
 

@@ -55,6 +55,9 @@ is its CSS transformer, as the package README shows.
   reaches partly under the bar or the toast. CSS cannot read their height, so the reference asks for
   short labels and messages. An app's frame keeps clear of its tab bar at any size, since the bar
   has a row of its own.
+- Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
+  for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
+  toast's height there.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.

@@ -368,6 +368,29 @@ test("gives the title the bar's whole width under its action on a phone at twice
     expect(await sideways(page)).toBe(0);
 });
 
+test("keeps the bar's rule in sight over a toast at twice the text size on a narrow phone", async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        width: 320,
+        height: 844,
+        title: 'Round 3 of the game at the cabin',
+        toast: true,
+    });
+    await doubled(page, browserName, { setting: true });
+    const top = await box(bar(page), 'the bar');
+    // What is drawn on the bar's last pixel row, its rule, is the bar's own.
+    expect(
+        await page.evaluate(
+            ([x, y]) => document.elementFromPoint(x, y)?.closest('.dk-app-bar') !== null,
+            [top.x + top.width / 2, top.y + top.height - 0.5] as const
+        )
+    ).toBe(true);
+    // The toast's place opens on a rule of its own, under which the body scrolls.
+    await expect(page.locator('.dk-app-toast')).toHaveCSS('border-top-style', 'solid');
+});
+
 test('squeezes no row where the bar and the dock come to more than the screen, and scrolls the page', async ({
     page,
     browserName,

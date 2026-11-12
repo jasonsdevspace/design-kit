@@ -1215,9 +1215,14 @@ safe area tokens their values:
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
 the body ends where the rows below it begin. A toast floats over the foot of the body, just above the
-dock, so showing or hiding one never moves the dock under a thumb about to press it again, and while
-one is shown the body pads past a toast of two rows, so its last line scrolls clear of it, in a
-browser with `:has()`. On a screen too short for the frame the toast takes its row above the dock.
+dock, so showing or hiding one never moves the dock under a thumb about to press it again. While one
+is shown its place opens on a rule, under which the body scrolls as it does under the bar, and the
+body leaves room for a toast of two rows after its last element, so its last line scrolls clear of
+the toast and what the keyboard reaches in it stops short of the toast, in a browser with `:has()`.
+The room is that element's margin, so the body ends in a block, such as a paragraph or a list, as
+its content does. On a screen too short for the frame the toast takes its row above the dock, and
+the page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll
+position by what is on screen, as Chrome and Firefox do.
 Each row but the body's is never shorter than what it holds, and the body keeps 8rem, a few lines,
 so where the rows come to more than the screen the page scrolls and no row covers its neighbor or
 squeezes the body to nothing. What the body holds out of
