@@ -920,8 +920,10 @@ shows. Where the browser refuses the clipboard, it selects that text instead. Th
 or Selected for a moment, its three words sharing one cell so it keeps its width, and the status
 line says which to a screen reader, with how to copy a selection with the keys or the device's own
 command. One status line serves every button on a page, and it is on the page from the start, since
-a line added at the moment it speaks may go unheard. Taking a button away hides it and puts it back
-to Copy.
+a line added at the moment it speaks may go unheard. Attaching a button again takes its new `source`
+and `status`, so a page that draws it again with a new source copies from that one, puts a word
+shown for the last source back to Copy, and returns the function it returned the first time. Taking
+a button away hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -1846,8 +1848,9 @@ A dialog that must be answered is attached with `{ stay: true }`, and then stays
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
 from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a close once and closes
 the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
-that can be dismissed too. Attaching a dialog again sets the options given and returns the same
-function. Its listeners are on the dialog, so a dialog taken from the page takes them with it.
+that can be dismissed too. Attaching a dialog again with options replaces them, attaching it again
+with none leaves them as they were, so a dialog attached to stay still stays, and either returns the
+same function. Its listeners are on the dialog, so a dialog taken from the page takes them with it.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.

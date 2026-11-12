@@ -282,19 +282,57 @@ test("sends focus where it is told when the event that opened it names the page'
     await expect(page.locator('#fallback')).toBeFocused();
 });
 
-test('follows the options it is attached with again', async ({ page }) => {
+test('takes the options it is attached with again, and keeps them when attached again with none', async ({
+    page,
+}) => {
     await open(page);
-    await page.evaluate(() => {
-        const kit = (
-            window as unknown as {
-                kit: { attachDialog: (d: Element | null, o: { stay: boolean }) => unknown };
-            }
-        ).kit;
-        kit.attachDialog(document.querySelector('#end-game'), { stay: true });
-    });
+    const attachAgain = (options?: { stay: boolean }) =>
+        page.evaluate((given) => {
+            const kit = (
+                window as unknown as {
+                    kit: { attachDialog: (d: Element | null, o?: { stay: boolean }) => unknown };
+                }
+            ).kit;
+            kit.attachDialog(document.querySelector('#end-game'), given ?? undefined);
+        }, options ?? null);
+    // Options given replace the last, so a dialog attached again to stay stays.
+    await attachAgain({ stay: true });
+    // Attached again with none, from another part of the page, it still stays.
+    await attachAgain();
     await page.locator('#end').click();
     await page.keyboard.press('Escape');
     await expect(endGame(page)).toBeVisible();
+    await page.getByRole('button', { name: 'Keep playing' }).click();
+    await expect(endGame(page)).toBeHidden();
+    // Attached again not to stay, Escape closes it.
+    await attachAgain({ stay: false });
+    await page.locator('#end').click();
+    await page.keyboard.press('Escape');
+    await expect(endGame(page)).toBeHidden();
+    // Options given replace the last whole, so options that leave out stay, an empty set
+    // among them, do not stay.
+    for (const given of [{}, { returnTo: true }]) {
+        await attachAgain({ stay: true });
+        await page.evaluate((options) => {
+            const kit = (
+                window as unknown as {
+                    kit: {
+                        attachDialog: (
+                            d: Element | null,
+                            o?: { returnTo?: () => HTMLElement | null }
+                        ) => unknown;
+                    };
+                }
+            ).kit;
+            kit.attachDialog(
+                document.querySelector('#end-game'),
+                'returnTo' in options ? { returnTo: () => document.querySelector('main') } : {}
+            );
+        }, given);
+        await page.locator('#end').click();
+        await page.keyboard.press('Escape');
+        await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+    }
 });
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {
