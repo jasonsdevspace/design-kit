@@ -141,7 +141,11 @@ test('lets the column scroll with the rest on a phone at a large text size, and 
         return { pinned: !moved, room };
     };
     expect(await pinnedAt(320, 1)).toEqual({ pinned: true, room: '128px' });
-    expect(await pinnedAt(390, 1.5)).toEqual({ pinned: true, room: '192px' });
+    expect(await pinnedAt(360, 1.25)).toEqual({ pinned: true, room: '160px' });
+    expect(await pinnedAt(430, 1.5)).toEqual({ pinned: true, room: '192px' });
+    expect(await pinnedAt(320, 1.25)).toEqual({ pinned: false, room: '0px' });
+    expect(await pinnedAt(360, 1.5)).toEqual({ pinned: false, room: '0px' });
+    expect(await pinnedAt(390, 1.5)).toEqual({ pinned: false, room: '0px' });
     expect(await pinnedAt(320, 2)).toEqual({ pinned: false, room: '0px' });
     expect(await pinnedAt(390, 2)).toEqual({ pinned: false, room: '0px' });
 });

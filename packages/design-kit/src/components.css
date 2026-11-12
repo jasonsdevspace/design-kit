@@ -1080,12 +1080,13 @@
     }
 
     /*
-     * On a phone at a large text size, under 15rem wide, a column of names would take most of the
-     * frame and leave no room for a figure beside it, so there the column scrolls with the rest and
-     * the frame keeps no room for it. A phone at the usual text size, 20rem wide or more, keeps it
-     * pinned.
+     * On a phone at a large text size, under 17.5rem wide, a column of names would take most of
+     * the frame and leave no space for a figure beside it, so there the column scrolls with the
+     * rest and the frame keeps no room for it. At 17.5rem and wider, as on any phone at the usual
+     * text size, it stays pinned. The viewport decides it, not the frame, since the frame's own
+     * room for the column has to go too, which a query of the frame cannot reach.
      */
-    @media (width < 15rem) {
+    @media (width < 17.5rem) {
         :where(.dk-table-pinned :is(th, td):first-child) {
             position: static;
         }
