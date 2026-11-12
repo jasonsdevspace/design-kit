@@ -532,11 +532,16 @@ export const toast: ReactElement = <Toast />;
  */
 export const dialog: ReactElement = (
     <>
-        <dialog className="dk-dialog" id="end-game" aria-labelledby="end-game-title">
+        <dialog
+            className="dk-dialog"
+            id="end-game"
+            aria-labelledby="end-game-title"
+            aria-describedby="end-game-text"
+        >
             <h2 className="dk-dialog-title" id="end-game-title">
                 End the game now?
             </h2>
-            <p>The scores so far are kept in the history.</p>
+            <p id="end-game-text">The scores so far are kept in the history.</p>
             <form method="dialog" className="dk-dialog-actions">
                 <button type="submit" className="dk-button" value="keep">
                     Keep playing
@@ -551,10 +556,18 @@ export const dialog: ReactElement = (
             id="round-options"
             aria-labelledby="round-options-title"
         >
-            <h2 className="dk-dialog-title" id="round-options-title">
+            <h2 className="dk-dialog-title" id="round-options-title" tabIndex={-1} autoFocus>
                 Round options
             </h2>
-            ...
+            <SelectField id="dealt" label="Cards dealt">
+                <option value="10">Ten each</option>
+                <option value="7">Seven each</option>
+            </SelectField>
+            <form method="dialog" className="dk-dialog-actions">
+                <button type="submit" className="dk-button dk-button-accent">
+                    Done
+                </button>
+            </form>
         </dialog>
     </>
 );

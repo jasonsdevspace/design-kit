@@ -31,16 +31,19 @@ const BODY = `<main><h1>Round 3</h1>
 <p><button type="button" class="dk-button" id="end">End the game</button>
 <button type="button" class="dk-button" id="options">Round options</button>
 <button type="button" class="dk-button" id="must">Choose a dealer</button></p>
+<div id="toolbar"><button type="button" class="dk-button" id="held"><span>Delegated</span></button></div>
+<p><button type="button" class="dk-button" id="gone">Opens and goes</button>
+<button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
 ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
-<dialog class="dk-dialog" id="end-game" aria-labelledby="end-game-title">
+<dialog class="dk-dialog" id="end-game" aria-labelledby="end-game-title" aria-describedby="end-game-text">
 <h2 class="dk-dialog-title" id="end-game-title">End the game now?</h2>
-<p>The scores so far are kept in the history.</p>
+<p id="end-game-text">The scores so far are kept in the history.</p>
 <form method="dialog" class="dk-dialog-actions">
 <button type="submit" class="dk-button" value="keep">Keep playing</button>
 <button type="submit" class="dk-button dk-button-accent" value="end">End the game</button>
 </form></dialog>
 <dialog class="dk-dialog dk-dialog-sheet" id="round-options" aria-labelledby="round-options-title">
-<h2 class="dk-dialog-title" id="round-options-title">Round options</h2>${OPTIONS}
+<h2 class="dk-dialog-title" id="round-options-title" tabindex="-1" autofocus>Round options</h2>${OPTIONS}
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Done</button></form>
 </dialog>
 <dialog class="dk-dialog" id="dealer" aria-labelledby="dealer-title">
@@ -56,6 +59,24 @@ const wire = (button, dialog, options) => {
 wire('#end', '#end-game');
 wire('#options', '#round-options');
 wire('#must', '#dealer', { stay: true });
+// Attached again with other options, which the same function then follows.
+window.kit = { attachDialog };
+// A listener on a part of the page that holds the button, as a page that delegates its clicks has.
+const end = attachDialog(document.querySelector('#end-game'));
+document.querySelector('#toolbar').addEventListener('click', end);
+// An opener taken from the page before the dialog closes, with a place for focus to go instead.
+const goes = attachDialog(document.querySelector('#round-options'), {
+    returnTo: () => document.querySelector('#fallback'),
+});
+document.querySelector('#gone').addEventListener('click', (event) => {
+    goes(event);
+    event.currentTarget.remove();
+});
+// React hands over an event of its own, with the button as its current target.
+window.openFromReact = () => {
+    const button = document.querySelector('#options');
+    end({ target: button.firstChild ?? button, currentTarget: button });
+};
 window.ready = true;`;
 
 const open = async (
@@ -169,16 +190,77 @@ test('stays open on a tap inside it and on a drag that ends outside it', async (
     await expect(endGame(page)).toBeVisible();
 });
 
-test('stays open on Escape and on the scrim when it asks to stay', async ({ page }) => {
+test('stays open on Escape pressed twice and on the scrim when it asks to stay', async ({
+    page,
+}) => {
     await open(page);
     await page.locator('#must').click();
     const dealer = page.getByRole('dialog', { name: 'Who deals first?' });
     await expect(dealer).toBeVisible();
     await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(dealer).toBeVisible();
     await page.mouse.click(5, 5);
     await expect(dealer).toBeVisible();
     await page.getByRole('button', { name: 'Ana' }).click();
     await expect(dealer).toBeHidden();
+});
+
+test('says what an answer leads to before the answers', async ({ page }) => {
+    await open(page);
+    await page.locator('#end').click();
+    await expect(endGame(page)).toHaveAccessibleDescription(
+        'The scores so far are kept in the history.'
+    );
+});
+
+test('finds the button a press landed on from a listener on the page or an event from React', async ({
+    page,
+}) => {
+    await open(page);
+    // A press inside a button, handled by a listener on what holds it.
+    await page.locator('#held span').click();
+    await expect(endGame(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#held')).toBeFocused();
+    // An event handed over from React, whose current target is the button.
+    await page.evaluate(() => {
+        (window as unknown as { openFromReact: () => void }).openFromReact();
+    });
+    await expect(endGame(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#options')).toBeFocused();
+});
+
+test('sends focus where it is told when what opened the dialog has gone', async ({ page }) => {
+    await open(page);
+    await page.locator('#gone').click();
+    await expect(sheet(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#fallback')).toBeFocused();
+});
+
+test('follows the options it is attached with again', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        const kit = (
+            window as unknown as {
+                kit: { attachDialog: (d: Element | null, o: { stay: boolean }) => unknown };
+            }
+        ).kit;
+        kit.attachDialog(document.querySelector('#end-game'), { stay: true });
+    });
+    await page.locator('#end').click();
+    await page.keyboard.press('Escape');
+    await expect(endGame(page)).toBeVisible();
+});
+
+test('opens a long sheet at its top, with focus on its title', async ({ page }) => {
+    await open(page);
+    await page.locator('#options').click();
+    await settle(sheet(page));
+    await expect(page.locator('#round-options-title')).toBeFocused();
+    expect(await sheet(page).evaluate((element) => element.scrollTop)).toBe(0);
 });
 
 test('keeps the page behind it still while it is open', async ({ page }) => {

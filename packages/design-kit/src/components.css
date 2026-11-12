@@ -2127,7 +2127,7 @@
      * and makes the page behind it inert. It sits on the raised ground with the raised shadow and
      * an edge forced colors keep, over a scrim in the kit's scrim color, in the middle of the
      * screen, and scrolls inside itself when it holds more than the screen does. While one is open
-     * the page behind it does not scroll.
+     * as a modal the page behind it does not scroll.
      */
     :where(.dk-dialog) {
         box-sizing: border-box;
@@ -2148,7 +2148,7 @@
         background: var(--dk-scrim);
     }
 
-    :where(:root:has(.dk-dialog[open])) {
+    :where(:root:has(.dk-dialog:modal)) {
         overflow: hidden;
     }
 
@@ -2182,7 +2182,7 @@
         border-radius: var(--dk-radius-large) var(--dk-radius-large) 0 0;
     }
 
-    :where(.dk-dialog-sheet[open]) {
+    :where(.dk-dialog-sheet:modal) {
         animation: dk-sheet-rise var(--dk-duration-medium);
     }
 
