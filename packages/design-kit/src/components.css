@@ -460,6 +460,19 @@
     }
 
     /*
+     * A row of buttons, such as a page's actions under its lead: in the order they are written,
+     * spaced by the kit's step between controls, and wrapping onto rows that step apart as well,
+     * where a space between them would leave the rows touching. It sets no margin of its own, so
+     * it stands from what is around it by the step of the container it sits in.
+     */
+    :where(.dk-actions) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--dk-space-2);
+    }
+
+    /*
      * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
      * button whose panel is open, takes the system's highlight, an off button the system's gray on
      * the page's ground as a disabled one does, and an off toggle that is on an edge in the
@@ -505,6 +518,28 @@
 
     :where(.dk-field > *) {
         margin: 0;
+    }
+
+    /*
+     * A field's control with a button beside it, such as a search with Go: the control takes the
+     * room the button leaves, and both stand one height, the taller of the two, at every width and
+     * text size. Where the button would leave the control too narrow to type in, as at a large text
+     * size on a phone, the button moves under it.
+     */
+    :where(.dk-field-action) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--dk-space-2);
+        min-width: 0;
+    }
+
+    :where(.dk-field-action > :is(.dk-input, .dk-select)) {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+
+    :where(.dk-field-action > .dk-button) {
+        flex: none;
     }
 
     :where(.dk-field-label) {
@@ -1189,6 +1224,27 @@
         margin-block-start: var(--dk-space-2);
     }
 
+    /*
+     * A code block's head: its title, with a copy button at its end on the title's line, wrapping
+     * under it where the line has no room. The block follows the head as it follows a title.
+     */
+    :where(.dk-code-head) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--dk-space-2);
+    }
+
+    /* Nothing in the head steps down from the title, as the block after a title does. */
+    :where(.dk-code-head > *) {
+        margin: 0;
+    }
+
+    :where(.dk-code-head + *) {
+        margin-block-start: var(--dk-space-2);
+    }
+
     @media (width <= 48rem) {
         :where(.dk-panel) {
             padding: var(--dk-space-4);
@@ -1218,6 +1274,29 @@
         padding-inline: calc(var(--dk-ring-width) + var(--dk-ring-offset));
         font-size: var(--dk-text-small);
         line-height: var(--dk-leading-tight);
+    }
+
+    /*
+     * In what pads its content, a demo's strip and footer, an explainer, a panel, a callout, an app's
+     * bar and body or a dialog, the switch reaches past the column by the room it keeps for its
+     * ring, as the pills and a row do, so its first word starts on the column's line and the
+     * padding holds the ring. Elsewhere it stays inside, so nothing scrolls sideways.
+     */
+    :where(
+        :is(
+                .dk-strip,
+                .dk-footer,
+                .dk-explainer,
+                .dk-panel,
+                .dk-callout,
+                .dk-app-bar,
+                .dk-app-body,
+                .dk-dialog
+            )
+            .dk-theme-switch
+    ) {
+        max-width: calc(100% + 2 * (var(--dk-ring-width) + var(--dk-ring-offset)));
+        margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
     /*
@@ -1398,7 +1477,8 @@
      * An eyebrow: a small label in caps over a heading or a group, such as a hero's theme or a
      * list's name, in the muted text at the caption size and the heading's weight, tracked so the
      * caps read at that size. It is text with no margin of its own, so it stands from what is
-     * around it by the step of the container it sits in.
+     * above it by the step of the container it sits in, and from a heading after it by the
+     * smallest step, near the end of the sheet.
      */
     :where(.dk-eyebrow) {
         color: var(--dk-muted);
@@ -2636,7 +2716,7 @@
         margin-block-start: var(--dk-space-3);
     }
 
-    :where(.dk-dialog > :is(.dk-table-title, .dk-code-title) + *) {
+    :where(.dk-dialog > :is(.dk-table-title, .dk-code-title, .dk-code-head) + *) {
         margin-block-start: var(--dk-space-2);
     }
 
@@ -2653,6 +2733,20 @@
         justify-content: flex-end;
         gap: var(--dk-space-2);
         margin: var(--dk-space-5) 0 0;
+    }
+
+    /*
+     * On a phone, and in an app at every width, the actions fill their row, so where they stack at
+     * a large text size each is the dialog's width rather than two widths pushed to its end.
+     */
+    @media (width <= 48rem) {
+        :where(.dk-dialog-actions > *) {
+            flex: 1 0 auto;
+        }
+    }
+
+    :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-actions > *) {
+        flex: 1 0 auto;
     }
 
     /*
@@ -2701,6 +2795,15 @@
         from {
             translate: 0 100%;
         }
+    }
+
+    /*
+     * An eyebrow over a heading sits the smallest step above it, since it names the heading, and
+     * stands from what is above it by its container's step. It comes after the containers' own
+     * steps, so it wins over them.
+     */
+    :where(.dk-eyebrow + :is(h1, h2, h3, h4, h5, h6)) {
+        margin-block-start: var(--dk-space-1);
     }
 
     /*
