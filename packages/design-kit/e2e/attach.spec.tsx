@@ -319,6 +319,39 @@ test('attaches one element as a copy button though it was attached as a switch f
     await context.close();
 });
 
+test('copies from the new source when the button is attached again with one', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const opened = await tab(context);
+    await opened.evaluate(() => {
+        const kit = (
+            window as unknown as {
+                kit: {
+                    attachCopyButton: (
+                        element: HTMLElement | null,
+                        options: { source: () => HTMLElement; status: HTMLElement }
+                    ) => () => void;
+                };
+            }
+        ).kit;
+        const other = document.createElement('pre');
+        other.id = 'other';
+        other.textContent = 'npm run verify';
+        document.querySelector('main')?.append(other);
+        // A page that draws the button again with a new source attaches it again with it.
+        kit.attachCopyButton(document.querySelector<HTMLElement>('.dk-copy'), {
+            source: () => other,
+            status: document.querySelector<HTMLElement>('[role="status"]') ?? document.body,
+        });
+    });
+    await opened.locator('.dk-copy').click();
+    await expect(opened.locator('.dk-copy')).toHaveAccessibleName('Copied install command');
+    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe('npm run verify');
+    await context.close();
+});
+
 test('puts a copy button back to Copy, hidden, when it is taken away mid-message', async ({
     browser,
 }) => {

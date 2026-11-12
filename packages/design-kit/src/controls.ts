@@ -156,7 +156,12 @@ const listen = () => {
  * other.
  */
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
-const attachedButtons = new WeakMap<HTMLElement, () => void>();
+/** What a copy button reads, which attaching it again replaces. */
+type CopyOptions = { readonly source: () => HTMLElement; readonly status: HTMLElement };
+const attachedButtons = new WeakMap<
+    HTMLElement,
+    { readonly detach: () => void; readonly set: (next: CopyOptions) => void }
+>();
 
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
@@ -359,14 +364,20 @@ const copied = async (text: string): Promise<boolean> => {
  * Makes a copy button work: copies the text of the element `source` gives when it is pressed, or
  * selects it where the browser refuses the clipboard, shows Copied or Selected for a moment, and
  * says which on the page's status line. `source` is read at each press, so a button beside tabs
- * copies the block its tab shows.
+ * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
+ * that draws the button again with a new source copies from that one, and returns what it
+ * returned the first time.
  */
-export const attachCopyButton = (
-    button: HTMLButtonElement,
-    { source, status }: { readonly source: () => HTMLElement; readonly status: HTMLElement }
-): (() => void) => {
+export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
     const already = attachedButtons.get(button);
-    if (already) return already;
+    if (already) {
+        already.set(options);
+        return already.detach;
+    }
+    let { source, status } = options;
+    const set = (next: CopyOptions) => {
+        ({ source, status } = next);
+    };
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
     let live = true;
@@ -405,7 +416,7 @@ export const attachCopyButton = (
         button.hidden = true;
         attachedButtons.delete(button);
     };
-    attachedButtons.set(button, detach);
+    attachedButtons.set(button, { detach, set });
     return detach;
 };
 
@@ -784,26 +795,25 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
- * often a page may refuse a close does not hold a refusal past the first. Attaching it again sets
- * the options given and returns the same function. Its listeners are on the dialog, so a dialog
+ * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
+ * options replaces them, attaching it again with none leaves them as they were, and either returns
+ * the same function. Its listeners are on the dialog, so a dialog
  * taken from the page takes them with it.
  */
-export const attachDialog = (
-    dialog: HTMLDialogElement,
-    options: DialogOptions = {}
-): OpenDialog => {
+export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     const already = attachedDialogs.get(dialog);
     if (already) {
-        already.set(options);
+        // Options given replace the last, and none leaves them as they were.
+        if (options) already.set(options);
         return already.open;
     }
-    let settings = options;
+    let settings: DialogOptions = {};
     const set = (next: DialogOptions) => {
         settings = next;
         if (settings.stay === true) dialog.setAttribute('closedby', 'none');
         else dialog.removeAttribute('closedby');
     };
-    set(options);
+    set(options ?? {});
     let opener: Element | null = null;
     let startedOutside = false;
     const outside = (event: MouseEvent) => {
