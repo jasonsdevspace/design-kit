@@ -6,24 +6,24 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-10 | `b412755` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.2 |
+| 2026-11-12 | `7048d11` | INTEL(R) XEON(R) PLATINUM 8573C, 4 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.4.0`, 37.4 KB packed.
+`@jasonsdevspace/design-kit@0.5.0`, 51.6 KB packed.
 
 The sheets a page loads:
 
 | File                | Raw     | Gzipped | Without comments |
 | ------------------- | ------- | ------- | ---------------- |
 | dist/base.css       | 8.3 KB  | 2.8 KB  | 1.0 KB           |
-| dist/components.css | 48.9 KB | 11.1 KB | 3.8 KB           |
-| dist/tokens.css     | 7.5 KB  | 2.7 KB  | 0.8 KB           |
+| dist/components.css | 78.6 KB | 17.6 KB | 5.8 KB           |
+| dist/tokens.css     | 9.7 KB  | 3.4 KB  | 0.9 KB           |
 
 The modules a page's build imports:
 
 | File             | Raw     | Gzipped |
 | ---------------- | ------- | ------- |
-| dist/controls.js | 13.1 KB | 4.0 KB  |
-| dist/react.js    | 15.7 KB | 5.0 KB  |
+| dist/controls.js | 27.2 KB | 7.7 KB  |
+| dist/react.js    | 18.7 KB | 5.6 KB  |
 | dist/theme.js    | 4.7 KB  | 1.7 KB  |
 | dist/vite.js     | 2.9 KB  | 1.3 KB  |
 
@@ -31,10 +31,10 @@ Every other file the package carries, which a page never loads:
 
 | File               | Raw     | Gzipped |
 | ------------------ | ------- | ------- |
-| dist/controls.d.ts | 1.6 KB  | 0.7 KB  |
-| dist/react.d.ts    | 15.6 KB | 4.6 KB  |
+| dist/controls.d.ts | 6.4 KB  | 2.4 KB  |
+| dist/react.d.ts    | 18.9 KB | 5.4 KB  |
 | dist/theme.d.ts    | 2.5 KB  | 1.0 KB  |
 | dist/vite.d.ts     | 2.2 KB  | 1.0 KB  |
 | LICENSE            | 1.0 KB  | 0.6 KB  |
 | package.json       | 2.1 KB  | 0.7 KB  |
-| README.md          | 12.2 KB | 4.2 KB  |
+| README.md          | 13.9 KB | 4.6 KB  |
