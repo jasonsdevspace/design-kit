@@ -1,10 +1,7 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import ts from 'typescript';
 
-import { box, KIT, style } from './page.js';
+import { box, js, KIT, ORIGIN, style } from './page.js';
 
 /*
  * A dialog as a page attaches it, in Chromium and in WebKit: opened over a scrim in the kit's scrim
@@ -14,13 +11,6 @@ import { box, KIT, style } from './page.js';
  * edge clear of the home indicator and scrolling inside itself, rising into place unless less
  * motion is asked for, and no audit findings in either theme.
  */
-
-const ORIGIN = 'https://kit.test';
-
-const js = (file: string) =>
-    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
-        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
-    }).outputText;
 
 const OPTIONS = Array.from(
     { length: 30 },

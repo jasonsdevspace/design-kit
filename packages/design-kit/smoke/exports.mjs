@@ -28,6 +28,7 @@ export const VALUE_EXPORTS = {
         'attachCopyButton',
         'attachDialog',
         'attachStepper',
+        'attachTable',
         'attachThemeSwitch',
         'attachToast',
         'chooseTheme',

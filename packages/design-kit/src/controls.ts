@@ -1,14 +1,14 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button, stepper, toast and dialog do, for a page to attach to
- * the markup the components draw or a page writes by hand. Each attach function finds its control's
- * parts by their classes. The switch, the copy button and the stepper show their control, which the
- * markup keeps hidden so a visitor without script meets no control that does nothing, and return a
- * function that takes it away again. `attachToast` returns instead the function that shows a
- * message in it, and `attachDialog` the function that opens it. Nothing runs when the module is
- * imported, and nothing here sets a style, so a page's policy can refuse every style it did not
- * serve.
+ * What the kit's theme switch, copy button, stepper, toast, dialog and table do, for a page to
+ * attach to the markup the components draw or a page writes by hand. Each attach function finds its
+ * control's parts by their classes. The switch, the copy button and the stepper show their control,
+ * which the markup keeps hidden so a visitor without script meets no control that does nothing, and
+ * return a function that takes it away again, as the table's does. `attachToast` returns instead
+ * the function that shows a message in it, and `attachDialog` the function that opens it. Nothing
+ * runs when the module is imported, and nothing here sets a style, so a page's policy can refuse
+ * every style it did not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -822,4 +822,63 @@ export const attachDialog = (
     };
     attachedDialogs.set(dialog, { open, set });
     return open;
+};
+
+/** The pinned cell in the row of what has focus, in this frame, unless focus is in it. */
+const pinnedBeside = (frame: Element, reached: Element): Element | undefined => {
+    const pinned = reached.closest('tr')?.firstElementChild;
+    return pinned &&
+        frame.contains(pinned) &&
+        !pinned.contains(reached) &&
+        getComputedStyle(pinned).position === 'sticky'
+        ? pinned
+        : undefined;
+};
+
+const attachedTables = new WeakMap<HTMLElement, () => void>();
+
+/**
+ * Brings what the keyboard reaches in a table's frame fully into view, clear of a pinned column,
+ * since Chromium leaves a link or a button that is partly in view where it is, cut by the frame's
+ * edge or under the pinned column, and Safari does once more than a target's width of it shows. The
+ * pinned cell in the same row, or the frame's scroll padding where that is wider, marks where the
+ * room starts, at the side the frame reads from, and the scroll padding at its end where it ends.
+ * Wider than the room, its start meets the room's, so its first words show. Only focus the keyboard
+ * brings is followed, so a press of a pointer never moves what it pressed. It takes the frame or
+ * anything in it, attaches each frame once, and returns what takes it away again.
+ */
+export const attachTable = (element: HTMLElement): (() => void) => {
+    const frame = element.closest<HTMLElement>('.dk-table-scroll');
+    if (!frame) throw new Error('a table needs its frame');
+    const already = attachedTables.get(frame);
+    if (already) return already;
+    const onFocusIn = ({ target }: FocusEvent) => {
+        if (!(target instanceof Element) || !target.matches(':focus-visible')) return;
+        // Measured along the way the frame reads, so a start is the smaller figure either way.
+        const read = getComputedStyle(frame);
+        const way = read.direction === 'rtl' ? -1 : 1;
+        const along = ({ left, right }: { left: number; right: number }): [number, number] =>
+            way > 0 ? [left, right] : [-right, -left];
+        const left = frame.getBoundingClientRect().left + frame.clientLeft;
+        const [inner, outer] = along({ left, right: left + frame.clientWidth });
+        // The room the frame's scroll padding keeps, where the browser itself would bring it, so
+        // the browser finds nothing more to do, or the pinned cell's inner edge where that is
+        // further in.
+        const pinned = pinnedBeside(frame, target);
+        const from = Math.max(
+            inner + Number.parseFloat(read.scrollPaddingInlineStart),
+            pinned ? along(pinned.getBoundingClientRect())[1] : inner
+        );
+        const to = outer - Number.parseFloat(read.scrollPaddingInlineEnd);
+        const [start, end] = along(target.getBoundingClientRect());
+        if (start < from || end - start > to - from) frame.scrollLeft += (start - from) * way;
+        else if (end > to) frame.scrollLeft += (end - to) * way;
+    };
+    frame.addEventListener('focusin', onFocusIn);
+    const detach = () => {
+        frame.removeEventListener('focusin', onFocusIn);
+        attachedTables.delete(frame);
+    };
+    attachedTables.set(frame, detach);
+    return detach;
 };

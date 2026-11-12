@@ -1059,6 +1059,19 @@ region whether or not it scrolls, as
 [decision 0008](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0008-a-scroll-frame-is-always-a-region.md)
 explains.
 
+```js
+import { attachTable } from '@jasonsdevspace/design-kit/controls';
+
+attachTable(document.querySelector('.dk-table-scroll'));
+```
+
+A table whose cells hold a link or a button attaches each frame with `attachTable(element)` once its
+markup is on the page, passing the frame or anything in it. What the keyboard reaches then comes
+fully into view, clear of a pinned column, where Chromium and Safari would leave one that is partly
+in view cut by the frame's edge. Focus a pointer brings is left to the browser. A frame added later
+is attached on its own, and the function returned lets it go. Without script the frame keeps a
+target's room at its end, so a link with no more than that showing still comes into view.
+
 A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every cell
 of a numeric column, its header included, is `.dk-table-number`. A table is never stacked into cards
 on a phone, since `display: block` on a table's parts drops its table semantics in WebKit. It
@@ -1074,7 +1087,8 @@ muted text at medium weight, and a row's header is at medium weight too. The out
 padding on their outer side, so the table's text lines up with the prose around it. Figures sit to
 the right and never wrap, while text in a cell wraps and keeps its first line level with the rest of
 its row. Code in a cell stays on one line, hyphens and spaces alike, so a token's name never breaks
-after `--dk-`, and a long expression scrolls the frame as a wide table does.
+after `--dk-`, and a long expression scrolls the frame as a wide table does. The frame's scroll
+padding keeps a target's room at its end edge, which a browser counts as out of view.
 
 </details>
 
@@ -1119,13 +1133,14 @@ is pinned, and the header row scrolls with the table, since a table of a few row
 header.
 
 A table whose cells hold a link or a button sets `--dk-table-pinned-size` on its frame to the pinned
-column's width, 8rem unless it does, so what the keyboard reaches stops beside the pinned column and
-never under it. On a phone at a large text size, under 17.5rem wide, the column scrolls with the
-rest and the frame keeps no room for it, since a column of names would leave no space for a figure
-beside it. At 17.5rem and wider, as on any phone at the usual text size, it stays pinned. Names in
-the pinned column are kept short all the same, since a long one widens the column wherever it stays
-pinned, and the wider text spacing a reader may set narrows what is left beside it. No cell in the
-first column spans rows, since the cell after it would be the one pinned.
+column's width, 8rem unless it does, so what the browser scrolls into view stops beside the pinned
+column, and once `attachTable` is attached the column's own width counts wherever it is wider. On a
+phone at a large text size, under 17.5rem wide, the column scrolls with the rest and the frame keeps
+no room for it, since a column of names would leave no space for a figure beside it. At 17.5rem and
+wider, as on any phone at the usual text size, it stays pinned. Names in the pinned column are kept
+short all the same, since a long one widens the column wherever it stays pinned, and the wider text
+spacing a reader may set narrows what is left beside it. No cell in the first column spans rows,
+since the cell after it would be the one pinned.
 
 ### Code blocks
 

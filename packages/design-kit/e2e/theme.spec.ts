@@ -1,7 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 
 import { THEME_KEY, themeScript } from '../src/theme.js';
-import { themeOf } from './page.js';
+import { ORIGIN, themeOf } from './page.js';
 
 /*
  * The theme script as a visitor's browser runs it: the theme the portfolio saved, or the system's
@@ -11,7 +11,6 @@ import { themeOf } from './page.js';
  * read, shared by every tab.
  */
 
-const ORIGIN = 'https://kit.test';
 const PAGE = `<!doctype html><html lang="en"><head><script>${themeScript}</script></head><body></body></html>`;
 
 /** A tab on the test origin, with the page given served from memory. */

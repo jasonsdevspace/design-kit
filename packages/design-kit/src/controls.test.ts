@@ -13,9 +13,10 @@ import { describe, expect, it } from 'vitest';
 /*
  * Raised from 3 KB to 5 KB for the toast, whose behavior ships in this module beside the rest
  * rather than in one of its own, as its rules ship in the components sheet, as record 15 has it,
- * and to 6 KB in 0.5.1 for the focus and theme fixes, as record 13 has it.
+ * to 6 KB in 0.5.1 for the focus and theme fixes, and to 7 KB in 0.6.0 for the table's frame and
+ * the fixes that follow it, as record 13 has it.
  */
-const BUDGET = 6 * 1024;
+const BUDGET = 7 * 1024;
 
 describe('the controls', () => {
     it('load in plain Node without reaching for the browser', async () => {
@@ -24,6 +25,7 @@ describe('the controls', () => {
             'attachCopyButton',
             'attachDialog',
             'attachStepper',
+            'attachTable',
             'attachThemeSwitch',
             'attachToast',
             'chooseTheme',

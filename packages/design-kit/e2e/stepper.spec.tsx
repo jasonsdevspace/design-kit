@@ -1,12 +1,9 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
-import ts from 'typescript';
 
 import { StepperField } from '../src/react.js';
-import { box, KIT, sideways, style, tabKey } from './page.js';
+import { box, js, KIT, ORIGIN, sideways, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -22,13 +19,6 @@ import { textSize } from './text-size.js';
  * phone's narrowest width, a stepper that fits a phone at twice the text size, the larger target
  * when asked, the keyboard, and no audit findings in either theme.
  */
-
-const ORIGIN = 'https://kit.test';
-
-const js = (file: string) =>
-    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
-        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
-    }).outputText;
 
 const FIELDS = renderToStaticMarkup(
     <main>

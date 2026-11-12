@@ -1,12 +1,22 @@
 import { readFileSync } from 'node:fs';
 
 import type { Locator, Page } from '@playwright/test';
+import ts from 'typescript';
 
 /*
  * What every spec that draws the kit in a browser needs: the sheets as the source has them, a page
  * written into the browser with them, and the reads of what the browser drew. One copy, so a width
  * or a theme added here reaches every spec.
  */
+
+/** The origin the specs that load a module serve their page from, so it has storage of its own. */
+export const ORIGIN = 'https://kit.test';
+
+/** A module of the kit's, as a browser loads it, built from the source with its imports kept. */
+export const js = (file: string): string =>
+    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
+        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
+    }).outputText;
 
 /** A sheet of the kit's, as the source has it. */
 export const sheet = (name: string): string =>
