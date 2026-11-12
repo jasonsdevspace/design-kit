@@ -446,6 +446,13 @@ test('keeps the choices open through a swipe beside them, so a touch can scroll 
     test.skip(browserName !== 'chromium', 'a touch swipe is made through Chromium');
     const context = await browser.newContext({ hasTouch: true });
     const { opened, button } = await collapsed(context);
+    // A page long enough to scroll in any face, as a page with choices below the fold is.
+    await opened.evaluate(() => {
+        const room = document.createElement('p');
+        room.textContent = 'More of the page.';
+        room.style.minHeight = '200vh';
+        document.querySelector('main')?.append(room);
+    });
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
     // A swipe up from a spot beside the list, as a thumb scrolls a page down.
