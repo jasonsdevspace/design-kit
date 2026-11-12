@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { box, style, writePage } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * A table that pins its first column, as a browser draws it: the column naming each row in view
@@ -44,16 +45,18 @@ const open = async (
         pinned = true,
         panel = false,
         css = '',
+        width = 360,
     }: {
         readonly theme?: 'light' | 'dark';
         readonly pinned?: boolean;
         readonly panel?: boolean;
         readonly css?: string;
+        readonly width?: number;
     } = {}
 ): Promise<void> => {
     const held = table(pinned);
     await writePage(page, {
-        width: 360,
+        width,
         theme,
         css,
         title: 'Scores',
@@ -118,6 +121,29 @@ test('lets nothing that passes under the pinned cells show through, on a page an
             expect(await ground(head(page)), what).toBe(held);
         }
     }
+});
+
+test('lets the column scroll with the rest on a phone at a large text size, and keeps it pinned on one at the usual size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    /** Whether the names stay where they were as the frame scrolls sideways. */
+    const pinnedAt = async (width: number, scale: number) => {
+        await open(page, { width });
+        await textSize(page, scale);
+        const start = (await box(cell(page, 'Ana'), 'a name')).x;
+        await scrollBy(page, 120);
+        const moved = Math.abs((await box(cell(page, 'Ana'), 'a name')).x - start) > 1;
+        const room = await frame(page).evaluate(
+            (element) => getComputedStyle(element).scrollPaddingInlineStart
+        );
+        return { pinned: !moved, room };
+    };
+    expect(await pinnedAt(320, 1)).toEqual({ pinned: true, room: '128px' });
+    expect(await pinnedAt(390, 1.5)).toEqual({ pinned: true, room: '192px' });
+    expect(await pinnedAt(320, 2)).toEqual({ pinned: false, room: '0px' });
+    expect(await pinnedAt(390, 2)).toEqual({ pinned: false, room: '0px' });
 });
 
 test('takes the ground a page sets for a table on a ground of its own', async ({ page }) => {

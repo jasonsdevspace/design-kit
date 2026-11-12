@@ -1117,8 +1117,9 @@ scrolls with the table, since a table of a few rows needs no pinned header.
 
 A table whose cells hold a link or a button sets `--dk-table-pinned-size` on its frame to the pinned
 column's width, 8rem unless it does, so what the keyboard reaches stops beside the pinned column and
-never under it. The names in the pinned column are kept short, since a long one widens the column
-and leaves little of the table to scroll on a phone, and no cell in the first column spans rows,
+never under it. On a phone at a large text size, under 15rem wide, the column scrolls with the
+rest and the frame keeps no room for it, since a column of names would leave no room for a figure
+beside it. A phone at the usual text size keeps it pinned. No cell in the first column spans rows,
 since the cell after it would be the one pinned.
 
 ### Code blocks

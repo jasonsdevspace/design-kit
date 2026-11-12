@@ -1080,6 +1080,22 @@
     }
 
     /*
+     * On a phone at a large text size, under 15rem wide, a column of names would take most of the
+     * frame and leave no room for a figure beside it, so there the column scrolls with the rest and
+     * the frame keeps no room for it. A phone at the usual text size, 20rem wide or more, keeps it
+     * pinned.
+     */
+    @media (width < 15rem) {
+        :where(.dk-table-pinned :is(th, td):first-child) {
+            position: static;
+        }
+
+        :where(.dk-table-scroll:has(> .dk-table-pinned)) {
+            scroll-padding-inline-start: 0;
+        }
+    }
+
+    /*
      * A block of code keeps its lines as written and scrolls inside itself, a named region the
      * keyboard reaches, as a table's frame is. It sits on the card's ground, or on the page's
      * inside a panel, so it reads as set into what holds it, and its edge shows in forced colors
