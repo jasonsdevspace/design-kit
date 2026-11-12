@@ -94,3 +94,55 @@ test('stands each field one step after the one before it in a plain form', async
     });
     expect(await gaps(page, '#form')).toEqual(each(['dk-field', 'dk-field dk-choice-field'], 16));
 });
+
+test('adds nothing to fields in a form that lays them out itself, in a grid or side by side', async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        css: '.own { display: grid; gap: 12px } .pair { display: flex; gap: 12px; align-items: end }',
+        body: `<form class="own" id="own">${FIELD('a')}${FIELD('b')}</form><form><div class="pair" id="pair">${FIELD('c')}${FIELD('d')}</div></form>`,
+    });
+    expect(await gaps(page, '#own')).toEqual(['dk-field 12']);
+    const tops = await page
+        .locator('#pair > .dk-field')
+        .evaluateAll((fields) =>
+            fields.map((field) => Math.round(field.getBoundingClientRect().top))
+        );
+    expect(new Set(tops).size).toBe(1);
+});
+
+test("adds no step for a piece out of sight before an app body's or a dialog's first one", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        width: 390,
+        body: `<div class="dk-app"><main class="dk-app-body"><h2 class="dk-visually-hidden">Round 3</h2>${CALLOUT}</main></div>
+<dialog class="dk-dialog"><p hidden>Saved.</p><h2 class="dk-dialog-title">Options</h2><p class="dk-table-title" id="t">Scores</p><div class="dk-table-scroll" role="region" aria-labelledby="t" tabindex="0"><table class="dk-table"><tr><td>1</td></tr></table></div></dialog>`,
+    });
+    const under = await page.locator('.dk-app-body').evaluate((element) => {
+        const first = element.querySelector('.dk-callout')?.getBoundingClientRect().top ?? 0;
+        return Math.round(first - element.getBoundingClientRect().top);
+    });
+    expect(under).toBe(16);
+    await page.locator('dialog').evaluate((dialog) => {
+        (dialog as HTMLDialogElement).showModal();
+    });
+    // The title first, at the dialog's padding, and a table its short step under its own title.
+    expect((await gaps(page, 'dialog')).slice(1)).toEqual([
+        'dk-table-title 12',
+        'dk-table-scroll 8',
+    ]);
+    const atPadding = await page.locator('dialog').evaluate((dialog) => {
+        const title = dialog.querySelector('.dk-dialog-title')?.getBoundingClientRect().top ?? 0;
+        const style = getComputedStyle(dialog);
+        return Math.round(
+            title -
+                dialog.getBoundingClientRect().top -
+                parseFloat(style.borderTopWidth) -
+                parseFloat(style.paddingTop)
+        );
+    });
+    expect(atPadding).toBe(0);
+});
