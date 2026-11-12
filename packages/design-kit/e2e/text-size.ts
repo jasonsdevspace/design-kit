@@ -1,12 +1,17 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 /**
  * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from, a
  * media query's included, where a size set on the root reaches no media query. The session stays
  * open for the page's life, since closing it undoes the setting, and the size is read back, so a
- * setting the browser drops fails the test rather than leaving it at one size.
+ * setting the browser drops fails the test rather than leaving it at one size. Only Chromium takes
+ * the setting from a test, so in another engine the test that asks for it is skipped.
  */
 export const textSize = async (page: Page, scale: number): Promise<void> => {
+    test.skip(
+        page.context().browser()?.browserType().name() !== 'chromium',
+        'the text size is set through Chromium'
+    );
     const session = await page.context().newCDPSession(page);
     await session.send('Page.setFontSizes', {
         fontSizes: { standard: Math.round(16 * scale), fixed: Math.round(13 * scale) },

@@ -329,3 +329,25 @@ for (const theme of ['light', 'dark'] as const) {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }
+
+test('draws a cell marked off by aria-disabled in the system gray in forced colors', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        await card(page, '9').evaluate((cell) => {
+            cell.setAttribute('aria-disabled', 'true');
+        });
+        const gray = await colorOf(page, 'GrayText');
+        // The edge eases to its new color, so it is read once it has arrived.
+        await expect
+            .poll(() => style(card(page, '9'), 'color', 'border-top-color'))
+            .toEqual({ color: gray, 'border-top-color': gray });
+    } finally {
+        await context.close();
+    }
+});

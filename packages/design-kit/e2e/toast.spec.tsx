@@ -796,3 +796,56 @@ test('draws its close button quiet in the muted color, and in the text color und
         expect(contrast(await read(), ground), theme).toBeGreaterThanOrEqual(4.5);
     }
 });
+
+test('returns the one function it showed with when attached again', async ({ page }) => {
+    await open(page);
+    expect(
+        await page.evaluate(() => {
+            const kit = (window as unknown as { kit: { show: unknown; again: unknown } }).kit;
+            return kit.show === kit.again;
+        })
+    ).toBe(true);
+});
+
+test('draws a solid edge round a shown toast in forced colors, where its shadow is gone', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        await page.locator('#save').click();
+        await expect(toast(page)).toBeVisible();
+        const edge = await toast(page).evaluate((element) => {
+            const style = getComputedStyle(element);
+            return [style.borderTopStyle, style.borderTopWidth];
+        });
+        expect(edge).toEqual(['solid', '1px']);
+    } finally {
+        await context.close();
+    }
+});
+
+test('prints no toast, shown or not', async ({ page }) => {
+    await open(page);
+    await page.locator('#save').click();
+    await expect(toast(page)).toBeVisible();
+    await page.emulateMedia({ media: 'print' });
+    await expect(toast(page)).toBeHidden();
+});
+
+test('keeps its buttons inside it on a 320px phone at twice the text size', async ({ page }) => {
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    await page.locator('#save').click();
+    const card = await box(toast(page), 'the toast');
+    for (const button of [undo(page), dismiss(page)]) {
+        const drawn = await box(button, 'a button');
+        expect(drawn.x).toBeGreaterThanOrEqual(card.x - 0.5);
+        expect(drawn.x + drawn.width).toBeLessThanOrEqual(card.x + card.width + 0.5);
+        expect(drawn.y + drawn.height).toBeLessThanOrEqual(card.y + card.height + 0.5);
+    }
+    expect(await sideways(page)).toBe(0);
+});

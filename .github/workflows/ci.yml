@@ -108,7 +108,7 @@ jobs:
             # The totals, and any test that failed, go to the run's summary from the JSON report. The
             # summary reports the tests and never decides them, so the step ends with their status
             # whether or not it could be written. Chromium alone here: the specs that run in WebKit
-            # as well run there in a job of their own.
+            # or Firefox as well run there in jobs of their own.
             - name: Browser tests
               run: |
                   rm -f playwright-results.json
@@ -192,6 +192,56 @@ jobs:
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
                   name: playwright-report-webkit
+                  path: playwright-report
+                  retention-days: 7
+
+    # The pieces Firefox draws its own way, such as the stepper's number field, whose spin buttons
+    # only a rule no other engine reads takes away, and the controls and the pieces, drawn in its
+    # engine too, in the current Firefox Playwright brings rather than the kit's floor. On a Mac, as
+    # WebKit is, where Firefox runs on what the image already has.
+    firefox:
+        name: Browser tests in Firefox
+        runs-on: macos-26
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            # Started once, so a browser that cannot start fails this step rather than a test.
+            - name: Install Firefox
+              timeout-minutes: 3
+              run: |
+                  npx playwright install firefox
+                  node -e "require('@playwright/test').firefox.launch({ timeout: 30_000 }).then((b) => b.close())"
+
+            - name: Browser tests in Firefox
+              run: |
+                  rm -f playwright-results.json
+                  status=0
+                  npm run e2e -- --project firefox || status=$?
+                  if [ -f playwright-results.json ]; then
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in Firefox" "$status" ||
+                          echo "The summary of the browser tests could not be written."
+                  fi
+                  exit "$status"
+
+            - name: Keep the report of a failed run
+              if: failure()
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: playwright-report-firefox
                   path: playwright-report
                   retention-days: 7
 
@@ -355,7 +405,7 @@ jobs:
     # deploy job runs only GitHub's own Pages actions.
     site:
         name: Build the site
-        needs: [verify, browser, webkit, lighthouse, floor]
+        needs: [verify, browser, webkit, firefox, lighthouse, floor]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-26.04
         timeout-minutes: 10

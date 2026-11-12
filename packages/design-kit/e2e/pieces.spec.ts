@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { writePage } from './page.js';
+import { pixels, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -385,24 +385,24 @@ test('draws an eyebrow in caps at the caption size in the muted text, tracked, w
 }) => {
     await open(page);
     const eyebrow = page.locator('.dk-eyebrow');
-    expect(
-        await eyebrow.evaluate((element) => {
-            const style = getComputedStyle(element);
-            return {
-                transform: style.textTransform,
-                size: style.fontSize,
-                color: style.color,
-                tracking: style.letterSpacing,
-                margin: style.marginBlock,
-            };
-        })
-    ).toEqual({
+    const drawn = await eyebrow.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+            transform: style.textTransform,
+            size: style.fontSize,
+            color: style.color,
+            tracking: style.letterSpacing,
+            margin: style.marginBlock,
+        };
+    });
+    expect({ transform: drawn.transform, color: drawn.color, margin: drawn.margin }).toEqual({
         transform: 'uppercase',
-        size: '13.6px',
         color: 'rgb(92, 92, 92)',
-        tracking: '0.816px',
         margin: '0px',
     });
+    // Within half a pixel, as an engine rounds a length.
+    expect(pixels(drawn.size)).toBeCloseTo(13.6, 0);
+    expect(pixels(drawn.tracking)).toBeCloseTo(0.816, 1);
 });
 
 test('keeps the copy button as wide as its longest word, whichever word shows', async ({

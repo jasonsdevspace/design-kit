@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { box, sheet, sideways, style, tabKey, writePage } from './page.js';
+import { cutOff } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -660,4 +661,17 @@ test("draws the toast's close button at the target both ways on a wide screen, i
         const close = await box(page.getByRole('button', { name: 'Dismiss' }), 'the close button');
         expect([Math.round(close.width), Math.round(close.height)], name).toEqual([44, 44]);
     }
+});
+
+test('breaks a title of one long word inside the bar on a 320px phone at twice the text size', async ({
+    page,
+}) => {
+    await open(page, { width: 320, title: 'Scorekeepingchampionshipfinalround' });
+    await textSize(page, 2);
+    const bar = await box(page.locator('.dk-app-bar'), 'the bar');
+    const title = await box(page.locator('.dk-app-title'), 'the title');
+    expect(title.x + title.width).toBeLessThanOrEqual(bar.x + bar.width + 0.5);
+    // Its word breaks inside it, rather than run past its own box.
+    expect(await cutOff(page, '.dk-app-title')).toEqual([]);
+    expect(await sideways(page)).toBe(0);
 });
