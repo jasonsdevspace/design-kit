@@ -44,9 +44,20 @@ is its CSS transformer, as the package README shows.
 - In Firefox 120, the room a page that ends in a tab bar keeps for it, the room a page keeps for a
   toast shown over it, and the room a table's frame keeps for its pinned column all rest on
   `:has()`, so there the keyboard can bring a control to rest under the bar, the toast or the pinned
-  column, and a toast with an action covers the page's last line until it is dismissed. An app drawn
-  in the kit's frame keeps clear of the bar and the toast there, since they have rows of their own.
+  column, and a toast with an action covers the page's last line until it is dismissed. In an app's
+  frame there, the body does not pad for a toast floating over its foot, so the toast covers the
+  body's last line until it is dismissed, and the frame keeps clear of the tab bar, which has a row
+  of its own.
   The page behind an open dialog still scrolls there too.
+- On a page that scrolls whole and is 18rem wide or more, the room kept for a tab bar holds a label
+  on two lines, and the room kept for a toast, on a page or in an app's frame, holds a line of
+  message over its buttons. A label or a message that wraps further can leave what the keyboard
+  reaches partly under the bar or the toast. CSS cannot read their height, so the reference asks for
+  short labels and messages. An app's frame keeps clear of its tab bar at any size, since the bar
+  has a row of its own.
+- Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
+  for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
+  toast's height there.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.

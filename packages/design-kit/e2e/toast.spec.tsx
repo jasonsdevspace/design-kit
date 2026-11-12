@@ -7,6 +7,7 @@ import ts from 'typescript';
 
 import { Toast } from '../src/react.js';
 import { box, KIT, sideways } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * A toast as a page attaches it, in Chromium and in WebKit: a message drawn and heard without
@@ -41,6 +42,16 @@ const FRAME = `<div class="dk-app">
 <div class="dk-app-toast">${TOAST}</div>
 <section class="dk-app-dock" aria-label="Actions"><button type="button" class="dk-button dk-button-accent dk-button-tall" id="save">Save the round</button></section>
 </div>`;
+
+// A screen as full as an app's gets: a long title, a dock of two and a tab bar, so at twice
+// the text size the body is at its least and a row for the toast would push the dock down.
+const FULL = FRAME.replace('Round 3</h1>', 'Round 3 of the game at the cabin</h1>').replace(
+    '</section>',
+    '<button type="button" class="dk-button dk-button-tall">Skip a player</button></section>' +
+        '<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul>' +
+        '<li><a href="#play" aria-current="page">Play</a></li><li><a href="#games">Games</a></li>' +
+        '</ul></nav>'
+);
 
 const ATTACH = `import { attachToast } from './controls.js';
 const kit = (window.kit = { done: [], last: undefined });
@@ -385,6 +396,123 @@ test("sits in an app's frame above the dock, its action one step back from the d
     await expect(undo(page)).toBeFocused();
 });
 
+test("never moves the frame's dock as it shows and leaves, at the usual and at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
+        await open(page, { body: FULL, height: 844 });
+        if (scale === 2) await textSize(page, 2);
+        const save = page.locator('#save');
+        const before = await box(save, "the dock's button");
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
+        await dismiss(page).click();
+        expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
+    }
+});
+
+test("keeps the frame's dock in place on a phone on its side at a large text size, where the page scrolls whole", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'chromium',
+        'the text size is set through Chromium, and Safari keeps no scroll position this way'
+    );
+    await open(page, { body: FRAME, width: 844, height: 390 });
+    await textSize(page, 1.5);
+    // Scrolled to the end, with the dock's button in view, where a thumb has just pressed it.
+    await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    const before = await page
+        .locator('#save')
+        .evaluate((element) => element.getBoundingClientRect().top);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    expect(
+        await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
+    ).toBeCloseTo(before, 0);
+    await dismiss(page).click();
+    expect(
+        await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
+    ).toBeCloseTo(before, 0);
+});
+
+test("stops what the keyboard reaches in the frame's body short of a toast floating over it", async ({
+    page,
+    browserName,
+}) => {
+    for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
+        await open(page, { body: FULL, height: 844 });
+        if (scale === 2) await textSize(page, 2);
+        await page.locator('.dk-app-body').evaluate((element) => {
+            // A paragraph with a link in it, as a body holds.
+            const line = document.createElement('p');
+            const link = document.createElement('a');
+            link.href = '#end';
+            link.id = 'end';
+            link.textContent = 'The end of the round';
+            line.append(link);
+            // In the middle of the body, out of sight below its fold, as most of what it holds is.
+            element.children[Math.floor(element.children.length / 2)]?.after(line);
+        });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        // The body scrolled so the link sits at its foot, under the toast, then reached by the
+        // keyboard from the body itself, as a visitor tabbing on through the screen reaches it.
+        await page.locator('.dk-app-body').evaluate((element) => {
+            const link = element.querySelector('#end');
+            if (!link) return;
+            element.scrollTop +=
+                link.getBoundingClientRect().bottom - element.getBoundingClientRect().bottom;
+            element.focus({ preventScroll: true });
+        });
+        await page.keyboard.press(tabKey(browserName));
+        await expect(page.locator('#end')).toBeFocused();
+        const card = await box(toast(page), 'the toast');
+        expect(
+            bottom(await box(page.locator('#end'), 'the link')),
+            `at ${String(scale)}x`
+        ).toBeLessThanOrEqual(card.y);
+    }
+});
+
+test('puts its buttons together on a row under its message on a phone at a large text size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    for (const [width, scale] of [
+        [390, 1.5],
+        [390, 2],
+        [320, 2],
+    ] as const) {
+        await open(page, { width });
+        await textSize(page, scale);
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const where = `${String(width)}px at ${String(scale)}x`;
+        const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
+        const action = await box(undo(page), 'the action');
+        const close = await box(dismiss(page), 'the close button');
+        // Under the message, the action before the close button on one row at its end, or where
+        // a face too wide leaves no room for both, each at the end of a row of its own.
+        expect(action.y, where).toBeGreaterThanOrEqual(message.y + message.height - 1);
+        const card = await box(toast(page), 'the toast');
+        const end = card.x + card.width;
+        expect(end - (close.x + close.width), where).toBeLessThan(16);
+        if (Math.abs(close.y - action.y) <= 1) {
+            expect(close.x, where).toBeGreaterThan(action.x + action.width - 1);
+        } else {
+            expect(close.y, where).toBeGreaterThan(action.y);
+            expect(end - (action.x + action.width), where).toBeLessThan(16);
+        }
+    }
+});
+
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
     page,
 }) => {
@@ -416,35 +544,64 @@ test('sits at the foot of a page clear of the home indicator, in the app column'
     expect(wide.x).toBe((1280 - wide.width) / 2);
 });
 
-test('keeps what the keyboard reaches, and the end of the page, clear of the toast on a page', async ({
+for (const width of [390, 320]) {
+    test(`keeps what the keyboard reaches, and the end of the page, clear of the toast on a page ${String(width)}px wide`, async ({
+        page,
+        browserName,
+    }) => {
+        await open(page, {
+            width,
+            body: PAGE.replace(
+                '<p id="last">',
+                '<p><a href="#earlier" id="above">Earlier rounds</a></p>' +
+                    '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
+            ),
+        });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const card = await box(toast(page), 'the toast');
+        // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
+        await page.locator('#foot').evaluate((element) => {
+            window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+        });
+        expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeGreaterThan(card.y);
+        await page.locator('#above').evaluate((element) => {
+            element.focus({ preventScroll: true });
+        });
+        await page.keyboard.press(tabKey(browserName));
+        await expect(page.locator('#foot')).toBeFocused();
+        expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(card.y);
+        await page.evaluate(() => {
+            window.scrollTo(0, document.documentElement.scrollHeight);
+        });
+        expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+            card.y
+        );
+    });
+}
+
+test('keeps room on a page for a toast whose buttons wrap under its message at twice the text size', async ({
     page,
     browserName,
 }) => {
-    await open(page, {
-        body: PAGE.replace(
-            '<p id="last">',
-            '<p><a href="#earlier" id="above">Earlier rounds</a></p>' +
-                '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
-        ),
-    });
-    await show(page, 'Round 3 saved.', 'Undo');
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    // The message of one word fits one line in any face, and the page's own rule puts the buttons
+    // under it, as a longer message does on a phone, so the toast is the two rows the room is for.
+    await open(page, { width: 390, css: '.dk-toast-message { flex-basis: 100%; }' });
+    await textSize(page, 2);
+    await show(page, 'Saved.', 'Undo');
     await settle(page);
     const card = await box(toast(page), 'the toast');
-    // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
-    await page.locator('#foot').evaluate((element) => {
-        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
-    });
-    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeGreaterThan(card.y);
-    await page.locator('#above').evaluate((element) => {
-        element.focus({ preventScroll: true });
-    });
-    await page.keyboard.press(tabKey(browserName));
-    await expect(page.locator('#foot')).toBeFocused();
-    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(card.y);
-    await page.evaluate(() => {
-        window.scrollTo(0, document.documentElement.scrollHeight);
-    });
-    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(card.y);
+    const action = await box(page.getByRole('button', { name: 'Undo' }), 'the action');
+    // The buttons sit under the message, so the toast is two rows tall.
+    const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
+    expect(action.y).toBeGreaterThanOrEqual(message.y + message.height - 1);
+    const kept = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
+    );
+    expect(kept).toBeGreaterThanOrEqual(
+        (await page.evaluate(() => window.innerHeight)) - card.y - 1
+    );
 });
 
 for (const theme of ['light', 'dark'] as const) {
