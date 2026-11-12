@@ -16,9 +16,9 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
   native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
   cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is.
-- **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen and 44 on a phone,
-  and tab bar links 56, as are an app's buttons, grid cells, rows and steppers where a page asks for
-  the tall size.
+- **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen, and 44 on a phone
+  and at every width in an app, and tab bar links 56, as are an app's buttons, grid cells, rows and
+  steppers where a page asks for the tall size.
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG asks
   a page to allow.
