@@ -433,12 +433,8 @@ would push its column.
 <form class="dk-field" role="search">
     <label class="dk-field-label" for="search">Search the products</label>
     <div class="dk-field-action">
-        <input class="dk-input" type="search" id="search" name="q" /><button
-            type="submit"
-            class="dk-button"
-        >
-            Search
-        </button>
+        <input class="dk-input" type="search" id="search" name="q" />
+        <button type="submit" class="dk-button">Search</button>
     </div>
 </form>
 ```
@@ -841,10 +837,10 @@ saved in another tab and a page restored by Back, and where the browser refuses 
 choice for as long as the page is open. The chosen word is drawn as a pressed button is, with an
 edge twice as thick in the accent. The choices keep one row wherever it fits, and wrap onto as many
 as they need where the switch's column is narrower, as at a large text size on a phone, so every
-choice stays in sight. In a demo's strip and footer, an explainer, a panel, a callout, an app's bar
-and body or a dialog, the switch reaches past the column by the room it keeps for its ring, so its
-name starts on the column's line. At a page's bare edge it stays inside, so nothing scrolls
-sideways.
+choice stays in sight. In a demo's strip and footer, an explainer and its header, a panel, a
+callout, an app's bar and body or a dialog, the switch reaches past the column by the room it keeps
+for its ring, so its name starts on the column's line. At a page's bare edge it stays inside, so
+nothing scrolls sideways.
 
 In a demo's strip on a screen narrower than 20rem, which is a phone with the browser's text set
 larger, three choices at a thumb's target no longer fit the row, so the sheet collapses the switch
@@ -946,10 +942,12 @@ it to a copy button's attach function.
 <div class="dk-code-head">
     <p class="dk-code-title" id="install-title">Install the kit</p>
     <button type="button" class="dk-button dk-copy" hidden="">
-        <span class="dk-copy-words"
-            ><span>Copy</span><span aria-hidden="true">Copied</span
-            ><span aria-hidden="true">Selected</span></span
-        ><span class="dk-visually-hidden"> install command</span>
+        <span class="dk-copy-words">
+            <span>Copy</span>
+            <span aria-hidden="true">Copied</span>
+            <span aria-hidden="true">Selected</span>
+        </span>
+        <span class="dk-visually-hidden"> install command</span>
     </button>
 </div>
 <pre
@@ -1223,15 +1221,16 @@ since the cell after it would be the one pinned.
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself on screen and wraps on paper, since wrapping would break its
-indentation and show line breaks the code does not have. It is a named region with a tabindex of 0,
-for the same reasons as a table's frame. Its title says what the code is for, such as "Run it
-yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
-page off the identifiers. A block never takes `lang` for its programming language, since `lang`
-names a human language. The code starts right after `<code>`, since a line break there shows as a
-blank first line, and a `<` or `&` in it is written `&lt;` or `&amp;`. The kit adds no behavior
-beyond the theme script, so a block on an explainer has no copy button. A page with script sets
-one beside the title, as the copy button's section shows.
+A block of code keeps its lines as written and scrolls inside itself on screen, since wrapping would
+break its indentation and show line breaks the code does not have. On paper it wraps, so nothing is
+cut off. It is a named region with a tabindex of 0, for the same reasons as a table's frame. Its
+title says what the code is for, such as "Run it yourself", rather than naming its language.
+`translate="no"` keeps a browser's translation of the page off the identifiers. A block never takes
+`lang` for its programming language, since `lang` names a human language. The code starts right
+after `<code>`, since a line break there shows as a blank first line, and a `<` or `&` in it is
+written `&lt;` or `&amp;`. The kit adds no behavior beyond the theme script, so a block on an
+explainer has no copy button. A page that attaches one sets it beside the title in a `dk-code-head`,
+as the copy button's section shows.
 
 <details>
 <summary>How a code block is drawn</summary>
@@ -1861,13 +1860,13 @@ shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls 
 it holds more than the screen does, and while one is open as a modal the page behind it does not
 scroll, in a browser with `:has()`. It stands what it holds `--dk-space-3` apart, and its actions
 further. Its title is at the title size, and its actions sit at its end, wrapping under one another
-where the room runs out. On a phone, and on a page that holds an app or ends in a tab bar, each
-action fills its row, so stacked actions are the dialog's width rather than two widths at its end.
-It pads by `--dk-space-5`, and by `--dk-space-4` at 48rem wide or less and on a page that holds an
-app or ends in a tab bar, as a panel does, with a sheet still clear of the home indicator. Its
-margins from the screen's edges and its padding stop growing with the text past their usual size, so
-on a phone at a large text size what it holds, such as a stepper, keeps its room. They stop there
-too where a page sets the space tokens larger.
+where the room runs out. On a phone, and on a page that holds an app or ends in a tab bar, the
+actions grow to fill their row, so stacked ones are the dialog's width rather than two widths at its
+end, and a text button keeps its link's width. It pads by `--dk-space-5`, and by `--dk-space-4` at
+48rem wide or less and on a page that holds an app or ends in a tab bar, as a panel does, with a
+sheet still clear of the home indicator. Its margins from the screen's edges and its padding stop
+growing with the text past their usual size, so on a phone at a large text size what it holds, such
+as a stepper, keeps its room. They stop there too where a page sets the space tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it

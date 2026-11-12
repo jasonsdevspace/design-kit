@@ -3,14 +3,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { buttons, codeHead, dialog, fieldAction, themeSwitch } from '../examples/examples.js';
 import { box, sideways, writePage } from './page.js';
+import { SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
  * The layouts a page would otherwise write around the kit's pieces, as a browser draws them: a row
  * of buttons that wraps with the kit's step, a field's control and its button at one height, a
  * code block's head with its copy button on the title's line, a dialog's stacked actions filling
- * their row on a phone, the theme switch's first word on the column's line in what pads and inside
- * a bare page, and an eyebrow the smallest step over its heading.
+ * their row on a phone and in an app and wrapping their words, the theme switch's first word on the
+ * column's line in what pads and inside a bare page, and an eyebrow the smallest step over its
+ * heading.
  */
 
 /** A control shown, as a page's script shows it once attached. */
@@ -59,7 +61,8 @@ test("stands a field's control and its button at one height at every width and t
                 title: 'Search',
                 body: `<main>${renderToStaticMarkup(fieldAction)}</main>`,
             });
-            if (size > 1) await textSize(page, size);
+            // Set at every pass, since a size set once stays for the page's life.
+            if (browserName === 'chromium') await textSize(page, size);
             const what = `${String(width)}px, text ${String(size)}`;
             const input = await box(page.getByRole('searchbox'), 'the control');
             const button = await box(page.getByRole('button', { name: 'Search' }), 'the button');
@@ -147,6 +150,67 @@ test("stacks a dialog's actions at the dialog's width on a phone at twice the te
     }
 });
 
+test("wraps a long label on a field's button and a dialog's action rather than run past the page", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    const long = 'Search every product, category and brand';
+    await writePage(page, {
+        width: 320,
+        title: 'Search',
+        css: SPACED,
+        body: `<main>${renderToStaticMarkup(fieldAction).replace('>Search<', `>${long}<`)}</main>`,
+    });
+    await textSize(page, 2);
+    expect(await sideways(page), 'the field').toBe(0);
+    await writePage(page, {
+        width: 320,
+        title: 'Round 3',
+        css: SPACED,
+        body: renderToStaticMarkup(dialog).replace(
+            '>End the game<',
+            '>End the game and clear every score<'
+        ),
+    });
+    await textSize(page, 2);
+    const opened = page.locator('#end-game');
+    await opened.evaluate((element) => {
+        (element as HTMLDialogElement).showModal();
+    });
+    // Nothing runs past the dialog's start, where it could not be scrolled to, or past its end.
+    expect(await opened.evaluate((element) => element.scrollWidth - element.clientWidth)).toBe(0);
+    const actions = await box(page.locator('#end-game .dk-dialog-actions'), 'the actions');
+    for (const name of ['Keep playing', 'End the game and clear every score']) {
+        const action = await box(page.getByRole('button', { name }), name);
+        expect(action.x, name).toBeGreaterThanOrEqual(actions.x - 0.5);
+        expect(action.x + action.width, name).toBeLessThanOrEqual(actions.x + actions.width + 0.5);
+    }
+});
+
+test("keeps a text button among a dialog's actions at its link's width on a phone", async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Round 3',
+        body: renderToStaticMarkup(dialog).replace(
+            'class="dk-button" value="keep"',
+            'class="dk-button dk-button-text" value="keep"'
+        ),
+    });
+    await page.locator('#end-game').evaluate((element) => {
+        (element as HTMLDialogElement).showModal();
+    });
+    const keep = await box(page.getByRole('button', { name: 'Keep playing' }), 'the text button');
+    const words = await page.getByRole('button', { name: 'Keep playing' }).evaluate((button) => {
+        const range = document.createRange();
+        range.selectNodeContents(button);
+        return range.getBoundingClientRect().width;
+    });
+    expect(keep.width).toBeLessThan(words + 16);
+});
+
 /** Where the switch's first word, its name, starts, and the inner edge of what holds it. */
 const switchStart = async (page: Page): Promise<{ word: number; edge: number }> => {
     const word = await box(page.locator('.dk-theme-switch-name'), "the switch's name");
@@ -164,6 +228,11 @@ test("starts the theme switch's first word on the column's line in what pads, an
     const theSwitch = shown(renderToStaticMarkup(themeSwitch));
     for (const [name, body] of [
         ['a panel', `<main><div class="dk-panel" id="holder">${theSwitch}</div></main>`],
+        ['a callout', `<main><div class="dk-callout" id="holder">${theSwitch}</div></main>`],
+        [
+            "an explainer's header",
+            `<header class="dk-explainer-header" id="holder">${theSwitch}</header><main></main>`,
+        ],
         [
             "an app's body",
             `<div class="dk-app"><main class="dk-app-body" id="holder">${theSwitch}</main></div>`,
@@ -174,8 +243,13 @@ test("starts the theme switch's first word on the column's line in what pads, an
         expect(word, name).toBeCloseTo(edge, 0);
         expect(await sideways(page), name).toBe(0);
     }
+    // At a page's bare edge the switch starts at the page's edge, its name past its ring's room.
     await writePage(page, { width: 320, title: 'Theme', body: `<main>${theSwitch}</main>` });
     expect(await sideways(page)).toBe(0);
+    expect((await box(page.locator('.dk-theme-switch'), 'the switch')).x).toBeCloseTo(0, 0);
+    expect(
+        (await box(page.locator('.dk-theme-switch-name'), "the switch's name")).x
+    ).toBeGreaterThan(0);
 });
 
 test('sets an eyebrow the smallest step over the heading after it, in every container', async ({

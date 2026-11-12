@@ -424,12 +424,12 @@
     }
 
     /*
-     * In an app's frame, on a page that ends in a tab bar and in a dialog on either, a button is the
-     * target at every width, as on a phone, since the app's column is a phone's on a wide screen
-     * too, so one screen has one height of control. The fields, the choices, the theme switch, the
-     * pills and the tabs below do the same there. A toast's buttons take the target too, so its
-     * close button is square. A demo's strip and footer are left as they are, so the page's chrome
-     * is one height on every page of a demo.
+     * In an app's frame, on a page that ends in a tab bar and in a dialog on either, a button is
+     * the target at every width, as on a phone, since the app's column is a phone's on a wide
+     * screen too, so one screen has one height of control. The fields, the choices, the theme
+     * switch, the pills and the tabs below do the same there. A toast's buttons take the target
+     * too, so its close button is square. A demo's strip and footer are left as they are, so the
+     * page's chrome is one height on every page of a demo.
      */
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog, .dk-toast)
@@ -451,8 +451,9 @@
      * pressed at arm's length. It sets the height, and the least width with it so it is never
      * narrower than it is tall, and nothing else, so it goes with the large button's padding and
      * text or without. It comes after the rules for a narrow screen and for an app, which would
-     * otherwise win by their order and bring a tall button back down to the target. A text button is never tall, and
-     * is left out here, so the pair written by hand does not give a link a box around it.
+     * otherwise win by their order and bring a tall button back down to the target. A text button
+     * is never tall, and is left out here, so the pair written by hand does not give a link a box
+     * around it.
      */
     :where(.dk-button-tall:not(.dk-button-text)) {
         min-height: var(--dk-target-large);
@@ -521,10 +522,10 @@
     }
 
     /*
-     * A field's control with a button beside it, such as a search with Go: the control takes the
-     * room the button leaves, and both stand one height, the taller of the two, at every width and
-     * text size. Where the button would leave the control too narrow to type in, as at a large text
-     * size on a phone, the button moves under it.
+     * A field's control with a button beside it, such as a search with the button that runs it: the
+     * control takes the room the button leaves, and both stand one height, the taller of the two,
+     * at every width and text size. Where the button would leave the control too narrow to type in,
+     * as at a large text size on a phone, the button moves under it.
      */
     :where(.dk-field-action) {
         display: flex;
@@ -538,8 +539,9 @@
         min-width: 0;
     }
 
+    /* The button keeps its words' width, and wraps them where even its own row is too narrow. */
     :where(.dk-field-action > .dk-button) {
-        flex: none;
+        flex: 0 1 auto;
     }
 
     :where(.dk-field-label) {
@@ -1277,15 +1279,16 @@
     }
 
     /*
-     * In what pads its content, a demo's strip and footer, an explainer, a panel, a callout, an app's
-     * bar and body or a dialog, the switch reaches past the column by the room it keeps for its
-     * ring, as the pills and a row do, so its first word starts on the column's line and the
-     * padding holds the ring. Elsewhere it stays inside, so nothing scrolls sideways.
+     * In what pads its content, a demo's strip and footer, an explainer and its header, a panel, a
+     * callout, an app's bar and body or a dialog, the switch reaches past the column by the room it
+     * keeps for its ring, as the pills and a row do, so its first word starts on the column's line
+     * and the padding holds the ring. Elsewhere it stays inside, so nothing scrolls sideways.
      */
     :where(
         :is(
                 .dk-strip,
                 .dk-footer,
+                .dk-explainer-header,
                 .dk-explainer,
                 .dk-panel,
                 .dk-callout,
@@ -2736,17 +2739,19 @@
     }
 
     /*
-     * On a phone, and in an app at every width, the actions fill their row, so where they stack at
-     * a large text size each is the dialog's width rather than two widths pushed to its end.
+     * On a phone, and at every width on a page that holds an app or ends in a tab bar, the actions
+     * grow to fill their row, so stacked ones are the dialog's width rather than two widths pushed
+     * to its end, and each still wraps its words where its row is too narrow for them. A text
+     * button keeps its link's width.
      */
     @media (width <= 48rem) {
-        :where(.dk-dialog-actions > *) {
-            flex: 1 0 auto;
+        :where(.dk-dialog-actions > :not(.dk-button-text)) {
+            flex: 1 1 auto;
         }
     }
 
-    :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-actions > *) {
-        flex: 1 0 auto;
+    :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-actions > :not(.dk-button-text)) {
+        flex: 1 1 auto;
     }
 
     /*
