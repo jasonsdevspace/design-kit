@@ -7,9 +7,10 @@ import { KIT, style } from './page.js';
 
 /*
  * The kit's button, fields, choices, switch and copy button with a ref, drawn by React in a browser,
- * since only a browser attaches a ref, moves focus, attaches a control or presses a key. The page
- * is bundled from ref-page.tsx with React in it, and written into the browser with the bundle as
- * its one script.
+ * since only a browser attaches a ref, moves focus, attaches a control or presses a key, and a
+ * stepper and a toast that keep what their attach functions wrote as React draws them again. The
+ * page is bundled from ref-page.tsx with React in it, and written into the browser with the bundle
+ * as its one script.
  */
 
 const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
@@ -125,6 +126,11 @@ test("keeps a stepper's own error heard and the field invalid as the page's erro
     // Shown, then with the page's error beside it, then with the page's error gone again.
     for (const press of [0, 1, 2]) {
         if (press > 0) await check.click();
+        // The page's own error is drawn after the first press and gone after the second, so React
+        // has rewritten the field each time.
+        await expect(page.getByText('Ben has bid that already')).toBeVisible({
+            visible: press === 1,
+        });
         await expect(bid, `after ${String(press)} presses`).toHaveAttribute(
             'aria-describedby',
             /(^|\s)bid-range(\s|$)/
@@ -152,4 +158,27 @@ test('keeps a shown toast drawn when the page draws it again with another class'
     expect(await card()).toEqual(shown);
     await expect(toast.locator('.dk-toast-message')).toHaveText('Round saved.');
     await expect(toast).toHaveAttribute('data-shown', '');
+});
+
+test("clears a stepper's own error as React draws it again once a script has set the value right", async ({
+    page,
+}) => {
+    await page.setContent('<div id="root"></div>');
+    await page.addScriptTag({ content: script, type: 'module' });
+    const bid = page.getByRole('spinbutton', { name: "Ana's bid" });
+    await expect(page.getByRole('button', { name: "Raise Ana's bid" })).toBeVisible();
+    await bid.fill('20');
+    await bid.press('Tab');
+    await expect(page.locator('#bid-range')).toBeVisible();
+    // A script sets the value with no event, and the page then draws the field again.
+    await bid.evaluate((input) => {
+        (input as HTMLInputElement).value = '5';
+    });
+    const check = page.getByRole('button', { name: 'Check the bid' });
+    await check.click();
+    await check.click();
+    await expect(page.getByText('Ben has bid that already')).toBeHidden();
+    await expect(page.locator('#bid-range')).toBeHidden();
+    await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(bid).not.toHaveAttribute('aria-describedby', /bid-range/);
 });

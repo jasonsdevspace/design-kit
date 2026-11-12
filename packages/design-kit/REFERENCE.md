@@ -1509,7 +1509,8 @@ visitor who cannot see the toast learns there is a way back, and the same words 
 heard twice. The function returns what dismisses that message, which does nothing once another has
 replaced it or it has gone. A shown toast is drawn from its `data-shown` attribute, which a page
 that draws the toast again, as React does when its class changes, leaves alone. `dk-toast-shown` is
-still set beside it for a page that reads the class.
+still set beside it for a page that reads the class, though such a redraw takes it away while the
+toast stays shown, so `data-shown` is the one to read.
 
 A toast leaves when its close button, its action, or Escape with focus in it dismisses it, or the
 next message replaces it. One with an action stays until then, since a timer would take the action

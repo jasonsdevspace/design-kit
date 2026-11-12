@@ -155,7 +155,8 @@ const Page = () => {
             <Toast ref={toast} className={loud ? 'page-toast page-toast-loud' : 'page-toast'} />
             <Button
                 onClick={() => {
-                    show.current?.('Round saved.');
+                    // With an action, so it stays until dismissed rather than for five seconds.
+                    show.current?.('Round saved.', { label: 'Undo', onAction: () => undefined });
                 }}
             >
                 Save the round

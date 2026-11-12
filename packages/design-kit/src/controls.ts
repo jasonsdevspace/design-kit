@@ -457,8 +457,8 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * see it learns there is a way back. The line keeps it until the toast leaves, and is what a screen
  * reader reads in the toast, since the words drawn are hidden from it. The same words shown twice
  * are heard twice. A shown toast is marked by its data-shown attribute, which a page that draws it
- * again, as React does with its class, leaves alone, and by the dk-toast-shown class for a page
- * that reads it.
+ * again, as React does with its class, leaves alone. The dk-toast-shown class is set beside it for
+ * a page that reads it, though such a redraw takes the class away while the toast stays shown.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
@@ -641,7 +641,8 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         const before = input.getAttribute('aria-describedby') ?? '';
         const ids = before.split(/\s+/).filter((id) => id !== '' && id !== range.id);
         if (wrong) ids.push(range.id);
-        // Written only when it changes, so the watch below never answers its own writing.
+        // Written only when it changes, so the watch below, woken by this writing, finds nothing
+        // left to write and stops.
         const after = ids.join(' ');
         if (after !== before) {
             if (after) input.setAttribute('aria-describedby', after);
@@ -702,11 +703,12 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     stepper.addEventListener('focusin', mark);
     input.form?.addEventListener('reset', onReset);
     // A page that draws the field again, as React does, writes its description and its invalid
-    // mark from what it last drew, so a shown error is put back each time they are rewritten.
+    // mark from what it last drew, so a shown error is put back each time they are rewritten, or
+    // cleared where a script has since made the value right.
     const kept = new MutationObserver(() => {
-        if (range && !range.hidden) report(true);
+        if (range && !range.hidden) report(wrong());
     });
-    kept.observe(input, { attributeFilter: ['aria-describedby', 'aria-invalid'] });
+    if (range) kept.observe(input, { attributeFilter: ['aria-describedby', 'aria-invalid'] });
     mark();
     down.hidden = false;
     up.hidden = false;
