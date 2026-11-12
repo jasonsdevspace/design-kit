@@ -71,25 +71,41 @@ export const footer: ReactElement = (
 
 /**
  * An action, the one action a view leads with, a large button, a tall one, a text button, a toggle
- * that is on, and a button that is off, with the text beside it that says why.
+ * that is on, and a button that is off, in a row of actions, with the text after it that says why
+ * the last is off.
  */
 export const buttons: ReactElement = (
     <>
-        <Button>Filters</Button>
-        <Button accent>Save rule</Button>
-        <Button large>Try it with your own products</Button>
-        <Button large tall accent>
-            Save the round
-        </Button>
-        <Button text>Show the markup</Button>
-        <Button pressed>Members only</Button>
-        <Button off aria-describedby="previous-why">
-            Previous
-        </Button>
+        <div className="dk-actions">
+            <Button>Filters</Button>
+            <Button accent>Save rule</Button>
+            <Button large>Try it with your own products</Button>
+            <Button large tall accent>
+                Save the round
+            </Button>
+            <Button text>Show the markup</Button>
+            <Button pressed>Members only</Button>
+            <Button off aria-describedby="previous-why">
+                Previous
+            </Button>
+        </div>
         <p id="previous-why" className="dk-field-hint">
             This is the first page.
         </p>
     </>
+);
+
+/** A field whose control has a button beside it, a search and the button that runs it. */
+export const fieldAction: ReactElement = (
+    <form className="dk-field" role="search">
+        <label className="dk-field-label" htmlFor="search">
+            Search the products
+        </label>
+        <div className="dk-field-action">
+            <input className="dk-input" type="search" id="search" name="q" />
+            <Button type="submit">Search</Button>
+        </div>
+    </form>
 );
 
 /** A text field with a hint and an error, a select with neither, and a textarea with a hint. */
@@ -639,6 +655,27 @@ export const rows: ReactElement = (
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
+/** A code block's head, its title with a copy button at its end, before the button is attached. */
+export const codeHead: ReactElement = (
+    <>
+        <div className="dk-code-head">
+            <p className="dk-code-title" id="install-title">
+                Install the kit
+            </p>
+            <CopyButton name="install command" />
+        </div>
+        <pre
+            className="dk-code"
+            role="region"
+            aria-labelledby="install-title"
+            tabIndex={0}
+            translate="no"
+        >
+            <code>npm install @jasonsdevspace/design-kit</code>
+        </pre>
+    </>
+);
+
 /** A copy button and the page's status line, before a page attaches the button. */
 export const copyButton: ReactElement = (
     <>
@@ -655,6 +692,7 @@ export const EXAMPLES = {
     footer,
     buttons,
     fields,
+    fieldAction,
     choiceField,
     callout,
     pills,
@@ -662,6 +700,7 @@ export const EXAMPLES = {
     eyebrow,
     themeSwitch,
     copyButton,
+    codeHead,
     explainerPage,
     steps,
     panel,

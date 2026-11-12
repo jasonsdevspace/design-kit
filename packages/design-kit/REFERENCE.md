@@ -269,17 +269,19 @@ explains.
 <!-- example: buttons -->
 
 ```html
-<button type="button" class="dk-button">Filters</button>
-<button type="button" class="dk-button dk-button-accent">Save rule</button>
-<button type="button" class="dk-button dk-button-large">Try it with your own products</button>
-<button type="button" class="dk-button dk-button-accent dk-button-large dk-button-tall">
-    Save the round
-</button>
-<button type="button" class="dk-button dk-button-text">Show the markup</button>
-<button type="button" class="dk-button" aria-pressed="true">Members only</button>
-<button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
-    Previous
-</button>
+<div class="dk-actions">
+    <button type="button" class="dk-button">Filters</button>
+    <button type="button" class="dk-button dk-button-accent">Save rule</button>
+    <button type="button" class="dk-button dk-button-large">Try it with your own products</button>
+    <button type="button" class="dk-button dk-button-accent dk-button-large dk-button-tall">
+        Save the round
+    </button>
+    <button type="button" class="dk-button dk-button-text">Show the markup</button>
+    <button type="button" class="dk-button" aria-pressed="true">Members only</button>
+    <button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
+        Previous
+    </button>
+</div>
 <p id="previous-why" class="dk-field-hint">This is the first page.</p>
 ```
 
@@ -298,6 +300,10 @@ in both states, since the attribute already says which it is. An action carries 
 all. A button with `aria-expanded="true"`, whose panel is open, is drawn as a pressed one, and a
 text button with it keeps its link look, since it has no padding around its words for the pressed
 look to fill and the open panel is the sign.
+
+A row of buttons, such as a page's actions under its lead, sits in a `dk-actions`, as above. It
+spaces the buttons by `--dk-space-2` and wraps them onto rows the same step apart, where spaces
+between buttons would leave the rows touching. It sets no margin of its own.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -326,12 +332,13 @@ button's height, so its target holds, which is why it sits beside a block rather
 text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
 color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
 muted text and still with no edge. Where a pointer can hover, the edge turns to the focus color
-under it, and the accent button underlines its words instead. Pressed is the highlight with an edge
-twice as thick in the accent, and its words in the page's text, an accent button's included. Off is
-the muted text on no ground with an edge in the line color, rather than a fade, so its words keep a
-ratio the palette measures. An off toggle that is on keeps the thicker edge, in the line color. In
-forced colors a pressed button takes the system's `Highlight`, and an off one takes `GrayText` on
-the page's ground, accent or not. An off toggle that is on keeps an edge in `Highlight`.
+under it, and the accent button, or a link drawn as one, underlines its words instead, its one cue
+under a pointer since its edge is already the accent. Pressed is the highlight with an edge twice as
+thick in the accent, and its words in the page's text, an accent button's included. Off is the muted
+text on no ground with an edge in the line color, rather than a fade, so its words keep a ratio the
+palette measures. An off toggle that is on keeps the thicker edge, in the line color. In forced
+colors a pressed button takes the system's `Highlight`, and an off one takes `GrayText` on the
+page's ground, accent or not. An off toggle that is on keeps an edge in `Highlight`.
 
 A page with a look of its own for a button sets two custom properties and writes no rule over the
 kit's class. `--dk-button-shadow` is a shadow drawn under a button at rest, such as a hard edge
@@ -417,6 +424,26 @@ and its text at the top rather than centered, and it resizes in height alone, si
 would push its column.
 
 </details>
+
+#### A field with a button
+
+<!-- example: fieldAction -->
+
+```html
+<form class="dk-field" role="search">
+    <label class="dk-field-label" for="search">Search the products</label>
+    <div class="dk-field-action">
+        <input class="dk-input" type="search" id="search" name="q" />
+        <button type="submit" class="dk-button">Search</button>
+    </div>
+</form>
+```
+
+A control with a button beside it, such as a search with the button that runs it, sits in a
+`dk-field-action` under the field's label. The control takes the room the button leaves, and both
+stand one height, the taller of the two, at every width and text size. Where the button would leave
+the control too narrow to type in, as at a large text size on a phone, the button moves under it.
+The button is a kit button, and its words say what it does, as Search rather than Go.
 
 ### Choice fields
 
@@ -640,7 +667,8 @@ An eyebrow is a small label in caps over a heading or a group, such as a hero's 
 name, in the muted text at the caption size and the heading's weight, tracked by
 `--dk-tracking-caps` so the caps read at that size. It is text, not a heading, so it adds nothing to
 the page's outline, and it has no margin of its own, so in the explainer, a panel, an app's body or
-a dialog it stands one of the container's steps from what is around it.
+a dialog it stands one of the container's steps from what is above it, and `--dk-space-1` from a
+heading after it, since it names that heading.
 
 ### React components
 
@@ -802,14 +830,17 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
 
 The switch is its name, Theme, a button for the collapsed form, and a group named Theme of three
 native radios, System, Light and Dark, described by a note that the choice is saved for every page
-of the site, which a page can word for itself. `attachThemeSwitch(element)` takes the switch, or
-an element that holds it, checks the choice the page draws, shows the switch, and saves and draws a
+of the site, which a page can word for itself. `attachThemeSwitch(element)` takes the switch, or an
+element that holds it, checks the choice the page draws, shows the switch, and saves and draws a
 choice under the theme contract's key, `system` following the system's scheme. It follows a choice
-saved in another tab and a page restored by Back, and where the browser refuses storage it holds
-the choice for as long as the page is open. The chosen word is drawn as a pressed button is, with an
+saved in another tab and a page restored by Back, and where the browser refuses storage it holds the
+choice for as long as the page is open. The chosen word is drawn as a pressed button is, with an
 edge twice as thick in the accent. The choices keep one row wherever it fits, and wrap onto as many
 as they need where the switch's column is narrower, as at a large text size on a phone, so every
-choice stays in sight.
+choice stays in sight. In a demo's strip and footer, an explainer and its header, a panel, a
+callout, an app's bar and body or a dialog, the switch reaches past the column by the room it keeps
+for its ring, so its name starts on the column's line. At a page's bare edge it stays inside, so
+nothing scrolls sideways.
 
 In a demo's strip on a screen narrower than 20rem, which is a phone with the browser's text set
 larger, three choices at a thumb's target no longer fit the row, so the sheet collapses the switch
@@ -902,6 +933,36 @@ to Copy.
 
 `CopyStatus` takes `className` and `ref` the same way, its ref the line drawn, for a page that hands
 it to a copy button's attach function.
+
+#### A copy button for a code block
+
+<!-- example: codeHead -->
+
+```html
+<div class="dk-code-head">
+    <p class="dk-code-title" id="install-title">Install the kit</p>
+    <button type="button" class="dk-button dk-copy" hidden="">
+        <span class="dk-copy-words">
+            <span>Copy</span>
+            <span aria-hidden="true">Copied</span>
+            <span aria-hidden="true">Selected</span>
+        </span>
+        <span class="dk-visually-hidden"> install command</span>
+    </button>
+</div>
+<pre
+    class="dk-code"
+    role="region"
+    aria-labelledby="install-title"
+    tabindex="0"
+    translate="no"
+><code>npm install @jasonsdevspace/design-kit</code></pre>
+```
+
+A code block's copy button sits in a `dk-code-head` with the block's title, at the end of the
+title's line, and wraps under the title where the line has no room. The block follows the head as
+it follows a title on its own. The button is hidden until it is attached, so without script the
+head shows the title alone, as an explainer's block does.
 
 ## Explainer pages
 
@@ -1160,14 +1221,16 @@ since the cell after it would be the one pinned.
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself on screen and wraps on paper, since wrapping would break its
-indentation and show line breaks the code does not have. It is a named region with a tabindex of 0,
-for the same reasons as a table's frame. Its title says what the code is for, such as "Run it
-yourself", rather than naming its language. `translate="no"` keeps a browser's translation of the
-page off the identifiers. A block never takes `lang` for its programming language, since `lang`
-names a human language. The code starts right after `<code>`, since a line break there shows as a
-blank first line, and a `<` or `&` in it is written `&lt;` or `&amp;`. The kit adds no behavior
-beyond the theme script, so a block has no copy button.
+A block of code keeps its lines as written and scrolls inside itself on screen, since wrapping would
+break its indentation and show line breaks the code does not have. On paper it wraps, so nothing is
+cut off. It is a named region with a tabindex of 0, for the same reasons as a table's frame. Its
+title says what the code is for, such as "Run it yourself", rather than naming its language.
+`translate="no"` keeps a browser's translation of the page off the identifiers. A block never takes
+`lang` for its programming language, since `lang` names a human language. The code starts right
+after `<code>`, since a line break there shows as a blank first line, and a `<` or `&` in it is
+written `&lt;` or `&amp;`. The kit adds no behavior beyond the theme script, so a block on an
+explainer has no copy button. A page that attaches one sets it beside the title in a `dk-code-head`,
+as the copy button's section shows.
 
 <details>
 <summary>How a code block is drawn</summary>
@@ -1797,11 +1860,13 @@ shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls 
 it holds more than the screen does, and while one is open as a modal the page behind it does not
 scroll, in a browser with `:has()`. It stands what it holds `--dk-space-3` apart, and its actions
 further. Its title is at the title size, and its actions sit at its end, wrapping under one another
-where the room runs out. It pads by `--dk-space-5`, and by `--dk-space-4` at 48rem wide or less and
-on a page that holds an app or ends in a tab bar, as a panel does, with a sheet still clear of the
-home indicator. Its margins from the screen's edges and its padding stop growing with the text past
-their usual size, so on a phone at a large text size what it holds, such as a stepper, keeps its
-room. They stop there too where a page sets the space tokens larger.
+where the room runs out. On a phone, and on a page that holds an app or ends in a tab bar, the
+actions grow to fill their row, so stacked ones are the dialog's width rather than two widths at its
+end, and a text button keeps its link's width. It pads by `--dk-space-5`, and by `--dk-space-4` at
+48rem wide or less and on a page that holds an app or ends in a tab bar, as a panel does, with a
+sheet still clear of the home indicator. Its margins from the screen's edges and its padding stop
+growing with the text past their usual size, so on a phone at a large text size what it holds, such
+as a stepper, keeps its room. They stop there too where a page sets the space tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it
