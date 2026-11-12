@@ -8,9 +8,10 @@ import { box, sideways, style, writePage } from './page.js';
  * A grid of buttons as a browser draws it: the columns asked for where they fit and fewer where a
  * cell would be under the target, every cell at the target both ways or the larger one in a tall
  * grid, a group named for what it holds with each toggle saying whether it is on and each plain key
- * named for what it enters, a toggle that is on told apart by how light it is and its weight, in
- * forced colors too, a cell that is off dashed, unpressable and at full contrast, one that is off
- * and on keeping an edge that is seen, a tall button tall in any grid, the button's
+ * named for what it enters, a toggle that is on filled in the text color and told apart by how
+ * light it is and its weight, in forced colors too, its edge turning to the accent under a pointer
+ * and text selected on it in sight, a cell that is off dashed, unpressable and at full contrast,
+ * one that is off and on keeping an edge that is seen, a tall button tall in any grid, the button's
  * shadow and press read by each cell, the keyboard reaching and pressing each one, and no audit
  * findings in either theme.
  */
@@ -187,6 +188,61 @@ test('tells a toggle that is on by how light it is and its weight, in forced col
     }
 });
 
+test('fills a toggle that is on with the text color, apart from the accent, in both themes', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, { theme });
+        const page_ = await style(page.locator('body'), 'color', 'background-color');
+        const on = await style(card(page, '7'), 'background-color', 'color', 'border-top-color');
+        expect(on['background-color'], theme).toBe(page_['color']);
+        expect(on['border-top-color'], theme).toBe(page_['color']);
+        expect(on['color'], theme).toBe(page_['background-color']);
+        // None of the accent edge a pressed button draws inside its own.
+        expect((await style(card(page, '7'), 'box-shadow'))['box-shadow'], theme).toBe('none');
+        expect(contrast(on['color'] ?? '', on['background-color'] ?? ''), theme).toBeGreaterThan(7);
+        expect(on['background-color'], theme).not.toBe(await systemColor(page, 'var(--dk-accent)'));
+    }
+});
+
+test("turns a toggle that is on to the accent's edge under a pointer", async ({ page }) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, { theme });
+        const accent = await systemColor(page, 'var(--dk-accent)');
+        await card(page, '7').hover();
+        // The edge eases to its new color, so it is read once it has arrived.
+        await expect
+            .poll(
+                async () => (await style(card(page, '7'), 'border-top-color'))['border-top-color'],
+                { message: theme }
+            )
+            .toBe(accent);
+        await page.mouse.move(0, 0);
+    }
+});
+
+test('keeps text selected on a toggle that is on in sight', async ({ page }) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, { theme });
+        const fill = (await style(card(page, '7'), 'background-color'))['background-color'] ?? '';
+        // On the cell's own words, and on words in an element inside it, as a label in a span.
+        // The span renames the cell, so it is read after the fill.
+        const read = await card(page, '7').evaluate((cell) => {
+            const inner = document.createElement('span');
+            inner.textContent = 'inside';
+            cell.append(inner);
+            return [cell, inner].map((element) => {
+                const picked = getComputedStyle(element, '::selection');
+                return { ground: picked.backgroundColor, words: picked.color };
+            });
+        });
+        for (const { ground, words } of read) {
+            expect(contrast(ground, fill), theme).toBeGreaterThanOrEqual(3);
+            expect(contrast(words, ground), theme).toBeGreaterThanOrEqual(4.5);
+        }
+    }
+});
+
 test('draws a cell that is off with a dashed edge, at full contrast, and lets nothing press it', async ({
     page,
 }) => {
@@ -202,6 +258,10 @@ test('draws a cell that is off with a dashed edge, at full contrast, and lets no
         );
         expect(contrast(drawn['color'] ?? '', ground ?? ''), theme).toBeGreaterThanOrEqual(4.5);
     }
+    // One that is off and on keeps the strong weight, told from one only off by more than its edge.
+    expect(Number((await style(card(page, '11'), 'font-weight'))['font-weight'])).toBeGreaterThan(
+        Number((await style(card(page, '12'), 'font-weight'))['font-weight'])
+    );
     // One that is off and on keeps a thicker edge, seen against the page.
     const both = await style(card(page, '11'), 'box-shadow', 'background-color');
     expect(both['background-color']).toBe('rgba(0, 0, 0, 0)');

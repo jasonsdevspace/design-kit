@@ -2236,21 +2236,34 @@
     }
 
     /*
-     * A toggle that is on is filled in the accent, so on and off differ by how light the cell is
-     * and by the weight of its words, and read at arm's length. Forced colors fill it in the
-     * system's selection colors, as they fill any pressed button.
+     * A toggle that is on is filled in the text color with the page's ground as its words, so on
+     * and off differ by how light the cell is and by the weight of its words, and read at arm's
+     * length. The accent is left to the one action the view leads with, so the cell takes none of
+     * the accent edge a pressed button draws inside its own. Under a pointer its edge turns to the
+     * accent as any button's does, and text selected on it swaps the pair, in the base sheet beside
+     * the accent button's. Forced colors fill it in the system's selection colors, as they fill any
+     * pressed button.
      */
     :where(.dk-button-grid > .dk-button[aria-pressed='true']) {
-        border-color: var(--dk-accent);
-        background: var(--dk-accent);
-        color: var(--dk-on-accent);
+        border-color: var(--dk-fg);
+        background: var(--dk-fg);
+        box-shadow: none;
+        color: var(--dk-bg);
         font-weight: var(--dk-weight-strong);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-grid > .dk-button[aria-pressed='true']:hover) {
+            border-color: var(--dk-focus, var(--dk-accent));
+        }
     }
 
     /*
      * A cell that is off has a dashed edge and keeps the page's text, where a faded one is hard to
      * tell from a toggle that is only not pressed. One that is on keeps a thicker edge, in the
-     * control's color so it is seen against the page.
+     * control's color so it is seen against the page, and the strong weight of a toggle that is on,
+     * so it is told from a cell only off by more than a line. These come after the rule for a
+     * toggle that is on, so their edge and ground win over its fill and its lack of an edge.
      */
     :where(
         .dk-button-grid > .dk-button:disabled,
@@ -2268,6 +2281,7 @@
         .dk-button-grid > .dk-button[aria-pressed='true'][aria-disabled='true']
     ) {
         box-shadow: inset 0 0 0 1px var(--dk-control);
+        font-weight: var(--dk-weight-strong);
     }
 
     /*

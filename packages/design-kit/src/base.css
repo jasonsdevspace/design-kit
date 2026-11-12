@@ -65,6 +65,19 @@
         color: var(--dk-accent);
     }
 
+    /*
+     * A toggle that is on in a button grid sits on the text color, where a selection on the accent
+     * would be lost, so its selection swaps that pair. A cell that is off as well has no fill, and
+     * keeps the page's selection.
+     */
+    :where(
+        .dk-button-grid > .dk-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']),
+        .dk-button-grid > .dk-button[aria-pressed='true']:not(:disabled, [aria-disabled='true']) *
+    )::selection {
+        background-color: var(--dk-bg);
+        color: var(--dk-fg);
+    }
+
     :where(code, kbd, pre, samp) {
         font-family: var(--dk-font-mono);
     }
