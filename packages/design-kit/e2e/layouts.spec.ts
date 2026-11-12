@@ -269,3 +269,67 @@ test('sets an eyebrow the smallest step over the heading after it, in every cont
         expect(heading.y - bottom(eyebrow), name).toBeCloseTo(4, 0);
     }
 });
+
+test("leaves a dialog in an app's body where the browser and its own rules put it", async ({
+    page,
+}) => {
+    const markup = renderToStaticMarkup(dialog);
+    await writePage(page, {
+        width: 390,
+        height: 700,
+        title: 'Round 3',
+        body: `<div class="dk-app"><main class="dk-app-body"><h1>Round 3</h1><p>Before.</p>${markup}</main></div>`,
+    });
+    for (const id of ['end-game', 'round-options']) {
+        await page.locator(`#${id}`).evaluate((element) => {
+            (element as HTMLDialogElement).showModal();
+        });
+        // Read once it has finished arriving.
+        await page
+            .locator(`#${id}`)
+            .evaluate((element) =>
+                Promise.all(element.getAnimations().map((animation) => animation.finished))
+            );
+        const drawn = await box(page.locator(`#${id}`), id);
+        if (id === 'round-options') {
+            // A sheet rises from the bottom edge.
+            expect(bottom(drawn), id).toBeCloseTo(700, 0);
+        } else {
+            // A centered dialog stands as far from the top as from the bottom.
+            expect(drawn.y, id).toBeCloseTo(700 - bottom(drawn), 0);
+        }
+        await page.locator(`#${id}`).evaluate((element) => {
+            (element as HTMLDialogElement).close();
+        });
+    }
+});
+
+test("sets a dialog's actions their further step inside a form as well", async ({ page }) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Round 3',
+        body: `<dialog class="dk-dialog" id="named" aria-labelledby="named-title"><form method="dialog"><h2 class="dk-dialog-title" id="named-title">Name the round</h2><p id="above">The name shows in the history.</p><div class="dk-dialog-actions"><button type="submit" class="dk-button">Save</button></div></form></dialog>`,
+    });
+    await page.locator('#named').evaluate((element) => {
+        (element as HTMLDialogElement).showModal();
+    });
+    const above = await box(page.locator('#above'), 'the text above');
+    const actions = await box(page.locator('.dk-dialog-actions'), 'the actions');
+    expect(actions.y - bottom(above)).toBeCloseTo(24, 0);
+});
+
+test("draws a grid's least cell at the target a page sets around it", async ({ page }) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Cards',
+        css: '.compact { --dk-target: 2rem; }',
+        body: `<main><div class="compact"><div class="dk-button-grid" role="group" aria-label="Cards" style="--dk-button-grid-columns: 12; width: 300px">${Array.from(
+            { length: 12 },
+            (_, card) => `<button type="button" class="dk-button">${String(card)}</button>`
+        ).join('')}</div></div></main>`,
+    });
+    const cell = await box(page.getByRole('button', { name: '0', exact: true }), 'a cell');
+    // Twelve asked for in 300px, each at least 2rem wide, fit nine to a row.
+    expect(Math.round(cell.width)).toBeGreaterThanOrEqual(32);
+    expect(Math.round(cell.width)).toBeLessThan(44);
+});
