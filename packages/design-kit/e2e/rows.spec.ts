@@ -4,12 +4,12 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { box, sideways, style, writePage } from './page.js';
 
 /*
- * A list of rows as a browser draws it: a rule between rows and none after the last, in both
- * themes and in forced colors, each row at the target or the larger one, a link row one stop named
- * by its words, title first, with its ring around the whole row, a button at a row's end its own stop named for
- * what it does and to which row, a long title wrapping with the end beside its first line, the
- * list saying how many rows it holds and an empty one not drawn, the keyboard's order, and no
- * audit findings in either theme.
+ * A list of rows as a browser draws it: a rule between rows and none after the last, in both themes
+ * and in forced colors, each row at the target or the larger one, a link row one stop named by its
+ * words, title first, with its ring around the whole row, its words on the column's line under an
+ * eyebrow, a button at a row's end its own stop named for what it does and to which row, a long
+ * title wrapping with the end beside its first line, the list saying how many rows it holds and an
+ * empty one not drawn, the keyboard's order, and no audit findings in either theme.
  */
 
 const GAMES = [
@@ -149,7 +149,7 @@ test('makes a link row one stop named by its words, title first, with its ring a
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
     expect(parseFloat(ring['outline-offset'] ?? '')).toBe(-parseFloat(ring['outline-width'] ?? ''));
-    // The link is the row, as wide as its item.
+    // The link is the row, as wide as its item on a page with no padding of its own.
     const row = await box(link, 'the row');
     const item = await box(items(games(page)).first(), 'the item');
     expect([row.x, row.width]).toEqual([item.x, item.width]);
@@ -242,3 +242,45 @@ for (const theme of ['light', 'dark'] as const) {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }
+
+test("starts a row's words on the column's line in what pads, and keeps it inside a bare page", async ({
+    page,
+}) => {
+    const list = `<p class="dk-eyebrow" id="eyebrow">Recent</p><ul class="dk-rows" role="list" aria-label="Games">${gameRows}</ul>`;
+    for (const [name, body] of [
+        ['an explainer', `<main class="dk-explainer"><h1>History</h1>${list}</main>`],
+        ['a panel', `<main><h1>History</h1><div class="dk-panel">${list}</div></main>`],
+        [
+            "an app's body",
+            `<div class="dk-app"><main class="dk-app-body"><h1>History</h1>${list}</main></div>`,
+        ],
+    ] as const) {
+        await writePage(page, { width: 320, title: 'History', body });
+        const eyebrow = await box(page.locator('#eyebrow'), 'the eyebrow');
+        const title = await box(page.locator('#g12'), "a row's title");
+        expect(title.x, name).toBeCloseTo(eyebrow.x, 0);
+        expect(await sideways(page), name).toBe(0);
+    }
+    // At a page's bare edge, and in a table's cell, the row stays inside, so nothing scrolls
+    // sideways and its whole ring shows.
+    for (const [name, body] of [
+        ['a bare page', `<main>${list}</main>`],
+        [
+            "a table's cell",
+            `<div class="dk-table-scroll" role="region" aria-label="Games" tabindex="0"><table class="dk-table"><tbody><tr><td><ul class="dk-rows" role="list" aria-label="Games">${gameRows}</ul></td></tr></tbody></table></div>`,
+        ],
+    ] as const) {
+        await writePage(page, { width: 320, title: 'History', body });
+        expect(await sideways(page), name).toBe(0);
+        const row = await box(page.getByRole('link').first(), 'the row');
+        const item = await box(page.locator('.dk-rows > li').first(), 'the item');
+        expect([row.x, row.width], name).toEqual([item.x, item.width]);
+        if (name === "a table's cell")
+            expect(
+                await page
+                    .locator('.dk-table-scroll')
+                    .evaluate((frame) => frame.scrollWidth - frame.clientWidth),
+                name
+            ).toBe(0);
+    }
+});

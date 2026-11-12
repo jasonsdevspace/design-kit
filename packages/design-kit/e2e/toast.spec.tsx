@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Toast } from '../src/react.js';
-import { box, js, KIT, ORIGIN, sideways, tabKey } from './page.js';
+import { box, colorOf, contrast, js, KIT, ORIGIN, sideways, style, tabKey } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -776,3 +776,23 @@ for (const theme of ['light', 'dark'] as const) {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }
+
+test('draws its close button quiet in the muted color, and in the text color under a pointer', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, { theme });
+        await page.locator('#save').click();
+        await expect(dismiss(page)).toBeVisible();
+        const read = async () => (await style(dismiss(page), 'color'))['color'] ?? '';
+        const ground = (await style(toast(page), 'background-color'))['background-color'] ?? '';
+        const text = (await style(page.locator('body'), 'color'))['color'];
+        const muted = await colorOf(page, 'var(--dk-muted)');
+        const quiet = await read();
+        expect(quiet, theme).toBe(muted);
+        expect(contrast(quiet, ground), theme).toBeGreaterThanOrEqual(4.5);
+        await dismiss(page).hover();
+        await expect.poll(read, { message: theme }).toBe(text);
+        expect(contrast(await read(), ground), theme).toBeGreaterThanOrEqual(4.5);
+    }
+});

@@ -2215,9 +2215,20 @@
         padding-inline: var(--dk-space-2);
     }
 
+    /*
+     * The close button is quiet beside the toast's one action, in the muted color, and turns to the
+     * text color under a pointer, as a button's edge turns, since it has no edge to turn.
+     */
     :where(.dk-toast-close) {
         min-width: var(--dk-target);
+        color: var(--dk-muted);
         text-decoration: none;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-toast-close:hover) {
+            color: var(--dk-fg);
+        }
     }
 
     /*
@@ -2394,7 +2405,7 @@
      * title's first line, so a long title wraps and the row grows with the end still beside where
      * it starts, and a row of one line sits in the middle of its height. A button at the end sits
      * in the middle of the row, since its target is taller than a line. A row is at least the
-     * target tall, or the larger target in a tall list, and is inset by the room a focus ring
+     * target tall, or the larger target in a tall list. It pads each side by the room a focus ring
      * takes, so a ring drawn inside it never covers its words.
      */
     :where(.dk-row) {
@@ -2410,6 +2421,17 @@
         padding: var(--dk-space-2) calc(var(--dk-ring-width) + var(--dk-ring-offset));
         color: inherit;
         text-decoration: none;
+    }
+
+    /*
+     * In what pads its content, an explainer, a panel, a callout, an app's body or a dialog, a row
+     * reaches past the column by that room, as the pills and the choices do, so its words start on
+     * the column's line and the padding holds its ring. A list at a page's bare edge or in a
+     * table's cell keeps its rows inside it, so the page never scrolls sideways and no part of a
+     * ring is cut off.
+     */
+    :where(:is(.dk-explainer, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
+        margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
     :where(.dk-row > .dk-button) {
@@ -2646,6 +2668,29 @@
         padding-bottom: calc(min(var(--dk-space-5), 24px) + var(--dk-safe-bottom));
         border-bottom: 0;
         border-radius: var(--dk-radius-large) var(--dk-radius-large) 0 0;
+    }
+
+    /*
+     * On a phone a dialog and a sheet pad by the smaller space, as a panel does, and a sheet still
+     * clears the home indicator below it. A dialog on a page that holds an app or ends in a tab bar
+     * does the same at every width, as its controls do, since the app's column is a phone's.
+     */
+    @media (width <= 48rem) {
+        :where(.dk-dialog) {
+            padding: min(var(--dk-space-4), 16px);
+        }
+
+        :where(.dk-dialog-sheet) {
+            padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+        }
+    }
+
+    :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog) {
+        padding: min(var(--dk-space-4), 16px);
+    }
+
+    :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-sheet) {
+        padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
     }
 
     :where(.dk-dialog-sheet:modal) {

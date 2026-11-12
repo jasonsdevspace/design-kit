@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
 import ts from 'typescript';
 
+import { contrast as ratio } from '../examples/palette.js';
+
 /*
  * What every spec that draws the kit in a browser needs: the sheets as the source has them, a page
  * written into the browser with them, and the reads of what the browser drew. One copy, so a width
@@ -94,3 +96,24 @@ export const themeOf = (page: Page): Promise<string | null> =>
 /** The Tab key, which Safari on a Mac keeps for fields unless Option is held. */
 export const tabKey = (browserName: string): string =>
     browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+
+/** The contrast between two colors the browser resolved to rgb, by the measure the tokens use. */
+export const contrast = (first: string, second: string): number => {
+    const hex = (color: string) =>
+        `#${(color.match(/[\d.]+/g) ?? [])
+            .slice(0, 3)
+            .map((part) => Math.round(Number(part)).toString(16).padStart(2, '0'))
+            .join('')}`;
+    return ratio(hex(first), hex(second));
+};
+
+/** A color as the page resolves it, a system color or a token, from an element asked to take it. */
+export const colorOf = (page: Page, name: string): Promise<string> =>
+    page.evaluate((color) => {
+        const probe = document.createElement('span');
+        probe.style.color = color;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+    }, name);
