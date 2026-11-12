@@ -16,9 +16,9 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
   native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
   cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is.
-- **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen and 44 on a phone.
-  On the site, the page tabs, the theme switch, the list of a page's sections and the controls of
-  each code panel are at least 24 pixels tall on a wide screen and 44 on a phone.
+- **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen and 44 on a phone,
+  and tab bar links 56, as are an app's buttons, grid cells, rows and steppers where a page asks for
+  the tall size.
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG asks
   a page to allow.
@@ -41,8 +41,18 @@ is its CSS transformer, as the package README shows.
   checkbox or a radio shows no pointer, though the box or the dot does. In a choice field there, a
   choice the keyboard lands on lights no word, so the ring on the control is the one cue, and a
   disabled choice keeps its word in the text color, with only the control drawn off.
-- The browser tests run only in Chromium, so the other browsers at the floor are held to it by what
-  they document rather than by a test here.
+- In Firefox 120, the room a page that ends in a tab bar keeps for it, the room a page keeps for a
+  toast shown over it, and the room a table's frame keeps for its pinned column all rest on
+  `:has()`, so there the keyboard can bring a control to rest under the bar, the toast or the pinned
+  column, and a toast with an action covers the page's last line until it is dismissed. An app drawn
+  in the kit's frame keeps clear of the bar and the toast there, since they have rows of their own.
+  The page behind an open dialog still scrolls there too.
+- Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
+  closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
+  attribute.
+- The browser tests run in Chromium, and the app's frame, tab bar, toast and dialog in WebKit as
+  well, so what Firefox lacks at the floor is known from its documented support rather than from
+  a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
   states the browser gives it.
 - The criteria a tool cannot judge, such as whether a heading describes its section or a link's

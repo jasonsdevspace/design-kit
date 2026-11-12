@@ -313,9 +313,9 @@ options rejected, what the choice costs, and the test behind it.
     moving when the switch comes, at the cost of a policy written for jasonsdevspace.com alone, so
     a build served anywhere else, as the tests and the audit serve theirs, names its own origin.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](docs/decisions/0013-controls-attach-to-markup.md).
-    The theme switch, the copy button and the toast work the same on a page with React and one
-    without, from one copy of their behavior, at the cost of a second script in the browser, held
-    to a budget.
+    The theme switch, the copy button, the stepper, the toast and the dialog work the same on a page
+    with React and one without, from one copy of their behavior, at the cost of a second script in
+    the browser, held to a budget.
 14. [A piece with no state of its own ships as classes alone](docs/decisions/0014-stateless-pieces-ship-as-classes.md).
     Tabs, pills and the eyebrow look the same on every site from classes a page writes, at the cost
     of each page running its own tabs' keys.
