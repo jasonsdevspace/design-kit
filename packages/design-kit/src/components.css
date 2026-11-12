@@ -2243,15 +2243,19 @@
     }
 
     /*
-     * A kit element a page marks hidden is gone, whatever display the kit or the page gives it.
-     * The browser's own rule for hidden loses to any display rule a page or the kit sets, so a
-     * hidden button, callout or row would otherwise stay drawn, and a theme switch, a copy button
-     * or a stepper's buttons, which wait hidden for a script, would show under a page's own button
-     * rule. Important in this layer, it wins over a page's rules outside it, as a state that is
-     * either on or off should. A page that reveals the element takes the attribute away. Hidden
-     * until found is the browser's to draw, so it is left alone.
+     * A kit element a page marks hidden is gone, and so is anything marked hidden inside one, a
+     * tab bar's link or a toast's button among them. The browser's own rule for hidden loses to
+     * any display rule, so a hidden button, callout or link would stay drawn, and a theme switch,
+     * a copy button or a stepper's buttons, which wait hidden for a script, would show under a
+     * page's own button rule. Important in this layer, the rule wins over a page's rules outside a
+     * layer, as a state that is on or off should, so a page shows the element by taking the
+     * attribute away. A kit class is one that starts with dk-, and hidden until found is the
+     * browser's to draw.
      */
-    :where([class*='dk-'][hidden]:not([hidden='until-found'])) {
+    :where(
+        :is([class^='dk-'], [class*=' dk-'])[hidden]:not([hidden='until-found' i]),
+        :is([class^='dk-'], [class*=' dk-']) [hidden]:not([hidden='until-found' i])
+    ) {
         display: none !important;
     }
 }

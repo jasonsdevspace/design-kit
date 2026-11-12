@@ -1,7 +1,6 @@
 # 2. The kit's rules sit in dk layers, with a prefix and no weight
 
-**Status:** accepted, amended in 0.5.1, where a kit element a page marks hidden is hidden with
-`!important`
+**Status:** accepted, amended in 0.5.1 to hide a kit element a page marks `hidden` with `!important`
 
 ## Context
 
@@ -52,10 +51,13 @@ carry any weight, and that weight counts for nothing against a page's own rule o
   page's important rule in a sheet, outside a layer and in a layer after `dk`. An important
   declaration in a `style` attribute still wins over it, as does an important rule in a layer the
   page orders before `dk`.
-- A kit element a page marks `hidden` is hidden with `!important` too, last in the components
-  layer, since the browser's own rule for `hidden` loses to any display rule, the kit's or the
-  page's. Hidden is a state that is on or off, so a page reveals the element by taking the attribute
-  away, never by outweighing the rule. `hidden="until-found"` is left to the browser.
+- A kit element a page marks `hidden`, and anything marked `hidden` inside one, is hidden with
+  `!important` too, last in the components layer, since the browser's own rule for `hidden` loses
+  to any display rule, the kit's or the page's. Hidden is a state that is on or off, so a page
+  shows the element by taking the attribute away, not by outweighing the rule. A kit element is one
+  with a class that starts with `dk-`, and `hidden="until-found"` is left to the browser. As with
+  the cut to motion, an important rule in a `style` attribute or in a layer the page orders before
+  `dk` still wins.
 - The focus rules follow their `:where()` with `:focus-visible` or `:focus`, so they carry a
   pseudo-class's weight, as the scope test allows. They still lose to a page's rule outside a
   layer.
@@ -86,5 +88,7 @@ The paths are in `packages/design-kit`.
   rule and from an important one in either place, and a view transition's group cut short too. It
   serves the sheets to a page whose reset sits in a layer after the kit's and finds a button's edge
   cleared, then drawn again once the components sheet is imported into a layer after the reset's.
-  It hides a button, a callout, a field, a row, a copy button and a stepper's buttons marked
-  `hidden`, under the page's own display rules outside a layer.
+  It hides a button, a callout, a field, a row, a theme switch, a copy button, a stepper's and a
+  toast's buttons, a tab's item and a tab bar's link marked `hidden`, under the page's own display
+  rules outside a layer, and leaves one marked `hidden="until-found"` drawn, and a page's own class
+  that only holds `dk-` to the page.
