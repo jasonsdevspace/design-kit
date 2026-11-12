@@ -433,7 +433,8 @@ const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
  * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
  * goes back to the last control outside the toast that had focus when a message arrived, and where
- * there was none, or it no longer takes focus, to the body of the app's frame.
+ * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
+ * frame to its main content.
  * Attaching a toast again returns the same function. Its listeners are on the toast's own
  * elements, so a toast taken from the page takes them with it.
  */
@@ -476,7 +477,8 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         element.classList.remove('dk-toast-shown');
         hush(status);
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
-        // that no longer takes it, to the body of the app's frame rather than to nowhere.
+        // that no longer takes it, to the body of the app's frame or the page's main content rather
+        // than to nowhere.
         if (hadFocus)
             focusFirst(
                 returnTo,

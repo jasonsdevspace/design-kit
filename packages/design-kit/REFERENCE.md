@@ -1477,12 +1477,13 @@ A toast leaves when its close button, its action, or Escape with focus in it dis
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
 while the pointer is over it or focus is in it. When a message arrives, what has focus stays in
-view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus
-in it, focus goes back to the last control outside the toast that had focus when a message
-arrived, and where there was none, or it no longer takes focus, to the body of the app's frame. An
-action runs after the toast has left, so where it takes away what focus came from, it moves focus
-itself. A message with no action replaces one with an action and its way back, so a page shows one
-another only when the first is done with. More than one action is a dialog's job.
+view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
+it, focus goes back to the last control outside the toast that had focus when a message arrived, and
+where there was none, or it no longer takes focus, to the body of the app's frame, or on a page with
+no frame to its main content where that takes focus. An action runs after the toast has left, so
+where it takes away what focus came from, it moves focus itself. A message with no action replaces
+one with an action and its way back, so a page shows one another only when the first is done with.
+More than one action is a dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
