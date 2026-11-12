@@ -106,3 +106,14 @@ export const contrast = (first: string, second: string): number => {
             .join('')}`;
     return ratio(hex(first), hex(second));
 };
+
+/** A color as the page resolves it, a system color or a token, from an element asked to take it. */
+export const colorOf = (page: Page, name: string): Promise<string> =>
+    page.evaluate((color) => {
+        const probe = document.createElement('span');
+        probe.style.color = color;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+    }, name);

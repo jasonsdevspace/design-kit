@@ -367,11 +367,19 @@ for (const theme of ['light', 'dark'] as const) {
 test('pads a dialog and a sheet by the smaller space on a phone, the sheet still clear of the home indicator', async ({
     page,
 }) => {
-    for (const [width, room] of [
-        [390, 16],
-        [1280, 24],
+    for (const [width, room, app] of [
+        [390, 16, false],
+        [1280, 24, false],
+        // On a page that holds an app, at the phone's padding at every width.
+        [1280, 16, true],
     ] as const) {
         await open(page, { width, css: ':root { --dk-safe-bottom: 34px; }' });
+        if (app)
+            await page.evaluate(() => {
+                const frame = document.createElement('div');
+                frame.className = 'dk-app';
+                document.body.prepend(frame);
+            });
         for (const [opener, opened] of [
             ['#end', page.locator('#end-game')],
             ['#options', sheet(page)],
@@ -379,7 +387,9 @@ test('pads a dialog and a sheet by the smaller space on a phone, the sheet still
             await page.locator(opener).click();
             await settle(opened);
             const padded = await style(opened, 'padding-top', 'padding-left', 'padding-bottom');
-            expect(padded['padding-top'], `${String(width)}, ${opener}`).toBe(`${String(room)}px`);
+            expect(padded['padding-top'], `${String(width)}, app: ${String(app)}, ${opener}`).toBe(
+                `${String(room)}px`
+            );
             expect(padded['padding-left'], `${String(width)}, ${opener}`).toBe(`${String(room)}px`);
             expect(padded['padding-bottom'], `${String(width)}, ${opener}`).toBe(
                 `${String(opener === '#options' ? room + 34 : room)}px`

@@ -56,11 +56,11 @@ const open = async (
         theme,
         title: 'History',
         body:
-            `<div class="dk-app"><main class="dk-app-body"><h1>History</h1><ul class="dk-rows${tall ? ' dk-rows-tall' : ''}" role="list" aria-label="Games">${gameRows}</ul>` +
+            `<main><h1>History</h1><ul class="dk-rows${tall ? ' dk-rows-tall' : ''}" role="list" aria-label="Games">${gameRows}</ul>` +
             `<h2>Players</h2><ul class="dk-rows" role="list" aria-label="Players">${playerRows}</ul>` +
             '<ul class="dk-rows" role="list" aria-label="Places"><li><a class="dk-row" href="#home" id="one-line">' +
             '<span class="dk-row-text"><span class="dk-row-title">Home</span></span></a></li></ul>' +
-            '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty">\n    \n</ul></main></div>',
+            '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty">\n    \n</ul></main>',
     });
 };
 
@@ -149,12 +149,10 @@ test('makes a link row one stop named by its words, title first, with its ring a
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
     expect(parseFloat(ring['outline-offset'] ?? '')).toBe(-parseFloat(ring['outline-width'] ?? ''));
-    // The link is the row, as wide as its item and the room its ring takes past it either side.
+    // The link is the row, as wide as its item on a page with no padding of its own.
     const row = await box(link, 'the row');
     const item = await box(items(games(page)).first(), 'the item');
-    // The room is the row's own inset, which is what its ring takes.
-    const room = parseFloat((await style(link, 'padding-left'))['padding-left'] ?? '');
-    expect([row.x, row.width]).toEqual([item.x - room, item.width + 2 * room]);
+    expect([row.x, row.width]).toEqual([item.x, item.width]);
 });
 
 test("makes a button at a row's end its own stop, named for what it does and to which row", async ({
@@ -245,18 +243,44 @@ for (const theme of ['light', 'dark'] as const) {
     });
 }
 
-test("starts a row's words on the column's line, under an eyebrow, on a page and in a panel", async ({
+test("starts a row's words on the column's line in what pads, and keeps it inside a bare page", async ({
     page,
 }) => {
-    for (const panel of [false, true]) {
-        const list = `<p class="dk-eyebrow" id="eyebrow">Recent</p><ul class="dk-rows" role="list" aria-label="Games">${gameRows}</ul>`;
-        await writePage(page, {
-            width: 390,
-            title: 'History',
-            body: `<main><h1>History</h1>${panel ? `<div class="dk-panel">${list}</div>` : list}</main>`,
-        });
+    const list = `<p class="dk-eyebrow" id="eyebrow">Recent</p><ul class="dk-rows" role="list" aria-label="Games">${gameRows}</ul>`;
+    for (const [name, body] of [
+        ['an explainer', `<main class="dk-explainer"><h1>History</h1>${list}</main>`],
+        ['a panel', `<main><h1>History</h1><div class="dk-panel">${list}</div></main>`],
+        [
+            "an app's body",
+            `<div class="dk-app"><main class="dk-app-body"><h1>History</h1>${list}</main></div>`,
+        ],
+    ] as const) {
+        await writePage(page, { width: 320, title: 'History', body });
         const eyebrow = await box(page.locator('#eyebrow'), 'the eyebrow');
         const title = await box(page.locator('#g12'), "a row's title");
-        expect(title.x, `panel: ${String(panel)}`).toBeCloseTo(eyebrow.x, 0);
+        expect(title.x, name).toBeCloseTo(eyebrow.x, 0);
+        expect(await sideways(page), name).toBe(0);
+    }
+    // At a page's bare edge, and in a table's cell, the row stays inside, so nothing scrolls
+    // sideways and its whole ring shows.
+    for (const [name, body] of [
+        ['a bare page', `<main>${list}</main>`],
+        [
+            "a table's cell",
+            `<div class="dk-table-scroll" role="region" aria-label="Games" tabindex="0"><table class="dk-table"><tbody><tr><td><ul class="dk-rows" role="list" aria-label="Games">${gameRows}</ul></td></tr></tbody></table></div>`,
+        ],
+    ] as const) {
+        await writePage(page, { width: 320, title: 'History', body });
+        expect(await sideways(page), name).toBe(0);
+        const row = await box(page.getByRole('link').first(), 'the row');
+        const item = await box(page.locator('.dk-rows > li').first(), 'the item');
+        expect([row.x, row.width], name).toEqual([item.x, item.width]);
+        if (name === "a table's cell")
+            expect(
+                await page
+                    .locator('.dk-table-scroll')
+                    .evaluate((frame) => frame.scrollWidth - frame.clientWidth),
+                name
+            ).toBe(0);
     }
 });

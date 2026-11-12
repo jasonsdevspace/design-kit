@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, contrast, sideways, style, writePage } from './page.js';
+import { box, colorOf, contrast, sideways, style, writePage } from './page.js';
 
 /*
  * A grid of buttons as a browser draws it: the columns asked for where they fit and fewer where a
@@ -60,17 +60,6 @@ const columnsOf = async (grid: Locator): Promise<number> => {
         .evaluateAll((cells) => cells.map((cell) => Math.round(cell.getBoundingClientRect().y)));
     return starts.filter((y) => y === starts[0]).length;
 };
-
-/** A system color as the page resolves it, from an element asked to take it. */
-const systemColor = (page: Page, name: string): Promise<string> =>
-    page.evaluate((color) => {
-        const probe = document.createElement('span');
-        probe.style.color = color;
-        document.body.append(probe);
-        const resolved = getComputedStyle(probe).color;
-        probe.remove();
-        return resolved;
-    }, name);
 
 test('draws the columns asked for where they fit, and fewer where a cell would be under the target', async ({
     page,
@@ -161,7 +150,7 @@ test('tells a toggle that is on by how light it is and its weight, in forced col
         );
         // A cell that is off takes the system's gray, and one that is off and on an edge in the
         // highlight.
-        const gray = await systemColor(forced, 'GrayText');
+        const gray = await colorOf(forced, 'GrayText');
         expect(
             await style(card(forced, '12'), 'color', 'border-top-color', 'border-top-style')
         ).toEqual({
@@ -170,7 +159,7 @@ test('tells a toggle that is on by how light it is and its weight, in forced col
             'border-top-style': 'dashed',
         });
         expect((await style(card(forced, '11'), 'border-top-color'))['border-top-color']).toBe(
-            await systemColor(forced, 'Highlight')
+            await colorOf(forced, 'Highlight')
         );
     } finally {
         await context.close();
@@ -182,22 +171,22 @@ test('fills a toggle that is on with the text color, apart from the accent, in b
 }) => {
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
-        const page_ = await style(page.locator('body'), 'color', 'background-color');
+        const ground = await style(page.locator('body'), 'color', 'background-color');
         const on = await style(card(page, '7'), 'background-color', 'color', 'border-top-color');
-        expect(on['background-color'], theme).toBe(page_['color']);
-        expect(on['border-top-color'], theme).toBe(page_['color']);
-        expect(on['color'], theme).toBe(page_['background-color']);
+        expect(on['background-color'], theme).toBe(ground['color']);
+        expect(on['border-top-color'], theme).toBe(ground['color']);
+        expect(on['color'], theme).toBe(ground['background-color']);
         // None of the accent edge a pressed button draws inside its own.
         expect((await style(card(page, '7'), 'box-shadow'))['box-shadow'], theme).toBe('none');
         expect(contrast(on['color'] ?? '', on['background-color'] ?? ''), theme).toBeGreaterThan(7);
-        expect(on['background-color'], theme).not.toBe(await systemColor(page, 'var(--dk-accent)'));
+        expect(on['background-color'], theme).not.toBe(await colorOf(page, 'var(--dk-accent)'));
     }
 });
 
 test("turns a toggle that is on to the accent's edge under a pointer", async ({ page }) => {
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
-        const accent = await systemColor(page, 'var(--dk-accent)');
+        const accent = await colorOf(page, 'var(--dk-accent)');
         await card(page, '7').hover();
         // The edge eases to its new color, so it is read once it has arrived.
         await expect
