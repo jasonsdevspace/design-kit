@@ -1615,14 +1615,15 @@ never in a box that shrinks to fit what it holds, where it would draw one column
 
 A toggle that is on is filled in the text color with the page's ground as its words, at the strong
 weight, so on and off differ by how light the cell is and by weight, not by hue alone, and the
-accent stays the one action the view leads with. Under a pointer its edge turns to the accent, text
-selected on it swaps the pair so it stays in sight, and forced colors fill it in the system's
+accent is left to the one action the view leads with. Under a pointer its edge turns to the accent,
+text selected on it swaps the pair so it stays in sight, and forced colors fill it in the system's
 selection colors. A cell that is off, by `disabled` or by `aria-disabled`, has a dashed edge and
 keeps the page's text color, where a faded one is hard to tell from a toggle that is only not
 pressed, and in forced colors takes the system's gray as any off button does. One that is off and on
-keeps a thicker edge in the control's color, or in the highlight in forced colors. A cell reads the
-button's `--dk-button-shadow` and `--dk-button-press`, so a page that sets them gives every cell a
-shadow and a press, and a toggle that is on rests where a held one lands.
+keeps a thicker edge in the control's color, or in the highlight in forced colors, and the strong
+weight of a toggle that is on. A cell reads the button's `--dk-button-shadow` and
+`--dk-button-press`, so a page that sets them gives every cell a shadow and a press, and a toggle
+that is on rests where a held one lands.
 
 </details>
 
