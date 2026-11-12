@@ -460,7 +460,8 @@ test('keeps room on a page for a toast whose buttons wrap under its message at t
     test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     await open(page, { width: 320 });
     await textSize(page, 2);
-    await show(page, 'Round 3 saved.', 'Undo');
+    // A message of one word, one line in any face, so the toast is the two rows the room is for.
+    await show(page, 'Saved.', 'Undo');
     await settle(page);
     const card = await box(toast(page), 'the toast');
     const action = await box(page.getByRole('button', { name: 'Undo' }), 'the action');
