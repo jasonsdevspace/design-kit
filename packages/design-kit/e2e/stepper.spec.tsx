@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
 
 import { StepperField } from '../src/react.js';
-import { box, KIT, sideways, style } from './page.js';
+import { box, KIT, sideways, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -116,9 +116,6 @@ const press = async (button: Locator, browserName: string): Promise<void> => {
     }
 };
 
-/** Safari on a Mac keeps the plain Tab key for fields, and reaches a button with Option held. */
-const tabKey = (browserName: string): string =>
-    browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 const line = (page: Page, id: string): Locator =>
     page.locator(`.dk-field:has(#${id}) .dk-stepper-status`);
 const heard = (page: Page): Promise<string[]> =>
@@ -171,6 +168,11 @@ test('says the value a press sets on its status line, since focus stays on the b
     await press(lower(page), browserName);
     await expect(line(page, 'bid')).toHaveText('8');
     await expect(lower(page)).toBeFocused();
+    // A pointer's press says its value too, in Safari's engine as well, where it gives no focus.
+    await open(page);
+    await lower(page).click();
+    await expect(line(page, 'bid')).toHaveText('8');
+    if (browserName === 'chromium') await expect(lower(page)).toBeFocused();
 });
 
 test('leaves a disabled field as it is, with both buttons off', async ({ page }) => {
@@ -468,11 +470,16 @@ test('stands its value level with its buttons, tall or not, and takes a tap at o
     page,
 }) => {
     await open(page);
-    for (const field of ['bid', 'players']) {
+    // The buttons stretch to the row, so each is held to the target as well as to the other.
+    for (const [field, target] of [
+        ['bid', 44],
+        ['players', 56],
+    ] as const) {
         const stepper = page.locator(`.dk-field:has(#${field}) .dk-stepper`);
         const value = await box(stepper.locator('.dk-stepper-value'), 'the value');
         const button = await box(stepper.locator('.dk-stepper-up'), 'a button');
-        expect(value.height, field).toBeCloseTo(button.height, 0);
+        expect(value.height, field).toBeCloseTo(target, 0);
+        expect(button.height, field).toBeCloseTo(target, 0);
         expect(
             (await style(stepper.locator('.dk-stepper-up'), 'touch-action'))['touch-action'],
             field

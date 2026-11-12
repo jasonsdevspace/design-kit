@@ -21,45 +21,45 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 <details>
 <summary>Every token, with its value or role</summary>
 
-| Tokens                                                                                            | Value or role                                                                                                                               |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dk-bg`, `--dk-surface`, `--dk-raised`                                                          | the page, a card, and what floats over both                                                                                                 |
-| `--dk-fg`, `--dk-muted`                                                                           | text, and text that steps back                                                                                                              |
-| `--dk-line`, `--dk-control`                                                                       | a rule, and a control's edge                                                                                                                |
-| `--dk-accent`, `--dk-on-accent`                                                                   | links, the lead action, and text on it                                                                                                      |
-| `--dk-focus`                                                                                      | unset, the focus ring and hover edge when a page sets it                                                                                    |
-| `--dk-highlight`                                                                                  | what is chosen or pointed at                                                                                                                |
-| `--dk-success`, `--dk-success-bg`                                                                 | what went right, and its ground                                                                                                             |
-| `--dk-danger`, `--dk-danger-bg`                                                                   | what went wrong, and its ground                                                                                                             |
-| `--dk-warning`, `--dk-warning-bg`                                                                 | what needs care before it goes wrong, and its ground                                                                                        |
-| `--dk-scrim`                                                                                      | what dims the page behind a dialog                                                                                                          |
-| `--dk-space-1` to `--dk-space-8`                                                                  | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                                                                                                      |
-| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`                                          | 0.85, 0.9 and 1rem                                                                                                                          |
-| `--dk-text-lead`, `--dk-text-title`                                                               | 1.1 and 1.25rem                                                                                                                             |
-| `--dk-text-heading`, `--dk-text-display`                                                          | 1.5 and 1.75rem                                                                                                                             |
-| `--dk-text-numeral`                                                                               | 3.5rem, a figure read from across a room                                                                                                    |
-| `--dk-text-code`                                                                                  | 0.9em, a step under the text around it                                                                                                      |
-| `--dk-leading-tight`, `--dk-leading-body`                                                         | 1.2 and 1.5                                                                                                                                 |
-| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong`                                  | 400, 500 and 600                                                                                                                            |
-| `--dk-tracking-caps`                                                                              | 0.06em, the tracking of a label in caps                                                                                                     |
-| `--dk-font-sans`, `--dk-font-mono`                                                                | the system's sans and mono stacks                                                                                                           |
-| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`                                           | 0.25, 0.375 and 0.5rem                                                                                                                      |
-| `--dk-radius-pill`                                                                                | 999px, round ends on a tab or a tag                                                                                                         |
-| `--dk-ring-width`, `--dk-ring-offset`                                                             | 2px and 2px                                                                                                                                 |
-| `--dk-field-height`, `--dk-field-inline`                                                          | a field's height, 2.25rem, and its inline padding, 0.75rem                                                                                  |
-| `--dk-target`                                                                                     | 2.75rem, the touch target on a phone                                                                                                        |
-| `--dk-target-large`                                                                               | 3.5rem, a target pressed at arm's length                                                                                                    |
-| `--dk-strip`, `--dk-strip-tools`                                                                  | 2.5rem, and `auto`, the room kept for switches                                                                                              |
-| `--dk-measure`, `--dk-column`                                                                     | 34rem and 72rem                                                                                                                             |
-| `--dk-app-column`, `--dk-app-bar`                                                                 | 28rem, the widest an app's frame grows, and 4rem, the least height of its bar                                                               |
-| `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link             |
-| `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                |
-| `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                   |
-| `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                    |
-| `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                     |
-| `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                |
-| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's or a panel's, and its width, read as 8rem, with no room kept under 17.5rem wide |
-| `--dk-stepper-digits`                                                                             | unset, and read as 2, how many figures a stepper's value has room for                                                                       |
+| Tokens                                                                                            | Value or role                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dk-bg`, `--dk-surface`, `--dk-raised`                                                          | the page, a card, and what floats over both                                                                                                             |
+| `--dk-fg`, `--dk-muted`                                                                           | text, and text that steps back                                                                                                                          |
+| `--dk-line`, `--dk-control`                                                                       | a rule, and a control's edge                                                                                                                            |
+| `--dk-accent`, `--dk-on-accent`                                                                   | links, the lead action, and text on it                                                                                                                  |
+| `--dk-focus`                                                                                      | unset, the focus ring and hover edge when a page sets it                                                                                                |
+| `--dk-highlight`                                                                                  | what is chosen or pointed at                                                                                                                            |
+| `--dk-success`, `--dk-success-bg`                                                                 | what went right, and its ground                                                                                                                         |
+| `--dk-danger`, `--dk-danger-bg`                                                                   | what went wrong, and its ground                                                                                                                         |
+| `--dk-warning`, `--dk-warning-bg`                                                                 | what needs care before it goes wrong, and its ground                                                                                                    |
+| `--dk-scrim`                                                                                      | what dims the page behind a dialog                                                                                                                      |
+| `--dk-space-1` to `--dk-space-8`                                                                  | 0.25, 0.5, 0.75, 1, 1.5, 2, 3 and 4rem                                                                                                                  |
+| `--dk-text-caption`, `--dk-text-small`, `--dk-text-body`                                          | 0.85, 0.9 and 1rem                                                                                                                                      |
+| `--dk-text-lead`, `--dk-text-title`                                                               | 1.1 and 1.25rem                                                                                                                                         |
+| `--dk-text-heading`, `--dk-text-display`                                                          | 1.5 and 1.75rem                                                                                                                                         |
+| `--dk-text-numeral`                                                                               | 3.5rem, a figure read from across a room                                                                                                                |
+| `--dk-text-code`                                                                                  | 0.9em, a step under the text around it                                                                                                                  |
+| `--dk-leading-tight`, `--dk-leading-body`                                                         | 1.2 and 1.5                                                                                                                                             |
+| `--dk-weight-normal`, `--dk-weight-medium`, `--dk-weight-strong`                                  | 400, 500 and 600                                                                                                                                        |
+| `--dk-tracking-caps`                                                                              | 0.06em, the tracking of a label in caps                                                                                                                 |
+| `--dk-font-sans`, `--dk-font-mono`                                                                | the system's sans and mono stacks                                                                                                                       |
+| `--dk-radius-small`, `--dk-radius`, `--dk-radius-large`                                           | 0.25, 0.375 and 0.5rem                                                                                                                                  |
+| `--dk-radius-pill`                                                                                | 999px, round ends on a tab or a tag                                                                                                                     |
+| `--dk-ring-width`, `--dk-ring-offset`                                                             | 2px and 2px                                                                                                                                             |
+| `--dk-field-height`, `--dk-field-inline`                                                          | a field's height, 2.25rem, and its inline padding, 0.75rem                                                                                              |
+| `--dk-target`                                                                                     | 2.75rem, the touch target on a phone                                                                                                                    |
+| `--dk-target-large`                                                                               | 3.5rem, a target pressed at arm's length                                                                                                                |
+| `--dk-strip`, `--dk-strip-tools`                                                                  | 2.5rem, and `auto`, the room kept for switches                                                                                                          |
+| `--dk-measure`, `--dk-column`                                                                     | 34rem and 72rem                                                                                                                                         |
+| `--dk-app-column`, `--dk-app-bar`                                                                 | 28rem, the widest an app's frame grows, and 4rem, the least height of its bar                                                                           |
+| `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link                         |
+| `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                            |
+| `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                               |
+| `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                |
+| `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                 |
+| `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                            |
+| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's, a panel's or a dialog's, and its width, read as 8rem, with no room kept under 17.5rem wide |
+| `--dk-stepper-digits`                                                                             | unset, and read as 2, how many figures a stepper's value has room for                                                                                   |
 
 </details>
 
@@ -939,10 +939,10 @@ markup below, which every page writes by hand, since none of these pieces has lo
 ```
 
 The header holds a link back to the demo, outside `main`, so the skip link passes it and reading
-starts at the h1. The link is the target tall, so a thumb finds the way back, without moving the
-header or the title. `main` holds the h1, the lead, the one action as an accent button, and then the
-sections. Each section holds its number, hidden from a screen reader since its heading says what the
-section is, then an h2 with an id, then its text, with an h3 for each part of it.
+starts at the h1. The link is the target tall, so a thumb finds the way back, and it moves neither
+the header nor the title. `main` holds the h1, the lead, the one action as an accent button, and
+then the sections. Each section holds its number, hidden from a screen reader since its heading says
+what the section is, then an h2 with an id, then its text, with an h3 for each part of it.
 
 A section is a plain `<section>`, never named, and its h2 ids are a contract other pages link to, so
 a page keeps an id when it rewords its heading, as
@@ -1447,11 +1447,12 @@ in an app's dock too. The value is in the mono face with figures of one width, c
 for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
 asks a page to allow, so the field does not change width as the value changes and no figure is cut
 off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so
-it stands level with them and with a field or a button beside it. With its label to the left the
-label takes the room the stepper leaves and wraps within it, and the stepper moves under the label
-where a large text size leaves no room for both. Its errors sit on lines above it, as every field's
-do, and its hint on a line below. The number field's own spin buttons are taken away, since the
-stepper's buttons stand in for them and they would keep their room even out of sight.
+it stands level with them. At 48rem wide or less, where a field and a button are the target tall, a
+stepper that is not tall stands level with one beside it. With its label to the left the label takes
+the room the stepper leaves and wraps within it, and the stepper moves under the label where a large
+text size leaves no room for both. Its errors sit on lines above it, as every field's do, and its
+hint on a line below. The number field's own spin buttons are taken away, since the stepper's
+buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 

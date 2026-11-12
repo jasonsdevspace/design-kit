@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { box, sheet, sideways, style, writePage } from './page.js';
+import { box, sheet, sideways, style, tabKey, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -456,8 +456,7 @@ test('takes the keyboard through the bar, then the body, then the dock', async (
     browserName,
 }) => {
     await open(page, { tabs: true });
-    // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
-    const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+    const tab = tabKey(browserName);
     const reached: string[] = [];
     for (let stop = 0; stop < 6; stop += 1) {
         await page.keyboard.press(tab);

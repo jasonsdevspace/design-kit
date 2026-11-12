@@ -80,3 +80,7 @@ export const sideways = (page: Page): Promise<number> =>
 /** The theme set on the root, or null where none is. */
 export const themeOf = (page: Page): Promise<string | null> =>
     page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+
+/** The Tab key, which Safari on a Mac keeps for fields unless Option is held. */
+export const tabKey = (browserName: string): string =>
+    browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';

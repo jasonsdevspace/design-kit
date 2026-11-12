@@ -169,6 +169,25 @@ test('draws the pinned cells on the raised ground of a dialog that holds the tab
     }
 });
 
+test('draws the pinned cells on the ground of a panel inside a dialog, in both themes', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await writePage(page, {
+            width: 360,
+            theme,
+            title: 'Scores',
+            body: `<dialog class="dk-dialog" id="d"><div class="dk-panel">${table(true)}</div></dialog>`,
+        });
+        await page.locator('dialog').evaluate((dialog) => {
+            (dialog as HTMLDialogElement).showModal();
+        });
+        const held = await ground(page.locator('.dk-panel'));
+        expect(await ground(cell(page, 'Ana')), theme).toBe(held);
+        expect(await ground(head(page)), theme).toBe(held);
+    }
+});
+
 test('takes the ground a page sets for a table on a ground of its own', async ({ page }) => {
     await open(page, { css: '.dk-table-scroll { --dk-table-ground: rgb(1, 2, 3); }' });
     expect(await ground(cell(page, 'Ana'))).toBe('rgb(1, 2, 3)');

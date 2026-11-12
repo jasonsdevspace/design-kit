@@ -4,9 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
  * The sheets, the theme script and the components in a real browser, since only a browser resolves
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
- * it into the browser. An app's frame, tab bar and toast, and the dialog, are drawn in WebKit
- * too. The site's tests open the built site, which the config builds and serves under the path
- * GitHub Pages gives it.
+ * it into the browser. An app's frame, tab bar and toast, the dialog and the stepper are drawn in
+ * WebKit too. The site's tests open the built site, which the config builds and serves under the
+ * path GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;
@@ -45,7 +45,7 @@ export default defineConfig({
     },
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-        // The pieces pinned to the screen's edges, in Safari's engine too, where they differ.
+        // The pieces Safari draws its own way, in its engine too.
         { name: 'webkit', testMatch: WEBKIT, use: { ...devices['Desktop Safari'] } },
     ],
 });
