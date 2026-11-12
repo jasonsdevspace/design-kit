@@ -180,13 +180,13 @@ gives the markup for each piece, and [Explainer
 pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.5.0/packages/design-kit/REFERENCE.md#explainer-pages)
 there gives the steps, panels, tables and code blocks of a "How it works" page.
 
-An app drawn for a phone takes its frame, a bar, a body that scrolls and a dock clear of the
-phone's safe areas, from [App
+An app drawn for a phone takes its frame from [App
 frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.5.0/packages/design-kit/REFERENCE.md#app-frame)
-in the reference. The sections after it give the tab bar, the stepper, the toast, the grid of
-buttons, the rows and the dialog, each with its markup and, where it has behavior, the attach
-function that makes it work. A page drawn in the frame says `viewport-fit=cover` in its viewport
-meta, which gives the safe areas their values.
+in the reference: a bar, a body that scrolls and a dock, clear of the phone's safe areas. The
+sections after it give the tab bar, the stepper, the toast, the grid of buttons, the rows and the
+dialog, each with its markup and, where it has behavior, the attach function that makes it work. A
+page drawn in the frame says `viewport-fit=cover` in its viewport meta, which gives the safe areas
+their values.
 
 ## Your own layers and palette
 
