@@ -424,6 +424,20 @@
     }
 
     /*
+     * In an app's frame, on a page that ends in a tab bar and in a toast, a button is the target at
+     * every width, as on a phone, since the app's column is a phone's on a wide screen too, so one
+     * screen has one height of control. The fields and the choices below do the same.
+     */
+    :where(:is(.dk-app, .dk-tabbar-page, .dk-toast) .dk-button) {
+        min-height: var(--dk-target);
+        min-width: var(--dk-target);
+    }
+
+    :where(:is(.dk-app, .dk-tabbar-page, .dk-toast) .dk-button-text) {
+        min-width: 0;
+    }
+
+    /*
      * A tall button, at the larger target at every width, for what a screen is for where it is
      * pressed at arm's length. It sets the height, and the least width with it so it is never
      * narrower than it is tall, and nothing else, so it goes with the large button's padding and
@@ -575,6 +589,10 @@
         }
     }
 
+    :where(:is(.dk-app, .dk-tabbar-page) :is(.dk-input, .dk-select, .dk-textarea)) {
+        min-height: var(--dk-target);
+    }
+
     /*
      * In forced colors the select takes the browser's own arrow, since the drawn caret is a
      * background. An invalid control loses its line in the danger color to the system's colors, so
@@ -715,6 +733,11 @@
             min-height: var(--dk-target);
             min-width: var(--dk-target);
         }
+    }
+
+    :where(:is(.dk-app, .dk-tabbar-page) .dk-choice) {
+        min-height: var(--dk-target);
+        min-width: var(--dk-target);
     }
 
     /*
