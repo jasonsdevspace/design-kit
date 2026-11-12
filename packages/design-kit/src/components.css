@@ -1583,6 +1583,11 @@
         border-top: 1px solid var(--dk-line);
     }
 
+    /* What the dock holds is no wider than the dock, so a stepper in it narrows rather than spill. */
+    :where(.dk-app-dock > *) {
+        min-width: 0;
+    }
+
     /* A tab bar's place, last, at the bottom edge. */
     :where(.dk-app-tabs) {
         grid-area: tabs;
@@ -2043,14 +2048,14 @@
      * after, for a small whole number that is quicker to step than to type on a phone. The buttons
      * are as tall as the field and as wide as they are tall, and the value is in the mono face with
      * figures of one width, two wide unless --dk-stepper-digits says more, so the field never
-     * changes width as the value does. Each figure keeps room for the widest spacing between
-     * letters a reader may set, so none is cut off. A button at a limit is off and drawn as any off
+     * changes width as the value does. Each figure keeps room for the spacing between letters WCAG
+     * asks a page to allow, so none is cut off. A button at a limit is off and drawn as any off
      * button. In a tall stepper the buttons and the value take the larger target, and the value a
      * larger size.
      *
      * Where a large text size leaves the stepper less room than its buttons take, on a phone, the
-     * buttons grow narrower, never under 1.5rem, the least target WCAG sets at the usual text size,
-     * and keep their height, so the stepper fits its field and the page never scrolls sideways.
+     * buttons grow narrower, never under the target at the usual text size, and keep their height,
+     * so the stepper fits its field.
      */
     :where(.dk-stepper) {
         display: flex;
@@ -2063,7 +2068,7 @@
 
     :where(.dk-stepper > .dk-button) {
         width: var(--dk-target);
-        min-width: 1.5rem;
+        min-width: min(var(--dk-target), 44px);
         min-height: var(--dk-target);
         padding-inline: 0;
         font-size: var(--dk-text-title);
@@ -2117,11 +2122,6 @@
     :where(.dk-stepper-inline > .dk-field-label) {
         flex: 1 1 4rem;
         min-width: 0;
-    }
-
-    /* On a line of its own under the label, the stepper narrows its buttons to fit as above. */
-    :where(.dk-stepper-inline > .dk-stepper) {
-        flex: 0 1 auto;
     }
 
     :where(.dk-stepper-inline > .dk-field-hint, .dk-stepper-inline > .dk-field-error) {

@@ -1402,16 +1402,16 @@ returns what takes it away again.
 <summary>How a stepper is drawn</summary>
 
 The buttons are `--dk-target` both ways, or `--dk-target-large` in a tall stepper. Where a large
-text size leaves the stepper less room than that on a phone, the buttons grow narrower, never under
-1.5rem, and keep their height, so the stepper fits its field. The value is in the mono face with
-figures of one width, centered, with room for two figures unless `--dk-stepper-digits` says more,
-and for the widest spacing between letters a reader may set, so the field does not change width as
-the value changes and no figure is cut off, and in a tall stepper it is at the heading size. With
-its label to the left the label takes the room the stepper leaves and wraps within it, and the
-stepper moves under the label where a large text size leaves no room for both. Its errors sit on
-lines above it, as every field's do, and its hint on a line below. The number field's own spin
-buttons are taken away, since the stepper's buttons stand in for them and they would keep their room
-even out of sight.
+text size leaves the stepper less room than its buttons take, on a phone, the buttons grow narrower,
+never under the target at the usual text size, and keep their height, so the stepper fits its field,
+in an app's dock too. The value is in the mono face with figures of one width, centered, with room
+for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
+asks a page to allow, so the field does not change width as the value changes and no figure is cut
+off, and in a tall stepper it is at the heading size. With its label to the left the label takes the
+room the stepper leaves and wraps within it, and the stepper moves under the label where a large
+text size leaves no room for both. Its errors sit on lines above it, as every field's do, and its
+hint on a line below. The number field's own spin buttons are taken away, since the stepper's
+buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 
