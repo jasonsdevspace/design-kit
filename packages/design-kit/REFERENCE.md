@@ -1304,7 +1304,7 @@ scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bott
 it is still at the bottom. At the page's end it sits after the last of the content and never over
 it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's least
 height, so what the keyboard reaches, or a link within the page leads to, stops short of the bar and
-is never under it.
+is never under it, in a browser with `:has()`.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
 lines tall, the bar scrolls with the page and waits at its end, so it takes no part of a screen that
@@ -1462,7 +1462,9 @@ above the dock, so it covers neither the dock nor the body's last line. On a pag
 sits at the bottom of the screen, over the page and clear of the safe areas, in the app's column.
 While it is shown there, what the keyboard reaches stops short of a toast of one line, and the
 page's end scrolls clear of it. A page that ends in a tab bar and shows toasts is drawn in the
-frame, where the toast clears the bar.
+frame, where the toast clears the bar. A toast shown while a dialog is open sits under the dialog's
+scrim, out of sight and out of a screen reader's reach, so a page shows its message once the dialog
+has closed.
 
 **`Toast` props**
 
@@ -1690,9 +1692,10 @@ the dialog closes, focus goes to what `returnTo` gives. It also closes the dialo
 scrim around it, one that starts and ends there so a drag out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
-phone's Back and the scrim. That is held by the dialog's `closedby` attribute in a browser that
-reads it, since one that limits how often a page may refuse a close lets a second Escape through
-otherwise. Attaching a dialog again sets the options given and returns the same function. Its
+phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
+from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a close once and closes
+the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
+that can be dismissed too. Attaching a dialog again sets the options given and returns the same function. Its
 listeners are on the dialog, so a dialog taken from the page takes them with it.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
@@ -1704,7 +1707,7 @@ asks in a dialog only where nothing could undo the answer.
 A dialog sits in the middle of the screen, at most 32rem wide, on the raised ground with the raised
 shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls inside itself when
 it holds more than the screen does, and while one is open as a modal the page behind it does not
-scroll. Its
+scroll, in a browser with `:has()`. Its
 title is at the title size, and its actions sit at its end, wrapping under one another where the
 room runs out.
 

@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast, whose attach function returns what shows a message
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them
 
 ## Context
 

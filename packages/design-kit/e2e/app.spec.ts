@@ -332,7 +332,7 @@ test('pads past a side safe area only by what the column leaves uncleared, on a 
     expect((await box(dock(page), 'the dock')).x).toBe(47);
 });
 
-test('draws the skip link below the top safe area', async ({ page }) => {
+test('draws the skip link below the top safe area and past the side one', async ({ page }) => {
     await writePage(page, {
         width: 390,
         height: 700,
@@ -342,7 +342,10 @@ test('draws the skip link below the top safe area', async ({ page }) => {
     });
     const skip = page.getByRole('link', { name: 'Skip to content' });
     await skip.focus();
-    expect((await box(skip, 'the skip link')).y).toBeGreaterThanOrEqual(SAFE.top);
+    const drawn = await box(skip, 'the skip link');
+    expect(drawn.y).toBeGreaterThanOrEqual(SAFE.top);
+    // The side the phone keeps, then the inset every page's links start at.
+    expect(drawn.x).toBeGreaterThanOrEqual(SAFE.left + 16);
 });
 
 test('prints as long and as wide as what it holds, with the body whole', async ({ page }) => {

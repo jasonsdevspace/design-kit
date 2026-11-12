@@ -26,7 +26,10 @@
      */
     .dk-skip {
         position: absolute;
-        left: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
+        /* At the column's inset, and past what a phone keeps at its side when that is more. */
+        left: calc(
+            max(var(--dk-safe-left), max(0px, (100% - var(--dk-column)) / 2)) + var(--dk-space-4)
+        );
         /* Below what a phone keeps at its top edge, nothing on a page that does not ask. */
         top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
