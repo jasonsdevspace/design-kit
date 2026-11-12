@@ -1215,8 +1215,10 @@ safe area tokens their values:
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
 the body ends where the rows below it begin, and a toast sits in a row of its own, clear of both. Each
-row but the body's is never shorter than what it holds, so where the bar and the dock come to more
-than the screen, the page scrolls and no row covers its neighbor.
+row but the body's is never shorter than what it holds, and the body keeps 8rem, a few lines, so
+where the rows come to more than the screen, as at a large text size with a toast shown, the page
+scrolls and no row covers its neighbor or squeezes the body to nothing. What the body holds out of
+sight, such as a row's words for a screen reader, scrolls with it and never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A browser without that unit reads `100vh`. The bar pads itself
@@ -1302,9 +1304,10 @@ wraps within its share at a large text size and the bar grows with it, so nothin
 padded past the side safe areas. The bar in it sticks to the bottom of the screen while the page
 scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. On a short page
 it is still at the bottom. At the page's end it sits after the last of the content and never over
-it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's least
-height, so what the keyboard reaches, or a link within the page leads to, stops short of the bar and
-is never under it, in a browser with `:has()`.
+it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's height
+with a label on two lines, so what the keyboard reaches, or a link within the page leads to, stops
+short of the bar and is never under it, in a browser with `:has()`. A label that wraps past two lines
+at a large text size makes the bar taller than that, so a label is a short word or two.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
 lines tall, the bar scrolls with the page and waits at its end, so it takes no part of a screen that
@@ -1463,8 +1466,9 @@ another only when the first is done with. More than one action is a dialog's job
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 above the dock, so it covers neither the dock nor the body's last line. On a page with no frame it
 sits at the bottom of the screen, over the page and clear of the safe areas, in the app's column.
-While it is shown there, what the keyboard reaches stops short of a toast of one line, and the
-page's end scrolls clear of it. A page that ends in a tab bar and shows toasts is drawn in the
+While it is shown there, what the keyboard reaches stops short of a toast of two lines, as one with
+an action is on a phone, and the page's end scrolls clear of it. A longer message, or a large text
+size, makes the toast taller than that, so a toast's message is a short sentence. A page that ends in a tab bar and shows toasts is drawn in the
 frame, where the toast clears the bar. A toast shown while a dialog is open sits under the dialog's
 scrim, out of sight and out of a screen reader's reach, so a page shows its message once the dialog
 has closed.
@@ -1711,7 +1715,9 @@ A dialog sits in the middle of the screen, at most 32rem wide, on the raised gro
 shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls inside itself when
 it holds more than the screen does, and while one is open as a modal the page behind it does not
 scroll, in a browser with `:has()`. Its title is at the title size, and its actions sit at its end,
-wrapping under one another where the room runs out.
+wrapping under one another where the room runs out. Its margin and padding stop growing with the
+text past their usual size, so on a phone at a large text size what it holds, a stepper among them,
+keeps the room.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it

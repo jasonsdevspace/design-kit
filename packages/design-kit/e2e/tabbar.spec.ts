@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { box, sideways, style, writePage } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * A tab bar as a browser draws it, in Chromium and in WebKit, since a bar stuck to the bottom of
@@ -17,8 +18,11 @@ import { box, sideways, style, writePage } from './page.js';
 const SAFE_BOTTOM = 34;
 const SAFE_CSS = `:root { --dk-safe-bottom: ${String(SAFE_BOTTOM)}px; }`;
 
-/** The visitor's text size doubled, which every rem in the bar is drawn from. */
-const DOUBLED = 'html { font-size: 200%; }';
+/** The visitor's text size doubled by the browser's own setting, which a media query reads too. */
+const doubled = async (page: Page, browserName: string): Promise<void> => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await textSize(page, 2);
+};
 
 const ICON =
     '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>';
@@ -208,14 +212,18 @@ test("shares a phone's narrowest width evenly, from two links to five", async ({
     }
 });
 
-test('wraps a long label at a doubled text size, and grows to hold it', async ({ page }) => {
+test('wraps a long label at a doubled text size, and grows to hold it', async ({
+    page,
+    browserName,
+}) => {
     const places = ['Play', 'Games played before', 'Players', 'Options', 'About'];
-    await open(page, { width: 320, places });
+    // A phone tall enough at twice the text size to keep the bar at the bottom of the screen.
+    await open(page, { width: 320, height: 900, places });
     const before = (await box(bar(page), 'the bar')).height;
-    await open(page, { width: 320, css: DOUBLED, places });
+    await doubled(page, browserName);
     const grown = await box(bar(page), 'the bar');
     expect(grown.height).toBeGreaterThan(before);
-    expect(bottom(grown)).toBe(700);
+    expect(bottom(grown)).toBe(900);
     for (const link of await links(page).all()) {
         const drawn = await box(link, 'a link');
         // No label wider or taller than its link, and no link outside the bar.
@@ -268,6 +276,34 @@ test('scrolls what takes focus clear of the bar, so the bar never covers it', as
     expect(bottom(await box(link, 'the link'))).toBeGreaterThan(top);
     await link.focus();
     expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(top);
+});
+
+test('scrolls what takes focus clear of a bar whose labels wrap, at a doubled text size', async ({
+    page,
+    browserName,
+}) => {
+    const places = ['Play', 'History', 'Players', 'Stats'];
+    await open(page, { width: 390, height: 900, css: SAFE_CSS, places });
+    await doubled(page, browserName);
+    const link = page.getByRole('link', { name: 'A game in the middle' });
+    // The link scrolled to the foot of the screen, under the bar, then reached by the keyboard
+    // from the link before it, as a visitor tabbing down the page reaches it.
+    await link.evaluate((element) => {
+        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+    });
+    await page.getByRole('link', { name: 'The first game' }).evaluate((element) => {
+        element.focus({ preventScroll: true });
+    });
+    await page.keyboard.press('Tab');
+    await expect(link).toBeFocused();
+    const drawn = await box(bar(page), 'the bar');
+    expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(drawn.y);
+    // A browser may scroll a link further than it needs, so the room the page keeps is held too:
+    // at least the bar's height, labels on two lines and the safe area included.
+    const kept = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
+    );
+    expect(kept).toBeGreaterThanOrEqual(drawn.height);
 });
 
 test('scrolls with the page on a screen too short to give it a row of its own', async ({

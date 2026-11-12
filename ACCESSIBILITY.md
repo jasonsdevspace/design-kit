@@ -47,6 +47,11 @@ is its CSS transformer, as the package README shows.
   column, and a toast with an action covers the page's last line until it is dismissed. An app drawn
   in the kit's frame keeps clear of the bar and the toast there, since they have rows of their own.
   The page behind an open dialog still scrolls there too.
+- The room a page that ends in a tab bar keeps for it holds a label on two lines, and the room a
+  page keeps for a toast holds two lines, so a label or a message that wraps further at a large
+  text size can bring what the keyboard reaches to rest partly under the bar or the toast. CSS
+  cannot read their height, so the reference asks for short labels and messages, and an app drawn
+  in the kit's frame keeps clear of both at any size, since they have rows of their own.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.

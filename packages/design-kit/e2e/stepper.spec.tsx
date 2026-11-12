@@ -363,6 +363,39 @@ test("narrows its buttons to fit a narrow place, never under the usual text size
     for (const width of floor?.widths ?? []) expect(width).toBeLessThanOrEqual(44 + 0.5);
 });
 
+test('fits a dialog and a sheet on a phone 320px wide at twice the text size', async ({ page }) => {
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    for (const form of ['dk-dialog', 'dk-dialog dk-dialog-sheet']) {
+        for (const id of ['players', 'bid']) {
+            const measured = await page.evaluate(
+                ([kind, field]) => {
+                    const dialog = document.createElement('dialog');
+                    dialog.className = kind;
+                    const copy = document
+                        .querySelector(`.dk-field:has(#${field})`)
+                        ?.cloneNode(true);
+                    if (!(copy instanceof HTMLElement)) throw new Error(`no field for ${field}`);
+                    dialog.append(copy);
+                    document.body.append(dialog);
+                    dialog.showModal();
+                    const up = copy.querySelector('.dk-stepper-up')?.getBoundingClientRect();
+                    const inside = dialog.getBoundingClientRect();
+                    const result = {
+                        fits: (up?.right ?? Infinity) <= inside.right - 1,
+                        sideways: dialog.scrollWidth - dialog.clientWidth,
+                    };
+                    dialog.close();
+                    dialog.remove();
+                    return result;
+                },
+                [form, id] as const
+            );
+            expect(measured, `${id} in ${form}`).toEqual({ fits: true, sideways: 0 });
+        }
+    }
+});
+
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
     await open(page, { width: 1280 });
     for (const [name, least] of [

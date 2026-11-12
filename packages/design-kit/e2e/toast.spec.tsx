@@ -416,36 +416,41 @@ test('sits at the foot of a page clear of the home indicator, in the app column'
     expect(wide.x).toBe((1280 - wide.width) / 2);
 });
 
-test('keeps what the keyboard reaches, and the end of the page, clear of the toast on a page', async ({
-    page,
-    browserName,
-}) => {
-    await open(page, {
-        body: PAGE.replace(
-            '<p id="last">',
-            '<p><a href="#earlier" id="above">Earlier rounds</a></p>' +
-                '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
-        ),
+for (const width of [390, 320]) {
+    test(`keeps what the keyboard reaches, and the end of the page, clear of the toast on a page ${String(width)}px wide`, async ({
+        page,
+        browserName,
+    }) => {
+        await open(page, {
+            width,
+            body: PAGE.replace(
+                '<p id="last">',
+                '<p><a href="#earlier" id="above">Earlier rounds</a></p>' +
+                    '<p><a href="#more" id="foot">More rounds</a></p><p id="last">'
+            ),
+        });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const card = await box(toast(page), 'the toast');
+        // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
+        await page.locator('#foot').evaluate((element) => {
+            window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+        });
+        expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeGreaterThan(card.y);
+        await page.locator('#above').evaluate((element) => {
+            element.focus({ preventScroll: true });
+        });
+        await page.keyboard.press(tabKey(browserName));
+        await expect(page.locator('#foot')).toBeFocused();
+        expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(card.y);
+        await page.evaluate(() => {
+            window.scrollTo(0, document.documentElement.scrollHeight);
+        });
+        expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+            card.y
+        );
     });
-    await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
-    const card = await box(toast(page), 'the toast');
-    // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
-    await page.locator('#foot').evaluate((element) => {
-        window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
-    });
-    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeGreaterThan(card.y);
-    await page.locator('#above').evaluate((element) => {
-        element.focus({ preventScroll: true });
-    });
-    await page.keyboard.press(tabKey(browserName));
-    await expect(page.locator('#foot')).toBeFocused();
-    expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(card.y);
-    await page.evaluate(() => {
-        window.scrollTo(0, document.documentElement.scrollHeight);
-    });
-    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(card.y);
-});
+}
 
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme, shown and not`, async ({ page }) => {

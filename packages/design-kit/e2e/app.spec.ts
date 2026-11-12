@@ -2,13 +2,15 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { box, sheet, sideways, style, writePage } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * An app's frame as a browser draws it, in Chromium and in WebKit, since a bar that stays put and
  * a height that follows the browser's own bars are where Safari differs: the bar, the body and the
  * dock in view with only the body scrolling, the bar clear of the top safe area and the last row
  * clear of the bottom one, one top heading, the body's last line scrolled clear of everything
- * below it at a doubled text size, a toast's place above the dock whatever the dock holds, the
+ * below it at a doubled text size with a few lines kept for the body, the page scrolled whole where
+ * a doubled text size leaves too little height, nothing out of sight lengthening the page, a toast's place above the dock whatever the dock holds, the
  * frame as tall as the screen at any height, a column in the middle of a wide screen and the full
  * width of a phone, a long title wrapping, the keyboard going bar, body, dock, the frame printing
  * whole, and no audit findings in either theme.
@@ -23,8 +25,15 @@ const SAFE_CSS = `:root {
     --dk-safe-left: ${String(SAFE.left)}px;
 }`;
 
-/** The visitor's text size doubled, which every rem in the frame is drawn from. */
-const DOUBLED = 'html { font-size: 200%; }';
+/**
+ * The visitor's text size doubled by the browser's own setting, which every rem is drawn from, a
+ * media query's included, where a size set on the root reaches no media query. It is set through
+ * Chromium, so the tests that need it run there alone.
+ */
+const doubled = async (page: Page, browserName: string): Promise<void> => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await textSize(page, 2);
+};
 
 const LINES = Array.from(
     { length: 40 },
@@ -159,16 +168,55 @@ test("has one top heading, the bar's title", async ({ page }) => {
 
 test("scrolls the body's last line clear of everything below it, at a doubled text size", async ({
     page,
+    browserName,
 }) => {
-    await open(page, { css: DOUBLED, dock: 2, toast: true, tabs: true });
+    // A phone held upright, tall enough at twice the text size to keep the frame, with a title
+    // long enough to take two lines.
+    await open(page, {
+        height: 844,
+        title: 'Round 3 of the game at the cabin',
+        dock: 2,
+        toast: true,
+        tabs: true,
+    });
+    await doubled(page, browserName);
     await scrollToEnd(page);
     const last = await box(page.locator('#last'), 'the last line');
     for (const below of ['.dk-app-toast', '.dk-app-dock', '.dk-app-tabs']) {
         expect(bottom(last), below).toBeLessThanOrEqual((await box(page.locator(below), below)).y);
     }
-    // The rows below still fit, with room left for the body between them and the bar.
-    expect(bottom(await box(page.locator('.dk-app-tabs'), 'the tab bar'))).toBe(700);
-    expect((await box(body(page), 'the body')).height).toBeGreaterThan(0);
+    // The body keeps a few lines of its own, 8rem at twice the text size, however much the rows
+    // around it hold, and the page scrolls to whatever no longer fits.
+    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
+    const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
+    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(tabs) - 844);
+});
+
+test('scrolls the page whole on a phone too short at a doubled text size for a body between the bar and the dock', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, { height: 700, dock: 2, toast: true, tabs: true });
+    await doubled(page, browserName);
+    // 700px is under 24rem at twice the text size, so the frame is as long as what it holds.
+    expect(await body(page).evaluate((element) => getComputedStyle(element).overflowY)).toBe(
+        'visible'
+    );
+    expect(await pageScroll(page)).toBeGreaterThan(0);
+    const last = await box(page.locator('#last'), 'the last line');
+    expect(bottom(last)).toBeLessThanOrEqual((await box(page.locator('.dk-app-toast'), 'toast')).y);
+});
+
+test('keeps what the body holds out of sight from lengthening the page', async ({ page }) => {
+    await open(page);
+    // Words for a screen reader alone, as a row or a stepper carries, low in the body.
+    await body(page).evaluate((element) => {
+        const hidden = document.createElement('span');
+        hidden.className = 'dk-visually-hidden';
+        hidden.textContent = ' points';
+        element.append(hidden);
+    });
+    expect(await pageScroll(page)).toBe(0);
 });
 
 test("sets a toast above the dock and clear of the body's last line, with a dock of one row and of two", async ({
@@ -221,9 +269,13 @@ test('is a column of 28rem in the middle of a wide screen, and the full width of
     expect(await sideways(page)).toBe(0);
 });
 
-test('wraps a long title at a large text size, and cuts nothing off', async ({ page }) => {
+test('wraps a long title at a large text size, and cuts nothing off', async ({
+    page,
+    browserName,
+}) => {
     const title = 'The seventeenth round of a very long game of Wizard';
-    await open(page, { width: 320, css: DOUBLED, title });
+    await open(page, { width: 320, height: 900, title });
+    await doubled(page, browserName);
     const heading = page.locator('.dk-app-title');
     const drawn = await box(heading, 'the title');
     const line = parseFloat((await style(heading, 'line-height'))['line-height'] ?? '');
@@ -241,9 +293,11 @@ test('wraps a long title at a large text size, and cuts nothing off', async ({ p
 
 test('squeezes no row where the bar and the dock come to more than the screen, and scrolls the page', async ({
     page,
+    browserName,
 }) => {
     const title = 'The seventeenth round of a very long game of Wizard. '.repeat(3);
-    await open(page, { width: 320, css: DOUBLED, title, dock: 2 });
+    await open(page, { width: 320, height: 900, title, dock: 2 });
+    await doubled(page, browserName);
     const top = await box(bar(page), 'the bar');
     expect(bottom(await box(page.locator('.dk-app-title'), 'the title'))).toBeLessThanOrEqual(
         bottom(top)
@@ -251,8 +305,9 @@ test('squeezes no row where the bar and the dock come to more than the screen, a
     // The dock starts where the bar ends, whole, and the page scrolls down to it.
     const low = await box(dock(page), 'the dock');
     expect(low.y).toBeGreaterThanOrEqual(bottom(top));
-    expect(bottom(low)).toBeGreaterThan(700);
-    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(low) - 700);
+    expect(bottom(low)).toBeGreaterThan(900);
+    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(low) - 900);
+    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
 });
 
 test('takes the keyboard through the bar, then the body, then the dock', async ({
