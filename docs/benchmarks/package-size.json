@@ -1,13 +1,13 @@
 {
     "recorded": {
-        "date": "2026-11-10",
-        "commit": "b412755",
-        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
+        "date": "2026-11-12",
+        "commit": "7048d11",
+        "machine": "INTEL(R) XEON(R) PLATINUM 8573C, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.4.0",
-    "size": 38321,
+    "version": "0.5.0",
+    "size": 52828,
     "files": [
         {
             "path": "dist/base.css",
@@ -17,29 +17,29 @@
         },
         {
             "path": "dist/components.css",
-            "size": 50037,
-            "gzip": 11341,
-            "stripped": 3885
+            "size": 80452,
+            "gzip": 18069,
+            "stripped": 5895
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 1671,
-            "gzip": 758
+            "size": 6593,
+            "gzip": 2419
         },
         {
             "path": "dist/controls.js",
-            "size": 13458,
-            "gzip": 4082
+            "size": 27802,
+            "gzip": 7854
         },
         {
             "path": "dist/react.d.ts",
-            "size": 15974,
-            "gzip": 4705
+            "size": 19328,
+            "gzip": 5542
         },
         {
             "path": "dist/react.js",
-            "size": 16120,
-            "gzip": 5105
+            "size": 19148,
+            "gzip": 5767
         },
         {
             "path": "dist/theme.d.ts",
@@ -53,9 +53,9 @@
         },
         {
             "path": "dist/tokens.css",
-            "size": 7644,
-            "gzip": 2754,
-            "stripped": 838
+            "size": 9956,
+            "gzip": 3487,
+            "stripped": 955
         },
         {
             "path": "dist/vite.d.ts",
@@ -79,8 +79,8 @@
         },
         {
             "path": "README.md",
-            "size": 12453,
-            "gzip": 4307
+            "size": 14187,
+            "gzip": 4677
         }
     ]
 }
