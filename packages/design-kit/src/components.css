@@ -1462,15 +1462,6 @@
     }
 
     /*
-     * A theme switch, a copy button or a stepper's buttons stay hidden until a page's script
-     * attaches them, and a toast's buttons until it shows a message, since the display these
-     * pieces take would otherwise win over the browser's own rule for hidden.
-     */
-    :where(.dk-theme-switch[hidden], .dk-copy[hidden], .dk-toast [hidden], .dk-stepper > [hidden]) {
-        display: none;
-    }
-
-    /*
      * An app's frame: a bar across the top that says where the visitor is, a body that scrolls
      * between, and a dock at the bottom for what the screen is for, with a place above the dock
      * for a toast and one below it for a tab bar. It is a grid of rows, and each part names its
@@ -2249,5 +2240,18 @@
         .dk-strip-tools {
             display: none;
         }
+    }
+
+    /*
+     * A kit element a page marks hidden is gone, whatever display the kit or the page gives it.
+     * The browser's own rule for hidden loses to any display rule a page or the kit sets, so a
+     * hidden button, callout or row would otherwise stay drawn, and a theme switch, a copy button
+     * or a stepper's buttons, which wait hidden for a script, would show under a page's own button
+     * rule. Important in this layer, it wins over a page's rules outside it, as a state that is
+     * either on or off should. A page that reveals the element takes the attribute away. Hidden
+     * until found is the browser's to draw, so it is left alone.
+     */
+    :where([class*='dk-'][hidden]:not([hidden='until-found'])) {
+        display: none !important;
     }
 }

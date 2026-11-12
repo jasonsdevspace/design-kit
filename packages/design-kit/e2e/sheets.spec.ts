@@ -1,14 +1,14 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { sheet } from './page.js';
+import { KIT, sheet } from './page.js';
 
 /*
  * The tokens and the base as a browser draws them: the theme a page saved, or the system's when it
  * saved none, picks the page's background and text, a demo's own palette and rules win over the
  * kit's wherever its sheets load, the order of a page's own layers places the kit's, a reset in a
  * layer after the kit's clears a button's edge until the components sheet is imported into a layer
- * after the reset's, selected text stands on the accent, and the focus ring lands where it should
- * in both themes.
+ * after the reset's, selected text stands on the accent, the focus ring lands where it should
+ * in both themes, and a kit piece a page marks hidden is gone whatever display rule it has.
  */
 
 /** The tokens and the base alone, since the components are held by their own specs. */
@@ -489,3 +489,38 @@ for (const theme of ['light', 'dark'] as const) {
         expect(drawn.selection.background).not.toBe(drawn.ground);
     });
 }
+
+test("hides every kit piece a page marks hidden, under its own display rules or the page's", async ({
+    page,
+}) => {
+    await page.setContent(
+        '<!doctype html><html lang="en"><head><style>' +
+            KIT +
+            // A page's own rules outside a layer, which beat the kit's display rules.
+            ' button { display: inline-flex } div { display: grid }' +
+            '</style></head><body>' +
+            '<button type="button" class="dk-button" hidden>Retry</button>' +
+            '<div class="dk-callout" hidden><p>Saved.</p></div>' +
+            '<div class="dk-field" hidden><label class="dk-field-label" for="n">Name</label>' +
+            '<input class="dk-input" id="n"></div>' +
+            '<ul class="dk-rows" role="list"><li><a class="dk-row" href="#" hidden>Ana</a></li></ul>' +
+            '<button type="button" class="dk-button dk-copy" hidden>Copy</button>' +
+            '<div class="dk-stepper"><button type="button" class="dk-button dk-stepper-down" hidden>' +
+            '-</button><input class="dk-input dk-stepper-value" type="number">' +
+            '<button type="button" class="dk-button dk-stepper-up" hidden>+</button></div>' +
+            '<div class="dk-panel" hidden="until-found"><p>Found</p></div>' +
+            '</body></html>'
+    );
+    const shown = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('[hidden]:not([hidden="until-found"])')]
+            .filter((element) => getComputedStyle(element).display !== 'none')
+            .map((element) => element.className)
+    );
+    expect(shown).toEqual([]);
+    // Hidden until found is left to the browser, which keeps the element's box.
+    expect(
+        await page
+            .locator('[hidden="until-found"]')
+            .evaluate((element) => getComputedStyle(element).display)
+    ).not.toBe('none');
+});

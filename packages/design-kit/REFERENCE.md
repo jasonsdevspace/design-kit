@@ -1723,9 +1723,11 @@ opens, at once for a visitor who asks for less motion.
 
 The tokens declare three layers, `dk.tokens`, `dk.base` and `dk.components`, in that order, and each
 sheet fills its own. A page's own rule outside a layer wins over every rule of the kit's except the
-reduced-motion rule, however little it weighs and wherever its sheet loads, as
+reduced-motion rule and the rule that hides a kit element marked `hidden`, however little it weighs
+and wherever its sheet loads, as
 [decision 0002](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0002-rules-sit-in-dk-layers.md)
-explains.
+explains. A kit element a page marks `hidden` is gone whatever display a rule gives it, so a page
+shows it again by taking the attribute away.
 
 A page with layers of its own names where `dk` goes, before any rule of its own. A layer takes its
 place where its name first appears, so a page whose layers come first without naming `dk` puts the
