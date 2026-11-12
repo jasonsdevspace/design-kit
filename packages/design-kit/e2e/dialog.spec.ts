@@ -309,6 +309,30 @@ test('takes the options it is attached with again, and keeps them when attached 
     await page.locator('#end').click();
     await page.keyboard.press('Escape');
     await expect(endGame(page)).toBeHidden();
+    // Options given replace the last whole, so options that leave out stay, an empty set
+    // among them, do not stay.
+    for (const given of [{}, { returnTo: true }]) {
+        await attachAgain({ stay: true });
+        await page.evaluate((options) => {
+            const kit = (
+                window as unknown as {
+                    kit: {
+                        attachDialog: (
+                            d: Element | null,
+                            o?: { returnTo?: () => HTMLElement | null }
+                        ) => unknown;
+                    };
+                }
+            ).kit;
+            kit.attachDialog(
+                document.querySelector('#end-game'),
+                'returnTo' in options ? { returnTo: () => document.querySelector('main') } : {}
+            );
+        }, given);
+        await page.locator('#end').click();
+        await page.keyboard.press('Escape');
+        await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+    }
 });
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {

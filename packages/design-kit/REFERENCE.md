@@ -921,8 +921,9 @@ or Selected for a moment, its three words sharing one cell so it keeps its width
 line says which to a screen reader, with how to copy a selection with the keys or the device's own
 command. One status line serves every button on a page, and it is on the page from the start, since
 a line added at the moment it speaks may go unheard. Attaching a button again takes its new `source`
-and `status`, so a page that draws it again with a new source copies from that one. Taking a button
-away hides it and puts it back to Copy.
+and `status`, so a page that draws it again with a new source copies from that one, puts a word
+shown for the last source back to Copy, and returns the function it returned the first time. Taking
+a button away hides it and puts it back to Copy.
 
 **`CopyButton` props**
 

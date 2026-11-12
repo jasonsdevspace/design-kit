@@ -319,36 +319,52 @@ test('attaches one element as a copy button though it was attached as a switch f
     await context.close();
 });
 
-test('copies from the new source when the button is attached again with one', async ({
+test('copies from the new source and speaks on the new line when attached again with them, its word back to Copy', async ({
     browser,
 }) => {
     const context = await browser.newContext();
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
     const opened = await tab(context);
-    await opened.evaluate(() => {
+    const button = opened.locator('.dk-copy');
+    // Copied from the first source, its word says so.
+    await button.click();
+    await expect(button).toHaveAccessibleName('Copied install command');
+    const shownAfter = await opened.evaluate(() => {
         const kit = (
             window as unknown as {
                 kit: {
                     attachCopyButton: (
-                        element: HTMLElement | null,
+                        element: HTMLElement,
                         options: { source: () => HTMLElement; status: HTMLElement }
                     ) => () => void;
                 };
             }
         ).kit;
+        const found = (selector: string): HTMLElement => {
+            const element = document.querySelector<HTMLElement>(selector);
+            if (!element) throw new Error(`the page has no ${selector}`);
+            return element;
+        };
         const other = document.createElement('pre');
         other.id = 'other';
         other.textContent = 'npm run verify';
-        document.querySelector('main')?.append(other);
-        // A page that draws the button again with a new source attaches it again with it.
-        kit.attachCopyButton(document.querySelector<HTMLElement>('.dk-copy'), {
-            source: () => other,
-            status: document.querySelector<HTMLElement>('[role="status"]') ?? document.body,
-        });
+        const line = document.createElement('p');
+        line.id = 'other-status';
+        line.setAttribute('role', 'status');
+        found('main').append(other, line);
+        // A page that draws the button again with a new source and line attaches it again with them.
+        kit.attachCopyButton(found('.dk-copy'), { source: () => other, status: line });
+        // The word shown at once, before the first copy's moment is up.
+        return [...found('.dk-copy').querySelectorAll('.dk-copy-words > *')].findIndex(
+            (word) => !word.hasAttribute('aria-hidden')
+        );
     });
-    await opened.locator('.dk-copy').click();
-    await expect(opened.locator('.dk-copy')).toHaveAccessibleName('Copied install command');
+    // The word shown for the first source goes back to Copy as it is attached again.
+    expect(shownAfter).toBe(0);
+    await button.click();
+    await expect(button).toHaveAccessibleName('Copied install command');
     expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe('npm run verify');
+    await expect(opened.locator('#other-status')).toHaveText('Copied.');
     await context.close();
 });
 

@@ -365,8 +365,8 @@ const copied = async (text: string): Promise<boolean> => {
  * selects it where the browser refuses the clipboard, shows Copied or Selected for a moment, and
  * says which on the page's status line. `source` is read at each press, so a button beside tabs
  * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
- * that draws the button again with a new source copies from that one, and returns what it
- * returned the first time.
+ * that draws the button again with a new source copies from that one, puts a word shown for the
+ * last source back to Copy, and returns what it returned the first time.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
     const already = attachedButtons.get(button);
@@ -375,9 +375,6 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
         return already.detach;
     }
     let { source, status } = options;
-    const set = (next: CopyOptions) => {
-        ({ source, status } = next);
-    };
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
     let live = true;
@@ -405,6 +402,12 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
                 showWord(0);
             }, SAID_FOR);
         });
+    };
+    // A word shown for the last source is put back to Copy, so it never claims the new one copied.
+    const set = (next: CopyOptions) => {
+        ({ source, status } = next);
+        window.clearTimeout(timer);
+        showWord(0);
     };
     button.addEventListener('click', onClick);
     button.hidden = false;
@@ -477,9 +480,8 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
  * goes back to the last control outside the toast that had focus when a message arrived, and where
  * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
- * frame to its main content.
- * Attaching a toast again returns the same function. Its listeners are on the toast's own
- * elements, so a toast taken from the page takes them with it.
+ * frame to its main content. Attaching a toast again returns the same function. Its listeners are
+ * on the toast's own elements, so a toast taken from the page takes them with it.
  */
 export const attachToast = (element: HTMLElement): ShowToast => {
     const already = attachedToasts.get(element);
@@ -797,8 +799,8 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
  * options replaces them, attaching it again with none leaves them as they were, and either returns
- * the same function. Its listeners are on the dialog, so a dialog
- * taken from the page takes them with it.
+ * the same function. Its listeners are on the dialog, so a dialog taken from the page takes them
+ * with it.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     const already = attachedDialogs.get(dialog);
