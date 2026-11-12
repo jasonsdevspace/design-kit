@@ -72,7 +72,7 @@ ${LINES}
 </main>
 ${
     toast
-        ? '<div class="dk-app-toast"><div class="dk-toast dk-toast-shown" id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div>'
+        ? '<div class="dk-app-toast"><div class="dk-toast" data-shown id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div>'
         : ''
 }
 ${

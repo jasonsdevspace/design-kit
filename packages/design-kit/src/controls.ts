@@ -456,7 +456,9 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * hears it without focus moving, with the action's name when it has one, so a visitor who cannot
  * see it learns there is a way back. The line keeps it until the toast leaves, and is what a screen
  * reader reads in the toast, since the words drawn are hidden from it. The same words shown twice
- * are heard twice.
+ * are heard twice. A shown toast is marked by its data-shown attribute, which a page that draws it
+ * again, as React does with its class, leaves alone, and by the dk-toast-shown class for a page
+ * that reads it.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
@@ -511,6 +513,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = true;
         close.hidden = true;
         element.classList.remove('dk-toast-shown');
+        delete element.dataset['shown'];
         watch.disconnect();
         window.removeEventListener('resize', remeasure);
         delete element.dataset['rows'];
@@ -540,6 +543,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = !action;
         close.hidden = false;
         element.classList.add('dk-toast-shown');
+        element.dataset['shown'] = '';
         measureToast(element, close);
         watch.observe(element);
         window.addEventListener('resize', remeasure);
@@ -600,8 +604,10 @@ const attachedSteppers = new WeakMap<HTMLElement, () => void>();
  * followed. A typed value the field refuses, or none at all, shows the stepper's own error once the
  * value is changed and says it on the status line, and the error is cleared as soon as the value is
  * right again. Only the error's own id and the invalid state it set are added and taken away, so a
- * hint or an error the page draws keeps its place. It takes the stepper's field or the stepper,
- * attaches each stepper once whichever it is given, and returns what takes it away again.
+ * hint or an error the page draws keeps its place, and a shown error is put back whenever a page
+ * that draws the field again, as React does, rewrites its description or its invalid mark. It
+ * takes the stepper's field or the stepper, attaches each stepper once whichever it is given, and
+ * returns what takes it away again.
  */
 export const attachStepper = (element: HTMLElement): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -632,12 +638,15 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     const report = (wrong: boolean) => {
         if (!range) return;
         range.hidden = !wrong;
-        const ids = (input.getAttribute('aria-describedby') ?? '')
-            .split(/\s+/)
-            .filter((id) => id !== '' && id !== range.id);
+        const before = input.getAttribute('aria-describedby') ?? '';
+        const ids = before.split(/\s+/).filter((id) => id !== '' && id !== range.id);
         if (wrong) ids.push(range.id);
-        if (ids.length > 0) input.setAttribute('aria-describedby', ids.join(' '));
-        else input.removeAttribute('aria-describedby');
+        // Written only when it changes, so the watch below never answers its own writing.
+        const after = ids.join(' ');
+        if (after !== before) {
+            if (after) input.setAttribute('aria-describedby', after);
+            else input.removeAttribute('aria-describedby');
+        }
         const pageError = [...field.querySelectorAll<HTMLElement>('.dk-field-error')].some(
             (error) => error !== range && !error.hidden
         );
@@ -692,6 +701,12 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     input.addEventListener('change', onChange);
     stepper.addEventListener('focusin', mark);
     input.form?.addEventListener('reset', onReset);
+    // A page that draws the field again, as React does, writes its description and its invalid
+    // mark from what it last drew, so a shown error is put back each time they are rewritten.
+    const kept = new MutationObserver(() => {
+        if (range && !range.hidden) report(true);
+    });
+    kept.observe(input, { attributeFilter: ['aria-describedby', 'aria-invalid'] });
     mark();
     down.hidden = false;
     up.hidden = false;
@@ -702,6 +717,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         input.removeEventListener('change', onChange);
         stepper.removeEventListener('focusin', mark);
         input.form?.removeEventListener('reset', onReset);
+        kept.disconnect();
         report(false);
         if (status) hush(status);
         down.hidden = true;

@@ -1436,8 +1436,10 @@ a form's reset set is followed. The field still takes a typed value. One outside
 at all, shows the stepper's own error, which waits hidden in the markup, once the value is changed,
 and the status line says it. The error is cleared as soon as the value is right again, and the
 attach function adds and takes away only its own error, so an error or a hint the page draws keeps
-its place. It takes the stepper or its field, attaches each stepper once whichever it is given, and
-returns what takes it away again.
+its place. A page that draws the field again, as React does when the page's own error comes or goes,
+rewrites the field's description and its invalid mark, and the attach function puts its shown error
+back in both at once. It takes the stepper or its field, attaches each stepper once whichever it is
+given, and returns what takes it away again.
 
 **`StepperField` props**
 
@@ -1502,10 +1504,12 @@ show('Round 3 saved.', { label: 'Undo', onAction: () => undoLastRound() });
 message is drawn in the toast and said on its status line, which is out of sight and on the page
 from the start, so a screen reader hears it without focus moving. The line keeps the message until
 the toast leaves, and is the one copy a screen reader reads, since the words drawn are hidden from
-it. With an action, the line says its
-name too, as in "Round 3 saved. Undo is available.", so a visitor who cannot see the toast learns
-there is a way back, and the same words shown twice are heard twice. The function returns what
-dismisses that message, which does nothing once another has replaced it or it has gone.
+it. With an action, the line says its name too, as in "Round 3 saved. Undo is available.", so a
+visitor who cannot see the toast learns there is a way back, and the same words shown twice are
+heard twice. The function returns what dismisses that message, which does nothing once another has
+replaced it or it has gone. A shown toast is drawn from its `data-shown` attribute, which a page
+that draws the toast again, as React does when its class changes, leaves alone. `dk-toast-shown` is
+still set beside it for a page that reads the class.
 
 A toast leaves when its close button, its action, or Escape with focus in it dismisses it, or the
 next message replaces it. One with an action stays until then, since a timer would take the action
