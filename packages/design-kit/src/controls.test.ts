@@ -24,6 +24,7 @@ describe('the controls', () => {
             'attachCopyButton',
             'attachDialog',
             'attachStepper',
+            'attachTable',
             'attachThemeSwitch',
             'attachToast',
             'chooseTheme',

@@ -1014,11 +1014,15 @@
      * The frame is a named region with a tabindex of 0, so a keyboard can reach it and scroll it.
      * Its rows are ruled, its headers step back in the muted text, and its outer cells keep no
      * padding, so its text lines up with the prose around it. Figures sit to the right, never
-     * wrapping, while the text in a row wraps and keeps each cell's first line level.
+     * wrapping, while the text in a row wraps and keeps each cell's first line level. The frame
+     * keeps a target's room at its end edge, so a link the keyboard reaches with no more than that
+     * showing is scrolled into view, which Chromium does for nothing that is partly in view, and
+     * `attachTable` brings the rest the whole way.
      */
     :where(.dk-table-scroll) {
         max-width: 100%;
         overflow-x: auto;
+        scroll-padding-inline-end: var(--dk-target);
     }
 
     :where(.dk-table) {
@@ -1064,11 +1068,12 @@
      * A table that pins its first column keeps the cells naming each row in view while the rest
      * scrolls sideways under them, so a reader in the middle of it still knows whose row it is.
      * The pinned cells take the page's ground, or a panel's, or a dialog's raised one, or whatever
-     * a page sets in --dk-table-ground for a table on a ground of its own, so the cells passing under them never
-     * show through, with a rule at their end that says where the pinned column stops. Its borders
-     * are drawn apart, cell by cell, since a border shared between cells stays where the table
-     * drew it and would not travel with a pinned one. What the keyboard reaches in the frame stops
-     * short of the pinned column, by its width in --dk-table-pinned-size, 8rem unless a page says.
+     * a page sets in --dk-table-ground for a table on a ground of its own, so the cells passing
+     * under them never show through, with a rule at their end that says where the pinned column
+     * stops. Its borders are drawn apart, cell by cell, since a border shared between cells stays
+     * where the table drew it and would not travel with a pinned one. What the keyboard reaches in
+     * the frame stops short of the pinned column, by its width in --dk-table-pinned-size, 8rem
+     * unless a page says, and by the column's own width once `attachTable` is attached.
      */
     :where(.dk-table-pinned) {
         border-collapse: separate;
@@ -1831,7 +1836,7 @@
         border-top: 1px solid var(--dk-line);
     }
 
-    /* What the dock holds is no wider than the dock, so a stepper in it narrows rather than spill. */
+    /* What the dock holds is no wider than the dock, so a stepper narrows rather than spill. */
     :where(.dk-app-dock > *) {
         min-width: 0;
     }
@@ -2009,7 +2014,7 @@
         font-weight: var(--dk-weight-strong);
     }
 
-    /* In forced colors the current place stands on the highlight, as the current tab and pill do. */
+    /* In forced colors the current place stands on the highlight, as the current tab and pill. */
     @media (forced-colors: active) {
         :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
             background: Highlight;
@@ -2162,8 +2167,9 @@
     /*
      * On a phone at a large text size, under 20rem wide, the message takes a row of its own and its
      * buttons share the row under it, at its end, rather than wrapping one by one where the room
-     * runs out. Where even the two do not fit beside each other, each sits at the end of its row. The message pads its end as its start, since the toast's own end padding is narrow
-     * for the buttons that usually sit there.
+     * runs out. Where even the two do not fit beside each other, each sits at the end of its row.
+     * The message pads its end as its start, since the toast's own end padding is narrow for the
+     * buttons that usually sit there.
      */
     @media (width < 20rem) {
         :where(.dk-toast-shown) {
@@ -2526,8 +2532,8 @@
     }
 
     /*
-     * A dialog stands what it holds one step apart, its actions further, as their own rule says, and
-     * a table or a block of code its short step under its title, as anywhere else.
+     * A dialog stands what it holds one step apart, its actions further, as their own rule says,
+     * and a table or a block of code its short step under its title, as anywhere else.
      */
     :where(.dk-dialog > *) {
         margin-block: 0;

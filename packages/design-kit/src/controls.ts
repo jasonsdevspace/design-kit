@@ -1,14 +1,14 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button, stepper, toast and dialog do, for a page to attach to
- * the markup the components draw or a page writes by hand. Each attach function finds its control's
- * parts by their classes. The switch, the copy button and the stepper show their control, which the
- * markup keeps hidden so a visitor without script meets no control that does nothing, and return a
- * function that takes it away again. `attachToast` returns instead the function that shows a
- * message in it, and `attachDialog` the function that opens it. Nothing runs when the module is
- * imported, and nothing here sets a style, so a page's policy can refuse every style it did not
- * serve.
+ * What the kit's theme switch, copy button, stepper, toast, dialog and table do, for a page to
+ * attach to the markup the components draw or a page writes by hand. Each attach function finds its
+ * control's parts by their classes. The switch, the copy button and the stepper show their control,
+ * which the markup keeps hidden so a visitor without script meets no control that does nothing, and
+ * return a function that takes it away again, as the table's does. `attachToast` returns instead
+ * the function that shows a message in it, and `attachDialog` the function that opens it. Nothing
+ * runs when the module is imported, and nothing here sets a style, so a page's policy can refuse
+ * every style it did not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -822,4 +822,42 @@ export const attachDialog = (
     };
     attachedDialogs.set(dialog, { open, set });
     return open;
+};
+
+const attachedTables = new WeakMap<HTMLElement, () => void>();
+
+/**
+ * Brings what the keyboard reaches in a table's frame fully into view, clear of a pinned column,
+ * since Chromium leaves a link or a button that is partly in view where it is, cut by the frame's
+ * edge or under the pinned column. The pinned cell in the same row marks where the room starts, at
+ * whichever side of the frame it stands, so a right to left table is followed too. Wider than the
+ * room, it lines up where it is cut, so its words nearest the room show. It takes the frame or
+ * anything in it, attaches each frame once, and returns what takes it away again.
+ */
+export const attachTable = (element: HTMLElement): (() => void) => {
+    const frame = element.closest<HTMLElement>('.dk-table-scroll') ?? element;
+    const already = attachedTables.get(frame);
+    if (already) return already;
+    const onFocusIn = ({ target }: FocusEvent) => {
+        if (!(target instanceof Element) || target === frame) return;
+        let from = frame.getBoundingClientRect().left + frame.clientLeft;
+        let to = from + frame.clientWidth;
+        const pinned = target.closest('tr')?.firstElementChild;
+        if (pinned && !pinned.contains(target) && getComputedStyle(pinned).position === 'sticky') {
+            const edge = pinned.getBoundingClientRect();
+            // A sticky cell stands inside the frame, so its inner edge is where the room stops.
+            if (edge.left - from < to - edge.right) from = edge.right;
+            else to = edge.left;
+        }
+        const { left, right } = target.getBoundingClientRect();
+        if (left < from) frame.scrollLeft += left - from;
+        else if (right > to) frame.scrollLeft += Math.min(right - to, left - from);
+    };
+    frame.addEventListener('focusin', onFocusIn);
+    const detach = () => {
+        frame.removeEventListener('focusin', onFocusIn);
+        attachedTables.delete(frame);
+    };
+    attachedTables.set(frame, detach);
+    return detach;
 };
