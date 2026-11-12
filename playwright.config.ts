@@ -13,11 +13,11 @@ const PORT = 4180;
 const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
- * The specs that run in WebKit as well: an app's frame, its tab bar, its toast and the dialog,
- * where what stays put, a height that follows the browser's own bars and the native dialog are
- * what Safari draws its own way.
+ * The specs that run in WebKit as well: an app's frame, its tab bar, its toast, the dialog and the
+ * stepper, where what stays put, a height that follows the browser's own bars, the native dialog
+ * and a number field's inner room are what Safari draws its own way.
  */
-const WEBKIT = '*/e2e/{app,tabbar,toast,dialog}.spec.{ts,tsx}';
+const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',

@@ -113,6 +113,19 @@ test('marks the link to how it works as the current page in the strip and the fo
     }
 });
 
+test("gives the link back to the demo a thumb's target, with the header and the title where they were", async ({
+    page,
+}) => {
+    await open(page);
+    const link = page.getByRole('link', { name: 'Example', exact: true }).first();
+    expect((await box(link, 'the link back')).height).toBeGreaterThanOrEqual(44 - 0.5);
+    const title = async () => (await box(page.getByRole('heading', { level: 1 }), 'the title')).y;
+    const at = await title();
+    // With the link's room taken away, the title sits where it did.
+    await page.addStyleTag({ content: '.dk-explainer-header a { padding: 0; margin: 0 }' });
+    expect(await title()).toBeCloseTo(at, 0);
+});
+
 test('lines the explainer up with the strip, and holds its prose to the measure', async ({
     page,
 }) => {

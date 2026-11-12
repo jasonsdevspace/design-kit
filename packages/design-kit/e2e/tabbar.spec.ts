@@ -182,6 +182,13 @@ test('draws one line in forced colors, over the current link, in a system color'
         ]);
         expect(current['border-top-color']).toBe(current['color']);
         expect((await edge('History'))['border-top-style']).toBe('none');
+        // The current place stands on the highlight, as the current tab and pill do.
+        const fill = (name: string) =>
+            style(page.getByRole('link', { name, exact: true }), 'background-color').then(
+                (read) => read['background-color']
+            );
+        expect(await fill('Play')).not.toBe(await fill('History'));
+        expect(await fill('Play')).not.toBe('rgba(0, 0, 0, 0)');
     } finally {
         await context.close();
     }

@@ -315,21 +315,22 @@ a press shows the errors rather than doing nothing.
 <summary>How a button is drawn</summary>
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
-48rem wide or less, and it is never narrower than it is tall. It has no ground of its own, so it
-takes the ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every
-width, with wider inline padding and the body text size. A tall button is 3.5rem tall at every
-width and never narrower than that, and changes nothing else. A text button has no edge, no inline
-padding and no minimum width, in the accent and underlined at the size of the text around it, and
-keeps the button's height, so its target holds, which is why it sits beside a block rather than in
-running text, whose line it would push taller. Pointed at, its underline thickens, since it has no
-edge to color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the muted text and still with no edge. Where a
-pointer can hover, the edge turns to the focus color under it, and the accent button underlines its
-words instead. Pressed is the highlight with an edge twice as thick in the accent, and its words in
-the page's text, an accent button's included. Off is the muted text on no ground with an edge in the
-line color, rather than a fade, so its words keep a ratio the palette measures. An off toggle that
-is on keeps the thicker edge, in the line color. In forced colors a pressed button takes the
-system's `Highlight`, and an off one takes `GrayText` on the page's ground, accent or not. An off
-toggle that is on keeps an edge in `Highlight`.
+48rem wide or less, and it is never narrower than it is tall. It takes a tap at once, with no wait
+for a second tap that would zoom the page. It has no ground of its own, so it takes the ground of
+whatever it sits on, a callout included. A large button is 2.75rem tall at every width, with wider
+inline padding and the body text size. A tall button is 3.5rem tall at every width and never
+narrower than that, and changes nothing else. A text button has no edge, no inline padding and no
+minimum width, in the accent and underlined at the size of the text around it, and keeps the
+button's height, so its target holds, which is why it sits beside a block rather than in running
+text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
+color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
+muted text and still with no edge. Where a pointer can hover, the edge turns to the focus color
+under it, and the accent button underlines its words instead. Pressed is the highlight with an edge
+twice as thick in the accent, and its words in the page's text, an accent button's included. Off is
+the muted text on no ground with an edge in the line color, rather than a fade, so its words keep a
+ratio the palette measures. An off toggle that is on keeps the thicker edge, in the line color. In
+forced colors a pressed button takes the system's `Highlight`, and an off one takes `GrayText` on
+the page's ground, accent or not. An off toggle that is on keeps an edge in `Highlight`.
 
 A page with a look of its own for a button sets two custom properties and writes no rule over the
 kit's class. `--dk-button-shadow` is a shadow drawn under a button at rest, such as a hard edge
@@ -938,7 +939,8 @@ markup below, which every page writes by hand, since none of these pieces has lo
 ```
 
 The header holds a link back to the demo, outside `main`, so the skip link passes it and reading
-starts at the h1. `main` holds the h1, the lead, the one action as an accent button, and then the
+starts at the h1. The link is the target tall, so a thumb finds the way back, without moving the
+header or the title. `main` holds the h1, the lead, the one action as an accent button, and then the
 sections. Each section holds its number, hidden from a screen reader since its heading says what the
 section is, then an h2 with an id, then its text, with an h3 for each part of it.
 
@@ -1109,11 +1111,12 @@ stays one table in its named frame, so a screen reader reads its heads as before
 </div>
 ```
 
-The pinned cells take the page's ground, or a panel's, so the cells passing under them never show
-through, and a rule at their end says where the pinned column stops. A table on a ground of its own,
-such as a callout's, sets that ground in `--dk-table-ground`. The table draws its borders cell by
-cell, so a pinned cell's rule travels with it. Only the first column is pinned, and the header row
-scrolls with the table, since a table of a few rows needs no pinned header.
+The pinned cells take the page's ground, or a panel's, or a dialog's raised one, so the cells
+passing under them never show through, and a rule at their end says where the pinned column stops. A
+table on a ground of its own, such as a callout's, sets that ground in `--dk-table-ground`. The
+table draws its borders cell by cell, so a pinned cell's rule travels with it. Only the first column
+is pinned, and the header row scrolls with the table, since a table of a few rows needs no pinned
+header.
 
 A table whose cells hold a link or a button sets `--dk-table-pinned-size` on its frame to the pinned
 column's width, 8rem unless it does, so what the keyboard reaches stops beside the pinned column and
@@ -1345,7 +1348,8 @@ short. So it does on a screen less than 18rem wide, a phone at a large text size
 wrap further than the room the page could keep for them.
 
 Only the current link has a line, and the others are padded to its depth, so forced colors draw one
-line. A tab bar does not print, and a page that ends in one prints as long as what it holds.
+line, and there the current link stands on `Highlight`, as the current tab and pill do. A tab bar
+does not print, and a page that ends in one prints as long as what it holds.
 
 </details>
 
@@ -1442,11 +1446,12 @@ never under the target at the usual text size, and keep their height, so the ste
 in an app's dock too. The value is in the mono face with figures of one width, centered, with room
 for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
 asks a page to allow, so the field does not change width as the value changes and no figure is cut
-off, and in a tall stepper it is at the heading size. With its label to the left the label takes the
-room the stepper leaves and wraps within it, and the stepper moves under the label where a large
-text size leaves no room for both. Its errors sit on lines above it, as every field's do, and its
-hint on a line below. The number field's own spin buttons are taken away, since the stepper's
-buttons stand in for them and they would keep their room even out of sight.
+off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so
+it stands level with them and with a field or a button beside it. With its label to the left the
+label takes the room the stepper leaves and wraps within it, and the stepper moves under the label
+where a large text size leaves no room for both. Its errors sit on lines above it, as every field's
+do, and its hint on a line below. The number field's own spin buttons are taken away, since the
+stepper's buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 

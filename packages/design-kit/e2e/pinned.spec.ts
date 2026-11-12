@@ -150,6 +150,25 @@ test('lets the column scroll with the rest on a phone at a large text size, and 
     expect(await pinnedAt(390, 2)).toEqual({ pinned: false, room: '0px' });
 });
 
+test('draws the pinned cells on the raised ground of a dialog that holds the table, in both themes', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await writePage(page, {
+            width: 360,
+            theme,
+            title: 'Scores',
+            body: `<dialog class="dk-dialog" id="d">${table(true)}</dialog>`,
+        });
+        await page.locator('dialog').evaluate((dialog) => {
+            (dialog as HTMLDialogElement).showModal();
+        });
+        const held = await ground(page.locator('dialog'));
+        expect(await ground(cell(page, 'Ana')), theme).toBe(held);
+        expect(await ground(head(page)), theme).toBe(held);
+    }
+});
+
 test('takes the ground a page sets for a table on a ground of its own', async ({ page }) => {
     await open(page, { css: '.dk-table-scroll { --dk-table-ground: rgb(1, 2, 3); }' });
     expect(await ground(cell(page, 'Ana'))).toBe('rgb(1, 2, 3)');
