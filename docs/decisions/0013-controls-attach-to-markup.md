@@ -77,8 +77,8 @@ The paths are in `packages/design-kit`.
 
 - `src/controls.test.ts` imports the module in plain Node, finds no export but its functions, and
   holds it with the theme module it imports, without their comments as a bundler sends them, to its
-  budget, which record 15 raised from 3 KB to 5 KB, and 0.5.1 to 6 KB for the focus and theme
-  fixes.
+  budget, which record 15 raised from 3 KB to 5 KB, 0.5.1 to 6 KB for the focus and theme fixes, and
+  0.6.0 to 7 KB for the table's frame and the fixes that follow it.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the switch's line for a visitor without script in

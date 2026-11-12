@@ -1,12 +1,9 @@
-import { readFileSync } from 'node:fs';
-
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
-import ts from 'typescript';
 
 import { Toast } from '../src/react.js';
-import { box, KIT, sideways, tabKey } from './page.js';
+import { box, js, KIT, ORIGIN, sideways, tabKey } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -18,13 +15,6 @@ import { textSize } from './text-size.js';
  * with its action in reach, its place above an app's dock or at the foot of a page, nothing drawn
  * before a message, and no audit findings in either theme.
  */
-
-const ORIGIN = 'https://kit.test';
-
-const js = (file: string) =>
-    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
-        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
-    }).outputText;
 
 const TOAST = renderToStaticMarkup(<Toast />);
 

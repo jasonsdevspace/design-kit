@@ -1,13 +1,10 @@
-import { readFileSync } from 'node:fs';
-
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
-import ts from 'typescript';
 
 import { CopyButton, CopyStatus, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { KIT, themeOf } from './page.js';
+import { js, KIT, ORIGIN, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -21,13 +18,7 @@ import { KIT, themeOf } from './page.js';
  * button.
  */
 
-const ORIGIN = 'https://kit.test';
 const POLICY = `default-src 'self'; script-src 'self' ${themeScriptHash}; style-src 'self'`;
-
-const js = (file: string) =>
-    ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
-        compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
-    }).outputText;
 
 const MARKUP = renderToStaticMarkup(
     <main>
