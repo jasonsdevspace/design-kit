@@ -562,3 +562,102 @@ for (const theme of ['light', 'dark'] as const) {
         expect(results.violations).toEqual([]);
     });
 }
+
+/** A control of each kind, as a screen of an app or a plain page holds them. */
+const CONTROLS = `<button type="button" class="dk-button" data-kind="button">Undo</button>
+<button type="button" class="dk-button dk-button-text" data-kind="text">Rules</button>
+<button type="button" class="dk-button dk-button-tall" data-kind="tall">Next round</button>
+<input class="dk-input" aria-label="Name" data-kind="field">
+<select class="dk-select" aria-label="Game" data-kind="select"><option>Hearts</option></select>
+<label class="dk-choice" data-kind="choice"><input type="checkbox"> Keep score</label>
+<div class="dk-theme-switch" role="radiogroup" aria-label="Theme"><label class="dk-theme-switch-choice" data-kind="switch"><input type="radio" name="theme" checked><span>System</span></label></div>
+<div class="dk-tabs" role="tablist" aria-label="Views"><button type="button" class="dk-tab" role="tab" aria-selected="true" data-kind="tab">All</button></div>
+<ul class="dk-pills"><li><a class="dk-pill" href="#games" data-kind="pill">Games</a></li></ul>`;
+
+/** The kinds that are the target tall in an app, and a field's height on a plain wide page. */
+const HELD = ['button', 'field', 'select', 'choice', 'switch', 'tab', 'pill'];
+
+type Sizes = Partial<Record<string, { readonly height: number; readonly width: number }>>;
+
+/** The height and width of each kind of control in the element the selector finds. */
+const sizes = (page: Page, within: string): Promise<Sizes> =>
+    page.locator(`${within} [data-kind]`).evaluateAll((controls) =>
+        Object.fromEntries(
+            controls.map((control): [string, { height: number; width: number }] => {
+                const drawn = control.getBoundingClientRect();
+                return [
+                    control.getAttribute('data-kind') ?? '',
+                    { height: Math.round(drawn.height), width: Math.round(drawn.width) },
+                ];
+            })
+        )
+    );
+
+test('holds every control in an app to the target on a wide screen, and leaves the rest of a page as it was', async ({
+    page,
+}) => {
+    for (const { name, body, bodyClass } of [
+        {
+            name: 'a frame',
+            body: `<div class="dk-app"><main class="dk-app-body" id="in">${CONTROLS}</main></div>`,
+            bodyClass: '',
+        },
+        {
+            name: 'a page that ends in a tab bar',
+            body: `<main id="in">${CONTROLS}</main><nav class="dk-tabbar" aria-label="Places"></nav>`,
+            bodyClass: 'dk-tabbar-page',
+        },
+        {
+            name: "a dialog beside an app's frame",
+            body: `<div class="dk-app"><main class="dk-app-body"></main></div><dialog class="dk-dialog" open id="in">${CONTROLS}</dialog>`,
+            bodyClass: '',
+        },
+    ]) {
+        await writePage(page, { width: 1280, title: 'Round 3', body });
+        if (bodyClass)
+            await page.evaluate((added) => {
+                document.body.classList.add(added);
+            }, bodyClass);
+        const drawn = await sizes(page, '#in');
+        for (const kind of HELD) expect(drawn[kind]?.height, `${name}, ${kind}`).toBe(44);
+        // A text button keeps no least width, and a tall button its larger target.
+        expect(drawn['text']?.height, `${name}, text`).toBe(44);
+        expect(drawn['text']?.width, `${name}, text`).toBeLessThan(44);
+        expect(drawn['tall']?.height, `${name}, tall`).toBe(56);
+    }
+    // Outside an app, a wide screen keeps the field's height for its controls.
+    await writePage(page, {
+        width: 1280,
+        title: 'Round 3',
+        body: `<main id="in">${CONTROLS}</main>`,
+    });
+    const plain = await sizes(page, '#in');
+    for (const kind of HELD) expect(plain[kind]?.height, kind).toBeLessThan(44);
+});
+
+test("leaves a demo's strip as it is on a page that ends in a tab bar", async ({ page }) => {
+    const strip = `<header class="dk-strip" id="in"><button type="button" class="dk-button" data-kind="button">Tour</button><div class="dk-theme-switch" role="radiogroup" aria-label="Theme"><label class="dk-theme-switch-choice" data-kind="switch"><input type="radio" name="theme" checked><span>System</span></label></div></header>`;
+    await writePage(page, { width: 1280, title: 'Round 3', body: `${strip}<main></main>` });
+    const plain = await sizes(page, '#in');
+    await page.evaluate(() => {
+        document.body.classList.add('dk-tabbar-page');
+    });
+    expect(await sizes(page, '#in')).toEqual(plain);
+});
+
+test("draws the toast's close button at the target both ways on a wide screen, in a frame or not", async ({
+    page,
+}) => {
+    const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Dismiss</span></button></div>`;
+    for (const [name, body] of [
+        ['a page', `<main><h1>Round 3</h1></main>${toast}`],
+        [
+            'a frame',
+            `<div class="dk-app"><main class="dk-app-body"><h1>Round 3</h1></main><div class="dk-app-toast">${toast}</div></div>`,
+        ],
+    ] as const) {
+        await writePage(page, { width: 1280, title: 'Round 3', body });
+        const close = await box(page.getByRole('button', { name: 'Dismiss' }), 'the close button');
+        expect([Math.round(close.width), Math.round(close.height)], name).toEqual([44, 44]);
+    }
+});

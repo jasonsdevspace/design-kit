@@ -47,7 +47,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-radius-pill`                                                                                | 999px, round ends on a tab or a tag                                                                                                                     |
 | `--dk-ring-width`, `--dk-ring-offset`                                                             | 2px and 2px                                                                                                                                             |
 | `--dk-field-height`, `--dk-field-inline`                                                          | a field's height, 2.25rem, and its inline padding, 0.75rem                                                                                              |
-| `--dk-target`                                                                                     | 2.75rem, the touch target on a phone                                                                                                                    |
+| `--dk-target`                                                                                     | 2.75rem, the touch target on a phone and in an app                                                                                                      |
 | `--dk-target-large`                                                                               | 3.5rem, a target pressed at arm's length                                                                                                                |
 | `--dk-strip`, `--dk-strip-tools`                                                                  | 2.5rem, and `auto`, the room kept for switches                                                                                                          |
 | `--dk-measure`, `--dk-column`                                                                     | 34rem and 72rem                                                                                                                                         |
@@ -315,12 +315,13 @@ a press shows the errors rather than doing nothing.
 <summary>How a button is drawn</summary>
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
-48rem wide or less, and it is never narrower than it is tall. It takes a tap at once, with no wait
-for a second tap that would zoom the page. It has no ground of its own, so it takes the ground of
-whatever it sits on, a callout included. A large button is 2.75rem tall at every width, with wider
-inline padding and the body text size. A tall button is 3.5rem tall at every width and never
-narrower than that, and changes nothing else. A text button has no edge, no inline padding and no
-minimum width, in the accent and underlined at the size of the text around it, and keeps the
+48rem wide or less, and at every width in an app's frame, on a page that ends in a tab bar, in a
+dialog on either and in a toast, and it is never narrower than it is tall. It takes a tap at once,
+with no wait for a second tap that would zoom the page. It has no ground of its own, so it takes the
+ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every width,
+with wider inline padding and the body text size. A tall button is 3.5rem tall at every width and
+never narrower than that, and changes nothing else. A text button has no edge, no inline padding and
+no minimum width, in the accent and underlined at the size of the text around it, and keeps the
 button's height, so its target holds, which is why it sits beside a block rather than in running
 text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
 color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
@@ -480,16 +481,17 @@ cannot make uses `disabled` on its control.
 <details>
 <summary>How a choice is drawn</summary>
 
-A choice is the field's height, and a thumb's target on a phone, and takes the highlight under a
-pointer and after the keyboard, as the ring does, so the whole word reads as one target with the
-ring on the control itself, and a tap leaves no choice lit once it is done. The highlight reaches
-past the control by the choice's own padding, so the control stays in line with the legend, into the
-room around the field, which a container that clips must leave. A gloss is in the muted text at the
-caption size, and a choice whose control is disabled is in the muted text with no highlight. Every
-control of an invalid set draws a thin line in the danger color around it, and a dashed line in
-`CanvasText` in forced colors, each giving way to the ring. The theme switch's choice is the same
-label of a radio and its word, drawn by rules of its own as a pill word with the radio under it, as
-the Theme switch section says.
+A choice is the field's height, and a thumb's target on a phone and at every width in an app's frame
+and on a page that ends in a tab bar, and takes the highlight under a pointer and after the
+keyboard, as the ring does, so the whole word reads as one target with the ring on the control
+itself, and a tap leaves no choice lit once it is done. The highlight reaches past the control by
+the choice's own padding, so the control stays in line with the legend, into the room around the
+field, which a container that clips must leave. A gloss is in the muted text at the caption size,
+and a choice whose control is disabled is in the muted text with no highlight. Every control of an
+invalid set draws a thin line in the danger color around it, and a dashed line in `CanvasText` in
+forced colors, each giving way to the ring. The theme switch's choice is the same label of a radio
+and its word, drawn by rules of its own as a pill word with the radio under it, as the Theme switch
+section says.
 
 </details>
 
@@ -1242,7 +1244,11 @@ safe area tokens their values:
 <summary>How the frame is drawn</summary>
 
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
-Only a toast's attach function reads a height, the toast's and the body's, as it shows and while it
+Its column is a phone's whatever the screen, so every button, field, select and choice in it is the
+target tall at every width, as on a phone, and one screen has one height of control. A page that
+ends in a tab bar does the same, as does a dialog on either, and so do a theme switch, pills and
+tabs there, and a button in a toast. A demo's strip and footer stay as they are on every page. Only
+a toast's attach function reads a height, the toast's and the body's, as it shows and while it
 stays. A dock grows with what it holds and a tab bar grows at a large text size, so the body ends
 where the rows below it begin. A toast floats over the foot of the body, just above the dock, so
 showing or hiding one never moves the dock under a thumb about to press it again. While one is shown
@@ -1464,12 +1470,13 @@ in an app's dock too. The value is in the mono face with figures of one width, c
 for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
 asks a page to allow, so the field does not change width as the value changes and no figure is cut
 off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so
-it stands level with them. At 48rem wide or less, where a field and a button are the target tall, a
-stepper that is not tall stands level with one beside it. With its label to the left the label takes
-the room the stepper leaves and wraps within it, and the stepper moves under the label where a large
-text size leaves no room for both. Its errors sit on lines above it, as every field's do, and its
-hint on a line below. The number field's own spin buttons are taken away, since the stepper's
-buttons stand in for them and they would keep their room even out of sight.
+it stands level with them. At 48rem wide or less, in an app's frame and on a page that ends in a tab
+bar, where a field and a button are the target tall, a stepper that is not tall stands level with
+one beside it. With its label to the left the label takes the room the stepper leaves and wraps
+within it, and the stepper moves under the label where a large text size leaves no room for both.
+Its errors sit on lines above it, as every field's do, and its hint on a line below. The number
+field's own spin buttons are taken away, since the stepper's buttons stand in for them and they
+would keep their room even out of sight.
 
 </details>
 
@@ -1548,10 +1555,11 @@ message once the dialog has closed.
 
 Shown, the toast is a raised card on `--dk-raised` with an edge in the line color, which forced
 colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium` each time
-it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside the buttons. On a phone at a
-large text size, under 20rem wide, the message takes a row of its own and the buttons share the row
-under it, at its end. The close button is at least the target wide. Outside a
-frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not print.
+it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside
+the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of its own
+and the buttons share the row under it, at its end. The close button is the target both ways at
+every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
+print.
 
 </details>
 
