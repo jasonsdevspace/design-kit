@@ -386,6 +386,59 @@ test("sits in an app's frame above the dock, its action one step back from the d
     await expect(undo(page)).toBeFocused();
 });
 
+test("never moves the frame's dock as it shows and leaves, at the usual and at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    // A screen as full as an app's gets: a long title, a dock of two and a tab bar, so at twice
+    // the text size the body is at its least and a row for the toast would push the dock down.
+    const full = FRAME.replace('Round 3</h1>', 'Round 3 of the game at the cabin</h1>').replace(
+        '</section>',
+        '<button type="button" class="dk-button dk-button-tall">Skip a player</button></section>' +
+            '<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul>' +
+            '<li><a href="#play" aria-current="page">Play</a></li><li><a href="#games">Games</a></li>' +
+            '</ul></nav>'
+    );
+    for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
+        await open(page, { body: full, height: 844 });
+        if (scale === 2) await textSize(page, 2);
+        const save = page.locator('#save');
+        const before = await box(save, "the dock's button");
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
+        await dismiss(page).click();
+        expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
+    }
+});
+
+test('puts its buttons together on a row under its message on a phone at a large text size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    for (const [width, scale] of [
+        [390, 1.5],
+        [390, 2],
+        [320, 2],
+    ] as const) {
+        await open(page, { width });
+        await textSize(page, scale);
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const where = `${String(width)}px at ${String(scale)}x`;
+        const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
+        const action = await box(undo(page), 'the action');
+        const close = await box(dismiss(page), 'the close button');
+        // One row under the message, the action before the close button, both at the end.
+        expect(action.y, where).toBeGreaterThanOrEqual(message.y + message.height - 1);
+        expect(Math.abs(close.y - action.y), where).toBeLessThanOrEqual(1);
+        expect(close.x, where).toBeGreaterThan(action.x + action.width - 1);
+        const card = await box(toast(page), 'the toast');
+        expect(card.x + card.width - (close.x + close.width), where).toBeLessThan(16);
+    }
+});
+
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
     page,
 }) => {

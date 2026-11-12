@@ -1214,10 +1214,13 @@ safe area tokens their values:
 
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
-the body ends where the rows below it begin, and a toast sits in a row of its own, clear of both. Each
-row but the body's is never shorter than what it holds, and the body keeps 8rem, a few lines, so
-where the rows come to more than the screen, as at a large text size with a toast shown, the page
-scrolls and no row covers its neighbor or squeezes the body to nothing. What the body holds out of
+the body ends where the rows below it begin. A toast floats over the foot of the body, just above the
+dock, so showing or hiding one never moves the dock under a thumb about to press it again, and while
+one is shown the body pads past a toast of two rows, so its last line scrolls clear of it, in a
+browser with `:has()`. On a screen too short for the frame the toast takes its row above the dock.
+Each row but the body's is never shorter than what it holds, and the body keeps 8rem, a few lines,
+so where the rows come to more than the screen the page scrolls and no row covers its neighbor or
+squeezes the body to nothing. What the body holds out of
 sight, such as a row's words for a screen reader, scrolls with it and never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
@@ -1228,7 +1231,9 @@ itself past `--dk-safe-bottom`, so its ground runs down under the home indicator
 stays clear of it, even where the page scrolls whole.
 
 The bar is `--dk-app-bar` tall, 4rem, or taller where a long title wraps, which it does within the
-room the mark and the action leave. On a wide screen the frame stays within `--dk-app-column`,
+room the mark and the action leave. On a phone at a large text size, under 16rem wide, the title
+takes a row of its own under the mark and the action, across the bar's whole width, keeping its size
+and every word, and it stays first in the markup. On a wide screen the frame stays within `--dk-app-column`,
 28rem, in the middle. Where the rows come to more than the screen and the page scrolls whole, a
 swipe that reaches the body's end carries on to the page, so the dock and the tab bar below are
 reached the same way. The body is the containing block for what it holds, so a menu that should draw
@@ -1468,12 +1473,13 @@ A message with no action replaces one with an action and its way back, so a page
 another only when the first is done with. More than one action is a dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
-above the dock, so it covers neither the dock nor the body's last line. On a page with no frame it
+floating over the foot of the body just above the dock, so it never moves the dock, and the body
+pads so its last line scrolls clear of it. On a page with no frame it
 sits at the bottom of the screen, over the page and clear of the safe areas, in the app's column.
 While it is shown there, what the keyboard reaches stops short of a toast of two rows, a line of
 message over its buttons as at a large text size, and the page's end scrolls clear of it. A longer
-message makes the toast taller than that, so a toast's message is a short sentence. A page that ends in a tab bar and shows toasts is drawn in the
-frame, where the toast clears the bar. A toast shown while a dialog is open sits under the dialog's
+message makes the toast taller than that, so a toast's message is a short sentence. A page that
+ends in a tab bar and shows toasts is drawn in the frame, where the toast clears the bar. A toast shown while a dialog is open sits under the dialog's
 scrim, out of sight and out of a screen reader's reach, so a page shows its message once the dialog
 has closed.
 
@@ -1489,8 +1495,9 @@ has closed.
 
 Shown, the toast is a raised card on `--dk-raised` with an edge in the line color, which forced
 colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium` each time
-it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside the buttons, and at a
-large text size the buttons wrap under it. The close button is at least the target wide. Outside a
+it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside the buttons. On a phone at a
+large text size, under 20rem wide, the message takes a row of its own and the buttons share the row
+under it, at its end. The close button is at least the target wide. Outside a
 frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not print.
 
 </details>

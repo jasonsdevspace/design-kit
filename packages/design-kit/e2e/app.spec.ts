@@ -70,7 +70,11 @@ const screen = ({
 ${LINES}
 <p id="last">The last line.</p>
 </main>
-${toast ? '<div class="dk-app-toast"><p id="toast" role="status">Round saved.</p></div>' : ''}
+${
+    toast
+        ? '<div class="dk-app-toast"><div class="dk-toast dk-toast-shown" id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div>'
+        : ''
+}
 ${
     dock > 0
         ? `<section class="dk-app-dock" aria-label="Actions">
@@ -207,25 +211,27 @@ test("scrolls the body's last line clear of everything below it, at a doubled te
     // The body keeps a few lines of its own, 8rem at twice the text size, however much the rows
     // around it hold, and the page scrolls to whatever no longer fits.
     expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
-    const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
-    // The rows come to more than the screen, so the page scrolls whole to reach the tab bar.
-    expect(bottom(tabs)).toBeGreaterThan(844);
-    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(tabs) - 844);
+    // The toast floats over the body and the title takes a row of its own, so the rows fit the
+    // screen and the tab bar is at its foot with nothing to scroll.
+    expect(bottom(await box(page.locator('.dk-app-tabs'), 'the tab bar'))).toBe(844);
+    expect(await pageScroll(page)).toBe(0);
 });
 
 test('carries a swipe that reaches the end of the body on to the page, and ends clear of the home indicator', async ({
     page,
     browserName,
 }) => {
+    // A title long enough that the rows come to more than the screen and the page scrolls whole.
     await open(page, {
         height: 844,
         css: SAFE_CSS,
-        title: 'Round 3 of the game at the cabin',
+        title: 'The seventeenth round of a very long game of Wizard. '.repeat(3),
         dock: 2,
         toast: true,
         tabs: true,
     });
     await doubled(page, browserName);
+    expect(await pageScroll(page)).toBeGreaterThan(0);
     const drawn = await box(body(page), 'the body');
     await page.mouse.move(drawn.x + drawn.width / 2, drawn.y + drawn.height / 2);
     // Wheel turns over the body, past its end, until the page has scrolled as far as it goes.
@@ -336,6 +342,29 @@ test('wraps a long title at a large text size, and cuts nothing off', async ({
     expect(
         await heading.evaluate((element) => element.scrollWidth - element.clientWidth)
     ).toBeLessThanOrEqual(0);
+    expect(await sideways(page)).toBe(0);
+});
+
+test("gives the title the bar's whole width under its action on a phone at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await open(page, { width: 390, height: 844, title: 'Round 3 of the game at the cabin' });
+    await doubled(page, browserName, { setting: true });
+    const heading = page.locator('.dk-app-title');
+    const title = await box(heading, 'the title');
+    const action = await box(page.getByRole('button', { name: 'Scores' }), 'the action');
+    // The action on a row of its own above, at the end, and the title across the bar below it.
+    expect(bottom(action)).toBeLessThanOrEqual(title.y + 1);
+    expect(action.x + action.width).toBeGreaterThan(390 - 64);
+    const top = await box(bar(page), 'the bar');
+    expect(title.width).toBeGreaterThan(top.width - 2 * 32 - 2);
+    const line = parseFloat((await style(heading, 'line-height'))['line-height'] ?? '');
+    expect(title.height).toBeLessThanOrEqual(line * 2 + 1);
+    // Still the bar's first element, so a screen reader meets the title before the action.
+    expect(await bar(page).evaluate((element) => element.firstElementChild?.className)).toBe(
+        'dk-app-title'
+    );
     expect(await sideways(page)).toBe(0);
 });
 
@@ -464,6 +493,8 @@ test('prints as long and as wide as what it holds, with the body whole', async (
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme`, async ({ page }) => {
         await open(page, { theme, toast: true, tabs: true, dock: 2 });
+        // The toast rises into place, so the audit reads its colors once it has arrived.
+        await page.waitForFunction(() => document.getAnimations().length === 0);
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations).toEqual([]);
     });
