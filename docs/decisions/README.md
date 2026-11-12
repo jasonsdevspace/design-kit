@@ -38,9 +38,9 @@ costs, and the test behind it.
     in the room the strip keeps and copy buttons beside the code, and why React in the browser and
     a second inline script were turned down.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
-    the theme switch, the copy button and the toast as markup from a component and a function a
-    page calls on it, from `./controls`, and why a stateful component and a script that builds the
-    DOM were turned down.
+    the theme switch, the copy button, the stepper, the toast and the dialog as markup from a
+    component and a function a page calls on it, from `./controls`, and why a stateful component and
+    a script that builds the DOM were turned down.
 14. [A piece with no state of its own ships as classes alone](0014-stateless-pieces-ship-as-classes.md):
     tabs, pills and the eyebrow as classes a page writes by hand, with the roles and keys the page
     owns, and why a component for each was turned down.

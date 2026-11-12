@@ -1695,8 +1695,8 @@ A dialog that must be answered is attached with `{ stay: true }`, and then stays
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
 from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a close once and closes
 the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
-that can be dismissed too. Attaching a dialog again sets the options given and returns the same function. Its
-listeners are on the dialog, so a dialog taken from the page takes them with it.
+that can be dismissed too. Attaching a dialog again sets the options given and returns the same
+function. Its listeners are on the dialog, so a dialog taken from the page takes them with it.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
@@ -1707,9 +1707,8 @@ asks in a dialog only where nothing could undo the answer.
 A dialog sits in the middle of the screen, at most 32rem wide, on the raised ground with the raised
 shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls inside itself when
 it holds more than the screen does, and while one is open as a modal the page behind it does not
-scroll, in a browser with `:has()`. Its
-title is at the title size, and its actions sit at its end, wrapping under one another where the
-room runs out.
+scroll, in a browser with `:has()`. Its title is at the title size, and its actions sit at its end,
+wrapping under one another where the room runs out.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it

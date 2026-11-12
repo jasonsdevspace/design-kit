@@ -87,12 +87,12 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 | `@jasonsdevspace/design-kit/theme`          | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                                                                                                                                                                |
 | `@jasonsdevspace/design-kit/controls`       | `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()` and `chooseTheme()`, which make the controls work, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener` and `DialogOptions`              |
 | `@jasonsdevspace/design-kit/react`          | The components, the theme switch's, copy button's, stepper's and toast's markup, the props types, `CalloutTone` and the chrome's URLs                                                                                                                        |
-| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `browserFloor()` and `lightningcssFloor()`                                                                                                                                                                         |
+| `@jasonsdevspace/design-kit/vite`           | `themeScriptPlugin()`, `themeScriptHash`, `THEME_PLACEHOLDER`, `browserFloor()` and `lightningcssFloor()`                                                                                                                                                    |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
 `SelectField`, `TextareaField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
-`CopyButton`, `CopyStatus` and `Toast`, a props type for each named after it, such as `ButtonProps`, the
-`Choice` and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome
+`CopyButton`, `CopyStatus` and `Toast`, a props type for each named after it, such as `ButtonProps`,
+the `Choice` and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome
 links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ## Using it
