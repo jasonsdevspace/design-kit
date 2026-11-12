@@ -7,6 +7,69 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.5.0
+
+The kit carries a phone app: a frame of a bar, a body that scrolls and a dock, clear of a phone's
+safe areas, with a tab bar, a toast that can carry Undo, a grid of buttons, a list of ruled rows, a
+table that pins its first column, a stepper for a small whole number, and a dialog with a sheet
+form. It adds a larger target, a numeral size, a medium duration, the safe areas and the order
+things stack in as tokens, a tall button, and a shadow and a press a page can give any button. No
+token or class is renamed, and the theme script is unchanged, so `themeScriptHash` is the same. The
+sheets' budget rises to 9 KB and the controls' to 5 KB, to hold the app's pieces beside the rest.
+
+- **Upgrading.** Nothing is renamed and no token's value moves, so a page that draws only what 0.4.0
+  drew changes nothing to take 0.5.0, but for these. The theme switch's open list now sits at
+  `--dk-stack-raised`, which is 2, where it sat at 1, so a page that stacks something of its own
+  beside it checks the order. The skip link's top and side now add `--dk-safe-top` and
+  `--dk-safe-left`, which are nothing unless the viewport meta says `viewport-fit=cover`, and its
+  stacking reads `--dk-stack-skip`, still 10. A button now reads `--dk-button-shadow` at rest and
+  `--dk-button-press` while held, and a pressed toggle or a button whose panel is open rests at the
+  press, so a page that gave buttons a shadow of its own in a layer below the kit's sets it through
+  those two instead. A page that already used a name the kit now takes, a `.dk-app`, `.dk-toast` or
+  `.dk-row` class or a `--dk-safe-`, `--dk-stack-` or `--dk-app-` property among them, gets the
+  kit's meaning for it.
+- **Tokens.** `--dk-target-large`, 3.5rem, is a target pressed at arm's length, and
+  `--dk-text-numeral`, 3.5rem, a number read from across a table. `--dk-duration-medium`, 250ms, is
+  a surface arriving. `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom` and `--dk-safe-left`
+  are what a phone keeps at each edge, nothing unless the viewport meta says `viewport-fit=cover`.
+  `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast` and
+  `--dk-stack-skip` name the order things sit over one another, and `--dk-app-column` and
+  `--dk-app-bar` the width of an app's frame and the height of its bar. A page sets
+  `--dk-button-shadow` and `--dk-button-press` for a button with an edge under it, and
+  `--dk-button-grid-columns`, `--dk-stepper-digits`, `--dk-table-ground` and
+  `--dk-table-pinned-size` for the pieces below.
+- **Sheets.** `.dk-button-tall` takes the larger target. `.dk-app` is a frame as tall as the screen
+  with `.dk-app-bar`, its heading `.dk-app-title`, `.dk-app-body`, `.dk-app-toast`, `.dk-app-dock`
+  and `.dk-app-tabs`, only the body scrolling and the page scrolling whole on a screen too short for
+  both. `.dk-tabbar` is a phone's places as links at its bottom, and `.dk-tabbar-page` a page that
+  ends in one. `.dk-toast` says what just happened over the page or above the frame's dock.
+  `.dk-button-grid` lays out toggles or keys in the columns a page asks for and fewer where a cell
+  would be under the target. `.dk-rows` is a list of ruled rows, each a link or holding a button.
+  `.dk-table-pinned` keeps a table's first column in view as the rest scrolls. `.dk-stepper` is a
+  number field between a lower and a raise button, and `.dk-stepper-inline` puts its label on its
+  left. `.dk-dialog` and `.dk-dialog-sheet` style the native dialog, centered or at the bottom edge,
+  with `.dk-dialog-title` and `.dk-dialog-actions` for its heading and its row of buttons.
+  `.dk-button-grid-tall`, `.dk-rows-tall` and `.dk-stepper-tall` take the larger target. The
+  reference gives each piece's parts, the toast's `.dk-toast-message`, `.dk-toast-status`,
+  `.dk-toast-action` and `.dk-toast-close` and a row's `.dk-row-title`, `.dk-row-detail`,
+  `.dk-row-figure` and `.dk-row-sign` among them. On paper a tab bar and a toast do not print, and
+  an app's frame, or a page that ends in a tab bar, prints as long as what it holds.
+- **Controls.** `attachToast` returns a `ShowToast`, which shows a message with one `ToastAction` or
+  none, says it on the toast's status line with the action's name, and returns what dismisses that
+  message. A toast with an action stays until it is dismissed or replaced, and one without leaves
+  after five seconds unless it is pointed at or has focus. `attachDialog` takes `DialogOptions`,
+  `stay` for a dialog that must be answered and `returnTo` for where focus goes once its opener is
+  gone, and returns an `OpenDialog`, which takes a `DialogOpener` and opens the dialog as a modal,
+  closing it on a tap on the scrim and returning focus to what opened it. `attachStepper` makes a
+  stepper's buttons step the value, said on its status line, and shows its error for a value outside
+  the limits. Decision record 15 says why the toast's and the dialog's functions return what shows
+  or opens them rather than what takes them away. In Chrome before 134 a dialog attached to stay
+  closes on a second Escape or Back, and in Firefox 120, without `:has()`, a page that scrolls whole
+  keeps no room for a tab bar or a shown toast, as ACCESSIBILITY.md lists.
+- **React.** `Toast` draws a toast's markup, and `StepperField` a stepper in the kit's field, with
+  `tall`, `inline`, a `subject` that names its buttons and a `rangeError` among its props, and the
+  types `ToastProps` and `StepperFieldProps`.
+
 ## 0.4.0
 
 The kit adds tabs, a choice field, a textarea field, a large button and a text button, an eyebrow, a
