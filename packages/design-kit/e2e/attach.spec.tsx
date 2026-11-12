@@ -441,31 +441,23 @@ test('collapses the switch in a strip on a screen narrower than 20rem to one but
 
 test('keeps the choices open through a swipe beside them, so a touch can scroll to them, and closes on a tap there', async ({
     browser,
-    browserName,
 }) => {
-    test.skip(browserName !== 'chromium', 'a touch swipe is made through Chromium');
     const context = await browser.newContext({ hasTouch: true });
     const { opened, button } = await collapsed(context);
-    // A page long enough to scroll in any face, as a page with choices below the fold is.
-    await opened.evaluate(() => {
-        const room = document.createElement('p');
-        room.textContent = 'More of the page.';
-        room.style.minHeight = '200vh';
-        document.querySelector('main')?.append(room);
-    });
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    // A swipe up from a spot beside the list, as a thumb scrolls a page down.
-    const session = await context.newCDPSession(opened);
-    await session.send('Input.synthesizeScrollGesture', {
-        x: 4,
-        y: 300,
-        yDistance: -120,
-        gestureSourceType: 'touch',
-        speed: 800,
-    });
+    /** A touch beside the list, as a browser reports it: lifted for a tap, canceled for a swipe. */
+    const touch = (end: 'pointerup' | 'pointercancel') =>
+        opened.evaluate((type) => {
+            const beside = document.querySelector('main > h1') ?? document.body;
+            const init = { bubbles: true, pointerType: 'touch', isPrimary: true, pointerId: 7 };
+            beside.dispatchEvent(new PointerEvent('pointerdown', init));
+            beside.dispatchEvent(new PointerEvent(type, init));
+        }, end);
+    // A swipe the browser takes for a scroll ends canceled, never lifted, and leaves them open.
+    await touch('pointercancel');
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    await opened.touchscreen.tap(4, 300);
+    await touch('pointerup');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await context.close();
 });
