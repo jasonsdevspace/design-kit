@@ -2043,26 +2043,36 @@
      * after, for a small whole number that is quicker to step than to type on a phone. The buttons
      * are as tall as the field and as wide as they are tall, and the value is in the mono face with
      * figures of one width, two wide unless --dk-stepper-digits says more, so the field never
-     * changes width as the value does. A button at a limit is off and drawn as any off button. In a
-     * tall stepper the buttons and the value take the larger target, and the value a larger size.
+     * changes width as the value does. Each figure keeps room for the widest spacing between
+     * letters a reader may set, so none is cut off. A button at a limit is off and drawn as any off
+     * button. In a tall stepper the buttons and the value take the larger target, and the value a
+     * larger size.
+     *
+     * Where a large text size leaves the stepper less room than its buttons take, on a phone, the
+     * buttons grow narrower, never under 1.5rem, the least target WCAG sets at the usual text size,
+     * and keep their height, so the stepper fits its field and the page never scrolls sideways.
      */
     :where(.dk-stepper) {
         display: flex;
         align-items: stretch;
         gap: var(--dk-space-2);
+        /* No wider than the field, which would otherwise widen to the buttons' full targets. */
+        min-width: 0;
         max-width: 100%;
     }
 
     :where(.dk-stepper > .dk-button) {
-        min-width: var(--dk-target);
+        width: var(--dk-target);
+        min-width: 1.5rem;
         min-height: var(--dk-target);
         padding-inline: 0;
         font-size: var(--dk-text-title);
     }
 
     :where(.dk-stepper-value) {
+        flex: none;
         box-sizing: content-box;
-        width: calc(var(--dk-stepper-digits, 2) * 1ch);
+        width: calc(var(--dk-stepper-digits, 2) * (1ch + 0.12em));
         min-height: var(--dk-target);
         padding-block: 0;
         font-family: var(--dk-font-mono);
@@ -2082,7 +2092,7 @@
     }
 
     :where(.dk-stepper-tall > .dk-button) {
-        min-width: var(--dk-target-large);
+        width: var(--dk-target-large);
         min-height: var(--dk-target-large);
     }
 
@@ -2109,8 +2119,9 @@
         min-width: 0;
     }
 
+    /* On a line of its own under the label, the stepper narrows its buttons to fit as above. */
     :where(.dk-stepper-inline > .dk-stepper) {
-        flex: none;
+        flex: 0 1 auto;
     }
 
     :where(.dk-stepper-inline > .dk-field-hint, .dk-stepper-inline > .dk-field-error) {

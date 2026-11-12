@@ -7,6 +7,8 @@ import ts from 'typescript';
 
 import { StepperField } from '../src/react.js';
 import { box, KIT, sideways, style } from './page.js';
+import { cutOff, SPACED } from './spacing.js';
+import { textSize } from './text-size.js';
 
 /*
  * A stepper as a page attaches it: its buttons hidden with no script and named for what they do and
@@ -16,8 +18,9 @@ import { box, KIT, sideways, style } from './page.js';
  * followed, a typed value outside the limits or none reported as a field's error once changed and
  * said, and cleared once right while a page's own error keeps its place, a phone's keyboard with a
  * minus only where it is needed, the value in figures of one width so the field keeps its width,
- * the label beside it on one line at a phone's narrowest width, the larger target when asked, the
- * keyboard, and no audit findings in either theme.
+ * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
+ * phone's narrowest width, a stepper that fits a phone at twice the text size, the larger target
+ * when asked, the keyboard, and no audit findings in either theme.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -271,6 +274,42 @@ test("sits on one line with its label beside it at a phone's narrowest width", a
         expect(drawn.x).toBeGreaterThan(label.x);
     }
     expect(await sideways(page)).toBe(0);
+});
+
+test('shows every figure of its value under the wider spacing a reader may set', async ({
+    page,
+}) => {
+    await open(page);
+    await page.addStyleTag({ content: `${SPACED} #players { --dk-stepper-digits: 3 }` });
+    await bid(page).fill('10');
+    await page.locator('#players').fill('100');
+    expect(await cutOff(page, '.dk-stepper-value')).toEqual([]);
+});
+
+test('fits a phone at twice the text size, its buttons narrower but a target still', async ({
+    page,
+}) => {
+    for (const width of [320, 390]) {
+        await open(page, { width });
+        await textSize(page, 2);
+        expect(await sideways(page), String(width)).toBe(0);
+        for (const stepper of await page.locator('.dk-stepper').all()) {
+            const field = await box(stepper.locator('xpath=..'), 'the field');
+            const drawn = await box(stepper, 'the stepper');
+            expect(drawn.x + drawn.width, String(width)).toBeLessThanOrEqual(
+                field.x + field.width + 1
+            );
+            const tall = (await stepper.getAttribute('class'))?.includes('dk-stepper-tall');
+            for (const button of await stepper.locator('.dk-button').all()) {
+                const pressed = await box(button, 'a button');
+                expect(pressed.width, String(width)).toBeGreaterThanOrEqual(24);
+                // The target and the larger target, in rems, at twice the text size.
+                expect(pressed.height, String(width)).toBeGreaterThanOrEqual(
+                    (tall ? 3.5 : 2.75) * 32 - 1
+                );
+            }
+        }
+    }
 });
 
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
