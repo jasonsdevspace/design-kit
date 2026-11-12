@@ -498,12 +498,18 @@ test('puts its buttons together on a row under its message on a phone at a large
         const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
         const action = await box(undo(page), 'the action');
         const close = await box(dismiss(page), 'the close button');
-        // One row under the message, the action before the close button, both at the end.
+        // Under the message, the action before the close button on one row at its end, or where
+        // a face too wide leaves no room for both, each at the end of a row of its own.
         expect(action.y, where).toBeGreaterThanOrEqual(message.y + message.height - 1);
-        expect(Math.abs(close.y - action.y), where).toBeLessThanOrEqual(1);
-        expect(close.x, where).toBeGreaterThan(action.x + action.width - 1);
         const card = await box(toast(page), 'the toast');
-        expect(card.x + card.width - (close.x + close.width), where).toBeLessThan(16);
+        const end = card.x + card.width;
+        expect(end - (close.x + close.width), where).toBeLessThan(16);
+        if (Math.abs(close.y - action.y) <= 1) {
+            expect(close.x, where).toBeGreaterThan(action.x + action.width - 1);
+        } else {
+            expect(close.y, where).toBeGreaterThan(action.y);
+            expect(end - (action.x + action.width), where).toBeLessThan(16);
+        }
     }
 });
 

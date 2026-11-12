@@ -1231,7 +1231,7 @@ sight, such as a row's words for a screen reader, scrolls with it and never leng
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A browser without that unit reads `100vh`. The bar pads itself
 past `--dk-safe-top`, so its ground runs up under a notch and its title starts below it. The frame
-pads itself past the side safe areas, and its last part, the tab bar, the dock or the body, pads
+pads itself past the side safe areas, and its lowest part, the tab bar, or the dock or the body where nothing comes after it, pads
 itself past `--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds
 stays clear of it, even where the page scrolls whole.
 
@@ -1241,7 +1241,8 @@ takes a row of its own under the mark and the action, across the bar's whole wid
 and every word, and it stays first in the markup. On a wide screen the frame stays within `--dk-app-column`,
 28rem, in the middle. Where the rows come to more than the screen and the page scrolls whole, a
 swipe that reaches the body's end carries on to the page, so the dock and the tab bar below are
-reached the same way. The body is the containing block for what it holds, so a menu that should draw
+reached the same way. The page under the frame neither reloads on a pull past the top of the body nor
+bounces. The body is the containing block for what it holds, so a menu that should draw
 over the frame is drawn in the top layer, as a `popover` is, not by `position: absolute` alone.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few

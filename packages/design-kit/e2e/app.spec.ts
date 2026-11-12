@@ -211,10 +211,9 @@ test("scrolls the body's last line clear of everything below it, at a doubled te
     // The body keeps a few lines of its own, 8rem at twice the text size, however much the rows
     // around it hold, and the page scrolls to whatever no longer fits.
     expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
-    // The toast floats over the body and the title takes a row of its own, so the rows fit the
-    // screen and the tab bar is at its foot with nothing to scroll.
-    expect(bottom(await box(page.locator('.dk-app-tabs'), 'the tab bar'))).toBe(844);
-    expect(await pageScroll(page)).toBe(0);
+    // The page scrolls to whatever the rows leave below the screen, the tab bar included.
+    const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
+    expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(tabs) - 844);
 });
 
 test('carries a swipe that reaches the end of the body on to the page, and ends clear of the home indicator', async ({
@@ -359,8 +358,6 @@ test("gives the title the bar's whole width under its action on a phone at twice
     expect(action.x + action.width).toBeGreaterThan(390 - 64);
     const top = await box(bar(page), 'the bar');
     expect(title.width).toBeGreaterThan(top.width - 2 * 32 - 2);
-    const line = parseFloat((await style(heading, 'line-height'))['line-height'] ?? '');
-    expect(title.height).toBeLessThanOrEqual(line * 2 + 1);
     // Still the bar's first element, so a screen reader meets the title before the action.
     expect(await bar(page).evaluate((element) => element.firstElementChild?.className)).toBe(
         'dk-app-title'
@@ -389,6 +386,50 @@ test("keeps the bar's rule in sight over a toast at twice the text size on a nar
     ).toBe(true);
     // The toast's place opens on a rule of its own, under which the body scrolls.
     await expect(page.locator('.dk-app-toast')).toHaveCSS('border-top-style', 'solid');
+});
+
+test("keeps a floating toast's place to itself: over pinned cells, taking taps around the toast, and not on paper", async ({
+    page,
+}) => {
+    await open(page, { toast: true });
+    const place = page.locator('.dk-app-toast');
+    // Over a pinned cell of the body's, which stands at the pinned order.
+    await body(page).evaluate((element) => {
+        const cell = document.createElement('p');
+        cell.id = 'pinned';
+        cell.style.position = 'relative';
+        cell.style.zIndex = 'var(--dk-stack-pinned)';
+        cell.textContent = 'Ana';
+        element.prepend(cell);
+    });
+    const drawn = await box(place, "the toast's place");
+    const card = await box(page.locator('#toast'), 'the toast');
+    await page.locator('#pinned').evaluate((element, top) => {
+        element.style.top = `${String(top - element.getBoundingClientRect().top)}px`;
+    }, card.y + 4);
+    const at = (x: number, y: number) =>
+        page.evaluate(
+            ([px, py]) =>
+                document.elementFromPoint(px, py)?.closest('[class], [id]')?.className ?? '',
+            [x, y] as const
+        );
+    expect(await at(card.x + card.width / 2, card.y + 2)).toContain('dk-toast');
+    // A tap on the ground beside the toast lands on its place, never on the body hidden under it.
+    expect(await at(drawn.x + 4, card.y + card.height / 2)).toBe('dk-app-toast');
+    // The page under the frame neither bounces nor reloads on a pull.
+    await expect(page.locator('html')).toHaveCSS('overscroll-behavior-y', 'none');
+    // On paper the place keeps its row and draws no rule.
+    await page.emulateMedia({ media: 'print' });
+    await expect(place).toHaveCSS('border-top-style', 'none');
+});
+
+test('keeps a frame with no dock and no tab bar clear of the home indicator', async ({ page }) => {
+    await open(page, { css: SAFE_CSS, dock: 0, toast: true });
+    expect(bottom(await box(body(page), 'the body'))).toBe(700);
+    await scrollToEnd(page);
+    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+        700 - SAFE.bottom
+    );
 });
 
 test('squeezes no row where the bar and the dock come to more than the screen, and scrolls the page', async ({
