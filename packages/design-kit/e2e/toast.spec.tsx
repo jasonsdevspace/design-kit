@@ -467,7 +467,8 @@ test('keeps room on a page for a toast whose buttons wrap under its message at t
     const card = await box(toast(page), 'the toast');
     const action = await box(page.getByRole('button', { name: 'Undo' }), 'the action');
     // The buttons sit under the message, so the toast is two rows tall.
-    expect(action.y).toBeGreaterThan(card.y + card.height / 3);
+    const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
+    expect(action.y).toBeGreaterThanOrEqual(message.y + message.height - 1);
     const kept = await page.evaluate(() =>
         parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
     );
