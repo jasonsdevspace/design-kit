@@ -421,6 +421,24 @@ export type ShowToast = (message: string, action?: ToastAction) => () => void;
 const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
 
 /**
+ * Marks a shown toast with the rows it takes, as many targets tall as it is, up to five, so the
+ * sheet keeps that much room for it, and in an app's frame whose body cannot hold it and a line
+ * more, marks it to take its row above the dock. Attributes carry both, not styles, so a page's
+ * policy may refuse every style it did not serve.
+ */
+const measureToast = (element: HTMLElement, close: HTMLElement) => {
+    delete element.dataset['row'];
+    const box = element.getBoundingClientRect().height;
+    const row = close.getBoundingClientRect().height || 1;
+    const edges = getComputedStyle(element);
+    const held =
+        element.clientHeight - parseFloat(edges.paddingTop) - parseFloat(edges.paddingBottom);
+    element.dataset['rows'] = String(Math.min(5, Math.max(1, Math.ceil(held / row - 0.25))));
+    const body = element.closest('.dk-app')?.querySelector('.dk-app-body');
+    if (body && body.clientHeight < box + row) element.dataset['row'] = '';
+};
+
+/**
  * Makes a toast work, and returns the function that shows a message in it. The message is drawn in
  * the toast and said on its status line, which is on the page from the start, so a screen reader
  * hears it without focus moving, with the action's name when it has one, so a visitor who cannot
@@ -475,6 +493,8 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = true;
         close.hidden = true;
         element.classList.remove('dk-toast-shown');
+        delete element.dataset['rows'];
+        delete element.dataset['row'];
         hush(status);
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame or the page's main content rather
@@ -500,6 +520,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = !action;
         close.hidden = false;
         element.classList.add('dk-toast-shown');
+        measureToast(element, close);
         // A control that had focus and that the toast now covers is scrolled clear of it, by the
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
