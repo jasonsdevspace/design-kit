@@ -2236,15 +2236,26 @@
     }
 
     /*
-     * A toggle that is on is filled in the accent, so on and off differ by how light the cell is
-     * and by the weight of its words, and read at arm's length. Forced colors fill it in the
-     * system's selection colors, as they fill any pressed button.
+     * A toggle that is on is filled in the text color with the page's ground as its words, so on
+     * and off differ by how light the cell is and by the weight of its words, and read at arm's
+     * length, while the accent stays the one action the view leads with, so it takes none of the
+     * accent edge a pressed button draws inside its own. Under a pointer its edge turns to the
+     * accent as any button's does, and text selected on it swaps the pair, in the base sheet beside
+     * the page's own selection. Forced colors fill it in the system's selection colors, as they
+     * fill any pressed button.
      */
     :where(.dk-button-grid > .dk-button[aria-pressed='true']) {
-        border-color: var(--dk-accent);
-        background: var(--dk-accent);
-        color: var(--dk-on-accent);
+        border-color: var(--dk-fg);
+        background: var(--dk-fg);
+        box-shadow: none;
+        color: var(--dk-bg);
         font-weight: var(--dk-weight-strong);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-grid > .dk-button[aria-pressed='true']:hover) {
+            border-color: var(--dk-focus, var(--dk-accent));
+        }
     }
 
     /*
