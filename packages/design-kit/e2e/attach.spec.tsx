@@ -15,7 +15,8 @@ import { js, KIT, ORIGIN, themeOf } from './page.js';
  * collapsed switch in a strip on a screen narrower than 20rem opening its choices under one button
  * and closing them again, and copying, from a pointer or the keyboard, or selecting where the
  * clipboard is refused, with the button and the status line saying which and focus held on the
- * button.
+ * button, a button taken away mid-press left hidden, at Copy and silent, and a press whose source
+ * changed before the clipboard answered saying what it did but selecting nothing.
  */
 
 const POLICY = `default-src 'self'; script-src 'self' ${themeScriptHash}; style-src 'self'`;
@@ -776,8 +777,8 @@ test('keeps a choice the browser will not save drawn over one another tab saves'
 });
 
 /**
- * Holds the clipboard's answer until the test lets it go, so a press can be outlasted, and returns
- * the function that lets it go with an answer.
+ * Holds the clipboard's answer until the test lets it go with `release`, so a press can be
+ * outlasted.
  */
 const holdClipboard = (opened: Page): Promise<void> =>
     opened.evaluate(() => {
@@ -813,8 +814,9 @@ test('leaves a copy button taken away mid-press hidden, at Copy, and silent once
         (window as unknown as { detachCopy: () => void }).detachCopy();
     });
     await release(opened, true);
-    // A turn for the answer to land, where a guard left out would show Copied and say it.
-    await opened.evaluate(() => new Promise((done) => setTimeout(done, 50)));
+    // Past the moment the status line says a message, where a guard left out would show Copied and
+    // say it.
+    await opened.evaluate(() => new Promise((done) => setTimeout(done, 300)));
     await expect(button).toBeHidden();
     expect(
         await button.evaluate((element) =>

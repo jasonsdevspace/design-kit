@@ -119,7 +119,7 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
     }, name);
 
 /**
- * A length the browser reports, in pixels, for a check within half a pixel, since Firefox rounds a
- * computed length to a sixty-fourth of a pixel where the others keep the figure written.
+ * A length the browser reports, in pixels, for a check within a twentieth of a pixel, since Firefox
+ * rounds a computed length to a sixty-fourth of a pixel where the others keep the figure written.
  */
 export const pixels = (length: string | undefined): number => Number.parseFloat(length ?? '');

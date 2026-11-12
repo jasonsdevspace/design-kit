@@ -10,7 +10,8 @@ import { textSize } from './text-size.js';
  * it on close however it closes, closed by Escape and by a tap on the scrim but not by a drag out
  * of it, kept open on both when asked to stay, the page behind it still, the sheet at the bottom
  * edge clear of the home indicator and scrolling inside itself, rising into place unless less
- * motion is asked for, and no audit findings in either theme.
+ * motion is asked for, a solid edge in forced colors, its actions stacked inside it on a 320px
+ * phone at twice the text size, and no audit findings in either theme.
  */
 
 const OPTIONS = Array.from(

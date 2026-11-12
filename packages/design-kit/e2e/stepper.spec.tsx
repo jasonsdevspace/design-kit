@@ -8,16 +8,17 @@ import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * A stepper as a page attaches it: its buttons hidden with no script and named for what they do and
- * to which field once attached, each press stepping the value once however often the stepper was
- * attached, firing the events a typed value fires and saying the value on its status line, the
- * buttons off at the limits with focus kept and on a locked field, a value a form's reset sets
- * followed, a typed value outside the limits or none reported as a field's error once changed and
- * said, and cleared once right while a page's own error keeps its place, a phone's keyboard with a
- * minus only where it is needed, the value in figures of one width so the field keeps its width,
- * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
- * phone's narrowest width, a stepper that fits a phone at twice the text size, the larger target
- * when asked, the keyboard, and no audit findings in either theme.
+ * A stepper as a page attaches it: its buttons hidden with no script and once taken away and named
+ * for what they do and to which field once attached, each press stepping the value once however
+ * often, and in whichever order, the stepper was attached, firing the events a typed value fires
+ * and saying the value on its status line, the buttons off at the limits with focus kept and on a
+ * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
+ * limits or none reported as a field's error once changed and said, and cleared once right while a
+ * page's own error keeps its place, a phone's keyboard with a minus only where it is needed, the
+ * value in figures of one width so the field keeps its width, every figure shown under the wider
+ * spacing a reader may set, the label beside it on one line at a phone's narrowest width, a stepper
+ * that fits a phone at twice the text size, the larger target when asked, an inline stepper's error
+ * above it and its hint below it, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -542,9 +543,10 @@ test('hides its buttons when taken away, and steps once a press when attached ag
     });
     await expect(lower(page)).toBeHidden();
     await expect(raise(page)).toBeHidden();
+    // From a value clear of both limits, so a second step would show and not stop at one.
     for (const [order, button, value] of [
-        [['field', 'stepper'], raise, '10'],
-        [['stepper', 'field'], lower, '9'],
+        [['field', 'stepper'], raise, '6'],
+        [['stepper', 'field'], lower, '4'],
     ] as const) {
         await page.evaluate(
             ([given]) => {
@@ -555,6 +557,8 @@ test('hides its buttons when taken away, and steps once a press when attached ag
                 };
                 kit.detach('bid');
                 kit.attachAgain('bid', given);
+                const field = document.querySelector<HTMLInputElement>('#bid');
+                if (field) field.value = '5';
                 kit.heard.length = 0;
             },
             [order] as const

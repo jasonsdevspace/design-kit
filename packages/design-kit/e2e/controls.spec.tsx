@@ -224,8 +224,8 @@ test('draws a tall button at the larger target at every width, alone and with th
         const tall = page.getByRole('button', { name: 'Start the round' });
         expect(await height(tall), `${String(width)}px`).toBe(56);
         const own = await style(tall, 'padding-left', 'font-size');
-        expect(pixels(own['padding-left'])).toBeCloseTo(12, 0);
-        expect(pixels(own['font-size'])).toBeCloseTo(14.4, 0);
+        expect(pixels(own['padding-left'])).toBeCloseTo(12, 1);
+        expect(pixels(own['font-size'])).toBeCloseTo(14.4, 1);
         // With the large button it takes that one's padding and text, and keeps the accent's fill.
         const lead = page.getByRole('button', { name: 'Save the round' });
         expect(await height(lead), `${String(width)}px`).toBe(56);

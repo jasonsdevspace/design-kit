@@ -6,11 +6,12 @@ import { textSize } from './text-size.js';
 
 /*
  * A list of rows as a browser draws it: a rule between rows and none after the last, in both themes
- * and in forced colors, each row at the target or the larger one, a link row one stop named by its
- * words, title first, with its ring around the whole row, its words on the column's line under an
- * eyebrow, a button at a row's end its own stop named for what it does and to which row, a long
- * title wrapping with the end beside its first line, the list saying how many rows it holds and an
- * empty one not drawn, the keyboard's order, and no audit findings in either theme.
+ * and in forced colors, each row at the target or the larger one, and a row of one line no taller,
+ * a link row one stop named by its words, title first, with its ring around the whole row, its
+ * words on the column's line under an eyebrow, a button at a row's end its own stop named for what
+ * it does and to which row, a long title wrapping with the end beside its first line, the end
+ * inside the row on a 320px phone at twice the text size, the list saying how many rows it holds
+ * and an empty one not drawn, the keyboard's order, and no audit findings in either theme.
  */
 
 const GAMES = [
@@ -300,9 +301,9 @@ test("keeps a row's end inside the row on a 320px phone at twice the text size",
     await page.locator('#g11').evaluate((title) => {
         title.textContent = 'Skyjochampionshipfinal';
     });
-    for (const row of await games(page).locator('.dk-row').all()) {
+    for (const row of await page.locator('.dk-row').all()) {
         const drawn = await box(row, 'a row');
-        for (const end of await row.locator('.dk-row-figure, .dk-row-sign').all()) {
+        for (const end of await row.locator('.dk-row-figure, .dk-row-sign, .dk-button').all()) {
             const at = await box(end, "the row's end");
             expect(at.x + at.width).toBeLessThanOrEqual(drawn.x + drawn.width + 0.5);
         }

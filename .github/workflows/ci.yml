@@ -195,10 +195,10 @@ jobs:
                   path: playwright-report
                   retention-days: 7
 
-    # The pieces Firefox draws its own way, such as the stepper's number field, whose spin buttons
-    # only a rule no other engine reads takes away, and the controls and the pieces, drawn in its
-    # engine too, in the current Firefox Playwright brings rather than the kit's floor. On a Mac, as
-    # WebKit is, where Firefox runs on what the image already has.
+    # The stepper, the controls and the pieces in Firefox too, since its number field keeps its spin
+    # buttons unless `appearance: textfield` takes them away and it rounds lengths its own way, in
+    # the current Firefox Playwright brings rather than the kit's floor. On a Mac, as WebKit is,
+    # where Firefox runs on what the image already has.
     firefox:
         name: Browser tests in Firefox
         runs-on: macos-26

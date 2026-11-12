@@ -9,10 +9,10 @@ import { box, colorOf, contrast, sideways, style, writePage } from './page.js';
  * grid, a group named for what it holds with each toggle saying whether it is on and each plain key
  * named for what it enters, a toggle that is on filled in the text color and told apart by how
  * light it is and its weight, in forced colors too, its edge turning to the accent under a pointer
- * and text selected on it in sight, a cell that is off dashed, unpressable and at full contrast,
- * one that is off and on keeping an edge that is seen, a tall button tall in any grid, the button's
- * shadow and press read by each cell, the keyboard reaching and pressing each one, and no audit
- * findings in either theme.
+ * and text selected on it in sight, a cell that is off dashed, unpressable and at full contrast and
+ * in the system's gray in forced colors when aria-disabled marks it off, one that is off and on
+ * keeping an edge that is seen, a tall button tall in any grid, the button's shadow and press read
+ * by each cell, the keyboard reaching and pressing each one, and no audit findings in either theme.
  */
 
 const CARDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];

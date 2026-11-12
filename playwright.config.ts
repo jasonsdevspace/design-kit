@@ -22,10 +22,10 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
 const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table}.spec.{ts,tsx}';
 
 /**
- * The specs that run in Firefox as well: the stepper, whose number field hides its spin buttons
- * there by a rule no other engine reads, and the controls and the pieces, which Firefox rounds to
- * its own sixty-fourths of a pixel, in the current Firefox Playwright brings rather than the
- * kit's floor.
+ * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
+ * there unless `appearance: textfield` takes them away, and the controls and the pieces, whose
+ * lengths Firefox rounds to a sixty-fourth of a pixel, in the current Firefox Playwright brings
+ * rather than the kit's floor.
  */
 const FIREFOX = '*/e2e/{stepper,controls,pieces}.spec.{ts,tsx}';
 
