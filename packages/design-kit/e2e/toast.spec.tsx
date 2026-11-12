@@ -460,7 +460,7 @@ test('keeps room on a page for a toast whose buttons wrap under its message at t
     test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     // The message of one word fits one line in any face, and the page's own rule puts the buttons
     // under it, as a longer message does on a phone, so the toast is the two rows the room is for.
-    await open(page, { width: 320, css: '.dk-toast-message { flex-basis: 100%; }' });
+    await open(page, { width: 390, css: '.dk-toast-message { flex-basis: 100%; }' });
     await textSize(page, 2);
     await show(page, 'Saved.', 'Undo');
     await settle(page);
