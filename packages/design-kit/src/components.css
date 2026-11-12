@@ -737,6 +737,11 @@
         }
     }
 
+    /* A field after a field stands one step from it in any container, a plain form among them. */
+    :where(.dk-field + .dk-field) {
+        margin-block-start: var(--dk-space-4);
+    }
+
     /*
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
      * something that went right, needs care or went wrong. Its words stay in the page's own color
@@ -807,6 +812,20 @@
         display: flex;
         flex-wrap: wrap;
         gap: var(--dk-space-2);
+    }
+
+    /*
+     * The pieces that carry no margin of their own, reset here, before the flow rules of the
+     * explainer, the panel, the app's body and the dialog, so a container's step between pieces
+     * wins over them. The pills pull back only at their sides, keeping their text on the column's
+     * line and the step above them.
+     */
+    :where(.dk-eyebrow, .dk-tabs, .dk-rows) {
+        margin: 0;
+    }
+
+    :where(.dk-pills) {
+        margin: 0 calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
     /*
@@ -951,6 +970,15 @@
 
     :where(.dk-panel > * + *) {
         margin-block-start: var(--dk-space-3);
+    }
+
+    /* An app's body stands what it holds one step apart, from the bar down, as an explainer does. */
+    :where(.dk-app-body > *) {
+        margin-block: 0;
+    }
+
+    :where(.dk-app-body > * + *) {
+        margin-block-start: var(--dk-space-4);
     }
 
     :where(.dk-panel-title) {
@@ -1279,10 +1307,10 @@
     /*
      * An eyebrow: a small label in caps over a heading or a group, such as a hero's theme or a
      * list's name, in the muted text at the caption size and the heading's weight, tracked so the
-     * caps read at that size. It is text with no margin of its own, so the page sets its distance.
+     * caps read at that size. It is text with no margin of its own, so the container it sits in
+     * sets its distance, one of its steps.
      */
     :where(.dk-eyebrow) {
-        margin: 0;
         color: var(--dk-muted);
         font-size: var(--dk-text-caption);
         font-weight: var(--dk-weight-strong);
@@ -1303,8 +1331,7 @@
         gap: var(--dk-space-2);
         min-width: 0;
         max-width: calc(100% + 2 * (var(--dk-ring-width) + var(--dk-ring-offset)));
-        margin: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
-        padding: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+        padding: 0 calc(var(--dk-ring-width) + var(--dk-ring-offset));
         list-style: none;
     }
 
@@ -1383,7 +1410,6 @@
         flex-wrap: wrap;
         gap: var(--dk-space-1);
         min-width: 0;
-        margin: 0;
         padding: 0;
         border-bottom: 1px solid var(--dk-line);
         list-style: none;
@@ -2098,7 +2124,6 @@
      * one a template has left a line break in.
      */
     :where(.dk-rows) {
-        margin: 0;
         padding: 0;
         list-style: none;
     }
@@ -2313,6 +2338,15 @@
 
     :where(:root:has(.dk-dialog:modal)) {
         overflow: hidden;
+    }
+
+    /* A dialog stands what it holds one step apart, its actions further, as their own rule says. */
+    :where(.dk-dialog > *) {
+        margin-block: 0;
+    }
+
+    :where(.dk-dialog > * + *) {
+        margin-block-start: var(--dk-space-3);
     }
 
     :where(.dk-dialog-title) {
