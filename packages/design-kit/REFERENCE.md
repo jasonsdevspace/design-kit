@@ -1221,15 +1221,18 @@ safe area tokens their values:
 <summary>How the frame is drawn</summary>
 
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
-Nothing reads a height. A dock grows with what it holds and a tab bar grows at a large text size, so
-the body ends where the rows below it begin. A toast floats over the foot of the body, just above
-the dock, so showing or hiding one never moves the dock under a thumb about to press it again. While
-one is shown its place opens on a rule, under which the body scrolls as it does under the bar, and
-the body leaves room for the toast after its last element, as many rows as its attach function
-measured it at, up to five, so its last line scrolls clear of the toast and what the keyboard
-reaches in it stops short of the toast, in a browser with `:has()`. Where the body cannot hold the
-toast and a line more, as on a phone on its side or at a large text size, the toast takes its row
-above the dock instead, so nothing in the body is covered by it or the bar. The room is that
+Only a toast's attach function reads a height, the toast's and the body's, as it shows and while it
+stays. A dock grows with what it holds and a tab bar grows at a large text size, so the body ends
+where the rows below it begin. A toast floats over the foot of the body, just above the dock, so
+showing or hiding one never moves the dock under a thumb about to press it again. While one is shown
+its place opens on a rule, under which the body scrolls as it does under the bar, and the body
+leaves room for the toast after its last element, as many rows as its attach function measured it
+at, up to five, so its last line scrolls clear of the toast and what the keyboard reaches in it
+stops short of the toast, in a browser with `:has()`. Where the body would keep less than a row and
+a half above that room, as on a phone on its side or at a large text size, the toast takes its row
+above the dock instead, so nothing in the body is covered by it or the bar, and the attach function
+scrolls the page by as much as the dock moved, so the dock stays under the thumb. The toast is
+measured again while it stays, as the screen turns or the text size changes. The room is that
 element's margin, so the body ends in a block, such as a paragraph or a list, as its content does.
 On a screen too short for the frame the toast takes its row above the dock, and the page keeps the
 dock in place as the toast comes and goes, in a browser that keeps a scroll position by what is on
@@ -1496,11 +1499,13 @@ One toast serves a page. In an app's frame it sits in the frame's place for it, 
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
 pads so its last line scrolls clear of it. On a page with no frame it sits at the bottom of the
 screen, over the page and clear of the safe areas, in the app's column. While it is shown there,
-what the keyboard reaches stops short of it and the page's end scrolls clear of it, by as many rows
-as the attach function measured the toast at as it showed, up to five, which it marks in the toast's
-`data-rows` attribute. A page that ends in a tab bar and shows toasts is drawn in the frame, where
-the toast clears the bar. A toast shown while a dialog is open sits under the dialog's scrim, out of
-sight and out of a screen reader's reach, so a page shows its message once the dialog has closed.
+what the keyboard reaches stops short of it and the page's end scrolls clear of it, by the rows the
+toast takes, two at least and five at most, which its attach function marks in its `data-rows`
+attribute as it shows and while it stays. A message longer than five rows can cover what the
+keyboard reaches, so a toast's message is a short sentence. A page that ends in a tab bar and shows
+toasts is drawn in the frame, where the toast clears the bar. A toast shown while a dialog is open
+sits under the dialog's scrim, out of sight and out of a screen reader's reach, so a page shows its
+message once the dialog has closed.
 
 **`Toast` props**
 

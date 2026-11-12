@@ -1637,13 +1637,14 @@
     /*
      * Where the frame holds, a toast floats over the foot of the body, just above the dock, so
      * showing or hiding it never moves the dock under a thumb that is about to press it again.
-     * While one is shown the body pads past a toast of two rows, so its last line scrolls clear of
-     * the toast, and what the keyboard reaches in it stops short of the toast. The toast's place
-     * is on the page's ground, so no line of the body shows around the toast's edges. Only the
-     * toast's place takes taps while it is shown, so a tap on the ground around the toast never
-     * reaches a control of the body hidden under it, and none while it is not. It sits over the
-     * body's pinned table cells and under the bar. On a screen too short for the frame, which
-     * scrolls whole, and on paper, where no toast prints, the toast keeps its row above the dock.
+     * While one is shown the body pads past it by the rows its attach function measured, so its
+     * last line scrolls clear of the toast, and what the keyboard reaches in it stops short of the
+     * toast. The toast's place is on the page's ground, so no line of the body shows around the
+     * toast's edges. Only the toast's place takes taps while it is shown, so a tap on the ground
+     * around the toast never reaches a control of the body hidden under it, and none while it is
+     * not. It sits over the body's pinned table cells and under the bar. On a screen too short for
+     * the frame, which scrolls whole, and on paper, where no toast prints, the toast keeps its row
+     * above the dock.
      */
     @media screen and (height > 24rem) {
         :where(.dk-app > .dk-app-toast) {
@@ -1675,11 +1676,11 @@
         }
 
         /*
-         * The body keeps its usual padding and leaves the room for a toast of two rows, or as many
-         * as the toast's attach function measured it at, after what it holds, as the last element's
-         * margin, so the body never grows past its row under the
-         * dock, its last line scrolls clear of the toast, and what the keyboard reaches in it stops
-         * short of the toast.
+         * The body keeps its usual padding and leaves room for the toast after what it holds, as
+         * the last element's margin, so the body never grows past its row under the dock, its last
+         * line scrolls clear of the toast, and what the keyboard reaches in it stops short of the
+         * toast. The room is as many rows as the toast's attach function marked in its rows
+         * attribute, up to five, or two where none is marked, while the toast floats over the body.
          */
         :where(
             .dk-app:has(.dk-toast-shown:not([data-row]))
@@ -1693,7 +1694,7 @@
 
         :where(.dk-app:has(.dk-toast-shown:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
-                2 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 3 * var(--dk-space-2)
+                2 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
@@ -1719,13 +1720,13 @@
 
         :where(.dk-app:has(.dk-toast-shown[data-rows='1']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
-                1 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 3 * var(--dk-space-2)
+                1 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(.dk-app:has(.dk-toast-shown[data-rows='3']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
-                3 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 3 * var(--dk-space-2)
+                3 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
@@ -1741,7 +1742,7 @@
 
         :where(.dk-app:has(.dk-toast-shown[data-rows='4']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
-                4 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 3 * var(--dk-space-2)
+                4 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
@@ -1757,14 +1758,16 @@
 
         :where(.dk-app:has(.dk-toast-shown[data-rows='5']:not([data-row])) > .dk-app-body) {
             scroll-padding-bottom: calc(
-                5 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 3 * var(--dk-space-2)
+                5 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         /*
-         * Where the body cannot hold the toast and a line more, which its attach function marks
-         * with the row attribute, the toast takes its row above the dock, as on a short screen,
-         * so nothing the keyboard reaches in the body rests under the toast or the bar.
+         * Where the body would keep less than a row and a half above the toast's room, which its
+         * attach function marks with the row attribute, the toast takes its row above the dock, as
+         * on a short screen, so nothing the keyboard reaches in the body rests under the toast or
+         * the bar. The page then scrolls whole, and the attach function scrolls it by as much as
+         * the dock moved, so the dock stays under the thumb.
          */
         :where(.dk-app > .dk-app-toast:has(> [data-row])) {
             grid-area: toast;
@@ -2000,9 +2003,9 @@
 
     /*
      * On a page with no frame, while a toast is shown, what the keyboard reaches or a link leads
-     * to stops short of it, and the page's end scrolls clear of it. The room is for a toast of two
-     * rows, a line of message over its buttons as at a large text size, or for as many rows as the
-     * toast's attach function measured it at, up to five, in its rows attribute.
+     * to stops short of it, and the page's end scrolls clear of it. The room is as many rows as
+     * the toast's attach function marked in its rows attribute, from two to five, or two, a line
+     * of message over its buttons, where none is marked.
      */
     :where(:root:has(.dk-toast-shown):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
@@ -2018,23 +2021,9 @@
         );
     }
 
-    :where(:root:has(.dk-toast-shown[data-rows='1']):not(:has(.dk-app))) {
-        scroll-padding-bottom: calc(
-            1 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
-        );
-    }
-
     :where(:root:has(.dk-toast-shown[data-rows='3']):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
             3 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
-        );
-    }
-
-    :where(:root:has(.dk-toast-shown[data-rows='1']):not(:has(.dk-app)) > body) {
-        padding-bottom: calc(
-            1 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
                 var(--dk-space-4)
         );
     }
