@@ -121,7 +121,7 @@
         /* The one focus ring every control draws, in the focus color. */
         --dk-ring-width: 2px;
         --dk-ring-offset: 2px;
-        /* The line under a chosen tab and over a tab bar's current place, in pixels as an edge is. */
+        /* The line under a chosen tab and over a tab bar's current place, in pixels as an edge. */
         --dk-indicator-width: 2px;
 
         /*
@@ -160,11 +160,6 @@
         --dk-app-bar: 4rem;
         /* The widest a dialog grows in the middle of a screen. */
         --dk-dialog-width: 32rem;
-        /*
-         * The least width of a cell in a button grid, the target, or the larger target in a tall
-         * grid below, so a cell is never too small to tap.
-         */
-        --dk-button-grid-least: var(--dk-target);
 
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
@@ -205,6 +200,10 @@
         --dk-stack-skip: 10;
     }
 
+    /*
+     * The least width of a cell in a button grid, read as the target where the grid is drawn
+     * unless set, and the larger target in a tall grid, so a cell is never too small to tap.
+     */
     :where(.dk-button-grid-tall) {
         --dk-button-grid-least: var(--dk-target-large);
     }

@@ -894,9 +894,9 @@
     }
 
     /*
-     * The pieces that carry no margin of their own. The containers' flow, at the end of the sheet,
-     * sets the step above each, so a reset here never cancels it. The pills pull back only at their
-     * sides, keeping their text on the column's line.
+     * The pieces that carry no margin of their own. The containers' flow, near the end of the
+     * sheet, sets the step above each, so a reset here never cancels it. The pills pull back only
+     * at their sides, keeping their text on the column's line.
      */
     :where(.dk-eyebrow, .dk-tabs, .dk-rows) {
         margin: 0;
@@ -911,7 +911,10 @@
      * one is the whole space between them. It comes before the rules that keep an app's last line
      * clear of a toast, which set the room under that one.
      */
-    :where(:is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog) > *) {
+    :where(
+        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+            > :not(dialog)
+    ) {
         margin-block-end: 0;
     }
 
@@ -1179,7 +1182,7 @@
     /*
      * The title of a table or a code block, outside the frame that scrolls, which names the frame
      * and the table. A caption would take the table's width and scroll off a phone with it. It
-     * comes after the frames' own rules, so its step wins over the code block's margin.
+     * keeps no room under itself, so the short step the flow gives what follows is the whole space.
      */
     :where(.dk-table-title, .dk-code-title) {
         margin-block-end: 0;
@@ -2291,11 +2294,12 @@
      * A grid of buttons: a set picked from, such as the cards in a hand, each a toggle that says
      * whether it is on, or a pad of plain keys that act when pressed. The page names the group and
      * sets how many columns it wants in --dk-button-grid-columns, three unless it does. Where that
-     * many would make a cell narrower than the target, the grid draws as many as fit, so a cell is
-     * never too small to tap. A column's least width is a pixel short of an even share, so a share
-     * that rounds up never costs a column. Each cell is at least the target tall, or the larger
-     * target in a tall grid or on a tall button, and its label has room to wrap at a large text
-     * size. The grid takes the width of what holds it, which needs a width of its own.
+     * many would make a cell narrower than its least width, the target or the larger target in a
+     * tall grid, the grid draws as many as fit, so a cell is never too small to tap. A column's
+     * least width is a pixel short of an even share, so a share that rounds up never costs a
+     * column. Each cell is at least the target tall, or the larger target in a tall grid or on a
+     * tall button, and its label has room to wrap at a large text size. The grid takes the width of
+     * what holds it, which needs a width of its own.
      */
     :where(.dk-button-grid) {
         display: grid;
@@ -2303,7 +2307,7 @@
             auto-fill,
             minmax(
                 max(
-                    var(--dk-button-grid-least),
+                    var(--dk-button-grid-least, var(--dk-target)),
                     (100% - (var(--dk-button-grid-columns, 3) - 1) * var(--dk-space-2)) /
                         var(--dk-button-grid-columns, 3) - 1px
                 ),
@@ -2731,31 +2735,35 @@
      * The flow in what holds a column of pieces, an explainer and each of its sections, a panel, an
      * app's body and a dialog: each piece stands its container's step, --dk-flow-step, from the one
      * before it, and the first sits at the top. A piece out of sight before the first one adds no
-     * step of its own. The flow comes at the end of the sheet, so a piece's own margin, written
-     * anywhere above, never cancels the step above it, and the room under each is set further up.
-     * The steps that differ follow it: the short step under a title, a heading's own, the further
-     * step above a dialog's actions and an explainer's sections, and the smallest step under an
-     * eyebrow over its heading.
+     * step of its own. A dialog in one of them is left alone, so it keeps the place the browser and
+     * its own rules give it. The flow comes near the end of the sheet, after every piece's own
+     * rules, so a piece's own margin never cancels the step above it, and the room under each is
+     * set further up. The steps that differ follow it: the short step under a title, a heading's
+     * own, the further step above a dialog's actions and an explainer's sections, and the smallest
+     * step under an eyebrow, a section's number and a section's subheading.
      */
-    :where(:is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog) > *) {
+    :where(
+        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+            > :not(dialog)
+    ) {
         margin-block-start: 0;
     }
 
     :where(
         :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
             > :not(.dk-visually-hidden, [hidden])
-            ~ *
+            ~ :not(dialog)
     ) {
         margin-block-start: var(--dk-flow-step);
     }
 
-    :where(.dk-explainer > h1 + *, .dk-table-title + *, .dk-code-title + *, .dk-code-head + *) {
+    :where(
+        .dk-explainer > h1 + *,
+        .dk-table-title + *,
+        :not(.dk-code-head) > .dk-code-title + *,
+        .dk-code-head + *
+    ) {
         margin-block-start: var(--dk-space-2);
-    }
-
-    /* Inside a code block's head, the copy button sits on the title's line, with no step. */
-    :where(.dk-code-head > *) {
-        margin-block-start: 0;
     }
 
     :where(.dk-explainer > section) {
@@ -2770,7 +2778,7 @@
         margin-block-start: var(--dk-space-5);
     }
 
-    :where(.dk-dialog > .dk-dialog-actions) {
+    :where(.dk-dialog-actions) {
         margin-block-start: var(--dk-space-5);
     }
 
