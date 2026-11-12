@@ -1626,6 +1626,94 @@ title. A figure is in the mono face with figures of one width, so a column of th
 
 </details>
 
+## Dialog
+
+A dialog asks a question over the page, and its sheet form opens a panel from the bottom of a
+phone. Both are the native `dialog` element opened as a modal, so the browser holds focus inside,
+closes it on Escape and makes the page behind it inert.
+
+<!-- example: dialog -->
+
+```html
+<dialog
+    class="dk-dialog"
+    id="end-game"
+    aria-labelledby="end-game-title"
+    aria-describedby="end-game-text"
+>
+    <h2 class="dk-dialog-title" id="end-game-title">End the game now?</h2>
+    <p id="end-game-text">The scores so far are kept in the history.</p>
+    <form class="dk-dialog-actions" method="dialog">
+        <button type="submit" class="dk-button" value="keep">Keep playing</button>
+        <button type="submit" class="dk-button dk-button-accent" value="end">End the game</button>
+    </form>
+</dialog>
+<dialog class="dk-dialog dk-dialog-sheet" id="round-options" aria-labelledby="round-options-title">
+    <h2 class="dk-dialog-title" id="round-options-title" tabindex="-1" autofocus="">
+        Round options
+    </h2>
+    <div class="dk-field">
+        <label class="dk-field-label" for="dealt">Cards dealt</label>
+        <select class="dk-select" id="dealt">
+            <option value="10">Ten each</option>
+            <option value="7">Seven each</option>
+        </select>
+    </div>
+    <form class="dk-dialog-actions" method="dialog">
+        <button type="submit" class="dk-button dk-button-accent">Done</button>
+    </form>
+</dialog>
+```
+
+```js
+import { attachDialog } from '@jasonsdevspace/design-kit/controls';
+
+const open = attachDialog(document.querySelector('#end-game'));
+document.querySelector('#end').addEventListener('click', open);
+```
+
+A dialog is named by its heading, a `dk-dialog-title` its `aria-labelledby` points to. A short
+question is also described by its text, through `aria-describedby`, so a screen reader says what
+an answer leads to before the answers. Its answers sit in a `form method="dialog"`, so a press of
+one closes it and leaves the answer in the dialog's `returnValue`. The first of them takes focus as
+it opens, so an answer that cannot be taken back comes last and the one that keeps things as they
+are first, and a press of Enter as the dialog opens changes nothing. A sheet whose title and
+options come before its first control gives its title `tabindex="-1"` and `autofocus`, so it opens
+at its top with its title said, rather than scrolled to a control further down.
+
+`attachDialog(dialog)` returns the function that opens it, and focus goes back to what opened it
+when the dialog closes, however it is closed. Handed the event of the press that opened it, from a
+listener on the button, on a part of the page that holds it or in React, it finds the button the
+press landed on, since Safari gives a clicked button no focus to remember. Called otherwise, it takes
+the element to return to, or remembers what had focus. Where that is gone from the page by the time
+the dialog closes, focus goes to what `returnTo` gives. It also closes the dialog on a tap on the
+scrim around it, one that starts and ends there so a drag out of the dialog closes nothing.
+
+A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
+phone's Back and the scrim. That is held by the dialog's `closedby` attribute in a browser that
+reads it, since one that limits how often a page may refuse a close lets a second Escape through
+otherwise. Attaching a dialog again sets the options given and returns the same function. Its
+listeners are on the dialog, so a dialog taken from the page takes them with it.
+
+The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
+asks in a dialog only where nothing could undo the answer.
+
+<details>
+<summary>How a dialog is drawn</summary>
+
+A dialog sits in the middle of the screen, at most 32rem wide, on the raised ground with the raised
+shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls inside itself when
+it holds more than the screen does, and while one is open as a modal the page behind it does not
+scroll. Its
+title is at the title size, and its actions sit at its end, wrapping under one another where the
+room runs out.
+
+A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
+its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it
+opens, at once for a visitor who asks for less motion.
+
+</details>
+
 ## Layers and palettes
 
 The tokens declare three layers, `dk.tokens`, `dk.base` and `dk.components`, in that order, and each

@@ -1,13 +1,14 @@
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
- * What the kit's theme switch, copy button, stepper and toast do, for a page to attach to the
- * markup the components draw or a page writes by hand. Each attach function finds its control's
+ * What the kit's theme switch, copy button, stepper, toast and dialog do, for a page to attach to
+ * the markup the components draw or a page writes by hand. Each attach function finds its control's
  * parts by their classes. The switch, the copy button and the stepper show their control, which the
  * markup keeps hidden so a visitor without script meets no control that does nothing, and return a
- * function that takes it away again. `attachToast` returns instead the function that shows a message in it. Nothing runs
- * when the module is imported, and nothing here sets a style, so a page's policy can refuse every
- * style it did not serve.
+ * function that takes it away again. `attachToast` returns instead the function that shows a
+ * message in it, and `attachDialog` the function that opens it. Nothing runs when the module is
+ * imported, and nothing here sets a style, so a page's policy can refuse every style it did not
+ * serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -590,4 +591,115 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     };
     attachedSteppers.set(stepper, detach);
     return detach;
+};
+
+/**
+ * What a page hands the function that opens a dialog, to say where focus goes back to: the element
+ * itself, or the event, a page's own or React's, whose press opened it.
+ */
+export type DialogOpener =
+    Element | { readonly target: EventTarget | null; readonly currentTarget?: EventTarget | null };
+
+/** Opens a dialog as a modal, over the page, remembering where focus goes back to on close. */
+export type OpenDialog = (from?: DialogOpener) => void;
+
+/** How a dialog is attached. */
+export type DialogOptions = {
+    /**
+     * Stays open on Escape, a phone's Back and a tap on the scrim, for a dialog that must be
+     * answered.
+     */
+    readonly stay?: boolean | undefined;
+    /** Where focus goes when what opened the dialog is no longer on the page. */
+    readonly returnTo?: (() => HTMLElement | null) | undefined;
+};
+
+const attachedDialogs = new WeakMap<
+    HTMLDialogElement,
+    { readonly open: OpenDialog; readonly set: (options: DialogOptions) => void }
+>();
+
+/** What a press can land on that takes focus, so a press inside a button finds the button. */
+const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
+
+/** The element focus goes back to, from what the page handed over, else what had focus. */
+const openerOf = (from: DialogOpener | undefined): Element | null => {
+    if (from instanceof Element) return from;
+    if (from) {
+        const target = from.target instanceof Element ? from.target.closest(FOCUSABLE) : null;
+        if (target) return target;
+        if (from.currentTarget instanceof Element) return from.currentTarget;
+    }
+    return document.activeElement;
+};
+
+/**
+ * Makes a dialog do what the native element does not do alone, and returns the function that opens
+ * it. The element holds focus inside, closes on Escape and makes the page behind it inert. This
+ * closes it on a tap on the scrim around it, one that starts and ends there so a drag out of the
+ * dialog closes nothing, and on close returns focus to what opened it. That is the element the
+ * press that opened it landed on, found from the event a page's listener or React's hands over,
+ * since a browser that gives a pressed button no focus leaves nothing else, or else what had
+ * focus. Where that is gone from the page, focus goes where `returnTo` says.
+ *
+ * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
+ * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
+ * often a page may refuse a close does not hold a refusal past the first. Attaching it again sets
+ * the options given and returns the same function. Its listeners are on the dialog, so a dialog
+ * taken from the page takes them with it.
+ */
+export const attachDialog = (
+    dialog: HTMLDialogElement,
+    options: DialogOptions = {}
+): OpenDialog => {
+    const already = attachedDialogs.get(dialog);
+    if (already) {
+        already.set(options);
+        return already.open;
+    }
+    let settings = options;
+    const set = (next: DialogOptions) => {
+        settings = next;
+        if (settings.stay === true) dialog.setAttribute('closedby', 'none');
+        else dialog.removeAttribute('closedby');
+    };
+    set(options);
+    let opener: Element | null = null;
+    let startedOutside = false;
+    const outside = (event: MouseEvent) => {
+        if (event.target !== dialog) return false;
+        const box = dialog.getBoundingClientRect();
+        return (
+            event.clientX < box.left ||
+            event.clientX > box.right ||
+            event.clientY < box.top ||
+            event.clientY > box.bottom
+        );
+    };
+    dialog.addEventListener('pointerdown', (event) => {
+        startedOutside = outside(event);
+    });
+    dialog.addEventListener('click', (event) => {
+        if (settings.stay !== true && startedOutside && outside(event)) dialog.close();
+        startedOutside = false;
+    });
+    dialog.addEventListener('cancel', (event) => {
+        if (settings.stay === true) event.preventDefault();
+    });
+    dialog.addEventListener('close', () => {
+        // The browser fires close a moment after the dialog closes, so one that arrives once the
+        // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
+        if (dialog.open) return;
+        const back =
+            opener instanceof HTMLElement && opener.isConnected ? opener : settings.returnTo?.();
+        back?.focus();
+        opener = null;
+    });
+    const open: OpenDialog = (from) => {
+        if (dialog.open) return;
+        opener = openerOf(from);
+        dialog.showModal();
+    };
+    attachedDialogs.set(dialog, { open, set });
+    return open;
 };
