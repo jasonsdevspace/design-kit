@@ -380,10 +380,16 @@ test('fits a dialog and a sheet on a phone 320px wide at twice the text size', a
                     document.body.append(dialog);
                     dialog.showModal();
                     const up = copy.querySelector('.dk-stepper-up')?.getBoundingClientRect();
-                    const inside = dialog.getBoundingClientRect();
+                    const value = copy.querySelector<HTMLInputElement>('.dk-stepper-value');
+                    // The dialog's content edge, inside its padding, which a stepper must not cross.
+                    const edge =
+                        dialog.getBoundingClientRect().right -
+                        parseFloat(getComputedStyle(dialog).paddingRight) -
+                        parseFloat(getComputedStyle(dialog).borderRightWidth);
                     const result = {
-                        fits: (up?.right ?? Infinity) <= inside.right - 1,
+                        fits: (up?.right ?? Infinity) <= edge + 0.5,
                         sideways: dialog.scrollWidth - dialog.clientWidth,
+                        clipped: value ? value.scrollWidth > value.clientWidth : true,
                     };
                     dialog.close();
                     dialog.remove();
@@ -391,7 +397,11 @@ test('fits a dialog and a sheet on a phone 320px wide at twice the text size', a
                 },
                 [form, id] as const
             );
-            expect(measured, `${id} in ${form}`).toEqual({ fits: true, sideways: 0 });
+            expect(measured, `${id} in ${form}`).toEqual({
+                fits: true,
+                sideways: 0,
+                clipped: false,
+            });
         }
     }
 });

@@ -7,6 +7,7 @@ import ts from 'typescript';
 
 import { Toast } from '../src/react.js';
 import { box, KIT, sideways } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * A toast as a page attaches it, in Chromium and in WebKit: a message drawn and heard without
@@ -451,6 +452,27 @@ for (const width of [390, 320]) {
         );
     });
 }
+
+test('keeps room on a page for a toast whose buttons wrap under its message at twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    const card = await box(toast(page), 'the toast');
+    const action = await box(page.getByRole('button', { name: 'Undo' }), 'the action');
+    // The buttons sit under the message, so the toast is two rows tall.
+    expect(action.y).toBeGreaterThan(card.y + card.height / 3);
+    const kept = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
+    );
+    expect(kept).toBeGreaterThanOrEqual(
+        (await page.evaluate(() => window.innerHeight)) - card.y - 1
+    );
+});
 
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme, shown and not`, async ({ page }) => {

@@ -1481,8 +1481,9 @@
      * a height: the body ends where the rows below it begin, and a toast has a row of its own
      * above the dock, which keeps it clear of both whatever their size. Each row but the body's
      * is as tall as what it holds and never less, and the body keeps a few lines, so where they
-     * come to more than the screen, as at a large text size with a toast shown, the page scrolls
-     * and no row is squeezed over its neighbor or squeezes the body to nothing.
+     * come to more than the screen, as at a large text size with a toast shown, the page scrolls,
+     * no row is squeezed over its neighbor and the body is never squeezed to nothing. The last part
+     * pads itself past the phone's bottom safe area, so even then it ends clear of it.
      *
      * The frame is as tall as the screen, by the dynamic height, so a phone browser's own bars
      * coming and going do not push the dock out of view. It is the page's whole content, with
@@ -1501,7 +1502,6 @@
         /* For a browser with no dynamic height, the screen's own, which the line after replaces. */
         height: 100vh;
         height: 100dvh;
-        padding-bottom: var(--dk-safe-bottom);
     }
 
     /*
@@ -1553,8 +1553,9 @@
     }
 
     /*
-     * The body, the one part that scrolls. It keeps its scrolling to itself, so reaching its end
-     * does not start the page behind it moving.
+     * The body, the one part that scrolls. Where the rows come to more than the screen and the
+     * page scrolls whole, a swipe that reaches the body's end carries on to the page, so the dock
+     * and the tab bar below it are reached the same way.
      */
     :where(.dk-app-body) {
         grid-area: body;
@@ -1563,7 +1564,6 @@
         min-height: 0;
         padding: var(--dk-space-4);
         overflow-y: auto;
-        overscroll-behavior: contain;
     }
 
     /* The body takes focus so the keys scroll it, and its ring sits inside the screen's edges. */
@@ -1594,6 +1594,23 @@
     /* A tab bar's place, last, at the bottom edge. */
     :where(.dk-app-tabs) {
         grid-area: tabs;
+    }
+
+    /*
+     * The frame's last part, the tab bar, the dock or the body, pads itself past the bottom safe
+     * area, so its ground runs under the home indicator and what it holds ends clear of it, and
+     * where the rows come to more than the screen the page scrolls that far too.
+     */
+    :where(.dk-app > .dk-app-tabs:last-child) {
+        padding-bottom: var(--dk-safe-bottom);
+    }
+
+    :where(.dk-app > .dk-app-dock:last-child) {
+        padding-bottom: calc(var(--dk-space-3) + var(--dk-safe-bottom));
+    }
+
+    :where(.dk-app > .dk-app-body:last-child) {
+        padding-bottom: calc(var(--dk-space-4) + var(--dk-safe-bottom));
     }
 
     /*
@@ -1663,8 +1680,12 @@
         );
     }
 
-    /* On a screen too short to give a bar a row of its own, it scrolls with the page. */
-    @media (max-height: 24rem) {
+    /*
+     * On a screen too short to give a bar a row of its own, it scrolls with the page, and so it
+     * does on a phone at a large text size, under 18rem wide, where its labels wrap past the room
+     * the page could keep for it and it would cover what the keyboard reaches.
+     */
+    @media (max-height: 24rem), (max-width: 18rem) {
         :where(.dk-tabbar-page > .dk-tabbar) {
             position: static;
         }
@@ -1770,8 +1791,8 @@
 
     /*
      * On a page with no frame, while a toast is shown, what the keyboard reaches or a link leads
-     * to stops short of a toast of two lines, as one with an action is on a phone, and the page's
-     * end scrolls clear of it.
+     * to stops short of a toast of two rows, a line of message over its buttons as at a large text
+     * size, and the page's end scrolls clear of it.
      */
     :where(:root:has(.dk-toast-shown):not(:has(.dk-app))) {
         scroll-padding-bottom: calc(
@@ -2087,8 +2108,8 @@
         box-sizing: content-box;
         width: calc(var(--dk-stepper-digits, 2) * (1ch + 0.12em));
         min-height: var(--dk-target);
-        /* A field's inline padding, which stops growing with the text, so the figures keep room. */
         padding-block: 0;
+        /* A field's inline padding, held to its usual size so the figures keep room. */
         padding-inline: min(var(--dk-field-inline), 12px);
         font-family: var(--dk-font-mono);
         font-variant-numeric: tabular-nums;
@@ -2151,14 +2172,15 @@
      * and makes the page behind it inert. It sits on the raised ground with the raised shadow and
      * an edge forced colors keep, over a scrim in the kit's scrim color, in the middle of the
      * screen, and scrolls inside itself when it holds more than the screen does. While one is open
-     * as a modal the page behind it does not scroll. Its margin and padding stop growing with the
-     * text past their usual size, so at a large text size on a phone what it holds keeps the room.
+     * as a modal the page behind it does not scroll. Its margins and its padding stop growing with
+     * the text past their usual size, so at a large text size on a phone what it holds keeps its
+     * room.
      */
     :where(.dk-dialog) {
         box-sizing: border-box;
         width: min(100% - 2 * min(var(--dk-space-4), 16px), 32rem);
         max-width: none;
-        max-height: calc(100dvh - 2 * var(--dk-space-4));
+        max-height: calc(100dvh - 2 * min(var(--dk-space-4), 16px));
         padding: min(var(--dk-space-5), 24px);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);

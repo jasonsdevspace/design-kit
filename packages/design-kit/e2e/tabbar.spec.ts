@@ -18,10 +18,20 @@ import { textSize } from './text-size.js';
 const SAFE_BOTTOM = 34;
 const SAFE_CSS = `:root { --dk-safe-bottom: ${String(SAFE_BOTTOM)}px; }`;
 
-/** The visitor's text size doubled by the browser's own setting, which a media query reads too. */
-const doubled = async (page: Page, browserName: string): Promise<void> => {
-    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
-    await textSize(page, 2);
+/** The visitor's text size doubled, by the browser's own setting where a media query must read it. */
+const doubled = async (
+    page: Page,
+    browserName: string,
+    { setting = false }: { readonly setting?: boolean } = {}
+): Promise<void> => {
+    if (browserName === 'chromium') {
+        await textSize(page, 2);
+        return;
+    }
+    // WebKit takes a root size, which no media query reads, so a test of what one does at twice
+    // the text size runs in Chromium alone.
+    test.skip(setting, 'only the browser setting reaches a media query, set through Chromium');
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
 };
 
 const ICON =
@@ -217,13 +227,14 @@ test('wraps a long label at a doubled text size, and grows to hold it', async ({
     browserName,
 }) => {
     const places = ['Play', 'Games played before', 'Players', 'Options', 'About'];
-    // A phone tall enough at twice the text size to keep the bar at the bottom of the screen.
     await open(page, { width: 320, height: 900, places });
     const before = (await box(bar(page), 'the bar')).height;
     await doubled(page, browserName);
+    // At the page's end, wherever the bar sits at this size, it is whole and at the screen's foot.
+    await scrollToEnd(page);
     const grown = await box(bar(page), 'the bar');
     expect(grown.height).toBeGreaterThan(before);
-    expect(bottom(grown)).toBe(900);
+    expect(Math.round(bottom(grown))).toBe(900);
     for (const link of await links(page).all()) {
         const drawn = await box(link, 'a link');
         // No label wider or taller than its link, and no link outside the bar.
@@ -278,13 +289,12 @@ test('scrolls what takes focus clear of the bar, so the bar never covers it', as
     expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(top);
 });
 
-test('scrolls what takes focus clear of a bar whose labels wrap, at a doubled text size', async ({
+test('scrolls what takes focus clear of a bar whose labels take two lines', async ({
     page,
     browserName,
 }) => {
-    const places = ['Play', 'History', 'Players', 'Stats'];
-    await open(page, { width: 390, height: 900, css: SAFE_CSS, places });
-    await doubled(page, browserName);
+    const places = ['Play', 'Games played', 'Players', 'Settings'];
+    await open(page, { width: 320, height: 700, css: SAFE_CSS, places });
     const link = page.getByRole('link', { name: 'A game in the middle' });
     // The link scrolled to the foot of the screen, under the bar, then reached by the keyboard
     // from the link before it, as a visitor tabbing down the page reaches it.
@@ -294,7 +304,10 @@ test('scrolls what takes focus clear of a bar whose labels wrap, at a doubled te
     await page.getByRole('link', { name: 'The first game' }).evaluate((element) => {
         element.focus({ preventScroll: true });
     });
-    await page.keyboard.press('Tab');
+    // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
+    await page.keyboard.press(
+        browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
+    );
     await expect(link).toBeFocused();
     const drawn = await box(bar(page), 'the bar');
     expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(drawn.y);
@@ -304,6 +317,23 @@ test('scrolls what takes focus clear of a bar whose labels wrap, at a doubled te
         parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
     );
     expect(kept).toBeGreaterThanOrEqual(drawn.height);
+});
+
+test('scrolls with the page on a phone at twice the text size, where its labels wrap further', async ({
+    page,
+    browserName,
+}) => {
+    const places = ['Play', 'Games played before', 'Players', 'Stats'];
+    await open(page, { width: 390, height: 900, places });
+    await doubled(page, browserName, { setting: true });
+    await expect(bar(page)).toHaveCSS('position', 'static');
+    expect(
+        await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingBottom)
+    ).toBe('0px');
+    await scrollToEnd(page);
+    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+        (await box(bar(page), 'the bar')).y
+    );
 });
 
 test('scrolls with the page on a screen too short to give it a row of its own', async ({
@@ -353,11 +383,11 @@ ${tabBar(PLACES.slice(0, 3), 'dk-app-tabs ')}
 </div>`,
     });
     const drawn = await box(bar(page), 'the bar');
-    expect(bottom(drawn)).toBe(700 - SAFE_BOTTOM);
+    expect(bottom(drawn)).toBe(700);
     expect(drawn.width).toBe(390);
     expect(drawn.y).toBe(bottom(await box(page.locator('.dk-app-dock'), 'the dock')));
-    // The frame clears the edge, so the bar pads by nothing of its own.
-    expect(bottom(await box(links(page).first(), 'a link'))).toBe(bottom(drawn));
+    // The bar, the frame's last part, pads past the edge once, so its links end clear of it.
+    expect(bottom(await box(links(page).first(), 'a link'))).toBe(700 - SAFE_BOTTOM);
 
     // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
     const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';

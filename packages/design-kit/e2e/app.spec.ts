@@ -26,13 +26,22 @@ const SAFE_CSS = `:root {
 }`;
 
 /**
- * The visitor's text size doubled by the browser's own setting, which every rem is drawn from, a
- * media query's included, where a size set on the root reaches no media query. It is set through
- * Chromium, so the tests that need it run there alone.
+ * The visitor's text size doubled. Chromium takes the browser's own setting, which every rem is
+ * drawn from, a media query's included. WebKit takes a root size, which no media query reads, so a
+ * test of what a media query does at twice the text size asks for the setting and runs in Chromium
+ * alone, and the rest run in both.
  */
-const doubled = async (page: Page, browserName: string): Promise<void> => {
-    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
-    await textSize(page, 2);
+const doubled = async (
+    page: Page,
+    browserName: string,
+    { setting = false }: { readonly setting?: boolean } = {}
+): Promise<void> => {
+    if (browserName === 'chromium') {
+        await textSize(page, 2);
+        return;
+    }
+    test.skip(setting, 'only the browser setting reaches a media query, set through Chromium');
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
 };
 
 const LINES = Array.from(
@@ -142,20 +151,30 @@ test('clears what the phone keeps at each edge, by the safe area tokens', async 
     expect((await box(page.locator('.dk-app-title'), 'the title')).y).toBeGreaterThanOrEqual(
         SAFE.top
     );
+    // The last part's ground runs down under the home indicator, and what it holds ends above it.
     const low = await box(dock(page), 'the dock');
-    expect(bottom(low)).toBe(700 - SAFE.bottom);
+    expect(bottom(low)).toBe(700);
     expect(low.x).toBe(SAFE.left);
     expect(low.x + low.width).toBe(390 - SAFE.right);
+    const save = await box(page.getByRole('button', { name: 'Save the round' }), 'the button');
+    expect(bottom(save)).toBeLessThanOrEqual(700 - SAFE.bottom);
 
     // With a tab bar in its place, that is the row at the edge, and the dock sits on it.
     await open(page, { css: SAFE_CSS, tabs: true });
     const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
-    expect(bottom(tabs)).toBe(700 - SAFE.bottom);
+    expect(bottom(tabs)).toBe(700);
+    expect(bottom(await box(page.locator('.dk-app-tabs a').first(), 'a link'))).toBeLessThanOrEqual(
+        700 - SAFE.bottom
+    );
     expect(bottom(await box(dock(page), 'the dock'))).toBe(tabs.y);
 
-    // With neither, the body ends short of the edge the phone keeps.
+    // With neither, the body scrolls its last line clear of the edge the phone keeps.
     await open(page, { css: SAFE_CSS, dock: 0 });
-    expect(bottom(await box(body(page), 'the body'))).toBe(700 - SAFE.bottom);
+    expect(bottom(await box(body(page), 'the body'))).toBe(700);
+    await scrollToEnd(page);
+    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+        700 - SAFE.bottom
+    );
 });
 
 test("has one top heading, the bar's title", async ({ page }) => {
@@ -189,7 +208,36 @@ test("scrolls the body's last line clear of everything below it, at a doubled te
     // around it hold, and the page scrolls to whatever no longer fits.
     expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
     const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
+    // The rows come to more than the screen, so the page scrolls whole to reach the tab bar.
+    expect(bottom(tabs)).toBeGreaterThan(844);
     expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(tabs) - 844);
+});
+
+test('carries a swipe that reaches the end of the body on to the page, and ends clear of the home indicator', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        height: 844,
+        css: SAFE_CSS,
+        title: 'Round 3 of the game at the cabin',
+        dock: 2,
+        toast: true,
+        tabs: true,
+    });
+    await doubled(page, browserName);
+    const drawn = await box(body(page), 'the body');
+    await page.mouse.move(drawn.x + drawn.width / 2, drawn.y + drawn.height / 2);
+    // Wheel turns over the body, past its end, until the page has scrolled as far as it goes.
+    for (let turn = 0; turn < 60; turn += 1) await page.mouse.wheel(0, 400);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThanOrEqual((await pageScroll(page)) - 1);
+    // The bar's ground runs to the screen's edge, and its links end clear of the home indicator.
+    expect(Math.round(bottom(await box(page.locator('.dk-app-tabs'), 'the tab bar')))).toBe(844);
+    expect(bottom(await box(page.locator('.dk-app-tabs a').first(), 'a link'))).toBeLessThanOrEqual(
+        844 - SAFE.bottom + 1
+    );
 });
 
 test('scrolls the page whole on a phone too short at a doubled text size for a body between the bar and the dock', async ({
@@ -197,7 +245,7 @@ test('scrolls the page whole on a phone too short at a doubled text size for a b
     browserName,
 }) => {
     await open(page, { height: 700, dock: 2, toast: true, tabs: true });
-    await doubled(page, browserName);
+    await doubled(page, browserName, { setting: true });
     // 700px is under 24rem at twice the text size, so the frame is as long as what it holds.
     expect(await body(page).evaluate((element) => getComputedStyle(element).overflowY)).toBe(
         'visible'
