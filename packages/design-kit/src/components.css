@@ -2215,9 +2215,20 @@
         padding-inline: var(--dk-space-2);
     }
 
+    /*
+     * The close button is quiet beside the toast's one action, in the muted color, and turns to the
+     * text color under a pointer, as a button's edge turns, since it has no edge to turn.
+     */
     :where(.dk-toast-close) {
         min-width: var(--dk-target);
+        color: var(--dk-muted);
         text-decoration: none;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-toast-close:hover) {
+            color: var(--dk-fg);
+        }
     }
 
     /*
@@ -2395,7 +2406,8 @@
      * it starts, and a row of one line sits in the middle of its height. A button at the end sits
      * in the middle of the row, since its target is taller than a line. A row is at least the
      * target tall, or the larger target in a tall list, and is inset by the room a focus ring
-     * takes, so a ring drawn inside it never covers its words.
+     * takes, so a ring drawn inside it never covers its words, and reaches out past the column by
+     * as much, as the pills and the choices do, so its words start on the column's line.
      */
     :where(.dk-row) {
         display: grid;
@@ -2407,6 +2419,7 @@
         gap: var(--dk-space-3);
         box-sizing: border-box;
         min-height: var(--dk-target);
+        margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
         padding: var(--dk-space-2) calc(var(--dk-ring-width) + var(--dk-ring-offset));
         color: inherit;
         text-decoration: none;
@@ -2646,6 +2659,20 @@
         padding-bottom: calc(min(var(--dk-space-5), 24px) + var(--dk-safe-bottom));
         border-bottom: 0;
         border-radius: var(--dk-radius-large) var(--dk-radius-large) 0 0;
+    }
+
+    /*
+     * On a phone a dialog and a sheet pad by the smaller space, as a panel does, and a sheet still
+     * clears the home indicator below it.
+     */
+    @media (width <= 48rem) {
+        :where(.dk-dialog) {
+            padding: min(var(--dk-space-4), 16px);
+        }
+
+        :where(.dk-dialog-sheet) {
+            padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+        }
     }
 
     :where(.dk-dialog-sheet:modal) {

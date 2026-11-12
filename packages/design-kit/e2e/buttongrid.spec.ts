@@ -1,8 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { contrast as ratio } from '../examples/palette.js';
-import { box, sideways, style, writePage } from './page.js';
+import { box, contrast, sideways, style, writePage } from './page.js';
 
 /*
  * A grid of buttons as a browser draws it: the columns asked for where they fit and fewer where a
@@ -60,16 +59,6 @@ const columnsOf = async (grid: Locator): Promise<number> => {
         .getByRole('button')
         .evaluateAll((cells) => cells.map((cell) => Math.round(cell.getBoundingClientRect().y)));
     return starts.filter((y) => y === starts[0]).length;
-};
-
-/** The contrast between two colors the browser resolved to rgb, by the measure the tokens use. */
-const contrast = (first: string, second: string): number => {
-    const hex = (color: string) =>
-        `#${(color.match(/[\d.]+/g) ?? [])
-            .slice(0, 3)
-            .map((part) => Math.round(Number(part)).toString(16).padStart(2, '0'))
-            .join('')}`;
-    return ratio(hex(first), hex(second));
 };
 
 /** A system color as the page resolves it, from an element asked to take it. */

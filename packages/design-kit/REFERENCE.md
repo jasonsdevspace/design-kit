@@ -1557,8 +1557,9 @@ Shown, the toast is a raised card on `--dk-raised` with an edge in the line colo
 colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium` each time
 it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside
 the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of its own
-and the buttons share the row under it, at its end. The close button is the target both ways at
-every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
+and the buttons share the row under it, at its end. The close button is in the muted text, turning
+to the text color under a pointer, so it stays quiet beside the action, and is the target both ways
+at every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
 print.
 
 </details>
@@ -1698,11 +1699,13 @@ first. A figure at the end is a `dk-row-figure`, and a tag a `dk-pill`.
 <summary>How the rows are drawn</summary>
 
 Each row is at least `--dk-target` tall, and at least `--dk-target-large` in a list whose classes
-are `dk-rows dk-rows-tall`. A row is inset at each side by the room a focus ring takes, and a button
-at its end sits in the middle of its height. The rule between rows is in the line color, which forced colors keep as an edge, and
-a row takes no ground of its own, so a list sits on a page or a panel alike. The end sits on the line
-of the title's first line, so a long title wraps and the row grows with its end still beside where
-the title starts, and a row of one line sits in the middle of its height.
+are `dk-rows dk-rows-tall`. A row is inset at each side by the room a focus ring takes, and reaches
+past the column by as much, as the pills and the choices do, so its words start on the column's
+line, and a button at its end sits in the middle of its height. The rule between rows is in the line
+color, which forced colors keep as an edge, and a row takes no ground of its own, so a list sits on
+a page or a panel alike. The end sits on the line of the title's first line, so a long title wraps
+and the row grows with its end still beside where the title starts, and a row of one line sits in
+the middle of its height.
 
 A link row's chevron is in the muted color. Its focus ring is
 drawn inside it, around the whole row, and a pointer over it, or a thumb pressing it, underlines the
@@ -1792,9 +1795,10 @@ shadow and an edge forced colors keep, over a scrim in `--dk-scrim`. It scrolls 
 it holds more than the screen does, and while one is open as a modal the page behind it does not
 scroll, in a browser with `:has()`. It stands what it holds `--dk-space-3` apart, and its actions
 further. Its title is at the title size, and its actions sit at its end, wrapping under one another
-where the room runs out. Its margins from the screen's edges and its padding stop growing with the
-text past their usual size, so on a phone at a large text size what it holds, such as a stepper,
-keeps its room. They stop there too where a page sets the space tokens larger.
+where the room runs out. It pads by 1.5rem, and by 1rem at 48rem wide or less, as a panel does, with
+a sheet still clear of the home indicator. Its margins from the screen's edges and its padding stop
+growing with the text past their usual size, so on a phone at a large text size what it holds, such
+as a stepper, keeps its room. They stop there too where a page sets the space tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it
