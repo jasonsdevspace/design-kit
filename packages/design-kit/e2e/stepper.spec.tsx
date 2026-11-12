@@ -7,6 +7,8 @@ import ts from 'typescript';
 
 import { StepperField } from '../src/react.js';
 import { box, KIT, sideways, style } from './page.js';
+import { cutOff, SPACED } from './spacing.js';
+import { textSize } from './text-size.js';
 
 /*
  * A stepper as a page attaches it: its buttons hidden with no script and named for what they do and
@@ -16,8 +18,9 @@ import { box, KIT, sideways, style } from './page.js';
  * followed, a typed value outside the limits or none reported as a field's error once changed and
  * said, and cleared once right while a page's own error keeps its place, a phone's keyboard with a
  * minus only where it is needed, the value in figures of one width so the field keeps its width,
- * the label beside it on one line at a phone's narrowest width, the larger target when asked, the
- * keyboard, and no audit findings in either theme.
+ * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
+ * phone's narrowest width, a stepper that fits a phone at twice the text size, the larger target
+ * when asked, the keyboard, and no audit findings in either theme.
  */
 
 const ORIGIN = 'https://kit.test';
@@ -42,7 +45,7 @@ const FIELDS = renderToStaticMarkup(
             tall
         />
         <form id="scores">
-            <StepperField id="score" label="Score" min={-12} max={12} defaultValue={11} />
+            <StepperField id="score" label="Score" min={-9} max={12} defaultValue={11} />
             <button type="reset">Reset</button>
         </form>
         <StepperField id="locked" label="Locked" min={0} max={10} defaultValue={5} disabled />
@@ -271,6 +274,93 @@ test("sits on one line with its label beside it at a phone's narrowest width", a
         expect(drawn.x).toBeGreaterThan(label.x);
     }
     expect(await sideways(page)).toBe(0);
+});
+
+test('shows every figure of its value under the wider spacing a reader may set', async ({
+    page,
+}) => {
+    await open(page);
+    await page.addStyleTag({ content: `${SPACED} #players { --dk-stepper-digits: 3 }` });
+    await bid(page).fill('10');
+    await page.locator('#players').fill('100');
+    await page.locator('#score').fill('-9');
+    expect(await cutOff(page, '.dk-stepper-value')).toEqual([]);
+});
+
+test('fits a phone at twice the text size, its buttons and its value whole', async ({ page }) => {
+    for (const width of [320, 390]) {
+        await open(page, { width });
+        await textSize(page, 2);
+        expect(await sideways(page), String(width)).toBe(0);
+        expect(await cutOff(page, '.dk-stepper-value'), String(width)).toEqual([]);
+        for (const stepper of await page.locator('.dk-stepper').all()) {
+            const field = await box(stepper.locator('xpath=..'), 'the field');
+            const last = await box(stepper.locator('.dk-stepper-up'), 'the raise button');
+            expect(last.x + last.width, String(width)).toBeLessThanOrEqual(
+                field.x + field.width + 1
+            );
+            const tall = (await stepper.getAttribute('class'))?.includes('dk-stepper-tall');
+            for (const button of await stepper.locator('.dk-button').all()) {
+                const pressed = await box(button, 'a button');
+                expect(pressed.width, String(width)).toBeGreaterThanOrEqual(44);
+                // The target and the larger target, in rems, at twice the text size.
+                expect(pressed.height, String(width)).toBeGreaterThanOrEqual(
+                    (tall ? 3.5 : 2.75) * 32 - 1
+                );
+            }
+        }
+    }
+});
+
+test("narrows its buttons to fit a narrow place, never under the usual text size's target", async ({
+    page,
+}) => {
+    await open(page, { width: 390 });
+    await textSize(page, 2);
+    /*
+     * A copy of the tall stepper and of the inline one, each in an app's dock and in a column of
+     * its own, the first narrower than the buttons' full targets and the second narrower than the
+     * buttons can go.
+     */
+    const measured = await page.evaluate(() =>
+        [320, 240].flatMap((room) =>
+            ['players', 'bid'].map((id) => {
+                const dock = document.createElement('div');
+                dock.className = 'dk-app-dock';
+                const column = document.createElement('div');
+                column.style.width = `${String(room)}px`;
+                column.append(dock);
+                const field = document.querySelector(`.dk-field:has(#${id})`);
+                const copy = field?.cloneNode(true);
+                if (!(copy instanceof HTMLElement)) throw new Error(`no field for ${id}`);
+                dock.append(copy);
+                document.body.append(column);
+                const up = copy.querySelector('.dk-stepper-up')?.getBoundingClientRect();
+                const inside = dock.getBoundingClientRect();
+                const widths = [...copy.querySelectorAll('.dk-stepper > .dk-button')].map(
+                    (button) => button.getBoundingClientRect().width
+                );
+                column.remove();
+                return {
+                    room,
+                    id,
+                    fits: (up?.right ?? Infinity) <= inside.right + 1,
+                    widths,
+                };
+            })
+        )
+    );
+    for (const { room, id, fits, widths } of measured) {
+        const where = `${id} in ${String(room)}px`;
+        for (const width of widths) {
+            expect(width, where).toBeGreaterThanOrEqual(44 - 0.5);
+            expect(width, where).toBeLessThan(3.5 * 32);
+        }
+        if (room === 320) expect(fits, where).toBe(true);
+    }
+    // In the narrower room the tall stepper's buttons rest at the floor rather than under it.
+    const floor = measured.find(({ room, id }) => room === 240 && id === 'players');
+    for (const width of floor?.widths ?? []) expect(width).toBeLessThanOrEqual(44 + 0.5);
 });
 
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
