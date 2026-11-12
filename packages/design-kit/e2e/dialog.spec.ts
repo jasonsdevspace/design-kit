@@ -240,6 +240,32 @@ test('sends focus where it is told when what opened the dialog has gone', async 
     await expect(page.locator('#fallback')).toBeFocused();
 });
 
+test('sends focus where it is told when the dialog opens with nothing focused', async ({
+    page,
+}) => {
+    await open(page);
+    // A dialog a page opens by itself, from a timer or a route, with no control holding focus.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        const kit = (
+            window as unknown as {
+                kit: {
+                    attachDialog: (
+                        d: Element | null,
+                        o: { returnTo: () => HTMLElement | null }
+                    ) => () => void;
+                };
+            }
+        ).kit;
+        kit.attachDialog(document.querySelector('#round-options'), {
+            returnTo: () => document.querySelector('#fallback'),
+        })();
+    });
+    await expect(sheet(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#fallback')).toBeFocused();
+});
+
 test('follows the options it is attached with again', async ({ page }) => {
     await open(page);
     await page.evaluate(() => {

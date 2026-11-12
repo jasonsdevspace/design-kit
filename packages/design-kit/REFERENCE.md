@@ -845,7 +845,9 @@ In a demo's strip it goes in `tools`, with `toolsLabel="Settings"`, so its landm
 Theme as its group is. A page that writes the switch by hand writes the button and the group around
 the radios as the markup above has them, since the attach function wires the button it finds.
 `chooseTheme(choice)` saves and draws a choice from anywhere else on the page, and every switch on
-the page shows it.
+the page shows it. It listens as a switch does, so a choice made with no switch on the page follows
+one another tab saves, and one the browser will not save holds on the page. A value that is not
+`light`, `dark` or `system` is ignored.
 
 **`ThemeSwitch` props**
 
@@ -1383,7 +1385,8 @@ It is the kit's field, so its label, hint and error work as every field's do, ar
 limits, so where they matter the hint states them. The buttons are hidden until
 `attachStepper(element)` shows them, so without script it is a number field alone, and they are
 named for what they do and to which field, "Lower the number of players" and "Raise the number of
-players". A status line out of sight says the value a press sets, since focus stays on the button.
+players". A status line out of sight says the value a press sets, since focus stays on the button,
+and says nothing again once the value is typed over or the stepper is taken away.
 
 `StepperField` draws it, taking `min`, `max` and a `step` of 1 unless given. Its `subject` is the
 words after Lower and Raise, the label unless given, and a label that is more than words needs one.
@@ -1472,8 +1475,10 @@ dismisses that message, which does nothing once another has replaced it or it ha
 A toast leaves when its close button, its action, or Escape with focus in it dismisses it, or the
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
-while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus goes
-back to where it was the last time a message arrived while focus was outside the toast. An action
+while the pointer is over it or focus is in it. When a message arrives, what has focus stays in view,
+scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in it,
+focus goes back to where it was the last time a message arrived while focus was outside the toast,
+or where nothing had focus then, to the body of the app's frame. An action
 runs after the toast has left, so where it takes away what focus came from, it moves focus itself.
 A message with no action replaces one with an action and its way back, so a page shows one after
 another only when the first is done with. More than one action is a dialog's job.
@@ -1711,8 +1716,8 @@ at its top with its title said, rather than scrolled to a control further down.
 when the dialog closes, however it is closed. Handed the event of the press that opened it, from a
 listener on the button, on a part of the page that holds it or in React, it finds the button the
 press landed on, since Safari gives a clicked button no focus to remember. Called otherwise, it takes
-the element to return to, or remembers what had focus. Where that is gone from the page by the time
-the dialog closes, focus goes to what `returnTo` gives. It also closes the dialog on a tap on the
+the element to return to, or remembers what had focus. Where nothing had focus, or what it returns
+to is gone from the page by the time the dialog closes, focus goes to what `returnTo` gives. It also closes the dialog on a tap on the
 scrim around it, one that starts and ends there so a drag out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a

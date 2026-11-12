@@ -253,7 +253,7 @@ follow by area.
 - **What the kit costs a page.** The three sheets are a few kilobytes gzipped without their
   comments, which a test holds to a budget, and the theme script goes inline in the page's head. A
   page that attaches a control loads the controls too, which a test holds, with the theme module
-  they import, to 5 KB gzipped without their comments. The package npm publishes is 52 KB packed,
+  they import, to 6 KB gzipped without their comments. The package npm publishes is 52 KB packed,
   the sheets and modules a page loads together with the README and the types it never does.
   [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, and from the
   next release each sheet without its comments.

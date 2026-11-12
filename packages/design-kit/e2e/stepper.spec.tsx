@@ -61,6 +61,8 @@ for (const stepper of document.querySelectorAll('.dk-stepper')) {
 }
 document.addEventListener('input', (event) => window.heard.push('input ' + event.target.value));
 document.addEventListener('change', (event) => window.heard.push('change ' + event.target.value));
+// What takes a stepper away, which attaching it again returns.
+window.detach = (id) => attachStepper(document.querySelector('#' + id).closest('.dk-stepper'))();
 window.ready = true;`;
 
 const open = async (
@@ -404,6 +406,23 @@ test('fits a dialog and a sheet on a phone 320px wide at twice the text size', a
             });
         }
     }
+});
+
+test('empties its status line once the value is typed over, and once it is taken away', async ({
+    page,
+}) => {
+    await open(page);
+    await raise(page).click();
+    await expect(line(page, 'bid')).not.toHaveText('');
+    // Typed over, the value a press said is no longer the value, so the line says nothing.
+    await bid(page).fill('4');
+    await expect(line(page, 'bid')).toHaveText('');
+    await raise(page).click();
+    await expect(line(page, 'bid')).toHaveText('5');
+    await page.evaluate(() => {
+        (window as unknown as { detach: (id: string) => void }).detach('bid');
+    });
+    await expect(line(page, 'bid')).toHaveText('');
 });
 
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {

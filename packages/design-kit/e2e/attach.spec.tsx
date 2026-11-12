@@ -44,17 +44,25 @@ const MARKUP = renderToStaticMarkup(
     </main>
 );
 
-const ATTACH = `import { attachCopyButton, attachThemeSwitch } from './controls.js';
+const ATTACH = `import { attachCopyButton, attachThemeSwitch, chooseTheme } from './controls.js';
 const group = document.querySelector('.dk-theme-switch');
 attachThemeSwitch(group);
 window.detachFirst = attachThemeSwitch(group);
 window.attachFirst = () => attachThemeSwitch(group);
-window.kit = { attachCopyButton, attachThemeSwitch };
+window.kit = { attachCopyButton, attachThemeSwitch, chooseTheme };
 window.detachHeld = attachThemeSwitch(document.querySelector('#holder'));
 window.detachCopy = attachCopyButton(document.querySelector('.dk-copy'), {
     source: () => document.querySelector('#code'),
     status: document.querySelector('[role="status"]'),
 });`;
+
+/**
+ * A page whose script attaches no switch as it loads, only offers the kit, so a choice it makes
+ * with chooseTheme is made with nothing of the switch's listening yet.
+ */
+const BARE = `import { attachThemeSwitch, chooseTheme } from './controls.js';
+window.kit = { attachThemeSwitch, chooseTheme };
+window.attachFirst = () => attachThemeSwitch(document.querySelector('.dk-theme-switch'));`;
 
 const page = (attach: boolean) =>
     `<!doctype html><html lang="en"><head><title>Controls</title>` +
@@ -70,10 +78,13 @@ const FILES: Readonly<Record<string, readonly [string, string]>> = {
 };
 
 /** A tab on the test origin, every file served from memory under the policy. */
-const tab = async (context: BrowserContext, attach = true): Promise<Page> => {
+const tab = async (context: BrowserContext, attach = true, script = ATTACH): Promise<Page> => {
     await context.route(`${ORIGIN}/**`, (route) => {
         const path = new URL(route.request().url()).pathname;
-        const [body, contentType] = FILES[path] ?? [page(attach), 'text/html'];
+        const [body, contentType] =
+            path === '/page.js'
+                ? [script, 'text/javascript']
+                : (FILES[path] ?? [page(attach), 'text/html']);
         return route.fulfill({ body, contentType, headers: { 'content-security-policy': POLICY } });
     });
     const opened = await context.newPage();
@@ -263,10 +274,11 @@ test('draws a choice the page holds on a switch attached again after every switc
     await opened.evaluate(() => {
         (window as unknown as { detachHeld: () => void }).detachHeld();
         (window as unknown as { detachFirst: () => void }).detachFirst();
-        // The theme script draws the system's light from storage it cannot read.
+        // The theme script draws the system's light from storage it cannot read, and the choice
+        // the page holds is drawn again after it, with no switch on the page.
         window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
     });
-    expect(await themeOf(opened)).toBe('light');
+    expect(await themeOf(opened)).toBe('dark');
     await opened.evaluate(() => {
         (window as unknown as { attachFirst: () => void }).attachFirst();
     });
@@ -299,7 +311,13 @@ test('attaches one element as a copy button though it was attached as a switch f
         fresh.innerHTML =
             '<span class="dk-copy-words"><span>Copy</span><span aria-hidden="true">Copied</span><span aria-hidden="true">Selected</span></span>';
         document.querySelector('main')?.append(fresh);
-        kit.attachThemeSwitch(fresh);
+        // Attached as a switch first, which a button with no choices is refused as, so nothing
+        // of the switch's holds the element when it is attached as a copy button.
+        try {
+            kit.attachThemeSwitch(fresh);
+        } catch {
+            // Refused, as a switch needs its choices.
+        }
         kit.attachCopyButton(fresh, {
             source: () => document.querySelector<HTMLElement>('#code') ?? document.body,
             status: document.querySelector<HTMLElement>('[role="status"]') ?? document.body,
@@ -398,6 +416,30 @@ test('collapses the switch in a strip on a screen narrower than 20rem to one but
     await expect(button).toBeHidden();
     await expect(radio('Light')).toBeChecked();
     await expect(radio('Light')).toBeVisible();
+    await context.close();
+});
+
+test('keeps the choices open through a swipe beside them, so a touch can scroll to them, and closes on a tap there', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'a touch swipe is made through Chromium');
+    const context = await browser.newContext({ hasTouch: true });
+    const { opened, button } = await collapsed(context);
+    await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    // A swipe up from a spot beside the list, as a thumb scrolls a page down.
+    const session = await context.newCDPSession(opened);
+    await session.send('Input.synthesizeScrollGesture', {
+        x: 4,
+        y: 300,
+        yDistance: -120,
+        gestureSourceType: 'touch',
+        speed: 800,
+    });
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await opened.touchscreen.tap(4, 300);
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
     await context.close();
 });
 
@@ -582,5 +624,66 @@ test('selects the source where the clipboard is refused, says how to copy it, an
     // Selecting the source moves focus nowhere, so the keys the status line names still reach the
     // page, and a screen reader stays where the visitor was.
     await expect(button).toBeFocused();
+    await context.close();
+});
+
+/** Calls chooseTheme as a page's own menu does, with whatever plain JavaScript passes. */
+const choose = (opened: Page, choice: string) =>
+    opened.evaluate((value) => {
+        (window as unknown as { kit: { chooseTheme: (choice: string) => void } }).kit.chooseTheme(
+            value
+        );
+    }, choice);
+
+test('follows a choice another tab saves after a choice made with no switch, on a switch attached later', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context, true, BARE);
+    await choose(opened, 'dark');
+    expect(await themeOf(opened)).toBe('dark');
+    const other = await context.newPage();
+    await other.goto(`${ORIGIN}/`);
+    await other.evaluate((key) => {
+        localStorage.setItem(key, 'light');
+    }, THEME_KEY);
+    await expect.poll(() => themeOf(opened)).toBe('light');
+    await opened.evaluate(() => {
+        (window as unknown as { attachFirst: () => void }).attachFirst();
+    });
+    await expect(first(opened).getByRole('radio', { name: 'Light' })).toBeChecked();
+    expect(await themeOf(opened)).toBe('light');
+    await context.close();
+});
+
+test('ignores a theme that is no choice, as plain JavaScript can pass', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'light' });
+    const opened = await tab(context);
+    await choose(opened, 'dark');
+    await choose(opened, 'blue');
+    expect(await themeOf(opened)).toBe('dark');
+    expect(await opened.evaluate((key) => localStorage.getItem(key), THEME_KEY)).toBe('dark');
+    await context.close();
+});
+
+test('refuses to attach a theme switch with no choices, as a toast or a stepper refuses a missing part', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    expect(
+        await opened.evaluate(() => {
+            try {
+                (
+                    window as unknown as {
+                        kit: { attachThemeSwitch: (element: HTMLElement) => void };
+                    }
+                ).kit.attachThemeSwitch(document.createElement('div'));
+                return 'attached';
+            } catch (error) {
+                return error instanceof Error ? error.message : 'thrown';
+            }
+        })
+    ).toBe('a theme switch needs its choices');
     await context.close();
 });
