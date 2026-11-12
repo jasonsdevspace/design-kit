@@ -397,6 +397,26 @@ const collapsed = async (context: BrowserContext) => {
     };
 };
 
+test('keeps the choices open, with focus on them, when a press on a choice is dragged off and lifted outside', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const { opened, button, radio } = await collapsed(context);
+    await button.click();
+    await expect(radio('System')).toBeFocused();
+    const from = await opened
+        .locator('#holder .dk-theme-switch-choice', { hasText: 'Light' })
+        .boundingBox();
+    if (!from) throw new Error('no choice');
+    await opened.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await opened.mouse.down();
+    await opened.mouse.move(4, 500, { steps: 4 });
+    await opened.mouse.up();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(opened.locator('#holder input[type="radio"]:focus')).toHaveCount(1);
+    await context.close();
+});
+
 test('collapses the switch in a strip on a screen narrower than 20rem to one button naming the choice shown', async ({
     browser,
 }) => {

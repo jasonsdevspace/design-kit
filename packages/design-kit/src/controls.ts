@@ -26,7 +26,8 @@ const focusedNow = (): Element | null => {
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]) => {
     for (const place of places) {
-        if (!(place instanceof HTMLElement) || !place.isConnected) continue;
+        if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
+            continue;
         place.focus({ preventScroll: place.matches('.dk-app-body') });
         if (document.activeElement === place) return;
     }
@@ -206,21 +207,34 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
      * by key is a pick by key.
      */
     let pointed = false;
+    // A press that began on the switch, which a pointer lifted outside it does not close.
+    let pressedHere = false;
+    /** Closes the choices where they are, and keeps focus on the switch if it was in them. */
+    const closeHere = () => {
+        const held = group.contains(document.activeElement);
+        close(false);
+        if (held) button?.focus({ preventScroll: true });
+    };
     const onPointerDown = (event: Event) => {
         const target = event.target as Node;
+        pressedHere = true;
         pointed = choices?.contains(target) ?? false;
         if (pointed || (button?.contains(target) ?? false)) event.preventDefault();
-        else close(false);
+        else closeHere();
     };
     // A tap outside closes the choices, heard as its pointer is lifted, before any of the page's
     // own handlers can stop it, and on a control that is off. A swipe, which the browser takes for
     // a scroll and cancels rather than lifts, leaves them open, so a touch can scroll down to
     // choices below the screen's edge.
     const onDocumentLift = (event: Event) => {
-        if (!group.contains(event.target as Node)) close(false);
+        const fromHere = pressedHere;
+        pressedHere = false;
+        if (!fromHere && !group.contains(event.target as Node)) closeHere();
     };
     const open = () => {
         button?.setAttribute('aria-expanded', 'true');
+        // The press that opened them was lifted before the page was listened to.
+        pressedHere = false;
         document.addEventListener('pointerup', onDocumentLift, true);
         (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
     };
@@ -464,7 +478,11 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame rather than to nowhere.
         if (hadFocus)
-            focusFirst(returnTo, element.closest('.dk-app')?.querySelector('.dk-app-body'));
+            focusFirst(
+                returnTo,
+                element.closest('.dk-app')?.querySelector('.dk-app-body') ??
+                    document.querySelector('main')
+            );
     };
     const show: ShowToast = (words, action) => {
         const active = focusedNow();
@@ -480,10 +498,15 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = !action;
         close.hidden = false;
         element.classList.add('dk-toast-shown');
-        // The scroll padding the sheet keeps under a shown toast lets this keep a control that had
-        // focus clear of it. The frame's body, which is no control, is left where it is.
-        if (returnTo === active && !returnTo.matches('.dk-app-body'))
-            returnTo.scrollIntoView({ block: 'nearest' });
+        // A control that had focus and that the toast now covers is scrolled clear of it, by the
+        // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
+        // taller than the room above the toast, such as the frame's body, stays where it is.
+        if (returnTo === active) {
+            const control = returnTo.getBoundingClientRect();
+            const card = element.getBoundingClientRect();
+            if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
+                returnTo.scrollIntoView({ block: 'nearest' });
+        }
         wait();
         return () => {
             if (shown === id) dismiss();
@@ -675,12 +698,14 @@ const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]
 
 /** The element focus goes back to, from what the page handed over, else what had focus. */
 const openerOf = (from: DialogOpener | undefined): Element | null => {
-    if (from instanceof Element) return from;
-    if (from) {
-        const target = from.target instanceof Element ? from.target.closest(FOCUSABLE) : null;
-        if (target) return target;
-        if (from.currentTarget instanceof Element) return from.currentTarget;
-    }
+    const found =
+        from instanceof Element
+            ? from
+            : from
+              ? ((from.target instanceof Element ? from.target.closest(FOCUSABLE) : null) ??
+                (from.currentTarget instanceof Element ? from.currentTarget : null))
+              : null;
+    if (found && found !== document.body) return found;
     // The page's body, where nothing has focus, is no opener, so focus goes where returnTo says.
     return focusedNow();
 };

@@ -266,6 +266,32 @@ test('sends focus where it is told when the dialog opens with nothing focused', 
     await expect(page.locator('#fallback')).toBeFocused();
 });
 
+test("sends focus where it is told when the event that opened it names the page's body", async ({
+    page,
+}) => {
+    await open(page);
+    // A key heard on the page's body, with nothing focused, opens the dialog.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        const kit = (
+            window as unknown as {
+                kit: {
+                    attachDialog: (
+                        d: Element | null,
+                        o: { returnTo: () => HTMLElement | null }
+                    ) => (from: { target: EventTarget; currentTarget: EventTarget }) => void;
+                };
+            }
+        ).kit;
+        kit.attachDialog(document.querySelector('#round-options'), {
+            returnTo: () => document.querySelector('#fallback'),
+        })({ target: document.body, currentTarget: document.body });
+    });
+    await expect(sheet(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#fallback')).toBeFocused();
+});
+
 test('follows the options it is attached with again', async ({ page }) => {
     await open(page);
     await page.evaluate(() => {

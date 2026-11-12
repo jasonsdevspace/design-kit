@@ -527,6 +527,34 @@ test("sends focus to the frame's body where what it would go back to no longer t
     await expect(page.locator('.dk-app-body')).toBeFocused();
 });
 
+test("sends focus to the page's main content when its action is chosen and nothing had focus before", async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('<main>', '<main tabindex="-1">') });
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('main')).toBeFocused();
+});
+
+test('leaves the page where it is when what has focus is not under the toast or is taller than the room above it', async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('<main>', '<main tabindex="-1">') });
+    // The page's main content holds focus, as a click on its text gives it, scrolled part way.
+    await page.locator('main').evaluate((element) => {
+        window.scrollTo(0, 120);
+        (element as HTMLElement).focus({ preventScroll: true });
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    expect(await page.evaluate(() => window.scrollY)).toBe(120);
+});
+
 test('keeps what had focus in view, clear of the toast, as it shows on a page', async ({
     page,
 }) => {
