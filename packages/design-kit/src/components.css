@@ -229,6 +229,8 @@
      */
     :where(.dk-button) {
         display: inline-flex;
+        /* A tap acts at once, with no wait for a second tap that would zoom the page. */
+        touch-action: manipulation;
         align-items: center;
         justify-content: center;
         gap: var(--dk-space-2);
@@ -844,6 +846,16 @@
         font-size: var(--dk-text-small);
     }
 
+    /*
+     * The link back to the demo is the page's way back, so it is the target tall, padded above and
+     * below and pulled back by as much, so the header and its title stay where they were.
+     */
+    :where(.dk-explainer-header a) {
+        display: inline-block;
+        padding-block: max(0px, (var(--dk-target) - 1lh) / 2);
+        margin-block: min(0px, (var(--dk-target) - 1lh) / -2);
+    }
+
     :where(.dk-explainer) {
         padding-block-start: var(--dk-space-6);
     }
@@ -1051,8 +1063,8 @@
     /*
      * A table that pins its first column keeps the cells naming each row in view while the rest
      * scrolls sideways under them, so a reader in the middle of it still knows whose row it is.
-     * The pinned cells take the page's ground, or a panel's, or whatever a page sets in
-     * --dk-table-ground for a table on a ground of its own, so the cells passing under them never
+     * The pinned cells take the page's ground, or a panel's, or a dialog's raised one, or whatever
+     * a page sets in --dk-table-ground for a table on a ground of its own, so the cells passing under them never
      * show through, with a rule at their end that says where the pinned column stops. Its borders
      * are drawn apart, cell by cell, since a border shared between cells stays where the table
      * drew it and would not travel with a pinned one. What the keyboard reaches in the frame stops
@@ -1069,6 +1081,11 @@
         z-index: var(--dk-stack-pinned);
         border-inline-end: 1px solid var(--dk-line);
         background: var(--dk-table-ground, var(--dk-bg));
+    }
+
+    /* A dialog's ground first, so a panel inside a dialog gives its cells the panel's. */
+    :where(.dk-dialog .dk-table-pinned :is(th, td):first-child) {
+        background: var(--dk-table-ground, var(--dk-raised));
     }
 
     :where(.dk-panel .dk-table-pinned :is(th, td):first-child) {
@@ -1992,6 +2009,19 @@
         font-weight: var(--dk-weight-strong);
     }
 
+    /* In forced colors the current place stands on the highlight, as the current tab and pill do. */
+    @media (forced-colors: active) {
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+            background: Highlight;
+            color: HighlightText;
+        }
+
+        /* Its focus ring, drawn inside it, in the highlight's text, so it shows on the fill. */
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
+            outline-color: HighlightText;
+        }
+    }
+
     /*
      * A toast: a short message that appears over the page, says what just happened and offers one
      * action, such as Undo. Its live region, its action and its close button are in the page from
@@ -2368,7 +2398,8 @@
      * changes width as the value does. Each figure keeps room for the spacing between letters WCAG
      * asks a page to allow, so none is cut off. A button at a limit is off and drawn as any off
      * button. In a tall stepper the buttons and the value take the larger target, and the value a
-     * larger size.
+     * larger size. The value's height, edge included, is the buttons', so it stands level with
+     * them, and with a field or a button beside it where those are the target tall, on a phone.
      *
      * Where a large text size leaves the stepper less room than its buttons take, on a phone, the
      * buttons grow narrower, never under the target at the usual text size, and keep their height,
@@ -2393,8 +2424,15 @@
 
     :where(.dk-stepper-value) {
         flex: none;
-        box-sizing: content-box;
-        width: calc(var(--dk-stepper-digits, 2) * (1ch + 0.12em));
+        /*
+         * Sized by its border box, as every box in the kit is, so its height, edge included, is
+         * its buttons' and it stands level with them. Its width so holds the figures, its inline
+         * padding, its edge and the pixel a side WebKit keeps inside a field.
+         */
+        width: calc(
+            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * min(var(--dk-field-inline), 12px) +
+                4px
+        );
         min-height: var(--dk-target);
         padding-block: 0;
         /* A field's inline padding, held to its usual size so the figures keep room. */

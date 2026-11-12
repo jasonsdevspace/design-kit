@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
 
 import { Toast } from '../src/react.js';
-import { box, KIT, sideways } from './page.js';
+import { box, KIT, sideways, tabKey } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -150,10 +150,6 @@ const elements = (page: Page): Promise<number> =>
 
 /** Where a drawn element ends, down the page. */
 const bottom = (drawn: { y: number; height: number }): number => drawn.y + drawn.height;
-
-/** The Tab key, which Safari on a Mac keeps for fields unless Option is held. */
-const tabKey = (browserName: string): string =>
-    browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 
 test('draws nothing before a message, with or without script', async ({ page }) => {
     for (const attach of [false, true]) {

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, sideways, style, writePage } from './page.js';
+import { box, sideways, style, tabKey, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -182,6 +182,17 @@ test('draws one line in forced colors, over the current link, in a system color'
         ]);
         expect(current['border-top-color']).toBe(current['color']);
         expect((await edge('History'))['border-top-style']).toBe('none');
+        // The current place stands on the highlight, as the current tab and pill do.
+        const fill = (name: string) =>
+            style(page.getByRole('link', { name, exact: true }), 'background-color').then(
+                (read) => read['background-color']
+            );
+        expect(await fill('Play')).not.toBe(await fill('History'));
+        expect(await fill('Play')).not.toBe('rgba(0, 0, 0, 0)');
+        // Its focus ring is drawn inside it, so it takes a color that shows on the highlight.
+        const play = page.getByRole('link', { name: 'Play', exact: true });
+        await play.focus();
+        expect((await style(play, 'outline-color'))['outline-color']).not.toBe(await fill('Play'));
     } finally {
         await context.close();
     }
@@ -304,10 +315,7 @@ test('scrolls what takes focus clear of a bar whose labels take two lines', asyn
     await page.getByRole('link', { name: 'The first game' }).evaluate((element) => {
         element.focus({ preventScroll: true });
     });
-    // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
-    await page.keyboard.press(
-        browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
-    );
+    await page.keyboard.press(tabKey(browserName));
     await expect(link).toBeFocused();
     const drawn = await box(bar(page), 'the bar');
     expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(drawn.y);
@@ -389,8 +397,7 @@ ${tabBar(PLACES.slice(0, 3), 'dk-app-tabs ')}
     // The bar, the frame's last part, pads past the edge once, so its links end clear of it.
     expect(bottom(await box(links(page).first(), 'a link'))).toBe(700 - SAFE_BOTTOM);
 
-    // Safari on a Mac keeps the plain Tab key for fields, and reaches a link with Option held.
-    const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
+    const tab = tabKey(browserName);
     const reached: string[] = [];
     for (let stop = 0; stop < 5; stop += 1) {
         await page.keyboard.press(tab);

@@ -145,10 +145,10 @@ jobs:
                   path: playwright-report
                   retention-days: 7
 
-    # The pieces pinned to the screen's edges, drawn in Safari's engine too, where a bar that stays
-    # put and a height that follows the browser's own bars differ. On a Mac, where WebKit runs on
-    # what the image already has: on Ubuntu it needs system packages from a mirror that has been
-    # slow enough to run a job out of time.
+    # The pieces Safari draws its own way, such as a bar that stays put, a height that follows the
+    # browser's own bars and a number field's inner room, drawn in its engine too. On a Mac, where
+    # WebKit runs on what the image already has: on Ubuntu it needs system packages from a mirror
+    # that has been slow enough to run a job out of time.
     webkit:
         name: Browser tests in WebKit
         runs-on: macos-26

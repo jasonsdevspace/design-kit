@@ -4,20 +4,20 @@ import { defineConfig, devices } from '@playwright/test';
  * The sheets, the theme script and the components in a real browser, since only a browser resolves
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
- * it into the browser. An app's frame, tab bar and toast, and the dialog, are drawn in WebKit
- * too. The site's tests open the built site, which the config builds and serves under the path
- * GitHub Pages gives it.
+ * it into the browser. An app's frame, tab bar and toast, the dialog and the stepper are drawn in
+ * WebKit too. The site's tests open the built site, which the config builds and serves under the
+ * path GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;
 const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
- * The specs that run in WebKit as well: an app's frame, its tab bar, its toast and the dialog,
- * where what stays put, a height that follows the browser's own bars and the native dialog are
- * what Safari draws its own way.
+ * The specs that run in WebKit as well: an app's frame, its tab bar, its toast, the dialog and the
+ * stepper, where what stays put, a height that follows the browser's own bars, the native dialog
+ * and a number field's inner room are what Safari draws its own way.
  */
-const WEBKIT = '*/e2e/{app,tabbar,toast,dialog}.spec.{ts,tsx}';
+const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
@@ -45,7 +45,7 @@ export default defineConfig({
     },
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-        // The pieces pinned to the screen's edges, in Safari's engine too, where they differ.
+        // The pieces Safari draws its own way, in its engine too.
         { name: 'webkit', testMatch: WEBKIT, use: { ...devices['Desktop Safari'] } },
     ],
 });

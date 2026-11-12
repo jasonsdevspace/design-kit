@@ -62,9 +62,9 @@ is its CSS transformer, as the package README shows.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.
-- The browser tests run in Chromium, and the app's frame, tab bar, toast and dialog in WebKit as
-  well, so what Firefox lacks at the floor is known from its documented support rather than from
-  a test here.
+- The browser tests run in Chromium, and the app's frame, tab bar, toast, dialog and stepper in
+  WebKit as well, so what Firefox lacks at the floor is known from its documented support rather
+  than from a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
   states the browser gives it.
 - The criteria a tool cannot judge, such as whether a heading describes its section or a link's

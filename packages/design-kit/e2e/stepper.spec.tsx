@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
 
 import { StepperField } from '../src/react.js';
-import { box, KIT, sideways, style } from './page.js';
+import { box, KIT, sideways, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -102,6 +102,20 @@ const open = async (
 const bid = (page: Page): Locator => page.getByRole('spinbutton', { name: "Ana's bid" });
 const lower = (page: Page): Locator => page.getByRole('button', { name: "Lower Ana's bid" });
 const raise = (page: Page): Locator => page.getByRole('button', { name: "Raise Ana's bid" });
+
+/**
+ * Presses a button as a visitor does: by pointer, or in WebKit, where Safari gives a pressed button
+ * no focus, by Enter on it, so a test of where focus stays tests the stepper and not the browser.
+ */
+const press = async (button: Locator, browserName: string): Promise<void> => {
+    if (browserName === 'webkit') {
+        await button.focus();
+        await button.press('Enter');
+    } else {
+        await button.click();
+    }
+};
+
 const line = (page: Page, id: string): Locator =>
     page.locator(`.dk-field:has(#${id}) .dk-stepper-status`);
 const heard = (page: Page): Promise<string[]> =>
@@ -121,9 +135,10 @@ test('shows the buttons only once attached, each named for what it does and to w
 
 test('steps once a press, firing the events a typed value fires, and stops at the limits with focus kept', async ({
     page,
+    browserName,
 }) => {
     await open(page);
-    await raise(page).click();
+    await press(raise(page), browserName);
     await expect(bid(page)).toHaveValue('10');
     expect(await heard(page)).toEqual(['input 10', 'change 10']);
     // At the greatest value the raise button is off, keeps focus, and a press does nothing.
@@ -136,7 +151,7 @@ test('steps once a press, firing the events a typed value fires, and stops at th
     await expect(lower(page)).not.toHaveAttribute('aria-disabled');
     // At the least value it is the lower button that is off.
     await open(page);
-    for (let press = 0; press < 9; press += 1) await lower(page).click();
+    for (let step = 0; step < 9; step += 1) await press(lower(page), browserName);
     await expect(bid(page)).toHaveValue('0');
     await expect(lower(page)).toHaveAttribute('aria-disabled', 'true');
     await expect(lower(page)).toBeFocused();
@@ -146,12 +161,18 @@ test('steps once a press, firing the events a typed value fires, and stops at th
 
 test('says the value a press sets on its status line, since focus stays on the button', async ({
     page,
+    browserName,
 }) => {
     await open(page);
     await expect(line(page, 'bid')).toHaveText('');
-    await lower(page).click();
+    await press(lower(page), browserName);
     await expect(line(page, 'bid')).toHaveText('8');
     await expect(lower(page)).toBeFocused();
+    // A pointer's press says its value too, in Safari's engine as well, where it gives no focus.
+    await open(page);
+    await lower(page).click();
+    await expect(line(page, 'bid')).toHaveText('8');
+    if (browserName === 'chromium') await expect(lower(page)).toBeFocused();
 });
 
 test('leaves a disabled field as it is, with both buttons off', async ({ page }) => {
@@ -289,7 +310,11 @@ test('shows every figure of its value under the wider spacing a reader may set',
     expect(await cutOff(page, '.dk-stepper-value')).toEqual([]);
 });
 
-test('fits a phone at twice the text size, its buttons and its value whole', async ({ page }) => {
+test('fits a phone at twice the text size, its buttons and its value whole', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     for (const width of [320, 390]) {
         await open(page, { width });
         await textSize(page, 2);
@@ -316,7 +341,9 @@ test('fits a phone at twice the text size, its buttons and its value whole', asy
 
 test("narrows its buttons to fit a narrow place, never under the usual text size's target", async ({
     page,
+    browserName,
 }) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     await open(page, { width: 390 });
     await textSize(page, 2);
     /*
@@ -365,7 +392,11 @@ test("narrows its buttons to fit a narrow place, never under the usual text size
     for (const width of floor?.widths ?? []) expect(width).toBeLessThanOrEqual(44 + 0.5);
 });
 
-test('fits a dialog and a sheet on a phone 320px wide at twice the text size', async ({ page }) => {
+test('fits a dialog and a sheet on a phone 320px wide at twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     await open(page, { width: 320 });
     await textSize(page, 2);
     for (const form of ['dk-dialog', 'dk-dialog dk-dialog-sheet']) {
@@ -435,6 +466,27 @@ test('empties its status line when its form is reset', async ({ page }) => {
     await expect(line(page, 'score')).toHaveText('');
 });
 
+test('stands its value level with its buttons, tall or not, and takes a tap at once', async ({
+    page,
+}) => {
+    await open(page);
+    // The buttons stretch to the row, so each is held to the target as well as to the other.
+    for (const [field, target] of [
+        ['bid', 44],
+        ['players', 56],
+    ] as const) {
+        const stepper = page.locator(`.dk-field:has(#${field}) .dk-stepper`);
+        const value = await box(stepper.locator('.dk-stepper-value'), 'the value');
+        const button = await box(stepper.locator('.dk-stepper-up'), 'a button');
+        expect(value.height, field).toBeCloseTo(target, 0);
+        expect(button.height, field).toBeCloseTo(target, 0);
+        expect(
+            (await style(stepper.locator('.dk-stepper-up'), 'touch-action'))['touch-action'],
+            field
+        ).toBe('manipulation');
+    }
+});
+
 test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
     await open(page, { width: 1280 });
     for (const [name, least] of [
@@ -449,16 +501,17 @@ test('draws its buttons at the target, and at the larger target when tall', asyn
 
 test('takes the keyboard through lower, the value and raise, pressing by Space and Enter', async ({
     page,
+    browserName,
 }) => {
     await open(page);
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     await expect(lower(page)).toBeFocused();
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     await expect(bid(page)).toBeFocused();
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     await expect(raise(page)).toBeFocused();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press(`Shift+${tabKey(browserName)}`);
+    await page.keyboard.press(`Shift+${tabKey(browserName)}`);
     await page.keyboard.press('Space');
     await expect(bid(page)).toHaveValue('8');
     await page.keyboard.press('Enter');
