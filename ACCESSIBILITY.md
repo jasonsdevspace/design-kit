@@ -50,11 +50,12 @@ is its CSS transformer, as the package README shows.
   of its own.
   The page behind an open dialog still scrolls there too.
 - On a page that scrolls whole and is 18rem wide or more, the room kept for a tab bar holds a label
-  on two lines, and the room kept for a toast, on a page or in an app's frame, holds a line of
-  message over its buttons. A label or a message that wraps further can leave what the keyboard
-  reaches partly under the bar or the toast. CSS cannot read their height, so the reference asks for
-  short labels and messages. An app's frame keeps clear of its tab bar at any size, since the bar
-  has a row of its own.
+  on two lines. A label that wraps further can leave what the keyboard reaches partly under the bar.
+  CSS cannot read its height, so the reference asks for short labels. An app's frame keeps clear of
+  its tab bar at any size, since the bar has a row of its own.
+- The room kept for a toast is measured as it shows and while it stays, up to five rows, so a toast
+  whose message runs past five rows can leave what the keyboard reaches partly under it. The
+  reference asks for a short sentence.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.

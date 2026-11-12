@@ -396,11 +396,13 @@ test("sits in an app's frame above the dock, its action one step back from the d
     await expect(undo(page)).toBeFocused();
 });
 
-test("never moves the frame's dock as it shows and leaves, at the usual and at twice the text size", async ({
+test("never moves the frame's dock under the thumb as it shows and leaves, at the usual and at twice the text size", async ({
     page,
     browserName,
 }) => {
     for (const scale of browserName === 'chromium' ? [1, 2] : [1]) {
+        // At twice the text size the body cannot hold the toast, which takes its row above the dock,
+        // and the page scrolls by as much as the dock would have moved.
         await open(page, { body: FULL, height: 844 });
         if (scale === 2) await textSize(page, 2);
         const save = page.locator('#save');
@@ -410,6 +412,41 @@ test("never moves the frame's dock as it shows and leaves, at the usual and at t
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
         await dismiss(page).click();
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
+    }
+});
+
+test("keeps what the keyboard reaches in the frame's body clear of the toast and the bar where the body is near its least height", async ({
+    page,
+    browserName,
+}) => {
+    // A phone on its side at the usual text size, and one upright at twice it, where the body is
+    // near its least height.
+    for (const [width, height, scale] of browserName === 'chromium'
+        ? ([
+              [844, 400, 1],
+              [390, 844, 2],
+          ] as const)
+        : ([[844, 400, 1]] as const)) {
+        await open(page, { body: FULL, width, height });
+        if (scale === 2) await textSize(page, 2);
+        await page.locator('.dk-app-body').evaluate((element) => {
+            const line = document.createElement('p');
+            const link = document.createElement('a');
+            link.href = '#mid';
+            link.id = 'mid';
+            link.textContent = 'A round in the middle';
+            line.append(link);
+            element.children[Math.floor(element.children.length / 2)]?.after(line);
+        });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const where = `${String(width)} by ${String(height)} at ${String(scale)}x`;
+        await page.locator('#mid').focus();
+        const link = await box(page.locator('#mid'), 'the link');
+        const body = await box(page.locator('.dk-app-body'), 'the body');
+        const card = await box(toast(page), 'the toast');
+        expect(link.y, where).toBeGreaterThanOrEqual(body.y - 1);
+        expect(bottom(link), where).toBeLessThanOrEqual(Math.min(bottom(body), card.y) + 1);
     }
 });
 
@@ -572,7 +609,7 @@ test('keeps what had focus in view, clear of the toast, as it shows on a page', 
     await show(page, 'Round 3 saved.', 'Undo');
     await settle(page);
     expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(
-        (await box(toast(page), 'the toast')).y
+        (await box(toast(page), 'the toast')).y + 1
     );
 });
 
@@ -698,6 +735,50 @@ test('keeps room on a page for a toast whose buttons wrap under its message at t
     expect(kept).toBeGreaterThanOrEqual(
         (await page.evaluate(() => window.innerHeight)) - card.y - 1
     );
+});
+
+test('keeps room on a page for a toast of as many rows as it takes, measured as it shows', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await open(page, { width: 390 });
+    await textSize(page, 2);
+    // A message that wraps, in any face, over its buttons.
+    await show(page, 'Round 3 is saved for every player at the table tonight.', 'Undo');
+    await settle(page);
+    const card = await box(toast(page), 'the toast');
+    const rows = Number(await toast(page).getAttribute('data-rows'));
+    expect(rows).toBeGreaterThanOrEqual(3);
+    const covered = (await page.evaluate(() => window.innerHeight)) - card.y - 1;
+    const kept = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
+    );
+    expect(kept).toBeGreaterThanOrEqual(covered);
+    // The page's end scrolls clear of it too.
+    await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
+        (await box(toast(page), 'the toast')).y + 1
+    );
+    await dismiss(page).click();
+    await expect(toast(page)).not.toHaveAttribute('data-rows');
+});
+
+test('measures its room again when the text size changes while it is shown', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await open(page, { width: 390 });
+    await show(page, 'Round 3 is saved for every player at the table tonight.', 'Undo');
+    await settle(page);
+    const before = Number(await toast(page).getAttribute('data-rows'));
+    await textSize(page, 2);
+    await expect
+        .poll(async () => Number(await toast(page).getAttribute('data-rows')))
+        .toBeGreaterThan(before);
 });
 
 for (const theme of ['light', 'dark'] as const) {

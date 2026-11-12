@@ -421,6 +421,36 @@ export type ShowToast = (message: string, action?: ToastAction) => () => void;
 const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
 
 /**
+ * Marks a shown toast with the rows it takes, its content's height over the target's length, which
+ * the sheet's room counts by, from one to five, so the sheet keeps that much room for it. In an
+ * app's frame whose body would keep less than a row and a half above that room, it also marks the
+ * toast to take its row above the dock, and scrolls the page by as much as the dock moved, so the
+ * dock stays under the thumb. Both are attributes rather than styles, so a page's policy may refuse
+ * every style it did not serve. A toast in a container out of sight, which has no size, is left
+ * unmarked until it is measured again.
+ */
+const measureToast = (element: HTMLElement, close: HTMLElement) => {
+    const target = parseFloat(getComputedStyle(close).minWidth);
+    const dock = element.closest('.dk-app')?.querySelector('.dk-app-dock');
+    const before = dock?.getBoundingClientRect().top ?? 0;
+    delete element.dataset['row'];
+    if (!target || !element.clientHeight) {
+        delete element.dataset['rows'];
+        return;
+    }
+    const edges = getComputedStyle(element);
+    const held =
+        element.clientHeight - parseFloat(edges.paddingTop) - parseFloat(edges.paddingBottom);
+    element.dataset['rows'] = String(Math.min(5, Math.max(1, Math.ceil(held / target - 0.02))));
+    const body = element.closest('.dk-app')?.querySelector('.dk-app-body');
+    if (!body) return;
+    const room = body.clientHeight - parseFloat(getComputedStyle(body).scrollPaddingBottom);
+    if (room >= 1.5 * target) return;
+    element.dataset['row'] = '';
+    window.scrollBy(0, (dock?.getBoundingClientRect().top ?? 0) - before);
+};
+
+/**
  * Makes a toast work, and returns the function that shows a message in it. The message is drawn in
  * the toast and said on its status line, which is on the page from the start, so a screen reader
  * hears it without focus moving, with the action's name when it has one, so a visitor who cannot
@@ -450,6 +480,12 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
+    // While a message is shown, the toast is measured again whenever its size or the screen's
+    // changes, a turned phone or a new text size among them, so its room never goes stale.
+    const remeasure = () => {
+        measureToast(element, close);
+    };
+    const watch = new ResizeObserver(remeasure);
     let timer = 0;
     // Each message's number, which only grows, so what dismisses one never dismisses a later one.
     let count = 0;
@@ -475,6 +511,10 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = true;
         close.hidden = true;
         element.classList.remove('dk-toast-shown');
+        watch.disconnect();
+        window.removeEventListener('resize', remeasure);
+        delete element.dataset['rows'];
+        delete element.dataset['row'];
         hush(status);
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame or the page's main content rather
@@ -500,6 +540,9 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         actionButton.hidden = !action;
         close.hidden = false;
         element.classList.add('dk-toast-shown');
+        measureToast(element, close);
+        watch.observe(element);
+        window.addEventListener('resize', remeasure);
         // A control that had focus and that the toast now covers is scrolled clear of it, by the
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
