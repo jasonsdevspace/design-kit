@@ -634,6 +634,114 @@ test('puts its buttons together on a row under its message on a phone at a large
     }
 });
 
+/** Checks that the action and the close button share the row under the message, at the end. */
+const together = async (page: Page, action: string, what: string): Promise<void> => {
+    const words = await box(message(page), 'the message');
+    const doing = await box(page.getByRole('button', { name: action }), 'the action');
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    expect(doing.y, what).toBeGreaterThanOrEqual(words.y + words.height - 1);
+    expect(Math.abs(close.y - doing.y), what).toBeLessThanOrEqual(1);
+    expect(close.x, what).toBeGreaterThan(doing.x + doing.width - 1);
+    expect(card.x + card.width - (close.x + close.width), what).toBeLessThan(16);
+};
+
+test('keeps its buttons together at its end wherever they wrap under its message', async ({
+    page,
+}) => {
+    for (const { what, width, body, css, action } of [
+        {
+            what: 'a long action on a 390px phone',
+            width: 390,
+            body: PAGE,
+            css: '',
+            action: 'Put the round back',
+        },
+        {
+            what: 'a long action on a 320px phone',
+            width: 320,
+            body: PAGE,
+            css: '',
+            action: 'Put the round back',
+        },
+        {
+            what: "an app's frame narrower than the screen",
+            width: 1280,
+            body: FRAME,
+            css: '.dk-app { inline-size: 290px; }',
+            action: 'Undo',
+        },
+    ]) {
+        await open(page, { width, body, css });
+        await show(page, 'Round 3 saved.', action);
+        await settle(page);
+        await together(page, action, what);
+        // The message on its row of its own stands as far from the toast's end as from its start.
+        const card = await box(toast(page), 'the toast');
+        const words = await box(message(page), 'the message');
+        const start = words.x - card.x;
+        expect(
+            Math.abs(card.x + card.width - (words.x + words.width) - start),
+            what
+        ).toBeLessThanOrEqual(1);
+    }
+});
+
+test('keeps its message and buttons on one row where they fit, and again after a message that did not', async ({
+    page,
+}) => {
+    for (const width of [390, 320]) {
+        await open(page, { width });
+        await show(page, 'Round 3 saved.', 'Put the round back');
+        await settle(page);
+        await together(page, 'Put the round back', String(width));
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const words = await box(message(page), 'the message');
+        for (const button of [undo(page), dismiss(page)]) {
+            const drawn = await box(button, 'a button');
+            expect(drawn.y, String(width)).toBeLessThan(words.y + words.height / 2);
+        }
+    }
+});
+
+test("keeps a toast with no action on one row in an app's frame narrower than the screen", async ({
+    page,
+}) => {
+    await open(page, { width: 1280, body: FRAME, css: '.dk-app { inline-size: 290px; }' });
+    await show(page, 'Round 3 saved.');
+    await settle(page);
+    await expect(toast(page)).toHaveAttribute('data-rows', '1');
+});
+
+test('keeps the layout it had for a toast written without its group of buttons', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    const flat = TOAST.replace('<div class="dk-toast-buttons">', '').replace(
+        /<\/div><\/div>$/,
+        '</div>'
+    );
+    expect(flat).not.toContain('dk-toast-buttons');
+    await open(page, { width: 320, body: PAGE.replace(TOAST, flat) });
+    await textSize(page, 2);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    // Under the message, the action before the close button on one row at its end, or where a face
+    // too wide leaves no room for both, each at the end of a row of its own, as before the group.
+    const words = await box(message(page), 'the message');
+    const action = await box(undo(page), 'the action');
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    const end = card.x + card.width;
+    expect(action.y).toBeGreaterThanOrEqual(words.y + words.height - 1);
+    expect(end - (close.x + close.width)).toBeLessThan(16);
+    if (Math.abs(close.y - action.y) <= 1)
+        expect(close.x).toBeGreaterThan(action.x + action.width - 1);
+    else expect(end - (action.x + action.width)).toBeLessThan(16);
+});
+
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
     page,
 }) => {
