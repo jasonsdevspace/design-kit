@@ -1,6 +1,7 @@
 # 8. A frame that scrolls is always a named region
 
-**Status:** accepted
+**Status:** accepted, amended in 0.6.0 to say a frame shows whole on paper, its code and figures
+wrapping
 
 ## Context
 
@@ -66,3 +67,5 @@ The paths are in `packages/design-kit`.
   title, the keyboard tabbing to each frame in turn and scrolling the table with an arrow key, and
   a pointer press in a frame drawing no ring. It holds a code block to `white-space: pre` and
   `translate="no"`, and finds no axe findings in either theme, wide and on a phone.
+- `e2e/print.spec.tsx` prints a code block and a scrolling table whole rather than cut at the frame,
+  and a code block's edge in the line color.

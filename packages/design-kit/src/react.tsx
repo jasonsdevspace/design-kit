@@ -907,7 +907,10 @@ export const StepperField = (props: StepperFieldProps) => {
         >
             <p className="dk-field-error dk-stepper-range" id={`${field.id}-range`} hidden>
                 <span className="dk-visually-hidden">Error: </span>
-                {rangeError ?? `Enter a number from ${String(min)} to ${String(max)}.`}
+                {rangeError ??
+                    (step === 1
+                        ? `Enter a whole number from ${String(min)} to ${String(max)}.`
+                        : `Enter a number from ${String(min)} to ${String(max)} in steps of ${String(step)}.`)}
             </p>
             <div className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}>
                 <button

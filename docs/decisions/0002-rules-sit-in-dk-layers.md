@@ -37,13 +37,12 @@ custom property starts with `--dk-` and every class with `.dk-`. Inside the laye
 is one of the kit's own classes or one `:where()`, followed at most by a focus pseudo-class. A rule
 in the base that has to reach every part of a page follows its `:where()` with each pseudo-element
 it means instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element inside a
-`:where()` matches nothing. A component may follow its `:where()` with
-`::-webkit-inner-spin-button` or `::-webkit-outer-spin-button`, a number field's own spin buttons,
-which the stepper takes away, or with `::backdrop`, the scrim behind a dialog. Each is a part of a
-browser's own element that only a pseudo-element reaches, and no other pseudo-element follows a
-component's `:where()`. So only the kit's classes, the focus
-rules and those pseudo-elements carry any weight, and that weight counts for nothing against a
-page's own rule outside a layer.
+`:where()` matches nothing. A component may follow its `:where()` with `::-webkit-inner-spin-button`
+or `::-webkit-outer-spin-button`, a number field's own spin buttons, which the stepper takes away,
+or with `::backdrop`, the scrim behind a dialog. Each is a part of a browser's own element that only
+a pseudo-element reaches, and no other pseudo-element follows a component's `:where()`. So only the
+kit's classes, the focus rules and those pseudo-elements carry any weight, and that weight counts
+for nothing against a page's own rule outside a layer.
 
 ## Consequences
 

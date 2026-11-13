@@ -145,52 +145,80 @@ const sheetsOf = (/** @type {Packed} */ packed) =>
  *
  * @param {Measured} packed
  */
-const packageSince = ({ since, ...packed }) =>
-    since
-        ? ` Since the record of \`${since.version}\` on ${since.date} at \`${since.commit}\`, it packs ${kb(packed.size)} where it packed ${kb(since.size)}, and the sheets a page loads come to ${kb(sheetsOf(packed))} without their comments where they came to ${kb(since.sheets)}.`
-        : '';
+const packageSince = ({ since, ...packed }) => {
+    if (!since) return '';
+    const sheets =
+        since.sheets > 0
+            ? `, and the sheets a page loads come to ${kb(sheetsOf(packed))} gzipped without their comments where they came to ${kb(since.sheets)}`
+            : '';
+    return ` Since the record of version ${since.version} on ${since.date} at \`${since.commit}\`, it packs ${kb(packed.size)} where it packed ${kb(since.size)}${sheets}.`;
+};
+
+/** What the pages download together. */
+const downloadsOf = (/** @type {readonly Page[]} */ pages) =>
+    pages.reduce((sum, page) => sum + page.bytes, 0);
 
 /**
- * The package record kept under `docs/benchmarks`, as what changed is measured from, or nothing
- * where there is none.
+ * A record as the commit checked out holds it, which the run before wrote, or nothing where that
+ * commit holds none. It is read from the commit rather than the folder, so a record taken again
+ * before it is committed is not measured against itself.
  *
- * @returns {PackageSince | undefined}
+ * @param {string} name
+ * @returns {unknown}
  */
-export const packageBefore = () => {
+const committed = (name) => {
+    let text;
     try {
-        /** @type {Packed & { recorded: Recorded }} */
-        const before = JSON.parse(readFileSync(new URL('package-size.json', BENCHMARKS), 'utf8'));
-        return {
-            date: before.recorded.date,
-            commit: before.recorded.commit,
-            version: before.version,
-            size: before.size,
-            sheets: sheetsOf(before),
-        };
+        text = execFileSync('git', ['show', `HEAD:docs/benchmarks/${name}.json`], {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        });
     } catch {
+        // The commit holds no such record.
         return undefined;
     }
+    return JSON.parse(text);
 };
 
 /**
- * The pages record kept under `docs/benchmarks`, as what changed is measured from, or nothing where
- * there is none.
+ * The package record the run before wrote, as what changed is measured from, or nothing where there
+ * is none or it was taken at the commit given.
  *
+ * @param {Recorded} at
+ * @returns {PackageSince | undefined}
+ */
+export const packageBefore = (at) => {
+    const before = /** @type {(Packed & { recorded: Recorded }) | undefined} */ (
+        committed('package-size')
+    );
+    if (!before || before.recorded.commit === at.commit) return undefined;
+    return {
+        date: before.recorded.date,
+        commit: before.recorded.commit,
+        version: before.version,
+        size: before.size,
+        sheets: sheetsOf(before),
+    };
+};
+
+/**
+ * The pages record the run before wrote, as what changed is measured from, or nothing where there is
+ * none or it was taken at the commit given.
+ *
+ * @param {Recorded} at
  * @returns {PagesSince | undefined}
  */
-export const pagesBefore = () => {
-    try {
-        /** @type {{ recorded: Recorded, tools: Tools, pages: Page[] }} */
-        const before = JSON.parse(readFileSync(new URL('site-pages.json', BENCHMARKS), 'utf8'));
-        return {
-            date: before.recorded.date,
-            commit: before.recorded.commit,
-            kit: before.tools.kit,
-            bytes: before.pages.reduce((sum, page) => sum + page.bytes, 0),
-        };
-    } catch {
-        return undefined;
-    }
+export const pagesBefore = (at) => {
+    const before = /** @type {{ recorded: Recorded, tools: Tools, pages: Page[] } | undefined} */ (
+        committed('site-pages')
+    );
+    if (!before || before.recorded.commit === at.commit) return undefined;
+    return {
+        date: before.recorded.date,
+        commit: before.recorded.commit,
+        kit: before.tools.kit,
+        bytes: downloadsOf(before.pages),
+    };
 };
 
 /** A count of bytes, for a part too small to read in kilobytes. */
@@ -265,9 +293,8 @@ ${files((path) => !isSheet(path) && !isModule(path))}${partsOf(packed)}`;
  * @param {PagesSince} [since] the record before, for what changed since it
  */
 export const pagesRecord = (pages, at, tools, since) => {
-    const bytes = pages.reduce((sum, page) => sum + page.bytes, 0);
     const changed = since
-        ? ` Since the record on ${since.date} at \`${since.commit}\`, drawn from version ${since.kit}, the pages download ${kb(bytes)} together where they downloaded ${kb(since.bytes)}.`
+        ? ` Since the record on ${since.date} at \`${since.commit}\`, when the site drew from version ${since.kit} of the kit, the pages download ${kb(downloadsOf(pages))} together where they downloaded ${kb(since.bytes)}.`
         : '';
     const markdown = `# Site pages
 
@@ -345,10 +372,11 @@ if (isRunDirectly(import.meta.url)) {
             pieces: piecesOf(sheets),
             functions: await functionsOf(dist, Object.keys(controls).sort()),
         };
-        const since = packageBefore();
+        const at = recorded();
+        const since = packageBefore(at);
         writeRecord(
             'package-size',
-            packageRecord({ ...packed, ...parts, ...(since ? { since } : {}) }, recorded())
+            packageRecord({ ...packed, ...parts, ...(since ? { since } : {}) }, at)
         );
     } finally {
         rmSync(into, { recursive: true, force: true });

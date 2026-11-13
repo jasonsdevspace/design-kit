@@ -11,8 +11,8 @@ page of results. A field can hold an error. Each state needs a look, and a scree
 the same state the eye sees. The components' sheet allows a selector to be a bare class of the kit's
 or one `:where()` followed at most by a focus pseudo-class, a number field's spin buttons or a
 dialog's `::backdrop`, as record 2 sets out, so any state written as an attribute selector sits in
-`:where()` and weighs nothing. A button that is off for a
-while has to stay where the keyboard can reach it, so a visitor can find out why it is off.
+`:where()` and weighs nothing. A button that is off for a while has to stay where the keyboard can
+reach it, so a visitor can find out why it is off.
 
 ## Options
 

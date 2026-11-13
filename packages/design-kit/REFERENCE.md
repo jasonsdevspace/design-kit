@@ -717,15 +717,15 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 
 **`Button` props**
 
-| `Button`  | Default    | What it does                                                                     |
-| --------- | ---------- | -------------------------------------------------------------------------------- |
-| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`          |
-| `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                        |
-| `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                         |
-| `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed` or `large` |
-| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action             |
-| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                     |
-| `type`    | `'button'` | The button's type                                                                |
+| `Button`  | Default    | What it does                                                                             |
+| --------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`                  |
+| `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                                |
+| `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                                 |
+| `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed`, `large` or `tall` |
+| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action                     |
+| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                             |
+| `type`    | `'button'` | The button's type                                                                        |
 
 Every other prop goes to the `<button>`, `ref` and `className` included, except `style`, `disabled`,
 `aria-disabled` and `aria-pressed`. A click on an off button calls `preventDefault()`, so a submit
@@ -1459,7 +1459,7 @@ to raise it after.
     <label class="dk-field-label" for="players">Players</label>
     <p class="dk-field-error dk-stepper-range" id="players-range" hidden="">
         <span class="dk-visually-hidden">Error: </span>
-        Enter a number from 2 to 8.
+        Enter a whole number from 2 to 8.
     </p>
     <div class="dk-stepper dk-stepper-tall">
         <button type="button" class="dk-button dk-stepper-down" aria-controls="players" hidden="">
@@ -1522,16 +1522,16 @@ it away again.
 
 **`StepperField` props**
 
-| `StepperField`        | Default                      | What it does                                                                                     |
-| --------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| `label`               | required                     | Names the field                                                                                  |
-| `min`, `max`          | required                     | The least and the greatest value                                                                 |
-| `step`                | `1`                          | What a press adds or takes away                                                                  |
-| `subject`             | the label, where it is words | The words after Lower and Raise in the buttons' names, needed where the label is more than words |
-| `rangeError`          | a sentence giving the limits | What a value the field refuses is told, such as `'Enter a number from 2 to 8.'`                  |
-| `inline`              | `false`                      | Puts the label to the left, on one line with the stepper                                         |
-| `tall`                | `false`                      | Draws the buttons and the value at `--dk-target-large`                                           |
-| `hint`, `error`, `id` | none                         | As for every field                                                                               |
+| `StepperField`        | Default                                         | What it does                                                                                     |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `label`               | required                                        | Names the field                                                                                  |
+| `min`, `max`          | required                                        | The least and the greatest value                                                                 |
+| `step`                | `1`                                             | What a press adds or takes away                                                                  |
+| `subject`             | the label, where it is words                    | The words after Lower and Raise in the buttons' names, needed where the label is more than words |
+| `rangeError`          | a sentence giving the limits and any step but 1 | What a value the field refuses is told, such as `'Enter a whole number from 2 to 8.'`            |
+| `inline`              | `false`                                         | Puts the label to the left, on one line with the stepper                                         |
+| `tall`                | `false`                                         | Draws the buttons and the value at `--dk-target-large`                                           |
+| `hint`, `error`, `id` | none                                            | As for every field                                                                               |
 
 <details>
 <summary>How a stepper is drawn</summary>
@@ -1631,12 +1631,11 @@ Shown, the toast is a raised card on `--dk-raised` with an edge in the line colo
 colors draw where the shadow is gone. It rises into place over `--dk-duration-medium` as it arrives,
 at once for a visitor who asks for less motion. A message that replaces one still shown takes its
 place in the card without rising again, since the toast stays shown. A message of a few lines wraps
-beside
-the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of its own
-and the buttons share the row under it, at its end. The close button is in the muted text, turning
-to the text color under a pointer, so it stays quiet beside the action, and is the target both ways
-at every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
-print.
+beside the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of
+its own and the buttons share the row under it, at its end. The close button is in the muted text,
+turning to the text color under a pointer, so it stays quiet beside the action, and is the target
+both ways at every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast
+does not print.
 
 </details>
 

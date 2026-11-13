@@ -158,9 +158,28 @@ describe('a record that follows another', () => {
             RECORDED
         );
         expect(packaged.markdown).toContain(
-            'Since the record of `0.5.0` on 2026-11-12 at `7048d11`, it packs 53.0 KB where it packed 51.6 KB, and the sheets a page loads come to 9.0 KB without their comments where they came to 7.8 KB.'
+            'Since the record of version 0.5.0 on 2026-11-12 at `7048d11`, it packs 53.0 KB where it packed 51.6 KB, and the sheets a page loads come to 9.0 KB gzipped without their comments where they came to 7.8 KB.'
         );
         expect(JSON.parse(packaged.json)).toHaveProperty('since.version', '0.5.0');
+        // A record taken before the sheets were measured without comments gives no figure for them.
+        const earlier = packageRecord(
+            {
+                name: '@jasonsdevspace/design-kit',
+                version: '0.6.0',
+                size: 54272,
+                files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9216 }],
+                since: {
+                    date: '2026-10-01',
+                    commit: 'abc1234',
+                    version: '0.3.0',
+                    size: 40960,
+                    sheets: 0,
+                },
+            },
+            RECORDED
+        );
+        expect(earlier.markdown).toContain('it packs 53.0 KB where it packed 40.0 KB.');
+        expect(earlier.markdown).not.toContain('where they came to');
         const paged = pagesRecord(
             [
                 {
@@ -178,7 +197,7 @@ describe('a record that follows another', () => {
             { date: '2026-11-12', commit: '7048d11', kit: '0.5.0', bytes: 18432 }
         );
         expect(paged.markdown).toContain(
-            'Since the record on 2026-11-12 at `7048d11`, drawn from version 0.5.0, the pages download 20.0 KB together where they downloaded 18.0 KB.'
+            'Since the record on 2026-11-12 at `7048d11`, when the site drew from version 0.5.0 of the kit, the pages download 20.0 KB together where they downloaded 18.0 KB.'
         );
         expect(JSON.parse(paged.json)).toHaveProperty('since.bytes', 18432);
     });

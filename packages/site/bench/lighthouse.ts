@@ -147,7 +147,8 @@ const finish = (
         console.error(`Missed the gates: ${failures.join('; ')}`);
         process.exitCode = 1;
     } else if (RECORD && tools !== undefined) {
-        writeRecord('site-pages', pagesRecord(measured, recorded(), tools, pagesBefore()));
+        const at = recorded();
+        writeRecord('site-pages', pagesRecord(measured, at, tools, pagesBefore(at)));
     }
 };
 
