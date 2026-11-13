@@ -634,35 +634,57 @@ test('puts its buttons together on a row under its message on a phone at a large
     }
 });
 
-test('keeps its buttons together at its end in a frame narrower than the screen', async ({
+/** Checks that the action and the close button share the row under the message, at the end. */
+const together = async (page: Page, action: string, what: string): Promise<void> => {
+    const words = await box(message(page), 'the message');
+    const doing = await box(page.getByRole('button', { name: action }), 'the action');
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    expect(doing.y, what).toBeGreaterThanOrEqual(words.y + words.height - 1);
+    expect(Math.abs(close.y - doing.y), what).toBeLessThanOrEqual(1);
+    expect(close.x, what).toBeGreaterThan(doing.x + doing.width - 1);
+    expect(card.x + card.width - (close.x + close.width), what).toBeLessThan(16);
+};
+
+test('keeps its buttons together at its end wherever the close button would wrap', async ({
     page,
 }) => {
-    await open(page, { width: 1280, body: FRAME, css: '.dk-app { inline-size: 290px; }' });
-    await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
-    const words = await box(message(page), 'the message');
-    const action = await box(undo(page), 'the action');
-    const close = await box(dismiss(page), 'the close button');
-    const card = await box(toast(page), 'the toast');
-    // The action and the close button share the row under the message, at the toast's end.
-    expect(action.y).toBeGreaterThanOrEqual(words.y + words.height - 1);
-    expect(Math.abs(close.y - action.y)).toBeLessThanOrEqual(1);
-    expect(close.x).toBeGreaterThan(action.x + action.width - 1);
-    expect(card.x + card.width - (close.x + close.width)).toBeLessThan(16);
+    for (const { what, width, body, css, action } of [
+        {
+            what: 'a long action on a 390px phone',
+            width: 390,
+            body: PAGE,
+            css: '',
+            action: 'Put the round back',
+        },
+        {
+            what: 'a long action on a 320px phone',
+            width: 320,
+            body: PAGE,
+            css: '',
+            action: 'Put the round back',
+        },
+        {
+            what: "an app's frame narrower than the screen",
+            width: 1280,
+            body: FRAME,
+            css: '.dk-app { inline-size: 290px; }',
+            action: 'Undo',
+        },
+    ]) {
+        await open(page, { width, body, css });
+        await show(page, 'Round 3 saved.', action);
+        await settle(page);
+        await together(page, action, what);
+    }
 });
 
-test('sets a button that wraps on its own at the end of its row', async ({ page }) => {
-    await open(page, { width: 320 });
-    await show(page, 'Round 3 saved.', 'Put the round back');
-    await settle(page);
-    const close = await box(dismiss(page), 'the close button');
-    const card = await box(toast(page), 'the toast');
-    expect(card.x + card.width - (close.x + close.width)).toBeLessThan(16);
-});
-
-test('keeps its message and buttons on one row where they fit', async ({ page }) => {
+test('keeps its message and buttons on one row where they fit, and again after a message that did not', async ({
+    page,
+}) => {
     for (const width of [390, 320]) {
         await open(page, { width });
+        await show(page, 'Round 3 saved.', 'Put the round back');
         await show(page, 'Round 3 saved.', 'Undo');
         await settle(page);
         const words = await box(message(page), 'the message');
@@ -671,6 +693,16 @@ test('keeps its message and buttons on one row where they fit', async ({ page })
             expect(drawn.y, String(width)).toBeLessThan(words.y + words.height / 2);
         }
     }
+});
+
+test("keeps a toast with no action on one row in an app's frame narrower than the screen", async ({
+    page,
+}) => {
+    await open(page, { width: 1280, body: FRAME, css: '.dk-app { inline-size: 290px; }' });
+    await show(page, 'Round 3 saved.');
+    await settle(page);
+    await expect(toast(page)).toHaveAttribute('data-rows', '1');
+    await expect(toast(page)).not.toHaveAttribute('data-stacked');
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({

@@ -1631,11 +1631,13 @@ Shown, the toast is a raised card on `--dk-raised` with an edge in the line colo
 colors draw where the shadow is gone. It rises into place over `--dk-duration-medium` as it arrives,
 at once for a visitor who asks for less motion. A message that replaces one still shown takes its
 place in the card without rising again, since the toast stays shown. A message of a few lines wraps
-beside the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of
-its own and the buttons share the row under it, at its end. The close button is in the muted text,
-turning to the text color under a pointer, so it stays quiet beside the action, and is the target
-both ways at every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast
-does not print.
+beside the buttons. Where the close button would wrap under the message, as on a phone at a large
+text size, with a long action or in a frame narrower than the screen, its attach function marks the
+toast in its `data-stacked` attribute, and the message takes a row of its own with the buttons
+sharing the row under it, at its end, as a page that draws a shown toast by hand marks it too. The
+close button is in the muted text, turning to the text color under a pointer, so it stays quiet
+beside the action, and is the target both ways at every width. Outside a frame the toast sits at
+`--dk-stack-toast`, over a bar. A toast does not print.
 
 </details>
 

@@ -433,8 +433,10 @@ export type ShowToast = (message: string, action?: ToastAction) => () => void;
 const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
 
 /**
- * Marks a shown toast with the rows it takes, its content's height over the target's length, which
- * the sheet's room counts by, from one to five, so the sheet keeps that much room for it. In an
+ * Marks a shown toast stacked where its close button would wrap under its message, so the sheet
+ * keeps its two buttons together on the row under it, and then with the rows it takes, its
+ * content's height over the target's length, which the sheet's room counts by, from one to five,
+ * so the sheet keeps that much room for it. In an
  * app's frame whose body would keep less than a row and a half above that room, it also marks the
  * toast to take its row above the dock, and scrolls the page by as much as the dock moved, so the
  * dock stays under the thumb. Both are attributes rather than styles, so a page's policy may refuse
@@ -446,10 +448,14 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
     const dock = element.closest('.dk-app')?.querySelector('.dk-app-dock');
     const before = dock?.getBoundingClientRect().top ?? 0;
     delete element.dataset['row'];
+    delete element.dataset['stacked'];
     if (!target || !element.clientHeight) {
         delete element.dataset['rows'];
         return;
     }
+    const words = element.querySelector('.dk-toast-message')?.getBoundingClientRect();
+    if (words && close.getBoundingClientRect().top >= words.bottom - 1)
+        element.dataset['stacked'] = '';
     const edges = getComputedStyle(element);
     const held =
         element.clientHeight - parseFloat(edges.paddingTop) - parseFloat(edges.paddingBottom);
@@ -529,6 +535,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         window.removeEventListener('resize', remeasure);
         delete element.dataset['rows'];
         delete element.dataset['row'];
+        delete element.dataset['stacked'];
         hush(status);
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame or the page's main content rather
