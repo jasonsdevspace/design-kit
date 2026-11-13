@@ -646,7 +646,7 @@ const together = async (page: Page, action: string, what: string): Promise<void>
     expect(card.x + card.width - (close.x + close.width), what).toBeLessThan(16);
 };
 
-test('keeps its buttons together at its end wherever the close button would wrap', async ({
+test('keeps its buttons together at its end wherever they wrap under its message', async ({
     page,
 }) => {
     for (const { what, width, body, css, action } of [
@@ -685,6 +685,8 @@ test('keeps its message and buttons on one row where they fit, and again after a
     for (const width of [390, 320]) {
         await open(page, { width });
         await show(page, 'Round 3 saved.', 'Put the round back');
+        await settle(page);
+        await together(page, 'Put the round back', String(width));
         await show(page, 'Round 3 saved.', 'Undo');
         await settle(page);
         const words = await box(message(page), 'the message');
@@ -702,7 +704,6 @@ test("keeps a toast with no action on one row in an app's frame narrower than th
     await show(page, 'Round 3 saved.');
     await settle(page);
     await expect(toast(page)).toHaveAttribute('data-rows', '1');
-    await expect(toast(page)).not.toHaveAttribute('data-stacked');
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({

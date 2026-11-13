@@ -2207,15 +2207,13 @@
 
     /*
      * Shown, a raised card with an edge, which forced colors draw where the shadow is gone. A
-     * message of a few lines wraps beside its buttons, and where the toast is too narrow for both
-     * the buttons wrap under it, at its end, since the message grows to fill any row it is on. It
-     * rises into place as it arrives.
+     * message of a few lines wraps beside its buttons, and at a large text size the buttons wrap
+     * under it. It rises into place as it arrives.
      */
     :where(.dk-toast[data-shown]) {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
         gap: 0 var(--dk-space-2);
         padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4);
         border: 1px solid var(--dk-line);
@@ -2247,6 +2245,21 @@
         padding-block: var(--dk-space-2);
     }
 
+    /*
+     * The action and the close button, kept together at the toast's end: beside the message where
+     * both fit, and on the row under it, at its end, where they do not, whatever the action's
+     * length or the toast's width. Where even the two do not fit beside each other, each sits at
+     * the end of its row.
+     */
+    :where(.dk-toast-buttons) {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0 var(--dk-space-2);
+        min-width: 0;
+        margin-inline-start: auto;
+    }
+
     :where(.dk-toast-action) {
         padding-inline: var(--dk-space-2);
     }
@@ -2268,16 +2281,21 @@
     }
 
     /*
-     * Where the close button would wrap under the message, as on a phone at a large text size, with
-     * a long action, or in a frame narrower than the screen, the attach function marks the toast
-     * stacked, and the message takes a row of its own so its buttons share the row under it, at
-     * its end, rather than coming apart where the room runs out. Where even the two buttons do not
-     * fit beside each other, each sits at the end of its row. The message pads its end as its
-     * start, since the toast's own end padding is narrow for the buttons that usually sit there.
+     * On a phone at a large text size, under 20rem wide, the message takes a row of its own and its
+     * buttons share the row under it, at its end, rather than wrapping one by one where the room
+     * runs out. Where even the two do not fit beside each other, each sits at the end of its row.
+     * The message pads its end as its start, since the toast's own end padding is narrow for the
+     * buttons that usually sit there.
      */
-    :where(.dk-toast[data-shown][data-stacked] > .dk-toast-message) {
-        flex-basis: 100%;
-        padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
+    @media (width < 20rem) {
+        :where(.dk-toast[data-shown]) {
+            justify-content: flex-end;
+        }
+
+        :where(.dk-toast[data-shown] > .dk-toast-message) {
+            flex-basis: 100%;
+            padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
+        }
     }
 
     /*

@@ -1270,15 +1270,17 @@ of view.
         <div class="dk-toast">
             <p class="dk-toast-message" aria-hidden="true"></p>
             <p class="dk-visually-hidden dk-toast-status" role="status"></p>
-            <button
-                type="button"
-                class="dk-button dk-button-text dk-toast-action"
-                hidden=""
-            ></button>
-            <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
-                <span aria-hidden="true">×</span>
-                <span class="dk-visually-hidden">Dismiss</span>
-            </button>
+            <div class="dk-toast-buttons">
+                <button
+                    type="button"
+                    class="dk-button dk-button-text dk-toast-action"
+                    hidden=""
+                ></button>
+                <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
+                    <span aria-hidden="true">×</span>
+                    <span class="dk-visually-hidden">Dismiss</span>
+                </button>
+            </div>
         </div>
     </div>
     <section class="dk-app-dock" aria-label="Actions">
@@ -1558,7 +1560,8 @@ buttons stand in for them and they would keep their room even out of sight.
 
 A toast is a short message that appears over the page, says what just happened and offers one
 action, such as Undo, in place of asking before a save or a delete. The markup holds its live region
-and its two buttons, empty and hidden, and draws nothing until a message is shown.
+and its two buttons, empty and hidden, in the group that keeps them together, and draws nothing
+until a message is shown.
 
 <!-- example: toast -->
 
@@ -1566,11 +1569,13 @@ and its two buttons, empty and hidden, and draws nothing until a message is show
 <div class="dk-toast">
     <p class="dk-toast-message" aria-hidden="true"></p>
     <p class="dk-visually-hidden dk-toast-status" role="status"></p>
-    <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
-    <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
-        <span aria-hidden="true">×</span>
-        <span class="dk-visually-hidden">Dismiss</span>
-    </button>
+    <div class="dk-toast-buttons">
+        <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
+        <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
+            <span aria-hidden="true">×</span>
+            <span class="dk-visually-hidden">Dismiss</span>
+        </button>
+    </div>
 </div>
 ```
 
@@ -1631,13 +1636,13 @@ Shown, the toast is a raised card on `--dk-raised` with an edge in the line colo
 colors draw where the shadow is gone. It rises into place over `--dk-duration-medium` as it arrives,
 at once for a visitor who asks for less motion. A message that replaces one still shown takes its
 place in the card without rising again, since the toast stays shown. A message of a few lines wraps
-beside the buttons. Where the close button would wrap under the message, as on a phone at a large
-text size, with a long action or in a frame narrower than the screen, its attach function marks the
-toast in its `data-stacked` attribute, and the message takes a row of its own with the buttons
-sharing the row under it, at its end, as a page that draws a shown toast by hand marks it too. The
-close button is in the muted text, turning to the text color under a pointer, so it stays quiet
-beside the action, and is the target both ways at every width. Outside a frame the toast sits at
-`--dk-stack-toast`, over a bar. A toast does not print.
+beside the buttons. Where the buttons do not fit beside the message, as on a phone at a large text
+size, with a long action or in a frame narrower than the screen, their group takes the row under it,
+at its end, the action and the close button together. A toast written before 0.7.0, with no group,
+does so only on a screen under 20rem wide. The close button is in the muted text, turning to the
+text color under a pointer, so it stays quiet beside the action, and is the target both ways at
+every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
+print.
 
 </details>
 
