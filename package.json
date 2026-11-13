@@ -33,7 +33,7 @@
     "devDependencies": {
         "@axe-core/playwright": "^4.14.0",
         "@eslint/js": "^10.0.1",
-        "@playwright/test": "^1.64.1",
+        "@playwright/test": "^1.65.0",
         "@types/node": "^24.19.2",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
@@ -44,7 +44,7 @@
         "eslint-plugin-sonarjs": "^4.2.2",
         "globals": "^17.14.0",
         "husky": "^9.1.7",
-        "lighthouse": "13.5.0",
+        "lighthouse": "13.6.0",
         "lint-staged": "^17.6.0",
         "prettier": "^3.9.10",
         "publint": "^0.3.25",
