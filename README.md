@@ -257,7 +257,7 @@ follow by area.
   comments, which a test holds to a budget, and the theme script goes inline in the page's head. A
   page that attaches a control loads the controls too, which a test holds, as a bundler sends every
   function, to 6.25 KB gzipped without their comments, and the theme script to 1 KB of its own. The
-  package npm publishes is 62 KB packed, the sheets and modules a page loads together with the
+  package npm publishes is 63 KB packed, the sheets and modules a page loads together with the
   README and the types it never does. [The record](docs/benchmarks/package-size.md) lists every
   file, raw and gzipped, each sheet without its comments, and from 0.6.0 what each piece of the
   sheets and each function of the controls costs.
