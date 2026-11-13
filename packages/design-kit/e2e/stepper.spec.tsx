@@ -223,7 +223,7 @@ test('reports a typed value outside the limits, or none, as a field reports an e
     await bid(page).fill('14');
     await bid(page).press('Tab');
     const error = page.locator('#bid-range');
-    const said = 'Error: Enter a number from 0 to 10.';
+    const said = 'Error: Enter a whole number from 0 to 10.';
     await expect(error).toBeVisible();
     await expect(error).toHaveText(said);
     await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');

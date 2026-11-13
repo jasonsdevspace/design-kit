@@ -7,7 +7,13 @@ import kit from 'design-kit-release/package.json' with { type: 'json' };
 import lighthouse from 'lighthouse';
 import { preview } from 'vite';
 
-import { pagesRecord, recorded, requireCommitted, writeRecord } from '../../../scripts/record.mjs';
+import {
+    pagesBefore,
+    pagesRecord,
+    recorded,
+    requireCommitted,
+    writeRecord,
+} from '../../../scripts/record.mjs';
 import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
 import { ROUTES } from '../src/routes.ts';
 
@@ -141,7 +147,8 @@ const finish = (
         console.error(`Missed the gates: ${failures.join('; ')}`);
         process.exitCode = 1;
     } else if (RECORD && tools !== undefined) {
-        writeRecord('site-pages', pagesRecord(measured, recorded(), tools));
+        const at = recorded();
+        writeRecord('site-pages', pagesRecord(measured, at, tools, pagesBefore(at)));
     }
 };
 

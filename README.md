@@ -2,8 +2,9 @@
 
 The shared look of the demos on [jasonsdevspace.com](https://jasonsdevspace.com): colors and type,
 a light and dark theme that follows the visitor's choice, the strip and footer around each demo,
-buttons, form fields and callouts for messages, and the layout of each "How it works" page. It
-ships on npm as `@jasonsdevspace/design-kit`, and ShelfLens is built on it.
+buttons, form fields and callouts for messages, the layout of each "How it works" page, and an
+app's frame, tab bar, toast, button grid, rows, stepper and dialog. It ships on npm as
+`@jasonsdevspace/design-kit`, and ShelfLens is built on it.
 
 [See every piece live](https://jasonsdevspace.com/design-kit/) ·
 [The package on npm](https://www.npmjs.com/package/@jasonsdevspace/design-kit) ·
@@ -103,18 +104,18 @@ follow by area.
 <details>
 <summary>Cascade layers, weight and contrast</summary>
 
-| Gotcha                                                                                                | Where it is tested                       |
-| ----------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| A page's layers placed before the kit's lose to it unless they name `dk` first                        | `packages/design-kit/e2e/sheets.spec.ts` |
-| Each rule is in its own dk layer, and only a class, a focus rule or a base pseudo-element adds weight | `packages/design-kit/src/scope.test.ts`  |
-| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                 | `packages/design-kit/src/scope.test.ts`  |
-| A page's `::before` and `::after` take the border box                                                 | `packages/design-kit/e2e/sheets.spec.ts` |
-| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                      | `packages/design-kit/e2e/sheets.spec.ts` |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit                 | `packages/design-kit/e2e/sheets.spec.ts` |
-| A palette set on a container restyles only what is inside it                                          | `packages/design-kit/e2e/sheets.spec.ts` |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                | `packages/design-kit/e2e/sheets.spec.ts` |
-| A label hidden from the eye is still read by a screen reader                                          | `packages/design-kit/e2e/sheets.spec.ts` |
-| Text, the accent and a control's edge pass on the highlight and each callout's ground                 | `packages/design-kit/src/tokens.test.ts` |
+| Gotcha                                                                                                    | Where it is tested                       |
+| --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                            | `packages/design-kit/e2e/sheets.spec.ts` |
+| Each rule is in its own dk layer, and only a class, a focus rule or an allowed pseudo-element adds weight | `packages/design-kit/src/scope.test.ts`  |
+| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                     | `packages/design-kit/src/scope.test.ts`  |
+| A page's `::before` and `::after` take the border box                                                     | `packages/design-kit/e2e/sheets.spec.ts` |
+| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                          | `packages/design-kit/e2e/sheets.spec.ts` |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit                     | `packages/design-kit/e2e/sheets.spec.ts` |
+| A palette set on a container restyles only what is inside it                                              | `packages/design-kit/e2e/sheets.spec.ts` |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                    | `packages/design-kit/e2e/sheets.spec.ts` |
+| A label hidden from the eye is still read by a screen reader                                              | `packages/design-kit/e2e/sheets.spec.ts` |
+| Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts` |
 
 </details>
 
@@ -256,15 +257,14 @@ follow by area.
   function, to 6.25 KB gzipped without their comments, and the theme script to 1 KB of its own. The
   package npm publishes is 52 KB packed, the sheets and modules a page loads together with the
   README and the types it never does. [The record](docs/benchmarks/package-size.md) lists every
-  file, raw and gzipped, each sheet without its comments, and from the next release what each piece
-  of the sheets and each function of the controls costs.
-- **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with
-  its processor slowed, every page scores a hundred for accessibility and performance, shows its
-  main content in about 0.9 seconds with nothing jumping as it loads, and downloads 13 to 16 KB in
-  three requests. CI fails any page under a hundred for accessibility or ninety for performance,
-  that takes longer than two and a half seconds to show its main content, or whose layout shifts by
-  more than a tenth.
-  [The record](docs/benchmarks/site-pages.md) gives each page.
+  file, raw and gzipped, each sheet without its comments, and from 0.6.0 what each piece of the
+  sheets and each function of the controls costs.
+- **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
+  processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
+  shows its main content in under a second with nothing jumping as it loads, and downloads 16.5 to
+  25.4 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
+  performance, that takes longer than two and a half seconds to show its main content, or whose
+  layout shifts by more than a tenth. [The record](docs/benchmarks/site-pages.md) gives each page.
 
 ## Decisions
 
@@ -344,13 +344,12 @@ npm run verify
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
 `npm run e2e` runs the browser tests in Chromium, an app's frame, tab bar, toast, dialog, stepper
-and a table's frame in WebKit too, and the stepper, the controls and the pieces in Firefox.
-`npm run lighthouse` builds the site and audits every page against the gates CI holds it to.
-Nothing needs building first, since the kit's tests read the sources and the site's tests build and
-serve the site themselves. `npm run build`
-compiles the theme module, the plugin and the components into the package's `dist`, beside a copy
-of each sheet, and builds the site. Installing also sets up the hooks, which lint
-and format what is staged and check each commit message.
+and a table's frame in WebKit too, and the stepper, the controls and the pieces in Firefox. `npm run
+lighthouse` builds the site and audits every page against the gates CI holds it to. Nothing needs
+building first, since the kit's tests read the sources and the site's tests build and serve the site
+themselves. `npm run build` compiles the theme module, the controls, the plugin and the components
+into the package's `dist`, beside a copy of each sheet, and builds the site. Installing also sets up
+the hooks, which lint and format what is staged and check each commit message.
 
 ```bash
 npx playwright install chromium webkit firefox

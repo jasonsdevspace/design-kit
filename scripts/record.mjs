@@ -59,9 +59,19 @@ const sheetTable = (sheets) => {
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
 /**
+ * What the package record before this one measured, for a record to say what changed since.
+ *
+ * @typedef {{ date: string, commit: string, version: string, size: number, sheets: number }} PackageSince
+ */
+/**
+ * What the pages record before this one measured, for a record to say what changed since.
+ *
+ * @typedef {{ date: string, commit: string, kit: string, bytes: number }} PagesSince
+ */
+/**
  * The package with what each part of it costs, for a record taken since the parts were measured.
  *
- * @typedef {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
+ * @typedef {Packed & { since?: PackageSince, pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
  */
 /**
  * A page of the site as the audit measured it on a first visit, its scores out of a hundred.
@@ -126,6 +136,91 @@ export const recorded = () => {
 export const recordedTable = ({ date, commit: at, machine, node }) =>
     table(['Recorded', 'Commit', 'Machine', 'Node'], [[date, `\`${at}\``, machine, node]]);
 
+/** The sheets a page loads together without their comments, the figure the sheets' budget holds. */
+const sheetsOf = (/** @type {Packed} */ packed) =>
+    packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+
+/**
+ * What changed since the package record before this one, for a record that knows it.
+ *
+ * @param {Measured} packed
+ */
+const packageSince = ({ since, ...packed }) => {
+    if (!since) return '';
+    const sheets =
+        since.sheets > 0
+            ? `, and the sheets a page loads come to ${kb(sheetsOf(packed))} gzipped without their comments where they came to ${kb(since.sheets)}`
+            : '';
+    return ` Since the record of version ${since.version} on ${since.date} at \`${since.commit}\`, it packs ${kb(packed.size)} where it packed ${kb(since.size)}${sheets}.`;
+};
+
+/** What the pages download together. */
+const downloadsOf = (/** @type {readonly Page[]} */ pages) =>
+    pages.reduce((sum, page) => sum + page.bytes, 0);
+
+/**
+ * A record as the commit checked out holds it, which the run before wrote, or nothing where that
+ * commit holds none. It is read from the commit rather than the folder, so a record taken again
+ * before it is committed is not measured against itself.
+ *
+ * @param {string} name
+ * @returns {unknown}
+ */
+const committed = (name) => {
+    let text;
+    try {
+        text = execFileSync('git', ['show', `HEAD:docs/benchmarks/${name}.json`], {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        });
+    } catch {
+        // The commit holds no such record.
+        return undefined;
+    }
+    return JSON.parse(text);
+};
+
+/**
+ * The package record the run before wrote, as what changed is measured from, or nothing where there
+ * is none or it was taken at the commit given.
+ *
+ * @param {Recorded} at
+ * @returns {PackageSince | undefined}
+ */
+export const packageBefore = (at) => {
+    const before = /** @type {(Packed & { recorded: Recorded }) | undefined} */ (
+        committed('package-size')
+    );
+    if (!before || before.recorded.commit === at.commit) return undefined;
+    return {
+        date: before.recorded.date,
+        commit: before.recorded.commit,
+        version: before.version,
+        size: before.size,
+        sheets: sheetsOf(before),
+    };
+};
+
+/**
+ * The pages record the run before wrote, as what changed is measured from, or nothing where there is
+ * none or it was taken at the commit given.
+ *
+ * @param {Recorded} at
+ * @returns {PagesSince | undefined}
+ */
+export const pagesBefore = (at) => {
+    const before = /** @type {{ recorded: Recorded, tools: Tools, pages: Page[] } | undefined} */ (
+        committed('site-pages')
+    );
+    if (!before || before.recorded.commit === at.commit) return undefined;
+    return {
+        date: before.recorded.date,
+        commit: before.recorded.commit,
+        kit: before.tools.kit,
+        bytes: downloadsOf(before.pages),
+    };
+};
+
 /** A count of bytes, for a part too small to read in kilobytes. */
 const bytes = (/** @type {number} */ count) => `${String(count)} B`;
 
@@ -173,7 +268,7 @@ Run \`npm run bench:package\` to reproduce it. The raw results are in [package-s
 What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports${sheetsNote(packed.files)}. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches a control.
 
 ${recordedTable(at)}
-\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.
+\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.${packageSince(packed)}
 
 The sheets a page loads:
 
@@ -195,8 +290,12 @@ ${files((path) => !isSheet(path) && !isModule(path))}${partsOf(packed)}`;
  * @param {readonly Page[]} pages
  * @param {Recorded} at
  * @param {Tools} tools
+ * @param {PagesSince} [since] the record before, for what changed since it
  */
-export const pagesRecord = (pages, at, tools) => {
+export const pagesRecord = (pages, at, tools, since) => {
+    const changed = since
+        ? ` Since the record on ${since.date} at \`${since.commit}\`, when the site drew from version ${since.kit} of the kit, the pages download ${kb(downloadsOf(pages))} together where they downloaded ${kb(since.bytes)}.`
+        : '';
     const markdown = `# Site pages
 
 Run \`npm run bench:pages\` to reproduce it. It runs the audit \`npm run lighthouse\` runs, and writes the record only when every page passes. The raw results are in [site-pages.json](site-pages.json).
@@ -204,7 +303,7 @@ Run \`npm run bench:pages\` to reproduce it. It runs the audit \`npm run lightho
 Each page of jasonsdevspace.com/design-kit/, built and served locally, on a first visit as Lighthouse makes one: a phone on a slow network, its processor slowed, with nothing cached. CI holds every page to accessibility of a hundred, performance of at least ninety, a largest paint within 2,500 ms and layout shift within 0.1. Where a page misses a performance gate on its first trace, it is measured twice more and judged on the middle of the three. The local server gzips each file, as GitHub Pages does, so what a page downloads is close to what a visitor's browser receives.
 
 ${recordedTable(at)}
-Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}, the site drawing from version ${tools.kit} of the kit.
+Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}, the site drawing from version ${tools.kit} of the kit.${changed}
 
 ${table(
     [
@@ -226,7 +325,10 @@ ${table(
         String(page.requests),
     ])
 )}`;
-    return { markdown, json: `${JSON.stringify({ recorded: at, tools, pages }, null, 4)}\n` };
+    return {
+        markdown,
+        json: `${JSON.stringify({ recorded: at, tools, pages, ...(since ? { since } : {}) }, null, 4)}\n`,
+    };
 };
 
 /**
@@ -270,7 +372,12 @@ if (isRunDirectly(import.meta.url)) {
             pieces: piecesOf(sheets),
             functions: await functionsOf(dist, Object.keys(controls).sort()),
         };
-        writeRecord('package-size', packageRecord({ ...packed, ...parts }, recorded()));
+        const at = recorded();
+        const since = packageBefore(at);
+        writeRecord(
+            'package-size',
+            packageRecord({ ...packed, ...parts, ...(since ? { since } : {}) }, at)
+        );
     } finally {
         rmSync(into, { recursive: true, force: true });
     }

@@ -7,6 +7,61 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.6.0
+
+Every piece the kit review found is fixed or finished as a drop-in, so a page places the kit's
+pieces and writes no CSS of its own to make them align, fit or work, at every width and text size
+and with a screen reader. The theme script is unchanged, so `themeScriptHash` is the same. The
+controls' budget rises from 5 KB to 6.25 KB, set from a size audit and measured as a bundler sends
+every function, with the theme script held to 1 KB of its own, and the sheets' stays at 9 KB.
+
+- **Upgrading.** A page can no longer show a kit piece it marks `hidden`, or anything marked hidden
+  inside one, through CSS of its own, since one rule now hides it with `!important`, so a page that
+  drew a hidden kit piece takes the attribute away instead. A shown toast is drawn from its
+  `data-shown` attribute, and the `dk-toast-shown` class is still set beside it, so markup that
+  marks a toast shown by the class alone sets the attribute instead. A picked cell in a button grid
+  is filled in the text color rather than the accent. In an app's frame, on a page that ends in a
+  tab bar and in a dialog on either, buttons, fields, choices, the theme switch, pill links and tabs
+  are the target tall at every width, not only at 48rem or less, and so are a toast's buttons. An
+  explainer, an app's body, a panel and a dialog now set the step above each piece after the first,
+  so a page that spaced them with a gap of its own drops it. A page that already used
+  `--dk-flow-step`, `--dk-dialog-width`, `--dk-indicator-width`, `--dk-button-grid-least`,
+  `.dk-actions`, `.dk-field-action` or `.dk-code-head` gets the kit's meaning for it.
+- **Tokens.** `--dk-indicator-width` is the line under a chosen tab and over a tab bar's current
+  place, `--dk-dialog-width` the widest a dialog grows, `--dk-button-grid-least` the least width of
+  a grid's cell, and `--dk-flow-step` the step between pieces in what holds a column of them, set
+  on the pieces an explainer, a panel, an app's body and a dialog hold.
+- **Sheets.** `.dk-actions` lays out a row of buttons, `.dk-field-action` a field's control with a
+  button beside it, and `.dk-code-head` a code block's title with its copy button. A container's
+  step between pieces sits near the end of the components sheet, so no piece's own margin cancels
+  it, and an app's body, a dialog and a panel now space what they hold, and a plain form spaces its
+  fields. An app's frame keeps the body a few lines tall and lets the page scroll whole where the
+  rows around it come to more than the screen, a toast floats over the body's foot and never moves
+  the dock, and the room it keeps follows the toast's own height. A stepper's value shows every
+  figure under the wider spacing a reader may set and the stepper fits a phone at twice the text
+  size, level with its buttons and with a field beside it. A pinned column scrolls with its table
+  under 17.5rem wide, and takes a dialog's ground inside one. A table's frame keeps a target's room
+  at its end, so a link the keyboard reaches is brought into view. A row's words, the theme switch's
+  name and an eyebrow over its heading sit on the column, a dialog pads as a panel does on a phone
+  and its stacked actions fill their row, and the toast's close button is muted until pointed at.
+  The tab bar's current place stands on the highlight in forced colors, the explainer's link back is
+  the target tall, and a tap on a button acts at once.
+- **Controls.** `attachTable` brings what the keyboard reaches in a table's frame fully into view,
+  clear of a pinned column. Every attach function attaches an element once, options given again
+  replace the last and none leaves them, and a part a control cannot work without throws an error
+  that names it, as decision record 13 sets out, so a dialog attached to stay keeps staying and a
+  copy button attached again copies from its new source. Focus goes back where a page says after
+  a dialog and a toast, `chooseTheme` keeps a choice true with no switch on the page, the theme
+  switch stays open through a swipe, a stepper keeps its own error through a React page's
+  re-render, and a toast is measured as it shows and while it stays.
+- **React.** `StepperField`'s own error asks for a whole number between its limits, or names its
+  step where that is not 1, so a value between steps is told what is wrong with it.
+- **Records, docs and tests.** The package record measures what each piece of the sheets and each
+  function of the controls costs a page, and the stepper, controls and pieces specs run in Firefox
+  as well. Decision record 13 records the size audit, and records 2, 5 and 6 the selector rule's
+  pseudo-elements. The reference's dialog example gives the button its script opens the dialog
+  from, and the reference and the 0.5.0 entry name `Button`'s `tall`.
+
 ## 0.5.0
 
 The kit carries a phone app: a frame of a bar, a body that scrolls and a dock, clear of a phone's
@@ -66,9 +121,9 @@ sheets' budget rises to 9 KB and the controls' to 5 KB, to hold the app's pieces
   or opens them rather than what takes them away. In Chrome before 134 a dialog attached to stay
   closes on a second Escape or Back, and in Firefox 120, without `:has()`, a page that scrolls whole
   keeps no room for a tab bar or a shown toast, as ACCESSIBILITY.md lists.
-- **React.** `Toast` draws a toast's markup, and `StepperField` a stepper in the kit's field, with
-  `tall`, `inline`, a `subject` that names its buttons and a `rangeError` among its props, and the
-  types `ToastProps` and `StepperFieldProps`.
+- **React.** `Button` takes `tall`, which adds `dk-button-tall`. `Toast` draws a toast's markup, and
+  `StepperField` a stepper in the kit's field, with `tall`, `inline`, a `subject` that names its
+  buttons and a `rangeError` among its props, and the types `ToastProps` and `StepperFieldProps`.
 
 ## 0.4.0
 

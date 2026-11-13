@@ -22,8 +22,9 @@ costs, and the test behind it.
    no role from the tone, so a message on the page at load is not read out of turn, and a live
    message's role on the message alone.
 8. [A frame that scrolls is always a named region](0008-a-scroll-frame-is-always-a-region.md):
-   tables and code that scroll inside themselves at every width with no script, titled from
-   outside the frame rather than by a caption, and code that never wraps.
+   tables and code that scroll inside themselves on screen at every width with no script, titled
+   from outside the frame rather than by a caption, and code that wraps only on paper, with a copy
+   button only from a page's script.
 9. [An explainer's sections are never landmarks](0009-explainer-sections-are-never-landmarks.md):
    plain sections a reader moves between by their headings, ids other pages link to, and jumps
    that keep a section's number in sight.
@@ -38,7 +39,7 @@ costs, and the test behind it.
     in the room the strip keeps and copy buttons beside the code, and why React in the browser and
     a second inline script were turned down.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
-    the theme switch, the copy button, the stepper, the toast and the dialog as markup from a
+    the theme switch, the copy button, the stepper, the toast, the dialog and the table as markup from a
     component and a function a page calls on it, from `./controls`, and why a stateful component and
     a script that builds the DOM were turned down.
 14. [A piece with no state of its own ships as classes alone](0014-stateless-pieces-ship-as-classes.md):
