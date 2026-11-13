@@ -367,19 +367,21 @@ export const APP: readonly Control[] = [
                             <p className="dk-visually-hidden dk-toast-status" role="status">
                                 Round 3 saved. Undo is available.
                             </p>
-                            <button
-                                type="button"
-                                className="dk-button dk-button-text dk-toast-action"
-                            >
-                                Undo
-                            </button>
-                            <button
-                                type="button"
-                                className="dk-button dk-button-text dk-toast-close"
-                            >
-                                <span aria-hidden="true">×</span>
-                                <span className="dk-visually-hidden">Dismiss</span>
-                            </button>
+                            <div className="dk-toast-buttons">
+                                <button
+                                    type="button"
+                                    className="dk-button dk-button-text dk-toast-action"
+                                >
+                                    Undo
+                                </button>
+                                <button
+                                    type="button"
+                                    className="dk-button dk-button-text dk-toast-close"
+                                >
+                                    <span aria-hidden="true">×</span>
+                                    <span className="dk-visually-hidden">Dismiss</span>
+                                </button>
+                            </div>
                         </div>
                     ),
             },
