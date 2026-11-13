@@ -8,16 +8,17 @@ import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * A stepper as a page attaches it: its buttons hidden with no script and named for what they do and
- * to which field once attached, each press stepping the value once however often the stepper was
- * attached, firing the events a typed value fires and saying the value on its status line, the
- * buttons off at the limits with focus kept and on a locked field, a value a form's reset sets
- * followed, a typed value outside the limits or none reported as a field's error once changed and
- * said, and cleared once right while a page's own error keeps its place, a phone's keyboard with a
- * minus only where it is needed, the value in figures of one width so the field keeps its width,
- * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
- * phone's narrowest width, a stepper that fits a phone at twice the text size, the larger target
- * when asked, the keyboard, and no audit findings in either theme.
+ * A stepper as a page attaches it: its buttons hidden with no script and once taken away and named
+ * for what they do and to which field once attached, each press stepping the value once however
+ * often, and in whichever order, the stepper was attached, firing the events a typed value fires
+ * and saying the value on its status line, the buttons off at the limits with focus kept and on a
+ * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
+ * limits or none reported as a field's error once changed and said, and cleared once right while a
+ * page's own error keeps its place, a phone's keyboard with a minus only where it is needed, the
+ * value in figures of one width so the field keeps its width, every figure shown under the wider
+ * spacing a reader may set, the label beside it on one line at a phone's narrowest width, a stepper
+ * that fits a phone at twice the text size, the larger target when asked, an inline stepper's error
+ * above it and its hint below it, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -39,6 +40,17 @@ const FIELDS = renderToStaticMarkup(
             <button type="reset">Reset</button>
         </form>
         <StepperField id="locked" label="Locked" min={0} max={10} defaultValue={5} disabled />
+        <StepperField id="read" label="Rounds played" min={0} max={10} defaultValue={5} readOnly />
+        <StepperField
+            id="hand"
+            label="Cards in hand"
+            hint="Up to ten"
+            error="Play a card before you draw"
+            min={0}
+            max={10}
+            defaultValue={3}
+            inline
+        />
     </main>
 );
 
@@ -53,6 +65,11 @@ document.addEventListener('input', (event) => window.heard.push('input ' + event
 document.addEventListener('change', (event) => window.heard.push('change ' + event.target.value));
 // What takes a stepper away, which attaching it again returns.
 window.detach = (id) => attachStepper(document.querySelector('#' + id).closest('.dk-stepper'))();
+// Attaches a stepper again through its field and its stepper, in the order given.
+window.attachAgain = (id, order) => {
+    const stepper = document.querySelector('#' + id).closest('.dk-stepper');
+    for (const through of order) attachStepper(through === 'field' ? stepper.closest('.dk-field') : stepper);
+};
 window.ready = true;`;
 
 const open = async (
@@ -515,3 +532,69 @@ for (const theme of ['light', 'dark'] as const) {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }
+
+test('hides its buttons when taken away, and steps once a press when attached again in either order', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as { detach: (id: string) => void }).detach('bid');
+    });
+    await expect(lower(page)).toBeHidden();
+    await expect(raise(page)).toBeHidden();
+    // From a value clear of both limits, so a second step would show and not stop at one.
+    for (const [order, button, value] of [
+        [['field', 'stepper'], raise, '6'],
+        [['stepper', 'field'], lower, '4'],
+    ] as const) {
+        await page.evaluate(
+            ([given]) => {
+                const kit = window as unknown as {
+                    attachAgain: (id: string, order: readonly string[]) => void;
+                    detach: (id: string) => void;
+                    heard: string[];
+                };
+                kit.detach('bid');
+                kit.attachAgain('bid', given);
+                const field = document.querySelector<HTMLInputElement>('#bid');
+                if (field) field.value = '5';
+                kit.heard.length = 0;
+            },
+            [order] as const
+        );
+        await press(button(page), browserName);
+        // One step, and one input and one change, where listeners left behind would step twice.
+        await expect(bid(page), order.join(' then ')).toHaveValue(value);
+        expect(await heard(page), order.join(' then ')).toEqual([
+            `input ${value}`,
+            `change ${value}`,
+        ]);
+    }
+});
+
+test('marks both buttons off on a read-only field, and a press changes nothing', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    const read = page.getByRole('spinbutton', { name: 'Rounds played' });
+    for (const name of ['Lower Rounds played', 'Raise Rounds played']) {
+        const button = page.getByRole('button', { name });
+        await expect(button, name).toHaveAttribute('aria-disabled', 'true');
+        // Pressed as a tap would, since Playwright waits for a button marked off to come on.
+        if (browserName === 'webkit') await press(button, browserName);
+        else await button.click({ force: true });
+        await expect(read, name).toHaveValue('5');
+    }
+});
+
+test("sets an inline stepper's error above it and its hint below it", async ({ page }) => {
+    await open(page, { width: 390 });
+    const field = page.locator('.dk-field:has(#hand)');
+    const error = await box(field.locator('.dk-field-error:not(.dk-stepper-range)'), 'the error');
+    const stepper = await box(field.locator('.dk-stepper'), 'the stepper');
+    const hint = await box(field.locator('.dk-field-hint'), 'the hint');
+    expect(error.y + error.height).toBeLessThanOrEqual(stepper.y);
+    expect(hint.y).toBeGreaterThanOrEqual(stepper.y + stepper.height);
+});

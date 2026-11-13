@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { writePage } from './page.js';
+import { pixels, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -208,12 +208,13 @@ test("collapses to its name and one button naming the choice in a demo's strip n
 
 test("keeps the row of three choices in a demo's strip at 20rem and wider, and outside the strip at any width", async ({
     page,
+    browserName,
 }) => {
     // 320px at the usual text size is 20rem, where every phone sits, and a wide screen at twice
-    // the text is 40rem.
+    // the text is 40rem, which only Chromium sets from a test.
     for (const [width, scale] of [
         [320, 1],
-        [1280, 2],
+        ...(browserName === 'chromium' ? ([[1280, 2]] as const) : []),
     ] as const) {
         await textSize(page, scale);
         await open(page, { width, css: 'main { padding-inline: 20px; }' });
@@ -224,7 +225,8 @@ test("keeps the row of three choices in a demo's strip at 20rem and wider, and o
         expect(fit.pageScrolls).toBe(false);
     }
     // Outside the strip the switch wraps instead, and draws no button, however narrow its column.
-    await open(page, { width: 320, css: 'main { width: 280px; }' });
+    // A column narrower than the three choices in any engine's own font.
+    await open(page, { width: 320, css: 'main { width: 200px; }' });
     await expect(page.getByRole('button', { name: 'Theme System' })).toBeHidden();
     expect((await switchFit(page)).rows).toBeGreaterThan(1);
 });
@@ -385,24 +387,24 @@ test('draws an eyebrow in caps at the caption size in the muted text, tracked, w
 }) => {
     await open(page);
     const eyebrow = page.locator('.dk-eyebrow');
-    expect(
-        await eyebrow.evaluate((element) => {
-            const style = getComputedStyle(element);
-            return {
-                transform: style.textTransform,
-                size: style.fontSize,
-                color: style.color,
-                tracking: style.letterSpacing,
-                margin: style.marginBlock,
-            };
-        })
-    ).toEqual({
+    const drawn = await eyebrow.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+            transform: style.textTransform,
+            size: style.fontSize,
+            color: style.color,
+            tracking: style.letterSpacing,
+            margin: style.marginBlock,
+        };
+    });
+    expect({ transform: drawn.transform, color: drawn.color, margin: drawn.margin }).toEqual({
         transform: 'uppercase',
-        size: '13.6px',
         color: 'rgb(92, 92, 92)',
-        tracking: '0.816px',
         margin: '0px',
     });
+    // Within a twentieth of a pixel, as an engine rounds a length.
+    expect(pixels(drawn.size)).toBeCloseTo(13.6, 1);
+    expect(pixels(drawn.tracking)).toBeCloseTo(0.816, 1);
 });
 
 test('keeps the copy button as wide as its longest word, whichever word shows', async ({

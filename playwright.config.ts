@@ -5,8 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
  * it into the browser. An app's frame, tab bar and toast, the dialog, the stepper and a table's
- * frame are drawn in WebKit too. The site's tests open the built site, which the config builds and
- * serves under the path GitHub Pages gives it.
+ * frame are drawn in WebKit too, and the stepper, the controls and the pieces in Firefox. The
+ * site's tests open the built site, which the config builds and serves under the path GitHub Pages
+ * gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;
@@ -19,6 +20,14 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * or does its own way.
  */
 const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table}.spec.{ts,tsx}';
+
+/**
+ * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
+ * there unless `appearance: textfield` takes them away, and the controls and the pieces, whose
+ * lengths Firefox rounds to a sixty-fourth of a pixel, in the current Firefox Playwright brings
+ * rather than the kit's floor.
+ */
+const FIREFOX = '*/e2e/{stepper,controls,pieces}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
@@ -48,5 +57,7 @@ export default defineConfig({
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
         // The pieces Safari draws its own way, in its engine too.
         { name: 'webkit', testMatch: WEBKIT, use: { ...devices['Desktop Safari'] } },
+        // The pieces Firefox draws its own way, in its engine too.
+        { name: 'firefox', testMatch: FIREFOX, use: { ...devices['Desktop Firefox'] } },
     ],
 });

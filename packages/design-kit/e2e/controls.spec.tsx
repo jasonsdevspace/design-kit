@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
-import { height, KIT, sideways, style, writePage } from './page.js';
+import { height, KIT, pixels, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 
 /*
@@ -129,7 +129,9 @@ test('turns the edge to the focus color under a pointer, and underlines the acce
 
 test("leaves a toggle's edge as it was after a tap on a touch screen, where no pointer rests", async ({
     browser,
+    browserName,
 }) => {
+    test.skip(browserName === 'firefox', 'Firefox emulates no touch screen');
     const context = await browser.newContext({ hasTouch: true, isMobile: true });
     try {
         const page = await context.newPage();
@@ -221,10 +223,9 @@ test('draws a tall button at the larger target at every width, alone and with th
         // Alone it takes the height and keeps the button's own padding and text size.
         const tall = page.getByRole('button', { name: 'Start the round' });
         expect(await height(tall), `${String(width)}px`).toBe(56);
-        expect(await style(tall, 'padding-left', 'font-size')).toEqual({
-            'padding-left': '12px',
-            'font-size': '14.4px',
-        });
+        const own = await style(tall, 'padding-left', 'font-size');
+        expect(pixels(own['padding-left'])).toBeCloseTo(12, 1);
+        expect(pixels(own['font-size'])).toBeCloseTo(14.4, 1);
         // With the large button it takes that one's padding and text, and keeps the accent's fill.
         const lead = page.getByRole('button', { name: 'Save the round' });
         expect(await height(lead), `${String(width)}px`).toBe(56);

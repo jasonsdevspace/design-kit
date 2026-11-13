@@ -15,11 +15,10 @@ npm run e2e
 npm run lighthouse
 ```
 
-`npm run e2e` needs `npx playwright install chromium webkit` the first time. A change to a piece's markup
-also needs `npm run examples`, which writes the blocks the package's reference prints from the
-examples.
-CI also builds and packs the package and installs it on the oldest Node it supports, as Dev setup
-describes.
+`npm run e2e` needs `npx playwright install chromium webkit firefox` the first time. A change to a
+piece's markup also needs `npm run examples`, which writes the blocks the package's reference prints
+from the examples. CI also builds and packs the package and installs it on the oldest Node it
+supports, as Dev setup describes.
 
 ## Writing
 

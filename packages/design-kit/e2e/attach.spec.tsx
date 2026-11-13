@@ -15,7 +15,8 @@ import { js, KIT, ORIGIN, themeOf } from './page.js';
  * collapsed switch in a strip on a screen narrower than 20rem opening its choices under one button
  * and closing them again, and copying, from a pointer or the keyboard, or selecting where the
  * clipboard is refused, with the button and the status line saying which and focus held on the
- * button.
+ * button, a button taken away mid-press left hidden, at Copy and silent, and a press whose source
+ * changed before the clipboard answered saying what it did but selecting nothing.
  */
 
 const POLICY = `default-src 'self'; script-src 'self' ${themeScriptHash}; style-src 'self'`;
@@ -772,5 +773,83 @@ test('keeps a choice the browser will not save drawn over one another tab saves'
         .toBe('light');
     await opened.evaluate(() => new Promise((done) => setTimeout(done, 50)));
     expect(await themeOf(opened)).toBe('dark');
+    await context.close();
+});
+
+/**
+ * Holds the clipboard's answer until the test lets it go with `release`, so a press can be
+ * outlasted.
+ */
+const holdClipboard = (opened: Page): Promise<void> =>
+    opened.evaluate(() => {
+        const held = window as unknown as { release?: (done: boolean) => void };
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                writeText: () =>
+                    new Promise<void>((resolve, reject) => {
+                        held.release = (done) => {
+                            if (done) resolve();
+                            else reject(new Error('refused'));
+                        };
+                    }),
+            },
+        });
+    });
+
+const release = (opened: Page, done: boolean): Promise<void> =>
+    opened.evaluate((answer) => {
+        (window as unknown as { release: (done: boolean) => void }).release(answer);
+    }, done);
+
+test('leaves a copy button taken away mid-press hidden, at Copy, and silent once the clipboard answers', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    await holdClipboard(opened);
+    const button = opened.locator('.dk-copy');
+    await button.click();
+    await opened.evaluate(() => {
+        (window as unknown as { detachCopy: () => void }).detachCopy();
+    });
+    await release(opened, true);
+    // Past the moment the status line says a message, where a guard left out would show Copied and
+    // say it.
+    await opened.evaluate(() => new Promise((done) => setTimeout(done, 300)));
+    await expect(button).toBeHidden();
+    expect(
+        await button.evaluate((element) =>
+            [...element.querySelectorAll('.dk-copy-words > *')].findIndex(
+                (word) => !word.hasAttribute('aria-hidden')
+            )
+        )
+    ).toBe(0);
+    await expect(opened.locator('[role="status"]')).toHaveText('');
+    await context.close();
+});
+
+test('says what a press did but selects nothing when its source changed before the clipboard answered', async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const opened = await tab(context);
+    await holdClipboard(opened);
+    const button = opened.locator('.dk-copy');
+    await button.click();
+    // The block the button copies is now another, as a tab changed would make it.
+    await opened.evaluate(() => {
+        const first = document.querySelector('#code');
+        const other = document.createElement('pre');
+        other.textContent = 'npm run verify';
+        first?.removeAttribute('id');
+        other.id = 'code';
+        document.querySelector('main')?.append(other);
+    });
+    await release(opened, false);
+    await expect(opened.locator('[role="status"]')).toHaveText('Not copied. Press Copy again.');
+    // Nothing is selected, and the button stays at Copy for the new block.
+    expect(await opened.evaluate(() => String(document.getSelection() ?? ''))).toBe('');
+    await expect(button).toHaveAccessibleName('Copy install command');
     await context.close();
 });

@@ -7,13 +7,15 @@ import { box, colorOf, contrast, js, KIT, ORIGIN, sideways, style, tabKey } from
 import { textSize } from './text-size.js';
 
 /*
- * A toast as a page attaches it, in Chromium and in WebKit: a message drawn and heard without
- * focus moving and with no element added, its action and its close button reached by the keyboard
- * and dismissing it, a toast with an action staying and one without leaving after its time, that
- * wait held while it is hovered or focused, on a stand-in clock, a second message replacing the
- * first and the same words heard again, focus returned to where it was, a long message wrapping
- * with its action in reach, its place above an app's dock or at the foot of a page, nothing drawn
- * before a message, and no audit findings in either theme.
+ * A toast as a page attaches it, in Chromium and in WebKit: a message drawn and heard without focus
+ * moving and with no element added, its action and its close button reached by the keyboard and
+ * dismissing it, a toast with an action staying and one without leaving after its time, that wait
+ * held while it is hovered or focused, on a stand-in clock, a second message replacing the first
+ * and the same words heard again, focus returned to where it was, a long message wrapping with its
+ * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
+ * place above an app's dock or at the foot of a page, nothing drawn before a message or printed,
+ * the same function returned when attached again, a solid edge in forced colors, and no audit
+ * findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -795,4 +797,69 @@ test('draws its close button quiet in the muted color, and in the text color und
         await expect.poll(read, { message: theme }).toBe(text);
         expect(contrast(await read(), ground), theme).toBeGreaterThanOrEqual(4.5);
     }
+});
+
+test('returns the one function it showed with when attached again', async ({ page }) => {
+    await open(page);
+    expect(
+        await page.evaluate(() => {
+            const kit = (window as unknown as { kit: { show: unknown; again: unknown } }).kit;
+            return kit.show === kit.again;
+        })
+    ).toBe(true);
+});
+
+test('draws a solid edge round a shown toast in forced colors, where its shadow is gone', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        await page.locator('#save').click();
+        await expect(toast(page)).toBeVisible();
+        const edge = await toast(page).evaluate((element) => {
+            const style = getComputedStyle(element);
+            return [style.borderTopStyle, style.borderTopWidth];
+        });
+        expect(edge).toEqual(['solid', '1px']);
+    } finally {
+        await context.close();
+    }
+});
+
+test('prints no toast, shown or not', async ({ page }) => {
+    await open(page);
+    const printed = async () => {
+        await page.emulateMedia({ media: 'print' });
+        const display = await toast(page).evaluate((element) => getComputedStyle(element).display);
+        await page.emulateMedia({ media: 'screen' });
+        return display;
+    };
+    expect(await printed(), 'not shown').toBe('none');
+    await page.locator('#save').click();
+    await expect(toast(page)).toBeVisible();
+    expect(await printed(), 'shown').toBe('none');
+});
+
+test('wraps its buttons under its message and keeps them inside it on a 320px phone at twice the text size', async ({
+    page,
+}) => {
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    await page.locator('#save').click();
+    const card = await box(toast(page), 'the toast');
+    // Its buttons wrap onto a row of their own under the message, starting below its middle.
+    const words = await box(message(page), 'the message');
+    for (const button of [undo(page), dismiss(page)])
+        expect((await box(button, 'a button')).y).toBeGreaterThan(words.y + words.height / 2);
+    for (const button of [undo(page), dismiss(page)]) {
+        const drawn = await box(button, 'a button');
+        expect(drawn.x).toBeGreaterThanOrEqual(card.x - 0.5);
+        expect(drawn.x + drawn.width).toBeLessThanOrEqual(card.x + card.width + 0.5);
+        expect(drawn.y + drawn.height).toBeLessThanOrEqual(card.y + card.height + 0.5);
+    }
+    expect(await sideways(page)).toBe(0);
 });

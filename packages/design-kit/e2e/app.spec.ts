@@ -2,18 +2,20 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { box, sheet, sideways, style, tabKey, writePage } from './page.js';
+import { cutOff } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * An app's frame as a browser draws it, in Chromium and in WebKit, since a bar that stays put and
- * a height that follows the browser's own bars are where Safari differs: the bar, the body and the
+ * An app's frame as a browser draws it, in Chromium and in WebKit, since a bar that stays put and a
+ * height that follows the browser's own bars are where Safari differs: the bar, the body and the
  * dock in view with only the body scrolling, the bar clear of the top safe area and the last row
- * clear of the bottom one, one top heading, the body's last line scrolled clear of everything
- * below it at a doubled text size with a few lines kept for the body, the page scrolled whole where
- * a doubled text size leaves too little height, nothing out of sight lengthening the page, a toast's place above the dock whatever the dock holds, the
- * frame as tall as the screen at any height, a column in the middle of a wide screen and the full
- * width of a phone, a long title wrapping, the keyboard going bar, body, dock, the frame printing
- * whole, and no audit findings in either theme.
+ * clear of the bottom one, one top heading, the body's last line scrolled clear of everything below
+ * it at a doubled text size with a few lines kept for the body, the page scrolled whole where a
+ * doubled text size leaves too little height, nothing out of sight lengthening the page, a toast's
+ * place above the dock whatever the dock holds, the frame as tall as the screen at any height, a
+ * column in the middle of a wide screen and the full width of a phone, a long title wrapping, one
+ * long word breaking inside the bar on a 320px phone at twice the text size, the keyboard going
+ * bar, body, dock, the frame printing whole, and no audit findings in either theme.
  */
 
 /** What the phone keeps at each edge, set as a page sets the kit's tokens. */
@@ -660,4 +662,18 @@ test("draws the toast's close button at the target both ways on a wide screen, i
         const close = await box(page.getByRole('button', { name: 'Dismiss' }), 'the close button');
         expect([Math.round(close.width), Math.round(close.height)], name).toEqual([44, 44]);
     }
+});
+
+test('breaks a title of one long word inside the bar on a 320px phone at twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, { width: 320, title: 'Scorekeepingchampionshipfinalround' });
+    await doubled(page, browserName);
+    const bar = await box(page.locator('.dk-app-bar'), 'the bar');
+    const title = await box(page.locator('.dk-app-title'), 'the title');
+    expect(title.x + title.width).toBeLessThanOrEqual(bar.x + bar.width + 0.5);
+    // Its word breaks inside it, rather than run past its own box.
+    expect(await cutOff(page, '.dk-app-title')).toEqual([]);
+    expect(await sideways(page)).toBe(0);
 });

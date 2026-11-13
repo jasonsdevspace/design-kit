@@ -342,8 +342,8 @@ npm run verify
 ```
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
-`npm run e2e` runs the browser tests in Chromium, and an app's frame, tab bar, toast, dialog,
-stepper and a table's frame in WebKit too.
+`npm run e2e` runs the browser tests in Chromium, an app's frame, tab bar, toast, dialog, stepper
+and a table's frame in WebKit too, and the stepper, the controls and the pieces in Firefox.
 `npm run lighthouse` builds the site and audits every page against the gates CI holds it to.
 Nothing needs building first, since the kit's tests read the sources and the site's tests build and
 serve the site themselves. `npm run build`
@@ -352,7 +352,7 @@ of each sheet, and builds the site. Installing also sets up the hooks, which lin
 and format what is staged and check each commit message.
 
 ```bash
-npx playwright install chromium webkit
+npx playwright install chromium webkit firefox
 npm run e2e
 npm run lighthouse
 ```
@@ -371,11 +371,12 @@ build in one job. Another packs the package, checks its manifest with publint, a
 an empty project on the lowest Node its engines field admits, with install scripts off and no Vite,
 where each sheet must resolve and each module load by the name a demo imports it by, then
 type-checks a page's use of it as Node and as a bundler resolve it. The browser tests run in a job
-of their own, and the site's run again over each commit's own packed kit, so a change that would
-break the site fails before it is released. The Lighthouse audit runs in another. Once every job
-passes on main, a job with read access alone builds the site, and a job that runs only GitHub's
-Pages actions deploys it. Each job runs on a named Ubuntu image within a time limit, which a test
-holds, and each check writes what it found to its run's page on GitHub, from `scripts/summary.mjs`.
+of their own, and in WebKit and in Firefox in a job each on a Mac, and the site's run again over
+each commit's own packed kit, so a change that would break the site fails before it is released. The
+Lighthouse audit runs in another. Once every job passes on main, a job with read access alone builds
+the site, and a job that runs only GitHub's Pages actions deploys it. Each job runs on a named
+image, Ubuntu but for those two, within a time limit, which a test holds, and each check writes what
+it found to its run's page on GitHub, from `scripts/summary.mjs`.
 
 </details>
 

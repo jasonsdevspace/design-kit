@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { box, js, KIT, ORIGIN, style } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * A dialog as a page attaches it, in Chromium and in WebKit: opened over a scrim in the kit's scrim
@@ -9,7 +10,8 @@ import { box, js, KIT, ORIGIN, style } from './page.js';
  * it on close however it closes, closed by Escape and by a tap on the scrim but not by a drag out
  * of it, kept open on both when asked to stay, the page behind it still, the sheet at the bottom
  * edge clear of the home indicator and scrolling inside itself, rising into place unless less
- * motion is asked for, and no audit findings in either theme.
+ * motion is asked for, a solid edge in forced colors, its actions stacked inside it on a 320px
+ * phone at twice the text size, and no audit findings in either theme.
  */
 
 const OPTIONS = Array.from(
@@ -436,4 +438,41 @@ test('pads a dialog and a sheet by the smaller space on a phone, the sheet still
             await expect(opened).not.toBeVisible();
         }
     }
+});
+
+test('draws a solid edge round an open dialog in forced colors, where its shadow is gone', async ({
+    browser,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        await page.locator('#end').click();
+        await expect(endGame(page)).toBeVisible();
+        const edge = await endGame(page).evaluate((element) => {
+            const style = getComputedStyle(element);
+            return [style.borderTopStyle, style.borderTopWidth];
+        });
+        expect(edge).toEqual(['solid', '1px']);
+    } finally {
+        await context.close();
+    }
+});
+
+test('stacks its actions inside it on a 320px phone at twice the text size', async ({ page }) => {
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    await page.locator('#end').click();
+    const drawn = await box(endGame(page), 'the dialog');
+    for (const name of ['Keep playing', 'End the game']) {
+        const action = await box(endGame(page).getByRole('button', { name }), name);
+        expect(action.x, name).toBeGreaterThanOrEqual(drawn.x - 0.5);
+        expect(action.x + action.width, name).toBeLessThanOrEqual(drawn.x + drawn.width + 0.5);
+    }
+    // Stacked, one under the other.
+    const keep = await box(endGame(page).getByRole('button', { name: 'Keep playing' }), 'keep');
+    const end = await box(endGame(page).getByRole('button', { name: 'End the game' }), 'end');
+    expect(end.y).toBeGreaterThanOrEqual(keep.y + keep.height);
 });
