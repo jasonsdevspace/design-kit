@@ -1,45 +1,45 @@
 {
     "recorded": {
-        "date": "2026-11-12",
-        "commit": "7048d11",
-        "machine": "INTEL(R) XEON(R) PLATINUM 8573C, 4 cores",
+        "date": "2026-11-13",
+        "commit": "816565f",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.5.0",
-    "size": 52828,
+    "version": "0.6.0",
+    "size": 63154,
     "files": [
         {
             "path": "dist/base.css",
-            "size": 8531,
-            "gzip": 2878,
-            "stripped": 1053
+            "size": 9085,
+            "gzip": 3006,
+            "stripped": 1107
         },
         {
             "path": "dist/components.css",
-            "size": 80452,
-            "gzip": 18069,
-            "stripped": 5895
+            "size": 107118,
+            "gzip": 23917,
+            "stripped": 7263
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 6593,
-            "gzip": 2419
+            "size": 8791,
+            "gzip": 3190
         },
         {
             "path": "dist/controls.js",
-            "size": 27802,
-            "gzip": 7854
+            "size": 38608,
+            "gzip": 11108
         },
         {
             "path": "dist/react.d.ts",
-            "size": 19328,
-            "gzip": 5542
+            "size": 19379,
+            "gzip": 5560
         },
         {
             "path": "dist/react.js",
-            "size": 19148,
-            "gzip": 5767
+            "size": 19484,
+            "gzip": 5844
         },
         {
             "path": "dist/theme.d.ts",
@@ -53,9 +53,9 @@
         },
         {
             "path": "dist/tokens.css",
-            "size": 9956,
-            "gzip": 3487,
-            "stripped": 955
+            "size": 11170,
+            "gzip": 3890,
+            "stripped": 1063
         },
         {
             "path": "dist/vite.d.ts",
@@ -74,13 +74,204 @@
         },
         {
             "path": "package.json",
-            "size": 2162,
-            "gzip": 724
+            "size": 2234,
+            "gzip": 762
         },
         {
             "path": "README.md",
-            "size": 14187,
-            "gzip": 4677
+            "size": 14870,
+            "gzip": 4737
         }
-    ]
+    ],
+    "pieces": [
+        {
+            "piece": "the page's own elements",
+            "rules": 31,
+            "gzip": 926
+        },
+        {
+            "piece": "app frame",
+            "rules": 44,
+            "gzip": 902
+        },
+        {
+            "piece": "tokens",
+            "rules": 4,
+            "gzip": 821
+        },
+        {
+            "piece": "strip",
+            "rules": 20,
+            "gzip": 497
+        },
+        {
+            "piece": "button",
+            "rules": 22,
+            "gzip": 492
+        },
+        {
+            "piece": "field",
+            "rules": 19,
+            "gzip": 451
+        },
+        {
+            "piece": "explainer",
+            "rules": 21,
+            "gzip": 374
+        },
+        {
+            "piece": "button grid",
+            "rules": 13,
+            "gzip": 337
+        },
+        {
+            "piece": "dialog",
+            "rules": 14,
+            "gzip": 261
+        },
+        {
+            "piece": "stepper",
+            "rules": 11,
+            "gzip": 257
+        },
+        {
+            "piece": "theme switch",
+            "rules": 14,
+            "gzip": 240
+        },
+        {
+            "piece": "choice",
+            "rules": 15,
+            "gzip": 234
+        },
+        {
+            "piece": "table",
+            "rules": 15,
+            "gzip": 232
+        },
+        {
+            "piece": "tab bar",
+            "rules": 14,
+            "gzip": 210
+        },
+        {
+            "piece": "rows",
+            "rules": 14,
+            "gzip": 186
+        },
+        {
+            "piece": "toast",
+            "rules": 9,
+            "gzip": 164
+        },
+        {
+            "piece": "pills",
+            "rules": 10,
+            "gzip": 136
+        },
+        {
+            "piece": "tabs",
+            "rules": 7,
+            "gzip": 127
+        },
+        {
+            "piece": "callout",
+            "rules": 10,
+            "gzip": 123
+        },
+        {
+            "piece": "skip link",
+            "rules": 2,
+            "gzip": 101
+        },
+        {
+            "piece": "footer",
+            "rules": 4,
+            "gzip": 80
+        },
+        {
+            "piece": "steps",
+            "rules": 5,
+            "gzip": 76
+        },
+        {
+            "piece": "code block",
+            "rules": 5,
+            "gzip": 69
+        },
+        {
+            "piece": "eyebrow",
+            "rules": 2,
+            "gzip": 62
+        },
+        {
+            "piece": "panel",
+            "rules": 6,
+            "gzip": 51
+        },
+        {
+            "piece": "copy button",
+            "rules": 3,
+            "gzip": 44
+        },
+        {
+            "piece": "animations",
+            "rules": 2,
+            "gzip": 33
+        },
+        {
+            "piece": "visually hidden",
+            "rules": 1,
+            "gzip": 18
+        },
+        {
+            "piece": "actions",
+            "rules": 1,
+            "gzip": 3
+        }
+    ],
+    "functions": [
+        {
+            "name": "attachToast",
+            "alone": 1668,
+            "added": 1059
+        },
+        {
+            "name": "attachStepper",
+            "alone": 1466,
+            "added": 978
+        },
+        {
+            "name": "attachThemeSwitch",
+            "alone": 1781,
+            "added": 698
+        },
+        {
+            "name": "attachCopyButton",
+            "alone": 1005,
+            "added": 600
+        },
+        {
+            "name": "attachTable",
+            "alone": 747,
+            "added": 485
+        },
+        {
+            "name": "attachDialog",
+            "alone": 886,
+            "added": 470
+        },
+        {
+            "name": "chooseTheme",
+            "alone": 865,
+            "added": 4
+        }
+    ],
+    "since": {
+        "date": "2026-11-12",
+        "commit": "7048d11",
+        "version": "0.5.0",
+        "size": 52828,
+        "sheets": 7903
+    }
 }
