@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, and in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB
 
 ## Context
 
