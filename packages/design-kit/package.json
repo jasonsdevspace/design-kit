@@ -1,6 +1,6 @@
 {
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "description": "Design tokens, base styles, a theme script, page chrome, buttons, fields, callouts, tabs, pills, a theme switch, a copy button, an explainer layout, and an app's frame, tab bar, toast, button grid, rows, stepper and dialog for the demos on jasonsdevspace.com.",
     "keywords": [
         "design-tokens",

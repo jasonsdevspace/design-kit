@@ -7,6 +7,30 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.7.0
+
+A toast keeps its action and close button together, and a table's frame shows where it scrolls
+further, both for an app on a phone. The theme script is unchanged, so
+`themeScriptHash` is the same. The sheets' budget rises from 9 KB to 9.25 KB, set again by the size
+audit's rule, and the controls' stays at 6.25 KB.
+
+- **Upgrading.** A toast's action and close button sit in a `dk-toast-buttons` group, which the
+  React `Toast` draws. A page that writes the toast's markup by hand wraps the two buttons in a
+  `div class="dk-toast-buttons"` to keep them together at the toast's end wherever they wrap. A
+  toast without the group keeps the layout it had, which stacks its buttons only on a screen under
+  20rem wide. A table's frame now draws its shade as its background, so a page that sets a
+  background of its own on `.dk-table-scroll` keeps it and shows no shade.
+- **Sheets.** `.dk-toast-buttons` keeps the action and the close button together, beside the
+  message where both fit and on the row under it, at the toast's end, where they do not, at any
+  width and whatever the action's length, and a toast with the group pads its end as its start.
+  A table's frame shows a shade at each edge it scrolls toward and none at an end in view, grown by
+  an animation tied to the frame's own scroll, on any ground and either way a table reads. A
+  browser that cannot tie an animation to a scroll, forced colors and paper show none.
+- **React.** `Toast` draws its two buttons in the group.
+- **Tests.** Browser tests hold a toast's buttons together in a narrow frame and with a long
+  action, and read a table frame's shade at each edge as it scrolls, a table's frame now in
+  Firefox too.
+
 ## 0.6.0
 
 Every piece the kit review found is fixed or finished as a drop-in, so a page places the kit's
