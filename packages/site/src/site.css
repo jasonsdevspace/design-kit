@@ -1020,6 +1020,11 @@ body > .dk-strip {
     margin-top: 0;
 }
 
+/* A block's head stands from the summary above it, or the block before it, by the panel's step. */
+.site-code .dk-code-head {
+    margin-block-start: var(--dk-space-4);
+}
+
 /*
  * The tests that hold a group, closed under its section as a state's code is, in the small text:
  * each file's name over a list of its tests' names, which hold to the measure as prose does.
