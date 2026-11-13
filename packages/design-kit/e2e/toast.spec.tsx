@@ -634,6 +634,45 @@ test('puts its buttons together on a row under its message on a phone at a large
     }
 });
 
+test('keeps its buttons together at its end in a frame narrower than the screen', async ({
+    page,
+}) => {
+    await open(page, { width: 1280, body: FRAME, css: '.dk-app { inline-size: 290px; }' });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    const words = await box(message(page), 'the message');
+    const action = await box(undo(page), 'the action');
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    // The action and the close button share the row under the message, at the toast's end.
+    expect(action.y).toBeGreaterThanOrEqual(words.y + words.height - 1);
+    expect(Math.abs(close.y - action.y)).toBeLessThanOrEqual(1);
+    expect(close.x).toBeGreaterThan(action.x + action.width - 1);
+    expect(card.x + card.width - (close.x + close.width)).toBeLessThan(16);
+});
+
+test('sets a button that wraps on its own at the end of its row', async ({ page }) => {
+    await open(page, { width: 320 });
+    await show(page, 'Round 3 saved.', 'Put the round back');
+    await settle(page);
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    expect(card.x + card.width - (close.x + close.width)).toBeLessThan(16);
+});
+
+test('keeps its message and buttons on one row where they fit', async ({ page }) => {
+    for (const width of [390, 320]) {
+        await open(page, { width });
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settle(page);
+        const words = await box(message(page), 'the message');
+        for (const button of [undo(page), dismiss(page)]) {
+            const drawn = await box(button, 'a button');
+            expect(drawn.y, String(width)).toBeLessThan(words.y + words.height / 2);
+        }
+    }
+});
+
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
     page,
 }) => {

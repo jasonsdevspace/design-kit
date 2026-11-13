@@ -2207,13 +2207,16 @@
 
     /*
      * Shown, a raised card with an edge, which forced colors draw where the shadow is gone. A
-     * message of a few lines wraps beside its buttons, and at a large text size the buttons wrap
-     * under it. It rises into place as it arrives.
+     * message of a few lines wraps beside its buttons, and where the toast is too narrow for both
+     * the buttons wrap under it, at its end, since the message grows to fill any row it is on. It
+     * rises into place as it arrives. It is a container its own width is read from, below.
      */
     :where(.dk-toast[data-shown]) {
+        container: dk-toast / inline-size;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: flex-end;
         gap: 0 var(--dk-space-2);
         padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4);
         border: 1px solid var(--dk-line);
@@ -2266,17 +2269,15 @@
     }
 
     /*
-     * On a phone at a large text size, under 20rem wide, the message takes a row of its own and its
-     * buttons share the row under it, at its end, rather than wrapping one by one where the room
-     * runs out. Where even the two do not fit beside each other, each sits at the end of its row.
-     * The message pads its end as its start, since the toast's own end padding is narrow for the
-     * buttons that usually sit there.
+     * In a toast with less room inside it than it has on a screen 20rem wide, as on a phone at a
+     * large text size or in a frame narrower than the screen, the message takes a row of its own
+     * and its buttons share the row under it, at its end, rather than wrapping one by one where the
+     * room runs out. That is where an action of a word or two no longer fits beside the message and
+     * the close button. Where even the two buttons do not fit beside each other, each sits at the
+     * end of its row. The message pads its end as its start, since the toast's own end padding is
+     * narrow for the buttons that usually sit there.
      */
-    @media (width < 20rem) {
-        :where(.dk-toast[data-shown]) {
-            justify-content: flex-end;
-        }
-
+    @container dk-toast (width < 16.625rem) {
         :where(.dk-toast[data-shown] > .dk-toast-message) {
             flex-basis: 100%;
             padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
