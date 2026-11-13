@@ -658,7 +658,7 @@ const TOAST = 'Toast';
 
 const APP_PIECES = ROUTES.find(({ file }) => file === 'app-pieces/index.html')?.path ?? BASE;
 
-/** Each state of the buttons, fields, callouts and dialogs, and the toast. */
+/** Each state of the buttons, fields, steppers, callouts and dialogs, and the toast. */
 export const Controls = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
@@ -666,8 +666,8 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         title="Controls"
         lead={
             <>
-                The design kit&rsquo;s buttons, fields, callouts and dialogs, in each state they can
-                be in, and its toast.
+                The design kit&rsquo;s buttons, fields, steppers, callouts and dialogs, in each
+                state they can be in, and its toast.
             </>
         }
         intro={
@@ -684,8 +684,8 @@ export const Controls = ({ build }: { readonly build: Build }) => (
             <h2 id={idOf(TOAST)}>{TOAST}</h2>
             <p>
                 A toast says what just happened, at the foot of the screen, and can offer one
-                action, such as Undo. Press Save round 3 to see one. A toast with Undo stays until
-                it is dismissed, and the one Undo shows leaves after five seconds. The toast in an
+                action, such as Undo. The button here shows one. A toast with Undo stays until it is
+                dismissed, and the one Undo shows leaves after five seconds. The toast in an
                 app&rsquo;s frame is under <a href={`${APP_PIECES}#app-frame`}>App pieces</a>, in
                 both themes.
             </p>

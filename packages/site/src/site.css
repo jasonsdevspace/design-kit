@@ -66,8 +66,8 @@ body > .dk-strip {
 /*
  * The site's header under the strip, lined up with the column: its mark and name, then its own
  * pages as the kit's link pills. On a wide screen the two share the row, and on a phone the pills
- * go under the name and wrap onto a second row, the kit keeping room around them for its focus
- * ring.
+ * go under the name and wrap onto a second row. The kit keeps room for its focus ring at the pills'
+ * sides, and above and below them the ring reaches into the header's own space.
  */
 .site-header {
     display: flex;
@@ -147,7 +147,6 @@ body > .dk-strip {
     text-decoration: underline;
 }
 
-/* The install command in one row with its copy button, the block scrolling inside its frame. */
 /* The install row takes the column, and the command is set small so it fits a wide screen whole. */
 .site-install {
     font-size: var(--dk-text-small);
@@ -1098,6 +1097,14 @@ body > .dk-strip {
 }
 
 /*
+ * The kit turns off a page's pull to refresh wherever an app's frame is, as an app's screen wants.
+ * A page that only pictures one reads like any other page, so it keeps the browser's own.
+ */
+:root:has(.site-copy .dk-app) {
+    overscroll-behavior-y: auto;
+}
+
+/*
  * A dialog's preview is drawn open in its place under its button, since the inert copy cannot be
  * opened, rather than over the page as a dialog that is not modal would be.
  */
@@ -1131,8 +1138,8 @@ body > .dk-strip {
 
     /*
      * Light is drawn first, on the left or above, and dark after it whichever is live, so the two
-     * never trade places as the theme changes. The live copy stays first in the page, for the keyboard and a
-     * screen reader, and on a phone, where it is the one a thumb reaches first.
+     * never trade places as the theme changes. The live copy stays first in the page, for the
+     * keyboard and a screen reader, and on a phone, where it is the one a thumb reaches first.
      */
     :root[data-theme='dark'] .site-other {
         order: -1;

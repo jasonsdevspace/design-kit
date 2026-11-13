@@ -30,7 +30,7 @@ export const ROUTES = [
         file: 'tokens/index.html',
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
-        nav: 'Tokens and theme',
+        nav: 'Tokens',
         card: 'Colors, their contrast, sizes and how the theme is chosen.',
         description:
             'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
@@ -40,9 +40,9 @@ export const ROUTES = [
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',
         nav: 'Controls',
-        card: 'Buttons, fields, dialogs and a toast in every state.',
+        card: 'Buttons, fields, steppers and dialogs in every state, and a toast.',
         description:
-            'Each state of the design kit’s buttons, fields, callouts and dialogs, and its toast, in both themes, with the code behind it.',
+            'Each state of the design kit’s buttons, fields, steppers, callouts and dialogs in both themes, with the code behind it, and its toast.',
     },
     {
         file: 'app-pieces/index.html',
@@ -66,7 +66,7 @@ export const ROUTES = [
         file: 'explainer-pieces/index.html',
         path: `${BASE}explainer-pieces/`,
         title: 'Explainer pieces · The design kit · Jason Poteet',
-        nav: 'Explainer pieces',
+        nav: 'Explainer',
         card: 'The layout and pieces of the page that explains a demo.',
         description:
             'The layout, steps, panels, tables and code blocks the design kit gives the page that explains each demo, in both themes.',

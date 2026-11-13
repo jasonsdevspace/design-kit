@@ -246,20 +246,20 @@ export const EXPLAINER: readonly Control[] = [
     { name: 'Code blocks', laidOut: true, states: [code] },
 ];
 
-/** The places an app's tab bar leads to, each with its mark, the first the one the visitor is in. */
+/** The places an app's tab bar leads to, each with its mark. */
 const PLACES = [
     { name: 'Play', mark: 'M8 5v14l11-7z' },
     { name: 'Games', mark: 'M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z' },
     { name: 'Stats', mark: 'M5 13h3v6H5zm5.5-6h3v12h-3zM16 4h3v15h-3z' },
 ] as const;
 
-/** A tab bar of the app's places, as a page writes it by hand. */
-const tabBar = (className: string) => (
+/** A tab bar of the app's places, as a page writes it by hand, the current place marked. */
+const tabBar = (className: string, current = 'Play') => (
     <nav className={className} aria-label="Sections">
         <ul>
-            {PLACES.map(({ name, mark }, index) => (
+            {PLACES.map(({ name, mark }) => (
                 <li key={name}>
-                    <a href="./" aria-current={index === 0 ? 'page' : undefined}>
+                    <a href="./" aria-current={name === current ? 'page' : undefined}>
                         <svg aria-hidden="true" viewBox="0 0 24 24">
                             <path d={mark} fill="currentColor" />
                         </svg>
@@ -296,7 +296,7 @@ const screen = (
     </div>
 );
 
-/** The site's own pages, which rows that each lead to a page lead to. */
+/** The site's own pages, for the rows that each lead to a page. */
 const PAGES = [
     { title: 'Tokens and theme', detail: 'Colors, their contrast and sizes', href: '../tokens/' },
     { title: 'Controls', detail: 'Buttons, fields and dialogs', href: '../controls/' },
@@ -353,8 +353,8 @@ export const APP: readonly Control[] = [
             {
                 name: 'A screen with a toast above its dock',
                 attribute: 'data-shown',
-                // Drawn as the toast's attach function leaves it once it shows a message, marked shown
-                // by the attribute the kit draws a shown toast from.
+                // Drawn as a shown toast is, since a picture is never attached, and marked shown
+                // by data-shown, the attribute the kit draws a shown toast from.
                 draw: (kit, id) =>
                     screen(
                         kit,
@@ -404,7 +404,7 @@ export const APP: readonly Control[] = [
                             <h1>Games</h1>
                             <p>Every game played, the newest first.</p>
                         </main>
-                        {tabBar('dk-tabbar')}
+                        {tabBar('dk-tabbar', 'Games')}
                     </div>
                 ),
             },

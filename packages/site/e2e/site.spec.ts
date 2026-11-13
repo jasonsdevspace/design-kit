@@ -429,7 +429,7 @@ test.describe('the words each page opens with', () => {
     }) => {
         for (const path of OPENED) {
             await page.goto(path);
-            const lead = (await page.locator('main > .site-lead').textContent()) ?? '';
+            const lead = (await page.locator('body > main > .site-lead').textContent()) ?? '';
             const sentences = lead.split(/(?<=[.?!])\s+/).filter((each) => each.trim() !== '');
             expect(sentences.length, path).toBeLessThanOrEqual(2);
             expect(lead, path).not.toMatch(/screen reader|\battributes?\b|\bclass(es)?\b/i);
@@ -813,7 +813,7 @@ test.describe('the controls page, with the pieces the script attaches', () => {
         await expect(options).toBeFocused();
     });
 
-    test("shows every stepper's buttons, and the error in the preview past its limit", async ({
+    test("shows every stepper's buttons, and the error in both copies past its limit", async ({
         page,
     }) => {
         await page.goto('/design-kit/controls/');
@@ -826,8 +826,16 @@ test.describe('the controls page, with the pieces the script attaches', () => {
             .locator('.site-state')
             .filter({ hasText: 'A stepper given a number past its limit' });
         await expect(past.locator('.site-other .dk-stepper-range')).toBeVisible();
-        // The live copy says nothing as the page loads, and tells the visitor once they change it.
-        await expect(past.locator('.site-copy:not([inert]) .dk-stepper-range')).toBeHidden();
+        // The live copy shows its error and is described by it, with nothing said as the page
+        // loads, and the error goes once the number is right.
+        const live = past.locator('.site-copy:not([inert])');
+        await expect(live.locator('.dk-stepper-range')).toBeVisible();
+        await expect(
+            live.getByRole('spinbutton', { name: 'Tricks taken' })
+        ).toHaveAccessibleDescription(/Enter a number from 0 to 10/);
+        await expect(live.locator('.dk-stepper-status')).toHaveText('');
+        await live.locator('.dk-stepper-down').click();
+        await expect(live.locator('.dk-stepper-range')).toBeHidden();
     });
 
     test('draws no app frame and no page that ends in a tab bar', async ({ page }) => {
@@ -1238,7 +1246,8 @@ test.describe("the site's header", () => {
             .evaluate((segment) => getComputedStyle(segment).outlineStyle);
         expect(ring).not.toBe('none');
     });
-    test("leaves room in the tabs' row for the kit's focus ring, and clips none of it", async ({
+
+    test("leaves room at the pills' sides for the kit's focus ring, and clips none of it", async ({
         page,
     }) => {
         await page.goto('/design-kit/controls/');
@@ -1619,12 +1628,35 @@ test.describe('the code of each state', () => {
                     }
                     return template.innerHTML;
                 };
+                /**
+                 * The steppers of a copy as the markup draws them, before the site's script
+                 * attached them.
+                 */
+                const steppersAsWritten = (copy: HTMLElement) => {
+                    // A stepper's button at a limit, which the script marks off as it attaches the
+                    // stepper, is read as the markup draws it.
+                    for (const off of copy.querySelectorAll('.dk-stepper > [aria-disabled]'))
+                        off.removeAttribute('aria-disabled');
+                    // A stepper's error, which the script shows on the live copy past its limit,
+                    // describes the field and marks it invalid only once shown, so the field is
+                    // read as the markup draws it.
+                    for (const value of copy.querySelectorAll('.dk-stepper-value')) {
+                        const range = value
+                            .closest('.dk-field')
+                            ?.querySelector('.dk-stepper-range');
+                        const all = (value.getAttribute('aria-describedby') ?? '').split(/\s+/);
+                        if (range && all.includes(range.id)) value.removeAttribute('aria-invalid');
+                        const ids = all.filter((id) => id !== '' && id !== range?.id);
+                        if (ids.length > 0) value.setAttribute('aria-describedby', ids.join(' '));
+                        else value.removeAttribute('aria-describedby');
+                    }
+                };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
                     // label, and with the ids the code names. A control the site's script attaches,
-                    // the switch, the copy button and a stepper, is shown, so the hidden the code prints is
-                    // read as shown too, and the choice the script checks is a property the markup
-                    // never carries.
+                    // the switch, the copy button and a stepper, is shown, so the hidden the code
+                    // prints is read as shown too, and the choice the script checks is a property
+                    // the markup never carries.
                     const copy = state.querySelector('.site-copy')?.cloneNode(true);
                     const code = state.querySelector<HTMLElement>('.site-code');
                     const shown = code
@@ -1634,10 +1666,7 @@ test.describe('the code of each state', () => {
                     copy.querySelector('.site-copy-label')?.remove();
                     for (const hidden of copy.querySelectorAll('[hidden]'))
                         hidden.removeAttribute('hidden');
-                    // A stepper's button at a limit, which the script marks off as it attaches the
-                    // stepper, is read as the markup draws it.
-                    for (const off of copy.querySelectorAll('.dk-stepper > [aria-disabled]'))
-                        off.removeAttribute('aria-disabled');
+                    steppersAsWritten(copy);
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
@@ -1808,6 +1837,7 @@ test.describe('the state cards', () => {
     /** The pages that draw states, each in its own card. */
     const STATED = [
         '/design-kit/controls/',
+        '/design-kit/app-pieces/',
         '/design-kit/page-chrome/',
         '/design-kit/explainer-pieces/',
     ];
@@ -2041,9 +2071,11 @@ test.describe('the state cards', () => {
                     .evaluateAll((headings) => headings.map((heading) => `#${heading.id}`));
                 expect(targets, at).toEqual(sections);
                 const [nav, heading, lead] = await Promise.all(
-                    [list, page.locator('main > h1'), page.locator('main > .site-lead')].map(
-                        (each) => each.boundingBox()
-                    )
+                    [
+                        list,
+                        page.locator('body > main > h1'),
+                        page.locator('body > main > .site-lead'),
+                    ].map((each) => each.boundingBox())
                 );
                 if (!nav || !heading || !lead) throw new Error(`${at}: no list, heading or lead`);
                 if (width >= 1024) {
@@ -2096,9 +2128,10 @@ test.describe('the state cards', () => {
             for (const path of LISTED) {
                 await page.goto(path);
                 const [heading, lead] = await Promise.all(
-                    [page.locator('main > h1'), page.locator('main > .site-lead')].map((each) =>
-                        each.boundingBox()
-                    )
+                    [
+                        page.locator('body > main > h1'),
+                        page.locator('body > main > .site-lead'),
+                    ].map((each) => each.boundingBox())
                 );
                 starts.push(Math.round(heading?.x ?? -1));
                 gaps.push(Math.round((lead?.y ?? 0) - (heading?.y ?? 0) - (heading?.height ?? 0)));
@@ -2118,7 +2151,7 @@ test.describe('the state cards', () => {
                 spaced.push(
                     await page.evaluate(() => {
                         const heading = document
-                            .querySelector('main > h1')
+                            .querySelector('body > main > h1')
                             ?.getBoundingClientRect();
                         const lead = document
                             .querySelector('main > .site-lead')
