@@ -1,13 +1,13 @@
 {
     "recorded": {
         "date": "2026-11-13",
-        "commit": "816565f",
-        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
+        "commit": "0ea7947",
+        "machine": "AMD EPYC 9V45 96-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.6.0",
-    "size": 63154,
+    "version": "0.7.0",
+    "size": 64057,
     "files": [
         {
             "path": "dist/base.css",
@@ -17,9 +17,9 @@
         },
         {
             "path": "dist/components.css",
-            "size": 107118,
-            "gzip": 23917,
-            "stripped": 7263
+            "size": 111152,
+            "gzip": 24796,
+            "stripped": 7558
         },
         {
             "path": "dist/controls.d.ts",
@@ -33,13 +33,13 @@
         },
         {
             "path": "dist/react.d.ts",
-            "size": 19379,
-            "gzip": 5560
+            "size": 19453,
+            "gzip": 5584
         },
         {
             "path": "dist/react.js",
-            "size": 19484,
-            "gzip": 5844
+            "size": 19545,
+            "gzip": 5856
         },
         {
             "path": "dist/theme.d.ts",
@@ -87,67 +87,72 @@
         {
             "piece": "the page's own elements",
             "rules": 31,
-            "gzip": 926
+            "gzip": 923
         },
         {
             "piece": "app frame",
             "rules": 44,
-            "gzip": 902
+            "gzip": 852
         },
         {
             "piece": "tokens",
             "rules": 4,
-            "gzip": 821
+            "gzip": 816
         },
         {
             "piece": "strip",
             "rules": 20,
-            "gzip": 497
+            "gzip": 480
         },
         {
             "piece": "button",
             "rules": 22,
-            "gzip": 492
+            "gzip": 472
         },
         {
             "piece": "field",
             "rules": 19,
-            "gzip": 451
+            "gzip": 417
         },
         {
             "piece": "explainer",
             "rules": 21,
-            "gzip": 374
+            "gzip": 361
         },
         {
             "piece": "button grid",
             "rules": 13,
-            "gzip": 337
+            "gzip": 339
         },
         {
-            "piece": "dialog",
-            "rules": 14,
-            "gzip": 261
+            "piece": "table",
+            "rules": 17,
+            "gzip": 324
         },
         {
             "piece": "stepper",
             "rules": 11,
-            "gzip": 257
+            "gzip": 259
+        },
+        {
+            "piece": "dialog",
+            "rules": 14,
+            "gzip": 255
         },
         {
             "piece": "theme switch",
             "rules": 14,
-            "gzip": 240
+            "gzip": 230
         },
         {
             "piece": "choice",
             "rules": 15,
-            "gzip": 234
+            "gzip": 218
         },
         {
-            "piece": "table",
-            "rules": 15,
-            "gzip": 232
+            "piece": "toast",
+            "rules": 12,
+            "gzip": 211
         },
         {
             "piece": "tab bar",
@@ -157,42 +162,42 @@
         {
             "piece": "rows",
             "rules": 14,
-            "gzip": 186
-        },
-        {
-            "piece": "toast",
-            "rules": 9,
-            "gzip": 164
+            "gzip": 187
         },
         {
             "piece": "pills",
             "rules": 10,
-            "gzip": 136
+            "gzip": 134
         },
         {
-            "piece": "tabs",
-            "rules": 7,
-            "gzip": 127
+            "piece": "animations",
+            "rules": 4,
+            "gzip": 120
         },
         {
             "piece": "callout",
             "rules": 10,
-            "gzip": 123
+            "gzip": 119
+        },
+        {
+            "piece": "tabs",
+            "rules": 7,
+            "gzip": 118
         },
         {
             "piece": "skip link",
             "rules": 2,
-            "gzip": 101
+            "gzip": 104
         },
         {
             "piece": "footer",
             "rules": 4,
-            "gzip": 80
+            "gzip": 82
         },
         {
             "piece": "steps",
             "rules": 5,
-            "gzip": 76
+            "gzip": 77
         },
         {
             "piece": "code block",
@@ -202,32 +207,27 @@
         {
             "piece": "eyebrow",
             "rules": 2,
-            "gzip": 62
-        },
-        {
-            "piece": "panel",
-            "rules": 6,
-            "gzip": 51
+            "gzip": 67
         },
         {
             "piece": "copy button",
             "rules": 3,
-            "gzip": 44
+            "gzip": 48
         },
         {
-            "piece": "animations",
-            "rules": 2,
-            "gzip": 33
+            "piece": "panel",
+            "rules": 6,
+            "gzip": 46
         },
         {
             "piece": "visually hidden",
             "rules": 1,
-            "gzip": 18
+            "gzip": 17
         },
         {
             "piece": "actions",
             "rules": 1,
-            "gzip": 3
+            "gzip": 2
         }
     ],
     "functions": [
@@ -268,10 +268,10 @@
         }
     ],
     "since": {
-        "date": "2026-11-12",
-        "commit": "7048d11",
-        "version": "0.5.0",
-        "size": 52828,
-        "sheets": 7903
+        "date": "2026-11-13",
+        "commit": "816565f",
+        "version": "0.6.0",
+        "size": 63154,
+        "sheets": 9433
     }
 }
