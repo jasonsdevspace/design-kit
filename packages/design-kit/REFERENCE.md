@@ -1793,6 +1793,7 @@ closes it on Escape and makes the page behind it inert.
 <!-- example: dialog -->
 
 ```html
+<button type="button" class="dk-button" id="finish">Finish the game</button>
 <dialog
     class="dk-dialog"
     id="end-game"
@@ -1827,7 +1828,7 @@ closes it on Escape and makes the page behind it inert.
 import { attachDialog } from '@jasonsdevspace/design-kit/controls';
 
 const open = attachDialog(document.querySelector('#end-game'));
-document.querySelector('#end').addEventListener('click', open);
+document.querySelector('#finish').addEventListener('click', open);
 ```
 
 A dialog is named by its heading, a `dk-dialog-title` its `aria-labelledby` points to. A short

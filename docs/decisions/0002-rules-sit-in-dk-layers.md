@@ -1,6 +1,6 @@
 # 2. The kit's rules sit in dk layers, with a prefix and no weight
 
-**Status:** accepted, amended in 0.5.1 to hide a kit element a page marks `hidden` with `!important`
+**Status:** accepted, amended in 0.6.0 to hide a kit element a page marks `hidden` with `!important`
 
 ## Context
 

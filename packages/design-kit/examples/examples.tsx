@@ -548,6 +548,9 @@ export const toast: ReactElement = <Toast />;
  */
 export const dialog: ReactElement = (
     <>
+        <button type="button" className="dk-button" id="finish">
+            Finish the game
+        </button>
         <dialog
             className="dk-dialog"
             id="end-game"
