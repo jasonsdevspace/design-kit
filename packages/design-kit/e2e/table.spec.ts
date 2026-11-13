@@ -295,39 +295,33 @@ test('moves the frame once a step, where the browser would leave it, under a nar
 const UNPINNED = '.dk-table-pinned :is(th, td):first-child { position: static; }';
 
 /**
- * How far the frame's color strays from the ground given at one edge, 2px in from the side given,
- * in the padding above the first row's text, read from what the browser drew.
+ * How far the frame's color at one edge, 2px in from the side given, strays from its color at its
+ * middle on the same line, in the padding above the first row's text, where only the ground behind
+ * the cells shows, read from what the browser drew.
  */
-const shadeAt = async (
-    page: Page,
-    side: 'left' | 'right',
-    ground = 'var(--dk-bg)'
-): Promise<number> => {
+const shadeAt = async (page: Page, side: 'left' | 'right'): Promise<number> => {
     const drawn = await box(frame(page), 'the frame');
     const row = await box(page.locator('tbody tr').first(), 'the first row');
-    const x = side === 'left' ? drawn.x + 2 : drawn.x + drawn.width - 3;
-    const shot = await page.screenshot({ clip: { x, y: row.y + 2, width: 1, height: 1 } });
-    const [want, at] = await page.evaluate(
-        async ([png, color]) => {
+    const shot = await page.screenshot({
+        clip: { x: drawn.x, y: row.y + 2, width: drawn.width, height: 1 },
+    });
+    const [edge, middle] = await page.evaluate(
+        async ([png, left]) => {
             const image = new Image();
             image.src = `data:image/png;base64,${png}`;
             await image.decode();
             const canvas = document.createElement('canvas');
-            canvas.width = 1;
+            canvas.width = image.width;
             canvas.height = 1;
             const drawing = canvas.getContext('2d');
             drawing?.drawImage(image, 0, 0);
-            const pixel = [...(drawing?.getImageData(0, 0, 1, 1).data ?? [])].slice(0, 3);
-            const probe = document.createElement('span');
-            probe.style.color = color;
-            document.querySelector('main')?.append(probe);
-            const resolved = (getComputedStyle(probe).color.match(/[\d.]+/g) ?? []).slice(0, 3);
-            probe.remove();
-            return [resolved.map(Number), pixel];
+            const at = (x: number) =>
+                [...(drawing?.getImageData(x, 0, 1, 1).data ?? [])].slice(0, 3);
+            return [at(left ? 2 : image.width - 3), at(Math.round(image.width / 2))];
         },
-        [shot.toString('base64'), ground] as const
+        [shot.toString('base64'), side === 'left'] as const
     );
-    return Math.max(...at.map((value, index) => Math.abs(value - (want[index] ?? 0))));
+    return Math.max(...edge.map((value, index) => Math.abs(value - (middle[index] ?? 0))));
 };
 
 const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> =>
@@ -337,12 +331,20 @@ const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> 
         element.scrollLeft = getComputedStyle(element).direction === 'rtl' ? -along : along;
     }, where);
 
-/** The shade at each of the frame's ends, its start's edge and its end's, either way it reads. */
-const shades = async (page: Page, dir: 'ltr' | 'rtl', ground?: string) => {
+/** The shade at the frame's start edge and at its end edge, either way it reads. */
+const shades = async (page: Page, dir: 'ltr' | 'rtl' = 'ltr') => {
     const [start, end] =
         dir === 'ltr' ? (['left', 'right'] as const) : (['right', 'left'] as const);
-    return { start: await shadeAt(page, start, ground), end: await shadeAt(page, end, ground) };
+    return { start: await shadeAt(page, start), end: await shadeAt(page, end) };
 };
+
+/** Whether the browser ties an animation to a scroll, and so draws the shade at all. */
+const drawsShade = (page: Page): Promise<boolean> =>
+    page.evaluate(() => CSS.supports('animation-timeline: scroll()'));
+
+/** A shade that is there, or none at all where the browser cannot draw one. */
+const SHADED = 12;
+const NONE = 4;
 
 test('shades the edges a frame scrolls toward, and neither end once it is in view', async ({
     page,
@@ -350,20 +352,37 @@ test('shades the edges a frame scrolls toward, and neither end once it is in vie
     for (const theme of ['light', 'dark'] as const) {
         for (const dir of ['ltr', 'rtl'] as const) {
             await open(page, { css: UNPINNED, theme, dir });
+            // Where the browser cannot tie an animation to a scroll, no edge is shaded at all.
+            const more = (await drawsShade(page)) ? SHADED : -1;
+            const shaded = (value: number, what: string) =>
+                more < 0
+                    ? expect(value, what).toBeLessThan(NONE)
+                    : expect(value, what).toBeGreaterThan(more);
             const where = `${theme} ${dir}`;
             let at = await shades(page, dir);
-            expect(at.start, `${where} at the start`).toBeLessThan(4);
-            expect(at.end, `${where} at the start`).toBeGreaterThan(12);
+            expect(at.start, `${where} at the start`).toBeLessThan(NONE);
+            shaded(at.end, `${where} at the start`);
             await scrollTo(page, 'middle');
             at = await shades(page, dir);
-            expect(at.start, `${where} in the middle`).toBeGreaterThan(12);
-            expect(at.end, `${where} in the middle`).toBeGreaterThan(12);
+            shaded(at.start, `${where} in the middle`);
+            shaded(at.end, `${where} in the middle`);
             await scrollTo(page, 'end');
             at = await shades(page, dir);
-            expect(at.start, `${where} at the end`).toBeGreaterThan(12);
-            expect(at.end, `${where} at the end`).toBeLessThan(4);
+            shaded(at.start, `${where} at the end`);
+            expect(at.end, `${where} at the end`).toBeLessThan(NONE);
         }
     }
+});
+
+test("hides the start's shade under a pinned column, and shades the end beside it", async ({
+    page,
+}) => {
+    await open(page);
+    test.skip(!(await drawsShade(page)), 'the browser draws no shade');
+    await scrollTo(page, 'middle');
+    const at = await shades(page);
+    expect(at.start).toBeLessThan(NONE);
+    expect(at.end).toBeGreaterThan(SHADED);
 });
 
 test("shades a frame on a ground of its own with no band of the page's ground", async ({
@@ -373,32 +392,38 @@ test("shades a frame on a ground of its own with no band of the page's ground", 
     await open(page, {
         css: `${UNPINNED} main { --dk-table-ground: var(--dk-highlight); background: var(--dk-highlight); }`,
     });
-    let at = await shades(page, 'ltr', 'var(--dk-highlight)');
-    expect(at.start).toBeLessThan(4);
-    expect(at.end).toBeGreaterThan(12);
+    test.skip(!(await drawsShade(page)), 'the browser draws no shade');
+    let at = await shades(page);
+    expect(at.start).toBeLessThan(NONE);
+    expect(at.end).toBeGreaterThan(SHADED);
     await scrollTo(page, 'end');
-    at = await shades(page, 'ltr', 'var(--dk-highlight)');
-    expect(at.end).toBeLessThan(4);
+    at = await shades(page);
+    expect(at.end).toBeLessThan(NONE);
 });
 
 test('shades the frame for a visitor who asks for less motion too', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(page, { css: UNPINNED });
+    test.skip(!(await drawsShade(page)), 'the browser draws no shade');
     await scrollTo(page, 'middle');
-    const at = await shades(page, 'ltr');
-    expect(at.start).toBeGreaterThan(12);
-    expect(at.end).toBeGreaterThan(12);
+    const at = await shades(page);
+    expect(at.start).toBeGreaterThan(SHADED);
+    expect(at.end).toBeGreaterThan(SHADED);
 });
 
 test('shades no edge of a frame whose table fits, nor any in forced colors', async ({ page }) => {
     await open(page, {
         css: `${UNPINNED} .dk-table :is(th, td):nth-child(n + 3) { display: none; }`,
     });
-    let at = await shades(page, 'ltr');
-    expect(at.start).toBeLessThan(4);
-    expect(at.end).toBeLessThan(4);
+    let at = await shades(page);
+    expect(at.start).toBeLessThan(NONE);
+    expect(at.end).toBeLessThan(NONE);
     await page.emulateMedia({ forcedColors: 'active' });
     await open(page, { css: UNPINNED });
-    at = await shades(page, 'ltr', 'Canvas');
-    expect(at.end, 'in forced colors at the start').toBeLessThan(4);
+    for (const where of ['start', 'middle'] as const) {
+        await scrollTo(page, where);
+        at = await shades(page);
+        expect(at.start, `in forced colors at the ${where}`).toBeLessThan(NONE);
+        expect(at.end, `in forced colors at the ${where}`).toBeLessThan(NONE);
+    }
 });

@@ -346,12 +346,13 @@ npm run verify
 
 `npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
 `npm run e2e` runs the browser tests in Chromium, an app's frame, tab bar, toast, dialog, stepper
-and a table's frame in WebKit too, and the stepper, the controls and the pieces in Firefox. `npm run
-lighthouse` builds the site and audits every page against the gates CI holds it to. Nothing needs
-building first, since the kit's tests read the sources and the site's tests build and serve the site
-themselves. `npm run build` compiles the theme module, the controls, the plugin and the components
-into the package's `dist`, beside a copy of each sheet, and builds the site. Installing also sets up
-the hooks, which lint and format what is staged and check each commit message.
+and a table's frame in WebKit too, and the stepper, the controls, the pieces and a table's frame in
+Firefox. `npm run lighthouse` builds the site and audits every page against the gates CI holds it
+to. Nothing needs building first, since the kit's tests read the sources and the site's tests build
+and serve the site themselves. `npm run build` compiles the theme module, the controls, the plugin
+and the components into the package's `dist`, beside a copy of each sheet, and builds the site.
+Installing also sets up the hooks, which lint and format what is staged and check each commit
+message.
 
 ```bash
 npx playwright install chromium webkit firefox

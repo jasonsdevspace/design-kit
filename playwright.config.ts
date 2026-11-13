@@ -5,9 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
  * it into the browser. An app's frame, tab bar and toast, the dialog, the stepper and a table's
- * frame are drawn in WebKit too, and the stepper, the controls and the pieces in Firefox. The
- * site's tests open the built site, which the config builds and serves under the path GitHub Pages
- * gives it.
+ * frame are drawn in WebKit too, and the stepper, the controls, the pieces and a table's frame in
+ * Firefox. The site's tests open the built site, which the config builds and serves under the path
+ * GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;
@@ -23,11 +23,12 @@ const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
- * there unless `appearance: textfield` takes them away, and the controls and the pieces, whose
- * lengths Firefox rounds to a sixty-fourth of a pixel, in the current Firefox Playwright brings
+ * there unless `appearance: textfield` takes them away, the controls and the pieces, whose
+ * lengths Firefox rounds to a sixty-fourth of a pixel, and a table's frame, whose shade a browser
+ * draws only where it ties an animation to a scroll, in the current Firefox Playwright brings
  * rather than the kit's floor.
  */
-const FIREFOX = '*/e2e/{stepper,controls,pieces}.spec.{ts,tsx}';
+const FIREFOX = '*/e2e/{stepper,controls,pieces,table}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',

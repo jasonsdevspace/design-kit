@@ -1079,78 +1079,75 @@
      * more, on any ground, and a frame that fits, which has no scroll to follow, shows none. The
      * shade is drawn behind the cells and reaches only the last few pixels of a cell the edge cuts,
      * and under a pinned column the start's shade is hidden, where the column's own rule marks the
-     * edge. A browser that cannot
-     * tie an animation to a scroll shows none, as before.
+     * edge. Only a browser that ties an animation to a scroll draws it, and only on screen, so a
+     * browser that cannot, forced colors in the system's own colors, and paper show none.
      */
-    :where(.dk-table-scroll) {
-        background:
-            linear-gradient(
-                    to right,
-                    color-mix(in oklab, var(--dk-fg) 30%, transparent),
-                    transparent
-                )
-                left / 0 100% no-repeat,
-            linear-gradient(
-                    to left,
-                    color-mix(in oklab, var(--dk-fg) 30%, transparent),
-                    transparent
-                )
-                right / 0 100% no-repeat;
-        animation: dk-table-shade linear both;
-        animation-timeline: scroll(self inline);
-    }
+    @supports (animation-timeline: scroll()) {
+        @media screen and (not (forced-colors: active)) {
+            :where(.dk-table-scroll) {
+                background:
+                    linear-gradient(
+                            to right,
+                            color-mix(in oklab, var(--dk-fg) 30%, transparent),
+                            transparent
+                        )
+                        left / 0 100% no-repeat,
+                    linear-gradient(
+                            to left,
+                            color-mix(in oklab, var(--dk-fg) 30%, transparent),
+                            transparent
+                        )
+                        right / 0 100% no-repeat;
+                animation: dk-table-shade linear both;
+                animation-timeline: scroll(self inline);
+            }
 
-    /* A frame that reads right to left starts at its right, so its shades trade places. */
-    :where(.dk-table-scroll:dir(rtl)) {
-        animation-name: dk-table-shade-rtl;
-    }
+            /* A frame that reads right to left starts at its right, so its shades trade places. */
+            :where(.dk-table-scroll:dir(rtl)) {
+                animation-name: dk-table-shade-rtl;
+            }
 
-    @keyframes dk-table-shade {
-        from {
-            background-size:
-                0 100%,
-                1rem 100%;
-        }
+            @keyframes dk-table-shade {
+                from {
+                    background-size:
+                        0 100%,
+                        1rem 100%;
+                }
 
-        2%,
-        98% {
-            background-size:
-                1rem 100%,
-                1rem 100%;
-        }
+                2%,
+                98% {
+                    background-size:
+                        1rem 100%,
+                        1rem 100%;
+                }
 
-        to {
-            background-size:
-                1rem 100%,
-                0 100%;
-        }
-    }
+                to {
+                    background-size:
+                        1rem 100%,
+                        0 100%;
+                }
+            }
 
-    @keyframes dk-table-shade-rtl {
-        from {
-            background-size:
-                1rem 100%,
-                0 100%;
-        }
+            @keyframes dk-table-shade-rtl {
+                from {
+                    background-size:
+                        1rem 100%,
+                        0 100%;
+                }
 
-        2%,
-        98% {
-            background-size:
-                1rem 100%,
-                1rem 100%;
-        }
+                2%,
+                98% {
+                    background-size:
+                        1rem 100%,
+                        1rem 100%;
+                }
 
-        to {
-            background-size:
-                0 100%,
-                1rem 100%;
-        }
-    }
-
-    /* Forced colors draw the page in the system's own colors, so the shade is left out. */
-    @media (forced-colors: active) {
-        :where(.dk-table-scroll) {
-            background: none;
+                to {
+                    background-size:
+                        0 100%,
+                        1rem 100%;
+                }
+            }
         }
     }
 
@@ -2877,10 +2874,6 @@
 
         :where(.dk-code, .dk-table-scroll) {
             overflow: visible;
-        }
-
-        :where(.dk-table-scroll) {
-            background: none;
         }
 
         :where(.dk-code, .dk-table-scroll .dk-table code, .dk-table-number) {
