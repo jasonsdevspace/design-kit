@@ -350,7 +350,22 @@ test.describe('the landing page', () => {
             .first()
             .locator('.site-hero-buttons')
             .evaluate((buttons) => buttons.getBoundingClientRect().bottom);
-        expect(bottom).toBeLessThan(844);
+        // Where each block above the buttons ends, so a failure says which one grew.
+        const ends = await page.evaluate(() =>
+            [
+                '.site-header',
+                'h1',
+                '.site-lead',
+                '.site-hero-text > :last-child',
+                '.site-hero-panel',
+            ]
+                .map((selector) => {
+                    const box = document.querySelector(selector)?.getBoundingClientRect();
+                    return `${selector} ${String(box?.top)} to ${String(box?.bottom)}`;
+                })
+                .join(', ')
+        );
+        expect(bottom, ends).toBeLessThan(844);
         await expect(page.locator('.site-hero-field').first()).toBeHidden();
         // Wider than a phone there is room for the field.
         await page.setViewportSize({ width: 820, height: 1180 });
