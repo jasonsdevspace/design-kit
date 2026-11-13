@@ -65,8 +65,8 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 
 The paths are in `packages/design-kit`.
 
-- `src/controls.test.ts` imports the module in plain Node, finds no export but its functions, and
-  holds it with the theme module, without comments, to its budget.
+- `src/controls.test.ts` imports the module in plain Node and finds no export but its functions,
+  and `scripts/controls.test.ts` holds what a page's bundler sends of it to its budget.
 - `e2e/toast.spec.tsx` serves the toast's markup and the module from an origin of its own, in
   Chromium and in WebKit, and finds a message drawn and said with its action's name without focus
   moving and with no element added, the same words said again, a toast with an action staying and

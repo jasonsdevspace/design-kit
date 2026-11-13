@@ -303,10 +303,10 @@ test('is as tall as the screen at any height, by the dynamic height', async ({ p
         expect(frame.y, `${String(height)}px`).toBe(0);
         expect(frame.height, `${String(height)}px`).toBe(height);
     }
-    // No test can move a phone browser's bars, so the unit itself is held: the dynamic height
-    // last, after the plain one a browser without it reads.
+    // No test can move a phone browser's bars, so the unit itself is held: the dynamic height,
+    // which every browser at the kit's floor reads.
     const rule = /:where\(\.dk-app\) \{[^}]*\}/.exec(sheet('components.css'))?.[0] ?? '';
-    expect(rule).toMatch(/height: 100vh;\s+height: 100dvh;/);
+    expect(rule).toMatch(/height: 100dvh;/);
 });
 
 test('is a column of 28rem in the middle of a wide screen, and the full width of a phone', async ({

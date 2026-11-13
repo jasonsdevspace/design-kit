@@ -14,10 +14,10 @@ import { withoutComments } from './summary.mjs';
  */
 
 /*
- * Raised from 6 KB for the pieces an app is made of, which ship in the components sheet beside the
- * rest rather than in a sheet of their own, so a page loads one sheet whatever it draws. The figure
- * holds every piece the release that adds them plans, with room for the dialog, which is the
- * largest of them.
+ * Set in 0.6.0 from the size audit of record 13: what the three sheets weigh sent together, with
+ * room for one more piece of the usual size, the median a piece costs, rounded up to the next
+ * quarter of a kilobyte. The app's pieces stay in the components sheet, so a page loads one sheet
+ * whatever it draws.
  */
 const BUDGET = 9 * 1024;
 const SHEETS = ['tokens.css', 'base.css', 'components.css'];
