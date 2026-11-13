@@ -3,14 +3,14 @@ import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from
 
 import { type Group, HELD } from '../../design-kit/examples/held.js';
 import { declaredIn } from '../../design-kit/examples/palette.js';
-import { CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
+import { APP, CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
 import { FAINT, TILES } from './mark.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
 import { Colors, Contrast, Scale, Spaces } from './tokens.js';
 
-const { DemoFooter, PortfolioStrip, SkipLink } = kit;
+const { DemoFooter, PortfolioStrip, SkipLink, Toast } = kit;
 
 /**
  * The version of the kit the site pins, its tokens sheet as the package ships it, and the commit
@@ -61,7 +61,7 @@ const CodeBlock = ({
     readonly code: string;
 }) => (
     <div className="site-code-panel">
-        <div className="site-code-head">
+        <div className="dk-code-head">
             <p className="dk-code-title" aria-hidden="true">
                 {title}
             </p>
@@ -379,6 +379,12 @@ const PREVIEWS: Readonly<
             <span className="site-preview-button">Filters</span>
         </>
     ),
+    'app-pieces/index.html': (
+        <span className="site-preview-phone">
+            <span className="site-preview-strip" />
+            <span className="site-preview-dock" />
+        </span>
+    ),
     'page-chrome/index.html': (
         <span className="site-preview-page">
             <span className="site-preview-strip" />
@@ -427,7 +433,7 @@ const Install = ({ version }: { readonly version: string }) => (
             >
                 <code>{`npm install @jasonsdevspace/design-kit@${version}`}</code>
             </pre>
-            <div className="site-code-head">
+            <div className="dk-code-head">
                 <span className="dk-visually-hidden site-code-name" id="install">
                     The install command
                 </span>
@@ -453,7 +459,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     read as one body of work and a fix to a button is made once. ShelfLens is built
                     on it.
                 </p>
-                <p className="site-actions">
+                <p className="dk-actions">
                     <a className="dk-button dk-button-accent" href={CONTROLS_PAGE}>
                         See every control
                     </a>
@@ -642,14 +648,27 @@ const Shown = ({
         </section>
     ));
 
-/** Each state of the buttons, fields and callouts. */
+/**
+ * The toast's own section, written by hand rather than from the states, under one name for its
+ * heading, its id, its tests and its place in the list of sections. The toast draws nothing until
+ * it is shown, so a preview of it would be an empty box, and a page holds one, so it is shown once,
+ * live, by a button the site's script attaches.
+ */
+const TOAST = 'Toast';
+
+const APP_PIECES = ROUTES.find(({ file }) => file === 'app-pieces/index.html')?.path ?? BASE;
+
+/** Each state of the buttons, fields, callouts and dialogs, and the toast. */
 export const Controls = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
         current="controls/index.html"
         title="Controls"
         lead={
-            <>The design kit&rsquo;s buttons, fields and callouts, in each state they can be in.</>
+            <>
+                The design kit&rsquo;s buttons, fields, callouts and dialogs, in each state they can
+                be in, and its toast.
+            </>
         }
         intro={
             <p>
@@ -658,9 +677,53 @@ export const Controls = ({ build }: { readonly build: Build }) => (
                 Light or Dark next to Theme, at the top of the page.
             </p>
         }
-        sections={listed(CONTROLS.map(({ name }) => name))}
+        sections={listed([...CONTROLS.map(({ name }) => name), TOAST])}
     >
         <Shown controls={CONTROLS} build={build} />
+        <section className="site-toast">
+            <h2 id={idOf(TOAST)}>{TOAST}</h2>
+            <p>
+                A toast says what just happened, at the foot of the screen, and can offer one
+                action, such as Undo. Press Save round 3 to see one. A toast with Undo stays until
+                it is dismissed, and the one Undo shows leaves after five seconds. The toast in an
+                app&rsquo;s frame is under <a href={`${APP_PIECES}#app-frame`}>App pieces</a>, in
+                both themes.
+            </p>
+            <p>
+                <button type="button" className="dk-button site-toast-show" hidden>
+                    Save round 3
+                </button>
+            </p>
+            <Toast />
+            <Tests group={TOAST} commit={build.commit} />
+        </section>
+    </Page>
+);
+
+/** An app's frame and tab bar as pictures, and the pieces a screen holds, live. */
+export const App = ({ build }: { readonly build: Build }) => (
+    <Page
+        build={build}
+        current="app-pieces/index.html"
+        title="App pieces"
+        lead={
+            <>
+                The frame, tab bar, grids of buttons, rows and pinned table a phone app is drawn
+                from.
+            </>
+        }
+        intro={
+            <p>
+                Each piece is shown twice: live in your theme, marked Live, and as a preview in the
+                other. Under each name is the code behind it. To see the other theme live, choose
+                Light or Dark next to Theme, at the top of the page. The frame and the tab bar are
+                pictures in both themes, since a live copy would give this page a second main
+                heading and a second set of places to go.
+            </p>
+        }
+        sections={listed(APP.map(({ name }) => name))}
+    >
+        <Shown controls={APP} build={build} />
     </Page>
 );
 
@@ -837,6 +900,7 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'index.html': (build) => <Landing build={build} />,
     'tokens/index.html': (build) => <Tokens build={build} />,
     'controls/index.html': (build) => <Controls build={build} />,
+    'app-pieces/index.html': (build) => <App build={build} />,
     'page-chrome/index.html': (build) => <Chrome build={build} />,
     'explainer-pieces/index.html': (build) => <Pieces build={build} />,
     'how-it-works/index.html': (build) => <Explainer build={build} />,

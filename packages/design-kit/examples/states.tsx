@@ -19,8 +19,10 @@ type Components = Pick<
     | 'InputField'
     | 'PortfolioStrip'
     | 'SelectField'
+    | 'StepperField'
     | 'TextareaField'
     | 'ThemeSwitch'
+    | 'Toast'
 >;
 
 /**
@@ -156,6 +158,12 @@ export const CONTROLS: readonly Control[] = [
                 attribute: 'class="dk-button dk-button-large"',
                 react: `<Button large>Try it with your own products</Button>`,
                 draw: ({ Button }) => <Button large>Try it with your own products</Button>,
+            },
+            {
+                name: "A tall button, pressed at arm's length",
+                attribute: 'class="dk-button dk-button-tall"',
+                react: `<Button tall>Save the round</Button>`,
+                draw: ({ Button }) => <Button tall>Save the round</Button>,
             },
             {
                 name: 'A button drawn as a link, beside a block',
@@ -322,6 +330,87 @@ export const CONTROLS: readonly Control[] = [
         ],
     },
     {
+        name: 'Stepper',
+        laidOut: true,
+        states: [
+            {
+                name: 'A number stepped up or down',
+                attribute: 'class="dk-stepper"',
+                react: `<StepperField id="guests" label="Guests" min={1} max={8} defaultValue={2} />`,
+                draw: ({ StepperField }, id) => (
+                    <StepperField
+                        id={id('guests')}
+                        label="Guests"
+                        min={1}
+                        max={8}
+                        defaultValue={2}
+                    />
+                ),
+            },
+            {
+                name: 'A stepper with its label beside it',
+                attribute: 'class="dk-field dk-stepper-inline"',
+                react: `<StepperField
+    id="players"
+    label="Players"
+    subject="the number of players"
+    min={2}
+    max={8}
+    defaultValue={4}
+    inline
+/>`,
+                draw: ({ StepperField }, id) => (
+                    <StepperField
+                        id={id('players')}
+                        label="Players"
+                        subject="the number of players"
+                        min={2}
+                        max={8}
+                        defaultValue={4}
+                        inline
+                    />
+                ),
+            },
+            {
+                name: 'A tall stepper, for a count read across a table',
+                attribute: 'class="dk-stepper dk-stepper-tall"',
+                react: `<StepperField id="bid" label="Bid" min={0} max={10} defaultValue={3} tall />`,
+                draw: ({ StepperField }, id) => (
+                    <StepperField
+                        id={id('bid')}
+                        label="Bid"
+                        min={0}
+                        max={10}
+                        defaultValue={3}
+                        tall
+                    />
+                ),
+            },
+            {
+                name: 'A stepper given a number past its limit',
+                attribute: 'class="dk-field-error dk-stepper-range"',
+                react: `<StepperField
+    id="tricks"
+    label="Tricks taken"
+    min={0}
+    max={10}
+    defaultValue={11}
+    rangeError="Enter a number from 0 to 10"
+/>`,
+                draw: ({ StepperField }, id) => (
+                    <StepperField
+                        id={id('tricks')}
+                        label="Tricks taken"
+                        min={0}
+                        max={10}
+                        defaultValue={11}
+                        rangeError="Enter a number from 0 to 10"
+                    />
+                ),
+            },
+        ],
+    },
+    {
         name: 'Callouts',
         laidOut: true,
         states: [
@@ -379,6 +468,144 @@ export const CONTROLS: readonly Control[] = [
                     <Callout tone="warning" title="Three products are running low">
                         <p>Each has fewer than five left.</p>
                     </Callout>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Dialog',
+        laidOut: true,
+        states: [
+            {
+                name: 'A question over the page',
+                attribute: 'class="dk-dialog"',
+                react: `<>
+    <button type="button" className="dk-button" aria-haspopup="dialog" aria-controls="end-game">
+        End the game
+    </button>
+    <dialog
+        className="dk-dialog"
+        id="end-game"
+        aria-labelledby="end-game-title"
+        aria-describedby="end-game-text"
+    >
+        <h2 className="dk-dialog-title" id="end-game-title">
+            End the game now?
+        </h2>
+        <p id="end-game-text">The scores so far are kept in the history.</p>
+        <form method="dialog" className="dk-dialog-actions">
+            <button type="submit" className="dk-button" value="keep">
+                Keep playing
+            </button>
+            <button type="submit" className="dk-button dk-button-accent" value="end">
+                End the game
+            </button>
+        </form>
+    </dialog>
+</>`,
+                draw: (_kit, id) => (
+                    <>
+                        <button
+                            type="button"
+                            className="dk-button"
+                            aria-haspopup="dialog"
+                            aria-controls={id('end-game')}
+                        >
+                            End the game
+                        </button>
+                        <dialog
+                            className="dk-dialog"
+                            id={id('end-game')}
+                            aria-labelledby={id('end-game-title')}
+                            aria-describedby={id('end-game-text')}
+                        >
+                            <h2 className="dk-dialog-title" id={id('end-game-title')}>
+                                End the game now?
+                            </h2>
+                            <p id={id('end-game-text')}>
+                                The scores so far are kept in the history.
+                            </p>
+                            <form method="dialog" className="dk-dialog-actions">
+                                <button type="submit" className="dk-button" value="keep">
+                                    Keep playing
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="dk-button dk-button-accent"
+                                    value="end"
+                                >
+                                    End the game
+                                </button>
+                            </form>
+                        </dialog>
+                    </>
+                ),
+            },
+            {
+                name: 'A sheet from the bottom of the screen',
+                attribute: 'class="dk-dialog dk-dialog-sheet"',
+                react: `<>
+    <button
+        type="button"
+        className="dk-button"
+        aria-haspopup="dialog"
+        aria-controls="round-options"
+    >
+        Round options
+    </button>
+    <dialog
+        className="dk-dialog dk-dialog-sheet"
+        id="round-options"
+        aria-labelledby="round-options-title"
+    >
+        <h2 className="dk-dialog-title" id="round-options-title" tabIndex={-1} autoFocus>
+            Round options
+        </h2>
+        <SelectField id="dealt" label="Cards dealt">
+            <option value="10">Ten each</option>
+            <option value="7">Seven each</option>
+        </SelectField>
+        <form method="dialog" className="dk-dialog-actions">
+            <button type="submit" className="dk-button dk-button-accent">
+                Done
+            </button>
+        </form>
+    </dialog>
+</>`,
+                draw: ({ SelectField }, id) => (
+                    <>
+                        <button
+                            type="button"
+                            className="dk-button"
+                            aria-haspopup="dialog"
+                            aria-controls={id('round-options')}
+                        >
+                            Round options
+                        </button>
+                        <dialog
+                            className="dk-dialog dk-dialog-sheet"
+                            id={id('round-options')}
+                            aria-labelledby={id('round-options-title')}
+                        >
+                            <h2
+                                className="dk-dialog-title"
+                                id={id('round-options-title')}
+                                tabIndex={-1}
+                                autoFocus
+                            >
+                                Round options
+                            </h2>
+                            <SelectField id={id('dealt')} label="Cards dealt">
+                                <option value="10">Ten each</option>
+                                <option value="7">Seven each</option>
+                            </SelectField>
+                            <form method="dialog" className="dk-dialog-actions">
+                                <button type="submit" className="dk-button dk-button-accent">
+                                    Done
+                                </button>
+                            </form>
+                        </dialog>
+                    </>
                 ),
             },
         ],

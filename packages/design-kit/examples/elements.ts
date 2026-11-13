@@ -24,6 +24,13 @@ export const elementOf = (react: string, kit: object): React.ReactElement => {
         if (ts.isParenthesizedExpression(node)) return valueOf(node.expression);
         if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
         if (ts.isNumericLiteral(node)) return Number(node.text);
+        // A number below nothing, such as a tab index of -1, is a minus before a number.
+        if (
+            ts.isPrefixUnaryExpression(node) &&
+            node.operator === ts.SyntaxKind.MinusToken &&
+            ts.isNumericLiteral(node.operand)
+        )
+            return -Number(node.operand.text);
         if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
         if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
         if (ts.isArrayLiteralExpression(node)) return node.elements.map(valueOf);

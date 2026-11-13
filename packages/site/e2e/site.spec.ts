@@ -24,6 +24,12 @@ const PAGES = ROUTES.map(({ path }) => path);
 const WIDTHS = [320, 390, 768, 1280] as const;
 
 /**
+ * The site's own status line, which its script puts last in the main content, apart from the status
+ * lines a stepper or a toast keeps for itself.
+ */
+const STATUS = 'main > [role="status"]';
+
+/**
  * The visitor's own text size, as the browser's setting sets it, which every rem is drawn from.
  * The session stays open for the page's life, since closing it undoes the setting, and the size is
  * read back, so a setting the browser drops fails the test rather than leaving it at one size.
@@ -288,7 +294,7 @@ test.describe('the landing page', () => {
         await page.keyboard.press('Tab');
         await expect(page.getByRole('button', { name: 'Copy The install command' })).toBeFocused();
         await page.keyboard.press('Enter');
-        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.locator(STATUS)).toHaveText('Copied.');
         expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(command);
     });
 
@@ -453,7 +459,7 @@ test.describe('the words each page opens with', () => {
     }) => {
         for (const path of PAGES) {
             await page.goto(path);
-            const text = (await page.locator('main').textContent()) ?? '';
+            const text = (await page.locator('body > main').textContent()) ?? '';
             expect(text, path).not.toMatch(
                 /under Theme in the strip|attribute that draws|See the controls/
             );
@@ -769,6 +775,111 @@ test.describe('the controls page', () => {
         await expect(page.locator('.site-state-copies > .site-copy:not([inert])')).toHaveCount(
             states
         );
+    });
+});
+
+test.describe('the controls page, with the pieces the script attaches', () => {
+    test('shows a toast with Undo, which shows one with no action in its place', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const toast = page.locator('.site-toast .dk-toast');
+        await expect(toast).not.toHaveAttribute('data-shown');
+        await page.getByRole('button', { name: 'Save round 3' }).click();
+        await expect(toast).toHaveAttribute('data-shown');
+        await expect(toast.locator('.dk-toast-message')).toHaveText('Round 3 saved.');
+        await toast.getByRole('button', { name: 'Undo' }).click();
+        await expect(toast.locator('.dk-toast-message')).toHaveText('Round 3 is back as it was.');
+        await expect(toast.getByRole('button', { name: 'Undo' })).toBeHidden();
+        await expect(toast.getByRole('button', { name: 'Dismiss' })).toBeVisible();
+    });
+
+    test('opens each live dialog from its button, and returns focus to it once closed', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const live = page.locator('.site-copy:not([inert])');
+        const ask = live.getByRole('button', { name: 'End the game' });
+        await ask.click();
+        const question = live.getByRole('dialog', { name: 'End the game now?' });
+        await expect(question).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(question).toBeHidden();
+        await expect(ask).toBeFocused();
+        const options = live.getByRole('button', { name: 'Round options' });
+        await options.click();
+        await expect(live.getByRole('heading', { name: 'Round options' })).toBeFocused();
+        await live.getByRole('button', { name: 'Done' }).click();
+        await expect(options).toBeFocused();
+    });
+
+    test("shows every stepper's buttons, and the error in the preview past its limit", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const steppers = page.locator('.site-copy .dk-stepper');
+        expect(await steppers.count()).toBeGreaterThan(0);
+        for (const stepper of await steppers.all()) {
+            await expect(stepper.locator('.dk-stepper-up')).toBeVisible();
+        }
+        const past = page
+            .locator('.site-state')
+            .filter({ hasText: 'A stepper given a number past its limit' });
+        await expect(past.locator('.site-other .dk-stepper-range')).toBeVisible();
+        // The live copy says nothing as the page loads, and tells the visitor once they change it.
+        await expect(past.locator('.site-copy:not([inert]) .dk-stepper-range')).toBeHidden();
+    });
+
+    test('draws no app frame and no page that ends in a tab bar', async ({ page }) => {
+        await page.goto('/design-kit/controls/');
+        await expect(page.locator('.dk-app, .dk-tabbar-page')).toHaveCount(0);
+    });
+});
+
+test.describe('the app pieces page', () => {
+    test('draws the frame and the tab bar as pictures, and the grids, rows and table live', async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/app-pieces/');
+        const live = page.locator('.site-copy:not([inert])');
+        await expect(live.locator('.dk-app, .dk-tabbar')).toHaveCount(0);
+        await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(4);
+        await expect(live.getByRole('group', { name: 'Cards in hand' })).toBeVisible();
+        await expect(live.locator('.dk-rows')).toHaveCount(4);
+        await expect(live.getByRole('table', { name: 'Scores by round' })).toBeVisible();
+        // A toast is shown only in a picture of a screen, so no live one waits on the page.
+        await expect(page.locator('.dk-toast:not([inert] *)')).toHaveCount(0);
+    });
+
+    test("draws each screen as a phone's height in a box of its own, its bars inside it", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 320, height: 640 });
+        await page.goto('/design-kit/app-pieces/');
+        for (const screen of await page.locator('.site-copy > .dk-app').all()) {
+            const box = await screen.boundingBox();
+            expect(box?.height ?? 0).toBeGreaterThanOrEqual(30 * 16);
+            await expect(screen).toHaveCSS('overflow', 'clip');
+        }
+        for (const bar of await page.locator('.site-copy .dk-tabbar-page > .dk-tabbar').all()) {
+            await expect(bar).toHaveCSS('position', 'static');
+        }
+        // The page keeps none of the room the kit keeps for a bar that sticks to the screen.
+        await expect(page.locator('html')).toHaveCSS('scroll-padding-bottom', '0px');
+    });
+
+    test('flips a toggle in the grid, and leaves a plain key with no state', async ({ page }) => {
+        await page.goto('/design-kit/app-pieces/');
+        const live = page.locator('.site-copy:not([inert])');
+        const card = live.getByRole('group', { name: 'Cards in hand' }).getByRole('button', {
+            name: '8',
+        });
+        await expect(card).toHaveAttribute('aria-pressed', 'false');
+        await card.click();
+        await expect(card).toHaveAttribute('aria-pressed', 'true');
+        await expect(
+            live.getByRole('group', { name: 'Score' }).locator('[aria-pressed]')
+        ).toHaveCount(0);
     });
 });
 
@@ -1127,7 +1238,9 @@ test.describe("the site's header", () => {
             .evaluate((segment) => getComputedStyle(segment).outlineStyle);
         expect(ring).not.toBe('none');
     });
-    test("leaves room in the tabs' row for the kit's focus ring", async ({ page }) => {
+    test("leaves room in the tabs' row for the kit's focus ring, and clips none of it", async ({
+        page,
+    }) => {
         await page.goto('/design-kit/controls/');
         const room = await page.locator('.site-header .dk-pills').evaluate((list) => {
             const style = getComputedStyle(list);
@@ -1136,11 +1249,19 @@ test.describe("the site's header", () => {
             const ring =
                 parseFloat(root.getPropertyValue('--dk-ring-width')) +
                 parseFloat(root.getPropertyValue('--dk-ring-offset'));
-            return [style.paddingTop, style.paddingBottom, style.paddingLeft, style.paddingRight]
+            // The row keeps the ring's room at its sides, and above and below the ring reaches
+            // into the header's own space, which nothing between the row and the page clips.
+            const sides = [style.paddingLeft, style.paddingRight]
                 .map(parseFloat)
                 .every((padding) => padding >= ring - 0.5);
+            const clipped = [];
+            for (let at: Element | null = list; at && at !== document.body; at = at.parentElement) {
+                const { overflowX, overflowY } = getComputedStyle(at);
+                if (overflowX !== 'visible' || overflowY !== 'visible') clipped.push(at.className);
+            }
+            return { sides, clipped };
         });
-        expect(room).toBe(true);
+        expect(room).toEqual({ sides: true, clipped: [] });
     });
 
     test('shows the chosen theme, the current page and the chosen tab in forced colors', async ({
@@ -1409,8 +1530,14 @@ test.describe('the theme switch', () => {
             .evaluate((section) => {
                 const outer = section.getBoundingClientRect();
                 const group = section.querySelector('.dk-theme-switch');
-                const inner = group?.getBoundingClientRect();
-                return !inner || inner.left < outer.left - 1 || inner.right > outer.right + 1;
+                if (!group) return true;
+                // The switch keeps the focus ring's room at its sides, reaching that far past the
+                // section, so what fits is the switch inside that room.
+                const box = group.getBoundingClientRect();
+                const { paddingLeft, paddingRight } = getComputedStyle(group);
+                const left = box.left + parseFloat(paddingLeft);
+                const right = box.right - parseFloat(paddingRight);
+                return left < outer.left - 1 || right > outer.right + 1;
             });
         expect(spills, `${String(width)} at text ${String(scale)}`).toBe(false);
     };
@@ -1452,6 +1579,7 @@ test.describe('the code of each state', () => {
     test("shows each state's markup as the copy beside it draws it", async ({ page }) => {
         for (const path of [
             '/design-kit/controls/',
+            '/design-kit/app-pieces/',
             '/design-kit/page-chrome/',
             '/design-kit/explainer-pieces/',
         ]) {
@@ -1494,7 +1622,7 @@ test.describe('the code of each state', () => {
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
                     // label, and with the ids the code names. A control the site's script attaches,
-                    // the switch and the copy button, is shown, so the hidden the code prints is
+                    // the switch, the copy button and a stepper, is shown, so the hidden the code prints is
                     // read as shown too, and the choice the script checks is a property the markup
                     // never carries.
                     const copy = state.querySelector('.site-copy')?.cloneNode(true);
@@ -1506,6 +1634,10 @@ test.describe('the code of each state', () => {
                     copy.querySelector('.site-copy-label')?.remove();
                     for (const hidden of copy.querySelectorAll('[hidden]'))
                         hidden.removeAttribute('hidden');
+                    // A stepper's button at a limit, which the script marks off as it attaches the
+                    // stepper, is read as the markup draws it.
+                    for (const off of copy.querySelectorAll('.dk-stepper > [aria-disabled]'))
+                        off.removeAttribute('aria-disabled');
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
@@ -1559,7 +1691,7 @@ test.describe('the code of each state', () => {
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         const block = page.getByRole('region', { name: 'Markup, An action' });
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.locator(STATUS)).toHaveText('Copied.');
         await expect(page.getByRole('button', { name: 'Copied Markup, An action' })).toBeVisible();
         expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
             await block.textContent()
@@ -1591,12 +1723,12 @@ test.describe('the code of each state', () => {
         await page.goto('/design-kit/controls/');
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.locator(STATUS)).toHaveText('Copied.');
         // Emptied first, so a screen reader hears the same words again.
         const heard = page.evaluate(
             () =>
                 new Promise<string[]>((resolve) => {
-                    const status = document.querySelector('[role="status"]');
+                    const status = document.querySelector('main > [role="status"]');
                     const seen: string[] = [];
                     if (!status) return resolve(seen);
                     new MutationObserver(() => {
@@ -1620,7 +1752,7 @@ test.describe('the code of each state', () => {
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         const block = page.getByRole('region', { name: 'Markup, An action' });
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.getByRole('status')).toHaveText(
+        await expect(page.locator(STATUS)).toHaveText(
             'Selected. Press Control and C, or Command and C on a Mac, to copy.'
         );
         expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
@@ -1819,7 +1951,7 @@ test.describe('the state cards', () => {
         await page.evaluate(() => {
             (window as unknown as { answerClipboard: () => void }).answerClipboard();
         });
-        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.locator(STATUS)).toHaveText('Copied.');
         // Read at once, before the button would say Copy again on its own: the words its name is
         // made of, the one shown and the name of what it copies.
         expect(
@@ -1850,7 +1982,7 @@ test.describe('the state cards', () => {
                     .join('')
             );
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.getByRole('status')).toHaveText('Copied.');
+        await expect(page.locator(STATUS)).toHaveText('Copied.');
         expect(await name()).toBe('Copied Markup, An action');
         await page.getByRole('tab', { name: 'React' }).first().click();
         expect(await name()).toBe('Copy React, An action');
@@ -2178,7 +2310,7 @@ test.describe('how each state is shown', () => {
         await expect(note).toHaveText(
             'This is only a preview of the dark theme. Try the one marked Live, or switch to dark.'
         );
-        await expect(page.getByRole('status')).toHaveText(
+        await expect(page.locator(STATUS)).toHaveText(
             'This is only a preview of the dark theme. Try the light one.'
         );
         // Escape closes it, and so does a tap anywhere else.
@@ -2196,7 +2328,7 @@ test.describe('how each state is shown', () => {
             page.locator('body > .dk-strip').getByRole('radio', { name: 'Dark' })
         ).toBeChecked();
         await expect(note).toHaveCount(0);
-        await expect(page.getByRole('status')).toHaveText('The theme is dark now.');
+        await expect(page.locator(STATUS)).toHaveText('The theme is dark now.');
         // Focus goes to the live copy beside it, rather than back to the start of the page.
         await expect(state.locator('.site-copy:not(.site-other)')).toBeFocused();
     });
@@ -2246,7 +2378,10 @@ test.describe('how each state is shown', () => {
     }) => {
         await page.emulateMedia({ colorScheme: 'light' });
         await page.goto('/design-kit/controls/');
-        /** What the keyboard reaches in the main content outside the live copies. */
+        /**
+         * What the keyboard reaches in the main content outside the live copies and the toast's
+         * own section.
+         */
         const reached = () =>
             page.evaluate(() =>
                 [
@@ -2258,7 +2393,8 @@ test.describe('how each state is shown', () => {
                         (element) =>
                             element.tabIndex >= 0 &&
                             element.closest('[inert]') === null &&
-                            element.closest('.site-copy') === null
+                            element.closest('.site-copy') === null &&
+                            element.closest('.site-toast') === null
                     )
                     .map(
                         (element) =>
@@ -2398,7 +2534,7 @@ test.describe('how each state is shown', () => {
         page,
     }) => {
         await page.goto('/design-kit/controls/');
-        await expect(page.locator('main [role="status"]')).toHaveCount(1);
+        await expect(page.locator(STATUS)).toHaveCount(1);
         await page.goto('/design-kit/tokens/');
         await expect(page.locator('[role="status"]')).toHaveCount(0);
     });
@@ -2415,7 +2551,7 @@ test.describe('how each state is shown', () => {
             await page.goto('/design-kit/controls/');
             await page.locator('summary', { hasText: 'The code, An action' }).click();
             await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-            await expect(page.getByRole('status')).toHaveText(
+            await expect(page.locator(STATUS)).toHaveText(
                 "Selected. Copy it with your device's copy command."
             );
         } finally {

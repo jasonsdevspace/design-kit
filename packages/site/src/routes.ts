@@ -40,9 +40,18 @@ export const ROUTES = [
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',
         nav: 'Controls',
-        card: 'Buttons, fields and callouts in every state.',
+        card: 'Buttons, fields, dialogs and a toast in every state.',
         description:
-            'Each state of the design kit’s buttons, fields and callouts, in both themes, with the code behind it.',
+            'Each state of the design kit’s buttons, fields, callouts and dialogs, and its toast, in both themes, with the code behind it.',
+    },
+    {
+        file: 'app-pieces/index.html',
+        path: `${BASE}app-pieces/`,
+        title: 'App pieces · The design kit · Jason Poteet',
+        nav: 'App pieces',
+        card: 'The frame, tab bar, grids, rows and tables of a phone app.',
+        description:
+            'The frame, tab bar, button grids, rows and pinned table the design kit gives a phone app, in both themes, with the code behind each.',
     },
     {
         file: 'page-chrome/index.html',

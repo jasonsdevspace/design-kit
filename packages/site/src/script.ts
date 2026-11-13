@@ -1,4 +1,11 @@
-import { attachCopyButton, attachThemeSwitch, chooseTheme } from 'design-kit-release/controls';
+import {
+    attachCopyButton,
+    attachDialog,
+    attachStepper,
+    attachThemeSwitch,
+    attachToast,
+    chooseTheme,
+} from 'design-kit-release/controls';
 
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
@@ -86,7 +93,7 @@ interface Block {
 /** The blocks of one state's code, in the order the page wrote them. */
 const blocksOf = (code: HTMLElement): Block[] =>
     [...code.querySelectorAll<HTMLElement>(':scope > .site-code-panel')].flatMap((panel) => {
-        const head = panel.querySelector<HTMLElement>('.site-code-head');
+        const head = panel.querySelector<HTMLElement>('.dk-code-head');
         const title = panel.querySelector('.site-code-name');
         const block = panel.querySelector<HTMLElement>('pre.dk-code');
         if (!head || !title || !block) return [];
@@ -259,7 +266,8 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('main .site-co
 /*
  * The live copies of the states a reader can change. A toggle flips what it says it is, and a
  * button that names a panel opens and closes it, so what a control says it is stays true after it
- * is pressed. The previews in the other theme stay as they are drawn.
+ * is pressed. A theme switch's button is the kit's to open, and is left to it. The previews in the
+ * other theme stay as they are drawn.
  */
 for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     'main .site-copy:not([inert]) button[aria-pressed]'
@@ -271,7 +279,7 @@ for (const toggle of document.querySelectorAll<HTMLButtonElement>(
 }
 
 for (const opener of document.querySelectorAll<HTMLButtonElement>(
-    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]'
+    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button)'
 )) {
     const panel = document.getElementById(opener.getAttribute('aria-controls') ?? '');
     if (!panel) continue;
@@ -281,6 +289,48 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
         const open = opener.getAttribute('aria-expanded') !== 'true';
         opener.setAttribute('aria-expanded', String(open));
         panel.hidden = !open;
+    });
+}
+
+/*
+ * Every stepper, the previews among them, since the kit hides a stepper's buttons until it is
+ * attached and a preview without them would be a bare number field. A preview given a number past
+ * its limit is told so, as the live copy is once the number is changed, so the preview shows the
+ * error, and the live copy says nothing as the page loads.
+ */
+for (const stepper of document.querySelectorAll<HTMLElement>('main .site-copy .dk-stepper')) {
+    attachStepper(stepper);
+    if (stepper.closest('[inert]'))
+        stepper.querySelector('input')?.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/*
+ * The live copy of each dialog, opened by the button before it, which focus returns to when it
+ * closes. The previews draw the dialog in place, and are never attached.
+ */
+for (const dialog of document.querySelectorAll<HTMLDialogElement>(
+    'main .site-copy:not([inert]) .dk-dialog'
+)) {
+    const open = attachDialog(dialog);
+    document
+        .querySelector<HTMLButtonElement>(`main button[aria-controls="${dialog.id}"]`)
+        ?.addEventListener('click', open);
+}
+
+/*
+ * The toast's section: a button that shows a toast with Undo, which shows one without an action,
+ * so the one toast shows both kinds, the one that waits and the one that leaves on its own.
+ */
+const toast = document.querySelector<HTMLElement>('main .dk-toast');
+const toastShow = document.querySelector<HTMLButtonElement>('main .site-toast-show');
+if (toast && toastShow) {
+    const show = attachToast(toast);
+    toastShow.hidden = false;
+    toastShow.addEventListener('click', () => {
+        show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => show('Round 3 is back as it was.'),
+        });
     });
 }
 
