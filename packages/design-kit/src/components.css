@@ -1074,39 +1074,80 @@
 
     /*
      * A frame that scrolls further shows a shade at the edge it scrolls toward, since a phone hides
-     * its scroll bar and a cut that falls between two columns says nothing of the rest. The shades
-     * stay at the frame's edges, and a patch of the frame's ground, --dk-table-edge, at each end of
-     * what it holds scrolls with it, covering the shade once that end is in view, so a frame that
-     * fits shows none. The shade is drawn under the cells, so their text keeps its contrast, and
-     * under a pinned column the start's shade is hidden, where the column's own rule marks the edge.
-     * A table that reads right to left shows none, since Safari sets the patches at the wrong ends
-     * of a frame scrolled that way, shading the end in view and not the one that scrolls.
+     * its scroll bar and a cut that falls between two columns says nothing of the rest. Each shade
+     * grows from nothing as the frame's own scroll leaves that end, so it shows only where there is
+     * more, on any ground, and a frame that fits, which has no scroll to follow, shows none. The
+     * shade is drawn behind the cells and reaches only the last few pixels of a cell the edge cuts,
+     * and under a pinned column the start's shade is hidden, where the column's own rule marks the
+     * edge. A browser that cannot
+     * tie an animation to a scroll shows none, as before.
      */
     :where(.dk-table-scroll) {
         background:
-            linear-gradient(to right, var(--dk-table-edge) 30%, transparent) left / 2rem 100%
-                no-repeat local,
-            linear-gradient(to left, var(--dk-table-edge) 30%, transparent) right / 2rem 100%
-                no-repeat local,
             linear-gradient(
                     to right,
                     color-mix(in oklab, var(--dk-fg) 30%, transparent),
                     transparent
                 )
-                left / 1rem 100% no-repeat scroll,
+                left / 0 100% no-repeat,
             linear-gradient(
                     to left,
                     color-mix(in oklab, var(--dk-fg) 30%, transparent),
                     transparent
                 )
-                right / 1rem 100% no-repeat scroll;
+                right / 0 100% no-repeat;
+        animation: dk-table-shade linear both;
+        animation-timeline: scroll(self inline);
     }
 
+    /* A frame that reads right to left starts at its right, so its shades trade places. */
     :where(.dk-table-scroll:dir(rtl)) {
-        background: none;
+        animation-name: dk-table-shade-rtl;
     }
 
-    /* Forced colors draw the page in the system's own, which the ground's patches would not match. */
+    @keyframes dk-table-shade {
+        from {
+            background-size:
+                0 100%,
+                1rem 100%;
+        }
+
+        2%,
+        98% {
+            background-size:
+                1rem 100%,
+                1rem 100%;
+        }
+
+        to {
+            background-size:
+                1rem 100%,
+                0 100%;
+        }
+    }
+
+    @keyframes dk-table-shade-rtl {
+        from {
+            background-size:
+                1rem 100%,
+                0 100%;
+        }
+
+        2%,
+        98% {
+            background-size:
+                1rem 100%,
+                1rem 100%;
+        }
+
+        to {
+            background-size:
+                0 100%,
+                1rem 100%;
+        }
+    }
+
+    /* Forced colors draw the page in the system's own colors, so the shade is left out. */
     @media (forced-colors: active) {
         :where(.dk-table-scroll) {
             background: none;
@@ -2836,6 +2877,10 @@
 
         :where(.dk-code, .dk-table-scroll) {
             overflow: visible;
+        }
+
+        :where(.dk-table-scroll) {
+            background: none;
         }
 
         :where(.dk-code, .dk-table-scroll .dk-table code, .dk-table-number) {

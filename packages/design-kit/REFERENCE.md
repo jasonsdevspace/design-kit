@@ -62,7 +62,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
 | `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
-| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column and over a frame's shades at its ends, read as the page's, a panel's or a dialog's, and its width, read as 8rem, with no room kept under 17.5rem wide    |
+| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's, a panel's or a dialog's, and its width, read as 8rem, with no room kept under 17.5rem wide                                          |
 | `--dk-stepper-digits`                                                                             | unset, and read as 2, how many figures a stepper's value has room for                                                                                                                            |
 
 </details>
@@ -1162,12 +1162,12 @@ does. On paper the table shows whole and its figures and code wrap. The frame's 
 a target's room at its end edge, which a browser counts as out of view.
 
 A frame that scrolls further shows a shade at each edge it scrolls toward, since a phone hides its
-scroll bar, and none at an end that is in view, so a frame whose table fits shows none. The shade is
-drawn under the cells, so their text keeps its contrast, and covered at each end by the frame's
-ground, the page's, a panel's or a dialog's, or what a page sets in `--dk-table-ground`. Under a
-pinned column the start's shade is hidden, where the column's rule marks the edge. A table that
-reads right to left shows no shade, since Safari draws it at the wrong ends there, and forced colors
-show none either.
+scroll bar, and none at an end that is in view, so a frame whose table fits shows none. Each shade
+grows as the frame's own scroll leaves that end, on any ground, either way the table reads, and for
+a visitor who asks for less motion too. It is drawn behind the cells and reaches only the last few
+pixels of a cell the edge cuts, and under a pinned column the start's shade is hidden, where the
+column's rule marks the edge. A browser that cannot tie an animation to a scroll shows no shade, and
+neither do forced colors or paper.
 
 </details>
 
