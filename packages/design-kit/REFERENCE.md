@@ -1161,6 +1161,14 @@ token's name never breaks after `--dk-`, and a long expression scrolls the frame
 does. On paper the table shows whole and its figures and code wrap. The frame's scroll padding keeps
 a target's room at its end edge, which a browser counts as out of view.
 
+A frame that scrolls further shows a shade at each edge it scrolls toward, since a phone hides its
+scroll bar, and none at an end that is in view, so a frame whose table fits shows none. Each shade
+grows as the frame's own scroll leaves that end, on any ground, either way the table reads, and for
+a visitor who asks for less motion too. It is drawn behind the cells and reaches only the last few
+pixels of a cell the edge cuts, and under a pinned column the start's shade is hidden, where the
+column's rule marks the edge. A browser that cannot tie an animation to a scroll shows no shade, and
+neither do forced colors or paper.
+
 </details>
 
 #### A pinned first column
