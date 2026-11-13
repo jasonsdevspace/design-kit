@@ -728,7 +728,18 @@ test('keeps the layout it had for a toast written without its group of buttons',
     await textSize(page, 2);
     await show(page, 'Round 3 saved.', 'Undo');
     await settle(page);
-    await together(page, 'Undo', 'without the group at 320px and twice the text size');
+    // Under the message, the action before the close button on one row at its end, or where a face
+    // too wide leaves no room for both, each at the end of a row of its own, as before the group.
+    const words = await box(message(page), 'the message');
+    const action = await box(undo(page), 'the action');
+    const close = await box(dismiss(page), 'the close button');
+    const card = await box(toast(page), 'the toast');
+    const end = card.x + card.width;
+    expect(action.y).toBeGreaterThanOrEqual(words.y + words.height - 1);
+    expect(end - (close.x + close.width)).toBeLessThan(16);
+    if (Math.abs(close.y - action.y) <= 1)
+        expect(close.x).toBeGreaterThan(action.x + action.width - 1);
+    else expect(end - (action.x + action.width)).toBeLessThan(16);
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
