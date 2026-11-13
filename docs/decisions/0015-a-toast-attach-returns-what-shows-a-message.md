@@ -63,7 +63,7 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 
 ## How it is tested
 
-The paths are in `packages/design-kit`.
+The paths are in `packages/design-kit`, and that of the budget in the repository's `scripts`.
 
 - `src/controls.test.ts` imports the module in plain Node and finds no export but its functions,
   and `scripts/controls.test.ts` holds what a page's bundler sends of it to its budget.

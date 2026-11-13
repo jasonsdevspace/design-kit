@@ -269,7 +269,7 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const onFocusOut = (event: FocusEvent) => {
         if (!group.contains(event.relatedTarget as Node | null)) close(false);
     };
-    // One signal takes every listener away together when the switch is.
+    // One signal takes away together every listener the switch puts on its own elements.
     const listening = new AbortController();
     const { signal } = listening;
     for (const radio of radios) radio.addEventListener('change', onChange, { signal });

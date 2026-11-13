@@ -85,10 +85,10 @@ a page that attaches it before its choices are drawn can attach it again once th
 
 ## The size audit of 0.6.0
 
-Before 0.6.0 the package was measured by what each part of it costs a page, and the package record
-now shows the figures: each piece by what the three sheets save without its rules, and each function
-by what it costs a page alone and added to every other. The types and the README are measured apart
-from what reaches a browser, in the record's last table.
+For 0.6.0 the package was measured part by part, and the package record now shows the figures: each
+piece by what the three sheets save without its rules, and each function by what it costs a page
+alone and added to every other. The types and the README are measured apart from what reaches a
+browser, in the record's last table.
 
 What the audit found larger than it needed to be went: the plain height a browser without the
 dynamic one read before each `dvh`, which no browser at the kit's floor needs, two blocks for one
@@ -110,10 +110,10 @@ second sheet that holds back its first paint, and a module of their own would sp
 since a bundler already sends only the functions a page imports.
 
 The budgets are set from the audit: what the sheets, and the controls as a bundler sends every
-function, weigh after it, with room for one more piece or function of the usual size, the median
-the record shows, rounded up to the next quarter of a kilobyte. That keeps the sheets at 9 KB and
-sets the controls at 6.25 KB, from the 7 KB that counted the theme script, which a bundler drops
-from the controls and a page puts inline in its head, and which is held to 1 KB of its own.
+function, weigh after it, with room for one more piece or function of the usual size, the median of
+the costs the record tables, rounded up to the next quarter of a kilobyte. That keeps the sheets at
+9 KB and sets the controls at 6.25 KB, from the 7 KB that counted the theme script, which a bundler
+drops from the controls and a page puts inline in its head, and which is held to 1 KB of its own.
 
 ## How it is tested
 

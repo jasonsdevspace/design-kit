@@ -59,6 +59,11 @@ const sheetTable = (sheets) => {
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
 /**
+ * The package with what each part of it costs, for a record taken since the parts were measured.
+ *
+ * @typedef {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
+ */
+/**
  * A page of the site as the audit measured it on a first visit, its scores out of a hundred.
  *
  * @typedef {{ path: string, accessibility: number, performance: number, paint: number, shift: number, bytes: number, requests: number }} Page
@@ -129,7 +134,7 @@ const bytes = (/** @type {number} */ count) => `${String(count)} B`;
  * and nothing for one taken before: each piece of the sheets, then each function of the controls,
  * the costliest named first.
  *
- * @param {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} packed
+ * @param {Measured} packed
  */
 const partsOf = (packed) => {
     const { pieces, functions } = packed;
@@ -137,7 +142,7 @@ const partsOf = (packed) => {
     const named = (/** @type {readonly string[]} */ names) =>
         `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
     return `
-What each piece costs the three sheets, as what they save sent together without their comments and gzipped once its rules are taken out, the costliest first. A rule belongs to the piece it draws. The costs add up to more than the whole, since gzip finds what the pieces repeat. The costliest are ${named(pieces.slice(0, 3).map(({ piece }) => piece))}.
+What each piece costs the three sheets, as what they save sent together without their comments and gzipped once its rules are taken out, the costliest first. A rule belongs to the piece it draws. The costs add up to less than the whole, since a piece that repeats another saves little once taken out. The costliest are ${named(pieces.slice(0, 3).map(({ piece }) => piece))}.
 
 ${table(
     ['Piece', 'Rules', 'Costs'],
@@ -155,7 +160,7 @@ ${table(
  * The package as npm ships it, as a record: the tarball, then the sheets a page loads, then the
  * modules a page's build imports, each raw and gzipped, then every other file it carries.
  *
- * @param {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} packed
+ * @param {Measured} packed
  * @param {Recorded} at
  */
 export const packageRecord = (packed, at) => {

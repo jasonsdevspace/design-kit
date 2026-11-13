@@ -2,13 +2,13 @@
  * What each part of the package costs a page, for the package record: each piece's rules in the
  * three sheets, and each function of the controls.
  *
- * A piece's cost is what the three sheets save, sent together without their comments and gzipped
- * as the sheets' budget measures them, when that piece's rules are taken out. A rule belongs to the
- * piece it lays out, the first of the kit's classes in its first selector, read outside any `:not()`
- * or `:has()`, so a rule for a button in a grid counts to the grid and one for a dialog on a page
- * with an app counts to the dialog. A rule with no class of the kit's counts to the tokens in the
- * tokens' sheet, and to the page's own elements in the others. The costs do not add up to the
- * whole, since gzip finds repeats across pieces.
+ * A piece's cost is what the three sheets save, sent together without their comments and gzipped as
+ * the sheets' budget measures them, when that piece's rules are taken out. A rule belongs to the
+ * piece it lays out, the first of the kit's classes in its first selector, read outside any
+ * `:not()` or `:has()`, so a rule for a button in a grid counts to the grid and one for a dialog on
+ * a page with an app counts to the dialog. A rule with no class of the kit's counts to the tokens
+ * in the tokens' sheet, and to the page's own elements in the others. The costs add up to less than
+ * the whole, since a piece that repeats another saves little once taken out.
  *
  * A function's cost is measured twice from the controls as a page's bundler takes them, without
  * comments and gzipped: alone, what a page that imports only that function sends, and added, what
@@ -87,7 +87,8 @@ export const rulesOf = (css) => {
         while (at < text.length) {
             const open = text.indexOf('{', at);
             if (open < 0) return;
-            const head = text.slice(at, open).trim();
+            // A statement with no block before it, such as a layer order, ends at its semicolon.
+            const head = text.slice(at, open).split(';').at(-1)?.trim() ?? '';
             let depth = 1;
             let end = open + 1;
             while (depth > 0 && end < text.length) {
@@ -126,7 +127,12 @@ export const piecesOf = (sheets) => {
     });
     return [...byPiece]
         .map(([piece, texts]) => {
-            const without = texts.reduce((left, text) => left.replace(text, ''), sent);
+            let without = texts.reduce((left, text) => left.replace(text, ''), sent);
+            // A media query or a layer left empty goes with the rules it held.
+            for (let before = ''; before !== without;) {
+                before = without;
+                without = without.replace(/@(?:media|supports|layer)[^{;}]*\{\s*\}/g, '');
+            }
             return { piece, rules: texts.length, gzip: whole - gzipSync(without).length };
         })
         .sort((a, b) => b.gzip - a.gzip || a.piece.localeCompare(b.piece));
@@ -158,7 +164,12 @@ export const sentOf = async (module, names) => {
             .flatMap((result) => ('output' in result ? result.output : []))
             .map((file) => (file.type === 'chunk' ? file.code : ''))
             .join('\n');
-        return gzipSync(withoutComments(code.replace(/^\s*\/\/.*$/gm, ''))).length;
+        // Without comments as a compiler takes them out, so no comment's text is read as code.
+        const { default: ts } = await import('typescript');
+        const stripped = ts.transpileModule(code, {
+            compilerOptions: { removeComments: true, target: ts.ScriptTarget.ESNext },
+        }).outputText;
+        return gzipSync(stripped.replace(/^[ \t]*\n/gm, '')).length;
     } finally {
         rmSync(entries, { recursive: true, force: true });
     }
@@ -175,10 +186,9 @@ export const sentOf = async (module, names) => {
 export const functionsOf = async (folder, names) => {
     const module = join(folder, 'controls.js');
     const every = await sentOf(module, names);
-    /** @type {{ name: string, alone: number, added: number }[]} */
-    const costs = [];
-    for (const name of names) {
-        costs.push({
+    // Each build is its own, so they run together.
+    const costs = await Promise.all(
+        names.map(async (name) => ({
             name,
             alone: await sentOf(module, [name]),
             added:
@@ -187,7 +197,7 @@ export const functionsOf = async (folder, names) => {
                     module,
                     names.filter((other) => other !== name)
                 )),
-        });
-    }
+        }))
+    );
     return costs.sort((a, b) => b.added - a.added || a.name.localeCompare(b.name));
 };

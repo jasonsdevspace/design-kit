@@ -1946,12 +1946,12 @@
     }
 
     /*
-     * A screen too short to hold the bar, the dock and a body worth scrolling: a phone on its
-     * side, or a page zoomed until its window is a few lines tall. There the frame is as long as
-     * what it holds and the page scrolls whole, so nothing is squeezed out of reach. The height
-     * is in rems, so a larger text size in the browser's settings reaches it sooner. There the
-     * page holds the dock in place as a toast comes and goes, rather than a line of the body
-     * above it, so the dock never moves under a thumb. Safari keeps no place this way.
+     * A screen too short to hold the bar, the dock and a body worth scrolling: a phone on its side,
+     * or a page zoomed until its window is a few lines tall. There the frame is as long as what it
+     * holds and the page scrolls whole, so nothing is squeezed out of reach. The height is in rems,
+     * so a larger text size in the browser's settings reaches it sooner. There the page holds the
+     * dock in place as a toast comes and goes, rather than a line of the body above it, so the dock
+     * never moves under a thumb. Safari has no scroll anchoring, so there the dock can still move.
      */
     @media (max-height: 24rem) {
         :where(.dk-app) {

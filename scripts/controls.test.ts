@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { describe, expect, it } from 'vitest';
@@ -9,7 +10,7 @@ import { sentOf } from './parts.mjs';
 /*
  * The controls as a page's bundler sends them: every function, without comments and gzipped, small
  * enough to send to every visitor of a page that attaches one. The package record measures each
- * function the same way, through the same function, so the figures it shows are the ones held here.
+ * function through the same function, as a bundler sends it from the packed package.
  * The theme script the theme module exports goes inline in a page's head and is dropped from the
  * controls by a bundler, so it is held to a budget of its own.
  */
@@ -27,7 +28,7 @@ const SCRIPT_BUDGET = 1024;
 describe('the controls', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped as a bundler sends every function, without comments`, async () => {
         const sent = await sentOf(
-            new URL('../packages/design-kit/src/controls.ts', import.meta.url).pathname,
+            fileURLToPath(new URL('../packages/design-kit/src/controls.ts', import.meta.url)),
             Object.keys(controls)
         );
         expect(sent).toBeLessThanOrEqual(BUDGET);

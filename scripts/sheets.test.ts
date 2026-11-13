@@ -7,10 +7,9 @@ import { withoutComments } from './summary.mjs';
 
 /*
  * The kit's three sheets as a page's minifier sends them, without their comments and blank lines:
- * small enough to send to every visitor of every demo, held to a budget as the controls are in the
- * package's own tests, so the components sheet cannot grow unseen as pieces are added. The package
- * record measures each sheet the same way, through the same function, so the figure it shows is
- * the one held here.
+ * small enough to send to every visitor of every demo, held to a budget beside the controls', so
+ * the components sheet cannot grow unseen as pieces are added. The package record measures each
+ * sheet the same way, through the same function, so the figure it shows is the one held here.
  */
 
 /*
