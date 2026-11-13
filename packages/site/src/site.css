@@ -66,8 +66,8 @@ body > .dk-strip {
 /*
  * The site's header under the strip, lined up with the column: its mark and name, then its own
  * pages as the kit's link pills. On a wide screen the two share the row, and on a phone the pills
- * go under the name and wrap onto a second row, the kit keeping room around them for its focus
- * ring.
+ * go under the name and wrap onto a second row. The kit keeps room for its focus ring at the pills'
+ * sides, and above and below them the ring reaches into the header's own space.
  */
 .site-header {
     display: flex;
@@ -147,17 +147,6 @@ body > .dk-strip {
     text-decoration: underline;
 }
 
-.site-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--dk-space-3);
-}
-
-.site-actions .dk-button {
-    text-decoration: none;
-}
-
-/* The install command in one row with its copy button, the block scrolling inside its frame. */
 /* The install row takes the column, and the command is set small so it fits a wide screen whole. */
 .site-install {
     font-size: var(--dk-text-small);
@@ -172,10 +161,6 @@ body > .dk-strip {
     border: 1px solid var(--dk-line);
     border-radius: var(--dk-radius-large);
     background: var(--dk-surface);
-}
-
-.site-install .site-code-head {
-    margin: 0;
 }
 
 .site-install .dk-code {
@@ -384,6 +369,28 @@ body > .dk-strip {
 
 .site-preview-foot {
     width: 60%;
+}
+
+/* A phone held upright: its bar at the top, and the one action its screen is for under the thumb. */
+.site-preview-phone {
+    display: grid;
+    align-content: space-between;
+    box-sizing: border-box;
+    width: 2.25rem;
+    height: 3.5rem;
+    padding: var(--dk-space-1);
+    border: 2px solid var(--dk-control);
+    border-radius: var(--dk-radius);
+}
+
+.site-preview-phone > .site-preview-strip {
+    width: 70%;
+}
+
+.site-preview-dock {
+    height: 0.5rem;
+    border-radius: var(--dk-radius-pill);
+    background: var(--dk-accent);
 }
 
 .site-preview-steps {
@@ -1012,21 +1019,9 @@ body > .dk-strip {
     margin-top: 0;
 }
 
-.site-code-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--dk-space-3);
-    margin-block: var(--dk-space-4) var(--dk-space-2);
-}
-
-.site-code-head[hidden] {
-    display: none;
-}
-
-.site-code-head .dk-code-title {
-    margin: 0;
+/* A block's head stands from the summary above it, or the block before it, by the panel's step. */
+.site-code .dk-code-head {
+    margin-block-start: var(--dk-space-4);
 }
 
 /*
@@ -1067,6 +1062,59 @@ body > .dk-strip {
 }
 
 /*
+ * A picture of an app's screen, or of a page that ends in a tab bar, is a box in the copy rather
+ * than the whole screen it is drawn for: as tall as a phone's screen held upright, or as tall as
+ * what it holds at a larger text size, since an inert body cannot be scrolled, with an edge where
+ * the screen's would be. A picture of a page that ends in a tab bar is shorter, since it shows
+ * only where the bar sits.
+ */
+.site-copy > :is(.dk-app, .dk-tabbar-page) {
+    height: auto;
+    min-height: 30rem;
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+    overflow: clip;
+}
+
+.site-copy > .dk-tabbar-page {
+    min-height: 14rem;
+}
+
+.site-copy .dk-tabbar-page > main {
+    padding: var(--dk-space-4);
+}
+
+/*
+ * The bar in a picture sits at the end of its box rather than sticking to the visitor's screen,
+ * and the page holds none of the room the kit keeps for one at the foot of the screen.
+ */
+.site-copy .dk-tabbar-page > .dk-tabbar {
+    position: static;
+}
+
+:root:has(.site-copy .dk-tabbar-page) {
+    scroll-padding-bottom: 0;
+}
+
+/*
+ * The kit turns off a page's pull to refresh wherever an app's frame is, as an app's screen wants.
+ * A page that only pictures one reads like any other page, so it keeps the browser's own.
+ */
+:root:has(.site-copy .dk-app) {
+    overscroll-behavior-y: auto;
+}
+
+/*
+ * A dialog's preview is drawn open in its place under its button, since the inert copy cannot be
+ * opened, rather than over the page as a dialog that is not modal would be.
+ */
+.site-other .dk-dialog {
+    display: block;
+    position: static;
+    margin: var(--dk-space-3) auto 0;
+}
+
+/*
  * The site's one breakpoint, the kit's: at 48rem wide or less, a phone, every target grows to a
  * thumb's size and each state's copies stack. Wider, the copies share the column, and the strip's
  * links and the theme switch share one row.
@@ -1090,8 +1138,8 @@ body > .dk-strip {
 
     /*
      * Light is drawn first, on the left or above, and dark after it whichever is live, so the two
-     * never trade places as the theme changes. The live copy stays first in the page, for the keyboard and a
-     * screen reader, and on a phone, where it is the one a thumb reaches first.
+     * never trade places as the theme changes. The live copy stays first in the page, for the
+     * keyboard and a screen reader, and on a phone, where it is the one a thumb reaches first.
      */
     :root[data-theme='dark'] .site-other {
         order: -1;

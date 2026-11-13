@@ -28,17 +28,18 @@ published package, pinned to one version.
 
 ## A path through the site
 
-Start at [the home page](https://jasonsdevspace.com/design-kit/), then open
-[Tokens and theme](https://jasonsdevspace.com/design-kit/tokens/) for every color role in both
-themes and the contrast of each pairing it is meant for.
-[Controls](https://jasonsdevspace.com/design-kit/controls/) shows buttons, fields and callouts in
-every state with the code that draws each, and
-[Page chrome](https://jasonsdevspace.com/design-kit/page-chrome/) the skip link, strip and footer
-around a demo. [Explainer pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the
-layout of the page that says how a demo works, and
-[How it works](https://jasonsdevspace.com/design-kit/how-it-works/) is that page written for the kit
-itself. The theme switch in the strip saves the same choice the portfolio does, so it holds across
-jasonsdevspace.com.
+Start at [the home page](https://jasonsdevspace.com/design-kit/), then open [Tokens and
+theme](https://jasonsdevspace.com/design-kit/tokens/) for every color role in both themes and the
+contrast of each pairing it is meant for.
+[Controls](https://jasonsdevspace.com/design-kit/controls/) shows buttons, fields, steppers,
+callouts and dialogs in every state with the code that draws each, [App
+pieces](https://jasonsdevspace.com/design-kit/app-pieces/) the frame, tab bar, grids, rows and
+tables of a phone app, and [Page chrome](https://jasonsdevspace.com/design-kit/page-chrome/) the
+skip link, strip and footer around a demo. [Explainer
+pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the layout of the page that
+says how a demo works, and [How it works](https://jasonsdevspace.com/design-kit/how-it-works/) is
+that page written for the kit itself. The theme switch in the strip saves the same choice the
+portfolio does, so it holds across jasonsdevspace.com.
 
 ## Using it
 
@@ -240,6 +241,7 @@ follow by area.
 | A copy of a state in the other theme draws in that theme, and the keyboard never stops inside it                  | `packages/site/e2e/site.spec.ts`      |
 | The tokens page draws each swatch in the value printed beside it, and lists every pairing tightest first          | `packages/site/e2e/site.spec.ts`      |
 | The page chrome page draws each state as a picture, around the kit's own live chrome                              | `packages/site/e2e/site.spec.ts`      |
+| The app pieces page draws the frame and the tab bar as pictures, and the grids, rows and table live               | `packages/site/e2e/site.spec.ts`      |
 | The explainer pieces page draws each piece live, and the explainer's layout as a picture                          | `packages/site/e2e/site.spec.ts`      |
 | The site's explainer marks itself the current page, and every other page's strip and footer lead to it            | `packages/site/e2e/site.spec.ts`      |
 | Every link within the site leads to one of its pages, and to the id it names, where it names one                  | `packages/site/e2e/site.spec.ts`      |

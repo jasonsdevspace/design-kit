@@ -12,7 +12,7 @@ import { defineConfig, type Plugin } from 'vite';
 
 import { laidOut } from '../design-kit/examples/format.js';
 import { colorOf, declaredIn } from '../design-kit/examples/palette.js';
-import { CHROME, EXPLAINER } from '../design-kit/examples/pieces.js';
+import { APP, CHROME, EXPLAINER } from '../design-kit/examples/pieces.js';
 import { CONTROLS } from '../design-kit/examples/states.js';
 import { type Build, codeKey, PAGES } from './src/pages.js';
 import { policyFor, SITE_ORIGIN } from './src/policy.js';
@@ -66,7 +66,7 @@ const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- po
  */
 const markupOf = async (): Promise<Build['markup']> => {
     const entries = await Promise.all(
-        [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) =>
+        [...CONTROLS, ...APP, ...CHROME, ...EXPLAINER].flatMap((control) =>
             control.states.map(async (state) => {
                 const key = codeKey(control, state);
                 try {

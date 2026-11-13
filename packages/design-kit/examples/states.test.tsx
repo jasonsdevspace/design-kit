@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import * as kit from '../src/react.js';
 import { elementOf } from './elements.js';
-import { asWritten, CHROME, EXPLAINER } from './pieces.js';
+import { APP, asWritten, CHROME, EXPLAINER } from './pieces.js';
 import { CONTROLS } from './states.js';
 
 /*
@@ -16,7 +16,7 @@ import { CONTROLS } from './states.js';
  * the kit it pins.
  */
 
-const states = [...CONTROLS, ...CHROME, ...EXPLAINER].flatMap((control) => control.states);
+const states = [...CONTROLS, ...APP, ...CHROME, ...EXPLAINER].flatMap((control) => control.states);
 
 describe('the states a page shows', () => {
     it('each draw the attribute printed under them', () => {

@@ -1,13 +1,20 @@
-import { attachCopyButton, attachThemeSwitch, chooseTheme } from 'design-kit-release/controls';
+import {
+    attachCopyButton,
+    attachDialog,
+    attachStepper,
+    attachThemeSwitch,
+    attachToast,
+    chooseTheme,
+} from 'design-kit-release/controls';
 
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
- * each block of code, attached with the kit's controls, and adds what the kit does not ship: tabs
- * where a state's code has two blocks, the live copies of the states a reader can change, and the
- * note a tap on a preview brings. The theme script the kit puts inline has already drawn the theme
- * before this runs, so the switch shows the choice, and saves and draws a new one. It saves under
- * the portfolio's key and with the portfolio's values, so a choice made here holds on every page of
- * jasonsdevspace.com, and the other way around.
+ * each block of code, attaches the kit's steppers, dialogs and toast where a page shows them, and
+ * adds what the kit does not ship: tabs where a state's code has two blocks, the live copies of the
+ * states a reader can change, and the note a tap on a preview brings. The theme script the kit puts
+ * inline has already drawn the theme before this runs, so the switch shows the choice, and saves
+ * and draws a new one. It saves under the portfolio's key and with the portfolio's values, so a
+ * choice made here holds on every page of jasonsdevspace.com, and the other way around.
  */
 
 /**
@@ -86,7 +93,7 @@ interface Block {
 /** The blocks of one state's code, in the order the page wrote them. */
 const blocksOf = (code: HTMLElement): Block[] =>
     [...code.querySelectorAll<HTMLElement>(':scope > .site-code-panel')].flatMap((panel) => {
-        const head = panel.querySelector<HTMLElement>('.site-code-head');
+        const head = panel.querySelector<HTMLElement>('.dk-code-head');
         const title = panel.querySelector('.site-code-name');
         const block = panel.querySelector<HTMLElement>('pre.dk-code');
         if (!head || !title || !block) return [];
@@ -259,7 +266,8 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('main .site-co
 /*
  * The live copies of the states a reader can change. A toggle flips what it says it is, and a
  * button that names a panel opens and closes it, so what a control says it is stays true after it
- * is pressed. The previews in the other theme stay as they are drawn.
+ * is pressed. A theme switch's button is the kit's to open, and is left to it. The previews in the
+ * other theme stay as they are drawn.
  */
 for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     'main .site-copy:not([inert]) button[aria-pressed]'
@@ -271,7 +279,7 @@ for (const toggle of document.querySelectorAll<HTMLButtonElement>(
 }
 
 for (const opener of document.querySelectorAll<HTMLButtonElement>(
-    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]'
+    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button)'
 )) {
     const panel = document.getElementById(opener.getAttribute('aria-controls') ?? '');
     if (!panel) continue;
@@ -281,6 +289,59 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
         const open = opener.getAttribute('aria-expanded') !== 'true';
         opener.setAttribute('aria-expanded', String(open));
         panel.hidden = !open;
+    });
+}
+
+/*
+ * Every stepper, the previews among them, since the kit hides a stepper's buttons until it is
+ * attached and a preview without them would be a bare number field. A preview given a number past
+ * its limit is told so, as the live copy is once the number is changed, so the preview shows the
+ * error. The live copy shows its error and is described by it without a word said as the page
+ * loads, so it is the state it names to a screen reader too, and the kit takes the error away once
+ * the number is right.
+ */
+for (const stepper of document.querySelectorAll<HTMLElement>('main .site-copy .dk-stepper')) {
+    attachStepper(stepper);
+    const field = stepper.closest('.dk-field');
+    const input = field?.querySelector<HTMLInputElement>('.dk-stepper-value');
+    if (stepper.closest('[inert]')) input?.dispatchEvent(new Event('change', { bubbles: true }));
+    else {
+        const range = field?.querySelector<HTMLElement>('.dk-stepper-range');
+        if (input && range && !input.validity.valid) {
+            range.hidden = false;
+            const ids = (input.getAttribute('aria-describedby') ?? '').split(/\s+/);
+            input.setAttribute('aria-describedby', [...ids, range.id].filter(Boolean).join(' '));
+        }
+    }
+}
+
+/*
+ * The live copy of each dialog, opened by the button before it, which focus returns to when it
+ * closes. The previews draw the dialog in place, and are never attached.
+ */
+for (const dialog of document.querySelectorAll<HTMLDialogElement>(
+    'main .site-copy:not([inert]) .dk-dialog'
+)) {
+    const open = attachDialog(dialog);
+    document
+        .querySelector<HTMLButtonElement>(`main button[aria-controls="${CSS.escape(dialog.id)}"]`)
+        ?.addEventListener('click', open);
+}
+
+/*
+ * The toast's section: a button that shows a toast with Undo, and Undo shows one with no action,
+ * so the one toast shows both kinds, the one that waits and the one that leaves on its own.
+ */
+const toast = document.querySelector<HTMLElement>('main .site-toast .dk-toast');
+const toastShow = document.querySelector<HTMLButtonElement>('main .site-toast-show');
+if (toast && toastShow) {
+    const show = attachToast(toast);
+    toastShow.hidden = false;
+    toastShow.addEventListener('click', () => {
+        show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => show('Round 3 is back as it was.'),
+        });
     });
 }
 

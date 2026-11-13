@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import { elementOf } from '../../design-kit/examples/elements.js';
-import { CHROME } from '../../design-kit/examples/pieces.js';
+import { APP, CHROME } from '../../design-kit/examples/pieces.js';
 import { CONTROLS } from '../../design-kit/examples/states.js';
 
 /*
@@ -12,7 +12,7 @@ import { CONTROLS } from '../../design-kit/examples/states.js';
  * to its sources, so a change in the sources before a release fails one of the two.
  */
 
-const shown = [...CONTROLS, ...CHROME]
+const shown = [...CONTROLS, ...APP, ...CHROME]
     .flatMap((control) => control.states)
     .filter((state) => state.react !== undefined);
 

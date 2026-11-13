@@ -30,7 +30,7 @@ export const ROUTES = [
         file: 'tokens/index.html',
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
-        nav: 'Tokens and theme',
+        nav: 'Tokens',
         card: 'Colors, their contrast, sizes and how the theme is chosen.',
         description:
             'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
@@ -40,15 +40,24 @@ export const ROUTES = [
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',
         nav: 'Controls',
-        card: 'Buttons, fields and callouts in every state.',
+        card: 'Buttons, fields, steppers and dialogs in every state, and a toast.',
         description:
-            'Each state of the design kit’s buttons, fields and callouts, in both themes, with the code behind it.',
+            'Each state of the design kit’s buttons, fields, steppers, callouts and dialogs in both themes, with the code behind it, and its toast.',
+    },
+    {
+        file: 'app-pieces/index.html',
+        path: `${BASE}app-pieces/`,
+        title: 'App pieces · The design kit · Jason Poteet',
+        nav: 'App pieces',
+        card: 'The frame, tab bar, grids, rows and tables of a phone app.',
+        description:
+            'The frame, tab bar, button grids, rows and pinned table the design kit gives a phone app, in both themes, with the code behind each.',
     },
     {
         file: 'page-chrome/index.html',
         path: `${BASE}page-chrome/`,
         title: 'Page chrome · The design kit · Jason Poteet',
-        nav: 'Page chrome',
+        nav: 'Chrome',
         card: 'The skip link, top strip and footer around each demo.',
         description:
             'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the code behind it.',
@@ -57,7 +66,7 @@ export const ROUTES = [
         file: 'explainer-pieces/index.html',
         path: `${BASE}explainer-pieces/`,
         title: 'Explainer pieces · The design kit · Jason Poteet',
-        nav: 'Explainer pieces',
+        nav: 'Explainer',
         card: 'The layout and pieces of the page that explains a demo.',
         description:
             'The layout, steps, panels, tables and code blocks the design kit gives the page that explains each demo, in both themes.',
