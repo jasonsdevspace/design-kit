@@ -1338,11 +1338,11 @@ and no row covers its neighbor or squeezes the body to nothing. What the body ho
 such as a row's words for a screen reader, scrolls with it and never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
-do not push the dock out of view. A browser without that unit reads `100vh`. The bar pads itself
-past `--dk-safe-top`, so its ground runs up under a notch and its title starts below it. The frame
-pads itself past the side safe areas, and its lowest part, the tab bar, or the dock or the body
-where nothing comes after it, pads itself past `--dk-safe-bottom`, so its ground runs down under the
-home indicator and what it holds stays clear of it, even where the page scrolls whole.
+do not push the dock out of view. The bar pads itself past `--dk-safe-top`, so its ground runs up
+under a notch and its title starts below it. The frame pads itself past the side safe areas, and its
+lowest part, the tab bar, or the dock or the body where nothing comes after it, pads itself past
+`--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds stays clear
+of it, even where the page scrolls whole.
 
 The bar is `--dk-app-bar` tall, 4rem, or taller where a long title wraps, which it does within the
 room the mark and the action leave. On a phone at a large text size, under 16rem wide, the title

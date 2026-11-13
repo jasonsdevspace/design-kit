@@ -1662,8 +1662,6 @@
             'dock' max-content
             'tabs' max-content
             / minmax(0, 1fr);
-        /* For a browser with no dynamic height, the screen's own, which the line after replaces. */
-        height: 100vh;
         height: 100dvh;
     }
 
@@ -1793,17 +1791,14 @@
             pointer-events: none;
         }
 
-        :where(.dk-app > .dk-app-toast:has(> .dk-toast[data-shown])) {
-            pointer-events: auto;
-        }
-
         /*
-         * While a toast is shown its place opens on a rule, so a line of the body scrolls under an
-         * edge a reader can see, as it does under the bar. The bar is drawn over the place, so
-         * where the body is at its least the place never hides the bar's rule.
+         * While a toast is shown its place takes a press, and opens on a rule, so a line of the
+         * body scrolls under an edge a reader can see, as it does under the bar. The bar is drawn
+         * over the place, so where the body is at its least the place never hides the bar's rule.
          */
         :where(.dk-app > .dk-app-toast:has(> .dk-toast[data-shown])) {
             border-top: 1px solid var(--dk-line);
+            pointer-events: auto;
         }
 
         :where(.dk-app > .dk-app-bar) {
@@ -1913,18 +1908,6 @@
         }
     }
 
-    /*
-     * On a screen too short for the frame, where the page scrolls whole and the toast keeps its
-     * row above the dock, the page holds the dock in place as a toast comes and goes, rather than
-     * a line of the body above it, so the dock never moves under a thumb. Safari keeps no place
-     * this way.
-     */
-    @media (max-height: 24rem) {
-        :where(.dk-app > .dk-app-bar, .dk-app > .dk-app-body) {
-            overflow-anchor: none;
-        }
-    }
-
     /* The dock: what the screen is for, over a rule, under the thumb. */
     :where(.dk-app-dock) {
         grid-area: dock;
@@ -1963,20 +1946,25 @@
     }
 
     /*
-     * A screen too short to hold the bar, the dock and a body worth scrolling: a phone on its
-     * side, or a page zoomed until its window is a few lines tall. There the frame is as long as
-     * what it holds and the page scrolls whole, so nothing is squeezed out of reach. The height
-     * is in rems, so a larger text size in the browser's settings reaches it sooner.
+     * A screen too short to hold the bar, the dock and a body worth scrolling: a phone on its side,
+     * or a page zoomed until its window is a few lines tall. There the frame is as long as what it
+     * holds and the page scrolls whole, so nothing is squeezed out of reach. The height is in rems,
+     * so a larger text size in the browser's settings reaches it sooner. There the page holds the
+     * dock in place as a toast comes and goes, rather than a line of the body above it, so the dock
+     * never moves under a thumb. Safari has no scroll anchoring, so there the dock can still move.
      */
     @media (max-height: 24rem) {
         :where(.dk-app) {
             height: auto;
-            min-height: 100vh;
             min-height: 100dvh;
         }
 
         :where(.dk-app-body) {
             overflow: visible;
+        }
+
+        :where(.dk-app > .dk-app-bar, .dk-app > .dk-app-body) {
+            overflow-anchor: none;
         }
     }
 
@@ -2004,7 +1992,6 @@
     :where(.dk-tabbar-page) {
         display: flex;
         flex-direction: column;
-        min-height: 100vh;
         min-height: 100dvh;
     }
 
@@ -2631,8 +2618,6 @@
     :where(.dk-dialog) {
         width: min(100% - 2 * min(var(--dk-space-4), 16px), var(--dk-dialog-width));
         max-width: none;
-        /* For a browser with no dynamic height, the screen's own, which the line after replaces. */
-        max-height: calc(100vh - 2 * min(var(--dk-space-4), 16px));
         max-height: calc(100dvh - 2 * min(var(--dk-space-4), 16px));
         padding: min(var(--dk-space-5), 24px);
         border: 1px solid var(--dk-line);
@@ -2690,7 +2675,6 @@
     :where(.dk-dialog-sheet) {
         width: 100%;
         max-width: var(--dk-app-column);
-        max-height: calc(100vh - var(--dk-safe-top) - var(--dk-space-6));
         max-height: calc(100dvh - var(--dk-safe-top) - var(--dk-space-6));
         margin: auto auto 0;
         padding-bottom: calc(min(var(--dk-space-5), 24px) + var(--dk-safe-bottom));

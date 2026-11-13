@@ -83,14 +83,46 @@ a page that attaches it before its choices are drawn can attach it again once th
   stop them, so a swipe beside the choices, which the browser cancels as a scroll, leaves them open
   for a touch to scroll to. A switch with no choices yet is left hidden and unattached.
 
+## The size audit of 0.6.0
+
+For 0.6.0 the package was measured part by part, and the package record now shows the figures: each
+piece by what the three sheets save without its rules, and each function by what it costs a page
+alone and added to every other. The types and the README are measured apart from what reaches a
+browser, in the record's last table.
+
+What the audit found larger than it needed to be went: the plain height a browser without the
+dynamic one read before each `dvh`, which no browser at the kit's floor needs, two blocks for one
+short screen in the app's frame and two rules for one selector there, now one each, and the list of
+listeners the theme switch and the stepper each took away one by one, now one signal each. What it
+found and kept, with why:
+
+- The room kept for a toast, written once for each count of rows, since a page's script sets no
+  style the kit could read and gzip already sends the repeats for little.
+- The theme switch's collapsed form, since a phone reaches it whenever its reader sets a large text
+  size, not only on a screen under 320px.
+- The strip's rules, whose likeness to others gzip already sends for nothing.
+- The tokens no sheet reads, since the theme contract of record 4 promises them to a page.
+- The `dk-toast-shown` class set beside `data-shown`, which the reference promises a page.
+
+The app's pieces stay in the components sheet and the controls module. A sheet of their own would
+spare a page with no app a little over 2 KB, sent once and then cached, and cost an app's page a
+second sheet that holds back its first paint, and a module of their own would spare a page nothing,
+since a bundler already sends only the functions a page imports.
+
+The budgets are set from the audit: what the sheets, and the controls as a bundler sends every
+function, weigh after it, with room for one more piece or function of the usual size, the median of
+the costs the record tables, rounded up to the next quarter of a kilobyte. That keeps the sheets at
+9 KB and sets the controls at 6.25 KB, from the 7 KB that counted the theme script, which a bundler
+drops from the controls and a page puts inline in its head, and which is held to 1 KB of its own.
+
 ## How it is tested
 
-The paths are in `packages/design-kit`.
+The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
 
-- `src/controls.test.ts` imports the module in plain Node, finds no export but its functions, and
-  holds it with the theme module it imports, without their comments as a bundler sends them, to its
-  budget, which record 15 raised from 3 KB to 5 KB, 0.5.1 to 6 KB for the focus and theme fixes, and
-  0.6.0 to 7 KB for the table's frame and the fixes that follow it.
+- `src/controls.test.ts` imports the module in plain Node and finds no export but its functions.
+- `scripts/controls.test.ts` holds what a page's bundler sends for every function, without comments,
+  to the controls' budget, and the theme script to its own. `scripts/sheets.test.ts` holds the three
+  sheets to theirs, and `scripts/parts.test.ts` the measure the record takes of each part.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the switch's line for a visitor without script in

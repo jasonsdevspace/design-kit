@@ -16,12 +16,14 @@
  * changes outside the records, since the commit it names would not be the code it measured.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { cpus, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
+import { functionsOf, piecesOf } from './parts.mjs';
 import { isRunDirectly } from './repository.mjs';
-import { fileRows, isModule, isSheet, kb, packedOf, table } from './summary.mjs';
+import { fileRows, filesOf, isModule, isSheet, kb, packedOf, table } from './summary.mjs';
 
 /**
  * What the record says of the sheets once they are measured without their comments, for a record
@@ -56,6 +58,11 @@ const sheetTable = (sheets) => {
 
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
+/**
+ * The package with what each part of it costs, for a record taken since the parts were measured.
+ *
+ * @typedef {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
+ */
 /**
  * A page of the site as the audit measured it on a first visit, its scores out of a hundred.
  *
@@ -119,11 +126,41 @@ export const recorded = () => {
 export const recordedTable = ({ date, commit: at, machine, node }) =>
     table(['Recorded', 'Commit', 'Machine', 'Node'], [[date, `\`${at}\``, machine, node]]);
 
+/** A count of bytes, for a part too small to read in kilobytes. */
+const bytes = (/** @type {number} */ count) => `${String(count)} B`;
+
+/**
+ * What each part of the package costs a page, for a record taken since the parts were measured,
+ * and nothing for one taken before: each piece of the sheets, then each function of the controls,
+ * the costliest named first.
+ *
+ * @param {Measured} packed
+ */
+const partsOf = (packed) => {
+    const { pieces, functions } = packed;
+    if (!pieces || !functions) return '';
+    const named = (/** @type {readonly string[]} */ names) =>
+        `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
+    return `
+What each piece costs the three sheets, as what they save sent together without their comments and gzipped once its rules are taken out, the costliest first. A rule belongs to the piece it draws. The costs add up to less than the whole, since a piece that repeats another saves little once taken out. The costliest are ${named(pieces.slice(0, 3).map(({ piece }) => piece))}.
+
+${table(
+    ['Piece', 'Rules', 'Costs'],
+    pieces.map(({ piece, rules, gzip }) => [piece, String(rules), bytes(gzip)])
+)}
+What each function of the controls costs a page, as its bundler takes them without comments and gzipped: alone, on a page that imports only that one, and added, to a page that imports every other. The costliest added are ${named(functions.slice(0, 2).map(({ name }) => `\`${name}\``))}.
+
+${table(
+    ['Function', 'Alone', 'Added'],
+    functions.map(({ name, alone, added }) => [`\`${name}\``, bytes(alone), bytes(added)])
+)}`;
+};
+
 /**
  * The package as npm ships it, as a record: the tarball, then the sheets a page loads, then the
  * modules a page's build imports, each raw and gzipped, then every other file it carries.
  *
- * @param {Packed} packed
+ * @param {Measured} packed
  * @param {Recorded} at
  */
 export const packageRecord = (packed, at) => {
@@ -146,7 +183,7 @@ The modules a page's build imports:
 ${files(isModule)}
 Every other file the package carries, which a page never loads:
 
-${files((path) => !isSheet(path) && !isModule(path))}`;
+${files((path) => !isSheet(path) && !isModule(path))}${partsOf(packed)}`;
     return { markdown, json: `${JSON.stringify({ recorded: at, ...packed }, null, 4)}\n` };
 };
 
@@ -215,7 +252,25 @@ if (isRunDirectly(import.meta.url)) {
         );
         const tarball = readdirSync(into).find((file) => file.endsWith('.tgz'));
         if (tarball === undefined) throw new Error('npm pack made no tarball');
-        writeRecord('package-size', packageRecord(packedOf(join(into, tarball)), recorded()));
+        const packed = packedOf(join(into, tarball));
+        // The package's files laid out as a page installs them, so its parts are measured from
+        // what npm ships.
+        const unpacked = join(into, 'package');
+        for (const { path, bytes: content } of filesOf(readFileSync(join(into, tarball)))) {
+            mkdirSync(dirname(join(unpacked, path)), { recursive: true });
+            writeFileSync(join(unpacked, path), content);
+        }
+        const dist = join(unpacked, 'dist');
+        const sheets = ['tokens.css', 'base.css', 'components.css'].map((name) =>
+            readFileSync(join(dist, name), 'utf8')
+        );
+        /** @type {Record<string, unknown>} */
+        const controls = await import(pathToFileURL(join(dist, 'controls.js')).href);
+        const parts = {
+            pieces: piecesOf(sheets),
+            functions: await functionsOf(dist, Object.keys(controls).sort()),
+        };
+        writeRecord('package-size', packageRecord({ ...packed, ...parts }, recorded()));
     } finally {
         rmSync(into, { recursive: true, force: true });
     }

@@ -109,6 +109,36 @@ describe('a record', () => {
     });
 });
 
+describe('a package record that measures its parts', () => {
+    it('names the costliest piece and function, and tables each, after the files', () => {
+        const { markdown } = packageRecord(
+            {
+                name: '@jasonsdevspace/design-kit',
+                version: '0.6.0',
+                size: 40960,
+                files: [{ path: 'dist/tokens.css', size: 6144, gzip: 2048, stripped: 1024 }],
+                pieces: [
+                    { piece: 'button', rules: 30, gzip: 600 },
+                    { piece: 'app frame', rules: 20, gzip: 500 },
+                    { piece: 'theme switch', rules: 10, gzip: 400 },
+                    { piece: 'panel', rules: 2, gzip: 40 },
+                ],
+                functions: [
+                    { name: 'attachToast', alone: 1600, added: 1000 },
+                    { name: 'attachStepper', alone: 1400, added: 990 },
+                    { name: 'chooseTheme', alone: 800, added: 4 },
+                ],
+            },
+            RECORDED
+        );
+        expect(markdown).toContain('The costliest are button, app frame and theme switch.');
+        expect(markdown).toContain('| Piece | Rules | Costs |');
+        expect(markdown).toContain('| panel | 2 | 40 B |');
+        expect(markdown).toContain('The costliest added are `attachToast` and `attachStepper`.');
+        expect(markdown).toContain('| `chooseTheme` | 800 B | 4 B |');
+    });
+});
+
 describe('the records in the repository', () => {
     const at = (path: string) => new URL(`../${path}`, import.meta.url);
 

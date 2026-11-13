@@ -269,12 +269,15 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const onFocusOut = (event: FocusEvent) => {
         if (!group.contains(event.relatedTarget as Node | null)) close(false);
     };
-    for (const radio of radios) radio.addEventListener('change', onChange);
-    button?.addEventListener('click', onButtonClick);
-    choices?.addEventListener('click', onChoicesClick);
-    group.addEventListener('pointerdown', onPointerDown);
-    group.addEventListener('keydown', onKeyDown);
-    group.addEventListener('focusout', onFocusOut);
+    // One signal takes away together every listener the switch puts on its own elements.
+    const listening = new AbortController();
+    const { signal } = listening;
+    for (const radio of radios) radio.addEventListener('change', onChange, { signal });
+    button?.addEventListener('click', onButtonClick, { signal });
+    choices?.addEventListener('click', onChoicesClick, { signal });
+    group.addEventListener('pointerdown', onPointerDown, { signal });
+    group.addEventListener('keydown', onKeyDown, { signal });
+    group.addEventListener('focusout', onFocusOut, { signal });
     switches.add(show);
     listen();
     show();
@@ -282,12 +285,7 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     draw(current());
     group.hidden = false;
     const detach = () => {
-        for (const radio of radios) radio.removeEventListener('change', onChange);
-        button?.removeEventListener('click', onButtonClick);
-        choices?.removeEventListener('click', onChoicesClick);
-        group.removeEventListener('pointerdown', onPointerDown);
-        group.removeEventListener('keydown', onKeyDown);
-        group.removeEventListener('focusout', onFocusOut);
+        listening.abort();
         // Closing takes the page's listener away with it.
         close(false);
         switches.delete(show);
@@ -690,8 +688,6 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         input.dispatchEvent(new Event('change', { bubbles: true }));
         if (status) say(status, input.value, true);
     };
-    const lower = press(false);
-    const raise = press(true);
     const onInput = () => {
         if (status) hush(status);
         mark();
@@ -709,12 +705,15 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
             report(false);
         });
     };
-    down.addEventListener('click', lower);
-    up.addEventListener('click', raise);
-    input.addEventListener('input', onInput);
-    input.addEventListener('change', onChange);
-    stepper.addEventListener('focusin', mark);
-    input.form?.addEventListener('reset', onReset);
+    // One signal takes every listener away together when the stepper is.
+    const listening = new AbortController();
+    const { signal } = listening;
+    down.addEventListener('click', press(false), { signal });
+    up.addEventListener('click', press(true), { signal });
+    input.addEventListener('input', onInput, { signal });
+    input.addEventListener('change', onChange, { signal });
+    stepper.addEventListener('focusin', mark, { signal });
+    input.form?.addEventListener('reset', onReset, { signal });
     // A page that draws the field again, as React does, writes its description and its invalid
     // mark from what it last drew, so a shown error is put back each time they are rewritten, or
     // cleared where a script has since made the value right.
@@ -726,12 +725,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     down.hidden = false;
     up.hidden = false;
     const detach = () => {
-        down.removeEventListener('click', lower);
-        up.removeEventListener('click', raise);
-        input.removeEventListener('input', onInput);
-        input.removeEventListener('change', onChange);
-        stepper.removeEventListener('focusin', mark);
-        input.form?.removeEventListener('reset', onReset);
+        listening.abort();
         kept.disconnect();
         report(false);
         if (status) hush(status);
