@@ -1,8 +1,8 @@
 {
     "recorded": {
-        "date": "2026-11-12",
-        "commit": "7048d11",
-        "machine": "INTEL(R) XEON(R) PLATINUM 8573C, 4 cores",
+        "date": "2026-11-13",
+        "commit": "816565f",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "tools": {
@@ -15,55 +15,61 @@
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 943.9,
+            "paint": 925.5,
             "shift": 0,
-            "bytes": 16902,
+            "bytes": 16901,
             "requests": 4
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
-            "performance": 99,
-            "paint": 954.9,
+            "performance": 100,
+            "paint": 954.8,
             "shift": 0,
-            "bytes": 20689,
+            "bytes": 20685,
             "requests": 4
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 955.9,
+            "paint": 962.7,
             "shift": 0,
-            "bytes": 25985,
+            "bytes": 25984,
             "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 928,
+            "paint": 926,
             "shift": 0,
-            "bytes": 18104,
+            "bytes": 18103,
             "requests": 4
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 927.8,
+            "paint": 928.7,
             "shift": 0,
-            "bytes": 18310,
+            "bytes": 18309,
             "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 934.7,
+            "paint": 933.9,
             "shift": 0,
-            "bytes": 17586,
+            "bytes": 17584,
             "requests": 4
         }
-    ]
+    ],
+    "since": {
+        "date": "2026-11-12",
+        "commit": "7048d11",
+        "kit": "0.4.0",
+        "bytes": 117576
+    }
 }
