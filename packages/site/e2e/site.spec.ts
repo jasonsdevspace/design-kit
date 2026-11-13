@@ -874,6 +874,46 @@ test.describe('the app pieces page', () => {
         await expect(page.locator('.dk-toast:not([inert] *)')).toHaveCount(0);
     });
 
+    test("pictures a shown toast with its buttons in their group, as the kit's own Toast draws them", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/app-pieces/');
+        const shown = page.locator('.site-copy[inert] .dk-toast[data-shown]');
+        expect(await shown.count()).toBeGreaterThan(0);
+        for (const toast of await shown.all()) {
+            await expect(
+                toast.locator(':scope > .dk-toast-buttons > .dk-toast-action')
+            ).toHaveCount(1);
+            await expect(toast.locator(':scope > .dk-toast-buttons > .dk-toast-close')).toHaveCount(
+                1
+            );
+        }
+    });
+
+    test('shades the end edge of its table of scores, which scrolls on a phone', async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 390, height: 900 });
+        await page.goto('/design-kit/app-pieces/');
+        const frame = page
+            .locator('.site-copy:not([inert])')
+            .getByRole('region', { name: 'Scores by round' });
+        await frame.scrollIntoViewIfNeeded();
+        // The site sets no ground of its own on a frame, so the kit's shade is drawn under the
+        // cells, sized by the frame's own scroll, where the browser ties an animation to one.
+        const drawn = await frame.evaluate((element) => ({
+            scrolls: element.scrollWidth > element.clientWidth,
+            images: getComputedStyle(element).backgroundImage.split('gradient(').length - 1,
+            sizes: getComputedStyle(element).backgroundSize,
+            ties: CSS.supports('animation-timeline: scroll()'),
+        }));
+        expect(drawn.scrolls).toBe(true);
+        if (drawn.ties) {
+            expect(drawn.images).toBe(2);
+            expect(drawn.sizes).toMatch(/^0px 100%, \d+(\.\d+)?px 100%$/);
+        }
+    });
+
     test("draws each screen as a phone's height in a box of its own, its bars inside it", async ({
         page,
     }) => {
@@ -2614,27 +2654,23 @@ test.describe(() => {
     test("keeps the room's line for a visitor without script inside the strip, on a phone with larger text", async ({
         page,
     }) => {
-        // The line comes with the release the strip's room draws it from, so over the pinned
-        // release there may be none, and the page is held to no sideways scroll either way.
         await page.setViewportSize({ width: 320, height: 900 });
         await textSize(page, 2);
         await page.goto('/design-kit/');
         const line = page.locator('body > .dk-strip .dk-strip-noscript');
-        if ((await line.count()) > 0) {
-            await expect(line).toBeVisible();
-            const fit = await line.evaluate((element) => {
-                const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
-                const own = element.getBoundingClientRect();
-                return {
-                    inside:
-                        section !== undefined &&
-                        own.bottom <= section.bottom + 0.5 &&
-                        own.right <= section.right + 0.5,
-                    cut: element.scrollWidth > element.clientWidth + 1,
-                };
-            });
-            expect(fit).toEqual({ inside: true, cut: false });
-        }
+        await expect(line).toBeVisible();
+        const fit = await line.evaluate((element) => {
+            const section = element.closest('.dk-strip-tools')?.getBoundingClientRect();
+            const own = element.getBoundingClientRect();
+            return {
+                inside:
+                    section !== undefined &&
+                    own.bottom <= section.bottom + 0.5 &&
+                    own.right <= section.right + 0.5,
+                cut: element.scrollWidth > element.clientWidth + 1,
+            };
+        });
+        expect(fit).toEqual({ inside: true, cut: false });
         expect(await sideways(page)).toBe(0);
     });
 
