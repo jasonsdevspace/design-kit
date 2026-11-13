@@ -1,6 +1,8 @@
 # 2. The kit's rules sit in dk layers, with a prefix and no weight
 
-**Status:** accepted, amended in 0.6.0 to hide a kit element a page marks `hidden` with `!important`
+**Status:** accepted, amended in 0.6.0 to hide a kit element a page marks `hidden` with
+`!important`, and to let a component follow its `:where()` with a number field's spin buttons or a
+dialog's `::backdrop`
 
 ## Context
 
@@ -24,7 +26,8 @@ unlayered rules.
 
 **C. A prefix, dk layers, and `:where()` inside them.** Every name prefixed, every rule in a layer
 of the kit's, and every selector but the kit's own classes one `:where()`, followed at most by a
-focus pseudo-class.
+focus pseudo-class, by a pseudo-element in the base, or in the components by a number field's spin
+buttons or a dialog's `::backdrop`.
 
 ## Decision
 
@@ -34,8 +37,13 @@ custom property starts with `--dk-` and every class with `.dk-`. Inside the laye
 is one of the kit's own classes or one `:where()`, followed at most by a focus pseudo-class. A rule
 in the base that has to reach every part of a page follows its `:where()` with each pseudo-element
 it means instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element inside a
-`:where()` matches nothing. So only the kit's classes, the focus rules and those pseudo-elements
-carry any weight, and that weight counts for nothing against a page's own rule outside a layer.
+`:where()` matches nothing. A component may follow its `:where()` with
+`::-webkit-inner-spin-button` or `::-webkit-outer-spin-button`, a number field's own spin buttons,
+which the stepper takes away, or with `::backdrop`, the scrim behind a dialog. Each is a part of a
+browser's own element that only a pseudo-element reaches, and no other pseudo-element follows a
+component's `:where()`. So only the kit's classes, the focus
+rules and those pseudo-elements carry any weight, and that weight counts for nothing against a
+page's own rule outside a layer.
 
 ## Consequences
 
@@ -77,7 +85,8 @@ The paths are in `packages/design-kit`.
 - `src/scope.test.ts` reads each sheet and holds the layer order to the first statement of the
   tokens and nowhere else, every block to the layer its sheet is named for, every selector to the
   kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
-  pseudo-element, with no pseudo-element inside a `:where()`, and custom properties to the tokens.
+  pseudo-element, or in the components by a number field's spin buttons or a dialog's `::backdrop`,
+  with no pseudo-element inside a `:where()`, and custom properties to the tokens.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its
   sheets, and finds a plain rule and a weightless one of the page's winning, a page's layer winning

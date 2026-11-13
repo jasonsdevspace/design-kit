@@ -10,14 +10,16 @@ import {
 
 import { THEME_CHOICES, type ThemeChoice } from './theme.js';
 /*
- * The page chrome a demo draws around its page, a skip link, a strip above the page that says
- * whose demo it is and a footer below it, and the buttons, fields and callouts on the page itself.
- * Each component draws the markup components.css styles and nothing else, with no stylesheet of
- * its own and no style attribute, so a page without React writes the same markup by hand, and a
- * page whose policy allows styles only from its own origin draws it. A control's state is a
- * native or ARIA attribute, never a class of the kit's. A component trusts its types, and guards
- * at run time only where a value plain JavaScript can pass would become a class, an element or an
- * attribute of its own, as a callout's tone, heading level, role and live region would.
+ * The page chrome a demo draws around its page, a skip link, a strip above the page that says whose
+ * demo it is and a footer below it, and the pieces on the page itself: the button, the input,
+ * select and textarea fields, the set of choices, the callout, the theme switch, the copy button
+ * and its status line, the toast and the stepper. Each component draws the markup components.css
+ * styles and nothing else, with no stylesheet of its own and no style attribute, so a page without
+ * React writes the same markup by hand, and a page whose policy allows styles only from its own
+ * origin draws it. A control's state is a native or ARIA attribute, never a class of the kit's. A
+ * component trusts its types, and guards at run time only where a value plain JavaScript can pass
+ * would become a class, an element or an attribute of its own, as a callout's tone, heading level,
+ * role and live region would.
  */
 
 /**
@@ -851,7 +853,10 @@ type StepperOwn = {
     readonly max: number;
     /** What a press adds or takes away, 1 unless given. */
     readonly step?: number | undefined;
-    /** What a value outside the limits, or none, is told, shown once the value is changed. */
+    /**
+     * What a value the field refuses, outside the limits, none or between steps, is told, shown
+     * once the value is changed.
+     */
     readonly rangeError?: ReactNode;
     /** Buttons and value at the larger target, for a count pressed at arm's length. */
     readonly tall?: boolean | undefined;
@@ -886,7 +891,7 @@ export type StepperFieldProps = Omit<FieldParts, 'label'> &
  * The buttons are hidden until `attachStepper` from `@jasonsdevspace/design-kit/controls` shows
  * them, so without script the field is a number field alone. Each button is named for what it does
  * and to which field, a status line out of sight says the value a press sets, and the error for a
- * value outside the limits waits, hidden, for the attach function to show it. A field whose least
+ * value the field refuses waits, hidden, for the attach function to show it. A field whose least
  * value is below nothing asks a phone for its full keyboard, since the numeric one has no minus.
  */
 export const StepperField = (props: StepperFieldProps) => {

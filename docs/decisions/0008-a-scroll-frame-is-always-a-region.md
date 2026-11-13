@@ -29,14 +29,16 @@ scrolls with it, and on a 320px screen it scrolled out of sight with the columns
 **D. A frame that is always a region, titled from outside it.** The title is a paragraph above the
 frame. The frame is `role="region"`, named by the title through `aria-labelledby`, with
 `tabindex="0"`, at every width. A table inside it is named by the same title. A code block is its
-own frame, a `<pre>` with the same attributes, and keeps its lines as written.
+own frame, a `<pre>` with the same attributes, and keeps its lines as written on screen.
 
 ## Decision
 
 Option D. A table sits in `.dk-table-scroll` under a `.dk-table-title`, and a block of code is a
-`pre.dk-code` under a `.dk-code-title`. Both scroll sideways inside themselves, so the page never
-does, and the title stays in place while the frame scrolls. A code block's title says what the code
-is for rather than its language, and the block carries `translate="no"`, never `lang`, so a
+`pre.dk-code` under a `.dk-code-title`. On screen both scroll sideways inside themselves, so the
+page never does, and the title stays in place while the frame scrolls. On paper, where nothing
+scrolls, both show whole, their code and figures wrapping so nothing is cut off, and a code block
+keeps an edge in the line color, since the browser drops its ground. A code block's title says what
+the code is for rather than its language, and the block carries `translate="no"`, never `lang`, so a
 browser's translation of the page leaves the identifiers alone. A table is never stacked into cards
 on a phone, since `display: block` on a table's parts drops its table semantics in WebKit, so its
 frame is the one way a wide table fits.
@@ -49,8 +51,9 @@ frame is the one way a wide table fits.
 - The frame and the table share a name, so a screen reader entering the table through its frame
   can say the title twice.
 - A page keeps each title's id in step with every `aria-labelledby` that points to it.
-- A long line of code is read by scrolling its block sideways, on a phone most of all.
-- With no script, a code block has no copy button.
+- On screen a long line of code is read by scrolling its block sideways, on a phone most of all.
+- A code block gets a copy button only from a page's script, which sets it beside the title in a
+  `.dk-code-head` and attaches it, so with no script a block has none.
 
 ## How it is tested
 

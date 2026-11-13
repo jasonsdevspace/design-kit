@@ -7,8 +7,8 @@
 Colors, type, light and dark themes and basic controls, shared by the demos on
 [jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets give a page colors and type in a
 light and a dark theme, a strip above the page and a footer below it, buttons, form fields and
-callouts for messages, and the layout of the "How it works" page beside each demo, called the
-explainer.
+callouts for messages, the layout of the "How it works" page beside each demo, called the
+explainer, and an app's frame, tab bar, toast, button grid, rows, stepper and dialog.
 
 It is made for those demos, so its strip and footer link to the author's portfolio. The colors, base
 styles and controls work on any page, and a page's own styles win over the kit's without extra
