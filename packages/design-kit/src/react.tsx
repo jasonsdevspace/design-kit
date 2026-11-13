@@ -821,10 +821,10 @@ export const CopyStatus = ({ className, ref }: CopyStatusProps = {}) => (
 /**
  * A toast's markup: the place its message is drawn, hidden from a screen reader, and the status
  * line it is said and read on, out of sight, both empty, and its action's button and close button,
- * hidden, in a group that keeps the two together where they wrap under the message. It draws nothing until `attachToast` from `@jasonsdevspace/design-kit/controls` shows a
- * message in it, and showing one adds no element, since a status line added at the moment it
- * speaks may go unheard. One is enough for a page, or for an app's frame, in the frame's place for
- * it.
+ * hidden, in a group that keeps the two together where they wrap under the message. It draws
+ * nothing until `attachToast` from `@jasonsdevspace/design-kit/controls` shows a message in it,
+ * and showing one adds no element, since a status line added at the moment it speaks may go
+ * unheard. One is enough for a page, or for an app's frame, in the frame's place for it.
  */
 export type ToastProps = {
     /** A page's class, after the kit's. */

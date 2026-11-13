@@ -676,6 +676,14 @@ test('keeps its buttons together at its end wherever they wrap under its message
         await show(page, 'Round 3 saved.', action);
         await settle(page);
         await together(page, action, what);
+        // The message on its row of its own stands as far from the toast's end as from its start.
+        const card = await box(toast(page), 'the toast');
+        const words = await box(message(page), 'the message');
+        const start = words.x - card.x;
+        expect(
+            Math.abs(card.x + card.width - (words.x + words.width) - start),
+            what
+        ).toBeLessThanOrEqual(1);
     }
 });
 
@@ -704,6 +712,23 @@ test("keeps a toast with no action on one row in an app's frame narrower than th
     await show(page, 'Round 3 saved.');
     await settle(page);
     await expect(toast(page)).toHaveAttribute('data-rows', '1');
+});
+
+test('keeps the layout it had for a toast written without its group of buttons', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    const flat = TOAST.replace('<div class="dk-toast-buttons">', '').replace(
+        /<\/div><\/div>$/,
+        '</div>'
+    );
+    expect(flat).not.toContain('dk-toast-buttons');
+    await open(page, { width: 320, body: PAGE.replace(TOAST, flat) });
+    await textSize(page, 2);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    await together(page, 'Undo', 'without the group at 320px and twice the text size');
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({

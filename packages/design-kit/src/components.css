@@ -2249,15 +2249,21 @@
      * The action and the close button, kept together at the toast's end: beside the message where
      * both fit, and on the row under it, at its end, where they do not, whatever the action's
      * length or the toast's width. Where even the two do not fit beside each other, each sits at
-     * the end of its row.
+     * the end of its row. A toast with the group pads its end as its start, so a message on a row
+     * of its own stands as far from either edge, and the group reaches back into that padding, so
+     * its buttons sit where they did.
      */
+    :where(.dk-toast[data-shown]:has(> .dk-toast-buttons)) {
+        padding-inline-end: var(--dk-space-4);
+    }
+
     :where(.dk-toast-buttons) {
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
         gap: 0 var(--dk-space-2);
         min-width: 0;
-        margin-inline-start: auto;
+        margin-inline: auto calc(var(--dk-space-1) - var(--dk-space-4));
     }
 
     :where(.dk-toast-action) {
