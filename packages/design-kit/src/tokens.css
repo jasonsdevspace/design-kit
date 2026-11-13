@@ -223,6 +223,23 @@
         --dk-flow-step: var(--dk-space-3);
     }
 
+    /*
+     * The ground a table's frame covers its shades with at the ends of what it holds: the page's,
+     * a dialog's raised one, or a panel's, or what a page sets in --dk-table-ground, as the pinned
+     * cells take, a panel's first so a panel in a dialog gives its own.
+     */
+    :where(.dk-table-scroll) {
+        --dk-table-edge: var(--dk-table-ground, var(--dk-bg));
+    }
+
+    :where(.dk-dialog .dk-table-scroll) {
+        --dk-table-edge: var(--dk-table-ground, var(--dk-raised));
+    }
+
+    :where(.dk-panel .dk-table-scroll) {
+        --dk-table-edge: var(--dk-table-ground, var(--dk-surface));
+    }
+
     /* A theme set on the root wins over the system's. */
     :where(:root[data-theme='light']) {
         color-scheme: light;

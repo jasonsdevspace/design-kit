@@ -45,12 +45,14 @@ const open = async (
         player = 'Ana',
         wide = false,
         css = '',
+        theme = 'light',
     }: {
         readonly attach?: boolean;
         readonly dir?: 'ltr' | 'rtl';
         readonly player?: string;
         readonly wide?: boolean;
         readonly css?: string;
+        readonly theme?: 'light' | 'dark';
     } = {}
 ): Promise<void> => {
     const files: Readonly<Record<string, readonly [string, string]>> = {
@@ -62,7 +64,7 @@ const open = async (
     await page.route(`${ORIGIN}/**`, (route) => {
         const path = new URL(route.request().url()).pathname;
         const [served, contentType] = files[path] ?? [
-            `<!doctype html><html lang="en" dir="${dir}" data-theme="light"><head>` +
+            `<!doctype html><html lang="en" dir="${dir}" data-theme="${theme}"><head>` +
                 `<title>Scores</title><link rel="stylesheet" href="/kit.css"></head><body>` +
                 `<main><h1>Scores</h1>${table(player, wide)}</main>` +
                 (attach ? '<script type="module" src="/page.js"></script>' : '') +
@@ -287,4 +289,82 @@ test('moves the frame once a step, where the browser would leave it, under a nar
     // Chromium scrolls before focus lands, so only a second move after it counts.
     expect(drawn).toBe(landed);
     expect(await whole(page, 5)).toBe(true);
+});
+
+/** The pinned column scrolling with the rest, so the start's shade is in sight. */
+const UNPINNED = '.dk-table-pinned :is(th, td):first-child { position: static; }';
+
+/**
+ * How far the frame's color strays from its ground at one edge, 2px in from the side given, in
+ * the padding above the first row's text, read from what the browser drew.
+ */
+const shadeAt = async (page: Page, side: 'left' | 'right'): Promise<number> => {
+    const drawn = await box(frame(page), 'the frame');
+    const row = await box(page.locator('tbody tr').first(), 'the first row');
+    const x = side === 'left' ? drawn.x + 2 : drawn.x + drawn.width - 3;
+    const shot = await page.screenshot({ clip: { x, y: row.y + 2, width: 1, height: 1 } });
+    const [ground, at] = await page.evaluate(async (png) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${png}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const drawing = canvas.getContext('2d');
+        drawing?.drawImage(image, 0, 0);
+        const pixel = [...(drawing?.getImageData(0, 0, 1, 1).data ?? [])].slice(0, 3);
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--dk-bg)';
+        document.body.append(probe);
+        const bg = (getComputedStyle(probe).color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+        probe.remove();
+        return [bg, pixel];
+    }, shot.toString('base64'));
+    return Math.max(...at.map((value, index) => Math.abs(value - (ground[index] ?? 0))));
+};
+
+const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> =>
+    frame(page).evaluate((element, to) => {
+        const room = element.scrollWidth - element.clientWidth;
+        const along = to === 'start' ? 0 : to === 'end' ? room : room / 2;
+        element.scrollLeft = getComputedStyle(element).direction === 'rtl' ? -along : along;
+    }, where);
+
+test('shades the edges a frame scrolls toward, and neither end once it is in view', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await open(page, { css: UNPINNED, theme });
+        expect(await shadeAt(page, 'left'), `${theme} at the start`).toBeLessThan(4);
+        expect(await shadeAt(page, 'right'), `${theme} at the start`).toBeGreaterThan(12);
+        await scrollTo(page, 'middle');
+        expect(await shadeAt(page, 'left'), `${theme} in the middle`).toBeGreaterThan(12);
+        expect(await shadeAt(page, 'right'), `${theme} in the middle`).toBeGreaterThan(12);
+        await scrollTo(page, 'end');
+        expect(await shadeAt(page, 'left'), `${theme} at the end`).toBeGreaterThan(12);
+        expect(await shadeAt(page, 'right'), `${theme} at the end`).toBeLessThan(4);
+    }
+});
+
+test('shades no edge of a frame whose table fits, one that reads right to left, or any in forced colors', async ({
+    page,
+}) => {
+    await open(page, {
+        css: `${UNPINNED} .dk-table :is(th, td):nth-child(n + 3) { display: none; }`,
+    });
+    expect(await shadeAt(page, 'left')).toBeLessThan(4);
+    expect(await shadeAt(page, 'right')).toBeLessThan(4);
+    await open(page, { css: UNPINNED, dir: 'rtl' });
+    await scrollTo(page, 'middle');
+    expect(await shadeAt(page, 'left'), 'right to left').toBeLessThan(4);
+    expect(await shadeAt(page, 'right'), 'right to left').toBeLessThan(4);
+    await page.emulateMedia({ forcedColors: 'active' });
+    await open(page, { css: UNPINNED });
+    await scrollTo(page, 'middle');
+    const left = await shadeAt(page, 'left');
+    const right = await shadeAt(page, 'right');
+    expect(Math.abs(left - right)).toBeLessThan(4);
+    expect(await frame(page).evaluate((element) => getComputedStyle(element).backgroundImage)).toBe(
+        'none'
+    );
 });
