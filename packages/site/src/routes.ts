@@ -57,7 +57,7 @@ export const ROUTES = [
         file: 'page-chrome/index.html',
         path: `${BASE}page-chrome/`,
         title: 'Page chrome · The design kit · Jason Poteet',
-        nav: 'Page chrome',
+        nav: 'Chrome',
         card: 'The skip link, top strip and footer around each demo.',
         description:
             'The skip link, strip and footer a demo draws around its page from the design kit, with each state of the strip and the footer in both themes and the code behind it.',
