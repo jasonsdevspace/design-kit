@@ -139,6 +139,51 @@ describe('a package record that measures its parts', () => {
     });
 });
 
+describe('a record that follows another', () => {
+    it('says what changed since the record before', () => {
+        const packaged = packageRecord(
+            {
+                name: '@jasonsdevspace/design-kit',
+                version: '0.6.0',
+                size: 54272,
+                files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9216 }],
+                since: {
+                    date: '2026-11-12',
+                    commit: '7048d11',
+                    version: '0.5.0',
+                    size: 52828,
+                    sheets: 7987,
+                },
+            },
+            RECORDED
+        );
+        expect(packaged.markdown).toContain(
+            'Since the record of `0.5.0` on 2026-11-12 at `7048d11`, it packs 53.0 KB where it packed 51.6 KB, and the sheets a page loads come to 9.0 KB without their comments where they came to 7.8 KB.'
+        );
+        expect(JSON.parse(packaged.json)).toHaveProperty('since.version', '0.5.0');
+        const paged = pagesRecord(
+            [
+                {
+                    path: '/design-kit/',
+                    accessibility: 100,
+                    performance: 99,
+                    paint: 900,
+                    shift: 0,
+                    bytes: 20480,
+                    requests: 4,
+                },
+            ],
+            RECORDED,
+            { lighthouse: '13.0.0', chrome: '140', kit: '0.6.0' },
+            { date: '2026-11-12', commit: '7048d11', kit: '0.5.0', bytes: 18432 }
+        );
+        expect(paged.markdown).toContain(
+            'Since the record on 2026-11-12 at `7048d11`, drawn from version 0.5.0, the pages download 20.0 KB together where they downloaded 18.0 KB.'
+        );
+        expect(JSON.parse(paged.json)).toHaveProperty('since.bytes', 18432);
+    });
+});
+
 describe('the records in the repository', () => {
     const at = (path: string) => new URL(`../${path}`, import.meta.url);
 
@@ -173,10 +218,11 @@ describe('the records in the repository', () => {
             recorded: Parameters<typeof pagesRecord>[1];
             tools: Parameters<typeof pagesRecord>[2];
             pages: Parameters<typeof pagesRecord>[0];
+            since?: Parameters<typeof pagesRecord>[3];
         };
-        expect(await made(pagesRecord(pages.pages, pages.recorded, pages.tools).markdown)).toBe(
-            await made(read('site-pages.md'))
-        );
+        expect(
+            await made(pagesRecord(pages.pages, pages.recorded, pages.tools, pages.since).markdown)
+        ).toBe(await made(read('site-pages.md')));
     });
 
     it('states the packed size the package record holds, so the README cannot keep an old one', () => {

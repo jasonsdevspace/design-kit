@@ -721,6 +721,7 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 | --------- | ---------- | -------------------------------------------------------------------------------- |
 | `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`          |
 | `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                        |
+| `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                         |
 | `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed` or `large` |
 | `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action             |
 | `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                     |

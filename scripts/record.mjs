@@ -59,9 +59,19 @@ const sheetTable = (sheets) => {
 /** @typedef {{ date: string, commit: string, machine: string, node: string }} Recorded */
 /** @typedef {import('./summary.mjs').Packed} Packed */
 /**
+ * What the package record before this one measured, for a record to say what changed since.
+ *
+ * @typedef {{ date: string, commit: string, version: string, size: number, sheets: number }} PackageSince
+ */
+/**
+ * What the pages record before this one measured, for a record to say what changed since.
+ *
+ * @typedef {{ date: string, commit: string, kit: string, bytes: number }} PagesSince
+ */
+/**
  * The package with what each part of it costs, for a record taken since the parts were measured.
  *
- * @typedef {Packed & { pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
+ * @typedef {Packed & { since?: PackageSince, pieces?: { piece: string, rules: number, gzip: number }[], functions?: { name: string, alone: number, added: number }[] }} Measured
  */
 /**
  * A page of the site as the audit measured it on a first visit, its scores out of a hundred.
@@ -126,6 +136,63 @@ export const recorded = () => {
 export const recordedTable = ({ date, commit: at, machine, node }) =>
     table(['Recorded', 'Commit', 'Machine', 'Node'], [[date, `\`${at}\``, machine, node]]);
 
+/** The sheets a page loads together without their comments, the figure the sheets' budget holds. */
+const sheetsOf = (/** @type {Packed} */ packed) =>
+    packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+
+/**
+ * What changed since the package record before this one, for a record that knows it.
+ *
+ * @param {Measured} packed
+ */
+const packageSince = ({ since, ...packed }) =>
+    since
+        ? ` Since the record of \`${since.version}\` on ${since.date} at \`${since.commit}\`, it packs ${kb(packed.size)} where it packed ${kb(since.size)}, and the sheets a page loads come to ${kb(sheetsOf(packed))} without their comments where they came to ${kb(since.sheets)}.`
+        : '';
+
+/**
+ * The package record kept under `docs/benchmarks`, as what changed is measured from, or nothing
+ * where there is none.
+ *
+ * @returns {PackageSince | undefined}
+ */
+export const packageBefore = () => {
+    try {
+        /** @type {Packed & { recorded: Recorded }} */
+        const before = JSON.parse(readFileSync(new URL('package-size.json', BENCHMARKS), 'utf8'));
+        return {
+            date: before.recorded.date,
+            commit: before.recorded.commit,
+            version: before.version,
+            size: before.size,
+            sheets: sheetsOf(before),
+        };
+    } catch {
+        return undefined;
+    }
+};
+
+/**
+ * The pages record kept under `docs/benchmarks`, as what changed is measured from, or nothing where
+ * there is none.
+ *
+ * @returns {PagesSince | undefined}
+ */
+export const pagesBefore = () => {
+    try {
+        /** @type {{ recorded: Recorded, tools: Tools, pages: Page[] }} */
+        const before = JSON.parse(readFileSync(new URL('site-pages.json', BENCHMARKS), 'utf8'));
+        return {
+            date: before.recorded.date,
+            commit: before.recorded.commit,
+            kit: before.tools.kit,
+            bytes: before.pages.reduce((sum, page) => sum + page.bytes, 0),
+        };
+    } catch {
+        return undefined;
+    }
+};
+
 /** A count of bytes, for a part too small to read in kilobytes. */
 const bytes = (/** @type {number} */ count) => `${String(count)} B`;
 
@@ -173,7 +240,7 @@ Run \`npm run bench:package\` to reproduce it. The raw results are in [package-s
 What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports${sheetsNote(packed.files)}. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches a control.
 
 ${recordedTable(at)}
-\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.
+\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.${packageSince(packed)}
 
 The sheets a page loads:
 
@@ -195,8 +262,13 @@ ${files((path) => !isSheet(path) && !isModule(path))}${partsOf(packed)}`;
  * @param {readonly Page[]} pages
  * @param {Recorded} at
  * @param {Tools} tools
+ * @param {PagesSince} [since] the record before, for what changed since it
  */
-export const pagesRecord = (pages, at, tools) => {
+export const pagesRecord = (pages, at, tools, since) => {
+    const bytes = pages.reduce((sum, page) => sum + page.bytes, 0);
+    const changed = since
+        ? ` Since the record on ${since.date} at \`${since.commit}\`, drawn from version ${since.kit}, the pages download ${kb(bytes)} together where they downloaded ${kb(since.bytes)}.`
+        : '';
     const markdown = `# Site pages
 
 Run \`npm run bench:pages\` to reproduce it. It runs the audit \`npm run lighthouse\` runs, and writes the record only when every page passes. The raw results are in [site-pages.json](site-pages.json).
@@ -204,7 +276,7 @@ Run \`npm run bench:pages\` to reproduce it. It runs the audit \`npm run lightho
 Each page of jasonsdevspace.com/design-kit/, built and served locally, on a first visit as Lighthouse makes one: a phone on a slow network, its processor slowed, with nothing cached. CI holds every page to accessibility of a hundred, performance of at least ninety, a largest paint within 2,500 ms and layout shift within 0.1. Where a page misses a performance gate on its first trace, it is measured twice more and judged on the middle of the three. The local server gzips each file, as GitHub Pages does, so what a page downloads is close to what a visitor's browser receives.
 
 ${recordedTable(at)}
-Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}, the site drawing from version ${tools.kit} of the kit.
+Measured with Lighthouse ${tools.lighthouse} in Chrome ${tools.chrome}, the site drawing from version ${tools.kit} of the kit.${changed}
 
 ${table(
     [
@@ -226,7 +298,10 @@ ${table(
         String(page.requests),
     ])
 )}`;
-    return { markdown, json: `${JSON.stringify({ recorded: at, tools, pages }, null, 4)}\n` };
+    return {
+        markdown,
+        json: `${JSON.stringify({ recorded: at, tools, pages, ...(since ? { since } : {}) }, null, 4)}\n`,
+    };
 };
 
 /**
@@ -270,7 +345,11 @@ if (isRunDirectly(import.meta.url)) {
             pieces: piecesOf(sheets),
             functions: await functionsOf(dist, Object.keys(controls).sort()),
         };
-        writeRecord('package-size', packageRecord({ ...packed, ...parts }, recorded()));
+        const since = packageBefore();
+        writeRecord(
+            'package-size',
+            packageRecord({ ...packed, ...parts, ...(since ? { since } : {}) }, recorded())
+        );
     } finally {
         rmSync(into, { recursive: true, force: true });
     }
