@@ -651,16 +651,30 @@ test("draws the toast's close button at the target both ways on a wide screen, i
     page,
 }) => {
     const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Dismiss</span></button></div></div>`;
-    for (const [name, body] of [
-        ['a page', `<main><h1>Round 3</h1></main>${toast}`],
-        [
-            'a frame',
-            `<div class="dk-app"><main class="dk-app-body"><h1>Round 3</h1></main><div class="dk-app-toast">${toast}</div></div>`,
-        ],
+    // With its group of buttons, and as a toast written before the group drew it.
+    const flat = toast
+        .replace('<div class="dk-toast-buttons">', '')
+        .replace('</div></div>', '</div>');
+    for (const [kind, drawn] of [
+        ['with the group', toast],
+        ['without the group', flat],
     ] as const) {
-        await writePage(page, { width: 1280, title: 'Round 3', body });
-        const close = await box(page.getByRole('button', { name: 'Dismiss' }), 'the close button');
-        expect([Math.round(close.width), Math.round(close.height)], name).toEqual([44, 44]);
+        for (const [name, body] of [
+            ['a page', `<main><h1>Round 3</h1></main>${drawn}`],
+            [
+                'a frame',
+                `<div class="dk-app"><main class="dk-app-body"><h1>Round 3</h1></main><div class="dk-app-toast">${drawn}</div></div>`,
+            ],
+        ] as const) {
+            await writePage(page, { width: 1280, title: 'Round 3', body });
+            const close = await box(
+                page.getByRole('button', { name: 'Dismiss' }),
+                'the close button'
+            );
+            expect([Math.round(close.width), Math.round(close.height)], `${name} ${kind}`).toEqual([
+                44, 44,
+            ]);
+        }
     }
 });
 

@@ -13,9 +13,10 @@ import { textSize } from './text-size.js';
  * held while it is hovered or focused, on a stand-in clock, a second message replacing the first
  * and the same words heard again, focus returned to where it was, a long message wrapping with its
  * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
- * place above an app's dock or at the foot of a page, nothing drawn before a message or printed,
- * the same function returned when attached again, a solid edge in forced colors, and no audit
- * findings in either theme.
+ * message as far from either edge there, its buttons kept together in their group, or as they were
+ * without it, its place above an app's dock or at the foot of a page, nothing drawn before a
+ * message or printed, the same function returned when attached again, a solid edge in forced
+ * colors, and no audit findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -714,6 +715,17 @@ test("keeps a toast with no action on one row in an app's frame narrower than th
     await expect(toast(page)).toHaveAttribute('data-rows', '1');
 });
 
+/** How far the room for the message's words stands from the toast's start and from its end. */
+const room = async (page: Page): Promise<[number, number]> => {
+    const card = await box(toast(page), 'the toast');
+    const drawn = await box(message(page), 'the message');
+    const [left, right] = await message(page).evaluate((words) => {
+        const { paddingLeft, paddingRight } = getComputedStyle(words);
+        return [parseFloat(paddingLeft), parseFloat(paddingRight)];
+    });
+    return [drawn.x + left - card.x, card.x + card.width - (drawn.x + drawn.width - right)];
+};
+
 test('stands its message as far from either edge on a 320px phone at twice the text size', async ({
     page,
     browserName,
@@ -723,16 +735,7 @@ test('stands its message as far from either edge on a 320px phone at twice the t
     await textSize(page, 2);
     await show(page, 'Round 3 saved.', 'Undo');
     await settle(page);
-    // How far the room for the message's words stands from the toast's start and from its end.
-    const [start, end] = await message(page).evaluate((words) => {
-        const card = words.closest('.dk-toast')?.getBoundingClientRect();
-        const drawn = words.getBoundingClientRect();
-        const { paddingLeft, paddingRight } = getComputedStyle(words);
-        return [
-            drawn.left + parseFloat(paddingLeft) - (card?.left ?? 0),
-            (card?.right ?? 0) - (drawn.right - parseFloat(paddingRight)),
-        ];
-    });
+    const [start, end] = await room(page);
     expect(Math.abs(end - start)).toBeLessThanOrEqual(1);
 });
 
@@ -762,6 +765,9 @@ test('keeps the layout it had for a toast written without its group of buttons',
     if (Math.abs(close.y - action.y) <= 1)
         expect(close.x).toBeGreaterThan(action.x + action.width - 1);
     else expect(end - (action.x + action.width)).toBeLessThan(16);
+    // Its message, on a row of its own, pads its end as its start, as it did.
+    const [start, finish] = await room(page);
+    expect(Math.abs(finish - start)).toBeLessThanOrEqual(1);
 });
 
 test('sits at the foot of a page clear of the home indicator, in the app column', async ({
