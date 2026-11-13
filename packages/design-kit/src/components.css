@@ -2,13 +2,19 @@
  * The kit's components, in the kit's components layer, so they sit over the base and under a
  * page's own rules. Each is styled by its class and the markup the kit's reference gives for it,
  * which the React components draw and a page without React writes by hand. A selector beyond a
- * single class sits inside one :where(), followed at most by a focus pseudo-class, so only the
- * classes and the focus rule carry weight. The page chrome comes first, then the buttons, fields
- * and callouts, then the explainer page and the steps, panel, table and code block it holds, then
- * the theme switch, the eyebrow, the pills, the tabs and the copy button's words, and then the
- * pieces an app is made of: its frame, the tab bar, the toast, the grid of buttons and the rows.
- * Each piece keeps its rules together, at rest, under a pointer, in its states, on a phone and in
- * forced colors, in that order, and the print rules come last for every piece at once.
+ * single class sits inside one :where(), followed at most by a focus pseudo-class, or by a number
+ * field's spin buttons or a dialog's ::backdrop, the parts of a browser's own element only a
+ * pseudo-element reaches. So only the classes, the focus rules and those parts carry weight.
+ *
+ * The page chrome comes first, then the buttons and a row of them, the fields, a field with a
+ * button beside it, the sets of choices and the callouts, then the explainer page and the
+ * steps, panel, table and code block it holds, then the theme switch, the eyebrow, the pills,
+ * the tabs and the copy button's words, and then the pieces an app is made of: its frame, the
+ * tab bar, the toast, the grid of buttons, the rows, the stepper and the dialog with its sheet.
+ * Each piece keeps its rules together, at rest, under a pointer, in its states, on a phone and
+ * in forced colors, in that order. The flow that spaces the pieces in a container follows them
+ * all, then the print rules for every piece at once, and last the rule that hides a kit element
+ * a page marks hidden.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -825,9 +831,8 @@
      * A message set apart from the page, on the highlight for news, or on a ground of its own for
      * something that went right, needs care or went wrong. Its words stay in the page's own color
      * in every tone, and say the tone themselves, so color is never the only sign of it. The edge
-     * draws nothing
-     * until forced colors or paper drop the ground, and then it marks where the callout starts and
-     * ends.
+     * draws nothing until forced colors or paper drop the ground, and then it marks where the
+     * callout starts and ends.
      */
     :where(.dk-callout) {
         display: grid;
@@ -988,9 +993,9 @@
     /*
      * Steps a demo takes one after another, each in a box of its own with an arrow above it from
      * the step before. The arrow is a span hidden from a screen reader, since a selector in this
-     * sheet takes nothing after its :where() but a focus pseudo-class, and a pseudo-element cannot
-     * sit inside one. The list keeps role="list" in its markup, since a browser can drop a list's
-     * meaning when its markers are gone.
+     * sheet takes no pseudo-element after its :where() but a number field's spin buttons and a
+     * dialog's backdrop, and a pseudo-element cannot sit inside one. The list keeps role="list" in
+     * its markup, since a browser can drop a list's meaning when its markers are gone.
      */
     :where(.dk-steps) {
         display: grid;
@@ -1161,10 +1166,11 @@
     }
 
     /*
-     * A block of code keeps its lines as written and scrolls inside itself, a named region the
-     * keyboard reaches, as a table's frame is. It sits on the card's ground, or on the page's
-     * inside a panel, so it reads as set into what holds it, and its edge shows in forced colors
-     * and on paper.
+     * A block of code keeps its lines as written on screen and scrolls inside itself, a named
+     * region the keyboard reaches, as a table's frame is. On paper it shows whole and wraps its
+     * lines, by the print rules at the end of the sheet. It sits on the card's ground, or on the
+     * page's inside a panel, so it reads as set into what holds it, and its edge shows in forced
+     * colors and on paper.
      */
     :where(.dk-code) {
         padding: var(--dk-space-3) var(--dk-space-4);

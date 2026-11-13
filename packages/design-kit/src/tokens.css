@@ -13,8 +13,9 @@
  * outside a layer wins over the kit's, the cut to motion in the base aside, and a page that names
  * dk among layers of its own sets where dk goes. A demo's own :root outside a layer wins the same
  * way, whichever sheet loads first. Across the kit, every selector is one of the kit's own classes
- * or one :where(), followed at most by a focus pseudo-class or, in the base alone, a
- * pseudo-element, and here each is a :where() alone, so nothing in the tokens carries weight.
+ * or one :where(), followed at most by a focus pseudo-class, by a pseudo-element in the base, or
+ * in the components by a number field's spin buttons or a dialog's ::backdrop. Here each is a
+ * :where() alone, so nothing in the tokens carries weight.
  *
  * Every text pairing the palette is meant for passes 4.5 to 1 in both themes, and a control's edge
  * 3 to 1 against what it sits on. The focus ring is in its own role, the accent unless a page

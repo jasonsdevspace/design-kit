@@ -1,6 +1,7 @@
 # 5. The components carry no stylesheet of their own
 
-**Status:** accepted
+**Status:** accepted, amended in 0.6.0 to let a selector in the components sheet follow its
+`:where()` with a number field's spin buttons or a dialog's `::backdrop`
 
 ## Context
 
@@ -70,7 +71,8 @@ The paths are in `packages/design-kit`.
   `style-src 'self'`, and finds the strip laid out as before with nothing refused.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to
   `dk.components`, its selectors to the kit's own classes or one `:where()` followed at most by a
-  focus pseudo-class, and its custom properties to none.
+  focus pseudo-class, a number field's spin buttons (`::-webkit-inner-spin-button` and
+  `::-webkit-outer-spin-button`) or a dialog's `::backdrop`, and its custom properties to none.
 - `scripts/sheets.test.ts`, from the repository's root beside the record's own test, holds the three
   sheets together, without their comments and blank lines, to a budget gzipped, as the controls are
   held to theirs, so the components sheet cannot grow unseen as pieces are added. The package record

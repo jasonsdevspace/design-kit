@@ -11,8 +11,8 @@ each piece live in both themes.
 the kit's layer order. `base.css` draws selected text on the accent rather than on the browser's
 blue, since a page keeps one accent, and in the text the accent carries. It sets inline code a step
 smaller than the text around it and lets a long name break anywhere rather than push a narrow
-column wider. Inside a `pre` code takes the
-block's size, and inside a link it keeps the link's underline. The base also puts a pointer cursor
+column wider. Inside a `pre` code takes the block's size, and inside a link it keeps the link's
+underline. The base also puts a pointer cursor
 on a `<summary>`, and on a checkbox or radio and the label around it.
 
 Every token's value, each color in both themes, and the contrast of each color pairing are on [the
@@ -569,8 +569,8 @@ explains. A message that arrives after the page has loaded is made live in three
    success, warning or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
-A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is dropped and
-the edge marks where the callout starts and ends.
+A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is
+dropped and the edge marks where the callout starts and ends.
 
 ### Pills
 
@@ -1155,10 +1155,11 @@ A frame holds to the measure as the prose does, so a table wider than 34rem scro
 too. A table is in the small text, with each row ruled in the line color. Its column headers are the
 muted text at medium weight, and a row's header is at medium weight too. The outer cells keep no
 padding on their outer side, so the table's text lines up with the prose around it. Figures sit to
-the right and never wrap, while text in a cell wraps and keeps its first line level with the rest of
-its row. Code in a cell stays on one line, hyphens and spaces alike, so a token's name never breaks
-after `--dk-`, and a long expression scrolls the frame as a wide table does. The frame's scroll
-padding keeps a target's room at its end edge, which a browser counts as out of view.
+the right and on screen never wrap, while text in a cell wraps and keeps its first line level with
+the rest of its row. On screen code in a cell stays on one line, hyphens and spaces alike, so a
+token's name never breaks after `--dk-`, and a long expression scrolls the frame as a wide table
+does. On paper the table shows whole and its figures and code wrap. The frame's scroll padding keeps
+a target's room at its end edge, which a browser counts as out of view.
 
 </details>
 
@@ -1228,22 +1229,23 @@ since the cell after it would be the one pinned.
 WHERE product_id = $1 AND held &lt; on_hand;</code></pre>
 ```
 
-A block of code keeps its lines as written and scrolls inside itself on screen, since wrapping would
-break its indentation and show line breaks the code does not have. On paper it wraps, so nothing is
-cut off. It is a named region with a tabindex of 0, for the same reasons as a table's frame. Its
-title says what the code is for, such as "Run it yourself", rather than naming its language.
-`translate="no"` keeps a browser's translation of the page off the identifiers. A block never takes
-`lang` for its programming language, since `lang` names a human language. The code starts right
-after `<code>`, since a line break there shows as a blank first line, and a `<` or `&` in it is
-written `&lt;` or `&amp;`. The kit adds no behavior beyond the theme script, so a block on an
-explainer has no copy button. A page that attaches one sets it beside the title in a `dk-code-head`,
-as the copy button's section shows.
+On screen a block of code keeps its lines as written and scrolls inside itself, since wrapping would
+break its indentation and show line breaks the code does not have. On paper it shows whole and wraps
+its lines, so nothing is cut off. It is a named region with a tabindex of 0, for the same reasons as
+a table's frame. Its title says what the code is for, such as "Run it yourself", rather than naming
+its language. `translate="no"` keeps a browser's translation of the page off the identifiers. A
+block never takes `lang` for its programming language, since `lang` names a human language. The
+code starts right after `<code>`, since a line break there shows as a blank first line, and a `<` or
+`&` in it is written `&lt;` or `&amp;`. The markup alone draws no copy button. A block gets one only
+from a page's script, which sets it beside the title in a `dk-code-head` and attaches it, as the
+copy button's section shows.
 
 <details>
 <summary>How a code block is drawn</summary>
 
 A block sits on the card ground, or on the page's own ground inside a panel, so it reads as set into
-what holds it. Its edge is transparent, and shows only in forced colors.
+what holds it. Its edge is transparent, and shows in forced colors and on paper, where the ground is
+dropped.
 
 </details>
 
@@ -1508,27 +1510,28 @@ A press steps the value by the step, and one that changes it fires the `input` a
 typed value fires. A button that would pass the least or the greatest value is off, by
 `aria-disabled` so focus stays on it, as both are on a field that is disabled or read only, and a
 press of an off button does nothing. Each press reads the value again first, so a value a script or
-a form's reset set is followed. The field still takes a typed value. One outside the limits, or none
-at all, shows the stepper's own error, which waits hidden in the markup, once the value is changed,
-and the status line says it. The error is cleared as soon as the value is right again, and the
-attach function adds and takes away only its own error, so an error or a hint the page draws keeps
-its place. A page that draws the field again, as React does when the page's own error comes or goes,
-rewrites the field's description and its invalid mark, and the attach function puts its shown error
-back in both at once. It takes the stepper or its field, attaches each stepper once whichever it is
-given, and returns what takes it away again.
+a form's reset set is followed. The field still takes a typed value. One the field refuses, outside
+the limits, none at all, or between steps, such as 2.5 with a step of 1, shows the stepper's own
+error, which waits hidden in the markup, once the value is changed, and the status line says it. The
+error is cleared as soon as the value is right again, and the attach function adds and takes away
+only its own error, so an error or a hint the page draws keeps its place. A page that draws the
+field again, as React does when the page's own error comes or goes, rewrites the field's description
+and its invalid mark, and the attach function puts its shown error back in both at once. It takes
+the stepper or its field, attaches each stepper once whichever it is given, and returns what takes
+it away again.
 
 **`StepperField` props**
 
-| `StepperField`        | Default                           | What it does                                                                                     |
-| --------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `label`               | required                          | names the field                                                                                  |
-| `min`, `max`          | required                          | the least and the greatest value                                                                 |
-| `step`                | 1                                 | what a press adds or takes away                                                                  |
-| `subject`             | the label, where it is words      | the words after Lower and Raise in the buttons' names, needed where the label is more than words |
-| `rangeError`          | "Enter a number from min to max." | what a value outside the limits, or none, is told                                                |
-| `inline`              | false                             | the label to the left, on one line with the stepper                                              |
-| `tall`                | false                             | buttons and value at `--dk-target-large`                                                         |
-| `hint`, `error`, `id` | none                              | as for every field                                                                               |
+| `StepperField`        | Default                      | What it does                                                                                     |
+| --------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `label`               | required                     | Names the field                                                                                  |
+| `min`, `max`          | required                     | The least and the greatest value                                                                 |
+| `step`                | `1`                          | What a press adds or takes away                                                                  |
+| `subject`             | the label, where it is words | The words after Lower and Raise in the buttons' names, needed where the label is more than words |
+| `rangeError`          | a sentence giving the limits | What a value the field refuses is told, such as `'Enter a number from 2 to 8.'`                  |
+| `inline`              | `false`                      | Puts the label to the left, on one line with the stepper                                         |
+| `tall`                | `false`                      | Draws the buttons and the value at `--dk-target-large`                                           |
+| `hint`, `error`, `id` | none                         | As for every field                                                                               |
 
 <details>
 <summary>How a stepper is drawn</summary>
@@ -1544,9 +1547,10 @@ it stands level with them. At 48rem wide or less, in an app's frame and on a pag
 bar, where a field and a button are the target tall, a stepper that is not tall stands level with
 one beside it. With its label to the left the label takes the room the stepper leaves and wraps
 within it, and the stepper moves under the label where a large text size leaves no room for both.
-Its errors sit on lines above it, as every field's do, and its hint on a line below. The number
-field's own spin buttons are taken away, since the stepper's buttons stand in for them and they
-would keep their room even out of sight.
+Its errors sit on lines above it, as every field's do, and its hint on a line below, which only the
+inline stepper does. In a stepper with its label above, the hint sits under the label and over the
+errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
+buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 
@@ -1617,15 +1621,17 @@ message once the dialog has closed.
 
 | `Toast`     | Default | What it does                                               |
 | ----------- | ------- | ---------------------------------------------------------- |
-| `className` | none    | a page's class, after the kit's                            |
-| `ref`       | none    | the toast drawn, for a page that hands it to `attachToast` |
+| `className` | none    | A page's class, after the kit's                            |
+| `ref`       | none    | The toast drawn, for a page that hands it to `attachToast` |
 
 <details>
 <summary>How the toast is drawn</summary>
 
 Shown, the toast is a raised card on `--dk-raised` with an edge in the line color, which forced
-colors draw where the shadow is gone, and it rises into place over `--dk-duration-medium` each time
-it is shown, at once for a visitor who asks for less motion. A message of a few lines wraps beside
+colors draw where the shadow is gone. It rises into place over `--dk-duration-medium` as it arrives,
+at once for a visitor who asks for less motion. A message that replaces one still shown takes its
+place in the card without rising again, since the toast stays shown. A message of a few lines wraps
+beside
 the buttons. On a phone at a large text size, under 20rem wide, the message takes a row of its own
 and the buttons share the row under it, at its end. The close button is in the muted text, turning
 to the text color under a pointer, so it stays quiet beside the action, and is the target both ways
@@ -1968,9 +1974,11 @@ and when the browser restores the page from its back and forward cache. Storage 
 origin, so only a page on the portfolio's origin reads the visitor's choice, and anywhere else
 follows the system. Print always draws the light values, whatever the theme, since paper is light
 and the browser drops backgrounds. A page that sets `color-scheme` on its own elements outside a
-layer sets them back to light in print too. On paper a callout and a code block keep an edge in the line
-color, a code block wraps and a scrolling table shows whole with its code and figures wrapping, and
-the theme switch, the copy button, the skip link and a strip's switches do not print.
+layer sets them back to light in print too. On paper a callout and a code block keep an edge in the
+line color, a code block and a scrolling table show whole with their code and figures wrapping, and
+an app's frame, or a page that ends in a tab bar, is as long as what it holds. What does nothing on
+paper does not print: the theme switch, the copy button, the skip link, a tab bar, a toast, and a
+strip's section of switches with the room it keeps for them.
 
 A page that names its theme color for each scheme, two `<meta name="theme-color">` whose media
 queries are exactly `(prefers-color-scheme: light)` and `(prefers-color-scheme: dark)`, before the

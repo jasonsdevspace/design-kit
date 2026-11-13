@@ -92,8 +92,9 @@ const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-butt
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
  * pseudo-element, followed by at most a focus pseudo-class, so nothing outside it but the focus
  * adds weight. A sheet whose rules have to reach every part of a page, the base alone, may follow
- * the :where() with a pseudo-element instead. A quoted string is read as empty first, so a ::
- * inside one is text.
+ * the :where() with a pseudo-element instead, and the components with one of the parts given, a
+ * number field's spin buttons or a dialog's backdrop. A quoted string is read as empty first, so
+ * a :: inside one is text.
  */
 
 const scoped = (
@@ -213,7 +214,8 @@ describe('what the sheets style', () => {
             ':where(:root)::view-transition-group(*)',
         ]);
         // A component styles no pseudo-element, so its arrows and marks are elements of their own,
-        // but a number field's spin buttons, which only a pseudo-element reaches.
+        // but a number field's spin buttons and a dialog's backdrop, which only a pseudo-element
+        // reaches.
         expect(candidates.filter((selector) => scoped(selector))).toEqual([]);
         expect(
             [
