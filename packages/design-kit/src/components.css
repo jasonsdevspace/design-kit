@@ -2369,8 +2369,9 @@
      * On a phone at a large text size, under 20rem wide, the message takes a row of its own and its
      * buttons share the row under it, at its end, rather than wrapping one by one where the room
      * runs out. Where even the two do not fit beside each other, each sits at the end of its row.
-     * The message pads its end as its start, since the toast's own end padding is narrow for the
-     * buttons that usually sit there.
+     * A toast without the group of buttons pads its message's end as its start, since its own end
+     * padding is narrow for the buttons that usually sit there, and one with the group already
+     * pads its end so.
      */
     @media (width < 20rem) {
         :where(.dk-toast[data-shown]) {
@@ -2379,6 +2380,9 @@
 
         :where(.dk-toast[data-shown] > .dk-toast-message) {
             flex-basis: 100%;
+        }
+
+        :where(.dk-toast[data-shown]:not(:has(> .dk-toast-buttons)) > .dk-toast-message) {
             padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
         }
     }

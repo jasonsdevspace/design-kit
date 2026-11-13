@@ -74,7 +74,7 @@ ${LINES}
 </main>
 ${
     toast
-        ? '<div class="dk-app-toast"><div class="dk-toast" data-shown id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div>'
+        ? '<div class="dk-app-toast"><div class="dk-toast" data-shown id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div></div>'
         : ''
 }
 ${
@@ -650,7 +650,7 @@ test("leaves a demo's strip as it is on a page that ends in a tab bar", async ({
 test("draws the toast's close button at the target both ways on a wide screen, in a frame or not", async ({
     page,
 }) => {
-    const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Dismiss</span></button></div>`;
+    const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Dismiss</span></button></div></div>`;
     for (const [name, body] of [
         ['a page', `<main><h1>Round 3</h1></main>${toast}`],
         [

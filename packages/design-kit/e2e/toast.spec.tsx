@@ -714,6 +714,28 @@ test("keeps a toast with no action on one row in an app's frame narrower than th
     await expect(toast(page)).toHaveAttribute('data-rows', '1');
 });
 
+test('stands its message as far from either edge on a 320px phone at twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    await open(page, { width: 320 });
+    await textSize(page, 2);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settle(page);
+    // How far the room for the message's words stands from the toast's start and from its end.
+    const [start, end] = await message(page).evaluate((words) => {
+        const card = words.closest('.dk-toast')?.getBoundingClientRect();
+        const drawn = words.getBoundingClientRect();
+        const { paddingLeft, paddingRight } = getComputedStyle(words);
+        return [
+            drawn.left + parseFloat(paddingLeft) - (card?.left ?? 0),
+            (card?.right ?? 0) - (drawn.right - parseFloat(paddingRight)),
+        ];
+    });
+    expect(Math.abs(end - start)).toBeLessThanOrEqual(1);
+});
+
 test('keeps the layout it had for a toast written without its group of buttons', async ({
     page,
     browserName,
