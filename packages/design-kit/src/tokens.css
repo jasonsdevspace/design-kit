@@ -188,6 +188,19 @@
         --dk-safe-left: env(safe-area-inset-left, 0px);
 
         /*
+         * Where content starts on each side of a band that runs the width of the page, such as the
+         * strip, the footer or a page's own colored section: the column's inset, or what a phone
+         * keeps at that side where that is more, and then the kit's side step. The percentage is
+         * the width of whatever reads the value, so a band reads it on itself.
+         */
+        --dk-band-left: calc(
+            max(var(--dk-safe-left), max(0px, (100% - var(--dk-column)) / 2)) + var(--dk-space-4)
+        );
+        --dk-band-right: calc(
+            max(var(--dk-safe-right), max(0px, (100% - var(--dk-column)) / 2)) + var(--dk-space-4)
+        );
+
+        /*
          * The order things sit over one another, lowest first: a cell pinned in a table over the
          * cells that scroll under it, a list that opens over the page, a bar pinned to an edge of
          * the screen, a toast over all of those, and the skip link over everything, since it is

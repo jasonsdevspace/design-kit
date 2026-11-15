@@ -87,6 +87,24 @@ describe('the tokens', () => {
             );
     });
 
+    it("holds where a full-width band's content starts on each side, past the phone's side, written once", () => {
+        for (const side of ['left', 'right']) {
+            const value = (declared.get(`--dk-band-${side}`) ?? '').replace(/\s+/g, ' ');
+            expect(value, side).toBe(
+                `calc( max(var(--dk-safe-${side}), max(0px, (100% - var(--dk-column)) / 2)) + var(--dk-space-4) )`
+            );
+        }
+        // The sheets read the band insets, and none works the column's inset out again.
+        const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
+        expect(components).not.toMatch(/100% - var\(--dk-column\)/);
+        for (const piece of ['.dk-skip', '.dk-strip, .dk-footer'])
+            expect(components).toContain(piece);
+        expect(components).toMatch(/left: var\(--dk-band-left\)/);
+        expect(components).toMatch(
+            /padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\)/
+        );
+    });
+
     /** A token's value in rem, or NaN when it is written in another unit. */
     const rem = (name: string) => {
         const [, value] = /^(\d+(?:\.\d+)?)rem$/.exec(declared.get(name) ?? '') ?? [];

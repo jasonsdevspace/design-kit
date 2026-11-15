@@ -493,6 +493,72 @@ test("runs the footer's rule the width of the page, with its text in the column"
     expect(text.width).toBeLessThanOrEqual(34 * 16);
 });
 
+/** What a phone held on its side keeps at each edge, set as the safe area tokens. */
+const SIDES = { left: 47, right: 47, bottom: 21 };
+const SIDES_CSS = `:root { --dk-safe-left: ${String(SIDES.left)}px; --dk-safe-right: ${String(SIDES.right)}px; --dk-safe-bottom: ${String(SIDES.bottom)}px; }`;
+
+test('keeps the strip and the footer clear of what a phone keeps at its sides and its foot', async ({
+    page,
+}) => {
+    await open(page, { width: 844, css: SIDES_CSS, aside: true });
+    // The column leaves no inset at this width, so the phone's side sets where content starts.
+    const inset = SIDES.left + 16;
+    expect((await stripLayout(page)).inset).toBe(inset);
+    const text = await box(page.locator('.dk-footer p').first(), "the footer's text");
+    expect(Math.round(text.x)).toBe(inset);
+    const aside = await box(page.locator('.dk-footer-aside'), "the demo's line");
+    expect(Math.round(aside.x + aside.width)).toBeLessThanOrEqual(844 - SIDES.right - 16);
+    // Its last line ends above what the phone keeps at its foot, a step clear of it.
+    const footer = await box(page.locator('.dk-footer'), 'the footer');
+    const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
+    expect(Math.round(footer.y + footer.height - (last.y + last.height))).toBe(16 + SIDES.bottom);
+});
+
+test('keeps the chrome where it was on a page that reaches under no edge', async ({ page }) => {
+    for (const width of [320, 1280]) {
+        await open(page, { width });
+        const inset = Math.max(0, (width - 1152) / 2) + 16;
+        expect((await stripLayout(page)).inset, String(width)).toBe(inset);
+        const footer = await box(page.locator('.dk-footer'), 'the footer');
+        const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
+        expect(Math.round(footer.y + footer.height - (last.y + last.height)), String(width)).toBe(
+            16
+        );
+    }
+});
+
+for (const [width, css] of [
+    [320, ''],
+    [1280, ''],
+    [844, SIDES_CSS],
+] as const)
+    test(`lines a page's own full-width band up with the strip by the band insets, at ${String(width)} wide${css ? ", past the phone's sides" : ''}`, async ({
+        page,
+    }) => {
+        await writePage(page, {
+            width,
+            height: 800,
+            css: `${css} .band { padding-left: var(--dk-band-left); padding-right: var(--dk-band-right); }`,
+            title: 'Example',
+            body:
+                chrome('none') +
+                '<section class="band"><p class="band-text">A band that runs the width of the page.</p></section>',
+        });
+        const band = await box(page.locator('.band-text'), "the band's text");
+        const strip = page.locator('.dk-strip');
+        const [left, right] = await strip.evaluate((element) => {
+            const drawn = getComputedStyle(element);
+            const edge = element.getBoundingClientRect();
+            return [
+                edge.left + Number.parseFloat(drawn.paddingLeft),
+                edge.right - Number.parseFloat(drawn.paddingRight),
+            ];
+        });
+        expect(Math.round(band.x)).toBe(Math.round(left));
+        expect(Math.round(band.x + band.width)).toBe(Math.round(right));
+        expect(Math.round(left)).toBe((await stripLayout(page)).inset);
+    });
+
 test("puts a demo's own line beside the footer's text on a wide screen and under it on a phone", async ({
     page,
 }) => {
