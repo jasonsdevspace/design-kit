@@ -325,10 +325,14 @@ const shadeAt = async (page: Page, side: 'left' | 'right'): Promise<number> => {
 };
 
 const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> =>
-    frame(page).evaluate((element, to) => {
+    frame(page).evaluate(async (element, to) => {
         const room = element.scrollWidth - element.clientWidth;
         const along = to === 'start' ? 0 : to === 'end' ? room : room / 2;
         element.scrollLeft = getComputedStyle(element).direction === 'rtl' ? -along : along;
+        // An animation tied to the scroll takes its new place in the frame the browser draws next,
+        // so the shade is read after two frames, once Firefox too has drawn the scroll.
+        for (let frames = 0; frames < 2; frames += 1)
+            await new Promise((drawn) => requestAnimationFrame(drawn));
     }, where);
 
 /** The shade at the frame's start edge and at its end edge, either way it reads. */
