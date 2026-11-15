@@ -666,6 +666,25 @@ export const rows: ReactElement = (
     </>
 );
 
+/** A list of tiles, each link on a ground its page sets. */
+export const rowTiles: ReactElement = (
+    <ul className="dk-rows dk-rows-tiles" role="list">
+        <li>
+            <a className="dk-row game-flip-7" href="/new/?game=flip-7">
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Flip 7</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">3 or more players</span>
+                </span>
+                <span className="dk-row-sign" aria-hidden="true">
+                    ›
+                </span>
+            </a>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -728,6 +747,7 @@ export const EXAMPLES = {
     toast,
     buttonGrid,
     rows,
+    rowTiles,
     dialog,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 

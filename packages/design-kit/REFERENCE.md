@@ -62,6 +62,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                                                          |
 | `--dk-panel-shadow`                                                                               | unset, a shadow under a raised panel                                                                                                                                                             |
+| `--dk-tile-ground`, `--dk-tile-shadow`                                                            | unset, a tile's ground, read as `--dk-surface`, and a shadow under it                                                                                                                            |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
 | `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
@@ -1840,6 +1841,57 @@ beside where the title starts, and a row of one line sits in the middle of its h
 A link row's chevron is in the muted color. Its focus ring is drawn inside it, around the whole row,
 and a pointer over it, or a thumb pressing it, underlines the title. A figure is in the mono face
 with figures of one width, so a column of them lines up.
+
+</details>
+
+### Tiles
+
+A list of tiles offers a few places to go, such as the games to start, each on a ground of its own.
+
+<!-- example: rowTiles -->
+
+```html
+<ul class="dk-rows dk-rows-tiles" role="list">
+    <li>
+        <a class="dk-row game-flip-7" href="/new/?game=flip-7">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Flip 7</span>
+                <span class="dk-visually-hidden">, </span>
+                <span class="dk-row-detail">3 or more players</span>
+            </span>
+            <span class="dk-row-sign" aria-hidden="true">›</span>
+        </a>
+    </li>
+    <li>...</li>
+</ul>
+```
+
+```css
+.game-flip-7 {
+    --dk-tile-ground: light-dark(rgb(255 236 214), rgb(74 46 20));
+}
+```
+
+A list of tiles is a list of rows with `dk-rows-tiles` beside `dk-rows`, each a link row on a ground
+of its own. The page sets the ground with `--dk-tile-ground`, by a class of its own on the row or in
+its style attribute, and chooses a ground its text keeps its contrast on in both themes, such as
+with `light-dark()`. A tile keeps what a link row has: the sign that says it leads somewhere on a
+phone, where nothing hovers, its title underlined under a pointer and under a pressing thumb, and
+its focus ring drawn inside it. A page with a shadow of its own for a tile sets `--dk-tile-shadow`,
+as it sets `--dk-button-shadow` for a button. A list with no tiles is not drawn, as a list of rows
+is not.
+
+<details>
+<summary>How the tiles are drawn</summary>
+
+A tile's title is at the lead size, since a tile is a place to go that stands alone. Tiles stand
+`--dk-space-3` apart, each with an edge in the line color and large corners, in place of the rule
+between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and below and
+`--dk-space-4` at its sides, and its detail wraps within it at any text size. With no ground set, a
+tile sits on `--dk-surface`, and with no shadow set it casts none. A tile stays inside the column in
+an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past it, since its
+edge, not its words, lines up with the column. In forced colors the edge stays, in the system's
+color, and the ground and any shadow give way to the system's.
 
 </details>
 
