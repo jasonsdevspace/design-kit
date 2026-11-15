@@ -188,6 +188,23 @@
         --dk-safe-left: env(safe-area-inset-left, 0px);
 
         /*
+         * How far the page's column stands in from each side of a band that runs the width of the
+         * page. The percentage is the width of the box that holds whatever reads the value, as with
+         * any padding, so a band that fills the page reads the page's width. The column is read on
+         * the root, where these are declared, so a page that changes --dk-column sets it there.
+         */
+        --dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);
+        /*
+         * Where content starts on each side of such a band, as the strip, the footer or a page's
+         * own colored section: the column's inset, or what a phone keeps at that side where that
+         * is more, and then the kit's side step.
+         */
+        --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-column-inset)) + var(--dk-space-4));
+        --dk-band-right: calc(
+            max(var(--dk-safe-right), var(--dk-column-inset)) + var(--dk-space-4)
+        );
+
+        /*
          * The order things sit over one another, lowest first: a cell pinned in a table over the
          * cells that scroll under it, a list that opens over the page, a bar pinned to an edge of
          * the screen, a toast over all of those, and the skip link over everything, since it is
@@ -205,6 +222,16 @@
      * The least width of a cell in a button grid, read as the target where the grid is drawn
      * unless set, and the larger target in a tall grid, so a cell is never too small to tap.
      */
+    /*
+     * An app's column clears what a phone keeps at its sides itself, so a band inside it, such as
+     * a demo's strip on a page that ends in a tab bar, starts its content a step in and pays for the
+     * sides no second time.
+     */
+    :where(.dk-app, .dk-tabbar-page) {
+        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4));
+        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4));
+    }
+
     :where(.dk-button-grid-tall) {
         --dk-button-grid-least: var(--dk-target-large);
     }
