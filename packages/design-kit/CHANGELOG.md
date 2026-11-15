@@ -10,9 +10,10 @@ entry as the notes.
 ## Unreleased
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
-raised form for the one thing to pick up again above a list, and a list of link rows gains a tile
-form, each tile on a ground the page sets. The theme script is unchanged, so `themeScriptHash` is
-the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
+raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
+each tile on a ground the page sets, and a React field can hold a button beside its control. The
+theme script is unchanged, so `themeScriptHash` is the same, and the sheets' budget stays at 9.25 KB
+and the controls' at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -42,8 +43,10 @@ the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
-  their press on a phone where nothing hovers and their edge in forced colors. A token test holds
-  the column's inset to one place in the sheets.
+  their press on a phone where nothing hovers and their edge in forced colors. The React field with
+  a button holds its control and button at one height as the hand-drawn field does, wraps the button
+  under the control on a narrow phone at twice the text size, and reaches the button after the
+  control. A token test holds the column's inset to one place in the sheets.
 
 ## 0.7.0
 
