@@ -147,6 +147,23 @@ test('lines the explainer up with the strip, and holds its prose to the measure'
     }
 });
 
+test('keeps the explainer and its header clear of what a phone keeps at its sides', async ({
+    page,
+}) => {
+    await open(page, {
+        width: 844,
+        extra: ':root { --dk-safe-left: 47px; --dk-safe-right: 47px; }',
+    });
+    for (const [name, locator] of [
+        ['the link back', page.locator('.dk-explainer-header a')],
+        ['the title', page.getByRole('heading', { level: 1 })],
+        ['the lead', page.locator('.dk-explainer-lead')],
+    ] as const)
+        expect(Math.round((await box(locator)).x), name).toBe(47 + 16);
+    const explainer = page.locator('.dk-explainer');
+    expect((await style(explainer, 'padding-right'))['padding-right']).toBe('63px');
+});
+
 test('keeps a line of prose to eighty characters or fewer on a wide screen', async ({ page }) => {
     await open(page);
     // The longest line a paragraph breaks into, read from where the browser breaks it, in the

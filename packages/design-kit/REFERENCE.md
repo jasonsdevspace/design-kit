@@ -58,6 +58,8 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                                                                     |
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                                                                        |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                         |
+| `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
+| `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                                                          |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
 | `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
@@ -181,7 +183,18 @@ colors too, and still reads as a link.
 
 The strip and the footer run their rules the width of the page and line their content up with the
 page's column, `--dk-column`, 72rem wide by default and centered, inset by 1rem. A page whose column
-is another width sets `--dk-column` to it, as it sets a color role.
+is another width sets `--dk-column` to it on `:root`, as it sets a color role.
+
+On a page that says `viewport-fit=cover`, the strip starts its links below what a phone held
+upright keeps at its top, and on a phone held on its side the strip, the footer, an explainer and
+its header start their content past what the phone keeps at each side, where that is more than the
+column's inset. Where the page ends at the footer, its last line ends a step above what the phone
+keeps at its foot. On a page that ends in a tab bar, whose column already clears the phone's sides
+and whose bar clears its foot, the chrome pads for neither again. `--dk-band-left` and
+`--dk-band-right` hold where that content starts, so a page's own band that runs the width of the
+page, such as a colored section, lines its content up with the strip by padding its sides with them.
+Each takes its percentage from the width of the box that holds the element it pads, so a band that
+fills the page reads the page's width, and reads `--dk-column` from the root.
 
 A page with React draws the same markup from the components.
 
