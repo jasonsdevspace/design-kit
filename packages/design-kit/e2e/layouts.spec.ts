@@ -1,18 +1,21 @@
 import { expect, type Page, test } from '@playwright/test';
+import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { buttons, codeHead, dialog, fieldAction, themeSwitch } from '../examples/examples.js';
+import { Button, InputField, SelectField } from '../src/react.js';
 import { box, sideways, writePage } from './page.js';
 import { SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
  * The layouts a page would otherwise write around the kit's pieces, as a browser draws them: a row
- * of buttons that wraps with the kit's step, a field's control and its button at one height, a
- * code block's head with its copy button on the title's line, a dialog's stacked actions filling
- * their row on a phone and in an app and wrapping their words, the theme switch's first word on the
- * column's line in what pads and inside a bare page, and an eyebrow the smallest step over its
- * heading.
+ * of buttons that wraps with the kit's step, a field's control and its button at one height, drawn
+ * by hand and by React's input and select fields, the button under the control on a narrow phone at
+ * twice the text size and reached after the control, a code block's head with its copy button on
+ * the title's line, a dialog's stacked actions filling their row on a phone and in an app and
+ * wrapping their words, the theme switch's first word on the column's line in what pads and inside
+ * a bare page, and an eyebrow the smallest step over its heading.
  */
 
 /** A control shown, as a page's script shows it once attached. */
@@ -50,32 +53,106 @@ test('wraps a row of buttons onto rows a step apart, with a step between each', 
     expect(await sideways(page)).toBe(0);
 });
 
+/** The field with a button as React's input field draws it, inside the page's own form. */
+const fieldActionDrawn = renderToStaticMarkup(
+    createElement(
+        'form',
+        { role: 'search' },
+        createElement(InputField, {
+            label: 'Search the products',
+            type: 'search',
+            name: 'q',
+            action: createElement(Button, { type: 'submit' }, 'Search'),
+        })
+    )
+);
+
+/** A select with a button beside it, as React's select field draws it. */
+const selectActionDrawn = renderToStaticMarkup(
+    createElement(
+        SelectField,
+        {
+            label: 'Sort the products',
+            action: createElement(Button, { type: 'submit' }, 'Sort'),
+        },
+        createElement('option', { value: 'price' }, 'Price, lowest first')
+    )
+);
+
+test("stands a select's control and its button as an input's, drawn by React", async ({
+    page,
+    browserName,
+}) => {
+    for (const width of [320, 1280])
+        for (const size of browserName === 'chromium' ? [1, 2] : [1]) {
+            await writePage(page, {
+                width,
+                title: 'Sort',
+                body: `<main>${selectActionDrawn}</main>`,
+            });
+            if (browserName === 'chromium') await textSize(page, size);
+            const what = `${String(width)}px, text ${String(size)}`;
+            const select = await box(
+                page.getByRole('combobox', { name: 'Sort the products' }),
+                'the select'
+            );
+            const button = await box(page.getByRole('button', { name: 'Sort' }), 'the button');
+            if (Math.round(button.y) === Math.round(select.y))
+                expect(button.height, what).toBeCloseTo(select.height, 0);
+            else expect(button.y, what).toBeGreaterThanOrEqual(bottom(select));
+            expect(await sideways(page), what).toBe(0);
+        }
+});
+
+test("reaches the React field's button after its control, and names it by its own words", async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Search',
+        body: `<main>${fieldActionDrawn}</main>`,
+    });
+    await page.getByRole('searchbox', { name: 'Search the products' }).focus();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeFocused();
+});
+
+/** Where a field's control and its button sit, at one height or the button under the control. */
+const holdsFieldAction = async (page: Page, what: string, narrow = false) => {
+    const input = await box(page.getByRole('searchbox'), 'the control');
+    const button = await box(page.getByRole('button', { name: 'Search' }), 'the button');
+    if (Math.round(button.y) === Math.round(input.y)) {
+        expect(button.height, what).toBeCloseTo(input.height, 0);
+        expect(button.x, what).toBeGreaterThan(input.x + input.width);
+    } else {
+        // Moved under the control where the row has no room for both.
+        expect(button.y, what).toBeGreaterThanOrEqual(bottom(input));
+    }
+    // A narrow phone at twice the text size has no room for both on one row.
+    if (narrow) expect(button.y, `${what}, wrapped`).toBeGreaterThanOrEqual(bottom(input));
+    expect(input.width, what).toBeGreaterThanOrEqual(10 * 16 - 1);
+    expect(await sideways(page), what).toBe(0);
+};
+
 test("stands a field's control and its button at one height at every width and text size", async ({
     page,
     browserName,
 }) => {
-    for (const width of [320, 390, 1280])
-        for (const size of browserName === 'chromium' ? [1, 2] : [1]) {
-            await writePage(page, {
-                width,
-                title: 'Search',
-                body: `<main>${renderToStaticMarkup(fieldAction)}</main>`,
-            });
-            // Set at every pass, since a size set once stays for the page's life.
-            if (browserName === 'chromium') await textSize(page, size);
-            const what = `${String(width)}px, text ${String(size)}`;
-            const input = await box(page.getByRole('searchbox'), 'the control');
-            const button = await box(page.getByRole('button', { name: 'Search' }), 'the button');
-            if (Math.round(button.y) === Math.round(input.y)) {
-                expect(button.height, what).toBeCloseTo(input.height, 0);
-                expect(button.x, what).toBeGreaterThan(input.x + input.width);
-            } else {
-                // Moved under the control where the row has no room for both.
-                expect(button.y, what).toBeGreaterThanOrEqual(bottom(input));
+    for (const [how, drawn] of [
+        ['by hand', renderToStaticMarkup(fieldAction)],
+        ['by React', fieldActionDrawn],
+    ] as const)
+        for (const width of [320, 390, 1280])
+            for (const size of browserName === 'chromium' ? [1, 2] : [1]) {
+                await writePage(page, { width, title: 'Search', body: `<main>${drawn}</main>` });
+                // Set at every pass, since a size set once stays for the page's life.
+                if (browserName === 'chromium') await textSize(page, size);
+                await holdsFieldAction(
+                    page,
+                    `${how}, ${String(width)}px, text ${String(size)}`,
+                    width === 320 && size === 2
+                );
             }
-            expect(input.width, what).toBeGreaterThanOrEqual(10 * 16 - 1);
-            expect(await sideways(page), what).toBe(0);
-        }
 });
 
 test("sets a code block's copy button on its title's line, and the block a short step under", async ({
