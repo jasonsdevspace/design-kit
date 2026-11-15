@@ -855,7 +855,7 @@ test('says what a press did but selects nothing when its source changed before t
     await context.close();
 });
 
-/** A screen's own status line, as the React component draws it in the page from the start. */
+/** A screen's own status line as the React component draws it, put in the page before any message. */
 const SCREEN_LINE = renderToStaticMarkup(<StatusLine className="screen-line" />);
 
 test("says a screen's messages on its own status line, the same words twice, with no element added", async ({
@@ -871,14 +871,19 @@ const line = document.querySelector('.screen-line');
 const said = [];
 new MutationObserver(() => { said.push(line.textContent); }).observe(line, { childList: true, characterData: true, subtree: true });
 window.heard = said;
-window.say = attachStatus(line);`
+window.attach = () => { window.say = attachStatus(line); };`
     );
     try {
         const line = opened.locator('.screen-line');
         await expect(line).toHaveAttribute('role', 'status');
+        // Counted before the line is attached, so attaching it adds nothing either.
         const before = await opened.evaluate(() => document.querySelectorAll('*').length);
         await opened.evaluate(() => {
-            const page = window as unknown as { say: (message: string) => void };
+            const page = window as unknown as {
+                attach: () => void;
+                say: (message: string) => void;
+            };
+            page.attach();
             page.say('Ann moves to seat 2.');
         });
         await expect(line).toHaveText('Ann moves to seat 2.');
@@ -897,8 +902,10 @@ window.say = attachStatus(line);`
                 )
             )
             .toBe(2);
-        // The message leaves after its time, so reading by line finds no old words.
-        await expect(line).toHaveText('', { timeout: 5000 });
+        // The message holds its time, then leaves, so reading by line finds no old words.
+        await opened.waitForTimeout(1500);
+        await expect(line).toHaveText('Ann moves to seat 2.', { timeout: 0 });
+        await expect(line).toHaveText('', { timeout: 1500 });
         expect(await opened.evaluate(() => document.querySelectorAll('*').length)).toBe(before);
     } finally {
         await context.close();

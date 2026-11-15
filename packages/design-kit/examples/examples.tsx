@@ -710,10 +710,10 @@ export const codeHead: ReactElement = (
     </>
 );
 
-/** A copy button and the page's status line, before a page attaches the button. */
 /** A screen's own status line, out of sight, on the page from the start. */
-export const statusLine: ReactElement = <StatusLine />;
+export const statusLine: ReactElement = <StatusLine className="screen-status" />;
 
+/** A copy button and the page's status line, before a page attaches the button. */
 export const copyButton: ReactElement = (
     <>
         <CopyButton name="install command" />

@@ -329,11 +329,12 @@ const say = (status: HTMLElement, message: string, keep = false) => {
 };
 
 /**
- * Makes a status line speak, and returns the function that says a message on it. The line is out
- * of sight and on the page from the start, as `role="status"` asks, so a screen reader hears each
- * message without focus moving. A message is put in a moment after the line is emptied, so the same
- * words said twice are heard twice, and leaves after a while, so reading by line finds no old words.
- * It is the line the copy button and the stepper speak on, so a line they share keeps one queue.
+ * Returns the function that says a message on a status line, which a page draws out of sight and
+ * puts on the page from the start, so a screen reader hears each message without focus moving. A
+ * message is put in a moment after the line is emptied, so the same words said twice are heard
+ * twice, and leaves after a while, so reading by line finds no old words. It speaks as the copy
+ * button and the stepper do, through the same function, so a line a page hands to both this and a
+ * copy button keeps one timer, and a later message replaces an earlier one.
  */
 export const attachStatus =
     (line: HTMLElement): ((message: string) => void) =>
