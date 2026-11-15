@@ -61,6 +61,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                                                          |
+| `--dk-panel-shadow`                                                                               | unset, a shadow under a raised panel                                                                                                                                                             |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
 | `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
@@ -1102,11 +1103,35 @@ which would be a region landmark, or a `figure`.
 
 A panel sits on `--dk-surface` with an edge in the line color and large corners. The edge is what
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
-padded 1.5rem, and 1rem at 48rem wide or less, and what it holds is spaced 0.75rem from the one
-before it, a step closer than an explainer's parts. Inside an explainer its title steps down to the
-body size.
+padded 1.5rem, and 1rem at 48rem wide or less. In an app's frame, on a page that ends in a tab bar
+and in a dialog on either, where the column is a phone's, it is padded 1rem at every width and no
+more than 16px at any text size. What it holds is spaced
+0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer its
+title steps down to the body size.
 
 </details>
+
+#### A raised panel
+
+<!-- example: panelRaised -->
+
+```html
+<div class="dk-panel dk-panel-raised">
+    <p class="dk-panel-title">Flip 7, round 4</p>
+    <p>Ana is next to score.</p>
+    <a class="dk-button dk-button-accent dk-button-tall" href="/game/?id=12">Continue the game</a>
+</div>
+```
+
+`dk-panel-raised` sets a panel above the cards on a page, for the one thing to pick up again above a
+list, such as a game in play above the games to start. It sits on `--dk-raised`, a step above the
+card ground in both themes, where a plain panel would match a page's cards. In the light theme the
+raised ground is the page's own, so the edge draws the panel there. A page with a shadow of its own
+for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule
+over the kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its
+corners and its padding, and stays a block with no role. A pinned column or a code block inside it
+takes grounds of its own that stand apart from the raised one. A raised panel belongs on a page or
+in an app's body, since a dialog is drawn on the raised ground already.
 
 ### Tables
 

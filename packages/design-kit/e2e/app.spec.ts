@@ -691,3 +691,90 @@ test('breaks a title of one long word inside the bar on a 320px phone at twice t
     expect(await cutOff(page, '.dk-app-title')).toEqual([]);
     expect(await sideways(page)).toBe(0);
 });
+
+/** A frame whose body holds a raised panel and a plain one, or the same two on a plain page. */
+const panels = (framed: boolean): string => {
+    const two =
+        '<div class="dk-panel dk-panel-raised"><p class="dk-panel-title">Flip 7, round 4</p><p>Ana is next to score.</p></div>' +
+        '<div class="dk-panel"><p>A plain panel.</p></div>';
+    return framed
+        ? `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header><main class="dk-app-body" id="main-content" tabindex="0">${two}</main></div>`
+        : `<main id="main-content">${two}</main>`;
+};
+
+for (const theme of ['light', 'dark'] as const)
+    test(`draws a raised panel on the raised ground, with the page's shadow only where it sets one, in the ${theme} theme`, async ({
+        page,
+    }) => {
+        const raised = page.locator('.dk-panel-raised');
+        const plain = page.locator('.dk-panel:not(.dk-panel-raised)');
+        await writePage(page, { width: 390, theme, title: 'Play', body: panels(true) });
+        const ground = theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(42, 42, 42)';
+        expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
+        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
+        // A plain panel stays on the card ground.
+        expect((await style(plain, 'background-color'))['background-color']).toBe(
+            theme === 'light' ? 'rgb(245, 245, 245)' : 'rgb(30, 30, 30)'
+        );
+
+        await writePage(page, {
+            width: 390,
+            theme,
+            css: ':root { --dk-panel-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',
+            title: 'Play',
+            body: panels(true),
+        });
+        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(
+            'rgba(0, 0, 0, 0.5) 0px 2px 0px 0px'
+        );
+        expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
+    });
+
+test("pads a panel alike at every width in an app's frame, and by the page's width outside one", async ({
+    page,
+}) => {
+    const panel = '<div class="dk-panel"><p>A panel.</p></div>';
+    const places = {
+        frame: panels(true),
+        'tab bar page': `<div class="dk-tabbar-page"><main id="main-content">${panel}</main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="./">Play</a></li></ul></nav></div>`,
+        'dialog over a frame': `${panels(true)}<dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+        plain: panels(false),
+        'dialog on a plain page': `<main id="main-content"><p>A page.</p></main><dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+    } as const;
+    for (const width of [320, 1280])
+        for (const [name, body] of Object.entries(places)) {
+            await writePage(page, { width, title: 'Play', body });
+            const phone = name !== 'plain' && name !== 'dialog on a plain page';
+            const scope = name.startsWith('dialog')
+                ? page.locator('.dk-dialog .dk-panel')
+                : page.locator('.dk-panel');
+            for (const one of await scope.all())
+                expect(
+                    (await style(one, 'padding-left'))['padding-left'],
+                    `${name} ${String(width)}`
+                ).toBe(phone || width === 320 ? '16px' : '24px');
+        }
+});
+
+test("keeps a panel in an app's frame to a phone's padding at twice the text size", async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    await writePage(page, { width: 390, title: 'Play', body: panels(true) });
+    for (const panel of await page.locator('.dk-panel').all())
+        expect((await style(panel, 'padding-left'))['padding-left']).toBe('16px');
+});
+
+test('keeps a pinned column and a code block apart from a raised panel on grounds of their own', async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Play',
+        body: '<main id="main-content"><div class="dk-panel dk-panel-raised"><div class="dk-table-scroll"><table class="dk-table dk-table-pinned"><tbody><tr><th scope="row">Ana</th><td>12</td></tr></tbody></table></div><pre class="dk-code"><code>npm run e2e</code></pre></div></main>',
+    });
+    const ground = async (selector: string) =>
+        (await style(page.locator(selector), 'background-color'))['background-color'];
+    expect(await ground('.dk-table-pinned th')).toBe('rgb(255, 255, 255)');
+    expect(await ground('.dk-panel-raised .dk-code')).toBe('rgb(245, 245, 245)');
+});

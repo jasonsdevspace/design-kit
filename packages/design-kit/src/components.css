@@ -1236,6 +1236,10 @@
         background: var(--dk-table-ground, var(--dk-surface));
     }
 
+    :where(.dk-panel-raised .dk-table-pinned :is(th, td):first-child) {
+        background: var(--dk-table-ground, var(--dk-raised));
+    }
+
     :where(.dk-table-scroll:has(> .dk-table-pinned)) {
         scroll-padding-inline-start: var(--dk-table-pinned-size, 8rem);
     }
@@ -1277,6 +1281,11 @@
         background: var(--dk-bg);
     }
 
+    /* On a raised panel, whose ground is the page's own in light, a code block takes the card's. */
+    :where(.dk-panel-raised .dk-code) {
+        background: var(--dk-surface);
+    }
+
     /*
      * The title of a table or a code block, outside the frame that scrolls, which names the frame
      * and the table. A caption would take the table's width and scroll off a phone with it. It
@@ -1309,6 +1318,27 @@
         :where(.dk-panel) {
             padding: var(--dk-space-4);
         }
+    }
+
+    /*
+     * A raised panel sits on the raised ground, a step above the cards on a page, for the one
+     * thing to pick up again above a list. A page's own shadow reaches it by a property, as it
+     * reaches a button, and with none set it casts none.
+     */
+    :where(.dk-panel-raised) {
+        background: var(--dk-raised);
+        box-shadow: var(--dk-panel-shadow, none);
+    }
+
+    /*
+     * In an app's frame, on a page that ends in a tab bar, and in a dialog on either, the column is
+     * a phone's at every width, so a panel keeps a phone's padding at every width and text size,
+     * as a dialog there does.
+     */
+    :where(
+        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
+    ) {
+        padding: min(var(--dk-space-4), 16px);
     }
 
     /*
