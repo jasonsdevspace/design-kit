@@ -383,6 +383,61 @@ describe('the field', () => {
         );
     });
 
+    it('draws an action beside the control in the field action row, after the control', () => {
+        expect(
+            renderToStaticMarkup(
+                <InputField
+                    id="search"
+                    label="Search the products"
+                    type="search"
+                    name="q"
+                    action={<Button type="submit">Search</Button>}
+                />
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="search">Search the products</label>' +
+                '<div class="dk-field-action"><input class="dk-input" type="search" id="search" name="q"/>' +
+                '<button type="submit" class="dk-button">Search</button></div></div>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <SelectField id="sort" label="Sort by" action={<Button>Apply</Button>}>
+                    <option value="price">Price</option>
+                </SelectField>
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="sort">Sort by</label>' +
+                '<div class="dk-field-action"><select class="dk-select" id="sort">' +
+                '<option value="price">Price</option></select>' +
+                '<button type="button" class="dk-button">Apply</button></div></div>'
+        );
+    });
+
+    it('draws a field with no action as it did, and wires its hint and error with one', () => {
+        for (const action of [undefined, null, false, '']) {
+            expect(
+                renderToStaticMarkup(<InputField id="email" label="Email" action={action} />)
+            ).toBe(
+                '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+                    '<input class="dk-input" id="email"/></div>'
+            );
+        }
+        const wired = renderToStaticMarkup(
+            <InputField
+                id="name"
+                label="A new player's name"
+                hint="Saved as you add it"
+                error="Enter the player's name"
+                action={<Button type="submit">Add</Button>}
+            />
+        );
+        expect(wired).toContain(
+            '<input class="dk-input" id="name" aria-describedby="name-hint name-error" aria-invalid="true"/>'
+        );
+        // The action is named by its own words, outside the label.
+        expect(wired).toMatch(/<\/label>.*<div class="dk-field-action">.*>Add<\/button>/);
+    });
+
     it('describes the control by its hint, then its error, and marks it invalid only with one', () => {
         const hinted = renderToStaticMarkup(
             <InputField id="email" label="Email" hint="Where the receipt goes" />
