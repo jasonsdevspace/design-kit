@@ -877,7 +877,8 @@ body > .dk-strip {
         stroke: CanvasText;
     }
 
-    .site-bar-fill {
+    .site-bar-fill,
+    .site-rule-mark {
         fill: CanvasText;
     }
 
