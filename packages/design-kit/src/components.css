@@ -1299,6 +1299,26 @@
     }
 
     /*
+     * A raised panel stands above the page and the cards on it, on the raised ground, for the one
+     * thing to pick up again above a list. A page's own shadow reaches it by a property, as it
+     * reaches a button, and with none set it casts none.
+     */
+    :where(.dk-panel-raised) {
+        background: var(--dk-raised);
+        box-shadow: var(--dk-panel-shadow, none);
+    }
+
+    /*
+     * In an app's frame, and on a page that ends in a tab bar or a dialog on either, the column is
+     * a phone's at every width, so a panel keeps a phone's padding at every width too.
+     */
+    :where(
+        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
+    ) {
+        padding: var(--dk-space-4);
+    }
+
+    /*
      * The theme switch: a group named Theme with three choices, System, Light and Dark, each a
      * native radio under its word. The chosen word is marked by an edge twice as thick, in the
      * accent, drawn by the pressed button's own rule, since the highlight alone stands too close to
