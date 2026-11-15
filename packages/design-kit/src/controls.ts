@@ -328,6 +328,19 @@ const say = (status: HTMLElement, message: string, keep = false) => {
     );
 };
 
+/**
+ * Makes a status line speak, and returns the function that says a message on it. The line is out
+ * of sight and on the page from the start, as `role="status"` asks, so a screen reader hears each
+ * message without focus moving. A message is put in a moment after the line is emptied, so the same
+ * words said twice are heard twice, and leaves after a while, so reading by line finds no old words.
+ * It is the line the copy button and the stepper speak on, so a line they share keeps one queue.
+ */
+export const attachStatus =
+    (line: HTMLElement): ((message: string) => void) =>
+    (message) => {
+        say(line, message);
+    };
+
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
 const select = (element: HTMLElement) => {
     const range = document.createRange();

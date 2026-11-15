@@ -36,6 +36,12 @@ the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+- **Controls.** `attachStatus` makes a status line speak and returns the function that says a
+  message on it, the same words said twice heard twice and each message leaving after a while. It is
+  the line a copy button and a stepper speak on, now exported for a screen that says a change
+  without moving focus.
+- **React.** `StatusLine` draws a status line out of sight, in the page from the start, and
+  `CopyStatus` is the same component under its first name.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,

@@ -12,6 +12,7 @@ import {
     PortfolioStrip,
     SelectField,
     SkipLink,
+    StatusLine,
     StepperField,
     TextareaField,
     ThemeSwitch,
@@ -710,6 +711,9 @@ export const codeHead: ReactElement = (
 );
 
 /** A copy button and the page's status line, before a page attaches the button. */
+/** A screen's own status line, out of sight, on the page from the start. */
+export const statusLine: ReactElement = <StatusLine />;
+
 export const copyButton: ReactElement = (
     <>
         <CopyButton name="install command" />
@@ -733,6 +737,7 @@ export const EXAMPLES = {
     eyebrow,
     themeSwitch,
     copyButton,
+    statusLine,
     codeHead,
     explainerPage,
     steps,

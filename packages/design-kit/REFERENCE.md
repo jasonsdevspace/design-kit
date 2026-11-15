@@ -956,6 +956,42 @@ a button away hides it and puts it back to Copy.
 `CopyStatus` takes `className` and `ref` the same way, its ref the line drawn, for a page that hands
 it to a copy button's attach function.
 
+### Status line
+
+<!-- example: statusLine -->
+
+```html
+<p class="dk-visually-hidden" role="status"></p>
+```
+
+A status line is what a screen reader hears a message on without focus moving, such as a seat's new
+place in a list, a name saved or a copy button's result. It is out of sight, and it is on the page
+from the start, prerendered with the screen, since a line added at the moment it speaks may go
+unheard. One is enough for a screen.
+
+```js
+import { attachStatus } from '@jasonsdevspace/design-kit/controls';
+
+const say = attachStatus(document.querySelector('[role="status"]'));
+say('Ann moves to seat 2.');
+```
+
+`attachStatus(line)` returns the function that says a message on the line. It empties the line and
+puts the message in a moment later, so the same words said twice are heard twice, and empties the
+line again after a while, so a visitor reading line by line finds no old words. It is the line a
+copy button and a stepper speak on, so a line a page hands to both keeps one queue, and a message
+said over another replaces it, so only the last of a quick run is heard.
+
+A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
+what happened on a line of its own and the two would speak over each other. A field's error is never
+said on the line, since a form that fails in several fields at once would speak over itself. While a
+dialog is open the page behind it is inert, and a line there is not heard, so a screen that speaks
+while a dialog is open puts a line inside the dialog and says its messages there.
+
+React's `StatusLine` draws the line, taking `className` and `ref`, its ref the line drawn, for a page
+that hands it to `attachStatus` from an effect. `CopyStatus` is the same component under the name a
+copy button's line was given first.
+
 #### A copy button for a code block
 
 <!-- example: codeHead -->
