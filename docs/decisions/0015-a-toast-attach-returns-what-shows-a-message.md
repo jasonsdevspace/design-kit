@@ -1,6 +1,6 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted
+**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message
 
 ## Context
 
@@ -60,6 +60,10 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 - A page that shows a message with no action over one with an action takes that way back away, so
   a page shows one after another only once the first is done with.
 - A page on which every visitor loads the controls loads the toast's behavior too.
+- The function the copy button and the stepper speak through is exported as `attachStatus`, which
+  returns what says a message on a page's own status line, for a screen that says a change without
+  moving focus. Its messages leave after two seconds, where the toast keeps its own until the toast
+  leaves and a stepper keeps its value until the next, so each keeps a line of its own.
 
 ## How it is tested
 
@@ -73,3 +77,6 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   one without leaving on a stand-in clock, that wait held while hovered or focused, focus returned
   where it was, each dismiss kept to its own message, its place above an app's dock and at the foot
   of a page, and no audit findings in either theme.
+- `e2e/attach.spec.tsx` serves a screen's own status line and finds each message said on it with no
+  element added, the same words said twice reaching it twice, and the line empty once a message has
+  been held its time.

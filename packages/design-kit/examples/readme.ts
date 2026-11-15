@@ -23,6 +23,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'eyebrow',
     'themeSwitch',
     'copyButton',
+    'statusLine',
     'codeHead',
     'steps',
     'panel',

@@ -7,6 +7,7 @@ import {
     InputField,
     PortfolioStrip,
     SelectField,
+    StatusLine,
     StepperField,
     TextareaField,
     ThemeSwitch,
@@ -66,6 +67,7 @@ export const namedTools = PortfolioStrip({
 export const switchRef = ThemeSwitch({ ref: createRef<HTMLDivElement>(), className: 'site' });
 export const copyRef = CopyButton({ name: 'email', ref: createRef<HTMLButtonElement>() });
 export const statusRef = CopyStatus({ ref: createRef<HTMLParagraphElement>() });
+export const lineRef = StatusLine({ ref: createRef<HTMLParagraphElement>(), className: 'screen' });
 export const toastRef = Toast({ ref: createRef<HTMLDivElement>(), className: 'site' });
 // A label that is more than words needs a subject, so the buttons are named for their field.
 const boldLabel = createElement('b', null, 'Bid');

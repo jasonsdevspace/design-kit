@@ -17,6 +17,7 @@ import {
     type PortfolioStripProps,
     SelectField,
     SkipLink,
+    StatusLine,
     TextareaField,
     ThemeSwitch,
 } from './react.js';
@@ -877,6 +878,16 @@ describe('the switch, the copy button and the status line', () => {
         expect(renderToStaticMarkup(<CopyStatus />)).toBe(
             '<p class="dk-visually-hidden" role="status"></p>'
         );
+    });
+
+    it('draws a status line out of sight as a status, in the prerendered markup, and keeps the copy line its name', () => {
+        expect(renderToStaticMarkup(<StatusLine />)).toBe(
+            '<p class="dk-visually-hidden" role="status"></p>'
+        );
+        expect(renderToStaticMarkup(<StatusLine className="screen" />)).toBe(
+            '<p class="dk-visually-hidden screen" role="status"></p>'
+        );
+        expect(CopyStatus).toBe(StatusLine);
     });
 
     it('draws the switch as its name, a button naming the choice for the collapsed form, and the group of radios described by the note', () => {

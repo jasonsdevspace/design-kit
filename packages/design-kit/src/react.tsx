@@ -840,19 +840,27 @@ export const CopyButton = ({ name, className, ref }: CopyButtonProps) => (
 );
 
 /**
- * The line a screen reader hears a copy button's result on, out of sight. One is enough for a page,
- * and it is on the page from the start, since a line added at the moment it speaks may go unheard.
+ * A status line, out of sight: what a screen reader hears a message on without focus moving, such
+ * as a seat's new place or a copy button's result. One is enough for a screen, and it is on the
+ * page from the start, prerender included, since a line added at the moment it speaks may go
+ * unheard. `attachStatus` from `@jasonsdevspace/design-kit/controls` says messages on it.
  */
-export type CopyStatusProps = {
+export type StatusLineProps = {
     /** A page's class, after the kit's. */
     readonly className?: string | undefined;
-    /** The line drawn, for a page that hands it to a copy button's attach function. */
+    /** The line drawn, for a page that hands it to `attachStatus` or a copy button's attach. */
     readonly ref?: Ref<HTMLParagraphElement> | undefined;
 };
 
-export const CopyStatus = ({ className, ref }: CopyStatusProps = {}) => (
+export const StatusLine = ({ className, ref }: StatusLineProps = {}) => (
     <p ref={ref} className={spaced('dk-visually-hidden', className)} role="status" />
 );
+
+/** The props of the status line, under the name a copy button's line was given first. */
+export type CopyStatusProps = StatusLineProps;
+
+/** The status line, under the name a copy button's line was given first, so no page breaks. */
+export const CopyStatus = StatusLine;
 
 /**
  * A toast's markup: the place its message is drawn, hidden from a screen reader, and the status
