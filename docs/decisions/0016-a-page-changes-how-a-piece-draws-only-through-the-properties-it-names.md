@@ -6,12 +6,12 @@
 
 Every kit piece is a drop-in: a page writes it as the reference writes it, and it aligns, spaces
 itself and works with no rule of the page's own over it. Some pieces still need a page's choice,
-which the kit cannot make for every page: Game Table Tally lays a game's color under each game to
+which the kit cannot make for every page: a scorekeeping app lays a game's color under each game to
 start, lifts its keys and cards on a lip of its own, and fits its stepper to scores of three
-figures. The raised panel and the tiles came from those needs, and the pieces planned after them
-ask for the same kind of choice, a ground or a shadow or a width. The kit needed one way for a page
-to make such a choice that neither breaks the drop-in promise nor ties the page to the kit's
-inner rules.
+figures. The raised panel and the tiles came from those needs, and the pinned table column, the grid
+of buttons and the stepper already asked for the same kind of choice, a ground or a width. The kit
+needed one way for a page to make such a choice that neither breaks the drop-in promise nor ties the
+page to the kit's inner rules.
 
 ## Options
 
@@ -59,5 +59,6 @@ holds in both themes.
 The path is in `packages/design-kit`.
 
 - `src/scope.test.ts` reads every property the sheets read with a fallback and fails when one is
-  missing from the reference's table of properties a page sets, or listed there with no default or
-  no duty, so the table cannot fall behind the sheets.
+  missing from the reference's table of properties a page sets, when the table lists one the sheets
+  no longer read, when a row leaves its default or what it sets empty, or when a default written as
+  a number is not the sheets' fallback, so the table cannot fall behind the sheets.

@@ -256,26 +256,33 @@ describe('what the sheets style', () => {
 
     it('lists every property a page may set in the reference, with its default and its duty', () => {
         // A property the sheets read with a fallback is one a page sets, so the table names each.
-        const read = new Set(
-            sheets
-                .flatMap((name) => [
-                    ...readFileSync(new URL(name, folder), 'utf8').matchAll(/var\((--dk-[\w-]+),/g),
-                ])
-                .map(([, name = '']) => name)
-        );
+        const fallbacks = new Map<string, string[]>();
+        for (const name of sheets) {
+            const css = withoutComments(readFileSync(new URL(name, folder), 'utf8'));
+            for (const [, property = '', fallback = ''] of css.matchAll(
+                /var\(\s*(--dk-[\w-]+)\s*,\s*([^)]*)\)/g
+            )) {
+                fallbacks.set(property, [...(fallbacks.get(property) ?? []), fallback.trim()]);
+            }
+        }
         const reference = readFileSync(new URL('../REFERENCE.md', folder), 'utf8');
         const start = reference.indexOf('### Properties a page sets');
-        const table = reference.slice(start, reference.indexOf('\n## ', start));
+        const end = reference.indexOf('\n#', start + 1);
+        const table = reference.slice(start, end === -1 ? undefined : end);
         const rows = new Map(
             [...table.matchAll(/^\| `(--dk-[\w-]+)` *\| *([^|]*?) *\| *([^|]*?) *\|$/gm)].map(
                 ([, name = '', fallback = '', duty = '']) => [name, { fallback, duty }]
             )
         );
         expect(start).toBeGreaterThan(-1);
-        expect([...read].filter((name) => !rows.has(name)).sort()).toEqual([]);
+        expect([...fallbacks.keys()].filter((name) => !rows.has(name)).sort()).toEqual([]);
+        expect([...rows.keys()].filter((name) => !fallbacks.has(name)).sort()).toEqual([]);
         for (const [name, row] of rows) {
             expect(row.fallback, name).not.toBe('');
             expect(row.duty, name).not.toBe('');
+            // A default the table writes as a number is the fallback the sheets read.
+            const number = /^\d[\w.]*/.exec(row.fallback)?.[0];
+            if (number) expect(fallbacks.get(name), name).toContain(number);
         }
     });
 
