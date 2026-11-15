@@ -378,9 +378,24 @@ test('draws the sheet at the bottom edge, clear of the home indicator, scrolling
 
 test('rises the sheet into place, and opens it in place for less motion', async ({ page }) => {
     await open(page);
+    // The rise ends in 250ms, which a slow browser can pass before a read after the click, so the
+    // page records the animations as the rise starts.
+    await page.evaluate(() => {
+        document.addEventListener('animationstart', (event) => {
+            const target = event.target as Element;
+            if (target.matches('.dk-dialog-sheet')) {
+                document.body.dataset['travel'] = JSON.stringify(
+                    target
+                        .getAnimations()
+                        .map((animation) => animation.effect?.getComputedTiming().duration)
+                );
+            }
+        });
+    });
     await page.locator('#options').click();
-    const travel = await sheet(page).evaluate((element) =>
-        element.getAnimations().map((animation) => animation.effect?.getComputedTiming().duration)
+    await expect(page.locator('body')).toHaveAttribute('data-travel', /./);
+    const travel: unknown = JSON.parse(
+        (await page.locator('body').getAttribute('data-travel')) ?? '[]'
     );
     expect(travel).toEqual([250]);
     await page.keyboard.press('Escape');
