@@ -2605,6 +2605,32 @@
         font-size: var(--dk-text-small);
     }
 
+    /*
+     * A list of tiles: link rows each on a ground of its own, which the page sets by a property,
+     * such as each game on its own color. A tile keeps the row's sign, its press and its ring, and
+     * stands apart from the next by a gap and an edge in the line color rather than the rule
+     * between rows. It stays inside the column, since its edge would be cut where a row reaches
+     * past it. A page's own shadow reaches a tile by a property, as it reaches a button.
+     */
+    :where(.dk-tiles) {
+        display: grid;
+        gap: var(--dk-space-3);
+    }
+
+    :where(.dk-tiles > li + li) {
+        border-top: 0;
+    }
+
+    :where(.dk-tiles .dk-row) {
+        min-height: var(--dk-target-large);
+        margin-inline: 0;
+        padding: var(--dk-space-3) var(--dk-space-4);
+        border: 1px solid var(--dk-line);
+        border-radius: var(--dk-radius-large);
+        background: var(--dk-tile-ground, var(--dk-surface));
+        box-shadow: var(--dk-tile-shadow, none);
+    }
+
     /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
     :where(.dk-row-figure) {
         font-family: var(--dk-font-mono);

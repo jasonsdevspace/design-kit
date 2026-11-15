@@ -11,7 +11,9 @@ import { textSize } from './text-size.js';
  * words on the column's line under an eyebrow, a button at a row's end its own stop named for what
  * it does and to which row, a long title wrapping with the end beside its first line, the end
  * inside the row on a 320px phone at twice the text size, the list saying how many rows it holds
- * and an empty one not drawn, the keyboard's order, and no audit findings in either theme.
+ * and an empty one not drawn, the keyboard's order, and no audit findings in either theme. A list
+ * of tiles draws each link on the ground its page sets, with the row's sign, press and ring, at the
+ * larger target, a gap and an edge apart.
  */
 
 const GAMES = [
@@ -310,3 +312,111 @@ test("keeps a row's end inside the row on a 320px phone at twice the text size",
     }
     expect(await sideways(page)).toBe(0);
 });
+
+/** A list of tiles in an app's body, each game on a ground its page sets, or none. */
+const tiles = (grounds = true): string =>
+    `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header><main class="dk-app-body" id="main-content" tabindex="0"><ul class="dk-rows dk-tiles" role="list" aria-label="Start a new game">` +
+    ['Flip 7', 'Skyjo', 'Wizard, the long game that runs past midnight and on into the morning']
+        .map(
+            (name, at) =>
+                `<li><a class="dk-row${grounds ? ` ground-${String(at)}` : ''}" href="#game-${String(at)}"><span class="dk-row-text"><span class="dk-row-title">${name}</span><span class="dk-visually-hidden">, </span><span class="dk-row-detail">From 2 to 8 players, each with a hand of cards</span></span><span class="dk-row-sign" aria-hidden="true">›</span></a></li>`
+        )
+        .join('') +
+    `</ul></main></div>`;
+
+const GROUNDS_CSS =
+    '.ground-0 { --dk-tile-ground: rgb(255, 236, 214); } .ground-1 { --dk-tile-ground: rgb(220, 240, 255); } .ground-2 { --dk-tile-ground: rgb(232, 245, 222); }';
+
+const tileList = (page: Page): Locator => page.getByRole('list', { name: 'Start a new game' });
+
+test('draws each tile on the ground its page sets, with an edge and a gap in place of the rule', async ({
+    page,
+}) => {
+    await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    const links = await tileList(page).getByRole('link').all();
+    const grounds = await Promise.all(
+        links.map(async (link) => (await style(link, 'background-color'))['background-color'])
+    );
+    expect(grounds).toEqual(['rgb(255, 236, 214)', 'rgb(220, 240, 255)', 'rgb(232, 245, 222)']);
+    const [first, second] = await Promise.all(links.slice(0, 2).map((link) => box(link)));
+    if (!first || !second) throw new Error('expected two tiles');
+    expect(Math.round(second.y - (first.y + first.height))).toBe(12);
+    for (const item of await items(tileList(page)).all())
+        expect((await style(item, 'border-top-width'))['border-top-width']).toBe('0px');
+    const edge = await style(
+        links[0] ?? page.locator('none'),
+        'border-top-style',
+        'border-top-width'
+    );
+    expect(edge).toEqual({ 'border-top-style': 'solid', 'border-top-width': '1px' });
+    // Each keeps the row's sign that it leads somewhere, hidden from a screen reader.
+    await expect(tileList(page).locator('.dk-row-sign')).toHaveCount(3);
+    // A tile stays inside the column, where a row in an app's body reaches past it.
+    const body = await box(page.locator('.dk-app-body'));
+    expect(Math.round(first.x)).toBe(Math.round(body.x + 16));
+});
+
+test('draws a tile on the surface with no ground set, and with the page shadow only where it sets one', async ({
+    page,
+}) => {
+    await writePage(page, { width: 390, title: 'Play', body: tiles(false) });
+    const link = tileList(page).getByRole('link').first();
+    expect(await style(link, 'background-color', 'box-shadow')).toEqual({
+        'background-color': 'rgb(245, 245, 245)',
+        'box-shadow': 'none',
+    });
+    await writePage(page, {
+        width: 390,
+        css: ':root { --dk-tile-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',
+        title: 'Play',
+        body: tiles(false),
+    });
+    expect((await style(link, 'box-shadow'))['box-shadow']).toBe(
+        'rgba(0, 0, 0, 0.5) 0px 2px 0px 0px'
+    );
+});
+
+test("underlines a tile's title on press and under a pointer, and rings it inside", async ({
+    page,
+}) => {
+    await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    const link = tileList(page).getByRole('link').first();
+    const title = link.locator('.dk-row-title');
+    await link.hover();
+    expect((await style(title, 'text-decoration-line'))['text-decoration-line']).toBe('underline');
+    await page.mouse.move(0, 0);
+    const box1 = await box(link);
+    await page.mouse.move(box1.x + 20, box1.y + 20);
+    await page.mouse.down();
+    expect((await style(title, 'text-decoration-line'))['text-decoration-line']).toBe('underline');
+    await page.mouse.up();
+    await link.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
+    expect(ring['outline-style']).toBe('solid');
+    expect(Number.parseFloat(ring['outline-offset'] ?? '')).toBe(
+        -Number.parseFloat(ring['outline-width'] ?? '')
+    );
+});
+
+test('keeps a tile at the larger target, its detail wrapping inside it at twice the text size', async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    await writePage(page, { width: 320, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    for (const link of await tileList(page).getByRole('link').all()) {
+        const drawn = await box(link);
+        expect(drawn.height).toBeGreaterThanOrEqual(56);
+        const detail = await box(link.locator('.dk-row-detail'));
+        expect(detail.x + detail.width).toBeLessThanOrEqual(drawn.x + drawn.width);
+    }
+    expect(await sideways(page)).toBe(0);
+});
+
+for (const theme of ['light', 'dark'] as const)
+    test(`has no audit findings for a list of tiles in the ${theme} theme`, async ({ page }) => {
+        await writePage(page, { width: 390, theme, title: 'Play', body: tiles(false) });
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(results.violations.map(({ id }) => id)).toEqual([]);
+    });
