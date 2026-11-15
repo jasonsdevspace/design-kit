@@ -254,6 +254,31 @@ describe('what the sheets style', () => {
         ).toEqual([]);
     });
 
+    it('lists every property a page may set in the reference, with its default and its duty', () => {
+        // A property the sheets read with a fallback is one a page sets, so the table names each.
+        const read = new Set(
+            sheets
+                .flatMap((name) => [
+                    ...readFileSync(new URL(name, folder), 'utf8').matchAll(/var\((--dk-[\w-]+),/g),
+                ])
+                .map(([, name = '']) => name)
+        );
+        const reference = readFileSync(new URL('../REFERENCE.md', folder), 'utf8');
+        const start = reference.indexOf('### Properties a page sets');
+        const table = reference.slice(start, reference.indexOf('\n## ', start));
+        const rows = new Map(
+            [...table.matchAll(/^\| `(--dk-[\w-]+)` *\| *([^|]*?) *\| *([^|]*?) *\|$/gm)].map(
+                ([, name = '', fallback = '', duty = '']) => [name, { fallback, duty }]
+            )
+        );
+        expect(start).toBeGreaterThan(-1);
+        expect([...read].filter((name) => !rows.has(name)).sort()).toEqual([]);
+        for (const [name, row] of rows) {
+            expect(row.fallback, name).not.toBe('');
+            expect(row.duty, name).not.toBe('');
+        }
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

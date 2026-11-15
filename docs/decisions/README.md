@@ -49,3 +49,7 @@ costs, and the test behind it.
     a toast as markup on the page from the start and a function that shows each message in it, said
     with its action's name, and why a separate export to show a message and a toast built by script
     were turned down.
+16. [A page changes how a piece draws only through the properties it names](0016-a-page-reaches-a-piece-through-the-properties-it-names.md):
+    a ground, a shadow or a width a page sets through a property the kit reads with a fallback and
+    leaves unset, listed with its default and its contrast duty, and why a page's own class over a
+    kit piece and a token for each were turned down.
