@@ -479,6 +479,22 @@ stand one height, the taller of the two, at every width and text size. Where the
 the control too narrow to type in, as at a large text size on a phone, the button moves under it.
 The button is a kit button, and its words say what it does, as Search rather than Go.
 
+A page with React draws the same field from `InputField` or `SelectField` with an `action`, inside
+a form of its own. The field draws its label, hint and error as always, and puts the control and the
+action in a `dk-field-action` row. The action comes after the control in the tab order, as on the
+screen, and is named by its own words, not the field's label.
+
+```tsx
+<form role="search">
+    <InputField
+        label="Search the products"
+        type="search"
+        name="q"
+        action={<Button type="submit">Search</Button>}
+    />
+</form>
+```
+
 ### Choice fields
 
 <!-- example: choiceField -->
@@ -764,15 +780,16 @@ themselves.
 
 **`InputField`, `SelectField` and `TextareaField` props**
 
-| `InputField`, `SelectField`, `TextareaField` | Default      | What it does                                                    |
-| -------------------------------------------- | ------------ | --------------------------------------------------------------- |
-| `label`                                      | required     | Names the control                                               |
-| `hint`                                       | none         | Drawn when it holds something, and read as a description        |
-| `error`                                      | none         | Drawn when it holds something, and marks the control invalid    |
-| `id`                                         | from `useId` | The control's id. Set it when something else links to the field |
+| `InputField`, `SelectField`, `TextareaField` | Default      | What it does                                                                          |
+| -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------- |
+| `label`                                      | required     | Names the control                                                                     |
+| `hint`                                       | none         | Drawn when it holds something, and read as a description                              |
+| `error`                                      | none         | Drawn when it holds something, and marks the control invalid                          |
+| `id`                                         | from `useId` | The control's id. Set it when something else links to the field                       |
+| `action`                                     | none         | Drawn after the control in a `dk-field-action` row, on `InputField` and `SelectField` |
 
-Every other prop goes to the control, `ref` and `className` included, except `style` and
-`aria-invalid`. A select field's children are its options, and a textarea field's text is its
+Every other prop goes to the control, `ref` and `className` included, except `style`,
+`aria-invalid` and `action`, which the field draws beside the control. A select field's children are its options, and a textarea field's text is its
 `defaultValue` or `value`, never children, with three rows unless given `rows`. An `aria-describedby`
 of the page's own is listed after the hint and the error.
 

@@ -383,6 +383,27 @@ const FieldText = ({
     </>
 );
 
+/**
+ * A control on its own, or with what a field draws beside it, such as the button that runs a
+ * search, in a row of their own that the sheets lay out. The action comes after the control, in
+ * the tab order as on the screen, and is named by its own words, not the field's label.
+ */
+const WithAction = ({
+    action,
+    children,
+}: {
+    readonly action: ReactNode;
+    readonly children: ReactNode;
+}) =>
+    filled(action) ? (
+        <div className="dk-field-action">
+            {children}
+            {action}
+        </div>
+    ) : (
+        children
+    );
+
 /** A field's label, hint and error around its control. */
 const Field = ({
     parts,
@@ -416,7 +437,17 @@ const useControl = <P extends FieldParts & { readonly 'aria-describedby'?: strin
     return { native, field: useField(props, own) };
 };
 
+/** What a field may draw beside its control. */
+type FieldAction = {
+    /**
+     * What sits beside the control, such as a button, drawn after it in the field's row and moved
+     * under it where the row has no room for both.
+     */
+    readonly action?: ReactNode;
+};
+
 export type InputFieldProps = FieldParts &
+    FieldAction &
     Omit<ComponentPropsWithRef<'input'>, 'style' | 'id' | 'aria-invalid' | 'children'>;
 
 /**
@@ -425,15 +456,18 @@ export type InputFieldProps = FieldParts &
  */
 export const InputField = (props: InputFieldProps) => {
     const { native, field } = useControl(props);
-    const { className, ...rest } = native;
+    const { className, action, ...rest } = native;
     return (
         <Field parts={props} field={field}>
-            <input className={spaced('dk-input', className)} {...rest} {...field.wired} />
+            <WithAction action={action}>
+                <input className={spaced('dk-input', className)} {...rest} {...field.wired} />
+            </WithAction>
         </Field>
     );
 };
 
 export type SelectFieldProps = FieldParts &
+    FieldAction &
     Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'>;
 
 /**
@@ -443,12 +477,14 @@ export type SelectFieldProps = FieldParts &
  */
 export const SelectField = (props: SelectFieldProps) => {
     const { native, field } = useControl(props);
-    const { className, children, ...rest } = native;
+    const { className, children, action, ...rest } = native;
     return (
         <Field parts={props} field={field}>
-            <select className={spaced('dk-select', className)} {...rest} {...field.wired}>
-                {children}
-            </select>
+            <WithAction action={action}>
+                <select className={spaced('dk-select', className)} {...rest} {...field.wired}>
+                    {children}
+                </select>
+            </WithAction>
         </Field>
     );
 };
