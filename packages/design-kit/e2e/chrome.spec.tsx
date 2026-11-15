@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
-import { box, KIT, writePage } from './page.js';
+import { box, KIT, style, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -497,6 +497,14 @@ test("runs the footer's rule the width of the page, with its text in the column"
 const SIDES = { left: 47, right: 47, bottom: 21 };
 const SIDES_CSS = `:root { --dk-safe-left: ${String(SIDES.left)}px; --dk-safe-right: ${String(SIDES.right)}px; --dk-safe-bottom: ${String(SIDES.bottom)}px; }`;
 
+/** The padding a piece is drawn with on each side, in pixels. */
+const sidesOf = async (locator: Locator) => {
+    const drawn = await style(locator, 'padding-left', 'padding-right');
+    return [drawn['padding-left'], drawn['padding-right']].map((value) =>
+        Math.round(Number.parseFloat(value ?? ''))
+    );
+};
+
 test('keeps the strip and the footer clear of what a phone keeps at its sides and its foot', async ({
     page,
 }) => {
@@ -512,6 +520,45 @@ test('keeps the strip and the footer clear of what a phone keeps at its sides an
     const footer = await box(page.locator('.dk-footer'), 'the footer');
     const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
     expect(Math.round(footer.y + footer.height - (last.y + last.height))).toBe(16 + SIDES.bottom);
+    // Both ends of the strip and the footer clear the phone's sides.
+    expect(await sidesOf(page.locator('.dk-strip'))).toEqual([inset, SIDES.right + 16]);
+    expect(await sidesOf(page.locator('.dk-footer'))).toEqual([inset, SIDES.right + 16]);
+});
+
+test('starts the strip below what a phone held upright keeps at its top', async ({ page }) => {
+    await open(page, { width: 390, css: ':root { --dk-safe-top: 59px; }' });
+    const strip = await box(page.locator('.dk-strip'), 'the strip');
+    const link = await box(
+        page.getByRole('navigation', { name: 'Portfolio' }).getByRole('link').first(),
+        'the first link'
+    );
+    expect(link.y - strip.y).toBeGreaterThanOrEqual(59);
+});
+
+test("clears a phone's sides and foot once on a page that ends in a tab bar", async ({ page }) => {
+    await writePage(page, {
+        width: 844,
+        height: 600,
+        css: SIDES_CSS,
+        title: 'Example',
+        body: chrome('none').replace(
+            '</footer>',
+            '</footer><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="./">Play</a></li></ul></nav>'
+        ),
+    });
+    await page.evaluate(() => {
+        document.body.classList.add('dk-tabbar-page');
+    });
+    // The column's own margin already clears the phone's sides, so the chrome starts a step in.
+    const column = await box(page.locator('body'), 'the column');
+    const strip = await box(page.locator('.dk-strip'), 'the strip');
+    expect((await stripLayout(page)).inset).toBe(Math.round(strip.x + 16));
+    expect(Math.round(strip.x)).toBe(Math.round(column.x));
+    expect(await sidesOf(page.locator('.dk-footer'))).toEqual([16, 16]);
+    // The tab bar after the footer clears the foot, so the footer does not again.
+    const footer = await box(page.locator('.dk-footer'), 'the footer');
+    const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
+    expect(Math.round(footer.y + footer.height - (last.y + last.height))).toBe(16);
 });
 
 test('keeps the chrome where it was on a page that reaches under no edge', async ({ page }) => {
