@@ -712,7 +712,7 @@ for (const theme of ['light', 'dark'] as const)
         const ground = theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(42, 42, 42)';
         expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
         expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
-        // A plain panel stays on the card ground, as it is drawn today.
+        // A plain panel stays on the card ground.
         expect((await style(plain, 'background-color'))['background-color']).not.toBe(ground);
 
         await writePage(page, {
@@ -728,7 +728,7 @@ for (const theme of ['light', 'dark'] as const)
         expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
     });
 
-test("pads a panel alike at every width in an app's frame, and as it did outside one", async ({
+test("pads a panel alike at every width in an app's frame, and by the page's width outside one", async ({
     page,
 }) => {
     for (const width of [320, 1280]) {

@@ -1109,13 +1109,13 @@ title steps down to the body size.
 </div>
 ```
 
-`dk-panel-raised` sets a panel above the page and the cards on it, for the one thing to pick up
-again above a list, such as a game in play above the games to start. It sits on `--dk-raised`,
-which stands above the page's ground in both themes, where a plain panel's card ground sinks below a
-page's own cards in the dark theme. A page with a shadow of its own for it sets
-`--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule over the
-kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its corners
-and its padding, and stays a block with no role.
+`dk-panel-raised` sets a panel above the cards on a page, for the one thing to pick up again above a
+list, such as a game in play above the games to start. It sits on `--dk-raised`, a step above the
+card ground in both themes, where a plain panel would match a page's cards. In the light theme the
+raised ground is the page's own, so the edge draws the panel there. A page with a shadow of its own
+for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule
+over the kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its
+corners and its padding, and stays a block with no role.
 
 ### Tables
 

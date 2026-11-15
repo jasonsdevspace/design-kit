@@ -1299,7 +1299,7 @@
     }
 
     /*
-     * A raised panel stands above the page and the cards on it, on the raised ground, for the one
+     * A raised panel sits on the raised ground, a step above the cards on a page, for the one
      * thing to pick up again above a list. A page's own shadow reaches it by a property, as it
      * reaches a button, and with none set it casts none.
      */
@@ -1309,7 +1309,7 @@
     }
 
     /*
-     * In an app's frame, and on a page that ends in a tab bar or a dialog on either, the column is
+     * In an app's frame, on a page that ends in a tab bar, and in a dialog on either, the column is
      * a phone's at every width, so a panel keeps a phone's padding at every width too.
      */
     :where(
