@@ -1090,8 +1090,9 @@ which would be a region landmark, or a `figure`.
 
 A panel sits on `--dk-surface` with an edge in the line color and large corners. The edge is what
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
-padded 1.5rem, and 1rem at 48rem wide or less and at every width in an app's frame, on a page that
-ends in a tab bar and in a dialog on either, where the column is a phone's. What it holds is spaced
+padded 1.5rem, and 1rem at 48rem wide or less. In an app's frame, on a page that ends in a tab bar
+and in a dialog on either, where the column is a phone's, it is padded 1rem at every width and no
+more than 16px at any text size. What it holds is spaced
 0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer its
 title steps down to the body size.
 
@@ -1115,7 +1116,9 @@ card ground in both themes, where a plain panel would match a page's cards. In t
 raised ground is the page's own, so the edge draws the panel there. A page with a shadow of its own
 for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule
 over the kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its
-corners and its padding, and stays a block with no role.
+corners and its padding, and stays a block with no role. A pinned column or a code block inside it
+takes grounds of its own that stand apart from the raised one. A raised panel belongs on a page or
+in an app's body, since a dialog is drawn on the raised ground already.
 
 ### Tables
 

@@ -713,7 +713,9 @@ for (const theme of ['light', 'dark'] as const)
         expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
         expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
         // A plain panel stays on the card ground.
-        expect((await style(plain, 'background-color'))['background-color']).not.toBe(ground);
+        expect((await style(plain, 'background-color'))['background-color']).toBe(
+            theme === 'light' ? 'rgb(245, 245, 245)' : 'rgb(30, 30, 30)'
+        );
 
         await writePage(page, {
             width: 390,
@@ -731,18 +733,48 @@ for (const theme of ['light', 'dark'] as const)
 test("pads a panel alike at every width in an app's frame, and by the page's width outside one", async ({
     page,
 }) => {
-    for (const width of [320, 1280]) {
-        await writePage(page, { width, title: 'Play', body: panels(true) });
-        for (const panel of await page.locator('.dk-panel').all())
-            expect(
-                (await style(panel, 'padding-left'))['padding-left'],
-                `framed ${String(width)}`
-            ).toBe('16px');
-        await writePage(page, { width, title: 'Play', body: panels(false) });
-        for (const panel of await page.locator('.dk-panel').all())
-            expect(
-                (await style(panel, 'padding-left'))['padding-left'],
-                `plain ${String(width)}`
-            ).toBe(width === 1280 ? '24px' : '16px');
-    }
+    const panel = '<div class="dk-panel"><p>A panel.</p></div>';
+    const places = {
+        frame: panels(true),
+        'tab bar page': `<div class="dk-tabbar-page"><main id="main-content">${panel}</main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="./">Play</a></li></ul></nav></div>`,
+        'dialog over a frame': `${panels(true)}<dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+        plain: panels(false),
+        'dialog on a plain page': `<main id="main-content"><p>A page.</p></main><dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+    } as const;
+    for (const width of [320, 1280])
+        for (const [name, body] of Object.entries(places)) {
+            await writePage(page, { width, title: 'Play', body });
+            const phone = name !== 'plain' && name !== 'dialog on a plain page';
+            const scope = name.startsWith('dialog')
+                ? page.locator('.dk-dialog .dk-panel')
+                : page.locator('.dk-panel');
+            for (const one of await scope.all())
+                expect(
+                    (await style(one, 'padding-left'))['padding-left'],
+                    `${name} ${String(width)}`
+                ).toBe(phone || width === 320 ? '16px' : '24px');
+        }
+});
+
+test("keeps a panel in an app's frame to a phone's padding at twice the text size", async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    await writePage(page, { width: 390, title: 'Play', body: panels(true) });
+    for (const panel of await page.locator('.dk-panel').all())
+        expect((await style(panel, 'padding-left'))['padding-left']).toBe('16px');
+});
+
+test('keeps a pinned column and a code block apart from a raised panel on grounds of their own', async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Play',
+        body: '<main id="main-content"><div class="dk-panel dk-panel-raised"><div class="dk-table-scroll"><table class="dk-table dk-table-pinned"><tbody><tr><th scope="row">Ana</th><td>12</td></tr></tbody></table></div><pre class="dk-code"><code>npm run e2e</code></pre></div></main>',
+    });
+    const ground = async (selector: string) =>
+        (await style(page.locator(selector), 'background-color'))['background-color'];
+    expect(await ground('.dk-table-pinned th')).toBe('rgb(255, 255, 255)');
+    expect(await ground('.dk-panel-raised .dk-code')).toBe('rgb(245, 245, 245)');
 });

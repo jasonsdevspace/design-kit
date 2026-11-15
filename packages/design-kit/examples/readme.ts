@@ -26,6 +26,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'codeHead',
     'steps',
     'panel',
+    'panelRaised',
     'table',
     'pinnedTable',
     'code',
