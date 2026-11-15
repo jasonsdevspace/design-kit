@@ -7,6 +7,41 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## Unreleased
+
+The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
+raised form for the one thing to pick up again above a list, and a list of link rows gains a tile
+form, each tile on a ground the page sets. The sheets' budget is unchanged so far.
+
+- **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
+  now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
+  `--dk-column` anywhere but `:root` sets it there to keep its column. A page that already uses one
+  of those three names for something of its own gets the kit's meaning for it. The footer's
+  vertical padding moved out of its class into a rule with no weight of its own, so a page's rule
+  for it wins as before, and a footer that ends the page pads its foot past what a phone keeps
+  there. In an app's frame, on a page that ends in a tab bar and in a dialog on either, a panel
+  keeps a phone's padding at every width and text size.
+- **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the
+  width of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts:
+  the column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
+  page's own full-width band pads its sides with them to line up with the strip. Inside an app's
+  frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
+  already.
+- **Sheets.** On a page that says `viewport-fit=cover`, the strip starts its links below what a
+  phone held upright keeps at its top, and the strip, the footer, an explainer and its header start
+  their content past what a phone on its side keeps at each side. `dk-panel-raised` sets a panel on
+  `--dk-raised`, with a pinned column and a code block inside it on grounds of their own, and a
+  page's own shadow under it by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows` draws each
+  link row as a tile, an edge and large corners apart from the next by a gap, on the ground a page
+  sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
+  `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
+  larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+- **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
+  the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
+  and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
+  their press on a phone where nothing hovers and their edge in forced colors. A token test holds
+  the column's inset to one place in the sheets.
+
 ## 0.7.0
 
 A toast keeps its action and close button together, and a table's frame shows where it scrolls
