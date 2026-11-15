@@ -325,21 +325,44 @@ const shadeAt = async (page: Page, side: 'left' | 'right'): Promise<number> => {
 };
 
 const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> =>
-    frame(page).evaluate(async (element, to) => {
+    frame(page).evaluate((element, to) => {
         const room = element.scrollWidth - element.clientWidth;
         const along = to === 'start' ? 0 : to === 'end' ? room : room / 2;
         element.scrollLeft = getComputedStyle(element).direction === 'rtl' ? -along : along;
-        // An animation tied to the scroll takes its new place in the frame the browser draws next,
-        // so the shade is read after two frames, once Firefox too has drawn the scroll.
-        for (let frames = 0; frames < 2; frames += 1)
-            await new Promise((drawn) => requestAnimationFrame(drawn));
     }, where);
 
-/** The shade at the frame's start edge and at its end edge, either way it reads. */
+/**
+ * Waits for the browser to draw a frame, or a short while where it draws none, such as a page in
+ * the back, so a test that reads what was drawn never hangs on a frame that does not come.
+ */
+const nextFrame = (page: Page): Promise<void> =>
+    page.evaluate(
+        () =>
+            new Promise<void>((drawn) => {
+                requestAnimationFrame(() => {
+                    drawn();
+                });
+                setTimeout(drawn, 500);
+            })
+    );
+
+/**
+ * The shade at the frame's start edge and at its end edge, either way it reads, once the browser
+ * has drawn it. An animation tied to a scroll can take its new place a frame or more after the
+ * scroll, in Firefox above all, so the shades are read after each frame until two readings agree.
+ */
 const shades = async (page: Page, dir: 'ltr' | 'rtl' = 'ltr') => {
     const [start, end] =
         dir === 'ltr' ? (['left', 'right'] as const) : (['right', 'left'] as const);
-    return { start: await shadeAt(page, start), end: await shadeAt(page, end) };
+    const read = async () => ({ start: await shadeAt(page, start), end: await shadeAt(page, end) });
+    let before = await read();
+    for (let tries = 0; tries < 10; tries += 1) {
+        await nextFrame(page);
+        const now = await read();
+        if (now.start === before.start && now.end === before.end) return now;
+        before = now;
+    }
+    return before;
 };
 
 /** Whether the browser ties an animation to a scroll, and so draws the shade at all. */
