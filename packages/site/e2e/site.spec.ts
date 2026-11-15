@@ -248,6 +248,33 @@ for (const path of PAGES) {
 }
 
 test.describe('the landing page', () => {
+    test("draws each rule mark in the system's text color in forced colors", async ({ page }) => {
+        await page.goto('/design-kit/');
+        await expect(page.locator('.site-rule-mark').first()).toBeAttached();
+        // A browser reports the author's colors to a script even while it forces its own, so the
+        // test reads the fill the sheet's forced colors rules give the mark.
+        const fills = await page.evaluate(() => {
+            const inside = (rules: CSSRuleList): CSSRule[] =>
+                [...rules].flatMap((rule) =>
+                    rule instanceof CSSGroupingRule ? [rule, ...inside(rule.cssRules)] : [rule]
+                );
+            return [...document.styleSheets]
+                .flatMap((sheet) => inside(sheet.cssRules))
+                .filter(
+                    (rule): rule is CSSMediaRule =>
+                        rule instanceof CSSMediaRule && rule.conditionText.includes('forced-colors')
+                )
+                .flatMap((rule) => [...rule.cssRules])
+                .filter(
+                    (rule): rule is CSSStyleRule =>
+                        rule instanceof CSSStyleRule &&
+                        rule.selectorText.includes('.site-rule-mark')
+                )
+                .map((rule) => rule.style.fill.toLowerCase());
+        });
+        expect(fills).toEqual(['canvastext']);
+    });
+
     test('opens with a heading, a lead, and links to the controls and to how the kit works', async ({
         page,
     }) => {
@@ -1211,13 +1238,32 @@ test.describe("the site's header", () => {
         }
     });
 
+    test("names the site's links apart from its brand link, so the name is not heard twice", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/');
+        const brand = (await page.locator('.site-brand').evaluate((link) => link.textContent))
+            .trim()
+            .toLowerCase();
+        const name = (
+            (await page.locator('header nav.site-header').getAttribute('aria-label')) ?? ''
+        )
+            .trim()
+            .toLowerCase();
+        // Neither name holds the other, so a screen reader moving by landmark hears two names.
+        expect(name).not.toBe('');
+        expect(brand).not.toContain(name);
+        expect(name).not.toContain(brand);
+        expect(name).not.toContain('design kit');
+    });
+
     test('draws the pages as tabs, the current one filled and marked as the page', async ({
         page,
     }) => {
         for (const { path, nav } of MENU) {
             await page.goto(path);
             const tabs = page
-                .getByRole('navigation', { name: 'Design kit' })
+                .getByRole('navigation', { name: 'Site', exact: true })
                 .getByRole('list')
                 .getByRole('link');
             const drawn = await tabs.evaluateAll((links) =>

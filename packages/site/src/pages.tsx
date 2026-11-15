@@ -158,7 +158,7 @@ const SiteFooter = ({
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header>
-        <nav className="site-header" aria-label="Design kit">
+        <nav className="site-header" aria-label="Site">
             <a className="site-brand" href={BASE}>
                 <span className="site-mark" aria-hidden="true">
                     <svg viewBox="0 0 32 32">
@@ -406,7 +406,10 @@ const PREVIEWS: Readonly<
 const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
     route.nav !== null && route.path !== BASE;
 
-/** A small mark for each thing the kit is built to, drawn in the accent beside its heading. */
+/**
+ * A small mark for each thing the kit is built to, drawn in the accent beside its heading, and in
+ * the system's text color in forced colors.
+ */
 const RuleMark = ({ d }: { readonly d: string }) => (
     <svg className="site-rule-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d={d} />
