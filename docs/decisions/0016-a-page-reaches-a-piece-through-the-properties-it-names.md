@@ -35,11 +35,12 @@ changes.
 ## Decision
 
 Option C. A page changes how a piece draws only through a property the kit names for it. The sheets
-read each with a fallback, so the piece draws its default until a page sets one, and the kit
-declares none of them in its tokens. The reference lists every such property in its table of
-properties a page sets, with its default and, where it sets a ground, the contrast what sits on it
-must hold. A page sets a ground's light and dark values in one `light-dark()`, so it holds in both
-themes.
+read each with a fallback, so the piece draws its default until a page sets one, and the kit leaves
+each unset on the page's root, setting one only on a piece of its own whose default differs, as a
+tall grid of buttons sets its cell's least width. The reference lists every such property in its
+table of properties a page sets, with its default and, where it sets a ground, the contrast what
+sits on it must hold. A page sets a ground's light and dark values in one `light-dark()`, so it
+holds in both themes.
 
 ## Consequences
 
@@ -59,5 +60,4 @@ The path is in `packages/design-kit`.
 
 - `src/scope.test.ts` reads every property the sheets read with a fallback and fails when one is
   missing from the reference's table of properties a page sets, or listed there with no default or
-  no duty, so the table cannot fall behind the sheets. Its test that the sheets declare custom
-  properties only in the tokens holds that none of these is declared there.
+  no duty, so the table cannot fall behind the sheets.
