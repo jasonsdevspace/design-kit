@@ -12,6 +12,7 @@ describe('the controls', () => {
         expect(Object.keys(controls).sort()).toEqual([
             'attachCopyButton',
             'attachDialog',
+            'attachStatus',
             'attachStepper',
             'attachTable',
             'attachThemeSwitch',
