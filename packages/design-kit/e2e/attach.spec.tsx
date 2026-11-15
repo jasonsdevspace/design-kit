@@ -1,7 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { CopyButton, CopyStatus, ThemeSwitch } from '../src/react.js';
+import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
 import { js, KIT, ORIGIN, themeOf } from './page.js';
@@ -16,7 +16,8 @@ import { js, KIT, ORIGIN, themeOf } from './page.js';
  * and closing them again, and copying, from a pointer or the keyboard, or selecting where the
  * clipboard is refused, with the button and the status line saying which and focus held on the
  * button, a button taken away mid-press left hidden, at Copy and silent, and a press whose source
- * changed before the clipboard answered saying what it did but selecting nothing.
+ * changed before the clipboard answered saying what it did but selecting nothing, and a screen's
+ * own status line saying each message, the same words twice heard twice, with no element added.
  */
 
 const POLICY = `default-src 'self'; script-src 'self' ${themeScriptHash}; style-src 'self'`;
@@ -852,4 +853,61 @@ test('says what a press did but selects nothing when its source changed before t
     expect(await opened.evaluate(() => String(document.getSelection() ?? ''))).toBe('');
     await expect(button).toHaveAccessibleName('Copy install command');
     await context.close();
+});
+
+/** A screen's own status line as the React component draws it, put in the page before any message. */
+const SCREEN_LINE = renderToStaticMarkup(<StatusLine className="screen-line" />);
+
+test("says a screen's messages on its own status line, the same words twice, with no element added", async ({
+    browser,
+}) => {
+    const context = await browser.newContext();
+    const opened = await tab(
+        context,
+        true,
+        `import { attachStatus } from './controls.js';
+document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(SCREEN_LINE)});
+const line = document.querySelector('.screen-line');
+const said = [];
+new MutationObserver(() => { said.push(line.textContent); }).observe(line, { childList: true, characterData: true, subtree: true });
+window.heard = said;
+window.attach = () => { window.say = attachStatus(line); };`
+    );
+    try {
+        const line = opened.locator('.screen-line');
+        await expect(line).toHaveAttribute('role', 'status');
+        // Counted before the line is attached, so attaching it adds nothing either.
+        const before = await opened.evaluate(() => document.querySelectorAll('*').length);
+        await opened.evaluate(() => {
+            const page = window as unknown as {
+                attach: () => void;
+                say: (message: string) => void;
+            };
+            page.attach();
+            page.say('Ann moves to seat 2.');
+        });
+        await expect(line).toHaveText('Ann moves to seat 2.');
+        // The same words again are put in after the line is emptied, so they are heard again.
+        await opened.evaluate(() => {
+            const page = window as unknown as { say: (message: string) => void };
+            page.say('Ann moves to seat 2.');
+        });
+        await expect
+            .poll(() =>
+                opened.evaluate(
+                    () =>
+                        (window as unknown as { heard: string[] }).heard.filter(
+                            (words) => words === 'Ann moves to seat 2.'
+                        ).length
+                )
+            )
+            .toBe(2);
+        // The message holds its time, then leaves, so reading by line finds no old words.
+        await opened.waitForTimeout(1500);
+        await expect(line).toHaveText('Ann moves to seat 2.', { timeout: 0 });
+        await expect(line).toHaveText('', { timeout: 1500 });
+        expect(await opened.evaluate(() => document.querySelectorAll('*').length)).toBe(before);
+    } finally {
+        await context.close();
+    }
 });

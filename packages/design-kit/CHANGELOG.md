@@ -37,9 +37,15 @@ and the controls' at 6.25 KB.
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+- **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
+  says a message on it, so the same words said twice are heard twice, and each message leaves two
+  seconds later. It speaks through the function the copy button and the stepper use, now exported
+  for a screen that says a change without moving focus.
 - **React.** `InputField` and `SelectField` take an `action`, drawn after the control in a
   `dk-field-action` row, so a page draws a field with a button, such as a search and the button that
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
+  `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
+  same component under its first name.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through

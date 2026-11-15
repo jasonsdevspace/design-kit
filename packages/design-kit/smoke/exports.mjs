@@ -18,6 +18,7 @@ export const VALUE_EXPORTS = {
         'PortfolioStrip',
         'SelectField',
         'SkipLink',
+        'StatusLine',
         'StepperField',
         'TextareaField',
         'ThemeSwitch',
@@ -27,6 +28,7 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/controls': [
         'attachCopyButton',
         'attachDialog',
+        'attachStatus',
         'attachStepper',
         'attachTable',
         'attachThemeSwitch',

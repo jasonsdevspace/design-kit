@@ -377,19 +377,22 @@ test('draws the sheet at the bottom edge, clear of the home indicator, scrolling
 });
 
 test('rises the sheet into place, and opens it in place for less motion', async ({ page }) => {
+    // The computed animation holds while the sheet is open, where the running animation ends
+    // after 250ms, which a slow browser can pass before a read.
+    const rise = () =>
+        sheet(page).evaluate((element) => {
+            const style = getComputedStyle(element);
+            return [style.animationName, parseFloat(style.animationDuration) * 1000];
+        });
     await open(page);
     await page.locator('#options').click();
-    const travel = await sheet(page).evaluate((element) =>
-        element.getAnimations().map((animation) => animation.effect?.getComputedTiming().duration)
-    );
-    expect(travel).toEqual([250]);
+    expect(await rise()).toEqual(['dk-sheet-rise', 250]);
     await page.keyboard.press('Escape');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.locator('#options').click();
-    const still = await sheet(page).evaluate((element) =>
-        element.getAnimations().map((animation) => animation.effect?.getComputedTiming().duration)
-    );
-    expect(Number(still[0] ?? 0)).toBeLessThan(1);
+    const [name, still] = await rise();
+    expect(name).toBe('dk-sheet-rise');
+    expect(Number(still)).toBeLessThan(1);
 });
 
 for (const theme of ['light', 'dark'] as const) {
