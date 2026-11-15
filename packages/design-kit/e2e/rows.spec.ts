@@ -407,7 +407,8 @@ test('keeps a tile at the larger target, its detail wrapping inside it at twice 
     await writePage(page, { width: 320, css: GROUNDS_CSS, title: 'Play', body: tiles() });
     for (const link of await tileList(page).getByRole('link').all()) {
         const drawn = await box(link);
-        expect(drawn.height).toBeGreaterThanOrEqual(56);
+        expect((await style(link, 'min-height'))['min-height']).toBe('112px');
+        expect(drawn.height).toBeGreaterThanOrEqual(112);
         const detail = await box(link.locator('.dk-row-detail'));
         expect(detail.x + detail.width).toBeLessThanOrEqual(drawn.x + drawn.width);
     }
