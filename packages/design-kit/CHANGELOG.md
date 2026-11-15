@@ -11,19 +11,19 @@ entry as the notes.
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, and a list of link rows gains a tile
-form, each tile on a ground the page sets. The sheets' budget is unchanged so far.
+form, each tile on a ground the page sets. The theme script is unchanged, so `themeScriptHash` is
+the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
   `--dk-column` anywhere but `:root` sets it there to keep its column. A page that already uses one
-  of those three names for something of its own gets the kit's meaning for it. The footer's
-  vertical padding moved out of its class into a rule with no weight of its own, so a page's rule
-  for it wins as before, and a footer that ends the page pads its foot past what a phone keeps
-  there. In an app's frame, on a page that ends in a tab bar and in a dialog on either, a panel
-  keeps a phone's padding at every width and text size.
-- **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the
-  width of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts:
-  the column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
+  of those three names for something of its own gets the kit's meaning for it. A footer with nothing
+  after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
+  padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
+  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
+- **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
+  of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
+  column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
   page's own full-width band pads its sides with them to line up with the strip. Inside an app's
   frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
   already.
