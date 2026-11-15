@@ -32,10 +32,8 @@
      */
     .dk-skip {
         position: absolute;
-        /* At the column's inset, and past what a phone keeps at its side when that is more. */
-        left: calc(
-            max(var(--dk-safe-left), max(0px, (100% - var(--dk-column)) / 2)) + var(--dk-space-4)
-        );
+        /* Where the strip's content starts, past what a phone keeps at its side. */
+        left: var(--dk-band-left);
         /* Below what a phone keeps at its top edge, nothing on a page that does not ask. */
         top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
@@ -62,10 +60,12 @@
     /*
      * The strip and the footer run their rules the width of the page and line their content up
      * with the column below, so the page reads as one column from the strip to the footer. An
-     * explainer and the header above it start their text at the same inset.
+     * explainer and the header above it start their text at the same inset. On a phone held on its
+     * side, each keeps its content clear of what the phone keeps at that side.
      */
     :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer) {
-        padding-inline: calc(max(0px, (100% - var(--dk-column)) / 2) + var(--dk-space-4));
+        padding-right: var(--dk-band-right);
+        padding-left: var(--dk-band-left);
     }
 
     /*
@@ -78,6 +78,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 0 var(--dk-space-5);
+        /* Below what a phone held upright keeps at its top, on a page that reaches under it. */
+        padding-top: var(--dk-safe-top);
         border-bottom: 1px solid var(--dk-line);
         font-size: var(--dk-text-small);
     }
@@ -129,10 +131,21 @@
         justify-content: space-between;
         gap: var(--dk-space-2) var(--dk-space-6);
         margin-top: var(--dk-space-6);
-        padding-block: var(--dk-space-4);
         border-top: 1px solid var(--dk-line);
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
+    }
+
+    /*
+     * Where the page ends at the footer, its last line ends a step above what a phone keeps at its
+     * foot. A tab bar or anything else after it clears that itself.
+     */
+    :where(.dk-footer) {
+        padding-block: var(--dk-space-4);
+    }
+
+    :where(.dk-footer:not(:has(~ *))) {
+        padding-bottom: calc(var(--dk-space-4) + var(--dk-safe-bottom));
     }
 
     /*
@@ -1223,6 +1236,10 @@
         background: var(--dk-table-ground, var(--dk-surface));
     }
 
+    :where(.dk-panel-raised .dk-table-pinned :is(th, td):first-child) {
+        background: var(--dk-table-ground, var(--dk-raised));
+    }
+
     :where(.dk-table-scroll:has(> .dk-table-pinned)) {
         scroll-padding-inline-start: var(--dk-table-pinned-size, 8rem);
     }
@@ -1264,6 +1281,11 @@
         background: var(--dk-bg);
     }
 
+    /* On a raised panel, whose ground is the page's own in light, a code block takes the card's. */
+    :where(.dk-panel-raised .dk-code) {
+        background: var(--dk-surface);
+    }
+
     /*
      * The title of a table or a code block, outside the frame that scrolls, which names the frame
      * and the table. A caption would take the table's width and scroll off a phone with it. It
@@ -1296,6 +1318,27 @@
         :where(.dk-panel) {
             padding: var(--dk-space-4);
         }
+    }
+
+    /*
+     * A raised panel sits on the raised ground, a step above the cards on a page, for the one
+     * thing to pick up again above a list. A page's own shadow reaches it by a property, as it
+     * reaches a button, and with none set it casts none.
+     */
+    :where(.dk-panel-raised) {
+        background: var(--dk-raised);
+        box-shadow: var(--dk-panel-shadow, none);
+    }
+
+    /*
+     * In an app's frame, on a page that ends in a tab bar, and in a dialog on either, the column is
+     * a phone's at every width, so a panel keeps a phone's padding at every width and text size,
+     * as a dialog there does.
+     */
+    :where(
+        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
+    ) {
+        padding: min(var(--dk-space-4), 16px);
     }
 
     /*
@@ -2631,6 +2674,11 @@
         border-radius: var(--dk-radius-large);
         background: var(--dk-tile-ground, var(--dk-surface));
         box-shadow: var(--dk-tile-shadow, none);
+    }
+
+    /* A tile is a place to go that stands alone, so its title is at the lead size. */
+    :where(.dk-rows-tiles .dk-row-title) {
+        font-size: var(--dk-text-lead);
     }
 
     /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */

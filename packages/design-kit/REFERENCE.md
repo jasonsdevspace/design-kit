@@ -58,7 +58,10 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                                                                     |
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                                                                        |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                         |
+| `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
+| `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                                                          |
+| `--dk-panel-shadow`                                                                               | unset, a shadow under a raised panel                                                                                                                                                             |
 | `--dk-tile-ground`, `--dk-tile-shadow`                                                            | unset, a tile's ground, read as `--dk-surface`, and a shadow under it                                                                                                                            |
 | `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
 | `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
@@ -182,7 +185,18 @@ colors too, and still reads as a link.
 
 The strip and the footer run their rules the width of the page and line their content up with the
 page's column, `--dk-column`, 72rem wide by default and centered, inset by 1rem. A page whose column
-is another width sets `--dk-column` to it, as it sets a color role.
+is another width sets `--dk-column` to it on `:root`, as it sets a color role.
+
+On a page that says `viewport-fit=cover`, the strip starts its links below what a phone held
+upright keeps at its top, and on a phone held on its side the strip, the footer, an explainer and
+its header start their content past what the phone keeps at each side, where that is more than the
+column's inset. Where the page ends at the footer, its last line ends a step above what the phone
+keeps at its foot. On a page that ends in a tab bar, whose column already clears the phone's sides
+and whose bar clears its foot, the chrome pads for neither again. `--dk-band-left` and
+`--dk-band-right` hold where that content starts, so a page's own band that runs the width of the
+page, such as a colored section, lines its content up with the strip by padding its sides with them.
+Each takes its percentage from the width of the box that holds the element it pads, so a band that
+fills the page reads the page's width, and reads `--dk-column` from the root.
 
 A page with React draws the same markup from the components.
 
@@ -1090,11 +1104,35 @@ which would be a region landmark, or a `figure`.
 
 A panel sits on `--dk-surface` with an edge in the line color and large corners. The edge is what
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
-padded 1.5rem, and 1rem at 48rem wide or less, and what it holds is spaced 0.75rem from the one
-before it, a step closer than an explainer's parts. Inside an explainer its title steps down to the
-body size.
+padded 1.5rem, and 1rem at 48rem wide or less. In an app's frame, on a page that ends in a tab bar
+and in a dialog on either, where the column is a phone's, it is padded 1rem at every width and no
+more than 16px at any text size. What it holds is spaced
+0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer its
+title steps down to the body size.
 
 </details>
+
+#### A raised panel
+
+<!-- example: panelRaised -->
+
+```html
+<div class="dk-panel dk-panel-raised">
+    <p class="dk-panel-title">Flip 7, round 4</p>
+    <p>Ana is next to score.</p>
+    <a class="dk-button dk-button-accent dk-button-tall" href="/game/?id=12">Continue the game</a>
+</div>
+```
+
+`dk-panel-raised` sets a panel above the cards on a page, for the one thing to pick up again above a
+list, such as a game in play above the games to start. It sits on `--dk-raised`, a step above the
+card ground in both themes, where a plain panel would match a page's cards. In the light theme the
+raised ground is the page's own, so the edge draws the panel there. A page with a shadow of its own
+for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule
+over the kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its
+corners and its padding, and stays a block with no role. A pinned column or a code block inside it
+takes grounds of its own that stand apart from the raised one. A raised panel belongs on a page or
+in an app's body, since a dialog is drawn on the raised ground already.
 
 ### Tables
 
@@ -1846,13 +1884,14 @@ is not.
 <details>
 <summary>How the tiles are drawn</summary>
 
-Tiles stand `--dk-space-3` apart, each with an edge in the line color and large corners, in place of
-the rule between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and
-below and `--dk-space-4` at its sides, and its detail wraps within it at any text size. With no
-ground set, a tile sits on `--dk-surface`, and with no shadow set it casts none. A tile stays inside
-the column in an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past
-it, since its edge, not its words, lines up with the column. In forced colors the edge stays, in the
-system's color, and the ground and any shadow give way to the system's.
+A tile's title is at the lead size, since a tile is a place to go that stands alone. Tiles stand
+`--dk-space-3` apart, each with an edge in the line color and large corners, in place of the rule
+between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and below and
+`--dk-space-4` at its sides, and its detail wraps within it at any text size. With no ground set, a
+tile sits on `--dk-surface`, and with no shadow set it casts none. A tile stays inside the column in
+an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past it, since its
+edge, not its words, lines up with the column. In forced colors the edge stays, in the system's
+color, and the ground and any shadow give way to the system's.
 
 </details>
 

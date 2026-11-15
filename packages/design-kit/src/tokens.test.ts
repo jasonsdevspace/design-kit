@@ -87,6 +87,27 @@ describe('the tokens', () => {
             );
     });
 
+    it("holds where a full-width band's content starts on each side, past the phone's side, written once", () => {
+        // The sheet read flat, with no space just inside a bracket, so its wrapping does not count.
+        const flat = sheet.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
+        expect(flat).toContain('--dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);');
+        for (const side of ['left', 'right'])
+            expect(flat, side).toContain(
+                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`
+            );
+        // An app's column clears the phone's sides itself, so a band inside it starts a step in.
+        expect(flat).toMatch(
+            /:where\(\.dk-app, \.dk-tabbar-page\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
+        );
+        // The sheets read the band insets, and none works the column's inset out again.
+        const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
+        expect(components).not.toMatch(/100% - var\(--dk-column\)/);
+        expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
+        expect(components).toMatch(
+            /:where\(\.dk-strip, \.dk-footer, \.dk-explainer-header, \.dk-explainer\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
+        );
+    });
+
     /** A token's value in rem, or NaN when it is written in another unit. */
     const rem = (name: string) => {
         const [, value] = /^(\d+(?:\.\d+)?)rem$/.exec(declared.get(name) ?? '') ?? [];

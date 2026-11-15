@@ -360,6 +360,10 @@ test('draws each tile on the ground its page sets, with an edge and a gap in pla
         await expect(sign).toBeVisible();
         await expect(sign).toHaveAttribute('aria-hidden', 'true');
     }
+    // A tile's title is at the lead size, as a place to go that stands alone.
+    expect(
+        (await style(tileList(page).locator('.dk-row-title').first(), 'font-size'))['font-size']
+    ).toBe('17.6px');
     // A tile stays inside the column, where a row in an app's body reaches past it.
     const body = await box(page.locator('.dk-app-body'));
     expect(Math.round(first.x)).toBe(Math.round(body.x + 16));
