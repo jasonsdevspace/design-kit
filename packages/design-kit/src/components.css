@@ -2609,19 +2609,21 @@
      * A list of tiles: link rows each on a ground of its own, which the page sets by a property,
      * such as each game on its own color. A tile keeps the row's sign, its press and its ring, and
      * stands apart from the next by a gap and an edge in the line color rather than the rule
-     * between rows. It stays inside the column, since its edge would be cut where a row reaches
-     * past it. A page's own shadow reaches a tile by a property, as it reaches a button.
+     * between rows. It stays inside the column where a row reaches past it, since a tile's edge,
+     * not its words, is what lines up with the column. A page's own shadow reaches a tile by a
+     * property, as it reaches a button.
      */
-    :where(.dk-tiles) {
+    /* An empty list stays out of the page, as a list of rows does. */
+    :where(.dk-rows-tiles:has(> li)) {
         display: grid;
         gap: var(--dk-space-3);
     }
 
-    :where(.dk-tiles > li + li) {
+    :where(.dk-rows-tiles > li + li) {
         border-top: 0;
     }
 
-    :where(.dk-tiles .dk-row) {
+    :where(.dk-rows-tiles .dk-row) {
         min-height: var(--dk-target-large);
         margin-inline: 0;
         padding: var(--dk-space-3) var(--dk-space-4);

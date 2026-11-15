@@ -1808,10 +1808,12 @@ with figures of one width, so a column of them lines up.
 
 ### Tiles
 
+A list of tiles offers a few places to go, such as the games to start, each on a ground of its own.
+
 <!-- example: rowTiles -->
 
 ```html
-<ul class="dk-rows dk-tiles" role="list">
+<ul class="dk-rows dk-rows-tiles" role="list">
     <li>
         <a class="dk-row game-flip-7" href="/new/?game=flip-7">
             <span class="dk-row-text">
@@ -1826,23 +1828,31 @@ with figures of one width, so a column of them lines up.
 </ul>
 ```
 
-A list of tiles is a list of rows with `dk-tiles` beside `dk-rows`, each a link row on a ground of
-its own, such as each game to start on its own color. The page sets the ground with
-`--dk-tile-ground`, by a class of its own on the row or inline, and chooses a color its text holds
-its ratio on. A tile keeps everything a link row has on a phone, where nothing hovers: the sign
-that it leads somewhere, its title underlined under a pointer and under a pressing thumb, and its
-focus ring drawn inside it. A page with a shadow of its own for a tile sets `--dk-tile-shadow`, as
-it sets `--dk-button-shadow` for a button.
+```css
+.game-flip-7 {
+    --dk-tile-ground: light-dark(rgb(255 236 214), rgb(74 46 20));
+}
+```
+
+A list of tiles is a list of rows with `dk-rows-tiles` beside `dk-rows`, each a link row on a ground
+of its own. The page sets the ground with `--dk-tile-ground`, by a class of its own on the row or in
+its style attribute, and chooses a ground its text keeps its contrast on in both themes, such as
+with `light-dark()`. A tile keeps what a link row has: the sign that says it leads somewhere on a
+phone, where nothing hovers, its title underlined under a pointer and under a pressing thumb, and
+its focus ring drawn inside it. A page with a shadow of its own for a tile sets `--dk-tile-shadow`,
+as it sets `--dk-button-shadow` for a button. A list with no tiles is not drawn, as a list of rows
+is not.
 
 <details>
 <summary>How the tiles are drawn</summary>
 
-Tiles stand `--dk-space-3` apart, each with an edge in the line color and large corners, in place
-of the rule between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and
+Tiles stand `--dk-space-3` apart, each with an edge in the line color and large corners, in place of
+the rule between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and
 below and `--dk-space-4` at its sides, and its detail wraps within it at any text size. With no
 ground set, a tile sits on `--dk-surface`, and with no shadow set it casts none. A tile stays inside
-the column in an app's body or a panel, where a row reaches past it, since its edge would be cut
-there. In forced colors the edge stays and the ground gives way to the system's.
+the column in an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past
+it, since its edge, not its words, lines up with the column. In forced colors the edge stays, in the
+system's color, and the ground and any shadow give way to the system's.
 
 </details>
 

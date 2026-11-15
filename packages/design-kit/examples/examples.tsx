@@ -657,7 +657,7 @@ export const rows: ReactElement = (
 
 /** A list of tiles, each link on a ground its page sets. */
 export const rowTiles: ReactElement = (
-    <ul className="dk-rows dk-tiles" role="list">
+    <ul className="dk-rows dk-rows-tiles" role="list">
         <li>
             <a className="dk-row game-flip-7" href="/new/?game=flip-7">
                 <span className="dk-row-text">
