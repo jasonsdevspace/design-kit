@@ -248,6 +248,27 @@ for (const path of PAGES) {
 }
 
 test.describe('the landing page', () => {
+    test('draws each rule mark in the text color in forced colors, so the system redraws it', async ({
+        browser,
+    }) => {
+        const context = await browser.newContext({ forcedColors: 'active' });
+        try {
+            const page = await context.newPage();
+            await page.goto('/design-kit/');
+            const marks = await page
+                .locator('.site-rule-mark')
+                .evaluateAll((all) =>
+                    all
+                        .filter((mark) => mark.closest('[inert]') === null)
+                        .map((mark) => [getComputedStyle(mark).fill, getComputedStyle(mark).color])
+                );
+            expect(marks.length).toBeGreaterThan(0);
+            for (const [fill, color] of marks) expect(fill).toBe(color);
+        } finally {
+            await context.close();
+        }
+    });
+
     test('opens with a heading, a lead, and links to the controls and to how the kit works', async ({
         page,
     }) => {
@@ -1211,13 +1232,23 @@ test.describe("the site's header", () => {
         }
     });
 
+    test("names the site's links apart from its brand link, so the name is not heard twice", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/');
+        const brand = await page.locator('.site-brand').evaluate((link) => link.textContent.trim());
+        const nav = page.locator('header nav.site-header');
+        await expect(nav).toHaveAttribute('aria-label', 'Site');
+        expect(brand.toLowerCase()).not.toContain('site');
+    });
+
     test('draws the pages as tabs, the current one filled and marked as the page', async ({
         page,
     }) => {
         for (const { path, nav } of MENU) {
             await page.goto(path);
             const tabs = page
-                .getByRole('navigation', { name: 'Design kit' })
+                .getByRole('navigation', { name: 'Site', exact: true })
                 .getByRole('list')
                 .getByRole('link');
             const drawn = await tabs.evaluateAll((links) =>

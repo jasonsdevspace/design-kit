@@ -448,7 +448,9 @@ body > .dk-strip {
 .site-rule-mark {
     width: 1.5rem;
     height: 1.5rem;
-    fill: var(--dk-accent);
+    /* Drawn in its own color, so forced colors redraw it with the text. */
+    color: var(--dk-accent);
+    fill: currentcolor;
 }
 
 /*

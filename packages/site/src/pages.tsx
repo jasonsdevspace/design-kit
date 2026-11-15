@@ -158,7 +158,7 @@ const SiteFooter = ({
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header>
-        <nav className="site-header" aria-label="Design kit">
+        <nav className="site-header" aria-label="Site">
             <a className="site-brand" href={BASE}>
                 <span className="site-mark" aria-hidden="true">
                     <svg viewBox="0 0 32 32">
