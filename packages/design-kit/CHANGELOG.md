@@ -16,16 +16,17 @@ page fits more of its tiles in columns on one line, and the package README names
 and the class for a picture. No token is renamed and the theme script is unchanged, so
 `themeScriptHash` is the same.
 
-- **Upgrading.** A page that pictures an app's frame, a page that ends in a tab bar or a shown toast
-  gives `dk-picture` to the picture's wrapper or to the piece itself and makes it `inert`, since
-  without the class the page around it still draws as an app's. A row of tabs that draws its own
-  rule is a pixel shorter for each line it takes, so a page that lines something up with its height
-  checks it. A container that holds a row with `dk-tabs-on-rule` beside something that can wrap
-  under it, such as a copy button on a phone, takes the class off the row, draws no rule of its own
-  and gives the row the room the rest leaves, so the row's own rule runs under the tabs.
-- **Tokens.** `--dk-band-left`, `--dk-band-right` and `--dk-card-inset` take an app's values only on
-  a page whose own frame or tab bar is live, so a page that holds only a picture of one keeps the
-  column's bands and a page's card inset.
+- **Upgrading.** A page that shows a picture of an app's frame, of a page that ends in a tab bar or
+  of a shown toast gives `dk-picture` to the picture's wrapper or to the piece itself and makes it
+  `inert`, since without the class the page around it still draws as an app's. A row of tabs that
+  draws its own rule is a pixel shorter for each line it takes, so a page that lines something up
+  with its height checks it. A container that holds a row with `dk-tabs-on-rule` beside something
+  that can wrap under it, such as a copy button on a phone, takes the class off the row, draws no
+  rule of its own and gives the row the room the rest leaves, so the row's own rule runs under the
+  tabs.
+- **Tokens.** `--dk-band-left` and `--dk-band-right` on the page, and `--dk-card-inset` on a
+  dialog, take an app's values only when the page's own frame or tab bar is live, so a page that
+  holds only a picture of one keeps the column's bands and a page's card inset in its dialogs.
 - **Sheets.** A frame, a page that ends in a tab bar or a shown toast that carries `dk-picture` or
   sits inside an element with the class, such as a picture of a screen on a content page, is not the
   page's own. The page around it keeps the column's bands for its strip, header, content and footer,
