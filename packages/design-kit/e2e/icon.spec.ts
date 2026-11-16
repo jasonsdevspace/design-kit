@@ -93,10 +93,10 @@ const strokeDrawn = async (page: Page, id: string): Promise<number> => {
     );
 };
 
-test("sizes an icon to its line's text, strokes it in the text's color at a weight that holds, and names its control by its words", async ({
-    page,
-}) => {
-    for (const theme of ['light', 'dark'] as const) {
+for (const theme of ['light', 'dark'] as const)
+    test(`sizes an icon to its line's text, strokes it in the text's color at a weight that holds, and names its control by its words, in the ${theme} theme`, async ({
+        page,
+    }) => {
         await writePage(page, { theme, title: 'Icons', body: ICONS });
         for (const id of ['in-text', 'doubled', 'in-link', 'small']) {
             const look = await iconLook(page, id);
@@ -129,8 +129,7 @@ test("sizes an icon to its line's text, strokes it in the text's color at a weig
             results.violations.map(({ id }) => id),
             theme
         ).toEqual([]);
-    }
-});
+    });
 
 test("redraws an icon in the system's text and link colors in forced colors", async ({
     page,

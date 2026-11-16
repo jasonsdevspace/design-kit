@@ -927,39 +927,45 @@ test("reads a site's header once, its nav named Site, its current page marked, a
         visited.push(await page.evaluate(() => document.activeElement?.textContent.trim() ?? ''));
     }
     expect(visited).toEqual(['Scorekeeper', 'Home', 'About', 'Open the app']);
-    for (const [width, theme] of [
-        [1280, 'light'],
-        [1280, 'dark'],
-        [320, 'light'],
-        [320, 'dark'],
-    ] as const) {
-        await writePage(page, { width, theme, title: 'Scorekeeper', body: sitePage });
-        // The brand reads as the site's name, not as a link in running text.
-        await expect(page.locator('.dk-site-brand'), theme).toHaveCSS(
-            'text-decoration-line',
-            'none'
-        );
-        // The current page stands apart by its weight as well as its ground.
-        const weights = await page
-            .getByRole('navigation', { name: 'Site', exact: true })
-            .getByRole('link')
-            .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
-        expect(new Set(weights).size, theme).toBe(2);
-        const results = await new AxeBuilder({ page }).analyze();
-        expect(
-            results.violations.map(({ id }) => id),
-            theme
-        ).toEqual([]);
-    }
-    // In forced colors the current page takes the system's selection, polled, since a ground still
-    // easing from the author's color is drawn in the forced one at the author's alpha.
+});
+
+for (const theme of ['light', 'dark'] as const)
+    test(`draws a site's brand as its name and its current page apart by weight, with no audit findings, in the ${theme} theme`, async ({
+        page,
+    }) => {
+        for (const width of [1280, 320]) {
+            await writePage(page, { width, theme, title: 'Scorekeeper', body: sitePage });
+            const at = `${String(width)}px`;
+            // The brand reads as the site's name, not as a link in running text.
+            await expect(page.locator('.dk-site-brand'), at).toHaveCSS(
+                'text-decoration-line',
+                'none'
+            );
+            // The current page stands apart by its weight as well as its ground.
+            const weights = await page
+                .getByRole('navigation', { name: 'Site', exact: true })
+                .getByRole('link')
+                .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
+            expect(new Set(weights).size, at).toBe(2);
+            const results = await new AxeBuilder({ page }).analyze();
+            expect(
+                results.violations.map(({ id }) => id),
+                at
+            ).toEqual([]);
+        }
+    });
+
+test("marks a site's current page with the system's selection in forced colors", async ({
+    page,
+}) => {
     await forceColors(page);
+    await writePage(page, { width: 320, title: 'Scorekeeper', body: sitePage });
     const home = page
         .getByRole('navigation', { name: 'Site', exact: true })
         .getByRole('link', { name: 'Home' });
-    await expect
-        .poll(() => home.evaluate((link) => getComputedStyle(link).backgroundColor))
-        .toBe(await colorOf(page, 'Highlight'));
+    expect(await home.evaluate((link) => getComputedStyle(link).backgroundColor)).toBe(
+        await colorOf(page, 'Highlight')
+    );
 });
 
 test("cuts nothing off a site's header at 320 wide, twice the text size and the wider spacing", async ({
