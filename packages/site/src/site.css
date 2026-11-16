@@ -205,7 +205,7 @@ body > .dk-strip {
     background: var(--dk-bg);
 }
 
-/* The swatches narrow before they would widen a card at a large text size. */
+/* The swatches narrow before they would widen a tile at a large text size. */
 .site-preview-swatch {
     flex: 0 1 1.25rem;
     min-width: 0.5rem;
@@ -233,12 +233,26 @@ body > .dk-strip {
     background: var(--dk-fg);
 }
 
+/*
+ * A button drawn as the kit's are on a page, with a short bar in its text color in place of its
+ * words, so the tile it sits in shows no words but its own name and line.
+ */
 .site-preview-button {
-    padding: var(--dk-space-1) var(--dk-space-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 1.75rem;
     border: 1px solid var(--dk-control);
     border-radius: var(--dk-radius);
     background: var(--dk-bg);
-    font-size: var(--dk-text-caption);
+}
+
+.site-preview-words {
+    width: 55%;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: currentcolor;
 }
 
 .site-preview-button-accent {

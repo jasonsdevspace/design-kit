@@ -270,6 +270,13 @@ for (const path of PAGES) {
     });
 }
 
+/** Text as a pattern that matches it word for word, whatever marks it holds. */
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The landing page's tiles, one for each page, in the list under what is in the kit. */
+const landingTiles = (page: Page) =>
+    page.locator('#in-the-kit ~ .dk-rows-tiles.dk-rows-columns > li');
+
 test.describe('the landing page', () => {
     test("draws each rule mark in the system's text color in forced colors", async ({ page }) => {
         await page.goto('/design-kit/');
@@ -412,7 +419,7 @@ test.describe('the landing page', () => {
         page,
     }) => {
         await page.goto(BASE);
-        const cards = page.locator('.dk-rows-tiles.dk-rows-columns > li');
+        const cards = landingTiles(page);
         const pages = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
         await expect(cards).toHaveCount(pages.length);
         for (const [index, { nav, path, description }] of pages.entries()) {
@@ -420,12 +427,14 @@ test.describe('the landing page', () => {
             const link = card.getByRole('link');
             await expect(link).toHaveCount(1);
             await expect(link).toHaveAttribute('href', path);
-            await expect(link).toHaveClass('dk-row');
-            await expect(link).toHaveAccessibleName(new RegExp(`^${nav ?? ''}\\s*,`));
+            await expect(link).toHaveClass(/\bdk-row\b/);
+            await expect(link).toHaveAccessibleName(new RegExp(`^${escaped(nav ?? '')}\\s*,`));
             await expect(card).not.toContainText(description);
             await expect(card.locator('.site-page-preview')).toHaveAttribute('aria-hidden', 'true');
             await expect(card.locator('.site-page-preview')).toHaveClass(/\bdk-row-picture\b/);
             await expect(card.locator('.site-page-preview')).toBeVisible();
+            // The drawing shows no words, so the tile shows none but those its name holds.
+            await expect(card.locator('.site-page-preview')).toHaveText('');
         }
     });
 
@@ -433,7 +442,7 @@ test.describe('the landing page', () => {
         page,
     }) => {
         await page.goto(BASE);
-        const cards = page.locator('.dk-rows-tiles.dk-rows-columns > li');
+        const cards = landingTiles(page);
         for (const [width, many] of [
             [1280, true],
             [375, false],
@@ -448,23 +457,31 @@ test.describe('the landing page', () => {
             else expect(lefts.size, String(width)).toBe(1);
         }
         // On a wide screen, tiles on one line start their previews and titles level, a short one
-        // beside one whose line runs longer.
+        // beside one whose line runs longer, which at least one line holds.
         await page.setViewportSize({ width: 1280, height: 900 });
         const lines = await cards.evaluateAll((all) => {
-            const top = (card: Element, selector: string) =>
-                Math.round(card.querySelector(selector)?.getBoundingClientRect().top ?? 0);
-            const byLine = new Map<number, Set<string>>();
+            const box = (card: Element, selector: string) => {
+                const found = card.querySelector(selector);
+                if (found === null) throw new Error(`a tile holds no ${selector}`);
+                return found.getBoundingClientRect();
+            };
+            const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
             for (const card of all) {
                 const line = Math.round(card.getBoundingClientRect().top);
-                const tops = byLine.get(line) ?? new Set<string>();
-                tops.add(
-                    `${String(top(card, '.dk-row-picture'))} ${String(top(card, '.dk-row-title'))}`
+                const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
+                held.starts.add(
+                    `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
                 );
-                byLine.set(line, tops);
+                held.details.add(Math.round(box(card, '.dk-row-detail').height));
+                byLine.set(line, held);
             }
-            return [...byLine.values()].map((tops) => tops.size);
+            return [...byLine.values()].map(({ starts, details }) => ({
+                starts: starts.size,
+                details: details.size,
+            }));
         });
-        for (const tops of lines) expect(tops).toBe(1);
+        expect(lines.some(({ details }) => details > 1)).toBe(true);
+        for (const { starts } of lines) expect(starts).toBe(1);
     });
 
     test("puts the build line in the footer's own line, beside the footer's text and under it on a phone", async ({
@@ -618,7 +635,7 @@ test.describe('the words each page opens with', () => {
         page,
     }) => {
         await page.goto(BASE);
-        const lines = await page.locator('.dk-rows-columns > li .dk-row-detail').allTextContents();
+        const lines = await landingTiles(page).locator('.dk-row-detail').allTextContents();
         expect(lines).toEqual(CARDED.map((route) => ('card' in route ? route.card : '')));
         for (const [index, { description, path }] of CARDED.entries()) {
             const line = lines[index] ?? '';
