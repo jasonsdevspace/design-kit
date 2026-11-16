@@ -920,18 +920,26 @@ body > .dk-strip {
 }
 
 /*
- * The tabs and the copy button in one row, the tabs underlined where chosen. Where a phone with
- * large text is too narrow for both, the button wraps under the tabs, and a block's title and
- * its button wrap the same way.
+ * The tabs and the copy button in one row, the tabs taking the room the button leaves and drawing
+ * their own rule, the chosen one's line on it. Where a phone with large text is too narrow for
+ * both, the button wraps under the tabs' rule, at the row's end over the code it copies, and the
+ * tabs wrap onto more lines of their own where they need them. A block's title and its button wrap
+ * the same way.
  */
 .site-code-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
     gap: var(--dk-space-3);
     margin-block: var(--dk-space-2);
-    border-bottom: 1px solid var(--dk-line);
+}
+
+.site-code-bar > .dk-tabs {
+    flex: 1 1 auto;
+}
+
+.site-code-bar > .dk-copy {
+    margin-inline-start: auto;
 }
 
 .site-code-bar + .site-code-panel .dk-code,
