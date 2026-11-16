@@ -1184,9 +1184,10 @@ if (line) {
 puts the message in a tenth of a second later, so the same words said twice are heard twice, and
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
-copy button does, through the same function, so a line a page hands to both keeps one timer. A
-stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
-finds its screen's line by a class of its own rather than by its role, which those share.
+copy button does, through the same function, so a line a page hands to both keeps one timer.
+Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
+inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
+its own rather than by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
 what happened on its own line and the two would speak over each other. A field's error is never said

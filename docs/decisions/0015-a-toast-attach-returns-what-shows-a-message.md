@@ -64,8 +64,10 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   returns what says a message on a page's own status line, for a screen that says a change without
   moving focus. Its messages leave after two seconds, where the toast keeps its own until the toast
   leaves and a stepper keeps its value until the next, so each keeps a line of its own. A line
-  handed to a copy button too shares the copy button's timer, so a later message replaces an
-  earlier one. It follows record 13: a line attached again returns the function it returned first.
+  handed to a copy button too keeps one timer with it, so a later message replaces an earlier one.
+  The function returns what says a message rather than what takes the line away, since a line holds
+  nothing to take away, and keeps record 13's rule for being called again: a line attached again
+  returns the function it returned first.
 
 ## How it is tested
 
