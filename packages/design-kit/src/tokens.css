@@ -55,15 +55,17 @@
         /* Links and the one action a page leads with, and the text drawn on it. */
         --dk-accent: light-dark(#1f4fd8, #8fb0ff);
         /*
-         * The focus ring, and the edge a pointer brings to a button, are drawn in --dk-focus where a
-         * page sets it, and in the accent otherwise. It is left unset here, so a page that sets the
-         * accent on one part of the page alone rings in that accent there too.
+         * The focus ring, and the edge a pointer brings to a button, are drawn in --dk-focus where
+         * a page sets it, and in the accent otherwise. It is left unset here, so a page that sets
+         * the accent on one part of the page alone rings in that accent there too.
          */
         --dk-on-accent: light-dark(#ffffff, #121212);
         /* What is chosen or pointed at, behind text in the page's own color. */
         --dk-highlight: light-dark(#e3eafb, #22305a);
 
-        /* What went right, needs care or went wrong, each with a ground of its own for a callout. */
+        /*
+         * What went right, needs care or went wrong, each with a ground of its own for a callout.
+         */
         --dk-success: light-dark(#1d7a3e, #5cc28a);
         --dk-success-bg: light-dark(#e8f5ec, #15301f);
         --dk-danger: light-dark(#b3261e, #ff8a80);
@@ -207,6 +209,11 @@
          */
         --dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);
         /*
+         * How far an app's column stands in from each side of the screen, measured on the screen
+         * rather than a box, since what a phone keeps at its sides is measured there too.
+         */
+        --dk-app-inset: max(0px, (100vw - var(--dk-app-column)) / 2);
+        /*
          * Where content starts on each side of such a band, as the strip, the footer or a page's
          * own colored section: the column's inset, or what a phone keeps at that side where that
          * is more, and then the kit's side step.
@@ -228,6 +235,46 @@
         --dk-stack-bar: 3;
         --dk-stack-toast: 4;
         --dk-stack-skip: 10;
+        /*
+         * How far a card's words stand in from its edge, a panel's and a tile's alike, so a raised
+         * panel's text and the tiles under it start on one line: a wider step on a wide page, a
+         * phone's on a phone, and in an app's column a phone's held at its size at every width.
+         */
+        --dk-card-inset: var(--dk-space-5);
+    }
+
+    @media (width <= 48rem) {
+        :where(:root) {
+            --dk-card-inset: var(--dk-space-4);
+        }
+    }
+
+    :where(:is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog)) {
+        --dk-card-inset: var(--dk-space-4-held);
+    }
+
+    /*
+     * The ground of what holds a piece, and the ground a piece set apart on it steps to, such as a
+     * code block or a tile, set on each container and inherited, so a piece inside a container
+     * inside another takes the nearest one's, as the flow's step does. Each is worked out on the
+     * container, so a palette a page sets on a container reaches them. Where no container sets
+     * them, a piece falls back to the page's ground and the card's. A dialog's ground and a raised
+     * panel's are the raised one, which steps to the card's, since in light it is the page's own,
+     * and a panel's is the card's, which steps to the page's.
+     */
+    :where(.dk-dialog) {
+        --dk-ground: var(--dk-raised);
+        --dk-ground-step: var(--dk-surface);
+    }
+
+    :where(.dk-panel) {
+        --dk-ground: var(--dk-surface);
+        --dk-ground-step: var(--dk-bg);
+    }
+
+    :where(.dk-panel-raised) {
+        --dk-ground: var(--dk-raised);
+        --dk-ground-step: var(--dk-surface);
     }
 
     /*
@@ -237,12 +284,8 @@
      * demo's strip, starts its content a step in and pays for the sides no second time.
      */
     :where(:root:has(.dk-app, .dk-tabbar-page)) {
-        --dk-band-left: calc(
-            max(var(--dk-safe-left), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4)
-        );
-        --dk-band-right: calc(
-            max(var(--dk-safe-right), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4)
-        );
+        --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4));
+        --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4));
     }
 
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {

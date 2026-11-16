@@ -521,6 +521,22 @@ test('keeps the strip and the footer clear of what a phone keeps at its sides an
     const footer = await box(page.locator('.dk-footer'), 'the footer');
     const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
     expect(Math.round(footer.y + footer.height - (last.y + last.height))).toBe(16 + SIDES.bottom);
+    // What may follow a footer and takes no room at the foot, a toast, a dialog, a script and a
+    // hidden tab bar, leaves the footer clearing it.
+    await page.evaluate(() => {
+        for (const html of [
+            '<div class="dk-toast" role="region" aria-label="Messages"></div>',
+            '<dialog class="dk-dialog"></dialog>',
+            '<script>void 0</script>',
+            '<nav class="dk-tabbar" aria-label="Sections" hidden></nav>',
+        ])
+            document.body.insertAdjacentHTML('beforeend', html);
+    });
+    const after = await box(page.locator('.dk-footer'), 'the footer with what follows it');
+    const lastAfter = await box(page.locator('.dk-footer > :last-child'), 'its last line');
+    expect(Math.round(after.y + after.height - (lastAfter.y + lastAfter.height))).toBe(
+        16 + SIDES.bottom
+    );
     // Both ends of the strip and the footer clear the phone's sides.
     expect(await sidesOf(page.locator('.dk-strip'))).toEqual([inset, SIDES.right + 16]);
     expect(await sidesOf(page.locator('.dk-footer'))).toEqual([inset, SIDES.right + 16]);
@@ -704,6 +720,26 @@ const pageLook = (page: Page) =>
             text: getComputedStyle(document.body).color,
         };
     });
+
+test('marks a link the strip or the footer names current by any value but false, as a pill does', async ({
+    page,
+}) => {
+    await open(page, { width: 1280, where: 'about' });
+    const link = page.getByRole('navigation', { name: 'Portfolio' }).getByRole('link', {
+        name: 'How it works',
+    });
+    const { strong, normal } = await pageLook(page);
+    // An empty value is false to a screen reader, so it marks nothing here either.
+    for (const [value, weight] of [
+        ['true', strong],
+        ['page', strong],
+        ['false', normal],
+        ['', normal],
+    ] as const) {
+        await link.evaluate((element, to) => element.setAttribute('aria-current', to), value);
+        expect((await linkLook(link)).weight, value).toBe(weight);
+    }
+});
 
 test('draws the link to the current page apart from the others in the strip and the footer', async ({
     page,

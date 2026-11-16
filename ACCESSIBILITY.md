@@ -22,8 +22,9 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
   native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
   cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is. A
-  tile's title and detail are measured at 4.5 to 1 and its sign and ring at 3 to 1, as drawn, on
-  the grounds a page sets, on the kit's own surface and on the grounds a tile steps to in a panel.
+  tile's title and detail are measured at 4.5 to 1 and its sign at 3 to 1, as drawn, on the
+  grounds a page sets, on the kit's own surface and on the grounds a tile steps to in a panel, and
+  its ring, drawn outside it, at 3 to 1 on what the list sits on.
 - **Links.** A link in running text keeps its underline, in a color that shows, in every place it
   sits from the strip to the footer, a dialog, a table and a toast among them, in both themes and in
   forced colors, since the accent stands too close to the text to mark a link by color alone. In the

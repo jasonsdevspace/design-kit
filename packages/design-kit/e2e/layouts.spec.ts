@@ -438,7 +438,8 @@ test('spaces a content page by the flow, its sections further apart, and holds i
     // Room above the title under the header's rule, as an explainer keeps, a whole step between
     // blocks and the larger step to a section.
     expect(Math.round(title.y - (main?.top ?? Number.NaN))).toBe(32);
-    expect(Math.round((lead?.top ?? 0) - title.y - title.height)).toBe(16);
+    // The lead stands the short step under the title, a pair, as an explainer's does.
+    expect(Math.round((lead?.top ?? 0) - title.y - title.height)).toBe(8);
     expect(
         [first, second].map((section, at) =>
             Math.round((section?.top ?? 0) - ([table, first][at]?.bottom ?? 0))

@@ -151,6 +151,19 @@
         hyphens: auto;
     }
 
+    /*
+     * The brand is a link home with no edge, so it underlines under a pointer and a pressing thumb.
+     */
+    :where(.dk-site-brand:active) {
+        text-decoration: underline;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-site-brand:hover) {
+            text-decoration: underline;
+        }
+    }
+
     :where(.dk-site-mark) {
         flex: none;
         width: 1.75em;
@@ -175,14 +188,16 @@
     }
 
     /*
-     * Where the page ends at the footer, its last line ends a step above what a phone keeps at its
-     * foot. A tab bar or anything else after it clears that itself.
+     * The footer's last line ends a step above what a phone keeps at its foot, unless a tab bar
+     * follows it, which clears that itself. A toast, a dialog or a script after it takes none of
+     * the foot's room, and a hidden tab bar clears nothing, so only a tab bar in sight turns this
+     * off.
      */
     :where(.dk-footer) {
         padding-block: var(--dk-space-4);
     }
 
-    :where(.dk-footer:not(:has(~ *))) {
+    :where(.dk-footer:not(:has(~ .dk-tabbar:not([hidden])))) {
         padding-bottom: calc(var(--dk-space-4) + var(--dk-safe-bottom));
     }
 
@@ -218,10 +233,10 @@
     :where(
         .dk-strip-links a:hover,
         .dk-strip-links a:focus-visible,
-        .dk-strip-links a[aria-current='page'],
+        .dk-strip-links a[aria-current]:not([aria-current='false'], [aria-current='']),
         .dk-footer a:hover,
         .dk-footer a:focus-visible,
-        .dk-footer a[aria-current='page']
+        .dk-footer a[aria-current]:not([aria-current='false'], [aria-current=''])
     ) {
         color: var(--dk-fg);
     }
@@ -229,9 +244,13 @@
     /*
      * The link to the page a reader is on stands in the page's text, as above, and at the heading's
      * weight, so it is told from the links around it by more than its color, which forced colors
-     * replace. It keeps its underline, so it still reads as a link.
+     * replace. It keeps its underline, so it still reads as a link. Any value but false marks it,
+     * as on a pill or a tab, so a page beneath one the links name marks that link with true.
      */
-    :where(.dk-strip-links a[aria-current='page'], .dk-footer a[aria-current='page']) {
+    :where(
+        .dk-strip-links a[aria-current]:not([aria-current='false'], [aria-current='']),
+        .dk-footer a[aria-current]:not([aria-current='false'], [aria-current=''])
+    ) {
         font-weight: var(--dk-weight-strong);
     }
 
@@ -461,22 +480,22 @@
      * A quiet text button, such as a Close at a panel's corner, in the muted color with no
      * underline, so it does not compete with the one strong action beside it, and in the text
      * color under a pointer and while held, open or off alike, which is why it comes after their
-     * rules. It keeps a button's least width, so a × alone is as
-     * wide as the button is tall, and the rules below that take a text button's width away leave
-     * it out. The toast's close is one. It is never off, since a Close always closes.
+     * rules. It keeps a button's least width, so a × alone is as wide as the button is tall, and
+     * the rules below that take a text button's width away leave it out. A toast's close carries
+     * this class beside its own, which draws nothing. It is never off, since a Close always closes.
      */
-    :where(.dk-button-quiet, .dk-toast-close) {
+    :where(.dk-button-quiet) {
         min-width: var(--dk-field-height);
         color: var(--dk-muted);
         text-decoration: none;
     }
 
-    :where(.dk-button-quiet:active, .dk-toast-close:active) {
+    :where(.dk-button-quiet:active) {
         color: var(--dk-fg);
     }
 
     @media (hover: hover) {
-        :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+        :where(.dk-button-quiet:hover) {
             color: var(--dk-fg);
         }
     }
@@ -499,7 +518,7 @@
          * A text button keeps no minimum width here either, since this rule comes later in the
          * sheet than its own and would win by its order.
          */
-        :where(.dk-button-text:not(.dk-button-quiet, .dk-toast-close)) {
+        :where(.dk-button-text:not(.dk-button-quiet)) {
             min-width: 0;
         }
     }
@@ -522,7 +541,7 @@
 
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog, .dk-toast)
-            .dk-button-text:not(.dk-button-quiet, .dk-toast-close)
+            .dk-button-text:not(.dk-button-quiet)
     ) {
         min-width: 0;
     }
@@ -556,7 +575,8 @@
 
     /*
      * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
-     * button whose panel is open, takes the system's highlight, an off button the system's gray on
+     * button whose panel is open, takes the system's highlight by the rule at the sheet's end for
+     * every chosen thing, an off button the system's gray on
      * the page's ground as a disabled one does, and an off toggle that is on an edge in the
      * highlight.
      */
@@ -566,28 +586,20 @@
             translate: none;
         }
 
-        :where(
-            .dk-button[aria-pressed='true'],
-            .dk-button:not(.dk-button-text)[aria-expanded='true']
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
         /*
          * A quiet button has no edge, so its words are what show it is a button, and an underline
          * under a pointer and while held is what shows those, where its colors are gone.
          */
-        :where(.dk-button-quiet, .dk-toast-close) {
+        :where(.dk-button-quiet) {
             color: ButtonText;
         }
 
-        :where(.dk-button-quiet:active, .dk-toast-close:active) {
+        :where(.dk-button-quiet:active) {
             text-decoration: underline;
         }
 
         @media (hover: hover) {
-            :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+            :where(.dk-button-quiet:hover) {
                 text-decoration: underline;
             }
         }
@@ -1087,7 +1099,14 @@
     }
 
     :where(
-        :is(.dk-page, .dk-page > section) > :is(p, ul:not([class]), ol:not([class]), blockquote)
+        .dk-page > p,
+        .dk-page > ul:not([class]),
+        .dk-page > ol:not([class]),
+        .dk-page > blockquote,
+        .dk-page > section > p,
+        .dk-page > section > ul:not([class]),
+        .dk-page > section > ol:not([class]),
+        .dk-page > section > blockquote
     ) {
         max-width: var(--dk-measure);
     }
@@ -1164,11 +1183,12 @@
     /*
      * A panel, a region of a page set apart on the card's ground, at the body's size, with no
      * tone and no role. Its edge in the line's color is what draws it, since the card's ground is
-     * close to the page's, and it stays in forced colors. Its title steps down to the body's size
-     * inside an explainer, under the section's heading.
+     * close to the page's, and it stays in forced colors. Its words stand in by the card's inset,
+     * as a tile's do, and its title steps down to the body's size inside an explainer, under the
+     * section's heading.
      */
     :where(.dk-panel) {
-        padding: var(--dk-space-5);
+        padding: var(--dk-card-inset);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-surface);
@@ -1340,20 +1360,7 @@
         inset-inline-start: 0;
         z-index: var(--dk-stack-pinned);
         border-inline-end: 1px solid var(--dk-line);
-        background: var(--dk-table-ground, var(--dk-bg));
-    }
-
-    /* A dialog's ground first, so a panel inside a dialog gives its cells the panel's. */
-    :where(.dk-dialog .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-raised));
-    }
-
-    :where(.dk-panel .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-surface));
-    }
-
-    :where(.dk-panel-raised .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-raised));
+        background: var(--dk-table-ground, var(--dk-ground, var(--dk-bg)));
     }
 
     :where(.dk-table-scroll:has(> .dk-table-pinned)) {
@@ -1388,18 +1395,9 @@
         padding: var(--dk-space-3) var(--dk-space-4);
         border: 1px solid transparent;
         border-radius: var(--dk-radius);
-        background: var(--dk-surface);
+        background: var(--dk-ground-step, var(--dk-surface));
         font-size: var(--dk-text-code);
         line-height: var(--dk-leading-body);
-    }
-
-    :where(.dk-panel .dk-code) {
-        background: var(--dk-bg);
-    }
-
-    /* On a raised panel, whose ground is the page's own in light, a code block takes the card's. */
-    :where(.dk-panel-raised .dk-code) {
-        background: var(--dk-surface);
     }
 
     /*
@@ -1430,12 +1428,6 @@
         margin: 0;
     }
 
-    @media (width <= 48rem) {
-        :where(.dk-panel) {
-            padding: var(--dk-space-4);
-        }
-    }
-
     /*
      * A raised panel sits on the raised ground, a step above the cards on a page, for the one
      * thing to pick up again above a list. It casts the resting shadow, which lifts it where the
@@ -1444,17 +1436,6 @@
     :where(.dk-panel-raised) {
         background: var(--dk-raised);
         box-shadow: var(--dk-panel-shadow, var(--dk-shadow-resting));
-    }
-
-    /*
-     * In an app's frame, on a page that ends in a tab bar, and in a dialog on either, the column is
-     * a phone's at every width, so a panel keeps a phone's padding at every width and text size,
-     * as a dialog there does.
-     */
-    :where(
-        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
-    ) {
-        padding: var(--dk-space-4-held);
     }
 
     /*
@@ -1660,17 +1641,6 @@
     }
 
     /*
-     * In forced colors the chosen word, and the button that names it, take the system's
-     * selection.
-     */
-    @media (forced-colors: active) {
-        :where(.dk-theme-switch-choice > input:checked + span, .dk-theme-switch-button) {
-            background: Highlight;
-            color: HighlightText;
-        }
-    }
-
-    /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
      * the muted text at the strip's size. In a strip it takes the switches' place and wraps where
      * the section is narrow, as at a large text size on a phone, since a line cut off and scrolled
@@ -1739,13 +1709,18 @@
         transition: color var(--dk-duration-short);
     }
 
+    /* Pressed, a resting pill or tab shows the text color, so a thumb on a phone sees it take. */
+    :where(a.dk-pill:active) {
+        color: var(--dk-fg);
+    }
+
     @media (hover: hover) {
         :where(a.dk-pill:hover) {
             color: var(--dk-fg);
         }
     }
 
-    :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
+    :where(a.dk-pill[aria-current]:not([aria-current='false'], [aria-current=''])) {
         background: var(--dk-highlight);
         color: var(--dk-fg);
         font-weight: var(--dk-weight-strong);
@@ -1766,22 +1741,10 @@
     }
 
     :where(
-        :is(
-                .dk-app,
-                .dk-tabbar-page,
-                :root:has(.dk-app, .dk-tabbar-page) .dk-dialog,
-                .dk-site-header
-            )
-            a.dk-pill
+        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) a.dk-pill,
+        .dk-site-header a.dk-pill
     ) {
         min-height: var(--dk-target);
-    }
-
-    @media (forced-colors: active) {
-        :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
     }
 
     /*
@@ -1841,6 +1804,10 @@
         transition: color var(--dk-duration-short);
     }
 
+    :where(.dk-tab:active) {
+        color: var(--dk-fg);
+    }
+
     @media (hover: hover) {
         :where(.dk-tab:hover) {
             color: var(--dk-fg);
@@ -1849,7 +1816,7 @@
 
     :where(
         .dk-tab[aria-selected='true'],
-        .dk-tab[aria-current]:not([aria-current='false']),
+        .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
         .dk-tab[aria-pressed='true']
     ) {
         padding-bottom: 0;
@@ -1867,17 +1834,6 @@
     :where(:is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-tab) {
         min-width: var(--dk-target);
         min-height: var(--dk-target);
-    }
-
-    @media (forced-colors: active) {
-        :where(
-            .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
-            .dk-tab[aria-pressed='true']
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
     }
 
     /*
@@ -1967,11 +1923,8 @@
     :where(.dk-app, .dk-tabbar-page) {
         max-width: var(--dk-app-column);
         margin-inline: auto;
-        padding-right: max(
-            0px,
-            var(--dk-safe-right) - max(0px, (100vw - var(--dk-app-column)) / 2)
-        );
-        padding-left: max(0px, var(--dk-safe-left) - max(0px, (100vw - var(--dk-app-column)) / 2));
+        padding-right: max(0px, var(--dk-safe-right) - var(--dk-app-inset));
+        padding-left: max(0px, var(--dk-safe-left) - var(--dk-app-inset));
     }
 
     /*
@@ -2390,24 +2343,11 @@
         color: var(--dk-fg);
     }
 
-    :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+    :where(.dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])) {
         padding-top: var(--dk-space-1);
         border-top: var(--dk-indicator-width) solid var(--dk-accent);
         color: var(--dk-fg);
         font-weight: var(--dk-weight-strong);
-    }
-
-    /* In forced colors the current place stands on the highlight, as the current tab and pill. */
-    @media (forced-colors: active) {
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
-        /* Its focus ring, drawn inside it, in the highlight's text, so it shows on the fill. */
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
-            outline-color: HighlightText;
-        }
     }
 
     /*
@@ -2679,12 +2619,6 @@
      * button does, which the grid's own rules above would otherwise replace.
      */
     @media (forced-colors: active) {
-        :where(.dk-button-grid > .dk-button[aria-pressed='true']) {
-            border-color: Highlight;
-            background: Highlight;
-            color: HighlightText;
-        }
-
         :where(
             .dk-button-grid > .dk-button:disabled,
             .dk-button-grid > .dk-button[aria-disabled='true']
@@ -2795,6 +2729,22 @@
         outline-offset: calc(-1 * var(--dk-ring-width));
     }
 
+    /*
+     * A tile stands apart from the next by a gap, so its ring sits outside it, as every other
+     * separate control's does, on the ground the kit holds the ring to, rather than on a ground the
+     * page chooses for the tile.
+     */
+    :where(.dk-rows-tiles a.dk-row):focus-visible {
+        outline-offset: var(--dk-ring-offset);
+    }
+
+    /*
+     * A tile brought into view by the keyboard stops short of the edge by its ring, so none is cut.
+     */
+    :where(.dk-rows-tiles a.dk-row) {
+        scroll-margin: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+    }
+
     :where(a.dk-row:active .dk-row-title) {
         text-decoration: underline;
     }
@@ -2822,11 +2772,12 @@
 
     /*
      * A list of tiles: link rows each on a ground of its own, which the page sets by a property,
-     * such as each game on its own color. A tile keeps the row's sign, its press and its ring, and
-     * stands apart from the next by a gap and an edge in the line color rather than the rule
-     * between rows. It stays inside the column where a row reaches past it, since a tile's edge,
-     * not its words, is what lines up with the column. A tile casts no shadow, so the raised panel
-     * above a list stays the one thing lifted, and a page that wants one sets it by a property.
+     * such as each game on its own color, or with none set the ground its container steps to, as a
+     * code block takes. A tile keeps the row's sign, its press and its ring, and stands apart from
+     * the next by a gap and an edge in the line color rather than the rule between rows. It stays
+     * inside the column where a row reaches past it, since a tile's edge, not its words, is what
+     * lines up with the column. A tile casts no shadow, so the raised panel above a list stays the
+     * one thing lifted, and a page that wants one sets it by a property.
      */
     /* An empty list stays out of the page, as a list of rows does. */
     :where(.dk-rows-tiles:has(> li)) {
@@ -2841,28 +2792,23 @@
     :where(.dk-rows-tiles .dk-row) {
         min-height: var(--dk-target-large);
         margin-inline: 0;
-        padding: var(--dk-space-3) var(--dk-space-4);
+        padding: var(--dk-space-3) var(--dk-card-inset);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
-        background: var(--dk-tile-ground, var(--dk-surface));
+        background: var(--dk-tile-ground, var(--dk-ground-step, var(--dk-surface)));
         box-shadow: var(--dk-tile-shadow, none);
-    }
-
-    /*
-     * A tile in a panel steps off the panel's ground as a code block does, to the page's, and one in
-     * a raised panel to the card's, where the page sets no ground of its own.
-     */
-    :where(.dk-panel .dk-rows-tiles .dk-row) {
-        background: var(--dk-tile-ground, var(--dk-bg));
-    }
-
-    :where(.dk-panel-raised .dk-rows-tiles .dk-row) {
-        background: var(--dk-tile-ground, var(--dk-surface));
     }
 
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
     :where(.dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-lead);
+    }
+
+    /*
+     * In an explainer a tile's title steps down to the body's size, as a panel's title there does.
+     */
+    :where(.dk-explainer .dk-rows-tiles .dk-row-title) {
+        font-size: var(--dk-text-body);
     }
 
     /*
@@ -3165,7 +3111,7 @@
     }
 
     :where(
-        .dk-explainer > h1 + *,
+        :is(.dk-explainer, .dk-page) > h1 + *,
         .dk-table-title + *,
         :not(.dk-code-head) > .dk-code-title + *,
         .dk-code-head + *
@@ -3202,13 +3148,15 @@
     }
 
     /*
-     * In forced colors what is chosen stands in the system's selection colors, each piece by a rule
-     * of its own: a toggle that is on and a button whose panel is open, a pressed cell of a grid,
-     * the theme switch's chosen word, the current pill, the chosen tab and the current place in a
-     * tab bar. A browser that paints a backplate of the page's ground behind their words would
-     * draw the selection's text on its own color, so they keep their colors, with an edge in the
-     * selection's own so each is one block of it, no shadow, and a ring outside them in the
-     * system's text, as forced colors would set them. The rule comes last, after every piece's own, which would otherwise win by order.
+     * In forced colors what is chosen stands in the system's selection colors, every piece by this
+     * one rule, so a piece with a chosen state is added here once: a toggle that is on and a button
+     * whose panel is open, a pressed cell of a grid, the theme switch's chosen word, the current
+     * pill, the chosen tab and the current place in a tab bar. A browser that paints a backplate of
+     * the page's ground behind their words would draw the selection's text on its own color, so
+     * they keep their colors, with an edge in the selection's own so each is one block of it, no
+     * shadow, and a ring outside them in the system's text, as forced colors would set them. A
+     * button that is also unavailable is left out, so its own rule draws it unavailable. The rule
+     * comes last, after every piece's own, which would otherwise win by order.
      */
     @media (forced-colors: active) {
         :where(
@@ -3218,28 +3166,39 @@
                 ),
             .dk-theme-switch-choice > input:checked + span,
             .dk-theme-switch-button,
-            a.dk-pill[aria-current]:not([aria-current='false']),
+            a.dk-pill[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-pressed='true'],
-            .dk-tabbar a[aria-current]:not([aria-current='false'])
+            .dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])
         ) {
             border-color: Highlight;
+            background: Highlight;
             box-shadow: none;
+            color: HighlightText;
             forced-color-adjust: none;
         }
 
-        /* The tab bar's line over its current place stays in sight, in the selection's text. */
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+        /*
+         * The tab bar's line over its current place, and its focus ring drawn inside it, stay in
+         * sight in the selection's text.
+         */
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])) {
             border-color: HighlightText;
+        }
+
+        :where(
+            .dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])
+        ):focus-visible {
+            outline-color: HighlightText;
         }
 
         :where(
             .dk-button:is([aria-pressed='true'], :not(.dk-button-text)[aria-expanded='true']),
             .dk-theme-switch-button,
-            a.dk-pill[aria-current]:not([aria-current='false']),
+            a.dk-pill[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-pressed='true']
         ):focus-visible {
             outline-color: CanvasText;
@@ -3251,6 +3210,20 @@
          */
         :where(.dk-theme-switch-choice > input:checked:focus-visible + span) {
             outline-color: CanvasText;
+        }
+
+        /*
+         * A pill or a tab shows a press and a pointer by its color, which forced colors replace, so
+         * there it underlines, as a quiet button does.
+         */
+        :where(a.dk-pill:active, .dk-tab:active) {
+            text-decoration: underline;
+        }
+
+        @media (hover: hover) {
+            :where(a.dk-pill:hover, .dk-tab:hover) {
+                text-decoration: underline;
+            }
         }
     }
 

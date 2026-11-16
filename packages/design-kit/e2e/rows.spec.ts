@@ -397,7 +397,9 @@ test('draws a tile on the surface with no ground set and no shadow, unless the p
     expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
 });
 
-test("underlines a tile's title under a pointer, and rings it inside", async ({ page }) => {
+test("underlines a tile's title under a pointer, and rings it outside, as a separate control", async ({
+    page,
+}) => {
     await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
     const link = tileList(page).getByRole('link').first();
     const title = link.locator('.dk-row-title');
@@ -409,9 +411,7 @@ test("underlines a tile's title under a pointer, and rings it inside", async ({ 
     await page.keyboard.press('Tab');
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
-    expect(Number.parseFloat(ring['outline-offset'] ?? '')).toBe(
-        -Number.parseFloat(ring['outline-width'] ?? '')
-    );
+    expect(ring['outline-offset']).toBe('2px');
 });
 
 test("underlines a tile's title under a pressing thumb, on a phone where nothing hovers", async ({
@@ -498,7 +498,8 @@ for (const theme of ['light', 'dark'] as const)
 
 /**
  * Reaches each link in a list of tiles by the keyboard, so its ring shows, and measures its title
- * and detail against its own ground at 4.5 to 1 and its sign and ring at 3 to 1, as drawn.
+ * and detail against its own ground at 4.5 to 1 and its sign at 3 to 1, and its ring, drawn outside
+ * it, at 3 to 1 against what the list sits on, as drawn.
  */
 const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
     const links = await list.getByRole('link').all();
@@ -521,9 +522,17 @@ const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
                 contrast(await color(link.locator(part)), ground),
                 `${where}, ${part}`
             ).toBeGreaterThanOrEqual(least);
+        // The nearest ground under the tile, the page's where nothing between has one.
+        const under = await link.evaluate((tile) => {
+            for (let at = tile.parentElement; at; at = at.parentElement) {
+                const drawn = getComputedStyle(at).backgroundColor;
+                if (drawn !== 'rgba(0, 0, 0, 0)') return drawn;
+            }
+            return getComputedStyle(document.documentElement).backgroundColor;
+        });
         expect(
-            contrast(await color(link, 'outline-color'), ground),
-            `${where}, the ring`
+            contrast(await color(link, 'outline-color'), under),
+            `${where}, the ring on ${under}`
         ).toBeGreaterThanOrEqual(3);
     }
 };
@@ -546,6 +555,88 @@ for (const theme of ['light', 'dark'] as const)
             await expect(tileList(page).getByRole('link')).toHaveCount(3);
             await holdsItsRatios(page, tileList(page), theme);
         });
+
+for (const [where, width] of [
+    ['a wide page', 1280],
+    ['a phone', 390],
+    ["an app's frame", 1280],
+] as const)
+    test(`starts a tile's words on the line a raised panel's start on above it, on ${where}`, async ({
+        page,
+    }) => {
+        const body =
+            '<div class="dk-panel dk-panel-raised"><p class="dk-panel-title">Flip 7, round 4</p></div>' +
+            tiles(false)
+                .replace(/^<div class="dk-app">.*?<ul/, '<ul')
+                .replace(/<\/main><\/div>$/, '');
+        await writePage(page, {
+            width,
+            title: 'Play',
+            body:
+                where === "an app's frame"
+                    ? `<div class="dk-app"><main class="dk-app-body" id="main-content">${body}</main></div>`
+                    : `<main id="main-content">${body}</main>`,
+        });
+        const panel = await box(page.locator('.dk-panel-title'), "the panel's title");
+        const tile = await box(tileList(page).locator('.dk-row-title').first(), "a tile's title");
+        expect(Math.round(tile.x), where).toBe(Math.round(panel.x));
+    });
+
+test("sets a tile's title in an explainer at the body size, as a panel's title there", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'How it works',
+        body: `<main class="dk-explainer" id="main-content"><h1>How it works</h1>${tiles(false)
+            .replace(/^<div class="dk-app">.*?<ul/, '<ul')
+            .replace(/<\/main><\/div>$/, '')}</main>`,
+    });
+    expect(
+        (await style(tileList(page).locator('.dk-row-title').first(), 'font-size'))['font-size']
+    ).toBe('16px');
+});
+
+test("keeps a tile's whole ring in view as the keyboard scrolls an app's body to it", async ({
+    page,
+}) => {
+    const many = Array.from(
+        { length: 12 },
+        (_, at) =>
+            `<li><a class="dk-row" href="#game-${String(at)}"><span class="dk-row-text"><span class="dk-row-title">Game ${String(at + 1)}</span></span></a></li>`
+    ).join('');
+    await writePage(page, {
+        width: 320,
+        height: 568,
+        title: 'Play',
+        body: `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header><main class="dk-app-body" id="main-content" tabindex="0"><ul class="dk-rows dk-rows-tiles" role="list" aria-label="Start a new game">${many}</ul></main></div>`,
+    });
+    const body = page.locator('.dk-app-body');
+    await body.focus();
+    const ring = 4;
+    const links = await body.getByRole('link').all();
+    // Forward from the body to the last tile, then back from it to the first.
+    for (const [key, presses] of [
+        ['Tab', links.length],
+        ['Shift+Tab', links.length - 1],
+    ] as const) {
+        // Each tile as the keyboard reaches it, since one scrolled just into view sits at the edge.
+        for (let at = 0; at < presses; at += 1) {
+            await page.keyboard.press(key);
+            const focused = page.locator(':focus');
+            await expect(focused).toHaveClass(/dk-row/);
+            const [tile, port] = await Promise.all([
+                box(focused, 'the focused tile'),
+                body.evaluate((element) => {
+                    const top = element.getBoundingClientRect().top + element.clientTop;
+                    return { top, bottom: top + element.clientHeight };
+                }),
+            ]);
+            const where = `${key}, press ${String(at + 1)}`;
+            expect(tile.y - ring, where).toBeGreaterThanOrEqual(port.top - 0.5);
+            expect(tile.y + tile.height + ring, where).toBeLessThanOrEqual(port.bottom + 0.5);
+        }
+    }
+});
 
 /** A picture drawn at once, of the shape a page's preview has. */
 const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#8a8a8a"/></svg>')}`;
