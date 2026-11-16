@@ -128,41 +128,50 @@ export const pixels = (length: string | undefined): number => Number.parseFloat(
  * How much of the box an element's words take is drawn in the element's own fill, the color most
  * of the element is drawn in, read from screenshots through a canvas. Words drawn on the fill
  * leave most of their box in it, and words a browser paints a backplate behind leave little, a
- * check on what shows where a computed style cannot tell.
+ * check on what shows where a computed style cannot tell. The box holds the words alone, not an
+ * icon beside them.
  */
 export const fillUnderWords = async (locator: Locator): Promise<number> => {
     const page = locator.page();
+    await locator.scrollIntoViewIfNeeded();
+    const whole = (await locator.screenshot()).toString('base64');
     const words = await locator.evaluate((element) => {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const drawn = range.getBoundingClientRect();
-        return { x: drawn.x, y: drawn.y, width: drawn.width, height: drawn.height };
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        const rects: DOMRect[] = [];
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (!node.textContent?.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            rects.push(range.getBoundingClientRect());
+        }
+        const left = Math.min(...rects.map((rect) => rect.left));
+        const top = Math.min(...rects.map((rect) => rect.top));
+        const right = Math.max(...rects.map((rect) => rect.right));
+        const bottom = Math.max(...rects.map((rect) => rect.bottom));
+        return { x: left, y: top, width: right - left, height: bottom - top };
     });
-    const shots = [await locator.screenshot(), await page.screenshot({ clip: words })].map((shot) =>
-        shot.toString('base64')
+    const under = (await page.screenshot({ clip: words })).toString('base64');
+    return page.evaluate(
+        async ([shotOfWhole = '', shotUnder = '']) => {
+            const pixels = async (data: string) => {
+                const image = new Image();
+                image.src = `data:image/png;base64,${data}`;
+                await image.decode();
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const context = canvas.getContext('2d');
+                context?.drawImage(image, 0, 0);
+                const drawn = context?.getImageData(0, 0, image.width, image.height).data;
+                return drawn ? [...new Uint32Array(drawn.buffer)] : [];
+            };
+            const counts = new Map<number, number>();
+            for (const pixel of await pixels(shotOfWhole))
+                counts.set(pixel, (counts.get(pixel) ?? 0) + 1);
+            const fill = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+            const box = await pixels(shotUnder);
+            return box.filter((pixel) => pixel === fill).length / box.length;
+        },
+        [whole, under] as const
     );
-    return page.evaluate(async ([whole = '', under = '']) => {
-        const read = async (data: string) => {
-            const image = new Image();
-            image.src = `data:image/png;base64,${data}`;
-            await image.decode();
-            const canvas = document.createElement('canvas');
-            canvas.width = image.width;
-            canvas.height = image.height;
-            const context = canvas.getContext('2d');
-            context?.drawImage(image, 0, 0);
-            const drawn = context?.getImageData(0, 0, image.width, image.height).data ?? [];
-            const colors: string[] = [];
-            for (let at = 0; at < drawn.length; at += 4)
-                colors.push(
-                    `${String(drawn[at])},${String(drawn[at + 1])},${String(drawn[at + 2])}`
-                );
-            return colors;
-        };
-        const counts = new Map<string, number>();
-        for (const color of await read(whole)) counts.set(color, (counts.get(color) ?? 0) + 1);
-        const fill = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
-        const box = await read(under);
-        return box.filter((color) => color === fill).length / box.length;
-    }, shots);
 };

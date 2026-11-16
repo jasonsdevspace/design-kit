@@ -11,9 +11,9 @@ entry as the notes.
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
-each tile on a ground the page sets, and a React field can hold a button beside its control. The
-theme script is unchanged, so `themeScriptHash` is the same, and the sheets' budget stays at 9.25 KB
-and the controls' at 6.25 KB.
+each tile on a ground the page sets, and a React field can hold a button beside its control. In
+forced colors what is chosen shows its words again. The theme script is unchanged, so
+`themeScriptHash` is the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -37,9 +37,10 @@ and the controls' at 6.25 KB.
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn. In
-  forced colors the current pill, the chosen tab and the current place in a tab bar keep the
-  selection's colors, with their edge and a ring outside them in system colors, so a browser that
-  paints a backplate behind their words no longer draws the words unseen.
+  forced colors what is chosen keeps the selection's colors, a toggle that is on, a button whose
+  panel is open, a pressed cell, the theme switch's chosen word, the current pill, the chosen tab
+  and the current place in a tab bar, with an edge and a ring in system colors and no shadow, so a
+  browser that paints a backplate behind their words no longer draws the words unseen.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -61,8 +62,7 @@ and the controls' at 6.25 KB.
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
   the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
-  of the current pill, the chosen tab and the tab bar's current place in forced colors and find
-  their fill under their words.
+  of every chosen thing in forced colors and find the selection under its words.
 
 ## 0.7.0
 
