@@ -4,7 +4,19 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
-import { box, colorOf, contrast, height, KIT, pixels, sideways, style, writePage } from './page.js';
+import {
+    box,
+    colorOf,
+    contrast,
+    forceColors,
+    height,
+    KIT,
+    pixels,
+    ringByKeyboard,
+    sideways,
+    style,
+    writePage,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 
 /*
@@ -304,7 +316,7 @@ test('draws a shadow under a button and moves it when pressed, where a page sets
     }
 
     // In forced colors the browser draws no shadow, so a held button has nothing to land on.
-    await page.emulateMedia({ forcedColors: 'active' });
+    await forceColors(page);
     await plain.hover();
     await page.mouse.down();
     expect((await drawn(plain)).translate).toBe('none');
@@ -463,6 +475,7 @@ test('draws a quiet button muted with no edge or underline, in the text color un
 
 test('names a quiet button Close alone, as wide as it is tall, and rings it in forced colors', async ({
     page,
+    browserName,
 }) => {
     for (const [width, side] of [
         [1280, 36],
@@ -485,7 +498,7 @@ test('names a quiet button Close alone, as wide as it is tall, and rings it in f
         - paragraph: A note.
         - button "Close"
     `);
-    await page.emulateMedia({ forcedColors: 'active' });
+    await forceColors(page);
     const close = page.locator('#close-0');
     expect((await style(close, 'color'))['color']).toBe(await colorOf(page, 'ButtonText'));
     // Its colors gone, an underline under a pointer is what shows it is pointed at.
@@ -494,10 +507,7 @@ test('names a quiet button Close alone, as wide as it is tall, and rings it in f
         .poll(async () => (await style(close, 'text-decoration-line'))['text-decoration-line'])
         .toBe('underline');
     await page.mouse.move(0, 0);
-    await page.locator('#close-0').focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
-    await expect(close).toBeFocused();
+    await ringByKeyboard(close, browserName);
     const ring = await style(close, 'outline-style', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
     expect(parseFloat(ring['outline-width'] ?? '0')).toBeGreaterThanOrEqual(2);
@@ -743,8 +753,8 @@ test("draws nothing for an empty live callout, and the callout's look once it is
     const callouts = page.locator('.dk-callout');
     await expect(callouts).toHaveCount(tones.length);
     // In forced colors too, where a callout's edge would otherwise show.
-    for (const forcedColors of ['none', 'active'] as const) {
-        await page.emulateMedia({ forcedColors });
+    for (const forced of [false, true]) {
+        await forceColors(page, forced);
         for (const callout of await callouts.all()) {
             // Drawn as visually hidden text is, a pixel out of the flow, rather than hidden, so it
             // has a box and stays in the tree a screen reader reads, which a role query leaves out
@@ -758,7 +768,7 @@ test("draws nothing for an empty live callout, and the callout's look once it is
             await expect(callout.getByRole('status')).toBeAttached();
         }
     }
-    await page.emulateMedia({ forcedColors: 'none' });
+    await forceColors(page, false);
     // Filled as the reference says a page fills one, with the tone's word for success, warning and
     // danger, each takes the callout's look again.
     await page.evaluate(() => {
@@ -850,46 +860,39 @@ for (const theme of ['light', 'dark'] as const) {
 }
 
 test('marks an invalid field with a dashed line in forced colors, where its red is gone', async ({
-    browser,
+    page,
 }) => {
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        const edge = (locator: Locator) =>
-            style(locator, 'border-top-width', 'outline-style', 'outline-color');
-        const text = await page.evaluate(() => getComputedStyle(document.body).color);
-        const invalid = await edge(page.locator('.dk-input[aria-invalid="true"]').first());
-        // A textarea with an error takes the same dashed line.
-        expect(
-            await style(page.locator('.dk-textarea[aria-invalid="true"]').first(), 'outline-style')
-        ).toEqual({ 'outline-style': 'dashed' });
-        const valid = await edge(page.locator('.dk-input:not([aria-invalid])').first());
-        // A dashed line in the text color around the invalid field, and the edge's width
-        // unchanged, so nothing in it moves as the error comes and goes.
-        expect(invalid).toEqual({
-            'border-top-width': valid['border-top-width'],
-            'outline-style': 'dashed',
-            'outline-color': text,
-        });
-        expect(valid['outline-style']).toBe('none');
-        // With focus, the ring takes the dashed line's place, as on any control.
-        const field = page.locator('.dk-input[aria-invalid="true"]').first();
-        await field.focus();
-        expect(await style(field, 'outline-style')).toEqual({ 'outline-style': 'solid' });
-        // Every control of a set with an error is marked the same way.
-        const choice = page
-            .locator('.dk-choice-field[aria-invalid="true"] .dk-choice > input')
-            .first();
-        expect(await style(choice, 'outline-style', 'outline-color')).toEqual({
-            'outline-style': 'dashed',
-            'outline-color': text,
-        });
-        await choice.focus();
-        expect(await style(choice, 'outline-style')).toEqual({ 'outline-style': 'solid' });
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    const edge = (locator: Locator) =>
+        style(locator, 'border-top-width', 'outline-style', 'outline-color');
+    const text = await page.evaluate(() => getComputedStyle(document.body).color);
+    const invalid = await edge(page.locator('.dk-input[aria-invalid="true"]').first());
+    // A textarea with an error takes the same dashed line.
+    expect(
+        await style(page.locator('.dk-textarea[aria-invalid="true"]').first(), 'outline-style')
+    ).toEqual({ 'outline-style': 'dashed' });
+    const valid = await edge(page.locator('.dk-input:not([aria-invalid])').first());
+    // A dashed line in the text color around the invalid field, and the edge's width
+    // unchanged, so nothing in it moves as the error comes and goes.
+    expect(invalid).toEqual({
+        'border-top-width': valid['border-top-width'],
+        'outline-style': 'dashed',
+        'outline-color': text,
+    });
+    expect(valid['outline-style']).toBe('none');
+    // With focus, the ring takes the dashed line's place, as on any control.
+    const field = page.locator('.dk-input[aria-invalid="true"]').first();
+    await field.focus();
+    expect(await style(field, 'outline-style')).toEqual({ 'outline-style': 'solid' });
+    // Every control of a set with an error is marked the same way.
+    const choice = page.locator('.dk-choice-field[aria-invalid="true"] .dk-choice > input').first();
+    expect(await style(choice, 'outline-style', 'outline-color')).toEqual({
+        'outline-style': 'dashed',
+        'outline-color': text,
+    });
+    await choice.focus();
+    expect(await style(choice, 'outline-style')).toEqual({ 'outline-style': 'solid' });
 });
 
 test('pads a callout as the other boxed text at its size is padded', async ({ page }) => {

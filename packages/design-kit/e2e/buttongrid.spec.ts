@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, colorOf, contrast, sideways, style, writePage } from './page.js';
+import { box, colorOf, contrast, forceColors, sideways, style, writePage } from './page.js';
 
 /*
  * A grid of buttons as a browser draws it: the columns asked for where they fit and fewer where a
@@ -113,7 +113,6 @@ test('names the group, says whether each toggle is on, and names each plain key 
 
 test('tells a toggle that is on by how light it is and its weight, in forced colors too', async ({
     page,
-    browser,
 }) => {
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
@@ -128,42 +127,25 @@ test('tells a toggle that is on by how light it is and its weight, in forced col
         );
         expect(Number(on['font-weight']), theme).toBeGreaterThan(Number(off['font-weight']));
     }
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const forced = await context.newPage();
-        await open(forced);
-        // The highlight resolved as a ground, set on an element of the page's own.
-        const highlight = await forced.evaluate(() => {
-            const probe = document.createElement('span');
-            probe.style.backgroundColor = 'Highlight';
-            document.body.append(probe);
-            const resolved = getComputedStyle(probe).backgroundColor;
-            probe.remove();
-            return resolved;
-        });
-        expect(await style(card(forced, '7'), 'background-color', 'border-top-color')).toEqual({
-            'background-color': highlight,
-            'border-top-color': highlight,
-        });
-        expect((await style(card(forced, '8'), 'background-color'))['background-color']).not.toBe(
-            highlight
-        );
-        // A cell that is off takes the system's gray, and one that is off and on an edge in the
-        // highlight.
-        const gray = await colorOf(forced, 'GrayText');
-        expect(
-            await style(card(forced, '12'), 'color', 'border-top-color', 'border-top-style')
-        ).toEqual({
-            color: gray,
-            'border-top-color': gray,
-            'border-top-style': 'dashed',
-        });
-        expect((await style(card(forced, '11'), 'border-top-color'))['border-top-color']).toBe(
-            await colorOf(forced, 'Highlight')
-        );
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    const highlight = await colorOf(page, 'Highlight');
+    expect(await style(card(page, '7'), 'background-color', 'border-top-color')).toEqual({
+        'background-color': highlight,
+        'border-top-color': highlight,
+    });
+    expect((await style(card(page, '8'), 'background-color'))['background-color']).not.toBe(
+        highlight
+    );
+    // A cell that is off takes the system's gray, and one that is off and on an edge in the
+    // highlight.
+    const gray = await colorOf(page, 'GrayText');
+    expect(await style(card(page, '12'), 'color', 'border-top-color', 'border-top-style')).toEqual({
+        color: gray,
+        'border-top-color': gray,
+        'border-top-style': 'dashed',
+    });
+    expect((await style(card(page, '11'), 'border-top-color'))['border-top-color']).toBe(highlight);
 });
 
 test('fills a toggle that is on with the text color, apart from the accent, in both themes', async ({
@@ -331,23 +313,18 @@ for (const theme of ['light', 'dark'] as const) {
 }
 
 test('draws a cell marked off by aria-disabled in the system gray in forced colors', async ({
-    browser,
+    page,
     browserName,
 }) => {
     test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        await card(page, '9').evaluate((cell) => {
-            cell.setAttribute('aria-disabled', 'true');
-        });
-        const gray = await colorOf(page, 'GrayText');
-        // The edge eases to its new color, so it is read once it has arrived.
-        await expect
-            .poll(() => style(card(page, '9'), 'color', 'border-top-color'))
-            .toEqual({ color: gray, 'border-top-color': gray });
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    await card(page, '9').evaluate((cell) => {
+        cell.setAttribute('aria-disabled', 'true');
+    });
+    const gray = await colorOf(page, 'GrayText');
+    // The edge eases to its new color, so it is read once it has arrived.
+    await expect
+        .poll(() => style(card(page, '9'), 'color', 'border-top-color'))
+        .toEqual({ color: gray, 'border-top-color': gray });
 });

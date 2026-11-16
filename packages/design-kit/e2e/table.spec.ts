@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, js, KIT, ORIGIN, tabKey } from './page.js';
+import { box, forceColors, js, KIT, ORIGIN, tabKey } from './page.js';
 
 /*
  * What the keyboard reaches in a table's frame, in Chromium and in WebKit: a link cut by the
@@ -424,7 +424,7 @@ test('shades no edge of a frame whose table fits, nor any in forced colors', asy
         css: `${UNPINNED} .dk-table :is(th, td):nth-child(n + 3) { display: none; }`,
     });
     await expectShades(page, { start: 'none', end: 'none' }, 'a table that fits');
-    await page.emulateMedia({ forcedColors: 'active' });
+    await forceColors(page);
     await open(page, { css: UNPINNED });
     for (const where of ['start', 'middle'] as const) {
         await scrollTo(page, where);

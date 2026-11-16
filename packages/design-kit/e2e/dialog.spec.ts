@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, js, KIT, ORIGIN, style } from './page.js';
+import { box, forceColors, js, KIT, ORIGIN, style } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -466,24 +466,19 @@ test('pads a dialog and a sheet by the smaller space on a phone, the sheet still
 });
 
 test('draws a solid edge round an open dialog in forced colors, where its shadow is gone', async ({
-    browser,
+    page,
     browserName,
 }) => {
     test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        await page.locator('#end').click();
-        await expect(endGame(page)).toBeVisible();
-        const edge = await endGame(page).evaluate((element) => {
-            const style = getComputedStyle(element);
-            return [style.borderTopStyle, style.borderTopWidth];
-        });
-        expect(edge).toEqual(['solid', '1px']);
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    await page.locator('#end').click();
+    await expect(endGame(page)).toBeVisible();
+    const edge = await endGame(page).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return [style.borderTopStyle, style.borderTopWidth];
+    });
+    expect(edge).toEqual(['solid', '1px']);
 });
 
 test('stacks its actions inside it on a 320px phone at twice the text size', async ({ page }) => {
