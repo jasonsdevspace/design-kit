@@ -23,7 +23,7 @@ on any page, and a page's own styles win over the kit's without extra weight.
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 **[See every piece live, in both themes, with its code](https://jasonsdevspace.com/design-kit/)** ·
-[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md) ·
+[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md) ·
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit)
 
@@ -139,7 +139,7 @@ must be a URL the demo's author writes, never one taken from the page's address 
 input, which could send a visitor anywhere. The skip link, strip and footer are live in each state
 on [the page chrome page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup,
 rules and props are under [Page
-chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#page-chrome)
+chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#page-chrome)
 in the reference, which also gives the markup of a site header, drawn under the strip.
 
 Buttons and fields take their state from the attribute a screen reader already reads, such as
@@ -183,24 +183,26 @@ export const Checkout = ({ error, saved }: Props) => {
 
 Every button, field and callout is live in each state on [the controls
 page](https://jasonsdevspace.com/design-kit/controls/). [Buttons, fields and
-callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
+callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
 in the reference gives each component's props and the rules a page follows, such as why an
 unavailable button is `aria-disabled` and how a message is made live.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
 gives the markup for each piece, [Content
-pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#content-pages)
+pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#content-pages)
 there gives a landing or an about page spaced by one class, and [Explainer
-pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#explainer-pages)
+pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#explainer-pages)
 there gives the steps, panels, tables and code blocks of a "How it works" page.
 
 An app drawn for a phone takes its frame from [App
-frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#app-frame)
+frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#app-frame)
 in the reference: a bar, a body that scrolls and a dock, clear of the phone's safe areas. The
 sections after it give the tab bar, the stepper, the toast, the grid of buttons, the rows and the
 dialog, each with its markup and, where it has behavior, the attach function that makes it work. A
 page drawn in the frame says `viewport-fit=cover` in its viewport meta, which gives the safe areas
-their values.
+their values. A page that shows a picture of a screen rather than being one, such as a page of an
+app's pieces, gives the picture `dk-picture` and makes it `inert`, so the page around it stays a
+content page.
 
 ## Your own layers and palette
 
@@ -225,11 +227,11 @@ A page whose column, app column or spacing differs from the kit's sets `--dk-col
 insets, an app's inset and the paddings that stop growing at a size are worked out there from them.
 Past the tokens, a page changes how a piece draws only through the properties the reference lists
 under [Properties a page
-sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#properties-a-page-sets),
+sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#properties-a-page-sets),
 never by a rule over a kit class.
 
 [Layers and
-palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#layers-and-palettes)
+palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#layers-and-palettes)
 in the reference gives the other order, the reduced-motion rule that holds over a page's own, and
 how far the contrast promise reaches.
 
@@ -248,7 +250,7 @@ const policy = `script-src 'self' ${themeScriptHash}`;
 
 The hash holds as long as nothing after the plugin rewrites the inline script, as an HTML minifier
 would. [The theme
-contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#the-theme-contract)
+contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/packages/design-kit/REFERENCE.md#the-theme-contract)
 in the reference gives what the script sets for each saved value, and when it sets the theme again.
 
 A strict `style-src` refuses a `style` attribute, so a page sets a property the kit names, such as
@@ -259,7 +261,7 @@ A strict `style-src` refuses a `style` attribute, so a page sets a property the 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
 and Safari 17.5. What falls short at the floor, such as an empty live callout in Firefox 120, is
 listed under [known
-limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/ACCESSIBILITY.md#known-limitations).
+limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.1/ACCESSIBILITY.md#known-limitations).
 
 A Vite build that takes `browserFloor()` as its target, as Setup shows, keeps each `light-dark()` as
 written. A lower target rewrites each one into custom properties set once on the root, so a part of
