@@ -53,3 +53,7 @@ costs, and the test behind it.
     a ground, a shadow or a width a page sets through a property the kit reads with a fallback and
     leaves unset, listed with its default and its contrast duty, and why a page's own class over a
     kit piece and a token for each were turned down.
+17. [A content page is a container of its own](0017-a-content-page-is-a-container.md): `dk-page`
+    spacing a landing or an about page's blocks and sections by the flow and holding its prose and
+    its lead to the measure, and why a reset of every block's margins and the explainer were turned
+    down.

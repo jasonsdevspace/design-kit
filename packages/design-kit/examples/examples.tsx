@@ -313,6 +313,32 @@ export const controlStates: ReactElement = (
     </>
 );
 
+/** A content page: its title, its lead, its one action and its sections. */
+export const contentPage: ReactElement = (
+    <main id="main-content" tabIndex={-1} className="dk-page">
+        <h1>Scorekeeper</h1>
+        <p className="dk-lead">
+            Keep score for any card game on one phone passed around the table.
+        </p>
+        <p>
+            <a className="dk-button dk-button-accent" href="/app/">
+                Start a game
+            </a>
+        </p>
+        <section>
+            <h2 id="how">How it works</h2>
+            <p>...</p>
+            <ul>
+                <li>...</li>
+            </ul>
+        </section>
+        <section>
+            <h2 id="games">The games it knows</h2>
+            ...
+        </section>
+    </main>
+);
+
 /** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
@@ -501,6 +527,27 @@ export const tabs: ReactElement = (
             </button>
         </div>
     </>
+);
+
+/** A button with an icon beside its words, and a toggle whose only face is a filled icon. */
+export const icon: ReactElement = (
+    <div className="dk-actions">
+        <button type="button" className="dk-button">
+            <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add a player
+        </button>
+        <button type="button" className="dk-button" aria-pressed="false">
+            <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path
+                    fill="currentColor"
+                    d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"
+                />
+            </svg>
+            <span className="dk-visually-hidden">Favorite game</span>
+        </button>
+    </div>
 );
 
 /** An eyebrow over a heading. */
@@ -718,6 +765,53 @@ export const rowTiles: ReactElement = (
     </ul>
 );
 
+/** A list of players, each row a link with the player's picture at its start. */
+export const rowPicture: ReactElement = (
+    <ul className="dk-rows" role="list">
+        <li>
+            <a className="dk-row" href="/players/ana/">
+                <img className="dk-row-picture" src="/players/ana.jpg" alt="" loading="lazy" />
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Ana</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">Played 12 games</span>
+                </span>
+                <span className="dk-row-sign" aria-hidden="true">
+                    ›
+                </span>
+            </a>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
+/** A list of tiles in columns, each a page with a picture of it across its top. */
+export const tileColumns: ReactElement = (
+    <ul className="dk-rows dk-rows-tiles dk-rows-columns" role="list">
+        <li>
+            <a className="dk-row" href="/design-kit/buttons/">
+                <img
+                    className="dk-row-picture"
+                    src="/previews/buttons.png"
+                    alt=""
+                    width="480"
+                    height="270"
+                    loading="lazy"
+                />
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Buttons</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">Every kind and state</span>
+                </span>
+                <span className="dk-row-sign" aria-hidden="true">
+                    ›
+                </span>
+            </a>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -772,6 +866,7 @@ export const EXAMPLES = {
     copyButton,
     statusLine,
     codeHead,
+    contentPage,
     explainerPage,
     steps,
     panel,
@@ -784,8 +879,11 @@ export const EXAMPLES = {
     stepper,
     toast,
     buttonGrid,
+    icon,
     rows,
+    rowPicture,
     rowTiles,
+    tileColumns,
     dialog,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 

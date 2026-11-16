@@ -138,6 +138,8 @@
          * phone passed around a table is. The target above stays the floor for every control.
          */
         --dk-target-large: 3.5rem;
+        /* The least width of a tile in a list of tiles in columns, so a name of a few words fits. */
+        --dk-tile-least: 15rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
         /*
@@ -161,6 +163,14 @@
         --dk-app-bar: 4rem;
         /* The widest a dialog grows in the middle of a screen. */
         --dk-dialog-width: 32rem;
+        /*
+         * The padding of a panel in an app's frame and of a dialog on a phone, and a wide
+         * dialog's, each stopping at its usual size so a large text size leaves what they hold
+         * its room. A field's inline padding held the same way keeps a stepper's figures room.
+         */
+        --dk-app-padding: min(var(--dk-space-4), 16px);
+        --dk-dialog-padding: min(var(--dk-space-5), 24px);
+        --dk-field-inline-held: min(var(--dk-field-inline), 12px);
 
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
@@ -243,10 +253,14 @@
     /*
      * The step between the pieces in what holds a column of them, set on the pieces themselves so
      * a container inside another stands its parent's step from what is around it and gives its own
-     * to what it holds: a whole step in an explainer, each of its sections and an app's body, and a
-     * smaller one in a panel and a dialog, whose room is tighter.
+     * to what it holds: a whole step in an explainer, a content page, each of their sections and an
+     * app's body, and a smaller one in a panel and a dialog, whose room is tighter.
      */
-    :where(.dk-explainer > *, .dk-explainer > section > *, .dk-app-body > *) {
+    :where(
+        :is(.dk-explainer, .dk-page) > *,
+        :is(.dk-explainer, .dk-page) > section > *,
+        .dk-app-body > *
+    ) {
         --dk-flow-step: var(--dk-space-4);
     }
 

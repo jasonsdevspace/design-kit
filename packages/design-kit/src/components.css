@@ -60,11 +60,11 @@
     /*
      * The strip and the footer run their rules the width of the page and line their content up
      * with the column below, so the page reads as one column from the strip to the footer. An
-     * explainer and the header above it, and a site's header, start their text at the same inset.
-     * On a phone held on its side, each keeps its content clear of what the phone keeps at that
-     * side.
+     * explainer and the header above it, a site's header and a content page start their text at the
+     * same inset. On a phone held on its side, each keeps its content clear of what the phone keeps
+     * at that side.
      */
-    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer, .dk-site-header) {
+    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer, .dk-site-header, .dk-page) {
         padding-right: var(--dk-band-right);
         padding-left: var(--dk-band-left);
     }
@@ -1010,7 +1010,15 @@
      * clear of a toast, which set the room under that one.
      */
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(dialog)
     ) {
         margin-block-end: 0;
@@ -1051,9 +1059,36 @@
         font-size: var(--dk-text-display);
     }
 
-    /* What the demo does, in a sentence or two, the second thing a reader reads after the title. */
-    :where(.dk-explainer-lead) {
+    /*
+     * The lead: what a page or a demo does, in a sentence or two, the second thing a reader reads
+     * after the title, at the lead size and held to the measure wherever it sits.
+     */
+    :where(.dk-explainer-lead, .dk-lead) {
+        max-width: var(--dk-measure);
         font-size: var(--dk-text-lead);
+    }
+
+    /*
+     * A content page, such as a landing page or an about page: its blocks and its sections spaced
+     * by the flow, as an explainer's are, with sections a larger step apart and no rule between
+     * them, its title at the display size and a section's heading at the title size, a short step
+     * over its text, its text starting at the strip's inset. Only its prose holds to the measure,
+     * so a table, a grid of tiles or a figure takes the column. The spacing is set on the page,
+     * between what it holds, so a reader's own sheet that adds room under a paragraph adds the room
+     * it asks for and breaks nothing.
+     */
+    :where(.dk-page > h1) {
+        font-size: var(--dk-text-display);
+    }
+
+    :where(.dk-page > section > h2) {
+        font-size: var(--dk-text-title);
+    }
+
+    :where(
+        :is(.dk-page, .dk-page > section) > :is(p, ul:not([class]), ol:not([class]), blockquote)
+    ) {
+        max-width: var(--dk-measure);
     }
 
     :where(.dk-explainer > section) {
@@ -1418,7 +1453,7 @@
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
     ) {
-        padding: min(var(--dk-space-4), 16px);
+        padding: var(--dk-app-padding);
     }
 
     /*
@@ -1448,9 +1483,10 @@
 
     /*
      * In what pads its content, a demo's strip and footer, an explainer and its header, a site's
-     * header, a panel, a callout, an app's bar and body or a dialog, the switch reaches past the column by the room it
-     * keeps for its ring, as the pills and a row do, so its first word starts on the column's line
-     * and the padding holds the ring. Elsewhere it stays inside, so nothing scrolls sideways.
+     * header, a content page, a panel, a callout, an app's bar and body or a dialog, the switch
+     * reaches past the column by the room it keeps for its ring, as the pills and a row do, so its
+     * first word starts on the column's line and the padding holds the ring. Elsewhere it stays
+     * inside, so nothing scrolls sideways.
      */
     :where(
         :is(
@@ -1459,6 +1495,7 @@
                 .dk-explainer-header,
                 .dk-explainer,
                 .dk-site-header,
+                .dk-page,
                 .dk-panel,
                 .dk-callout,
                 .dk-app-bar,
@@ -1840,6 +1877,34 @@
             background: Highlight;
             color: HighlightText;
         }
+    }
+
+    /*
+     * An icon: an svg one em square, so it grows with the text around it, stroked in the text's
+     * color with round caps and joins and no fill, so forced colors redraw it with the text. Its
+     * stroke holds its weight whatever the drawing's scale, and never goes under one and a half
+     * pixels, where it reads faint on a screen of low density. A path that draws a mark in fill
+     * says so on itself. A tab bar's icons keep their larger size, set later in the sheet.
+     */
+    :where(.dk-icon) {
+        flex: none;
+        width: 1em;
+        height: 1em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: max(1.5px, 0.125em);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: -0.125em;
+    }
+
+    :where(.dk-icon *) {
+        vector-effect: non-scaling-stroke;
+    }
+
+    /* A mark drawn in fill takes no outline, which would round its corners and fill its holes. */
+    :where(.dk-icon [fill]:not([fill='none'])) {
+        stroke: none;
     }
 
     /*
@@ -2308,6 +2373,11 @@
         height: 1.5rem;
     }
 
+    /* A kit icon there keeps the stroke an icon of its size takes beside text of that size. */
+    :where(.dk-tabbar .dk-icon) {
+        stroke-width: max(1.5px, 0.1875rem);
+    }
+
     @media (hover: hover) {
         :where(.dk-tabbar a:hover) {
             color: var(--dk-fg);
@@ -2674,18 +2744,36 @@
     }
 
     /*
-     * In what pads its content, an explainer, a panel, a callout, an app's body or a dialog, a row
-     * reaches past the column by that room, as the pills and the choices do, so its words start on
-     * the column's line and the padding holds its ring. A list at a page's bare edge or in a
-     * table's cell keeps its rows inside it, so the page never scrolls sideways and no part of a
-     * ring is cut off.
+     * In what pads its content, an explainer, a content page, a panel, a callout, an app's body
+     * or a dialog, a row reaches past the column by that room, as the pills and the choices do, so
+     * its words start on the column's line and the padding holds its ring. A list at a page's bare
+     * edge or in a table's cell keeps its rows inside it, so the page never scrolls sideways and no
+     * part of a ring is cut off.
      */
-    :where(:is(.dk-explainer, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
+    :where(:is(.dk-explainer, .dk-page, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
         margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
     :where(.dk-row > .dk-button) {
         align-self: center;
+    }
+
+    /*
+     * A picture at a row's start, such as a player's face, in a column of its own before the text,
+     * square at a size a page may set, so every title in a list starts on one line, and never more
+     * than a quarter of a narrow screen, so the text keeps its room. The markup gives it empty alt
+     * text, so the link's name starts with its title.
+     */
+    :where(.dk-row:has(> .dk-row-picture)) {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    :where(.dk-row-picture) {
+        align-self: center;
+        width: min(var(--dk-row-picture-size, var(--dk-target)), 25vw);
+        height: min(var(--dk-row-picture-size, var(--dk-target)), 25vw);
+        border-radius: var(--dk-radius);
+        object-fit: cover;
     }
 
     :where(.dk-rows-tall .dk-row) {
@@ -2759,9 +2847,55 @@
         box-shadow: var(--dk-tile-shadow, var(--dk-shadow-card));
     }
 
+    /*
+     * A tile in a panel steps off the panel's ground as a code block does, to the page's, and one in
+     * a raised panel to the card's, where the page sets no ground of its own.
+     */
+    :where(.dk-panel .dk-rows-tiles .dk-row) {
+        background: var(--dk-tile-ground, var(--dk-bg));
+    }
+
+    :where(.dk-panel-raised .dk-rows-tiles .dk-row) {
+        background: var(--dk-tile-ground, var(--dk-surface));
+    }
+
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
     :where(.dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-lead);
+    }
+
+    /*
+     * Tiles in columns, as many as fit at the least width each, in the order they are written row
+     * by row, falling to one column on a phone. A lone last tile keeps one column's width. A tile
+     * there sets its title at the body size, and its picture across its top at the picture's own
+     * shape, with the text, the end and the sign on the line under it.
+     */
+    :where(.dk-rows-columns:has(> li)) {
+        grid-template-columns: repeat(auto-fill, minmax(min(var(--dk-tile-least), 100%), 1fr));
+    }
+
+    /* Each tile fills its item, so the tiles on one line end together. */
+    :where(.dk-rows-columns > li) {
+        display: grid;
+    }
+
+    :where(.dk-rows-columns .dk-row-title) {
+        font-size: var(--dk-text-body);
+    }
+
+    :where(.dk-rows-columns .dk-row:has(> .dk-row-picture)) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+    }
+
+    :where(.dk-rows-columns .dk-row-picture) {
+        flex-basis: 100%;
+        height: auto;
+    }
+
+    :where(.dk-rows-columns .dk-row-text) {
+        flex: 1;
     }
 
     /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
@@ -2812,13 +2946,12 @@
          * padding, its edge and the pixel a side WebKit keeps inside a field.
          */
         width: calc(
-            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * min(var(--dk-field-inline), 12px) +
-                4px
+            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * var(--dk-field-inline-held) + 4px
         );
         min-height: var(--dk-target);
         padding-block: 0;
         /* A field's inline padding, held to its usual size so the figures keep room. */
-        padding-inline: min(var(--dk-field-inline), 12px);
+        padding-inline: var(--dk-field-inline-held);
         font-family: var(--dk-font-mono);
         font-variant-numeric: tabular-nums;
         text-align: center;
@@ -2885,10 +3018,10 @@
      * room.
      */
     :where(.dk-dialog) {
-        width: min(100% - 2 * min(var(--dk-space-4), 16px), var(--dk-dialog-width));
+        width: min(100% - 2 * var(--dk-app-padding), var(--dk-dialog-width));
         max-width: none;
-        max-height: calc(100dvh - 2 * min(var(--dk-space-4), 16px));
-        padding: min(var(--dk-space-5), 24px);
+        max-height: calc(100dvh - 2 * var(--dk-app-padding));
+        padding: var(--dk-dialog-padding);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-raised);
@@ -2946,7 +3079,7 @@
         max-width: var(--dk-app-column);
         max-height: calc(100dvh - var(--dk-safe-top) - var(--dk-space-6));
         margin: auto auto 0;
-        padding-bottom: calc(min(var(--dk-space-5), 24px) + var(--dk-safe-bottom));
+        padding-bottom: calc(var(--dk-dialog-padding) + var(--dk-safe-bottom));
         border-bottom: 0;
         border-radius: var(--dk-radius-large) var(--dk-radius-large) 0 0;
     }
@@ -2958,20 +3091,20 @@
      */
     @media (width <= 48rem) {
         :where(.dk-dialog) {
-            padding: min(var(--dk-space-4), 16px);
+            padding: var(--dk-app-padding);
         }
 
         :where(.dk-dialog-sheet) {
-            padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+            padding-bottom: calc(var(--dk-app-padding) + var(--dk-safe-bottom));
         }
     }
 
     :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog) {
-        padding: min(var(--dk-space-4), 16px);
+        padding: var(--dk-app-padding);
     }
 
     :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-sheet) {
-        padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+        padding-bottom: calc(var(--dk-app-padding) + var(--dk-safe-bottom));
     }
 
     :where(.dk-dialog-sheet:modal) {
@@ -2985,25 +3118,42 @@
     }
 
     /*
-     * The flow in what holds a column of pieces, an explainer and each of its sections, a panel, an
-     * app's body and a dialog: each piece stands its container's step, --dk-flow-step, from the one
-     * before it, and the first sits at the top. A piece out of sight before the first one adds no
-     * step of its own. A dialog in one of them is left alone, so it keeps the place the browser and
-     * its own rules give it. The flow comes near the end of the sheet, after every piece's own
-     * rules, so a piece's own margin never cancels the step above it, and the room under each is
-     * set further up. The steps that differ follow it: the short step under a title, a heading's
-     * own, the further step above a dialog's actions and an explainer's sections, and the smallest
-     * step under an eyebrow, a section's number and a section's subheading.
+     * The flow in what holds a column of pieces, an explainer, a content page and each of their
+     * sections, a panel, an app's body and a dialog: each piece stands its container's step,
+     * --dk-flow-step, from the one before it, and the first sits at the top. A piece out of sight
+     * before the first one adds no step of its own. A dialog in one of them is left alone, so it
+     * keeps the place the browser and its own rules give it. The flow comes near the end of the
+     * sheet, after every piece's own rules, so a piece's own margin never cancels the step above
+     * it, and the room under each is set further up. The steps that differ follow it: the short
+     * step under a title, a heading's own, the further step above a dialog's actions, an
+     * explainer's sections and a content page's, and the smallest step under an eyebrow, a
+     * section's number and a section's subheading.
      */
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(dialog)
     ) {
         margin-block-start: 0;
     }
 
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(.dk-visually-hidden, [hidden])
             ~ :not(dialog)
     ) {
@@ -3023,7 +3173,11 @@
         margin-block-start: var(--dk-space-6);
     }
 
-    :where(.dk-explainer > section > h2 + *) {
+    :where(.dk-page > :not(.dk-visually-hidden, [hidden]) ~ section) {
+        margin-block-start: var(--dk-space-7);
+    }
+
+    :where(:is(.dk-explainer, .dk-page) > section > h2 + *) {
         margin-block-start: var(--dk-space-3);
     }
 
