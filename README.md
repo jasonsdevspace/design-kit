@@ -254,7 +254,7 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets are a few kilobytes gzipped without their
-  comments, which a test holds to a budget, and the theme script goes inline in the page's head. A
+  comments, which a test holds to 10.25 KB, and the theme script goes inline in the page's head. A
   page that attaches a control loads the controls too, which a test holds, as a bundler sends every
   function, to 6.25 KB gzipped without their comments, and the theme script to 1 KB of its own. The
   package npm publishes is 63 KB packed, the sheets and modules a page loads together with the
