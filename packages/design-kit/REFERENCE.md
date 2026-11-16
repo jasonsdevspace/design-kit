@@ -769,15 +769,17 @@ below.
 ```
 
 Tabs are a row of muted words with the chosen one in the page's text over an accent line, each
-`.dk-tab` in a `.dk-tabs` row over a rule. The classes draw the row alone, and ship no script and no
-React component, since a tab's role and its keys belong to the page that owns the panels. The chosen
-tab carries the attribute a screen reader already reads for its control: `aria-selected="true"` on a
+`.dk-tab` in a `.dk-tabs` row over a rule. Each tab draws the rule along its own foot and stands on
+the row's, so a row too wide for its place wraps onto more lines with every tab on a line, the
+chosen one's line over it. The classes draw the row alone, and ship no script and no React
+component, since a tab's role and its keys belong to the page that owns the panels. The chosen tab
+carries the attribute a screen reader already reads for its control: `aria-selected="true"` on a
 tab, `aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike.
 It keeps the resting weight, so no tab moves as the choice does. In forced colors the chosen tab
-stands in the system's selection colors, as the current pill does, and a resting tab has no line for
-them to paint. A tab is the strip's height, and a thumb wide and tall on a phone, and its first word
-sits in from the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as
-the pills do, and each link fills its item down to the rule.
+stands in the system's selection colors, as the current pill does, and a resting tab keeps its line.
+A tab is the strip's height, and a thumb wide and tall on a phone, and its first word sits in from
+the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as the pills
+do, and each link fills its item down to the rule.
 
 A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab in the tab order,
 the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
@@ -798,13 +800,15 @@ arrow keys.
 </header>
 ```
 
-Where the row sits at the foot of a container that draws a rule of its own, such as a masthead or a
-code block's bar, `dk-tabs-on-rule` beside `dk-tabs` draws no rule and stands a pixel lower, so the
-chosen tab's line lies over the container's rule and the resting tabs leave it showing, rather than
-two rules stacking. The container draws its rule as a border of the kit's 1px line and keeps no
-padding at its foot, so the row reaches its rule, and the row keeps to that foot in a bar that
-centers what it holds, such as a flex row beside a copy button. In forced colors the row draws no
-rule of its own there either, and the chosen tab's mark reaches the container's.
+Where the row sits at the foot of a container that draws a rule of its own, such as a masthead,
+`dk-tabs-on-rule` beside `dk-tabs` draws no rule and stands a pixel lower, so the chosen tab's line
+lies over the container's rule and the resting tabs leave it showing, rather than two rules
+stacking. The container draws its rule as a border of the kit's 1px line and keeps no padding at its
+foot, so the row reaches its rule, and the row keeps to that foot in a bar that centers what it
+holds. It suits a container whose rule sits right under the row, so a bar where something can wrap
+under the row, such as a copy button beside it on a phone, gives the row the room it has left and
+lets the row draw its own rule instead. In forced colors the row draws no rule of its own there
+either, and the chosen tab's mark reaches the container's.
 
 ### Icons
 

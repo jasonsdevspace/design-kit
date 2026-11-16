@@ -1,3 +1,5 @@
+import { inflateSync } from 'node:zlib';
+
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { ReactElement } from 'react';
@@ -407,6 +409,53 @@ const holdsOnRule = async (
         forced ? colors.selection : colors.accent
     );
 };
+
+/** The color the screen shows at one point, as red, green and blue, from a shot of that pixel. */
+const pixelAt = async (page: Page, x: number, y: number): Promise<readonly number[]> => {
+    const shot = await page.screenshot({ clip: { x, y, width: 1, height: 1 } });
+    // A PNG of one pixel: its image data, inflated, is a filter byte and then the pixel.
+    const chunks: Buffer[] = [];
+    for (let at = 8; at < shot.length;) {
+        const length = shot.readUInt32BE(at);
+        if (shot.toString('ascii', at + 4, at + 8) === 'IDAT')
+            chunks.push(shot.subarray(at + 8, at + 8 + length));
+        at += 12 + length;
+    }
+    return [...inflateSync(Buffer.concat(chunks)).subarray(1, 4)];
+};
+
+test('stands every tab on a line when the row wraps, in both themes and forced colors', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    for (const forced of [false, true])
+        for (const theme of ['light', 'dark'] as const) {
+            await forceColors(page, forced);
+            await writePage(page, {
+                theme,
+                title: 'Code',
+                css: '.bar { width: 190px; }',
+                body: `<main><div class="bar"><div class="dk-tabs" role="tablist" aria-label="The code"><button type="button" class="dk-tab" role="tab" aria-selected="true">Markup</button><button type="button" class="dk-tab" role="tab" aria-selected="false">React</button><button type="button" class="dk-tab" role="tab" aria-selected="false">Vue</button></div></div></main>`,
+            });
+            await textSize(page, 2);
+            const what = `${theme}${forced ? ', forced colors' : ''}`;
+            const tabs = await page.getByRole('tab').all();
+            const boxes = await Promise.all(tabs.map(async (tab) => (await tab.boundingBox())!));
+            // The row wraps, so some tab stands on a line above another.
+            expect(new Set(boxes.map(({ y }) => Math.round(y))).size, what).toBeGreaterThan(1);
+            const ground = await pixelAt(page, 2, 2);
+            for (const [at, { x, y, width, height }] of boxes.entries()) {
+                // The pixel row at the tab's foot, a little in from its start, is a line.
+                const foot = await pixelAt(
+                    page,
+                    Math.round(x + width / 2),
+                    Math.floor(y + height - 1)
+                );
+                expect(foot, `${what}, tab ${String(at)}`).not.toEqual(ground);
+            }
+        }
+});
 
 test("lays a tab row on its container's rule, the chosen line over it, and a plain row as it was", async ({
     page,
