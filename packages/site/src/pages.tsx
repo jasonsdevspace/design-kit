@@ -148,44 +148,44 @@ const SiteFooter = ({
 );
 
 /**
- * The site's header under the strip: its mark and name, leading to the landing page, and its own
- * pages as the kit's link pills, the current one marked as the page, all in the site's navigation
- * so nothing in it sits outside a landmark. It is the page's banner, as the explainer's header is,
- * so a screen reader that moves to the banner finds the way around the site on every page. The mark
- * is the site's icon, its tiles drawn in the text on the accent and in the page's own theme, in the
+ * The site's header under the strip, the kit's site header: its mark and name, leading to the
+ * landing page, and its own pages as the kit's link pills in the site's navigation, the current one
+ * marked as the page. It is the page's banner, as the explainer's header is, so a screen reader that
+ * moves to the banner finds the way around the site on every page. The mark is the site's icon in
+ * the kit's slot, its tiles drawn in the text on the accent and in the page's own theme, in the
  * site's own markup, so the policy that refuses outside styles holds. It is hidden from a screen
  * reader, which hears the name.
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
-    <header>
-        <nav className="site-header" aria-label="Site">
-            <a className="site-brand" href={BASE}>
-                <span className="site-mark" aria-hidden="true">
-                    <svg viewBox="0 0 32 32">
-                        {TILES.map((tile) =>
-                            tile.shape === 'circle' ? (
-                                <circle
-                                    key={`${String(tile.x)} ${String(tile.y)}`}
-                                    cx={tile.x}
-                                    cy={tile.y}
-                                    r={tile.radius}
-                                />
-                            ) : (
-                                <rect
-                                    key={`${String(tile.x)} ${String(tile.y)}`}
-                                    x={tile.x}
-                                    y={tile.y}
-                                    width={tile.size}
-                                    height={tile.size}
-                                    rx={tile.radius}
-                                    fillOpacity={tile.faint ? FAINT : undefined}
-                                />
-                            )
-                        )}
-                    </svg>
-                </span>
-                The design kit
-            </a>
+    <header className="dk-site-header">
+        <a className="dk-site-brand" href={BASE}>
+            <span className="dk-site-mark site-mark" aria-hidden="true">
+                <svg viewBox="0 0 32 32">
+                    {TILES.map((tile) =>
+                        tile.shape === 'circle' ? (
+                            <circle
+                                key={`${String(tile.x)} ${String(tile.y)}`}
+                                cx={tile.x}
+                                cy={tile.y}
+                                r={tile.radius}
+                            />
+                        ) : (
+                            <rect
+                                key={`${String(tile.x)} ${String(tile.y)}`}
+                                x={tile.x}
+                                y={tile.y}
+                                width={tile.size}
+                                height={tile.size}
+                                rx={tile.radius}
+                                fillOpacity={tile.faint ? FAINT : undefined}
+                            />
+                        )
+                    )}
+                </svg>
+            </span>
+            The design kit
+        </a>
+        <nav aria-label="Site">
             <ul className="dk-pills" role="list">
                 {ROUTES.filter((route) => route.nav !== null).map((route) => (
                     <li key={route.file}>
@@ -298,10 +298,10 @@ const Page = ({
         <main
             id="main-content"
             tabIndex={-1}
-            className={sections === undefined ? 'site-main' : 'site-main site-main-listed'}
+            className={sections === undefined ? 'dk-page' : 'dk-page site-listed'}
         >
             {title === undefined ? null : <h1>{title}</h1>}
-            {lead === undefined ? null : <p className="site-lead">{lead}</p>}
+            {lead === undefined ? null : <p className="dk-lead">{lead}</p>}
             {intro}
             {sections === undefined ? null : <OnThisPage sections={sections} />}
             {children}
@@ -457,7 +457,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                     <a href={`${NPM}/v/${build.version}`}>Version {build.version} on npm</a>
                 </p>
                 <h1>One set of colors, type and controls for the demos</h1>
-                <p className="site-lead">
+                <p className="dk-lead">
                     The design kit is one package the demos on jasonsdevspace.com share, so they
                     read as one body of work and a fix to a button is made once. ShelfLens is built
                     on it.
