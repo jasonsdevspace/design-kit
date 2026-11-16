@@ -280,7 +280,7 @@ const tabColors = async (page: Page) => ({
     selectionText: await colorOf(page, 'HighlightText'),
 });
 
-test("marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, with no line under the others", async ({
+test("marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, the others on the rule's line", async ({
     page,
 }) => {
     for (const theme of ['light', 'dark'] as const) {
@@ -293,10 +293,13 @@ test("marks the chosen tab by the page's text over an accent line, and by the sy
             const colors = await tabColors(page);
             expect(chosen.weight, at).toBe(resting.weight);
             expect(chosen.lineWidth, at).toBe('2px');
-            expect(resting.lineWidth, at).toBe('0px');
+            expect(resting.lineWidth, at).toBe('1px');
             if (forcedColors === 'none') {
                 expect(chosen, at).toMatchObject({ color: colors.text, line: colors.accent });
-                expect(resting.color, at).toBe(colors.muted);
+                expect(resting, at).toMatchObject({
+                    color: colors.muted,
+                    line: await colorOf(page, 'var(--dk-line)'),
+                });
                 expect(chosen.ground, at).toBe('rgba(0, 0, 0, 0)');
             } else {
                 expect(chosen, at).toMatchObject({
@@ -390,13 +393,13 @@ const holdsOnRule = async (
     await forceColors(page, forced);
     await writePage(page, { theme, title: 'Tabs on a rule', css: MASTHEAD[shape], body: ON_RULE });
     const what = `${theme}, ${shape}${forced ? ', forced colors' : ''}`;
-    // One rule, the masthead's: the chosen line ends on its foot, a resting tab leaves it.
+    // One rule, the masthead's: the chosen line ends on its foot, a resting tab's edge lies on it.
     expect(await onRule(page), what).toEqual({
         row: '0px',
         chosen: 0,
         chosenLine: '2px',
         resting: 0,
-        restingLine: '0px',
+        restingLine: '1px',
         plain: '1px',
     });
     // The chosen tab's mark is the accent line, and the system's selection in forced colors,
@@ -407,6 +410,44 @@ const holdsOnRule = async (
         forced ? colors.selection : colors.accent
     );
 };
+
+/** A shot of the one pixel at a point, to hold against another. */
+const pixelAt = (page: Page, x: number, y: number) =>
+    page.screenshot({ clip: { x, y, width: 1, height: 1 } });
+
+test('stands every tab on a line when the row wraps, in both themes and forced colors', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    for (const forced of [false, true])
+        for (const theme of ['light', 'dark'] as const) {
+            await forceColors(page, forced);
+            await writePage(page, {
+                theme,
+                title: 'Code',
+                css: '.bar { width: 190px; }',
+                body: `<main><div class="bar"><div class="dk-tabs" role="tablist" aria-label="The code"><button type="button" class="dk-tab" role="tab" aria-selected="true">Markup</button><button type="button" class="dk-tab" role="tab" aria-selected="false">React</button><button type="button" class="dk-tab" role="tab" aria-selected="false">Vue</button></div></div></main>`,
+            });
+            await textSize(page, 2);
+            const what = `${theme}${forced ? ', forced colors' : ''}`;
+            const tabs = await page.getByRole('tab').all();
+            const boxes = await Promise.all(tabs.map(async (tab) => (await tab.boundingBox())!));
+            // The row wraps, so some tab stands on a line above another.
+            expect(new Set(boxes.map(({ y }) => Math.round(y))).size, what).toBeGreaterThan(1);
+            // The page's own ground, read to the side of the bar, clear of every tab.
+            const ground = await pixelAt(page, 250, Math.round(boxes[0]?.y ?? 0) + 2);
+            for (const [at, { x, y, width, height }] of boxes.entries()) {
+                // The pixel row at the tab's foot, in its middle, is a line rather than the ground.
+                const foot = await pixelAt(
+                    page,
+                    Math.round(x + width / 2),
+                    Math.floor(y + height - 1)
+                );
+                expect(foot.equals(ground), `${what}, tab ${String(at)}`).toBe(false);
+            }
+        }
+});
 
 test("lays a tab row on its container's rule, the chosen line over it, and a plain row as it was", async ({
     page,

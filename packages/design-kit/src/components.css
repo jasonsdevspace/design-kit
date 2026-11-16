@@ -1782,11 +1782,11 @@
      * role and its keys belong to the page that owns the panels, so the chosen tab is whichever
      * carries the attribute a screen reader already reads: aria-selected true on a tab,
      * aria-current on a link among pages, or aria-pressed true on a toggle, each drawn alike. The
-     * chosen tab keeps the resting weight,
-     * since a heavier word is a wider one and the tabs after it would shift as the choice moves.
-     * Only the chosen tab has a line, the others padded to its depth, so forced colors, which paint
-     * every edge in a system color, draw no line under a resting tab and fill the chosen one in the
-     * system's selection colors, as the current pill does. A tab is the strip's height, and a
+     * chosen tab keeps the resting weight, since a heavier word is a wider one and the tabs after
+     * it would shift as the choice moves. A resting tab's edge is the rule's, the chosen tab's the
+     * accent line in its place, padded to one depth, so forced colors, which paint every edge in a
+     * system color, keep a resting tab on its line and fill the chosen one in the system's
+     * selection colors, as the current pill does. A tab is the strip's height, and a
      * thumb's on a phone, where a short word is still a thumb wide. A row of links wraps each in an
      * item, which stretches its link to the rule.
      */
@@ -1805,10 +1805,20 @@
     }
 
     /*
-     * A row at the foot of a container that draws a rule of its own, such as a masthead or a code
-     * block's bar, draws no rule and stands a pixel lower, so the chosen tab's line lies over the
-     * container's rule and the resting tabs leave it showing, where two rules would stack. In a
-     * bar that centers what it holds, the row still keeps to the foot.
+     * Each tab draws the rule along its own foot as an edge, which forced colors and paper keep, so
+     * a row that wraps stands every tab on a line, not only those on its last one. A row's tabs
+     * stand a pixel lower, on the row's rule, so on the last line their edges and the rule are one,
+     * and the chosen tab's line lies over it, as on a container's rule.
+     */
+    :where(.dk-tabs:not(.dk-tabs-on-rule) > *) {
+        margin-bottom: -1px;
+    }
+
+    /*
+     * A row at the foot of a container that draws a rule of its own, such as a masthead, draws no
+     * rule and stands a pixel lower, so the chosen tab's line lies over the container's rule and
+     * the resting tabs' edges lie on it, where two rules would stack. In a bar that centers what it
+     * holds, the row still keeps to the foot.
      */
     :where(.dk-tabs-on-rule) {
         align-self: end;
@@ -1821,8 +1831,9 @@
         align-items: center;
         justify-content: center;
         min-height: var(--dk-strip);
-        padding: 0 var(--dk-space-3) var(--dk-indicator-width);
+        padding: 0 var(--dk-space-3) calc(var(--dk-indicator-width) - 1px);
         border: 0;
+        border-bottom: 1px solid var(--dk-line);
         border-radius: 0;
         background: none;
         color: var(--dk-muted);
