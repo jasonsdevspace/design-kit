@@ -3247,6 +3247,35 @@
         margin-block-start: var(--dk-space-5);
     }
 
+    /*
+     * A quiet Close in the top corner of a dialog or a panel, in a dk-close after the title, a
+     * dialog's a form that closes it with no script. The title and the Close share the first row,
+     * the Close at its end, and the title keeps the target's width free beside it, so it wraps
+     * rather than run under the Close. The Close is one line tall and centered on the title's
+     * first line, never shorter than what keeps it and its ring inside the dialog's padding, so the
+     * row stays the title's height and what follows keeps its step. An open dialog alone, since a
+     * grid would draw a closed one.
+     */
+    :where(:is(.dk-panel, .dk-dialog[open]):has(> .dk-close)) {
+        display: grid;
+        grid-template-columns: 100%;
+    }
+
+    :where(:has(+ .dk-close)) {
+        grid-area: 1 / 1;
+        align-self: start;
+        margin-inline-end: var(--dk-target);
+    }
+
+    :where(.dk-close) {
+        display: flex;
+        grid-area: 1 / 1;
+        align-items: center;
+        justify-self: end;
+        height: max(1lh, var(--dk-target) - 1.5 * var(--dk-space-4-held));
+        margin: 0;
+    }
+
     :where(
         .dk-explainer-number + h2,
         .dk-explainer > section > h3 + *,

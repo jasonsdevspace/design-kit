@@ -674,6 +674,49 @@ export const dialog: ReactElement = (
     </>
 );
 
+/**
+ * A dialog and a panel with a quiet Close in the top corner: the dialog's first answer takes focus
+ * as it opens, and its Close closes it with no script, and the panel's Close names what it closes.
+ */
+export const cornerClose: ReactElement = (
+    <>
+        <dialog className="dk-dialog" id="leave-game" aria-labelledby="leave-game-title">
+            <h2 className="dk-dialog-title" id="leave-game-title">
+                Leave the game for now?
+            </h2>
+            <form className="dk-close" method="dialog">
+                <button
+                    type="submit"
+                    className="dk-button dk-button-text dk-button-quiet"
+                    value="close"
+                >
+                    <span aria-hidden="true">×</span>
+                    <span className="dk-visually-hidden">Close</span>
+                </button>
+            </form>
+            <p>The scores are kept, and the game waits where you left it.</p>
+            <form method="dialog" className="dk-dialog-actions">
+                <button type="submit" className="dk-button" value="stay" autoFocus>
+                    Keep playing
+                </button>
+                <button type="submit" className="dk-button dk-button-accent" value="leave">
+                    Leave the game
+                </button>
+            </form>
+        </dialog>
+        <div className="dk-panel" id="round-tips">
+            <h3 className="dk-panel-title">Round tips</h3>
+            <div className="dk-close">
+                <button type="button" className="dk-button dk-button-text dk-button-quiet">
+                    <span aria-hidden="true">×</span>
+                    <span className="dk-visually-hidden">Close round tips</span>
+                </button>
+            </div>
+            <p>Ana deals first, and the cards go round to the left.</p>
+        </div>
+    </>
+);
+
 /** A grid of toggles for the cards in a hand, one of them off, and a pad of plain keys. */
 export const buttonGrid: ReactElement = (
     <>
@@ -877,6 +920,7 @@ export const EXAMPLES = {
     rowTiles,
     tileColumns,
     dialog,
+    cornerClose,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
 export type ExampleName = keyof typeof EXAMPLES;
