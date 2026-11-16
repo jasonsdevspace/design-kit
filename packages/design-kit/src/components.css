@@ -535,7 +535,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog,
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog,
                 .dk-toast
             )
             .dk-button:not(.dk-strip *, .dk-footer *)
@@ -548,7 +548,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog,
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog,
                 .dk-toast
             )
             .dk-button-text:not(.dk-button-quiet)
@@ -760,7 +760,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog
             )
             :is(.dk-input, .dk-select, .dk-textarea)
     ) {
@@ -913,7 +913,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog
             )
             .dk-choice
     ) {
@@ -1587,7 +1587,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog
             )
             .dk-theme-switch-choice:not(.dk-strip *, .dk-footer *)
     ) {
@@ -1767,7 +1767,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog
             )
             a.dk-pill,
         .dk-site-header a.dk-pill
@@ -1874,7 +1874,7 @@
         :is(
                 .dk-app,
                 .dk-tabbar-page,
-                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+                :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog
             )
             .dk-tab
     ) {
@@ -2047,7 +2047,7 @@
      * the frame is the app's whole screen. A swipe past the body's end still scrolls the page where
      * it is taller than the screen.
      */
-    :where(:root:has(.dk-app:not(.dk-picture *))) {
+    :where(:root:has(.dk-app:not(.dk-picture, .dk-picture *))) {
         overscroll-behavior-y: none;
     }
 
@@ -2301,7 +2301,7 @@
      * the bar's height with a label on two lines, as a long one wraps on a phone at a large text
      * size, so the bar never covers where focus is.
      */
-    :where(:root:has(.dk-tabbar-page:not(.dk-picture *))) {
+    :where(:root:has(.dk-tabbar-page:not(.dk-picture, .dk-picture *))) {
         scroll-padding-bottom: calc(
             var(--dk-target-large) + var(--dk-text-caption) * var(--dk-leading-tight) + 1px +
                 var(--dk-safe-bottom)
@@ -2318,7 +2318,7 @@
             position: static;
         }
 
-        :where(:root:has(.dk-tabbar-page:not(.dk-picture *))) {
+        :where(:root:has(.dk-tabbar-page:not(.dk-picture, .dk-picture *))) {
             scroll-padding-bottom: 0;
         }
     }
@@ -2428,7 +2428,9 @@
      * of message over its buttons, where none is marked.
      */
     :where(
-        :root:has(.dk-toast[data-shown]:not(.dk-picture *)):not(:has(.dk-app:not(.dk-picture *)))
+        :root:has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
+            )
     ) {
         scroll-padding-bottom: calc(
             2 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
@@ -2437,7 +2439,9 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown]:not(.dk-picture *)):not(:has(.dk-app:not(.dk-picture *)))
+        :root:has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
+            )
             > body
     ) {
         padding-bottom: calc(
@@ -2447,8 +2451,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='3']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='3']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
     ) {
         scroll-padding-bottom: calc(
@@ -2458,8 +2462,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='3']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='3']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
             > body
     ) {
@@ -2470,8 +2474,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='4']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='4']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
     ) {
         scroll-padding-bottom: calc(
@@ -2481,8 +2485,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='4']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='4']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
             > body
     ) {
@@ -2493,8 +2497,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='5']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='5']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
     ) {
         scroll-padding-bottom: calc(
@@ -2504,8 +2508,8 @@
     }
 
     :where(
-        :root:has(.dk-toast[data-shown][data-rows='5']:not(.dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture *))
+        :root:has(.dk-toast[data-shown][data-rows='5']:not(.dk-picture, .dk-picture *)):not(
+                :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
             > body
     ) {
@@ -3103,7 +3107,7 @@
     }
 
     :where(
-        :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *))
+        :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
             .dk-dialog-actions
             > :not(.dk-button-text)
     ) {
@@ -3140,11 +3144,13 @@
         }
     }
 
-    :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog) {
+    :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog) {
         padding: var(--dk-space-4-held);
     }
 
-    :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog-sheet) {
+    :where(
+        :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog-sheet
+    ) {
         padding-bottom: calc(var(--dk-space-4-held) + var(--dk-safe-bottom));
     }
 

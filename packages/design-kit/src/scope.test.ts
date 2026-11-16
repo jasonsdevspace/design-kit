@@ -302,7 +302,7 @@ describe('what the sheets style', () => {
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
         // The base list, and the pieces that keep a phone's size there too.
         const places =
-            '.dk-app, .dk-tabbar-page, :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog';
+            '.dk-app, .dk-tabbar-page, :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog';
         const added = new Set(['.dk-toast']);
         // Every list a piece names the places in, however many of them it kept, leaving out the
         // frames a page's own place is told by inside its :has().
@@ -341,7 +341,9 @@ describe('what the sheets style', () => {
             /\.dk-app\b(?!-)|\.dk-tabbar-page|\.dk-toast\[data-shown/.test(held)
         );
         expect(app.length).toBeGreaterThan(0);
-        expect(app.filter((held) => !held.endsWith(':not(.dk-picture *)'))).toEqual([]);
+        expect(app.filter((held) => !held.endsWith(':not(.dk-picture, .dk-picture *)'))).toEqual(
+            []
+        );
     });
 
     it('reads each formula copied to change in step from its token', () => {
