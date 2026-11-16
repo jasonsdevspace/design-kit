@@ -70,7 +70,7 @@ describe('the tokens', () => {
             'app-bar',
             ...['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) => `stack-${layer}`),
             'shadow-raised',
-            'shadow-card',
+            'shadow-resting',
             'scrim',
             'duration-short',
             'duration-medium',
@@ -103,7 +103,10 @@ describe('the tokens', () => {
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
         expect(components).not.toMatch(/100% - var\(--dk-column\)/);
-        expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
+        // The skip link is placed on the screen, so it clears the phone's side where a band need not.
+        expect(components).toMatch(
+            /\.dk-skip \{[^}]*\bleft: max\(var\(--dk-safe-left\) \+ var\(--dk-space-4\), var\(--dk-band-left\)\);/
+        );
         expect(components).toMatch(
             /:where\(\s*\.dk-strip,\s*\.dk-footer,\s*\.dk-explainer-header,\s*\.dk-explainer,\s*\.dk-site-header,\s*\.dk-page\s*\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
         );
@@ -151,7 +154,7 @@ describe('the tokens', () => {
         expect(declared.get('--dk-field-inline')).toBe(declared.get('--dk-space-3'));
     });
 
-    it.each(['--dk-shadow-raised', '--dk-shadow-card'])(
+    it.each(['--dk-shadow-raised', '--dk-shadow-resting'])(
         'casts %s deeper on a dark page, where a soft one shows little',
         (name) => {
             const shadow = declared.get(name) ?? '';

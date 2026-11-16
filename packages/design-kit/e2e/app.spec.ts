@@ -545,6 +545,27 @@ test('draws the skip link below the top safe area and past the side one', async 
     expect(drawn.x).toBeGreaterThanOrEqual(SAFE.left + 16);
 });
 
+test('draws the skip link past the side a phone keeps on a page that ends in a tab bar', async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        height: 700,
+        css: SAFE_CSS,
+        title: 'Round 3',
+        body:
+            '<a class="dk-skip" href="#main-content">Skip to content</a>' +
+            '<main id="main-content" tabindex="-1"><h1>Round 3</h1></main>' +
+            '<nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#play" aria-current="page">Play</a></li></ul></nav>',
+    });
+    // A page that ends in a tab bar sets where a band starts within its column, and the skip link,
+    // placed on the screen, still clears the side.
+    await page.evaluate(() => document.body.classList.add('dk-tabbar-page'));
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    await skip.focus();
+    expect((await box(skip, 'the skip link')).x).toBeGreaterThanOrEqual(SAFE.left + 16);
+});
+
 test('prints as long and as wide as what it holds, with the body whole', async ({ page }) => {
     await open(page, { width: 1280, css: SAFE_CSS });
     await page.emulateMedia({ media: 'print' });

@@ -138,8 +138,6 @@
          * phone passed around a table is. The target above stays the floor for every control.
          */
         --dk-target-large: 3.5rem;
-        /* The least width of a tile in a list of tiles in columns, so a name of a few words fits. */
-        --dk-tile-least: 15rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
         /*
@@ -168,19 +166,19 @@
          * dialog's, each stopping at its usual size so a large text size leaves what they hold
          * its room. A field's inline padding held the same way keeps a stepper's figures room.
          */
-        --dk-app-padding: min(var(--dk-space-4), 16px);
-        --dk-dialog-padding: min(var(--dk-space-5), 24px);
+        --dk-space-4-held: min(var(--dk-space-4), 16px);
+        --dk-space-5-held: min(var(--dk-space-5), 24px);
         --dk-field-inline-held: min(var(--dk-field-inline), 12px);
 
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
          * what dims the page behind it, darker there too, since a dark page needs more dimming.
-         * The card shadow is the soft lift of a raised panel and a tile, which does the lifting in
-         * the light theme, where the raised ground is the page's own, and shows deeper on a dark
-         * page as the raised one does.
+         * The resting shadow is the soft lift of what rests on the page, the raised panel, which
+         * does the lifting in the light theme, where the raised ground is the page's own, and shows
+         * deeper on a dark page as the raised one does.
          */
         --dk-shadow-raised: 0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
-        --dk-shadow-card: 0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4));
+        --dk-shadow-resting: 0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4));
         --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
         /*
