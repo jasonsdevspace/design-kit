@@ -680,7 +680,12 @@ export const dialog: ReactElement = (
  */
 export const cornerClose: ReactElement = (
     <>
-        <dialog className="dk-dialog" id="leave-game" aria-labelledby="leave-game-title">
+        <dialog
+            className="dk-dialog"
+            id="leave-game"
+            aria-labelledby="leave-game-title"
+            aria-describedby="leave-game-text"
+        >
             <h2 className="dk-dialog-title" id="leave-game-title">
                 Leave the game for now?
             </h2>
@@ -694,7 +699,7 @@ export const cornerClose: ReactElement = (
                     <span className="dk-visually-hidden">Close</span>
                 </button>
             </form>
-            <p>The scores are kept, and the game waits where you left it.</p>
+            <p id="leave-game-text">The scores are kept, and the game waits where you left it.</p>
             <form method="dialog" className="dk-dialog-actions">
                 <button type="submit" className="dk-button" value="stay" autoFocus>
                     Keep playing

@@ -20,7 +20,7 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * the sheets past 9.25 KB, and again in 0.8.2, whose corner Close took them past 10.25 KB. The
  * app's pieces stay in the components sheet, so a page loads one sheet whatever it draws.
  */
-const BUDGET = 10.5 * 1024;
+const BUDGET = 10.75 * 1024;
 
 describe('the sheets', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped together, without their comments and blank lines`, () => {

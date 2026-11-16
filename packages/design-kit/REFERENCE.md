@@ -2380,14 +2380,19 @@ opens, at once for a visitor who asks for less motion.
 <!-- example: cornerClose -->
 
 ```html
-<dialog class="dk-dialog" id="leave-game" aria-labelledby="leave-game-title">
+<dialog
+    class="dk-dialog"
+    id="leave-game"
+    aria-labelledby="leave-game-title"
+    aria-describedby="leave-game-text"
+>
     <h2 class="dk-dialog-title" id="leave-game-title">Leave the game for now?</h2>
     <form class="dk-close" method="dialog">
         <button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close">
             <span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span>
         </button>
     </form>
-    <p>The scores are kept, and the game waits where you left it.</p>
+    <p id="leave-game-text">The scores are kept, and the game waits where you left it.</p>
     <form class="dk-dialog-actions" method="dialog">
         <button type="submit" class="dk-button" value="stay" autofocus="">Keep playing</button
         ><button type="submit" class="dk-button dk-button-accent" value="leave">
@@ -2412,16 +2417,20 @@ which wraps beside it rather than run under it. In a dialog the `dk-close` is a 
 method="dialog"`, so a press closes the dialog with no script and leaves `close` in its
 `returnValue`, apart from an answer. The Close comes after the title, so the keyboard and a screen
 reader meet the dialog's name first, and it never takes focus as the dialog opens: a dialog that
-asks a question gives its first answer `autofocus`, and a sheet its title, as above. It keeps the
-×, with Close out of sight beside it, and is the target at every width, where the title's first
-line holds it, and its ring stays inside the dialog's padding. A dialog has one Close, in the
-corner or among its actions, never both, and a dialog attached to stay, which must be answered,
-has none.
+asks a question gives its first answer `autofocus`, and a sheet its title, as above. Where nothing
+asks for focus, as when React's `autoFocus` writes no attribute, `attachDialog` moves it off the
+Close to the first answer, or to the title where the dialog has none. It keeps the ×, with Close out
+of sight beside it, and is the target at every width, centered on the title's first line. It is
+placed in the corner rather than laid out, so what the dialog or panel holds stays in its order and
+at its own width, and what comes before the Close keeps free the room it takes, so a title or an
+eyebrow wraps beside it. Its ring stays inside the dialog and clear of what follows the title. A
+dialog has one Close, in the corner or among its actions, never both, and a dialog attached to stay,
+which must be answered, has none.
 
 A panel's Close names what it closes out of sight, such as Close round tips, since a panel has no
 name of its own, and the page's script that hides the panel moves focus to what comes after it
-first, so the keyboard keeps its place. The kit draws the Close and leaves what it closes to the
-page.
+first, or to the heading before it where nothing follows, so the keyboard keeps its place. The kit
+draws the Close and leaves what it closes to the page.
 
 ## Layers and palettes
 

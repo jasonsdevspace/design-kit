@@ -15,6 +15,8 @@ const CLOSE = `<button type="submit" class="dk-button dk-button-text dk-button-q
 
 const BODY = `<main class="dk-page"><h1>Round 3</h1>
 <div class="dk-panel" id="tips"><h2 class="dk-panel-title">Round tips for a table that has never played before</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div><p>Ana deals first, and the cards go round to the left.</p></div>
+<div class="dk-panel dk-panel-raised" id="resume"><p class="dk-eyebrow">In play</p><h2 class="dk-panel-title">Flip 7, round 4</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close the game in play</span></button></div><p>Ana is next to score.</p><a class="dk-button dk-button-accent" href="#game">Continue</a></div>
+<div class="dk-panel" id="gone" hidden><h2 class="dk-panel-title">Gone</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close gone</span></button></div></div>
 </main>
 <dialog class="dk-dialog" id="end-game" aria-labelledby="end-game-title">
 <h2 class="dk-dialog-title" id="end-game-title">End the game now, with two rounds still to play?</h2>
@@ -78,9 +80,9 @@ for (const [width, scale] of [
         );
         if (scale !== 1) await textSize(page, scale);
         await writePage(page, { width, title: 'Round 3', body: BODY });
-        await openDialog(page);
-        const least = width <= 768 || scale > 1 ? 44 : 24;
-        for (const holder of ['#end-game', '#tips']) {
+        const least = 44 * scale;
+        /** The Close in a holder is the target, in the corner, clear of its title, its ring clear of what follows. */
+        const holds = async (holder: string) => {
             const at = `${holder}, ${String(width)} at ${String(scale)}`;
             const drawn = await corner(page, holder);
             // The Close is the target, at the end of the first row, and the title stops short of it.
@@ -93,7 +95,41 @@ for (const [width, scale] of [
             );
             // The long title wraps beside the Close on a phone rather than run under it.
             if (width === 320) expect(drawn.lines, at).toBeGreaterThan(1);
-        }
+            // Focused, the Close's ring clears what follows it.
+            const button = page.locator(`${holder} > .dk-close button`);
+            await ringByKeyboard(button, browserName);
+            const clear = await button.evaluate((element) => {
+                const style = getComputedStyle(element);
+                const reach = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
+                const next = element.closest('.dk-close')?.nextElementSibling;
+                if (!next) throw new Error('nothing follows the Close');
+                return (
+                    next.getBoundingClientRect().top -
+                    (element.getBoundingClientRect().bottom + reach)
+                );
+            });
+            expect(clear, at).toBeGreaterThanOrEqual(-0.5);
+        };
+        await holds('#tips');
+        // What comes before the Close stays where it is written, an eyebrow above the title, and a
+        // button among the panel's parts keeps its own width rather than the panel's.
+        const resume = await page.locator('#resume').evaluate((panel) => {
+            const style = getComputedStyle(panel);
+            return {
+                eyebrow: panel.querySelector('.dk-eyebrow')?.getBoundingClientRect().top ?? 0,
+                title: panel.querySelector('.dk-panel-title')?.getBoundingClientRect().top ?? 0,
+                button:
+                    panel.querySelector(':scope > a.dk-button')?.getBoundingClientRect().width ?? 0,
+                room:
+                    panel.clientWidth -
+                    parseFloat(style.paddingLeft) -
+                    parseFloat(style.paddingRight),
+            };
+        });
+        expect(resume.eyebrow, String(width)).toBeLessThan(resume.title);
+        expect(resume.button, String(width)).toBeLessThan(resume.room - 1);
+        await openDialog(page);
+        await holds('#end-game');
         // The Close and its ring stay inside the dialog, which clips what it scrolls.
         const close = page.locator('#end-game .dk-close button');
         await ringByKeyboard(close, browserName);
@@ -101,11 +137,14 @@ for (const [width, scale] of [
             const style = getComputedStyle(button);
             const reach = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
             const box = button.getBoundingClientRect();
-            const dialog = button.closest('dialog')?.getBoundingClientRect();
-            if (!dialog) throw new Error('no dialog');
+            const holder = button.closest('dialog');
+            if (!holder) throw new Error('no dialog');
+            // The dialog scrolls, so it clips inside its border, where the ring has to stay.
+            const dialog = holder.getBoundingClientRect();
+            const edge = getComputedStyle(holder);
             return {
-                top: box.top - reach - dialog.top,
-                right: dialog.right - (box.right + reach),
+                top: box.top - reach - (dialog.top + parseFloat(edge.borderTopWidth)),
+                right: dialog.right - parseFloat(edge.borderRightWidth) - (box.right + reach),
             };
         });
         expect(ring.top, String(width)).toBeGreaterThanOrEqual(0);
@@ -137,6 +176,8 @@ test("names a panel's Close for what it closes, and draws a closed dialog with a
     await writePage(page, { width: 390, title: 'Round 3', body: BODY });
     await expect(page.getByRole('button', { name: 'Close round tips' })).toBeVisible();
     await expect(page.locator('#end-game')).toBeHidden();
+    // A panel hidden by its page, as its Close asks, is drawn not at all.
+    await expect(page.locator('#gone')).toBeHidden();
 });
 
 test('keeps the Close drawn in forced colors, its × in the text and its ring on focus', async ({

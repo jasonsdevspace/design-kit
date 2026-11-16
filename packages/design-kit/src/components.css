@@ -3249,31 +3249,81 @@
 
     /*
      * A quiet Close in the top corner of a dialog or a panel, in a dk-close after the title, a
-     * dialog's a form that closes it with no script. The title and the Close share the first row,
-     * the Close at its end, and the title keeps the target's width free beside it, so it wraps
-     * rather than run under the Close. The Close is one line tall and centered on the title's
-     * first line, never shorter than what keeps it and its ring inside the dialog's padding, so the
-     * row stays the title's height and what follows keeps its step. An open dialog alone, since a
-     * grid would draw a closed one.
+     * dialog's a form that closes it with no script. It is placed in the corner rather than laid
+     * out, so nothing else in the container moves or stretches, and a panel that holds one is
+     * placed relative to it. It is centered on a title's first line, measured from the container's
+     * padding, and never comes nearer the edge than its own ring, which a dialog clips. What comes
+     * before it keeps free at its end the room the Close takes past the padding, and the title is
+     * never shorter than keeps the Close's ring clear of what follows. The Close is the target at
+     * every width.
      */
-    :where(:is(.dk-panel, .dk-dialog[open]):has(> .dk-close)) {
-        display: grid;
-        grid-template-columns: 100%;
+    :where(.dk-panel:has(> .dk-close)) {
+        position: relative;
     }
 
-    :where(:has(+ .dk-close)) {
-        grid-area: 1 / 1;
-        align-self: start;
-        margin-inline-end: var(--dk-target);
+    :where(:is(.dk-panel, .dk-dialog) > :has(~ .dk-close)) {
+        margin-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-space-4-held),
+            (1.5rem + var(--dk-target)) / 2
+        );
     }
 
-    :where(.dk-close) {
-        display: flex;
-        grid-area: 1 / 1;
-        align-items: center;
-        justify-self: end;
-        height: max(1lh, var(--dk-target) - 1.5 * var(--dk-space-4-held));
+    :where(.dk-panel > :has(~ .dk-close)) {
+        margin-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-card-inset),
+            (1.5rem + var(--dk-target)) / 2
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > :has(+ .dk-close)) {
+        min-height: calc(
+            max(
+                    2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -
+                        var(--dk-space-4-held),
+                    (1.5rem + var(--dk-target)) / 2 + var(--dk-ring-width) + var(--dk-ring-offset)
+                ) -
+                var(--dk-flow-step)
+        );
+    }
+
+    :where(.dk-panel > :has(+ .dk-close)) {
+        min-height: calc(
+            max(
+                    2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -
+                        var(--dk-card-inset),
+                    (1.5rem + var(--dk-target)) / 2 + var(--dk-ring-width) + var(--dk-ring-offset)
+                ) -
+                var(--dk-flow-step)
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > .dk-close) {
+        position: absolute;
+        inset-block-start: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-space-4-held) + (1.5rem - var(--dk-target)) / 2
+        );
+        inset-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-space-4-held) + (1.5rem - var(--dk-target)) / 2
+        );
         margin: 0;
+    }
+
+    :where(.dk-panel > .dk-close) {
+        inset-block-start: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-card-inset) + (1.5rem - var(--dk-target)) / 2
+        );
+        inset-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-card-inset) + (1.5rem - var(--dk-target)) / 2
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > .dk-close > .dk-button) {
+        min-width: var(--dk-target);
+        min-height: var(--dk-target);
     }
 
     :where(
