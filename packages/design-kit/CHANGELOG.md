@@ -9,50 +9,60 @@ entry as the notes.
 
 ## 0.8.1
 
-A page that pictures an app's screen in a `dk-picture` no longer draws as an app's page, a tile in
+A page that pictures an app's screen with `dk-picture` no longer draws as an app's page, a tile in
 columns keeps its title and picture level with a taller tile beside it, and every tab in a row
 stands on a line when the row wraps, in forced colors and on paper too. The reference says how a
-page fits more of its tiles in columns on one line, and the package README names what 0.8.0 ships.
-No token is renamed and the theme script is unchanged, so `themeScriptHash` is the same.
+page fits more of its tiles in columns on one line, and the package README names what 0.8.0 ships
+and the class for a picture. No token is renamed and the theme script is unchanged, so
+`themeScriptHash` is the same.
 
 - **Upgrading.** A page that pictures an app's frame, a page that ends in a tab bar or a shown toast
-  puts the picture in an element with `dk-picture` and makes it `inert`, as the reference's app
-  frame shows, since without the class the page around it still draws as an app's. A row of tabs
-  that draws its own rule is a pixel shorter on one line, so a page that lines something up with its
-  height checks it. A row with `dk-tabs-on-rule` in a bar where something can wrap under it, such as
-  a copy button on a phone, drops that class and lets the row draw its own rule.
-- **Sheets.** A frame, a page that ends in a tab bar or a shown toast inside an element with
-  `dk-picture`, such as a picture of a screen on a content page, is not the page's own. The page
-  around it keeps the column's bands for its strip, header, content and footer, a dialog keeps a
-  page's card inset and targets, pull to refresh stays on, and the page keeps no room at its foot
-  for the pictured toast. A page whose own frame is live draws as it did. A tile in columns starts
-  what it holds at its top, where a row centers its lines in its height, so a tile stretched to a
-  taller one on its line keeps its title and picture level with that one's and the room it gains
-  falls under its text, with a picture or without. A resting tab draws the rule along its foot as an
-  edge, as the chosen tab draws its accent line, and a row's tabs stand a pixel lower on the row's
-  rule, so a row too wide for its place wraps onto more lines with every tab on a line. On one line
-  a resting tab's edge and the row's rule are one, the chosen tab's line lies over the rule as it
-  does on a container's rule, and a row that draws its own rule is a pixel shorter.
-- **Docs.** The reference's app frame names `dk-picture` for a picture of a screen, made `inert` so
-  the keyboard and a screen reader pass it by, and the toast and the dialog say a frame or a tab bar
-  of the page's own. The reference's tiles in columns say where a short tile's title, picture and
-  extra room go beside a tall one, that a lone last tile stays at the start of its line and in the
-  list's order and why the kit does not stretch, center or move it, and how a page works out a
-  `--dk-tile-least` for its count of tiles, the room to leave under it, and what a lower value asks
-  of the tiles' names. The reference's tabs say a row that wraps keeps every tab on a line, and that
-  `dk-tabs-on-rule` suits a container whose rule sits right under the row, so a bar where something
-  can wrap under the row lets the row draw its own rule. The package README's opening and its
-  exports, and the description in `package.json`, name the pieces 0.8.0 ships, and the README says
-  which tokens a page sets on `:root` and that a strict `style-src` refuses a style attribute.
-- **Tests.** A browser test draws a content page plain and with a picture of a frame, a page that
-  ends in a tab bar and a shown toast, and holds the strip, the content, the footer, the dialog and
-  its controls, and the page's foot the same, with a live toast too, and a page with its own frame
-  and a picture keeps drawing as an app's. A scope test holds every rule that draws a page as an
-  app's to leaving out a picture. A browser test draws a short tile beside a tall one, with pictures
-  and without, and holds their titles and pictures level. A browser test wraps a row of tabs at
-  twice the text size and finds a line at the foot of each tab on every line, against the page's
-  ground, in both themes and forced colors, and the tabs' test holds a resting tab to the rule's
-  line.
+  gives `dk-picture` to the picture's wrapper or to the piece itself and makes it `inert`, since
+  without the class the page around it still draws as an app's. A row of tabs that draws its own
+  rule is a pixel shorter for each line it takes, so a page that lines something up with its height
+  checks it. A container that holds a row with `dk-tabs-on-rule` beside something that can wrap
+  under it, such as a copy button on a phone, takes the class off the row, draws no rule of its own
+  and gives the row the room the rest leaves, so the row's own rule runs under the tabs.
+- **Tokens.** `--dk-band-left`, `--dk-band-right` and `--dk-card-inset` take an app's values only on
+  a page whose own frame or tab bar is live, so a page that holds only a picture of one keeps the
+  column's bands and a page's card inset.
+- **Sheets.** A frame, a page that ends in a tab bar or a shown toast that carries `dk-picture` or
+  sits inside an element with the class, such as a picture of a screen on a content page, is not the
+  page's own. The page around it keeps the column's bands for its strip, header, content and footer,
+  a dialog keeps a page's card inset and targets, pull to refresh stays on, and the page keeps no
+  room at its foot for the pictured toast, which sits in its place as a toast in a frame does. A
+  page whose own frame is live draws as it did. A tile in columns starts what it holds at its top,
+  where a row centers its lines in its height, so a tile stretched to a taller one on its line keeps
+  its title and picture level with that one's and the room it gains falls under its text, with a
+  picture or without. A resting tab draws the rule along its foot as an edge, as the chosen tab
+  draws its accent line, and a row's tabs stand a pixel lower on the row's rule, so a row too wide
+  for its place wraps onto more lines with every tab on a line. On one line a resting tab's edge and
+  the row's rule are one, the chosen tab's line lies over the rule as it does on a container's rule,
+  and a row that draws its own rule is a pixel shorter for each line it takes.
+- **Docs.** The reference's app frame says `dk-picture` goes on a picture's wrapper or on the piece
+  itself, made `inert` so the keyboard and a screen reader pass it by, and that a pictured toast
+  sits in its place, and the toast and the dialog say a frame or a tab bar of the page's own. The
+  reference's tiles in columns say where a short tile's title, picture and extra room go beside a
+  tall one, that a lone last tile stays at the start of its line and in the list's order and why the
+  kit does not stretch, center or move it, and how a page works out a `--dk-tile-least` for its
+  count of tiles, the room to leave under it, and what a lower value asks of the tiles' names. The
+  reference's tabs say a row that wraps keeps every tab on a line, and that `dk-tabs-on-rule` suits
+  a container whose rule sits right under the row, so a bar where something can wrap under the row
+  lets the row draw its own rule. The package README's opening and its exports, and the description
+  in `package.json`, name the pieces 0.8.0 ships, and the README says which tokens a page sets on
+  `:root`, that a strict `style-src` refuses a style attribute, and that a picture of a screen takes
+  `dk-picture`.
+- **Tests.** A browser test draws a content page plain and with pictures of a frame, a page that
+  ends in a tab bar and a shown toast, the class on a wrapper and on each piece itself, and holds
+  the strip, the content, the footer, the dialog and its controls, and the page's foot the same,
+  with a live toast too, the pictured toast in its place, and a page with its own frame beside the
+  pictures still drawn as an app's. A scope test holds every rule that draws a page as an app's to
+  leaving out an element with `dk-picture` and one inside it, on every frame it names. A browser
+  test draws a short tile beside a tall one, with pictures and without, and holds their titles and
+  pictures level. A browser test wraps a row of tabs at twice the text size and finds a line at the
+  foot of each tab on every line, against the page's ground, in both themes and forced colors, and
+  the tabs' test holds a resting tab to the rule's line. A test holds every tagged link in the
+  package README to the package's version.
 
 ## 0.8.0
 
