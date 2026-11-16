@@ -2230,15 +2230,15 @@ middle it would look like the one that matters most, and moving tiles to fill th
 the keyboard out of the order the eye reads.
 
 A page whose count of tiles leaves one alone at the widths its readers use most sets
-`--dk-tile-least` on its list by a class of its own, so more stand on a line. A line holds a number
-of tiles where its width is at least that many least widths and the `--dk-space-3` gaps between
-them, so in a content page's column of 70rem, at the default text size, five tiles fit at a least
-width up to 13.4rem and six up to 11rem. A value at that edge drops a tile onto the next line at a
-larger text size or in a panel, which is narrower by its padding, so a page leaves some room under
-it. Five tiles at 13.25rem stand on one line at 1280 pixels wide and wider, and four over one on a
-tablet held sideways. The value is worked out for one count of tiles, so a list whose count changes
-works it out again, and the default of 15rem is the width a name of a few words fits, so a page
-that goes below it keeps its tiles' names short.
+`--dk-tile-least` on its list by a class of its own, so more stand on a line. A line holds as many
+tiles as fit at the least width with a `--dk-space-3` gap between each two, so in a content page's
+column of 70rem, at the default text size, five tiles fit at a least width up to 13.4rem and six up
+to about 11rem. A value at that edge drops a tile onto the next line at a larger text size or in a
+panel, which is narrower by its padding, so a page leaves some room under it. Five tiles at 13.25rem
+stand on one line at 1280 pixels wide and wider, and four over one at 1024, as on a tablet held
+sideways. The value is worked out for one count of tiles, so a list whose count changes works it out
+again. The default of 15rem is the width a name of a few words fits, so a page that goes below it
+keeps its tiles' names short.
 
 ```css
 .game-list {
