@@ -10,10 +10,14 @@ each piece live in both themes.
 `base.css` and `components.css` load after `tokens.css`, since the tokens' first statement declares
 the kit's layer order. `base.css` draws selected text on the accent rather than on the browser's
 blue, since a page keeps one accent, and in the text the accent carries. It sets inline code a step
-smaller than the text around it and lets a long name break anywhere rather than push a narrow
-column wider. Inside a `pre` code takes the block's size, and inside a link it keeps the link's
-underline. The base also puts a pointer cursor
-on a `<summary>`, and on a checkbox or radio and the label around it.
+smaller than the text around it and lets a long name break anywhere rather than push a narrow column
+wider. Inside a `pre` code takes the block's size, and inside a link it keeps the link's underline.
+The base keeps the browser's underline on a link in running text, in a paragraph, a list, a callout,
+a panel or a dialog, since the accent stands too close to the text around it to mark a link by its
+color alone, and the underline is what tells the link apart. Each piece that is a link, a button, a
+pill, a tab or a row, takes the underline off in its own class, where its edge, its place in a row
+of links or its sign marks it instead. The base also puts a pointer cursor on a `<summary>`, and on
+a checkbox or radio and the label around it.
 
 Every token's value, each color in both themes, and the contrast of each color pairing are on [the
 tokens page](https://jasonsdevspace.com/design-kit/tokens/).

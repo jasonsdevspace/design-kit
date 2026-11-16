@@ -105,18 +105,19 @@ follow by area.
 <details>
 <summary>Cascade layers, weight and contrast</summary>
 
-| Gotcha                                                                                                    | Where it is tested                       |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| A page's layers placed before the kit's lose to it unless they name `dk` first                            | `packages/design-kit/e2e/sheets.spec.ts` |
-| Each rule is in its own dk layer, and only a class, a focus rule or an allowed pseudo-element adds weight | `packages/design-kit/src/scope.test.ts`  |
-| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                     | `packages/design-kit/src/scope.test.ts`  |
-| A page's `::before` and `::after` take the border box                                                     | `packages/design-kit/e2e/sheets.spec.ts` |
-| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                          | `packages/design-kit/e2e/sheets.spec.ts` |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit                     | `packages/design-kit/e2e/sheets.spec.ts` |
-| A palette set on a container restyles only what is inside it                                              | `packages/design-kit/e2e/sheets.spec.ts` |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                    | `packages/design-kit/e2e/sheets.spec.ts` |
-| A label hidden from the eye is still read by a screen reader                                              | `packages/design-kit/e2e/sheets.spec.ts` |
-| Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts` |
+| Gotcha                                                                                                           | Where it is tested                       |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                                   | `packages/design-kit/e2e/sheets.spec.ts` |
+| Each rule is in its own dk layer, and only a class, a focus rule or an allowed pseudo-element adds weight        | `packages/design-kit/src/scope.test.ts`  |
+| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                            | `packages/design-kit/src/scope.test.ts`  |
+| A page's `::before` and `::after` take the border box                                                            | `packages/design-kit/e2e/sheets.spec.ts` |
+| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                                 | `packages/design-kit/e2e/sheets.spec.ts` |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit                            | `packages/design-kit/e2e/sheets.spec.ts` |
+| A palette set on a container restyles only what is inside it                                                     | `packages/design-kit/e2e/sheets.spec.ts` |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                           | `packages/design-kit/e2e/sheets.spec.ts` |
+| A label hidden from the eye is still read by a screen reader                                                     | `packages/design-kit/e2e/sheets.spec.ts` |
+| A link in running text keeps its underline in both themes and forced colors, and a piece that is a link drops it | `packages/design-kit/e2e/links.spec.ts`  |
+| Text, the accent and a control's edge pass on the highlight and each callout's ground                            | `packages/design-kit/src/tokens.test.ts` |
 
 </details>
 
