@@ -55,6 +55,7 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-dialog-width`                                                                               | 32rem, the widest a dialog grows in the middle of a screen                                                                                                                                       |
 | `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link                                                                  |
 | `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                                                                     |
+| `--dk-shadow-card`                                                                                | `0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4))`, the lift of a raised panel and a tile                                                                                               |
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                                                                        |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                         |
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
@@ -77,9 +78,9 @@ contrast, in both themes, which `light-dark()` writes in one value.
 | `--dk-focus`               | the accent                                       | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                          |
 | `--dk-button-shadow`       | none                                             | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                            |
 | `--dk-button-press`        | none, so a held button does not move             | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px` |
-| `--dk-panel-shadow`        | none                                             | A shadow under a raised panel                                                                                                         |
+| `--dk-panel-shadow`        | the card shadow                                  | A shadow under a raised panel                                                                                                         |
 | `--dk-tile-ground`         | the surface                                      | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign and its focus ring 3 to 1                                |
-| `--dk-tile-shadow`         | none                                             | A shadow under a tile                                                                                                                 |
+| `--dk-tile-shadow`         | the card shadow                                  | A shadow under a tile                                                                                                                 |
 | `--dk-button-grid-columns` | 3                                                | The columns a grid of buttons asks for                                                                                                |
 | `--dk-button-grid-least`   | the target, and the larger target in a tall grid | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                 |
 | `--dk-table-ground`        | the page's, a panel's or a dialog's ground       | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                |
@@ -1200,12 +1201,13 @@ title steps down to the body size.
 `dk-panel-raised` sets a panel above the cards on a page, for the one thing to pick up again above a
 list, such as a game in play above the games to start. It sits on `--dk-raised`, a step above the
 card ground in both themes, where a plain panel would match a page's cards. In the light theme the
-raised ground is the page's own, so the edge draws the panel there. A page with a shadow of its own
-for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and writes no rule
-over the kit's class. With none set, a raised panel casts no shadow. It keeps the panel's edge, its
-corners and its padding, and stays a block with no role. A pinned column or a code block inside it
-takes grounds of its own that stand apart from the raised one. A raised panel belongs on a page or
-in an app's body, since a dialog is drawn on the raised ground already.
+raised ground is the page's own, so its edge and its shadow draw the panel there. A page with a
+shadow of its own for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and
+writes no rule over the kit's class. With none set, a raised panel casts the kit's card shadow,
+`--dk-shadow-card`, which a page's own replaces. It keeps the panel's edge, its corners and its
+padding, and stays a block with no role. A pinned column or a code block inside it takes grounds of
+its own that stand apart from the raised one. A raised panel belongs on a page or in an app's body,
+since a dialog is drawn on the raised ground already.
 
 ### Tables
 
@@ -1961,10 +1963,10 @@ A tile's title is at the lead size, since a tile is a place to go that stands al
 `--dk-space-3` apart, each with an edge in the line color and large corners, in place of the rule
 between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and below and
 `--dk-space-4` at its sides, and its detail wraps within it at any text size. With no ground set, a
-tile sits on `--dk-surface`, and with no shadow set it casts none. A tile stays inside the column in
-an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past it, since its
-edge, not its words, lines up with the column. In forced colors the edge stays, in the system's
-color, and the ground and any shadow give way to the system's.
+tile sits on `--dk-surface`, and with no shadow set it casts `--dk-shadow-card`. A tile stays inside
+the column in an explainer, a panel, a callout, an app's body or a dialog, where a row reaches past
+it, since its edge, not its words, lines up with the column. In forced colors the edge stays, in the
+system's color, and the ground and any shadow give way to the system's.
 
 </details>
 

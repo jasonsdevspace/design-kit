@@ -1327,7 +1327,7 @@
      */
     :where(.dk-panel-raised) {
         background: var(--dk-raised);
-        box-shadow: var(--dk-panel-shadow, none);
+        box-shadow: var(--dk-panel-shadow, var(--dk-shadow-card));
     }
 
     /*
@@ -2673,7 +2673,7 @@
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-tile-ground, var(--dk-surface));
-        box-shadow: var(--dk-tile-shadow, none);
+        box-shadow: var(--dk-tile-shadow, var(--dk-shadow-card));
     }
 
     /* A tile is a place to go that stands alone, so its title is at the lead size. */

@@ -369,15 +369,19 @@ test('draws each tile on the ground its page sets, with an edge and a gap in pla
     expect(Math.round(first.x)).toBe(Math.round(body.x + 16));
 });
 
-test("draws a tile on the surface with no ground set, and with a page's shadow only where it sets one", async ({
+test("draws a tile on the surface with no ground set, lifted by the card shadow or the page's own", async ({
     page,
 }) => {
     await writePage(page, { width: 390, title: 'Play', body: tiles(false) });
     const link = tileList(page).getByRole('link').first();
     expect(await style(link, 'background-color', 'box-shadow')).toEqual({
         'background-color': 'rgb(245, 245, 245)',
-        'box-shadow': 'none',
+        'box-shadow': 'rgba(0, 0, 0, 0.12) 0px 1px 3px 0px',
     });
+    // Forced colors draw no shadow.
+    await page.emulateMedia({ forcedColors: 'active' });
+    expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
+    await page.emulateMedia({ forcedColors: 'none' });
     await writePage(page, {
         width: 390,
         css: ':root { --dk-tile-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',

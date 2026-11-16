@@ -711,7 +711,13 @@ for (const theme of ['light', 'dark'] as const)
         await writePage(page, { width: 390, theme, title: 'Play', body: panels(true) });
         const ground = theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(42, 42, 42)';
         expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
-        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
+        // The card shadow lifts it with no shadow of the page's own, and a plain panel casts none.
+        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(
+            theme === 'light'
+                ? 'rgba(0, 0, 0, 0.12) 0px 1px 3px 0px'
+                : 'rgba(0, 0, 0, 0.4) 0px 1px 3px 0px'
+        );
+        expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
         // A plain panel stays on the card ground.
         expect((await style(plain, 'background-color'))['background-color']).toBe(
             theme === 'light' ? 'rgb(245, 245, 245)' : 'rgb(30, 30, 30)'

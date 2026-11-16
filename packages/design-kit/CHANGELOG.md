@@ -21,22 +21,26 @@ and the controls' at 6.25 KB.
   of those three names for something of its own gets the kit's meaning for it. A footer with nothing
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
-  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
+  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
+  raised panel and a tile now cast `--dk-shadow-card` where the page sets no shadow, so a page that
+  wants neither to cast one sets `--dk-panel-shadow` or `--dk-tile-shadow` to `none`.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
   page's own full-width band pads its sides with them to line up with the strip. Inside an app's
   frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
-  already.
+  already. `--dk-shadow-card` is the soft lift of a raised panel and a tile, deeper in the dark
+  theme.
 - **Sheets.** On a page that says `viewport-fit=cover`, the strip starts its links below what a
   phone held upright keeps at its top, and the strip, the footer, an explainer and its header start
   their content past what a phone on its side keeps at each side. `dk-panel-raised` sets a panel on
-  `--dk-raised`, with a pinned column and a code block inside it on grounds of their own, and a
-  page's own shadow under it by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows` draws each
-  link row as a tile, an edge and large corners apart from the next by a gap, on the ground a page
-  sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
-  `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
-  larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+  `--dk-raised`, with a pinned column and a code block inside it on grounds of their own, and the
+  card shadow under it, or a page's own by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows`
+  draws each link row as a tile, an edge and large corners apart from the next by a gap, on the
+  ground a page sets by `--dk-tile-ground` or the surface where it sets none, with the card shadow,
+  or a page's own by `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring,
+  is at least the larger target tall, sets its title at the lead size, and an empty list of tiles is
+  not drawn.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -57,7 +61,9 @@ and the controls' at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read.
+  the table of properties a page sets to what the sheets read. A raised panel and a tile cast the
+  card shadow with none set, in both themes and none in forced colors, while a plain panel casts
+  none.
 
 ## 0.7.0
 
