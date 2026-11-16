@@ -2218,8 +2218,10 @@ panel and to the card's, `--dk-surface`, in a raised one.
 they are read. On a phone they fall to one column, and a lone last tile keeps one column's width. A
 tile there sets its title at the body size, and its picture across its top at the picture's own
 shape, which its `width` and `height` attributes give before it loads, with the text and the sign on
-the line under it. Without `dk-rows-columns` a list of tiles stays one column. A card that leads to
-several places is not one link and is not a tile.
+the line under it. The tiles on one line end together, and a short tile beside a tall one starts its
+picture and title at its top, level with the tall one's, with the room it gains under its text.
+Without `dk-rows-columns` a list of tiles stays one column. A card that leads to several places is
+not one link and is not a tile.
 
 <details>
 <summary>How the tiles are drawn</summary>

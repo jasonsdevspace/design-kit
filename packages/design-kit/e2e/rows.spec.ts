@@ -753,6 +753,54 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
     }
 });
 
+test('starts each title, and each picture, on one line across tiles in columns, a short tile beside a tall one', async ({
+    page,
+}) => {
+    // The same tiles with pictures and without, the second's long title wrapping.
+    const plain = (label: string) =>
+        pictureList(label, 'dk-rows-tiles dk-rows-columns').replace(/<img [^>]*>/g, '');
+    await writePage(page, {
+        width: 1280,
+        title: 'Pages',
+        body: `<main><h1>Pages</h1>${pictureList('Pictured', 'dk-rows-tiles dk-rows-columns', ' width="160" height="90"')}${plain('Plain')}</main>`,
+    });
+    for (const [label, pictured] of [
+        ['Pictured', true],
+        ['Plain', false],
+    ] as const) {
+        const tiles = await page
+            .getByRole('list', { name: label })
+            .getByRole('link')
+            .evaluateAll((links) =>
+                links.map((link) => {
+                    const top = (selector: string) => {
+                        const found = link.querySelector(selector);
+                        return found === null
+                            ? null
+                            : Math.round(found.getBoundingClientRect().top);
+                    };
+                    return {
+                        tile: Math.round(link.getBoundingClientRect().top),
+                        height: Math.round(link.getBoundingClientRect().height),
+                        picture: top('.dk-row-picture'),
+                        title: top('.dk-row-title'),
+                    };
+                })
+            );
+        // The first tile stands beside the second on one line, stretched to its height, and keeps
+        // its title, and its picture, where the tall one has them.
+        const [short, tall] = tiles;
+        expect(short?.tile, label).toBe(tall?.tile);
+        expect(short?.height, label).toBe(tall?.height);
+        expect(short?.title, label).not.toBeNull();
+        expect(short?.title, label).toBe(tall?.title);
+        if (pictured) {
+            expect(short?.picture, label).not.toBeNull();
+            expect(short?.picture, label).toBe(tall?.picture);
+        } else expect(short?.picture, label).toBeNull();
+    }
+});
+
 test('keeps tiles in one column on the narrowest phone at twice the text size and the wider spacing, a word cut off nowhere', async ({
     page,
 }) => {
