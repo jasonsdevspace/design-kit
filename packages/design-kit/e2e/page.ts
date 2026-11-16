@@ -105,7 +105,7 @@ export const tabKey = (browserName: string): string =>
     browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 
 /** The red, green, blue and alpha of a color the browser resolved to rgb or to srgb. */
-const channels = (color: string): readonly [number, number, number, number] => {
+export const channels = (color: string): readonly [number, number, number, number] => {
     const [red = 0, green = 0, blue = 0, alpha = 1] = (
         color.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []
     ).map(Number);
@@ -115,15 +115,16 @@ const channels = (color: string): readonly [number, number, number, number] => {
 };
 
 /**
- * The contrast between two colors the browser resolved, by the measure the tokens use. A
- * translucent color is weighed over the other, the ground it sits on, since what shows is the two
- * mixed, so a color drawn at a tenth of its strength measures as faint as it looks.
+ * The contrast between a color the browser resolved and the ground it sits on, by the measure the
+ * tokens use. A translucent color is weighed over its ground, since what shows is the two mixed, so
+ * a color drawn at a tenth of its strength measures as faint as it looks. The ground must be
+ * opaque, as `groundOf` gives it, since a translucent ground is only known over what shows through.
  */
 export const contrast = (first: string, second: string): number => {
-    const [over, under] = channels(first)[3] < 1 ? [first, second] : [second, first];
-    const top = channels(over);
-    const ground = channels(under);
-    if (ground[3] < 1) throw new Error(`expected one of ${first} and ${second} to be opaque`);
+    const top = channels(first);
+    const ground = channels(second);
+    if (ground[3] < 1)
+        throw new Error(`expected an opaque ground, got ${second}: measure it with groundOf`);
     const hex = (color: readonly number[]) =>
         `#${color
             .slice(0, 3)

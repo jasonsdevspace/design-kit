@@ -67,7 +67,8 @@ const lines = async (page: Page, kind: 'in' | 'piece') => {
             found.set(`${place}, ${(await link.innerText()).trim()}`, {
                 line: drawn['text-decoration-line'] ?? '',
                 color: drawn['text-decoration-color'] ?? '',
-                ground: await groundOf(link),
+                // Only a link in running text is measured on its ground.
+                ground: kind === 'in' ? await groundOf(link) : '',
             });
         }
     }

@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { icon } from '../examples/examples.js';
-import { colorOf, forceColors, pixels, writePage } from './page.js';
+import { channels, colorOf, forceColors, pixels, writePage } from './page.js';
 
 /*
  * An icon as each engine draws it: one em square in a line of text, a doubled line, a link and a
@@ -60,10 +60,9 @@ const strokeDrawn = async (page: Page, id: string): Promise<number> => {
             height: 1,
         },
     });
-    const stroke = (await icon.evaluate((element) => getComputedStyle(element).stroke))
-        .match(/[\d.]+/g)
-        ?.slice(0, 3)
-        .map(Number);
+    const stroke = channels(
+        await icon.evaluate((element) => getComputedStyle(element).stroke)
+    ).slice(0, 3);
     return page.evaluate(
         async ([png, ink = [], across]) => {
             const image = new Image();

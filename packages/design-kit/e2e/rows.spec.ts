@@ -6,6 +6,7 @@ import {
     colorOf,
     contrast,
     forceColors,
+    groundOf,
     ringByKeyboard,
     shadowOf,
     sideways,
@@ -434,9 +435,7 @@ test("underlines a tile's title under a pointer, and rings it outside, as a sepa
 
 test("underlines a tile's title under a pressing thumb, on a phone where nothing hovers", async ({
     browser,
-    browserName,
 }) => {
-    test.skip(browserName === 'firefox', 'Firefox emulates no touch screen');
     const context = await browser.newContext({ hasTouch: true, isMobile: true });
     try {
         const page = await context.newPage();
@@ -539,13 +538,7 @@ const holdsItsRatios = async (list: Locator, at: string, browserName: string) =>
                 `${where}, ${part}`
             ).toBeGreaterThanOrEqual(least);
         // The nearest ground under the tile, the page's where nothing between has one.
-        const under = await link.evaluate((tile) => {
-            for (let at = tile.parentElement; at; at = at.parentElement) {
-                const drawn = getComputedStyle(at).backgroundColor;
-                if (drawn !== 'rgba(0, 0, 0, 0)') return drawn;
-            }
-            return getComputedStyle(document.documentElement).backgroundColor;
-        });
+        const under = await groundOf(link.locator('..'));
         expect(
             contrast(await color(link, 'outline-color'), under),
             `${where}, the ring on ${under}`
@@ -672,6 +665,7 @@ const pictureList = (label: string, classes: string, size = ''): string =>
 
 test('starts every title on one line beside a picture, in a row and a tile, with the ring clear of it', async ({
     page,
+    browserName,
 }) => {
     await writePage(page, {
         width: 390,
@@ -684,7 +678,7 @@ test('starts every title on one line beside a picture, in a row and a tile, with
         for (const link of links) {
             const title = await box(link.locator('.dk-row-title'));
             starts.add(Math.round(title.x));
-            await link.focus();
+            await ringByKeyboard(link, browserName);
             const ring = parseFloat((await style(link, 'outline-width'))['outline-width'] ?? '0');
             const row = await box(link);
             const picture = await box(link.locator('.dk-row-picture'));

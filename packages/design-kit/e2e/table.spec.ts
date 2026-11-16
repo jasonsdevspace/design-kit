@@ -360,6 +360,14 @@ const expectShades = async (
 ): Promise<void> => {
     const [start, end] =
         dir === 'ltr' ? (['left', 'right'] as const) : (['right', 'left'] as const);
+    // Two frames first, so an edge the scroll has yet to reach is not read as already at rest, which
+    // would let a wanted none pass on the edge as it was before.
+    await page.evaluate(
+        () =>
+            new Promise((done) => {
+                requestAnimationFrame(() => requestAnimationFrame(done));
+            })
+    );
     await expect
         .poll(
             async () => ({
