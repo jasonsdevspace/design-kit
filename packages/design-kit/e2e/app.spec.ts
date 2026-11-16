@@ -795,3 +795,30 @@ test('keeps a pinned column and a code block apart from a raised panel on ground
     expect(await ground('.dk-table-pinned th')).toBe('rgb(255, 255, 255)');
     expect(await ground('.dk-panel-raised .dk-code')).toBe('rgb(245, 245, 245)');
 });
+
+test("draws a panel's title as a heading as it draws it as a paragraph, so either reads alike", async ({
+    page,
+}) => {
+    const title = (tag: string, raised: string) =>
+        `<div class="dk-panel${raised}"><${tag} class="dk-panel-title">Flip 7, round 4</${tag}><p>Ana is next to score.</p></div>`;
+    for (const raised of ['', ' dk-panel-raised']) {
+        await writePage(page, {
+            width: 390,
+            title: 'Play',
+            body: `<main id="main-content"><h1>Play</h1>${title('p', raised)}${title('h2', raised)}</main>`,
+        });
+        const [asParagraph, asHeading] = await Promise.all(
+            ['p', 'h2'].map((tag) =>
+                style(
+                    page.locator(`${tag}.dk-panel-title`),
+                    'font-size',
+                    'font-weight',
+                    'line-height',
+                    'margin-top',
+                    'margin-bottom'
+                )
+            )
+        );
+        expect(asHeading, raised || 'plain').toEqual(asParagraph);
+    }
+});
