@@ -1,13 +1,14 @@
 # Changes for the next release
 
-A pull request that changes what the package ships writes its changelog text here, in a file of its
-own named for the issue it closes, such as `284.md`, and leaves `CHANGELOG.md` alone. Pull requests
-open side by side then never edit the same lines, so merging one leaves the others free of
-conflicts.
+A pull request that changes the kit, its reference or its tests writes its changelog text here, in a
+file of its own named for the issue it closes or is part of, such as `284.md`, and leaves
+`CHANGELOG.md` alone. Two pull requests open at once write different files, so merging one leaves
+the other free of conflicts. A later pull request for the same issue adds to its file.
 
-A file opens with what the change adds to the entry's opening sentence, written as a sentence of its
-own, then holds a bullet under each lead-in the changelog's entries use, with **Upgrading.** first
-when a page has to change anything:
+A file opens with a sentence for the entry's opening paragraph, then holds a bullet for each part of
+the change, each opened by the lead-in the changelog's entries use, in their order: **Upgrading.**
+when a page has to change anything, then **Tokens.**, **Sheets.**, **Controls.**, **React.**,
+**Docs.** and **Tests.**, each only where the change has something to say:
 
 ```markdown
 A row can hold a picture at its start, with tiles flowing into columns.
@@ -17,5 +18,5 @@ A row can hold a picture at its start, with tiles flowing into columns.
 ```
 
 The pull request that bumps the version folds every file here into the version's entry, its opening
-into the entry's opening sentence and each bullet into the paragraph under the same lead-in, and
+into the entry's opening paragraph and each bullet into the bullet with the same lead-in, and
 deletes the files. The release workflow stops while any file other than this one is left.

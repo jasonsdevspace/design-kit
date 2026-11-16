@@ -1,8 +1,9 @@
 name: Release
 
 # Releases the package when a tag such as design-kit-v0.1.0 is pushed. The tag has to name a commit
-# on main, match the version in the package's package.json, and have an entry in its changelog with
-# every change file folded into it, or nothing is released. Every check CI runs, runs first.
+# on main, match the version in the package's package.json, and have an entry in its changelog, with
+# no file but the README left in its changes folder, or nothing is released. Every check CI runs,
+# runs first.
 #
 # The publish uses npm's trusted publishing: the workflow proves who it is with an OpenID Connect
 # token, so no npm token is stored anywhere, and each version carries provenance that links it to
@@ -65,7 +66,7 @@ jobs:
                       echo "$dir/CHANGELOG.md has no entry for $version"
                       exit 1
                   fi
-                  left=$(find "$dir/changes" -name '*.md' ! -name README.md)
+                  left=$(find "$dir/changes" -type f ! -path "$dir/changes/README.md")
                   if [ -n "$left" ]; then
                       echo "fold these change files into $dir/CHANGELOG.md and delete them:"
                       echo "$left"
