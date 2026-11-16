@@ -468,6 +468,34 @@ test.describe('the landing page', () => {
     });
 });
 
+test("spaces every block of a page by the kit, none of the site's own rules taking its step away", async ({
+    page,
+}) => {
+    for (const width of [390, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const path of PAGES) {
+            await page.goto(path);
+            // Each block after another in the page or a section, but the list of sections, which
+            // sits in the gutter on a wide screen.
+            const flat = await page.evaluate(() =>
+                [...document.querySelectorAll('.dk-page > *, .dk-page > section > *')]
+                    .filter(
+                        (block) =>
+                            block.previousElementSibling !== null &&
+                            !block.matches('.site-toc, .dk-visually-hidden, [hidden]') &&
+                            !block.previousElementSibling.matches('.dk-visually-hidden, [hidden]')
+                    )
+                    .filter((block) => parseFloat(getComputedStyle(block).marginTop) === 0)
+                    .map(
+                        (block) =>
+                            `${block.tagName.toLowerCase()}.${[...block.classList].join('.')}`
+                    )
+            );
+            expect(flat, `${path} at ${String(width)}`).toEqual([]);
+        }
+    }
+});
+
 test.describe('the words each page opens with', () => {
     test('holds every lead to the measure at any width, between a phone and a wide screen too', async ({
         page,

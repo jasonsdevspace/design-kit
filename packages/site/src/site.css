@@ -192,7 +192,6 @@ body > .dk-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
     gap: var(--dk-space-4);
-    margin: 0;
     padding: 0;
     list-style: none;
 }
@@ -365,7 +364,6 @@ body > .dk-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
     gap: var(--dk-space-5);
-    margin: 0;
     padding: 0;
     list-style: none;
 }
@@ -470,7 +468,6 @@ body > .dk-strip {
 .site-states {
     display: grid;
     gap: var(--dk-space-5);
-    margin: 0;
     padding: 0;
     list-style: none;
 }
@@ -649,7 +646,7 @@ body > .dk-strip {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
     gap: var(--dk-space-4);
-    margin: 0 0 var(--dk-space-5);
+    margin-bottom: var(--dk-space-5);
     padding: 0;
     list-style: none;
 }
@@ -741,7 +738,7 @@ body > .dk-strip {
     display: flex;
     flex-wrap: wrap;
     gap: var(--dk-space-4) var(--dk-space-5);
-    margin: 0 0 var(--dk-space-5);
+    margin-bottom: var(--dk-space-5);
     padding: 0;
     list-style: none;
 }
