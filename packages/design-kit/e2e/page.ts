@@ -129,7 +129,8 @@ export const pixels = (length: string | undefined): number => Number.parseFloat(
  * in a color other than the element's own fill, the color most of the element is drawn in, read
  * from screenshots through a canvas. Words drawn on the fill break every row into short strokes,
  * and a backplate a browser paints behind them runs the whole width, a check on what shows where a
- * computed style cannot tell. The box holds the words alone, not an icon beside them.
+ * computed style cannot tell. The box holds the words alone, not an icon beside them, and inside the
+ * element.
  */
 export const backplateUnderWords = async (locator: Locator): Promise<number> => {
     const page = locator.page();
@@ -144,10 +145,12 @@ export const backplateUnderWords = async (locator: Locator): Promise<number> => 
             range.selectNodeContents(node);
             rects.push(range.getBoundingClientRect());
         }
-        const left = Math.min(...rects.map((rect) => rect.left));
-        const top = Math.min(...rects.map((rect) => rect.top));
-        const right = Math.max(...rects.map((rect) => rect.right));
-        const bottom = Math.max(...rects.map((rect) => rect.bottom));
+        // Within the element's own box, which a line of words can run past on some fonts.
+        const own = element.getBoundingClientRect();
+        const left = Math.max(own.left, Math.min(...rects.map((rect) => rect.left)));
+        const top = Math.max(own.top, Math.min(...rects.map((rect) => rect.top)));
+        const right = Math.min(own.right, Math.max(...rects.map((rect) => rect.right)));
+        const bottom = Math.min(own.bottom, Math.max(...rects.map((rect) => rect.bottom)));
         return { x: left, y: top, width: right - left, height: bottom - top };
     });
     const under = (await page.screenshot({ clip: words })).toString('base64');
