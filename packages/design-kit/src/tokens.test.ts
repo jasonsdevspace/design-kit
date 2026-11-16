@@ -70,6 +70,7 @@ describe('the tokens', () => {
             'app-bar',
             ...['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) => `stack-${layer}`),
             'shadow-raised',
+            'shadow-card',
             'scrim',
             'duration-short',
             'duration-medium',
@@ -150,19 +151,22 @@ describe('the tokens', () => {
         expect(declared.get('--dk-field-inline')).toBe(declared.get('--dk-space-3'));
     });
 
-    it('casts the raised shadow deeper on a dark page, where a soft one shows little', () => {
-        const shadow = declared.get('--dk-shadow-raised') ?? '';
-        // Each color's alpha, written as a number or a percent, in the order light then dark.
-        const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ (\d+(?:\.\d+)?)(%?)\)/g)].map(
-            ([, value = '0', percent]) => Number(value) / (percent ? 100 : 1)
-        );
-        const [light, dark] = alphas;
-        if (light === undefined || dark === undefined) {
-            throw new Error(`the shadow is not two rgb() blacks in light-dark(): ${shadow}`);
+    it.each(['--dk-shadow-raised', '--dk-shadow-card'])(
+        'casts %s deeper on a dark page, where a soft one shows little',
+        (name) => {
+            const shadow = declared.get(name) ?? '';
+            // Each color's alpha, written as a number or a percent, in the order light then dark.
+            const alphas = [...shadow.matchAll(/rgb\(0 0 0 \/ (\d+(?:\.\d+)?)(%?)\)/g)].map(
+                ([, value = '0', percent]) => Number(value) / (percent ? 100 : 1)
+            );
+            const [light, dark] = alphas;
+            if (light === undefined || dark === undefined) {
+                throw new Error(`the shadow is not two rgb() blacks in light-dark(): ${shadow}`);
+            }
+            expect(shadow).toContain('light-dark(');
+            expect(dark).toBeGreaterThan(light);
         }
-        expect(shadow).toContain('light-dark(');
-        expect(dark).toBeGreaterThan(light);
-    });
+    );
 
     it('lifts the raised ground above the surface in the dark theme, and no lower than the page in the light one', () => {
         // In the dark theme the step is what tells a card from the page, since its shadow shows

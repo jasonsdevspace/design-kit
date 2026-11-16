@@ -1437,12 +1437,12 @@
 
     /*
      * A raised panel sits on the raised ground, a step above the cards on a page, for the one
-     * thing to pick up again above a list. A page's own shadow reaches it by a property, as it
-     * reaches a button, and with none set it casts none.
+     * thing to pick up again above a list. It casts the card shadow, which lifts it where the
+     * raised ground is the page's own, and a page's own shadow replaces that by a property.
      */
     :where(.dk-panel-raised) {
         background: var(--dk-raised);
-        box-shadow: var(--dk-panel-shadow, none);
+        box-shadow: var(--dk-panel-shadow, var(--dk-shadow-card));
     }
 
     /*
@@ -2824,8 +2824,8 @@
      * such as each game on its own color. A tile keeps the row's sign, its press and its ring, and
      * stands apart from the next by a gap and an edge in the line color rather than the rule
      * between rows. It stays inside the column where a row reaches past it, since a tile's edge,
-     * not its words, is what lines up with the column. A page's own shadow reaches a tile by a
-     * property, as it reaches a button.
+     * not its words, is what lines up with the column. A tile casts the card shadow, and a page's
+     * own replaces it by a property.
      */
     /* An empty list stays out of the page, as a list of rows does. */
     :where(.dk-rows-tiles:has(> li)) {
@@ -2844,7 +2844,7 @@
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-tile-ground, var(--dk-surface));
-        box-shadow: var(--dk-tile-shadow, none);
+        box-shadow: var(--dk-tile-shadow, var(--dk-shadow-card));
     }
 
     /*

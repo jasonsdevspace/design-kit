@@ -175,8 +175,12 @@
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
          * what dims the page behind it, darker there too, since a dark page needs more dimming.
+         * The card shadow is the soft lift of a raised panel and a tile, which does the lifting in
+         * the light theme, where the raised ground is the page's own, and shows deeper on a dark
+         * page as the raised one does.
          */
         --dk-shadow-raised: 0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
+        --dk-shadow-card: 0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4));
         --dk-scrim: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.6));
 
         /*
