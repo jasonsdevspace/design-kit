@@ -39,7 +39,7 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
   `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the container at whose foot it
   sits, drawing no rule of its own and standing a pixel lower, so the chosen tab's line lies over
-  the container's rule.
+  the container's rule, and keeping to the foot of a bar that centers what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -61,8 +61,8 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
   the table of properties a page sets to what the sheets read. A tab row on its container's rule
-  ends the chosen line and the resting tabs on the container's foot with one rule, in both themes
-  and in forced colors, and a plain row keeps its own rule.
+  ends the chosen line and the resting tabs on the container's foot with one rule, in a block and in
+  a bar that centers it, in both themes and in forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
 

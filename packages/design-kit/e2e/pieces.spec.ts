@@ -356,7 +356,13 @@ test("keeps the chosen link's line on the rule when a neighbor's words wrap", as
 });
 
 /** A masthead of the page's own with a rule at its foot, a tab row on it, and a plain row after. */
-const ON_RULE = `<main><header class="masthead"><h1>Shelf</h1><nav aria-label="Categories"><ul class="dk-tabs dk-tabs-on-rule" role="list"><li><a class="dk-tab" href="#all" aria-current="page">All</a></li><li><a class="dk-tab" href="#books">Books</a></li></ul></nav></header><div class="dk-tabs" id="plain"><button type="button" class="dk-tab" aria-pressed="true">Open</button></div></main>`;
+const ON_RULE = `<main><header class="masthead"><h1>Shelf</h1><ul class="dk-tabs dk-tabs-on-rule" role="list" aria-label="Categories"><li><a class="dk-tab" href="#all" aria-current="page">All</a></li><li><a class="dk-tab" href="#books">Books</a></li></ul></header><div class="dk-tabs" id="plain"><button type="button" class="dk-tab" aria-pressed="true">Open</button></div></main>`;
+
+/** The masthead's rule, and a bar that centers a row beside a taller button, as a code bar does. */
+const MASTHEAD = {
+    block: '.masthead { border-bottom: 1px solid var(--dk-line); }',
+    bar: '.masthead { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--dk-line); } .masthead h1 { min-height: 4rem; margin: 0; }',
+};
 
 /** Where the row, the chosen tab and the resting tab end against the masthead's foot. */
 const onRule = (page: Page) =>
@@ -376,31 +382,44 @@ const onRule = (page: Page) =>
         };
     });
 
+/** Draws one case of a row on a masthead's rule, and checks it ends on the one rule. */
+const holdsOnRule = async (
+    page: Page,
+    {
+        theme,
+        shape,
+        forced,
+    }: { theme: 'light' | 'dark'; shape: keyof typeof MASTHEAD; forced: boolean }
+) => {
+    await writePage(page, { theme, title: 'Tabs on a rule', css: MASTHEAD[shape], body: ON_RULE });
+    await page.emulateMedia({ forcedColors: forced ? 'active' : 'none' });
+    const what = `${theme}, ${shape}${forced ? ', forced colors' : ''}`;
+    // One rule, the masthead's: the chosen line ends on its foot, a resting tab leaves it.
+    expect(await onRule(page), what).toEqual({
+        row: '0px',
+        chosen: 0,
+        chosenLine: '2px',
+        resting: 0,
+        restingLine: '0px',
+        plain: '1px',
+    });
+    // The chosen tab's mark is the accent line, and the system's selection in forced colors,
+    // reaching the rule either way.
+    const chosen = await tabLook(page.getByRole('link', { name: 'All' }));
+    const colors = await tabColors(page);
+    expect(forced ? chosen.ground : chosen.line, what).toBe(
+        forced ? colors.selection : colors.accent
+    );
+    await page.emulateMedia({ forcedColors: 'none' });
+};
+
 test("lays a tab row on its container's rule, the chosen line over it, and a plain row as it was", async ({
     page,
 }) => {
-    for (const forced of [false, true]) {
-        for (const theme of ['light', 'dark'] as const) {
-            await writePage(page, {
-                theme,
-                title: 'Tabs on a rule',
-                css: '.masthead { border-bottom: 1px solid var(--dk-line); }',
-                body: ON_RULE,
-            });
-            if (forced) await page.emulateMedia({ forcedColors: 'active' });
-            const what = `${theme}${forced ? ', forced colors' : ''}`;
-            // One rule, the masthead's: the chosen line ends on its foot, a resting tab leaves it.
-            expect(await onRule(page), what).toEqual({
-                row: '0px',
-                chosen: 0,
-                chosenLine: '2px',
-                resting: 0,
-                restingLine: '0px',
-                plain: '1px',
-            });
-            await page.emulateMedia({ forcedColors: 'none' });
-        }
-    }
+    for (const forced of [false, true])
+        for (const theme of ['light', 'dark'] as const)
+            for (const shape of ['block', 'bar'] as const)
+                await holdsOnRule(page, { theme, shape, forced });
 });
 
 test("makes each tab the strip's height, and a thumb wide and tall on a phone", async ({
