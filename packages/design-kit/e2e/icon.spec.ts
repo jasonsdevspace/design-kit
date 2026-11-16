@@ -75,7 +75,8 @@ const strokeDrawn = async (page: Page, id: string): Promise<number> => {
             const context = canvas.getContext('2d');
             context?.drawImage(image, 0, 0);
             const row = context?.getImageData(0, 0, image.width, 1).data ?? new Uint8ClampedArray();
-            // The ground is the row's first pixel, at the icon's edge, which the stroke never reaches.
+            // The ground is the row's first pixel, at the icon's edge, which the stroke never
+            // reaches.
             const ground = [...row.slice(0, 3)];
             const channel = [0, 1, 2].reduce((best, at) =>
                 Math.abs((ink[at] ?? 0) - (ground[at] ?? 0)) >

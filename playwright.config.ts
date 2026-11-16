@@ -5,9 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
  * it into the browser. An app's frame, tab bar and toast, the dialog, the stepper, a table's frame,
- * an icon and the rows and tiles are drawn in WebKit too, and the stepper, the controls, the pieces, a table's frame
- * and an icon in Firefox. The site's tests open the built site, which the config builds and serves
- * under the path GitHub Pages gives it.
+ * an icon and the rows and tiles are drawn in WebKit too, and the stepper, the controls, the
+ * pieces, a table's frame and an icon in Firefox. The site's tests open the built site, which the
+ * config builds and serves under the path GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;

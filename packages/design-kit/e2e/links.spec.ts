@@ -7,8 +7,9 @@ import { contrast, forceColors, groundOf, style, writePage } from './page.js';
  * stands too close to the text to mark it by color alone, and in the footer a link takes the
  * footer's own muted color, so the underline is all that marks it. The kit leaves the browser's
  * underline on a plain link wherever one sits in running text, drawn at 3 to 1 against the ground
- * it sits on, in both themes and in forced colors, and a text button puts it back. A piece that is a link, such as a
- * button, a pill, a tab, a row, a tab bar's link or the site's brand, takes it off in its own class.
+ * it sits on, in both themes and in forced colors, and a text button puts it back. A piece that is
+ * a link, such as a button, a pill, a tab, a row, a tab bar's link or the site's brand, takes it
+ * off in its own class.
  */
 
 const RUNNING = `<p>Read <a href="#rules">the rules</a> first.</p>`;
