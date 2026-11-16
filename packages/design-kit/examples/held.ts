@@ -487,7 +487,8 @@ export const HELD = {
         {
             file: 'e2e/pieces.spec.ts',
             titles: [
-                "marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, with no line under the others",
+                "marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, the others on the rule's line",
+                'stands every tab on a line when the row wraps, in both themes and forced colors',
                 'draws a tab, a link among pages and a toggle alike, chosen or not',
                 'keeps every tab in place as the choice moves',
                 "keeps the chosen link's line on the rule when a neighbor's words wrap",
