@@ -286,30 +286,53 @@ describe('what the sheets style', () => {
         }
     });
 
+    /** Every sheet without its comments, its runs of space as one, read once for the tests below. */
+    const flat = sheets
+        .map((name) => withoutComments(readFileSync(new URL(name, folder), 'utf8')))
+        .join('\n')
+        .replace(/\s+/g, ' ')
+        .replace(/ ?, ?/g, ', ')
+        .replace(/\( /g, '(')
+        .replace(/ \)/g, ')');
+
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
         // The base list, and the pieces that keep a phone's size there too.
         const places = '.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog';
         const added = new Set(['.dk-toast']);
-        const css = withoutComments(readFileSync(new URL('components.css', folder), 'utf8'));
-        const lists = [...css.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)]
-            .map(([, list = '']) => list.replace(/\s+/g, ' ').replace(/\( /g, '(').trim())
-            .filter((list) => list.includes('.dk-tabbar-page') && list.includes('.dk-dialog'));
+        // Every list a piece names the places in, however many of them it kept.
+        const lists = [...flat.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)]
+            .map(([, list = '']) => list.trim())
+            .filter((list) => list.includes('.dk-tabbar-page'));
         expect(lists.length).toBeGreaterThan(0);
         const astray = lists.filter((list) => {
             if (!list.startsWith(places)) return true;
-            const rest = list.slice(places.length).replace(/^,/, '').trim();
-            return rest !== '' && !rest.split(/\s*,\s*/).every((piece) => added.has(piece));
+            const rest = list.slice(places.length);
+            if (rest === '') return false;
+            return (
+                !rest.startsWith(',') ||
+                !rest
+                    .slice(1)
+                    .split(',')
+                    .every((piece) => added.has(piece.trim()))
+            );
         });
         expect(astray).toEqual([]);
     });
 
     it('reads each formula copied to change in step from its token', () => {
-        const css = withoutComments(readFileSync(new URL('components.css', folder), 'utf8'));
-        const copies = [
-            'min(var(--dk-space-4), 16px)',
-            'min(var(--dk-space-5), 24px)',
-            'min(var(--dk-field-inline), 12px)',
-        ].filter((formula) => css.includes(formula));
+        // Each formula the tokens hold, in either order, left nowhere else in the sheets.
+        const held = [
+            ['var(--dk-space-4)', '16px'],
+            ['var(--dk-space-5)', '24px'],
+            ['var(--dk-field-inline)', '12px'],
+        ];
+        const copies = held.flatMap(([token = '', cap = '']) => {
+            const written = [`min(${token}, ${cap})`, `min(${cap}, ${token})`]
+                .map((formula) => flat.split(formula).length - 1)
+                .reduce((sum, times) => sum + times, 0);
+            // The token is the one place each formula is written.
+            return written === 1 ? [] : [`min(${token}, ${cap}), written ${String(written)} times`];
+        });
         expect(copies).toEqual([]);
     });
 

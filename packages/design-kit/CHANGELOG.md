@@ -22,13 +22,19 @@ and the controls' at 6.25 KB.
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
   a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
+  The padding of a panel in an app, of a dialog and of a stepper's field now reads
+  `--dk-app-padding`, `--dk-dialog-padding` and `--dk-field-inline-held`, worked out on the root, so
+  a page that sets `--dk-space-4`, `--dk-space-5` or `--dk-field-inline` below the root sets it on
+  `:root` to keep those paddings in step, and a page that already uses one of those three names gets
+  the kit's meaning for it.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
   page's own full-width band pads its sides with them to line up with the strip. Inside an app's
   frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
-  already. `--dk-app-padding` and `--dk-dialog-padding` are the padding of a panel in an app's frame
-  and of a dialog on a phone, and a wide dialog's, each stopping at its usual size, and
+  already. `--dk-app-padding` is a panel's padding in an app's frame, a dialog's on a phone and in
+  an app, and a dialog's gap from the screen's edges, `--dk-space-4` stopping at 16px,
+  `--dk-dialog-padding` a wide dialog's padding, `--dk-space-5` stopping at 24px, and
   `--dk-field-inline-held` is a stepper's inline padding held the same way, so each copy reads one
   value.
 - **Sheets.** On a page that says `viewport-fit=cover`, the strip starts its links below what a
