@@ -153,9 +153,7 @@ export const backplateUnderWords = async (locator: Locator): Promise<number> => 
         const bottom = Math.min(own.bottom, Math.max(...rects.map((rect) => rect.bottom)));
         return { x: left, y: top, width: right - left, height: bottom - top };
     });
-    const underShot = await page.screenshot({ clip: words });
-    await (await import('@playwright/test')).test.info().attach('under', { body: underShot, contentType: 'image/png' });
-    const under = underShot.toString('base64');
+    const under = (await page.screenshot({ clip: words })).toString('base64');
     return page.evaluate(
         async ([shotOfWhole = '', shotUnder = '']) => {
             const read = async (data: string) => {
@@ -177,12 +175,24 @@ export const backplateUnderWords = async (locator: Locator): Promise<number> => 
             for (const pixel of (await read(shotOfWhole)).pixels)
                 counts.set(pixel, (counts.get(pixel) ?? 0) + 1);
             const fill = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+            // A shade off the fill still counts as it, since two screenshots can differ by one.
+            const channels = (pixel: number) => [
+                pixel & 255,
+                (pixel >> 8) & 255,
+                (pixel >> 16) & 255,
+            ];
+            const filled = channels(fill ?? 0);
+            const near = (pixel: number) =>
+                channels(pixel).reduce(
+                    (sum, value, at) => sum + Math.abs(value - (filled[at] ?? 0)),
+                    0
+                ) < 24;
             const { width, pixels } = await read(shotUnder);
             let longest = 0;
             for (let row = 0; row * width < pixels.length; row += 1) {
                 let run = 0;
                 for (let column = 0; column < width; column += 1) {
-                    run = pixels[row * width + column] === fill ? 0 : run + 1;
+                    run = near(pixels[row * width + column] ?? 0) ? 0 : run + 1;
                     longest = Math.max(longest, run);
                 }
             }

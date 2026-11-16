@@ -586,7 +586,6 @@ test("draws every chosen thing's words in forced colors, on the system's selecti
                 await chosen.evaluate((element) => getComputedStyle(element).backgroundColor),
                 id
             ).toBe(selection);
-            await test.info().attach(`${id}-whole`, { body: await chosen.screenshot(), contentType: 'image/png' });
             expect(await backplateUnderWords(chosen), id).toBeLessThan(0.8);
         }
     } finally {
