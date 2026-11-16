@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { pixels, writePage } from './page.js';
+import { backplateUnderWords, pixels, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -544,3 +544,51 @@ for (const theme of ['light', 'dark'] as const) {
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
 }
+
+/** Each kind of chosen thing the kit draws in the selection's colors, beside one at rest. */
+const CHOSEN = `<main><h1>Chosen</h1>
+<ul class="dk-pills" role="list"><li><a class="dk-pill" href="#home" aria-current="page" id="pill">Home</a></li><li><a class="dk-pill" href="#about">About</a></li></ul>
+<div class="dk-tabs" role="tablist" aria-label="Code"><button type="button" class="dk-tab" role="tab" aria-selected="true" id="tab">Markup</button><button type="button" class="dk-tab" role="tab" aria-selected="false">React</button></div>
+<ul class="dk-tabs" role="list"><li><a class="dk-tab" href="#all" aria-current="page" id="tab-link">All</a></li></ul>
+<div class="dk-tabs"><button type="button" class="dk-tab" aria-pressed="true" id="tab-toggle">Open</button></div>
+<p><button type="button" class="dk-button" aria-pressed="true" id="toggle">Members only</button> <button type="button" class="dk-button" aria-expanded="true" id="open">Filters</button></p>
+<div class="dk-theme-switch" role="radiogroup" aria-label="Theme"><label class="dk-theme-switch-choice"><input type="radio" name="theme" checked><span id="theme">System</span></label><label class="dk-theme-switch-choice"><input type="radio" name="theme"><span>Light</span></label></div>
+<div class="dk-button-grid"><button type="button" class="dk-button" aria-pressed="true" id="cell">Bid 3</button><button type="button" class="dk-button" aria-pressed="false">Bid 4</button></div></main>`;
+
+test("draws every chosen thing's words in forced colors, on the system's selection", async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await writePage(page, { title: 'Chosen', body: CHOSEN });
+        const selection = await page.evaluate(() => {
+            const probe = document.body.appendChild(document.createElement('span'));
+            probe.style.backgroundColor = 'Highlight';
+            const drawn = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return drawn;
+        });
+        // On the selection, its words show as the selection's text where a backplate would
+        // paint them over.
+        for (const id of [
+            'pill',
+            'tab',
+            'tab-link',
+            'tab-toggle',
+            'toggle',
+            'open',
+            'theme',
+            'cell',
+        ]) {
+            const chosen = page.locator(`#${id}`);
+            expect(
+                await chosen.evaluate((element) => getComputedStyle(element).backgroundColor),
+                id
+            ).toBe(selection);
+            expect(await backplateUnderWords(chosen), id).toBeLessThan(0.8);
+        }
+    } finally {
+        await context.close();
+    }
+});
