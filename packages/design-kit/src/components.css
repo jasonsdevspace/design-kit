@@ -1688,6 +1688,16 @@
         display: flex;
     }
 
+    /*
+     * A row at the foot of a container that draws a rule of its own, such as a masthead or a code
+     * block's bar, draws no rule and stands a pixel lower, so the chosen tab's line lies over the
+     * container's rule and the resting tabs leave it showing, where two rules would stack.
+     */
+    :where(.dk-tabs-on-rule) {
+        margin-bottom: -1px;
+        border-bottom: 0;
+    }
+
     :where(.dk-tab) {
         display: inline-flex;
         align-items: center;
