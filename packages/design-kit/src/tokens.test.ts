@@ -70,7 +70,7 @@ describe('the tokens', () => {
             'app-bar',
             ...['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) => `stack-${layer}`),
             'shadow-raised',
-            'shadow-card',
+            'shadow-resting',
             'scrim',
             'duration-short',
             'duration-medium',
@@ -96,9 +96,14 @@ describe('the tokens', () => {
             expect(flat, side).toContain(
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`
             );
-        // An app's column clears the phone's sides itself, so a band inside it starts a step in.
+        // On a page with an app's column, what sits outside it starts where the column's content
+        // does, and the column clears the phone's sides itself, so a band inside it starts a step in.
+        for (const side of ['left', 'right'])
+            expect(flat, side).toContain(
+                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4));`
+            );
         expect(flat).toMatch(
-            /:where\(\.dk-app, \.dk-tabbar-page\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
+            /:where\(\.dk-app, \.dk-tabbar-page > :not\(\.dk-skip\)\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
         );
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
@@ -151,7 +156,7 @@ describe('the tokens', () => {
         expect(declared.get('--dk-field-inline')).toBe(declared.get('--dk-space-3'));
     });
 
-    it.each(['--dk-shadow-raised', '--dk-shadow-card'])(
+    it.each(['--dk-shadow-raised', '--dk-shadow-resting'])(
         'casts %s deeper on a dark page, where a soft one shows little',
         (name) => {
             const shadow = declared.get(name) ?? '';

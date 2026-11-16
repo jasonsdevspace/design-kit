@@ -230,13 +230,6 @@
                                 "unit": "rem"
                             }
                         },
-                        "tile-least": {
-                            "$type": "dimension",
-                            "$value": {
-                                "value": 15,
-                                "unit": "rem"
-                            }
-                        },
                         "strip": {
                             "$type": "dimension",
                             "$value": {
@@ -480,7 +473,7 @@
                                     }
                                 }
                             },
-                            "shadow-card": {
+                            "shadow-resting": {
                                 "$type": "shadow",
                                 "$value": {
                                     "color": {
@@ -677,7 +670,7 @@
                                     }
                                 }
                             },
-                            "shadow-card": {
+                            "shadow-resting": {
                                 "$type": "shadow",
                                 "$value": {
                                     "color": {
