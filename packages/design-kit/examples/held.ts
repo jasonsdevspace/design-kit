@@ -122,6 +122,8 @@ export const HELD = {
                 "the field passes the control's own attributes through",
                 'the field draws a native select with its options, wired the same way',
                 'the field draws a textarea with its text as a value, wired the same way',
+                'the field draws an action beside the control in the field action row, after the control',
+                'the field draws a field with no action as it did, and wires its hint and error with one',
                 'the choice field draws a fieldset with its label as the legend, and a label of a radio and its word for each choice',
                 'the choice field describes the set by its hint, then its error, and marks a radio group invalid only with one',
                 'the choice field draws checkboxes in a row where the field asks, with a gloss after a word, each marked by an error',
@@ -327,6 +329,7 @@ export const HELD = {
                         `draws a raised panel on the raised ground, lifted by the resting shadow or the page's own, in the ${theme} theme`
                 ),
                 'keeps a pinned column and a code block apart from a raised panel on grounds of their own',
+                'gives a piece the ground of the nearest container that holds it, however they nest',
             ],
         },
         {
@@ -335,6 +338,10 @@ export const HELD = {
                 ...BOTH_THEMES(
                     (theme) =>
                         `steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the ${theme} theme`
+                ),
+                ...['on a wide page', 'on a phone', "on an app's frame"].map(
+                    (where) =>
+                        `starts a tile's words on the line a raised panel's start on above it, ${where}`
                 ),
             ],
         },
@@ -353,6 +360,13 @@ export const HELD = {
                 'keeps a row with a button as tall as one without, the button in the middle and every ring off the words',
                 'has no audit findings in the light theme',
                 'has no audit findings in the dark theme',
+            ],
+        },
+    ],
+    Tiles: [
+        {
+            file: 'e2e/rows.spec.ts',
+            titles: [
                 'draws each tile on the ground its page sets, with an edge and a gap in place of the rule',
                 'draws a tile on the surface with no ground set and no shadow, unless the page sets its own',
                 ...BOTH_THEMES(
@@ -367,6 +381,8 @@ export const HELD = {
                 ...BOTH_THEMES(
                     (theme) => `has no audit findings for a list of tiles in the ${theme} theme`
                 ),
+                "draws no tile's shadow in forced colors, a page's own included",
+                'draws an empty list of tiles not at all',
             ],
         },
     ],
