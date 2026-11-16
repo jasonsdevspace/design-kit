@@ -12,9 +12,9 @@ entry as the notes.
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
-can sit on its container's rule, and an icon takes one class. The theme script is unchanged, so
-`themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set again by the
-size audit's rule, and the controls' stays at 6.25 KB.
+can sit on its container's rule, a text button gains a quiet form for a Close, and an icon takes one
+class. The theme script is unchanged, so `themeScriptHash` is the same. The sheets' budget rises
+from 9.25 KB to 10.25 KB, set again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -22,7 +22,10 @@ size audit's rule, and the controls' stays at 6.25 KB.
   of those three names for something of its own gets the kit's meaning for it. A footer with nothing
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
-  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
+  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
+  toast's close says Close, where it said Dismiss, so a toast written by hand changes the words out
+  of sight in its close button, and may add `dk-button-quiet` to it as the React `Toast` does,
+  though its own class draws it the same without.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
@@ -38,12 +41,16 @@ size audit's rule, and the controls' stays at 6.25 KB.
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
-  `dk-icon` draws an inline svg one em square, stroked in the text's color at `max(1.5px, 0.125em)`
-  that does not scale with the drawing, with round caps and joins and no fill, a path drawn in fill
-  with no outline, and a tab bar's icons at their own size with the stroke that size takes.
-  `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the container at whose foot it
-  sits, drawing no rule of its own and standing a pixel lower, so the chosen tab's line lies over
-  the container's rule, and keeping to the foot of a bar that centers what it holds.
+  `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
+  underline and in the text color under a pointer and while held, as wide as a button is tall, open
+  or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
+  toast's close is drawn by the same rules. `dk-icon` draws an inline svg one em square, stroked in
+  the text's color at `max(1.5px, 0.125em)` that does not scale with the drawing, with round caps
+  and joins and no fill, a path drawn in fill with no outline, and a tab bar's icons at their own
+  size with the stroke that size takes. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the
+  rule of the container at whose foot it sits, drawing no rule of its own and standing a pixel
+  lower, so the chosen tab's line lies over the container's rule, and keeping to the foot of a bar
+  that centers what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -52,7 +59,9 @@ size audit's rule, and the controls' stays at 6.25 KB.
   `dk-field-action` row, so a page draws a field with a button, such as a search and the button that
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
   `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
-  same component under its first name.
+  same component under its first name. `Button` takes `quiet` beside `text`, and with no children
+  draws a hidden × beside Close out of sight. TypeScript refuses `quiet` with `off`, since a Close
+  always closes.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through
@@ -68,9 +77,11 @@ size audit's rule, and the controls' stays at 6.25 KB.
   the table of properties a page sets to what the sheets read. An icon is its line's font size at
   the usual and a doubled size, stroked in its line's color at a weight that holds in Chromium,
   Firefox and WebKit, in the system's text and link colors in forced colors, and a control whose
-  face is an icon alone is named by its words. A tab row on its container's rule ends the chosen
-  line and the resting tabs on the container's foot with one rule, in a block and in a bar that
-  centers it, in both themes and in forced colors, and a plain row keeps its own rule.
+  face is an icon alone is named by its words. A quiet button's colors, its states, its size at
+  every width and in an app, its name and its ring in forced colors are held on the page, a panel
+  and a raised panel in both themes. A tab row on its container's rule ends the chosen line and the
+  resting tabs on the container's foot with one rule, in a block and in a bar that centers it, in
+  both themes and in forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
 

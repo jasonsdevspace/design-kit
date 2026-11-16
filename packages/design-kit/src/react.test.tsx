@@ -263,6 +263,25 @@ describe('the button', () => {
         }
     });
 
+    it('draws a quiet button by its class, saying Close beside a hidden × when given no words', () => {
+        expect(renderToStaticMarkup(<Button text quiet />)).toBe(
+            '<button type="button" class="dk-button dk-button-text dk-button-quiet">' +
+                '<span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Button text quiet>
+                    Done
+                </Button>
+            )
+        ).toBe(
+            '<button type="button" class="dk-button dk-button-text dk-button-quiet">Done</button>'
+        );
+        expect(renderToStaticMarkup(<Button text quiet={false} />)).toBe(
+            '<button type="button" class="dk-button dk-button-text"></button>'
+        );
+    });
+
     it('draws a tall button by its class, with the large button or without', () => {
         expect(renderToStaticMarkup(<Button tall>Save the round</Button>)).toBe(
             '<button type="button" class="dk-button dk-button-tall">Save the round</button>'
@@ -348,6 +367,12 @@ describe('the button', () => {
         // @ts-expect-error A text button is not tall.
         const raised = <Button text tall children="Go" />;
         expect(renderToStaticMarkup(raised)).toBeTruthy();
+        // @ts-expect-error A quiet button is a text button.
+        const alone = <Button quiet />;
+        expect(renderToStaticMarkup(alone)).toBeTruthy();
+        // @ts-expect-error A Close always closes, so a quiet button is never off.
+        const stuck = <Button text quiet off />;
+        expect(renderToStaticMarkup(stuck)).toBeTruthy();
     });
 });
 
