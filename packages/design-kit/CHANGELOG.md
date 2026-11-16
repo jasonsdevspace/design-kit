@@ -27,7 +27,10 @@ and the controls' at 6.25 KB.
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
   page's own full-width band pads its sides with them to line up with the strip. Inside an app's
   frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
-  already.
+  already. `--dk-app-padding` and `--dk-dialog-padding` are the padding of a panel in an app's frame
+  and of a dialog on a phone, and a wide dialog's, each stopping at its usual size, and
+  `--dk-field-inline-held` is a stepper's inline padding held the same way, so each copy reads one
+  value.
 - **Sheets.** On a page that says `viewport-fit=cover`, the strip starts its links below what a
   phone held upright keeps at its top, and the strip, the footer, an explainer and its header start
   their content past what a phone on its side keeps at each side. `dk-panel-raised` sets a panel on
@@ -57,7 +60,8 @@ and the controls' at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read.
+  the table of properties a page sets to what the sheets read. A scope test holds every list of an
+  app's places to one form, and another finds no copy of a formula the tokens now hold.
 
 ## 0.7.0
 

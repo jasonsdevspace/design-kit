@@ -1338,7 +1338,7 @@
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
     ) {
-        padding: min(var(--dk-space-4), 16px);
+        padding: var(--dk-app-padding);
     }
 
     /*
@@ -2729,13 +2729,12 @@
          * padding, its edge and the pixel a side WebKit keeps inside a field.
          */
         width: calc(
-            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * min(var(--dk-field-inline), 12px) +
-                4px
+            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * var(--dk-field-inline-held) + 4px
         );
         min-height: var(--dk-target);
         padding-block: 0;
         /* A field's inline padding, held to its usual size so the figures keep room. */
-        padding-inline: min(var(--dk-field-inline), 12px);
+        padding-inline: var(--dk-field-inline-held);
         font-family: var(--dk-font-mono);
         font-variant-numeric: tabular-nums;
         text-align: center;
@@ -2802,10 +2801,10 @@
      * room.
      */
     :where(.dk-dialog) {
-        width: min(100% - 2 * min(var(--dk-space-4), 16px), var(--dk-dialog-width));
+        width: min(100% - 2 * var(--dk-app-padding), var(--dk-dialog-width));
         max-width: none;
-        max-height: calc(100dvh - 2 * min(var(--dk-space-4), 16px));
-        padding: min(var(--dk-space-5), 24px);
+        max-height: calc(100dvh - 2 * var(--dk-app-padding));
+        padding: var(--dk-dialog-padding);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-raised);
@@ -2863,7 +2862,7 @@
         max-width: var(--dk-app-column);
         max-height: calc(100dvh - var(--dk-safe-top) - var(--dk-space-6));
         margin: auto auto 0;
-        padding-bottom: calc(min(var(--dk-space-5), 24px) + var(--dk-safe-bottom));
+        padding-bottom: calc(var(--dk-dialog-padding) + var(--dk-safe-bottom));
         border-bottom: 0;
         border-radius: var(--dk-radius-large) var(--dk-radius-large) 0 0;
     }
@@ -2875,20 +2874,20 @@
      */
     @media (width <= 48rem) {
         :where(.dk-dialog) {
-            padding: min(var(--dk-space-4), 16px);
+            padding: var(--dk-app-padding);
         }
 
         :where(.dk-dialog-sheet) {
-            padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+            padding-bottom: calc(var(--dk-app-padding) + var(--dk-safe-bottom));
         }
     }
 
     :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog) {
-        padding: min(var(--dk-space-4), 16px);
+        padding: var(--dk-app-padding);
     }
 
     :where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog-sheet) {
-        padding-bottom: calc(min(var(--dk-space-4), 16px) + var(--dk-safe-bottom));
+        padding-bottom: calc(var(--dk-app-padding) + var(--dk-safe-bottom));
     }
 
     :where(.dk-dialog-sheet:modal) {

@@ -161,6 +161,14 @@
         --dk-app-bar: 4rem;
         /* The widest a dialog grows in the middle of a screen. */
         --dk-dialog-width: 32rem;
+        /*
+         * The padding of a panel in an app's frame and of a dialog on a phone, and a wide
+         * dialog's, each stopping at its usual size so a large text size leaves what they hold
+         * its room. A field's inline padding held the same way keeps a stepper's figures room.
+         */
+        --dk-app-padding: min(var(--dk-space-4), 16px);
+        --dk-dialog-padding: min(var(--dk-space-5), 24px);
+        --dk-field-inline-held: min(var(--dk-field-inline), 12px);
 
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and

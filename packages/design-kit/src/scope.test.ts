@@ -286,6 +286,33 @@ describe('what the sheets style', () => {
         }
     });
 
+    it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
+        // The base list, and the pieces that keep a phone's size there too.
+        const places = '.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog';
+        const added = new Set(['.dk-toast']);
+        const css = withoutComments(readFileSync(new URL('components.css', folder), 'utf8'));
+        const lists = [...css.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)]
+            .map(([, list = '']) => list.replace(/\s+/g, ' ').replace(/\( /g, '(').trim())
+            .filter((list) => list.includes('.dk-tabbar-page') && list.includes('.dk-dialog'));
+        expect(lists.length).toBeGreaterThan(0);
+        const astray = lists.filter((list) => {
+            if (!list.startsWith(places)) return true;
+            const rest = list.slice(places.length).replace(/^,/, '').trim();
+            return rest !== '' && !rest.split(/\s*,\s*/).every((piece) => added.has(piece));
+        });
+        expect(astray).toEqual([]);
+    });
+
+    it('reads each formula copied to change in step from its token', () => {
+        const css = withoutComments(readFileSync(new URL('components.css', folder), 'utf8'));
+        const copies = [
+            'min(var(--dk-space-4), 16px)',
+            'min(var(--dk-space-5), 24px)',
+            'min(var(--dk-field-inline), 12px)',
+        ].filter((formula) => css.includes(formula));
+        expect(copies).toEqual([]);
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')
