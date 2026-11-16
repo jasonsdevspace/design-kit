@@ -499,5 +499,11 @@ test("takes a content page's controls in the markup's order, and cuts nothing of
     await textSize(page, 2);
     await writePage(page, { width: 320, title: 'Scorekeeper', css: SPACED, body: CONTENT });
     expect(await sideways(page)).toBe(0);
-    expect(await cutOff(page, '.dk-page > *, .dk-page > section > *')).toEqual([]);
+    // A table's frame scrolls inside itself by design, so the check is of everything else.
+    expect(
+        await cutOff(
+            page,
+            '.dk-page > :not(.dk-table-scroll), .dk-page > section > :not(.dk-table-scroll)'
+        )
+    ).toEqual([]);
 });
