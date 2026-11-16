@@ -1131,7 +1131,7 @@ test.describe('the app pieces page', () => {
         }
     });
 
-    test("draws each screen as a phone's height in a box of its own, its bars inside it", async ({
+    test("draws each screen as a phone's height in a box of its own, its bars inside it, and the page around them as a content page", async ({
         page,
     }) => {
         await page.setViewportSize({ width: 320, height: 640 });
@@ -1144,8 +1144,26 @@ test.describe('the app pieces page', () => {
         for (const bar of await page.locator('.site-copy .dk-tabbar-page > .dk-tabbar').all()) {
             await expect(bar).toHaveCSS('position', 'static');
         }
-        // The page keeps none of the room the kit keeps for a bar that sticks to the screen.
-        await expect(page.locator('html')).toHaveCSS('scroll-padding-bottom', '0px');
+        // The pictures are not the page's own, so the page keeps the browser's scroll room and
+        // pull to refresh, and lines its strip, content and footer up with a page that pictures
+        // no frame.
+        await expect(page.locator('html')).toHaveCSS('scroll-padding-bottom', 'auto');
+        await expect(page.locator('html')).toHaveCSS('overscroll-behavior-y', 'auto');
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            const starts = async (path: string) => {
+                await page.goto(path);
+                return page.evaluate(() =>
+                    ['body > .dk-strip', 'body > main', 'body > .dk-footer'].map(
+                        (selector) =>
+                            `${selector} ${getComputedStyle(document.querySelector(selector) ?? document.body).paddingLeft}`
+                    )
+                );
+            };
+            expect(await starts('/design-kit/app-pieces/'), String(width)).toEqual(
+                await starts('/design-kit/controls/')
+            );
+        }
     });
 
     test('flips a toggle in the grid, and leaves a plain key with no state', async ({ page }) => {
@@ -1878,7 +1896,7 @@ test.describe('the theme switch', () => {
 });
 
 test.describe('the code of each state', () => {
-    test("keeps the chosen tab's line on the tabs' rule, and the copy button after the tabs and under their rule when it wraps", async ({
+    test("stands every tab on a line, the chosen one's on the tabs' rule, and the copy button after the tabs and under their rule when it wraps", async ({
         page,
     }) => {
         for (const [width, scale] of [
@@ -1913,6 +1931,14 @@ test.describe('the code of each state', () => {
                             Math.round(tab.getBoundingClientRect().top)
                         )
                     ).size,
+                    edges: [...tabs.querySelectorAll('.dk-tab')].map((tab) => {
+                        const drawn = getComputedStyle(tab);
+                        return drawn.borderBottomStyle === 'none' ||
+                            drawn.borderBottomWidth === '0px' ||
+                            drawn.borderBottomColor === 'rgba(0, 0, 0, 0)'
+                            ? '0px'
+                            : drawn.borderBottomWidth;
+                    }),
                 };
             });
             // The tabs draw the one rule, the bar none, and the copy button follows the tabs for
@@ -1920,13 +1946,17 @@ test.describe('the code of each state', () => {
             expect(drawn.barRule, at).toBe('0px');
             expect(drawn.rule, at).toBe('1px');
             expect(drawn.copyAfter, at).toBe(true);
-            if (drawn.lines === 1) {
-                // On one line the chosen tab's line ends on the rule, or a pixel above it on a kit
-                // whose tabs stand over their row's rule rather than on it, and never below it.
-                const above = drawn.tabsBottom - drawn.chosenBottom;
-                expect(above, at).toBeGreaterThanOrEqual(0);
-                expect(above, at).toBeLessThanOrEqual(1);
-            }
+            // At twice the text size on the narrowest phone the tabs wrap, so the case of a tab on a
+            // line above another is the one tested there.
+            if (width === 320) expect(drawn.lines, at).toBeGreaterThan(1);
+            // Every tab stands on a drawn line of its own, on every line the tabs take, and on one
+            // line the chosen tab's line lies on the tabs' rule.
+            expect(
+                drawn.edges.filter((edge) => edge === '0px'),
+                at
+            ).toEqual([]);
+            if (drawn.lines === 1)
+                expect(Math.abs(drawn.tabsBottom - drawn.chosenBottom), at).toBeLessThan(0.5);
             // On the narrowest phone at twice the text size the button wraps under the tabs' rule,
             // and wider it stands beside the tabs.
             if (width === 320) expect(drawn.copyTop, at).toBeGreaterThanOrEqual(drawn.tabsBottom);
