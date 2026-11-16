@@ -153,7 +153,9 @@ export const backplateUnderWords = async (locator: Locator): Promise<number> => 
         const bottom = Math.min(own.bottom, Math.max(...rects.map((rect) => rect.bottom)));
         return { x: left, y: top, width: right - left, height: bottom - top };
     });
-    const under = (await page.screenshot({ clip: words })).toString('base64');
+    const underShot = await page.screenshot({ clip: words });
+    await (await import('@playwright/test')).test.info().attach('under', { body: underShot, contentType: 'image/png' });
+    const under = underShot.toString('base64');
     return page.evaluate(
         async ([shotOfWhole = '', shotUnder = '']) => {
             const read = async (data: string) => {
