@@ -40,11 +40,12 @@ can hold a picture at its start, with tiles flowing into columns. The theme scri
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
   `dk-row-picture` as a row's first child sits at its start in a column of its own, `--dk-target`
-  square or the size a page sets by `--dk-row-picture-size`, so every title in a list starts on one
-  line. `dk-rows-columns` beside `dk-rows-tiles` flows the tiles into as many columns as fit, each
-  at least `--dk-tile-least` wide, falling to one column on a phone, with each title at the body
-  size and a picture across the tile's top. A tile in a plain panel steps to the page's ground and
-  one in a raised panel to the card's, where the page sets none.
+  square or the size a page sets by `--dk-row-picture-size` up to a quarter of the screen's width,
+  so every title in a list starts on one line. `dk-rows-columns` beside `dk-rows-tiles` flows the
+  tiles into as many columns as fit, each at least `--dk-tile-least` wide, falling to one column on
+  a phone, the tiles on one line ending together, with each title at the body size and a picture
+  across the tile's top. A tile in a plain panel steps to the page's ground and one in a raised
+  panel to the card's, where the page sets none.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -67,8 +68,9 @@ can hold a picture at its start, with tiles flowing into columns. The theme scri
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
   the table of properties a page sets to what the sheets read. A row and a tile with a picture start
   every title on one line with the ring clear of the picture and the title first in the link's name,
-  tiles flow into columns on a wide page and into one on a phone at twice the text size, in reading
-  order for the keyboard, and a tile steps its ground in a panel.
+  tiles flow into columns on a wide page, ending together on each line, and into one on a phone at
+  twice the text size and the wider spacing a visitor may set, in reading order for the keyboard,
+  and a tile steps its ground in a panel with its words, sign and ring at their ratios.
 
 ## 0.7.0
 

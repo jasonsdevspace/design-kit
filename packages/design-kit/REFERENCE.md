@@ -73,20 +73,20 @@ draws, and a page writes no rule over a kit class for it, as [decision
 sets out. Where a property sets a ground, the page chooses a value that keeps what sits on it to its
 contrast, in both themes, which `light-dark()` writes in one value.
 
-| Property                   | Default                                            | What it sets, and what it must hold                                                                                                   |
-| -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dk-focus`               | the accent                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                          |
-| `--dk-button-shadow`       | none                                               | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                            |
-| `--dk-button-press`        | none, so a held button does not move               | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px` |
-| `--dk-panel-shadow`        | none                                               | A shadow under a raised panel                                                                                                         |
-| `--dk-tile-ground`         | the surface, or the page's ground in a plain panel | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign and its focus ring 3 to 1                                |
-| `--dk-tile-shadow`         | none                                               | A shadow under a tile                                                                                                                 |
-| `--dk-row-picture-size`    | the target                                         | The width and height of a picture at a row's start                                                                                    |
-| `--dk-button-grid-columns` | 3                                                  | The columns a grid of buttons asks for                                                                                                |
-| `--dk-button-grid-least`   | the target, and the larger target in a tall grid   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                 |
-| `--dk-table-ground`        | the page's, a panel's or a dialog's ground         | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                |
-| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide         | The width of a pinned column                                                                                                          |
-| `--dk-stepper-digits`      | 2                                                  | The figures a stepper's field keeps room for                                                                                          |
+| Property                   | Default                                            | What it sets, and what it must hold                                                                                                            |
+| -------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dk-focus`               | the accent                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                   |
+| `--dk-button-shadow`       | none                                               | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                                     |
+| `--dk-button-press`        | none, so a held button does not move               | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px`          |
+| `--dk-panel-shadow`        | none                                               | A shadow under a raised panel                                                                                                                  |
+| `--dk-tile-ground`         | the surface, or the page's ground in a plain panel | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign and its focus ring 3 to 1                                         |
+| `--dk-tile-shadow`         | none                                               | A shadow under a tile                                                                                                                          |
+| `--dk-row-picture-size`    | the target                                         | The width and height of a picture at a row's start, at most a quarter of the screen. A tile in columns lays its picture across its top instead |
+| `--dk-button-grid-columns` | 3                                                  | The columns a grid of buttons asks for                                                                                                         |
+| `--dk-button-grid-least`   | the target, and the larger target in a tall grid   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                          |
+| `--dk-table-ground`        | the page's, a panel's or a dialog's ground         | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
+| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide         | The width of a pinned column                                                                                                                   |
+| `--dk-stepper-digits`      | 2                                                  | The figures a stepper's field keeps room for                                                                                                   |
 
 ## Page chrome
 
@@ -1943,9 +1943,9 @@ with figures of one width, so a column of them lines up.
 A `dk-row-picture` as a row's first child, such as a player's face, sits at the row's start in a
 column of its own, so every title in the list starts on one line. It is `--dk-target` wide and tall
 and cropped to fill that square, or the size a page sets with `--dk-row-picture-size`, with the
-kit's corners. The title names the link, so the picture has empty alt text, or is hidden from a
-screen reader, and the link's name starts with its title. It sits inside the room the row keeps for
-its focus ring, so the ring never covers it.
+kit's corners, and never more than a quarter of the screen's width, so the text keeps its room on a
+phone. The title names the link, so the picture has empty alt text, and the link's name starts with
+its title. It sits inside the room the row keeps for its focus ring, so the ring never covers it.
 
 ### Tiles
 

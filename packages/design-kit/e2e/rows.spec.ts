@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, colorOf, sideways, style, writePage } from './page.js';
+import { box, colorOf, contrast, sideways, style, writePage } from './page.js';
+import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -508,9 +509,9 @@ test('starts every title on one line beside a picture, in a row and a tile, with
     await writePage(page, {
         width: 390,
         title: 'Players',
-        body: `<main><h1>Players</h1>${pictureList('Players', '')}${pictureList('Tiles', 'dk-rows-tiles')}</main>`,
+        body: `<main><h1>Players</h1>${pictureList('Players', '')}${pictureList('Tiles', 'dk-rows-tiles')}${pictureList('Columns', 'dk-rows-tiles dk-rows-columns', ' width="160" height="90"')}</main>`,
     });
-    for (const label of ['Players', 'Tiles']) {
+    for (const label of ['Players', 'Tiles', 'Columns']) {
         const links = await page.getByRole('list', { name: label }).getByRole('link').all();
         const starts = new Set<number>();
         for (const link of links) {
@@ -525,11 +526,9 @@ test('starts every title on one line beside a picture, in a row and a tile, with
             expect(picture.y - row.y, label).toBeGreaterThan(ring);
         }
         expect([...starts], label).toHaveLength(1);
+        // The picture says nothing, so each link's name starts with its title.
+        await expect(links[0] ?? page.locator('#none'), label).toHaveAccessibleName(/^Ana\b/);
     }
-    // The picture says nothing, so each link's name starts with its title.
-    await expect(
-        page.getByRole('list', { name: 'Players' }).getByRole('link').first()
-    ).toHaveAccessibleName(/^Ana\b/);
 });
 
 /** The tiles in columns, on a plain page, each with a picture across its top. */
@@ -544,7 +543,11 @@ const places = (page: Page) =>
         .evaluateAll((links) =>
             links.map((link) => {
                 const drawn = link.getBoundingClientRect();
-                return { x: Math.round(drawn.x), y: Math.round(drawn.y) };
+                return {
+                    x: Math.round(drawn.x),
+                    y: Math.round(drawn.y),
+                    height: Math.round(drawn.height),
+                };
             })
         );
 
@@ -558,6 +561,8 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
         if (width === 1280) {
             expect(across, '1280px').toBeGreaterThan(1);
             expect(drawn[1]?.y, '1280px').toBe(drawn[0]?.y);
+            // The tiles on one line end together, a long title's beside a short one's.
+            expect(drawn[1]?.height, '1280px').toBe(drawn[0]?.height);
         } else expect(across, '320px').toBe(1);
         // Written order is reading order, row by row, and the keyboard's.
         const read = [...drawn.keys()].sort(
@@ -584,11 +589,23 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
         expect(title.y, `${String(width)}px`).toBeGreaterThanOrEqual(picture.y + picture.height);
         expect((await style(tile.locator('.dk-row-title'), 'font-size'))['font-size']).toBe('16px');
     }
-    // At twice the text size on the narrowest phone, one column that does not scroll sideways.
+    // At twice the text size and the wider spacing a visitor may set, on the narrowest phone, one
+    // column, and a row, a tile and a large picture a page sets, none scrolling sideways or cutting
+    // off a word.
     await textSize(page, 2);
-    await writePage(page, { width: 320, title: 'Pages', body: columns() });
+    await writePage(page, {
+        width: 320,
+        title: 'Pages',
+        css: `${SPACED} #large { --dk-row-picture-size: 6rem; }`,
+        body:
+            columns() +
+            pictureList('Players', '') +
+            pictureList('Tiles', 'dk-rows-tiles') +
+            `<div id="large">${pictureList('Large', 'dk-rows-tiles')}</div>`,
+    });
     expect(await sideways(page)).toBe(0);
     expect(new Set((await places(page)).map(({ x }) => x)).size).toBe(1);
+    expect(await cutOff(page, '.dk-row-text')).toEqual([]);
 });
 
 test("steps a tile's ground off a plain panel to the page's, and off a raised one to the card's", async ({
@@ -612,6 +629,18 @@ test("steps a tile's ground off a plain panel to the page's, and off a raised on
         expect(await ground('In a raised panel'), theme).toBe(
             await colorOf(page, 'var(--dk-surface)')
         );
+        // The muted detail, the sign and the ring hold their ratios on each stepped ground.
+        for (const label of ['In a panel', 'In a raised panel']) {
+            const under = await ground(label);
+            expect(
+                contrast(await colorOf(page, 'var(--dk-muted)'), under),
+                label
+            ).toBeGreaterThanOrEqual(4.5);
+            expect(
+                contrast(await colorOf(page, 'var(--dk-accent)'), under),
+                label
+            ).toBeGreaterThanOrEqual(3);
+        }
         const results = await new AxeBuilder({ page }).analyze();
         expect(
             results.violations.map(({ id }) => id),

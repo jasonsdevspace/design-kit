@@ -2607,8 +2607,9 @@
 
     /*
      * A picture at a row's start, such as a player's face, in a column of its own before the text,
-     * at a size a page may set, so every title in a list starts on one line. It is hidden from a
-     * screen reader, so the link's name starts with its title.
+     * square at a size a page may set, so every title in a list starts on one line, and never more
+     * than a quarter of a narrow screen, so the text keeps its room. The markup gives it empty alt
+     * text, so the link's name starts with its title.
      */
     :where(.dk-row:has(> .dk-row-picture)) {
         grid-template-columns: auto minmax(0, 1fr);
@@ -2616,8 +2617,8 @@
 
     :where(.dk-row-picture) {
         align-self: center;
-        width: var(--dk-row-picture-size, var(--dk-target));
-        height: var(--dk-row-picture-size, var(--dk-target));
+        width: min(var(--dk-row-picture-size, var(--dk-target)), 25vw);
+        height: min(var(--dk-row-picture-size, var(--dk-target)), 25vw);
         border-radius: var(--dk-radius);
         object-fit: cover;
     }
@@ -2718,6 +2719,11 @@
      */
     :where(.dk-rows-columns:has(> li)) {
         grid-template-columns: repeat(auto-fill, minmax(min(var(--dk-tile-least), 100%), 1fr));
+    }
+
+    /* Each tile fills its item, so the tiles on one line end together. */
+    :where(.dk-rows-columns > li) {
+        display: grid;
     }
 
     :where(.dk-rows-columns .dk-row-title) {
