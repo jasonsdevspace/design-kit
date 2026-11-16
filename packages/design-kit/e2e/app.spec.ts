@@ -703,8 +703,9 @@ const panels = (framed: boolean): string => {
 };
 
 for (const theme of ['light', 'dark'] as const)
-    test(`draws a raised panel on the raised ground, with the page's shadow only where it sets one, in the ${theme} theme`, async ({
+    test(`draws a raised panel on the raised ground, lifted by the card shadow or the page's own, in the ${theme} theme`, async ({
         page,
+        browserName,
     }) => {
         const raised = page.locator('.dk-panel-raised');
         const plain = page.locator('.dk-panel:not(.dk-panel-raised)');
@@ -718,6 +719,12 @@ for (const theme of ['light', 'dark'] as const)
                 : 'rgba(0, 0, 0, 0.4) 0px 1px 3px 0px'
         );
         expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
+        // Forced colors draw no shadow, where an engine draws them.
+        if (browserName !== 'webkit') {
+            await page.emulateMedia({ forcedColors: 'active' });
+            expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
+            await page.emulateMedia({ forcedColors: 'none' });
+        }
         // A plain panel stays on the card ground.
         expect((await style(plain, 'background-color'))['background-color']).toBe(
             theme === 'light' ? 'rgb(245, 245, 245)' : 'rgb(30, 30, 30)'

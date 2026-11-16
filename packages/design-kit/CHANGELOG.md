@@ -21,9 +21,7 @@ and the controls' at 6.25 KB.
   of those three names for something of its own gets the kit's meaning for it. A footer with nothing
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
-  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
-  raised panel and a tile now cast `--dk-shadow-card` where the page sets no shadow, so a page that
-  wants neither to cast one sets `--dk-panel-shadow` or `--dk-tile-shadow` to `none`.
+  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A

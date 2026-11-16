@@ -378,10 +378,14 @@ test("draws a tile on the surface with no ground set, lifted by the card shadow 
         'background-color': 'rgb(245, 245, 245)',
         'box-shadow': 'rgba(0, 0, 0, 0.12) 0px 1px 3px 0px',
     });
-    // Forced colors draw no shadow.
+    // Forced colors draw no shadow, and a dark page a deeper one.
     await page.emulateMedia({ forcedColors: 'active' });
     expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
     await page.emulateMedia({ forcedColors: 'none' });
+    await writePage(page, { width: 390, theme: 'dark', title: 'Play', body: tiles(false) });
+    expect((await style(link, 'box-shadow'))['box-shadow']).toBe(
+        'rgba(0, 0, 0, 0.4) 0px 1px 3px 0px'
+    );
     await writePage(page, {
         width: 390,
         css: ':root { --dk-tile-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',

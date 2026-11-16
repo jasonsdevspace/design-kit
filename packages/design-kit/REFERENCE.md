@@ -1202,12 +1202,12 @@ title steps down to the body size.
 list, such as a game in play above the games to start. It sits on `--dk-raised`, a step above the
 card ground in both themes, where a plain panel would match a page's cards. In the light theme the
 raised ground is the page's own, so its edge and its shadow draw the panel there. A page with a
-shadow of its own for it sets `--dk-panel-shadow`, as it sets `--dk-button-shadow` for a button, and
-writes no rule over the kit's class. With none set, a raised panel casts the kit's card shadow,
-`--dk-shadow-card`, which a page's own replaces. It keeps the panel's edge, its corners and its
-padding, and stays a block with no role. A pinned column or a code block inside it takes grounds of
-its own that stand apart from the raised one. A raised panel belongs on a page or in an app's body,
-since a dialog is drawn on the raised ground already.
+shadow of its own for it sets `--dk-panel-shadow`, or `none` for no shadow, and writes no rule over
+the kit's class. With none set, a raised panel casts the kit's card shadow, `--dk-shadow-card`,
+which a page's own replaces. It keeps the panel's edge, its corners and its padding, and stays a
+block with no role. A pinned column or a code block inside it takes grounds of its own that stand
+apart from the raised one. A raised panel belongs on a page or in an app's body, since a dialog is
+drawn on the raised ground already.
 
 ### Tables
 
@@ -1953,8 +1953,7 @@ its style attribute, and chooses a ground its text keeps its contrast on in both
 with `light-dark()`. A tile keeps what a link row has: the sign that says it leads somewhere on a
 phone, where nothing hovers, its title underlined under a pointer and under a pressing thumb, and
 its focus ring drawn inside it. A page with a shadow of its own for a tile sets `--dk-tile-shadow`,
-as it sets `--dk-button-shadow` for a button. A list with no tiles is not drawn, as a list of rows
-is not.
+or `none` for no shadow. A list with no tiles is not drawn, as a list of rows is not.
 
 <details>
 <summary>How the tiles are drawn</summary>
