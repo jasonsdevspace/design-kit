@@ -6,17 +6,17 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-16 | `2caf42c` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.2 |
+| 2026-11-16 | `d510aea` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.8.0`, 70.7 KB packed. The sheets a page loads come to 10.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.7.0 on 2026-11-13 at `0ea7947`, it packs 70.7 KB where it packed 62.6 KB.
+`@jasonsdevspace/design-kit@0.8.1`, 71.9 KB packed. The sheets a page loads come to 10.1 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.8.0 on 2026-11-16 at `2caf42c`, it packs 71.9 KB where it packed 70.7 KB, and the sheets together came to 10.0 KB.
 
 The sheets a page loads:
 
 | File                | Raw      | Gzipped | Without comments |
 | ------------------- | -------- | ------- | ---------------- |
 | dist/base.css       | 8.9 KB   | 2.9 KB  | 1.1 KB           |
-| dist/components.css | 122.1 KB | 27.5 KB | 8.1 KB           |
-| dist/tokens.css     | 15.5 KB  | 4.9 KB  | 1.3 KB           |
+| dist/components.css | 125.0 KB | 27.9 KB | 8.2 KB           |
+| dist/tokens.css     | 15.7 KB  | 5.0 KB  | 1.4 KB           |
 
 The modules a page's build imports:
 
@@ -37,45 +37,45 @@ Every other file the package carries, which a page never loads:
 | dist/tokens.resolver.json | 30.6 KB | 1.9 KB  |
 | dist/vite.d.ts            | 2.2 KB  | 1.0 KB  |
 | LICENSE                   | 1.0 KB  | 0.6 KB  |
-| package.json              | 2.3 KB  | 0.8 KB  |
-| README.md                 | 15.0 KB | 4.7 KB  |
+| package.json              | 2.4 KB  | 0.8 KB  |
+| README.md                 | 18.9 KB | 5.5 KB  |
 
 What each piece costs the three sheets, as what they save sent together without their comments and gzipped once its rules are taken out, the costliest first. A rule belongs to the piece it draws. The costs add up to less than the whole, since a piece that repeats another saves little once taken out. The costliest are the page's own elements, tokens and app frame.
 
 | Piece                   | Rules | Costs |
 | ----------------------- | ----- | ----- |
-| the page's own elements | 31    | 959 B |
-| tokens                  | 6     | 950 B |
-| app frame               | 46    | 864 B |
-| button                  | 29    | 621 B |
-| strip                   | 20    | 490 B |
-| rows                    | 28    | 431 B |
-| field                   | 19    | 427 B |
-| explainer               | 22    | 421 B |
-| table                   | 17    | 376 B |
-| button grid             | 12    | 308 B |
-| stepper                 | 11    | 279 B |
-| dialog                  | 14    | 262 B |
-| theme switch            | 14    | 246 B |
-| tab bar                 | 15    | 244 B |
-| choice                  | 15    | 237 B |
-| toast                   | 10    | 219 B |
-| pills                   | 12    | 175 B |
-| tabs                    | 8     | 143 B |
-| callout                 | 10    | 127 B |
-| animations              | 4     | 121 B |
-| footer                  | 6     | 119 B |
-| icon                    | 3     | 104 B |
+| the page's own elements | 31    | 979 B |
+| tokens                  | 6     | 943 B |
+| app frame               | 46    | 863 B |
+| button                  | 29    | 622 B |
+| strip                   | 20    | 469 B |
+| rows                    | 29    | 435 B |
+| field                   | 19    | 428 B |
+| explainer               | 22    | 414 B |
+| table                   | 17    | 360 B |
+| button grid             | 12    | 298 B |
+| dialog                  | 14    | 265 B |
+| stepper                 | 11    | 257 B |
+| choice                  | 15    | 232 B |
+| theme switch            | 14    | 230 B |
+| tab bar                 | 15    | 219 B |
+| toast                   | 10    | 184 B |
+| pills                   | 12    | 151 B |
+| tabs                    | 9     | 146 B |
+| callout                 | 10    | 125 B |
+| footer                  | 6     | 122 B |
+| animations              | 4     | 116 B |
+| icon                    | 3     | 92 B  |
 | site header             | 5     | 92 B  |
 | skip link               | 2     | 76 B  |
-| steps                   | 5     | 71 B  |
-| code block              | 5     | 67 B  |
-| content page            | 4     | 67 B  |
+| steps                   | 5     | 73 B  |
+| code block              | 5     | 65 B  |
 | panel                   | 6     | 65 B  |
-| eyebrow                 | 2     | 57 B  |
-| copy button             | 3     | 46 B  |
-| visually hidden         | 1     | 15 B  |
-| actions                 | 1     | 8 B   |
+| content page            | 4     | 63 B  |
+| eyebrow                 | 2     | 58 B  |
+| copy button             | 3     | 53 B  |
+| visually hidden         | 1     | 17 B  |
+| actions                 | 1     | 10 B  |
 
 What each function of the controls costs a page, as its bundler takes them without comments and gzipped: alone, on a page that imports only that one, and added, to a page that imports every other. The costliest added are `attachToast` and `attachStepper`.
 
