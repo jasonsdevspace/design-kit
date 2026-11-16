@@ -17,7 +17,8 @@ import { textSize } from './text-size.js';
  * apart and inside the column of an app's body, with the row's sign, press and ring, a page's shadow
  * only where it sets one, the larger target with its detail inside it at twice the text size, its
  * edge in forced colors, an empty list not at all, and no audit findings in either theme with its
- * grounds set, its words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them.
+ * grounds set, and its words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them and on the
+ * surface.
  */
 
 const GAMES = [
@@ -497,45 +498,56 @@ for (const theme of ['light', 'dark'] as const)
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
 
-// The audit reads the title and the detail, but not the sign, which is hidden from a screen reader,
-// nor the ring, so each is measured on each ground as the reference asks.
-test("holds a tile's words at 4.5 to 1 on the ground its page sets, and its sign and ring at 3 to 1", async ({
-    page,
-}) => {
-    for (const theme of ['light', 'dark'] as const) {
-        await writePage(page, {
-            width: 390,
-            theme,
-            css: GROUNDS_CSS,
-            title: 'Play',
-            body: tiles(),
-        });
-        await page.locator('.dk-app-body').focus();
-        for (const link of await tileList(page).getByRole('link').all()) {
-            await page.keyboard.press('Tab');
-            await expect(link).toBeFocused();
-            const color = async (part: Locator, property = 'color') =>
-                (await style(part, property))[property] ?? '';
-            const ground = await color(link, 'background-color');
-            const at = `${theme}, ${ground}`;
+/**
+ * Reaches each link in a list of tiles by the keyboard, so its ring shows, and measures its title
+ * and detail against its own ground at 4.5 to 1 and its sign and ring at 3 to 1, as drawn.
+ */
+const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
+    const links = await list.getByRole('link').all();
+    expect(links.length, at).toBeGreaterThan(0);
+    const color = async (part: Locator, property = 'color') =>
+        (await style(part, property))[property] ?? '';
+    for (const link of links) {
+        await link.focus();
+        await page.keyboard.press('Shift+Tab');
+        await page.keyboard.press('Tab');
+        await expect(link).toBeFocused();
+        const ground = await color(link, 'background-color');
+        const where = `${at}, ${ground}`;
+        for (const [part, least] of [
+            ['.dk-row-title', 4.5],
+            ['.dk-row-detail', 4.5],
+            ['.dk-row-sign', 3],
+        ] as const)
             expect(
-                contrast(await color(link.locator('.dk-row-title')), ground),
-                at
-            ).toBeGreaterThanOrEqual(4.5);
-            expect(
-                contrast(await color(link.locator('.dk-row-detail')), ground),
-                at
-            ).toBeGreaterThanOrEqual(4.5);
-            expect(
-                contrast(await color(link.locator('.dk-row-sign')), ground),
-                at
-            ).toBeGreaterThanOrEqual(3);
-            expect(contrast(await color(link, 'outline-color'), ground), at).toBeGreaterThanOrEqual(
-                3
-            );
-        }
+                contrast(await color(link.locator(part)), ground),
+                `${where}, ${part}`
+            ).toBeGreaterThanOrEqual(least);
+        expect(
+            contrast(await color(link, 'outline-color'), ground),
+            `${where}, the ring`
+        ).toBeGreaterThanOrEqual(3);
     }
-});
+};
+
+// The audit measures text and never the focus ring, and it holds the sign to the text's ratio
+// rather than the one the reference names, so each part is measured on each ground here, on the
+// grounds a page sets and on the surface a tile takes with none.
+for (const theme of ['light', 'dark'] as const)
+    for (const grounds of [true, false])
+        test(`holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on ${grounds ? "the page's grounds" : 'the surface'} in the ${theme} theme`, async ({
+            page,
+        }) => {
+            await writePage(page, {
+                width: 390,
+                theme,
+                css: GROUNDS_CSS,
+                title: 'Play',
+                body: tiles(grounds),
+            });
+            await expect(tileList(page).getByRole('link')).toHaveCount(3);
+            await holdsItsRatios(page, tileList(page), theme);
+        });
 
 /** A picture drawn at once, of the shape a page's preview has. */
 const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#8a8a8a"/></svg>')}`;
@@ -677,18 +689,13 @@ test("steps a tile's ground off a plain panel to the page's, and off a raised on
         expect(await ground('In a raised panel'), theme).toBe(
             await colorOf(page, 'var(--dk-surface)')
         );
-        // The muted detail, the sign and the ring hold their ratios on each stepped ground.
-        for (const label of ['In a panel', 'In a raised panel']) {
-            const under = await ground(label);
-            expect(
-                contrast(await colorOf(page, 'var(--dk-muted)'), under),
-                label
-            ).toBeGreaterThanOrEqual(4.5);
-            expect(
-                contrast(await colorOf(page, 'var(--dk-accent)'), under),
-                label
-            ).toBeGreaterThanOrEqual(3);
-        }
+        // The title, the muted detail, the sign and the ring hold their ratios on each stepped ground.
+        for (const label of ['In a panel', 'In a raised panel'])
+            await holdsItsRatios(
+                page,
+                page.getByRole('list', { name: label }),
+                `${theme}, ${label}`
+            );
         const results = await new AxeBuilder({ page }).analyze();
         expect(
             results.violations.map(({ id }) => id),
