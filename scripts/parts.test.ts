@@ -22,7 +22,7 @@ describe('the parts of the package', () => {
         ).toBe('dialog');
         expect(pieceOf(':where(.dk-row-title), :where(.dk-table)')).toBe('rows');
         expect(pieceOf(':where(.dk-input:focus-visible)')).toBe('field');
-        // The pieces the next release adds, each under one name.
+        // The pieces 0.8.0 adds, each under one name.
         expect(pieceOf(':where(.dk-site-brand)')).toBe('site header');
         expect(pieceOf(':where(.dk-page > h1)')).toBe('content page');
         // The lead shares the explainer's lead's rule, which names it first.

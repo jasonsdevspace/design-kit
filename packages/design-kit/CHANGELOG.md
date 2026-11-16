@@ -7,87 +7,155 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
-## Unreleased
+## 0.8.0
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
-raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
-each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
-can sit on its container's rule, a text button gains a quiet form for a Close, and a site draws its
-header with kit classes. In forced colors what is chosen shows its words again. The theme script is
-unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
-again by the size audit's rule, and the controls' stays at 6.25 KB.
+raised form with a soft shadow for the one thing to pick up again above a list, a list of link rows
+gains a tile form that can flow into columns, a row can hold a picture at its start, an icon takes
+one class, a content page is spaced by one class, and a site draws its header with kit classes. A
+tab row can sit on its container's rule, a text button gains a quiet form for a Close, which draws
+the toast's close too, a React field can hold a button beside its control, and a page's own status
+line can speak. A panel and a tile share one inset, the paddings that stop growing at a size read
+one token each, and the tokens also ship in the Design Tokens Community Group's format, for a tool
+that reads it. In forced colors what is chosen shows its words again. The reference's examples run
+as written and ask a page for nothing a strict policy refuses. The theme script is unchanged, so
+`themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set again by the
+size audit's rule, and the controls' stays at 6.25 KB.
 
-- **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
-  now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
-  `--dk-column` anywhere but `:root` sets it there to keep its column. A page that already uses one
-  of those three names for something of its own gets the kit's meaning for it. A footer with no tab
-  bar after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
-  padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
-  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
-  toast's close says Close, where it said Dismiss, so a toast written by hand changes the words out
-  of sight in its close button, and gives it `dk-button-quiet` beside `dk-toast-close`, as the React
-  `Toast` does, since that class alone draws it.
+- **Upgrading.** The strip, the footer, an explainer and its header, and the skip link start their
+  content at `--dk-band-left` and `--dk-band-right`, worked out on the root from `--dk-column` and
+  `--dk-space-4`, and an app's frame and a page that ends in a tab bar pad their sides by
+  `--dk-app-inset`, worked out there from `--dk-app-column`. A dialog's padding and its gap from the
+  screen's edges read `--dk-space-4-held` and `--dk-space-5-held`, a stepper's inline padding reads
+  `--dk-field-inline-held`, and a panel's padding reads `--dk-card-inset`, each worked out on the
+  root too. So a page that sets `--dk-column`, `--dk-app-column`, `--dk-space-4`, `--dk-space-5` or
+  `--dk-field-inline` anywhere but `:root` sets it there to keep its column and those paddings in
+  step. A page that already uses a name the kit now declares, each listed under Tokens, for
+  something of its own gets the kit's meaning for it. In an app's frame, on a page that ends in a
+  tab bar and in a dialog on either, a panel keeps a phone's padding at every width and text size,
+  where it padded wider above 48rem. The footer pads its foot past what a phone keeps there unless a
+  tab bar in sight follows it, and a page's own rule for the footer's padding still wins. A toast's
+  close says Close, where it said Dismiss, and is drawn by `dk-button-quiet` alone, so a toast
+  written by hand changes the words out of sight in its close button and gives it that class beside
+  `dk-toast-close`, as the reference's markup and the React `Toast` do. `dk-explainer-lead` is held
+  to the measure wherever it sits, so a lead with it outside an explainer is no wider than
+  `--dk-measure`.
+
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
   page's own full-width band pads its sides with them to line up with the strip. Inside an app's
   frame and a page that ends in a tab bar they leave out the phone's sides, which the column clears
-  already.
+  already, and `--dk-app-inset` is how far an app's column stands in from the screen's sides.
+  `--dk-space-4-held` is a panel's padding in an app's frame, a dialog's on a phone and in an app,
+  and a dialog's gap from the screen's edges, `--dk-space-4` stopping at 16px, `--dk-space-5-held`
+  is a wide dialog's padding, `--dk-space-5` stopping at 24px, and `--dk-field-inline-held` is a
+  stepper's inline padding held the same way, so each copy reads one value. `--dk-card-inset` is how
+  far a panel's and a tile's words stand in. `--dk-ground` and `--dk-ground-step` carry the ground
+  of what holds a piece and the ground a piece steps to on it, set by a dialog, a panel and a raised
+  panel and worked out on each, so a piece takes the nearest container's however they nest, and a
+  palette a page sets on a container reaches it. `--dk-shadow-resting` is the soft lift of a raised
+  panel, deeper in the dark theme. `tokens.resolver.json`, exported beside the sheets, holds the
+  tokens in the Design Tokens Community Group format's 2025.10 edition as one resolver document: a
+  base set with every token the two themes share, and a theme modifier with each color and shadow in
+  a light and a dark context, light by default. A length in `em`, a keyword and a value the browser
+  works out as it draws, by `min()`, `max()`, `calc()` or `env()`, stay in `tokens.css` alone. A
+  token renamed in the file is a breaking change, as a custom property renamed in the sheet is.
+
 - **Sheets.** On a page that says `viewport-fit=cover`, the strip starts its links below what a
   phone held upright keeps at its top, and the strip, the footer, an explainer and its header start
-  their content past what a phone on its side keeps at each side. `dk-panel-raised` sets a panel on
-  `--dk-raised`, with a pinned column and a code block inside it on grounds of their own, and a
-  page's own shadow under it by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows` draws each
-  link row as a tile, an edge and large corners apart from the next by a gap, on the ground a page
-  sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
-  `--dk-tile-shadow`. A tile keeps the row's sign, its press and its ring, drawn outside it, is at
-  least the larger target tall, sets its title at the lead size, and an empty list of tiles is not
-  drawn. `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
-  underline and in the text color under a pointer and while held, as wide as a button is tall, open
-  or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
-  toast's close is drawn by the same rules. In forced colors what is chosen keeps the selection's
-  colors, a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's
-  chosen word, the current pill, the chosen tab and the current place in a tab bar, with an edge and
-  a ring in system colors and no shadow, so a browser that paints a backplate behind their words no
-  longer draws the words unseen. `dk-site-header` draws a site's header under the strip, at the
-  strip's inset and over a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's
-  name and its pages as pills, the brand and each page the target tall and the pages wrapping under
-  the brand on a phone. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the
-  container at whose foot it sits, drawing no rule of its own and standing a pixel lower, so the
-  chosen tab's line lies over the container's rule, and keeping to the foot of a bar that centers
-  what it holds.
-- **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
-  says a message on it, so the same words said twice are heard twice, and each message leaves two
-  seconds later. It speaks through the function the copy button and the stepper use, now exported
-  for a screen that says a change without moving focus.
+  their content past what a phone on its side keeps at each side. On a page with an app's frame or a
+  tab bar, the skip link starts where the app's column starts its content, past what a phone keeps
+  at its side, as the strip's links there do. `dk-panel-raised` sets a panel on `--dk-raised`, with
+  a pinned column and a code block inside it on grounds of their own, and casts the resting shadow
+  where a page sets no shadow of its own by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows`
+  draws each link row as a tile, an edge and large corners apart from the next by a gap, on the
+  ground a page sets by `--dk-tile-ground` or, where it sets none, the ground its container steps
+  to, `--dk-ground-step`: the page's in a plain panel and the card's in a raised panel or on the
+  page. A tile casts no shadow unless a page sets one by `--dk-tile-shadow`, so the raised panel
+  above a list stays the one thing lifted. A tile keeps the row's sign and its press, draws its
+  focus ring outside it, and stops short of the edge by its ring when the keyboard brings it into
+  view, so a tile's ground holds its words and sign alone. It is at least the larger target tall,
+  sets its title at the lead size, or the body size in an explainer, starts its words on a raised
+  panel's line at every width, and an empty list of tiles is not drawn. `dk-rows-columns` beside
+  `dk-rows-tiles` flows the tiles into as many columns as fit, each at least `--dk-tile-least` wide,
+  15rem unless the page sets it, falling to one column on a phone, the tiles on one line ending
+  together, with each title at the body size and a picture across the tile's top. `dk-row-picture`
+  as a row's first child sits at its start in a column of its own, `--dk-target` square or the size
+  a page sets by `--dk-row-picture-size` up to a quarter of the screen's width, so every title in a
+  list starts on one line. `dk-icon` draws an inline svg one em square, stroked in the text's color
+  at `max(1.5px, 0.125em)` that does not scale with the drawing, with round caps and joins and no
+  fill, a path drawn in fill with no outline, and a tab bar's icons at their own size with the
+  stroke that size takes. `dk-page` on a content page's main content spaces what it holds by the
+  flow and its sections `--dk-space-7` apart with no rule between them, leaves `--dk-space-6` above
+  its title under the header's rule, as an explainer does, sets its `h1` at the display size and a
+  section's `h2` at the title size, starts its text at the strip's inset by the band insets, and
+  holds its prose to the measure. `dk-lead` is the lead under a name of its own, held to the
+  measure, with `dk-explainer-lead` the same rule, and a content page's lead stands the short step
+  under its title. `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted
+  with no underline and in the text color under a pointer and while held, as wide as a button is
+  tall, open or off alike, and in `ButtonText` in forced colors, underlined under a pointer and
+  while held. `dk-site-header` draws a site's header under the strip, at the strip's inset and over
+  a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's name and its pages as
+  pills, the brand and each page the target tall and the pages wrapping under the brand on a phone.
+  The brand underlines under a pointer and a press. `dk-tabs-on-rule` beside `dk-tabs` lays a tab
+  row on the rule of the container at whose foot it sits, drawing no rule of its own and standing a
+  pixel lower, so the chosen tab's line lies over the container's rule, and keeping to the foot of a
+  bar that centers what it holds. A resting pill and tab take the text color under a press, and
+  underline under a press and a pointer in forced colors. A link in the strip or the footer marked
+  current by any value of `aria-current` but false or empty, such as `true` on a page beneath the
+  one it names, stands in the text color at the heading's weight, as one marked `page` does, and an
+  empty value marks nothing anywhere in the kit. In forced colors what is chosen keeps the
+  selection's colors, drawn by one rule after every piece's own: a toggle that is on, a button whose
+  panel is open, a pressed cell, the theme switch's chosen word, the current pill, the chosen tab
+  and the current place in a tab bar, with an edge and a ring in system colors and no shadow, so a
+  browser that paints a backplate behind their words no longer draws the words unseen.
+
+- **Controls.** `attachStatus` makes a page's own status line speak, for a screen that says a change
+  without moving focus, and returns the function that says a message on it, so the same words said
+  twice are heard twice, and each message leaves two seconds later. It speaks through the same
+  function as the copy button and the stepper, so a line handed to a copy button too keeps one timer
+  and a later message replaces an earlier one. A line attached again returns the function it
+  returned first, as decision 0013 has every attach function do.
+
 - **React.** `InputField` and `SelectField` take an `action`, drawn after the control in a
   `dk-field-action` row, so a page draws a field with a button, such as a search and the button that
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
   `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
   same component under its first name. `Button` takes `quiet` beside `text`, and with no children
-  draws a hidden × beside Close out of sight. TypeScript refuses `quiet` with `off`, since a Close
-  always closes.
+  draws a × hidden from a screen reader beside Close out of sight. TypeScript refuses `quiet` with
+  `off`, since a Close always closes.
+
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
-  from the token table. Decision 0016 records why a page changes how a piece draws only through
-  them. The reference shows a site's header and names its nav Site.
-- **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
-  the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
-  and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
-  their press on a phone where nothing hovers and their edge in forced colors. The React field with
-  a button holds its control and button at one height as the hand-drawn field does, wraps the button
-  under the control on a narrow phone at twice the text size, and reaches the button after the
-  control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
-  of every chosen thing in forced colors and find the selection under its words. A quiet button's
-  colors, its states, its size at every width and in an app, its name and its ring in forced colors
-  are held on the page, a panel and a raised panel in both themes. A site's header starts its brand,
-  and its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with
-  its nav named Site, marks its current page by weight and in forced colors, takes the brand before
-  the pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and
-  the wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
-  the container's foot with one rule, in a block and in a bar that centers it, in both themes and in
-  forced colors, and a plain row keeps its own rule.
+  from the token table. It says a tile's ground holds the title and the muted detail at 4.5 to 1,
+  and the muted sign at 3 to 1, in both themes, and sets a tile's ground by a class, never a style
+  attribute, which a strict `style-src` refuses. Decision 0016 records why a page changes how a
+  piece draws only through those properties. The reference shows a site's header and names its nav
+  Site, a row with a picture and tiles in columns, an icon's markup, its attributes and its words,
+  with a warning against an svg `title`, and a content page and its lead, and names a content page
+  among what spaces by the flow. Decision 0017 says why a content page is a container of its own and
+  that it leaves `--dk-space-6` above its title. The reference says a link in running text keeps the
+  browser's underline, since the accent stands too close to the text to mark it by color alone and a
+  footer's link takes the footer's muted color, that a text button puts it back, and that each other
+  piece that is a link takes it off in its own class. The status line's example finds its line with
+  `querySelector('.screen-status')`, as the other examples do, where the old line, TypeScript in a
+  JavaScript example, found nothing and never spoke. Decision 0015 is amended for `attachStatus`.
+  The reference says what the tokens file holds and which tokens it leaves to the sheet, the package
+  README lists it with the other exports, and decision 0018 says the file is written by hand, held
+  to the sheet by a test, and that renaming or dropping a token in it or moving it to a later
+  edition is a breaking change.
+
+- **Tests.** Browser tests hold each new piece and each change above as drawn, in both themes, in
+  forced colors, on a phone where nothing hovers, at 320 wide, at twice the text size and under the
+  wider text spacing, and in Firefox or WebKit too where that engine draws a piece its own way, an
+  icon in both and the rows and tiles in WebKit. Each reads what it names as drawn, so it fails when
+  that is gone, and CI fails a test that passes only on its retry. A test holds
+  `tokens.resolver.json` to `tokens.css`, and the smoke test loads it from the packed package. Scope
+  tests hold the table of properties a page sets to what the sheets read and fail when the reference
+  or the README asks for a style attribute. The package record gzips the sheets together, in the
+  order a page loads them, as the budget's test does, where it summed each sheet gzipped on its own
+  and printed more than the budget measured.
 
 ## 0.7.0
 

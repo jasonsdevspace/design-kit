@@ -17,7 +17,7 @@ weight.
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 **[See every piece live, in both themes, with its code](https://jasonsdevspace.com/design-kit/)** ·
-[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md) ·
+[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md) ·
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md)
 · [Source](https://github.com/jasonsdevspace/design-kit)
 
@@ -86,15 +86,15 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 | `@jasonsdevspace/design-kit/base.css`             | Type, colors, the selection, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule                                                                                                                                                                                                                               |
 | `@jasonsdevspace/design-kit/components.css`       | The page chrome, buttons and a row of them, fields and a field with a button, callouts, pills, tabs, the eyebrow, an icon, the theme switch, the copy button and a code block's head, the explainer page with its tables, a pinned first column among them, and an app's frame, tab bar, toast, grid of buttons, rows, stepper and dialog |
 | `@jasonsdevspace/design-kit/theme`                | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                                                                                                                                                                                                                                             |
-| `@jasonsdevspace/design-kit/controls`             | `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`, `attachTable()` and `chooseTheme()`, which make the controls work, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener` and `DialogOptions`                                                                          |
+| `@jasonsdevspace/design-kit/controls`             | `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`, `attachTable()`, `attachStatus()` and `chooseTheme()`, which make the controls work, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener` and `DialogOptions`                                                        |
 | `@jasonsdevspace/design-kit/react`                | The components, the theme switch's, copy button's, stepper's and toast's markup, the props types, `CalloutTone` and the chrome's URLs                                                                                                                                                                                                     |
 | `@jasonsdevspace/design-kit/vite`                 | `themeScriptPlugin()`, `themeScriptHash`, `THEME_PLACEHOLDER`, `browserFloor()` and `lightningcssFloor()`                                                                                                                                                                                                                                 |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
 `SelectField`, `TextareaField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
-`CopyButton`, `CopyStatus` and `Toast`, a props type for each named after it, such as `ButtonProps`,
-the `Choice` and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome
-links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
+`CopyButton`, `CopyStatus`, `StatusLine` and `Toast`, a props type for each named after it, such as
+`ButtonProps`, the `Choice` and `CalloutTone` types a page writes a choice or a tone with, and the
+URLs the chrome links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ## Using it
 
@@ -128,7 +128,7 @@ must be a URL the demo's author writes, never one taken from the page's address 
 input, which could send a visitor anywhere. The skip link, strip and footer are live in each state
 on [the page chrome page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup,
 rules and props are under [Page
-chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#page-chrome)
+chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#page-chrome)
 in the reference.
 
 Buttons and fields take their state from the attribute a screen reader already reads, such as
@@ -172,17 +172,17 @@ export const Checkout = ({ error, saved }: Props) => {
 
 Every button, field and callout is live in each state on [the controls
 page](https://jasonsdevspace.com/design-kit/controls/). [Buttons, fields and
-callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
+callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#buttons-fields-and-callouts)
 in the reference gives each component's props and the rules a page follows, such as why an
 unavailable button is `aria-disabled` and how a message is made live.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
 gives the markup for each piece, and [Explainer
-pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#explainer-pages)
+pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#explainer-pages)
 there gives the steps, panels, tables and code blocks of a "How it works" page.
 
 An app drawn for a phone takes its frame from [App
-frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#app-frame)
+frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#app-frame)
 in the reference: a bar, a body that scrolls and a dock, clear of the phone's safe areas. The
 sections after it give the tab bar, the stepper, the toast, the grid of buttons, the rows and the
 dialog, each with its markup and, where it has behavior, the attach function that makes it work. A
@@ -208,7 +208,7 @@ palette sets the roles again, with both values at once.
 ```
 
 [Layers and
-palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#layers-and-palettes)
+palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#layers-and-palettes)
 in the reference gives the other order, the reduced-motion rule that holds over a page's own, and
 how far the contrast promise reaches.
 
@@ -227,7 +227,7 @@ const policy = `script-src 'self' ${themeScriptHash}`;
 
 The hash holds as long as nothing after the plugin rewrites the inline script, as an HTML minifier
 would. [The theme
-contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.7.0/packages/design-kit/REFERENCE.md#the-theme-contract)
+contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#the-theme-contract)
 in the reference gives what the script sets for each saved value, and when it sets the theme again.
 
 ## Browser support
