@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, sheet, sideways, style, tabKey, writePage } from './page.js';
+import { box, colorOf, sheet, sideways, style, tabKey, writePage } from './page.js';
 import { cutOff } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -830,4 +830,29 @@ test('keeps a pinned column and a code block apart from a raised panel on ground
         (await style(page.locator(selector), 'background-color'))['background-color'];
     expect(await ground('.dk-table-pinned th')).toBe('rgb(255, 255, 255)');
     expect(await ground('.dk-panel-raised .dk-code')).toBe('rgb(245, 245, 245)');
+});
+
+test('gives a piece the ground of the nearest container that holds it, however they nest', async ({
+    page,
+}) => {
+    const pinned =
+        '<div class="dk-table-scroll"><table class="dk-table dk-table-pinned"><tbody><tr><th scope="row">Ana</th><td>12</td></tr></tbody></table></div>';
+    const code = '<pre class="dk-code"><code>npm run e2e</code></pre>';
+    await writePage(page, {
+        width: 390,
+        title: 'Play',
+        body:
+            `<main id="main-content"><div class="dk-panel"><dialog class="dk-dialog" open aria-label="Options">${pinned}</dialog></div>` +
+            `<div class="dk-panel dk-panel-raised"><div class="dk-panel">${code}</div></div></main>`,
+    });
+    const ground = async (locator: Locator) =>
+        (await style(locator, 'background-color'))['background-color'];
+    // A dialog inside a panel gives its pinned cells its own raised ground, not the panel's.
+    expect(await ground(page.locator('.dk-dialog .dk-table-pinned th'))).toBe(
+        await colorOf(page, 'var(--dk-raised)')
+    );
+    // A plain panel inside a raised one gives its code block the page's ground, a step off its own.
+    expect(await ground(page.locator('.dk-panel-raised .dk-panel .dk-code'))).toBe(
+        await colorOf(page, 'var(--dk-bg)')
+    );
 });

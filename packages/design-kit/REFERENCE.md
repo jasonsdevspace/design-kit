@@ -82,6 +82,7 @@ page.
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
+| `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's, or a raised panel's and the card's         |
 
 </details>
 

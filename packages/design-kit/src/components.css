@@ -1333,20 +1333,7 @@
         inset-inline-start: 0;
         z-index: var(--dk-stack-pinned);
         border-inline-end: 1px solid var(--dk-line);
-        background: var(--dk-table-ground, var(--dk-bg));
-    }
-
-    /* A dialog's ground first, so a panel inside a dialog gives its cells the panel's. */
-    :where(.dk-dialog .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-raised));
-    }
-
-    :where(.dk-panel .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-surface));
-    }
-
-    :where(.dk-panel-raised .dk-table-pinned :is(th, td):first-child) {
-        background: var(--dk-table-ground, var(--dk-raised));
+        background: var(--dk-table-ground, var(--dk-ground));
     }
 
     :where(.dk-table-scroll:has(> .dk-table-pinned)) {
@@ -1381,18 +1368,9 @@
         padding: var(--dk-space-3) var(--dk-space-4);
         border: 1px solid transparent;
         border-radius: var(--dk-radius);
-        background: var(--dk-surface);
+        background: var(--dk-ground-step);
         font-size: var(--dk-text-code);
         line-height: var(--dk-leading-body);
-    }
-
-    :where(.dk-panel .dk-code) {
-        background: var(--dk-bg);
-    }
-
-    /* On a raised panel, whose ground is the page's own in light, a code block takes the card's. */
-    :where(.dk-panel-raised .dk-code) {
-        background: var(--dk-surface);
     }
 
     /*
@@ -2774,11 +2752,12 @@
 
     /*
      * A list of tiles: link rows each on a ground of its own, which the page sets by a property,
-     * such as each game on its own color. A tile keeps the row's sign, its press and its ring, and
-     * stands apart from the next by a gap and an edge in the line color rather than the rule
-     * between rows. It stays inside the column where a row reaches past it, since a tile's edge,
-     * not its words, is what lines up with the column. A tile casts no shadow, so the raised panel
-     * above a list stays the one thing lifted, and a page that wants one sets it by a property.
+     * such as each game on its own color, or with none set the ground its container steps to, as a
+     * code block takes. A tile keeps the row's sign, its press and its ring, and stands apart from
+     * the next by a gap and an edge in the line color rather than the rule between rows. It stays
+     * inside the column where a row reaches past it, since a tile's edge, not its words, is what
+     * lines up with the column. A tile casts no shadow, so the raised panel above a list stays the
+     * one thing lifted, and a page that wants one sets it by a property.
      */
     /* An empty list stays out of the page, as a list of rows does. */
     :where(.dk-rows-tiles:has(> li)) {
@@ -2796,20 +2775,8 @@
         padding: var(--dk-space-3) var(--dk-space-4);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
-        background: var(--dk-tile-ground, var(--dk-surface));
+        background: var(--dk-tile-ground, var(--dk-ground-step));
         box-shadow: var(--dk-tile-shadow, none);
-    }
-
-    /*
-     * A tile in a panel steps off the panel's ground as a code block does, to the page's, and one in
-     * a raised panel to the card's, where the page sets no ground of its own.
-     */
-    :where(.dk-panel .dk-rows-tiles .dk-row) {
-        background: var(--dk-tile-ground, var(--dk-bg));
-    }
-
-    :where(.dk-panel-raised .dk-rows-tiles .dk-row) {
-        background: var(--dk-tile-ground, var(--dk-surface));
     }
 
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
