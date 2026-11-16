@@ -1843,6 +1843,34 @@
     }
 
     /*
+     * An icon: an svg one em square, so it grows with the text around it, stroked in the text's
+     * color with round caps and joins and no fill, so forced colors redraw it with the text. Its
+     * stroke holds its weight whatever the drawing's scale, and never goes under one and a half
+     * pixels, where it reads faint on a screen of low density. A path that draws a mark in fill
+     * says so on itself. A tab bar's icons keep their larger size, set later in the sheet.
+     */
+    :where(.dk-icon) {
+        flex: none;
+        width: 1em;
+        height: 1em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: max(1.5px, 0.125em);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: -0.125em;
+    }
+
+    :where(.dk-icon *) {
+        vector-effect: non-scaling-stroke;
+    }
+
+    /* A mark drawn in fill takes no outline, which would round its corners and fill its holes. */
+    :where(.dk-icon [fill]:not([fill='none'])) {
+        stroke: none;
+    }
+
+    /*
      * A copy button's words share one cell, so the button is as wide as its longest word whatever
      * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
      * from the button's name.
@@ -2306,6 +2334,11 @@
         flex: none;
         width: 1.5rem;
         height: 1.5rem;
+    }
+
+    /* A kit icon there keeps the stroke an icon of its size takes beside text of that size. */
+    :where(.dk-tabbar .dk-icon) {
+        stroke-width: max(1.5px, 0.1875rem);
     }
 
     @media (hover: hover) {

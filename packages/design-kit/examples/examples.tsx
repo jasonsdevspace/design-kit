@@ -503,6 +503,27 @@ export const tabs: ReactElement = (
     </>
 );
 
+/** A button with an icon beside its words, and a toggle whose only face is a filled icon. */
+export const icon: ReactElement = (
+    <div className="dk-actions">
+        <button type="button" className="dk-button">
+            <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add a player
+        </button>
+        <button type="button" className="dk-button" aria-pressed="false">
+            <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path
+                    fill="currentColor"
+                    d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"
+                />
+            </svg>
+            <span className="dk-visually-hidden">Favorite game</span>
+        </button>
+    </div>
+);
+
 /** An eyebrow over a heading. */
 export const eyebrow: ReactElement = (
     <>
@@ -784,6 +805,7 @@ export const EXAMPLES = {
     stepper,
     toast,
     buttonGrid,
+    icon,
     rows,
     rowTiles,
     dialog,
