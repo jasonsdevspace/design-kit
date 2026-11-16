@@ -38,7 +38,9 @@ tables of a phone app, and [Page chrome](https://jasonsdevspace.com/design-kit/p
 skip link, strip and footer around a demo. [Explainer
 pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the layout of the page that
 says how a demo works, and [How it works](https://jasonsdevspace.com/design-kit/how-it-works/) is
-that page written for the kit itself. The theme switch in the strip saves the same choice the
+that page written for the kit itself. [The pieces
+together](https://jasonsdevspace.com/design-kit/together/) stacks the newer pieces as an app's home
+page stacks them, each set apart from the one it sits on. The theme switch in the strip saves the same choice the
 portfolio does, so it holds across jasonsdevspace.com.
 
 ## Using it

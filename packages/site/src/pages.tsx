@@ -361,9 +361,7 @@ const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
  * the site's own styles from the kit's tokens, with no words of its own, since the tile is one link
  * named by its page's name and short line. A screen reader passes the drawing by.
  */
-const PREVIEWS: Readonly<
-    Record<Exclude<Route['file'], 'index.html' | 'how-it-works/index.html'>, ReactNode>
-> = {
+const PREVIEWS: Readonly<Record<Extract<Route, { card: string }>['file'], ReactNode>> = {
     'tokens/index.html': (
         <>
             <span className="site-preview-swatch site-preview-accent" />
@@ -404,11 +402,37 @@ const PREVIEWS: Readonly<
 };
 
 /**
- * Whether a page has a tile on the landing page: every page in the site's menu but the landing
- * page itself, each of which has a drawing in PREVIEWS, which the type holds.
+ * Whether a page has a tile on the landing page: every page with a card's short line, each of
+ * which has a drawing in PREVIEWS, which the type holds.
  */
-const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
-    route.nav !== null && route.path !== BASE;
+const isCarded = (route: Route): route is Extract<Route, { card: string }> => 'card' in route;
+
+/**
+ * A tile for each page with a card, in columns, its drawing across the tile's top and the whole
+ * tile its link, named by the page first. The landing page and the pieces together draw the same
+ * list, so the two cannot drift apart.
+ */
+const PageTiles = () => (
+    <ul className="dk-rows dk-rows-tiles dk-rows-columns site-pages" role="list">
+        {ROUTES.filter(isCarded).map((route) => (
+            <li key={route.file}>
+                <a className="dk-row" href={route.path}>
+                    <span className="dk-row-picture site-page-preview" aria-hidden="true">
+                        {PREVIEWS[route.file]}
+                    </span>
+                    <span className="dk-row-text">
+                        <span className="dk-row-title">{route.nav}</span>
+                        <span className="dk-visually-hidden">, </span>
+                        <span className="dk-row-detail">{route.card}</span>
+                    </span>
+                    <span className="dk-row-sign" aria-hidden="true">
+                        ›
+                    </span>
+                </a>
+            </li>
+        ))}
+    </ul>
+);
 
 /**
  * A small mark for each thing the kit is built to, drawn in the accent beside its heading, and in
@@ -422,6 +446,9 @@ const RuleMark = ({ d }: { readonly d: string }) => (
 
 /** The controls page, which the landing page leads to first. */
 const CONTROLS_PAGE = ROUTES.find(({ file }) => file === 'controls/index.html')?.path ?? BASE;
+
+/** The page that stacks the newer pieces together. */
+const TOGETHER = ROUTES.find(({ file }) => file === 'together/index.html')?.path ?? BASE;
 
 /**
  * The install command, the block first and its copy button after it, as they are drawn, so the
@@ -489,26 +516,12 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         </div>
         <section>
             <h2 id="in-the-kit">What is in the design kit</h2>
-            <p>Each page shows every piece in the light and dark themes.</p>
-            <ul className="dk-rows dk-rows-tiles dk-rows-columns site-pages" role="list">
-                {ROUTES.filter(isCarded).map((route) => (
-                    <li key={route.file}>
-                        <a className="dk-row" href={route.path}>
-                            <span className="dk-row-picture site-page-preview" aria-hidden="true">
-                                {PREVIEWS[route.file]}
-                            </span>
-                            <span className="dk-row-text">
-                                <span className="dk-row-title">{route.nav}</span>
-                                <span className="dk-visually-hidden">, </span>
-                                <span className="dk-row-detail">{route.card}</span>
-                            </span>
-                            <span className="dk-row-sign" aria-hidden="true">
-                                ›
-                            </span>
-                        </a>
-                    </li>
-                ))}
-            </ul>
+            <p>
+                Each page shows every piece in the light and dark themes.{' '}
+                <a href={TOGETHER}>The pieces together</a> shows them stacked as an app&rsquo;s home
+                page stacks them.
+            </p>
+            <PageTiles />
         </section>
         <section>
             <h2 id="built-for">Built for strict security, contrast and screen readers</h2>
@@ -743,6 +756,144 @@ export const App = ({ build }: { readonly build: Build }) => (
     </Page>
 );
 
+/** A tile in the raised panel: a piece of this page, leading to where it is shown alone. */
+const ALONE = [
+    {
+        title: 'Raised panel',
+        detail: 'The one thing to pick up again',
+        href: `${APP_PIECES}#raised-panel`,
+    },
+    { title: 'Tiles', detail: 'Places to go, each on its own ground', href: `${APP_PIECES}#tiles` },
+    { title: 'Tabs', detail: 'Pages or toggles in a row', href: `${CONTROLS_PAGE}#tabs` },
+] as const;
+
+/**
+ * The newer pieces stacked as an app's home page stacks them, live, each leading to a page of the
+ * site: a masthead with its row of tabs on its rule and a button that opens a dialog of the
+ * grounds, a raised panel of tiles, and the site's pages as tiles in columns with their drawings.
+ * The button waits hidden until the site's script attaches the dialog, so no control is dead
+ * without it.
+ */
+export const Together = ({ build }: { readonly build: Build }) => (
+    <Page
+        build={build}
+        current="together/index.html"
+        title="The pieces together"
+        lead={
+            <>
+                The design kit&rsquo;s pieces stacked as an app&rsquo;s home page stacks them, each
+                set apart from the one it sits on by its ground or its edge.
+            </>
+        }
+        intro={
+            <p>
+                Below, a masthead with a row of tabs sits over a raised panel of tiles, with more
+                tiles in columns on the page under it. Every piece is live and leads to a page of
+                this site. To see the other theme live, choose Light or Dark next to Theme, at the
+                top of the page.
+            </p>
+        }
+    >
+        <section className="site-together">
+            <div className="site-masthead">
+                <div className="site-masthead-head">
+                    <h2>Pieces</h2>
+                    <button
+                        type="button"
+                        className="dk-button site-grounds-show"
+                        aria-haspopup="dialog"
+                        aria-controls="together-grounds"
+                        hidden
+                    >
+                        <svg
+                            className="dk-icon"
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+                            <path d="m3 13 9 5 9-5" />
+                        </svg>
+                        The grounds
+                    </button>
+                </div>
+                <nav aria-label="Pieces">
+                    <ul className="dk-tabs dk-tabs-on-rule" role="list">
+                        <li>
+                            <a className="dk-tab" href={TOGETHER} aria-current="page">
+                                Together
+                            </a>
+                        </li>
+                        <li>
+                            <a className="dk-tab" href={CONTROLS_PAGE}>
+                                Controls
+                            </a>
+                        </li>
+                        <li>
+                            <a className="dk-tab" href={APP_PIECES}>
+                                App pieces
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <div className="dk-panel dk-panel-raised">
+                <h3 className="dk-panel-title">Each piece here, shown alone</h3>
+                <p>Each opens the piece on its own page, in every state and both themes.</p>
+                <ul className="dk-rows dk-rows-tiles" role="list">
+                    {ALONE.map(({ title, detail, href }) => (
+                        <li key={href}>
+                            <a className="dk-row" href={href}>
+                                <span className="dk-row-text">
+                                    <span className="dk-row-title">{title}</span>
+                                    <span className="dk-visually-hidden">, </span>
+                                    <span className="dk-row-detail">{detail}</span>
+                                </span>
+                                <span className="dk-row-sign" aria-hidden="true">
+                                    ›
+                                </span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <PageTiles />
+            <dialog
+                className="dk-dialog"
+                id="together-grounds"
+                aria-labelledby="together-grounds-title"
+            >
+                <h2 className="dk-dialog-title" id="together-grounds-title" tabIndex={-1} autoFocus>
+                    The grounds on this page
+                </h2>
+                <ul role="list">
+                    <li>
+                        The page, on <code>--dk-bg</code>.
+                    </li>
+                    <li>
+                        The raised panel, on <code>--dk-raised</code>, drawn by its edge and shadow.
+                    </li>
+                    <li>
+                        A tile on the raised panel, on <code>--dk-surface</code>.
+                    </li>
+                    <li>
+                        A tile on the page, on <code>--dk-surface</code>, its drawing on{' '}
+                        <code>--dk-bg</code>.
+                    </li>
+                    <li>
+                        This dialog, on <code>--dk-raised</code> over the scrim.
+                    </li>
+                </ul>
+                <form className="dk-dialog-actions" method="dialog">
+                    <button type="submit" className="dk-button dk-button-text dk-button-quiet">
+                        Close
+                    </button>
+                </form>
+            </dialog>
+        </section>
+    </Page>
+);
+
 /**
  * The page chrome's own section, written by hand rather than from the states, under one name for
  * its heading, its id, its tests and its place in the list of sections.
@@ -919,5 +1070,6 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'app-pieces/index.html': (build) => <App build={build} />,
     'page-chrome/index.html': (build) => <Chrome build={build} />,
     'explainer-pieces/index.html': (build) => <Pieces build={build} />,
+    'together/index.html': (build) => <Together build={build} />,
     'how-it-works/index.html': (build) => <Explainer build={build} />,
 };
