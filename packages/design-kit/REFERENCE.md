@@ -802,7 +802,7 @@ arrow keys.
 
 Where the row sits at the foot of a container that draws a rule of its own, such as a masthead,
 `dk-tabs-on-rule` beside `dk-tabs` draws no rule and stands a pixel lower, so the chosen tab's line
-lies over the container's rule and the resting tabs leave it showing, rather than two rules
+lies over the container's rule and the resting tabs' edges lie on it, rather than two rules
 stacking. The container draws its rule as a border of the kit's 1px line and keeps no padding at its
 foot, so the row reaches its rule, and the row keeps to that foot in a bar that centers what it
 holds. It suits a container whose rule sits right under the row, so a bar where something can wrap
