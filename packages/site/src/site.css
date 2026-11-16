@@ -193,14 +193,6 @@ body > .dk-strip {
 }
 
 /*
- * A tile stretched to a taller one on its line starts its drawing and its title at its top, level
- * with that one's, and the room it gains falls under its text.
- */
-.dk-rows-columns .dk-row:has(> .site-page-preview) {
-    align-content: start;
-}
-
-/*
  * The drawing of what each page shows, in the picture slot across the top of its tile, on the
  * page's own ground so it stands apart from the tile's.
  */
@@ -1011,35 +1003,9 @@ body > .dk-strip {
     padding: var(--dk-space-4);
 }
 
-/*
- * The bar in a picture sits at the end of its box rather than sticking to the visitor's screen,
- * and the page holds none of the room the kit keeps for one at the foot of the screen.
- */
+/* The bar in a picture sits at the end of its box rather than sticking to the visitor's screen. */
 .site-copy .dk-tabbar-page > .dk-tabbar {
     position: static;
-}
-
-:root:has(.site-copy .dk-tabbar-page) {
-    scroll-padding-bottom: 0;
-}
-
-/*
- * The kit lines every band up with an app's column on a page that holds an app's frame, as an app's
- * own page wants. A page that only pictures one is a content page, so its strip, header, content and
- * footer keep the column's bands, as on every other page of the site. Each picture keeps the bands
- * the kit sets inside a frame.
- */
-:root:has(.site-copy :is(.dk-app, .dk-tabbar-page)) {
-    --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-column-inset)) + var(--dk-space-4));
-    --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-column-inset)) + var(--dk-space-4));
-}
-
-/*
- * The kit turns off a page's pull to refresh wherever an app's frame is, as an app's screen wants.
- * A page that only pictures one reads like any other page, so it keeps the browser's own.
- */
-:root:has(.site-copy .dk-app) {
-    overscroll-behavior-y: auto;
 }
 
 /*
