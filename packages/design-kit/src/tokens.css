@@ -173,9 +173,9 @@
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
          * what dims the page behind it, darker there too, since a dark page needs more dimming.
-         * The resting shadow is the soft lift of what rests on the page, the raised panel, which
-         * does the lifting in the light theme, where the raised ground is the page's own, and shows
-         * deeper on a dark page as the raised one does.
+         * The resting shadow is the soft lift of a raised panel, which does the lifting in the
+         * light theme, where the raised ground is the page's own, and shows deeper on a dark page
+         * as the raised one does.
          */
         --dk-shadow-raised: 0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
         --dk-shadow-resting: 0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4));
@@ -231,19 +231,29 @@
     }
 
     /*
-     * The least width of a cell in a button grid, read as the target where the grid is drawn
-     * unless set, and the larger target in a tall grid, so a cell is never too small to tap.
+     * On a page with an app's frame or a tab bar, what sits on the screen outside the app's
+     * column, such as the skip link, starts where that column starts its content, past what a phone
+     * keeps at its sides. The column clears those sides itself, so a band inside it, such as a
+     * demo's strip, starts its content a step in and pays for the sides no second time.
      */
-    /*
-     * An app's column clears what a phone keeps at its sides itself, so a band inside it, such as
-     * a demo's strip on a page that ends in a tab bar, starts its content a step in and pays for the
-     * sides no second time.
-     */
-    :where(.dk-app, .dk-tabbar-page) {
+    :where(:root:has(.dk-app, .dk-tabbar-page)) {
+        --dk-band-left: calc(
+            max(var(--dk-safe-left), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4)
+        );
+        --dk-band-right: calc(
+            max(var(--dk-safe-right), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4)
+        );
+    }
+
+    :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {
         --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4));
         --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4));
     }
 
+    /*
+     * The least width of a cell in a button grid, read as the target where the grid is drawn
+     * unless set, and the larger target in a tall grid, so a cell is never too small to tap.
+     */
     :where(.dk-button-grid-tall) {
         --dk-button-grid-least: var(--dk-target-large);
     }

@@ -603,6 +603,7 @@ test("rings every chosen thing in the system's text in forced colors, the theme 
     const canvasText = await colorOf(page, 'CanvasText');
     // Each chosen thing, the element focus lands on, and the one its ring is drawn on.
     const rings: readonly (readonly [string, string])[] = [
+        ['#pill', '#pill'],
         ['#toggle', '#toggle'],
         ['#open', '#open'],
         ['#cell', '#cell'],

@@ -392,6 +392,9 @@ test('draws a tile on the surface with no ground set and no shadow, unless the p
     expect((await style(link, 'box-shadow'))['box-shadow']).toBe(
         'rgba(0, 0, 0, 0.5) 0px 2px 0px 0px'
     );
+    // Forced colors draw no shadow, a page's own included.
+    await page.emulateMedia({ forcedColors: 'active' });
+    expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
 });
 
 test("underlines a tile's title under a pointer, and rings it inside", async ({ page }) => {

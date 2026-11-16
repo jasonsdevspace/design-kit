@@ -32,12 +32,8 @@
      */
     .dk-skip {
         position: absolute;
-        /*
-         * Where the strip's content starts, past what a phone keeps at its side. It is placed on
-         * the screen rather than in a column, so it clears the phone's side even where a page that
-         * ends in a tab bar sets the band's start within its column.
-         */
-        left: max(var(--dk-safe-left) + var(--dk-space-4), var(--dk-band-left));
+        /* Where the strip's content starts, past what a phone keeps at its side. */
+        left: var(--dk-band-left);
         /* Below what a phone keeps at its top edge, nothing on a page that does not ask. */
         top: calc(var(--dk-safe-top) + var(--dk-space-4));
         width: 1px;
@@ -1443,8 +1439,7 @@
     /*
      * A raised panel sits on the raised ground, a step above the cards on a page, for the one
      * thing to pick up again above a list. It casts the resting shadow, which lifts it where the
-     * raised ground is the page's own, and a page's own shadow replaces that by a property. It is
-     * the one thing on a page that rests above the rest.
+     * raised ground is the page's own, and a page's own shadow replaces that by a property.
      */
     :where(.dk-panel-raised) {
         background: var(--dk-raised);
@@ -3250,7 +3245,10 @@
             outline-color: CanvasText;
         }
 
-        /* The chosen theme word is ringed on its word while focus sits on its input. */
+        /*
+         * The theme word's ring is drawn on its word, not on the input that has focus, so the
+         * list above, which rings what has focus, misses it.
+         */
         :where(.dk-theme-switch-choice > input:checked:focus-visible + span) {
             outline-color: CanvasText;
         }

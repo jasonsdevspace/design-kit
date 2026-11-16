@@ -96,17 +96,19 @@ describe('the tokens', () => {
             expect(flat, side).toContain(
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`
             );
-        // An app's column clears the phone's sides itself, so a band inside it starts a step in.
+        // On a page with an app's column, what sits outside it starts where the column's content
+        // does, and the column clears the phone's sides itself, so a band inside it starts a step in.
+        for (const side of ['left', 'right'])
+            expect(flat, side).toContain(
+                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4));`
+            );
         expect(flat).toMatch(
-            /:where\(\.dk-app, \.dk-tabbar-page\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
+            /:where\(\.dk-app, \.dk-tabbar-page > :not\(\.dk-skip\)\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
         );
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
         expect(components).not.toMatch(/100% - var\(--dk-column\)/);
-        // The skip link is placed on the screen, so it clears the phone's side where a band need not.
-        expect(components).toMatch(
-            /\.dk-skip \{[^}]*\bleft: max\(var\(--dk-safe-left\) \+ var\(--dk-space-4\), var\(--dk-band-left\)\);/
-        );
+        expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
         expect(components).toMatch(
             /:where\(\s*\.dk-strip,\s*\.dk-footer,\s*\.dk-explainer-header,\s*\.dk-explainer,\s*\.dk-site-header,\s*\.dk-page\s*\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
         );

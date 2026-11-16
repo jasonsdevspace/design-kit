@@ -1225,16 +1225,17 @@ title, its lead, its one action and its sections, spaced by the kit with no rule
 ```
 
 `dk-page` spaces what it holds by `--dk-flow-step`, `--dk-space-4`, as an explainer does, with
-nothing above its first child and nothing added by a child out of sight, and stands its sections
-`--dk-space-7` apart, with no rule between them. Its `h1` is at the display size, and a section's
-`h2` at the title size, `--dk-space-3` over its text. It starts its text at the strip's inset, by
-the same band insets, so the page reads as one column from the strip to the footer and keeps clear
-of a phone's sides. Only its prose holds to the measure, its paragraphs, its plain lists and a
-quote, so a table, a grid of tiles or a figure takes the column. The spacing is set on the page,
-between what it holds, never on a paragraph's own margin, so a reader's own sheet that adds room
-under a paragraph adds the room it asks for and breaks nothing, and nothing is reordered, so focus
-and reading follow the markup. `dk-lead` is the lead, in the page's text color at the lead size and
-held to the measure, the explainer's lead under a name of its own. [Decision
+`--dk-space-6` above its first child under the header's rule and nothing added by a child out of
+sight, and stands its sections `--dk-space-7` apart, with no rule between them. Its `h1` is at the
+display size, and a section's `h2` at the title size, `--dk-space-3` over its text. It starts its
+text at the strip's inset, by the same band insets, so the page reads as one column from the strip
+to the footer and keeps clear of a phone's sides. Only its prose holds to the measure, its
+paragraphs, its plain lists and a quote, so a table, a grid of tiles or a figure takes the column.
+The spacing is set on the page, between what it holds, never on a paragraph's own margin, so a
+reader's own sheet that adds room under a paragraph adds the room it asks for and breaks nothing,
+and nothing is reordered, so focus and reading follow the markup. `dk-lead` is the lead, in the
+page's text color at the lead size and held to the measure, the explainer's lead under a name of its
+own. [Decision
 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
 says why a content page is a container of its own.
 
@@ -2204,12 +2205,12 @@ panel and to the card's, `--dk-surface`, in a raised one.
 ```
 
 `dk-rows-columns` beside `dk-rows-tiles` flows the tiles into as many columns as fit, each at least
-`--dk-tile-least` wide, 15rem unless the page sets it, in the order they are written, row by row, so
-the keyboard visits them as they are read. On a phone they fall to one column, and a lone last tile
-keeps one column's width. A tile there sets its title at the body size, and its picture across its
-top at the picture's own shape, which its `width` and `height` attributes give before it loads, with
-the text and the sign on the line under it. Without `dk-rows-columns` a list of tiles stays one
-column. A card that leads to several places is not one link and is not a tile.
+`--dk-tile-least` wide, in the order they are written, row by row, so the keyboard visits them as
+they are read. On a phone they fall to one column, and a lone last tile keeps one column's width. A
+tile there sets its title at the body size, and its picture across its top at the picture's own
+shape, which its `width` and `height` attributes give before it loads, with the text and the sign on
+the line under it. Without `dk-rows-columns` a list of tiles stays one column. A card that leads to
+several places is not one link and is not a tile.
 
 <details>
 <summary>How the tiles are drawn</summary>
