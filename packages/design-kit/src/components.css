@@ -151,6 +151,17 @@
         hyphens: auto;
     }
 
+    /* The brand is a link home with no edge, so it underlines under a pointer and a pressing thumb. */
+    :where(.dk-site-brand:active) {
+        text-decoration: underline;
+    }
+
+    @media (hover: hover) {
+        :where(.dk-site-brand:hover) {
+            text-decoration: underline;
+        }
+    }
+
     :where(.dk-site-mark) {
         flex: none;
         width: 1.75em;
@@ -1704,6 +1715,11 @@
         transition: color var(--dk-duration-short);
     }
 
+    /* Pressed, a resting pill or tab shows the text color, so a thumb on a phone sees it take. */
+    :where(a.dk-pill:active) {
+        color: var(--dk-fg);
+    }
+
     @media (hover: hover) {
         :where(a.dk-pill:hover) {
             color: var(--dk-fg);
@@ -1797,6 +1813,10 @@
         text-decoration: none;
         cursor: pointer;
         transition: color var(--dk-duration-short);
+    }
+
+    :where(.dk-tab:active) {
+        color: var(--dk-fg);
     }
 
     @media (hover: hover) {
