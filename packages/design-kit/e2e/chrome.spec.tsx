@@ -807,7 +807,7 @@ const headerLayout = async (page: Page) => {
     const edge = (
         await box(page.getByRole('navigation', { name: 'Portfolio' }).getByRole('link').first())
     ).x;
-    const site = page.getByRole('navigation', { name: 'Site' });
+    const site = page.getByRole('navigation', { name: 'Site', exact: true });
     const brand = await box(page.locator('.dk-site-brand'), 'the brand');
     const mark = await box(page.locator('.dk-site-mark'), 'the mark');
     const links = await Promise.all((await site.getByRole('link').all()).map((link) => box(link)));
@@ -832,8 +832,22 @@ test("lines a site's header up with the strip, its brand and pages the target ta
             // The pages on a row of their own, starting on the strip's edge, a row step under.
             expect(Math.round(first.x), at).toBe(Math.round(edge));
             expect(Math.round(first.y - (brand.y + brand.height)), at).toBe(12);
-        } else expect(first.y, at).toBeLessThan(brand.y + brand.height);
+        } else {
+            // The pages share the brand's row, the last ending on the strip's right edge.
+            expect(first.y, at).toBeLessThan(brand.y + brand.height);
+            const end = await page.locator('.dk-strip').evaluate((strip) => {
+                const drawn = strip.getBoundingClientRect();
+                return drawn.right - parseFloat(getComputedStyle(strip).paddingRight);
+            });
+            const last = links.at(-1) ?? first;
+            expect(Math.round(last.x + last.width), at).toBe(Math.round(end));
+        }
     }
+    // On a phone on its side, the brand clears what the phone keeps at its side, with the strip.
+    await writePage(page, { width: 812, title: 'Scorekeeper', css: SIDES_CSS, body: sitePage });
+    const sides = await headerLayout(page);
+    expect(Math.round(sides.brand.x)).toBe(Math.round(sides.edge));
+    expect(sides.brand.x).toBeGreaterThan(SIDES.left);
     const look = await page.locator('.dk-site-brand').evaluate((brand) => {
         const style = getComputedStyle(brand);
         return { size: style.fontSize, gap: style.columnGap };
@@ -846,9 +860,18 @@ test("reads a site's header once, its nav named Site, its current page marked, a
 }) => {
     await writePage(page, { width: 320, title: 'Scorekeeper', body: sitePage });
     await expect(page.getByRole('banner')).toHaveCount(1);
+    // The banner comes after the strip's nav and before the main content.
+    const order = await page.evaluate(() =>
+        [...document.querySelectorAll('nav[aria-label="Portfolio"], header, main')].map(
+            (element) => element.tagName
+        )
+    );
+    expect(order).toEqual(['NAV', 'HEADER', 'MAIN']);
     await expect(page.getByRole('link', { name: 'Scorekeeper', exact: true })).toHaveCount(1);
     await expect(
-        page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Home' })
+        page
+            .getByRole('navigation', { name: 'Site', exact: true })
+            .getByRole('link', { name: 'Home' })
     ).toHaveAttribute('aria-current', 'page');
     // The skip link lands on the main content, past the header.
     await page.keyboard.press('Tab');
@@ -862,8 +885,13 @@ test("reads a site's header once, its nav named Site, its current page marked, a
         visited.push(await page.evaluate(() => document.activeElement?.textContent.trim() ?? ''));
     }
     expect(visited).toEqual(['Scorekeeper', 'Home', 'About', 'Open the app']);
-    for (const theme of ['light', 'dark'] as const) {
-        await writePage(page, { width: 1280, theme, title: 'Scorekeeper', body: sitePage });
+    for (const [width, theme] of [
+        [1280, 'light'],
+        [1280, 'dark'],
+        [320, 'light'],
+        [320, 'dark'],
+    ] as const) {
+        await writePage(page, { width, theme, title: 'Scorekeeper', body: sitePage });
         // The brand reads as the site's name, not as a link in running text.
         await expect(page.locator('.dk-site-brand'), theme).toHaveCSS(
             'text-decoration-line',
@@ -871,7 +899,7 @@ test("reads a site's header once, its nav named Site, its current page marked, a
         );
         // The current page stands apart by its weight as well as its ground.
         const weights = await page
-            .getByRole('navigation', { name: 'Site' })
+            .getByRole('navigation', { name: 'Site', exact: true })
             .getByRole('link')
             .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
         expect(new Set(weights).size, theme).toBe(2);
@@ -883,7 +911,9 @@ test("reads a site's header once, its nav named Site, its current page marked, a
     }
     // In forced colors the current page takes the system's selection.
     await page.emulateMedia({ forcedColors: 'active' });
-    const home = page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Home' });
+    const home = page
+        .getByRole('navigation', { name: 'Site', exact: true })
+        .getByRole('link', { name: 'Home' });
     expect(await home.evaluate((link) => getComputedStyle(link).backgroundColor)).toBe(
         await page.evaluate(() => {
             const probe = document.body.appendChild(document.createElement('span'));
