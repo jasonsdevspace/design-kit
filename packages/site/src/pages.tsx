@@ -361,12 +361,7 @@ const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
  * the site's own styles from the kit's tokens, with no words of its own, since the tile is one link
  * named by its page's name and short line. A screen reader passes the drawing by.
  */
-const PREVIEWS: Readonly<
-    Record<
-        Exclude<Route['file'], 'index.html' | 'how-it-works/index.html' | 'together/index.html'>,
-        ReactNode
-    >
-> = {
+const PREVIEWS: Readonly<Record<Extract<Route, { card: string }>['file'], ReactNode>> = {
     'tokens/index.html': (
         <>
             <span className="site-preview-swatch site-preview-accent" />
@@ -407,11 +402,10 @@ const PREVIEWS: Readonly<
 };
 
 /**
- * Whether a page has a tile on the landing page: every page in the site's menu but the landing
- * page itself, each of which has a drawing in PREVIEWS, which the type holds.
+ * Whether a page has a tile on the landing page: every page with a card's short line, each of
+ * which has a drawing in PREVIEWS, which the type holds.
  */
-const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
-    route.nav !== null && route.path !== BASE;
+const isCarded = (route: Route): route is Extract<Route, { card: string }> => 'card' in route;
 
 /**
  * A tile for each page with a card, in columns, its drawing across the tile's top and the whole
@@ -788,7 +782,7 @@ export const Together = ({ build }: { readonly build: Build }) => (
         lead={
             <>
                 The design kit&rsquo;s pieces stacked as an app&rsquo;s home page stacks them, each
-                ground a step from the one it sits on.
+                set apart from the one it sits on by its ground or its edge.
             </>
         }
         intro={
@@ -800,10 +794,10 @@ export const Together = ({ build }: { readonly build: Build }) => (
             </p>
         }
     >
-        <section className="site-together" aria-labelledby="together-name">
+        <section className="site-together">
             <div className="site-masthead">
                 <div className="site-masthead-head">
-                    <h2 id="together-name">Pieces</h2>
+                    <h2>Pieces</h2>
                     <button
                         type="button"
                         className="dk-button site-grounds-show"
@@ -844,7 +838,7 @@ export const Together = ({ build }: { readonly build: Build }) => (
                 </nav>
             </div>
             <div className="dk-panel dk-panel-raised">
-                <p className="dk-panel-title">Each piece here, shown alone</p>
+                <h3 className="dk-panel-title">Each piece here, shown alone</h3>
                 <p>Each opens the piece on its own page, in every state and both themes.</p>
                 <ul className="dk-rows dk-rows-tiles" role="list">
                     {ALONE.map(({ title, detail, href }) => (
@@ -869,7 +863,7 @@ export const Together = ({ build }: { readonly build: Build }) => (
                 id="together-grounds"
                 aria-labelledby="together-grounds-title"
             >
-                <h2 className="dk-dialog-title" id="together-grounds-title">
+                <h2 className="dk-dialog-title" id="together-grounds-title" tabIndex={-1} autoFocus>
                     The grounds on this page
                 </h2>
                 <ul role="list">
@@ -892,8 +886,7 @@ export const Together = ({ build }: { readonly build: Build }) => (
                 </ul>
                 <form className="dk-dialog-actions" method="dialog">
                     <button type="submit" className="dk-button dk-button-text dk-button-quiet">
-                        <span aria-hidden="true">×</span>
-                        <span className="dk-visually-hidden">Close</span>
+                        Close
                     </button>
                 </form>
             </dialog>

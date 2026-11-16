@@ -199,6 +199,7 @@ body > .dk-strip {
  */
 .site-page-preview {
     forced-color-adjust: none;
+    color: var(--dk-fg);
     display: flex;
     align-items: center;
     justify-content: center;

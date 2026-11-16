@@ -20,6 +20,9 @@ import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 /** Each page, as the path a visitor asks for. */
 const PAGES = ROUTES.map(({ path }) => path);
 
+/** The page that stacks the newer pieces together. */
+const TOGETHER = ROUTES.find(({ file }) => file === 'together/index.html')?.path ?? BASE;
+
 /** The widths of a small phone, a phone, a tablet and a laptop. */
 const WIDTHS = [320, 390, 768, 1280] as const;
 
@@ -581,9 +584,10 @@ test.describe('the words each page opens with', () => {
         }
     });
 
-    /** The pages that list their sections and open the same way: every page with a landing card. */
+    /** Every page with a landing card, each of which lists its sections. */
     const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
-    const OPENED = [...CARDED.map(({ path }) => path), '/design-kit/together/'];
+    /** The pages that open the same way: every page with a landing card, and the pieces together. */
+    const OPENED = [...CARDED.map(({ path }) => path), TOGETHER];
     /** The one way every page says how to see the other theme. */
     const SWITCH = 'choose Light or Dark next to Theme, at the top of the page';
 
@@ -1429,12 +1433,13 @@ test.describe('the explainer', () => {
 
 test.describe("the site's header", () => {
     /** The pages in the site's menu, which open with the header, rather than the explainer's. */
-    const MENU = ROUTES.filter(({ nav }) => nav !== null);
+    /** Every page that opens with the site's header: all but the explainer, which a demo's draws. */
+    const HEADED = ROUTES.filter(({ path }) => path !== ABOUT);
 
     test("opens each page with the site's icon and the name, linked to the landing page", async ({
         page,
     }) => {
-        for (const { path } of MENU) {
+        for (const { path } of HEADED) {
             await page.goto(path);
             const brand = page.getByRole('link', { name: 'The design kit', exact: true });
             await expect(brand, path).toHaveAttribute('href', BASE);
@@ -1465,10 +1470,10 @@ test.describe("the site's header", () => {
         expect(name).not.toContain('design kit');
     });
 
-    test('draws the pages as tabs, the current one filled and marked as the page', async ({
+    test('draws the pages as tabs, the current one filled and marked as the page, and none on a page the menu leaves out', async ({
         page,
     }) => {
-        for (const { path, nav } of MENU) {
+        for (const { path, nav } of HEADED) {
             await page.goto(path);
             const tabs = page
                 .getByRole('navigation', { name: 'Site', exact: true })
@@ -1485,7 +1490,7 @@ test.describe("the site's header", () => {
             expect(
                 drawn.filter(({ current }) => current).map(({ name }) => name),
                 path
-            ).toEqual([nav]);
+            ).toEqual(nav === null ? [] : [nav]);
             expect(
                 drawn.filter(({ current, filled }) => current !== filled),
                 path
@@ -2888,7 +2893,7 @@ test.describe('how each state is shown', () => {
                     '/design-kit/controls/',
                     '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .dk-site-header a',
                 ],
-                ['/design-kit/together/', '.site-together a, .site-masthead button'],
+                [TOGETHER, '.site-together a, .site-masthead button'],
             ] as const) {
                 await page.goto(path);
                 const found = await page.evaluate(
@@ -3012,8 +3017,6 @@ test.describe(() => {
 });
 
 test.describe('the pieces together', () => {
-    const TOGETHER = '/design-kit/together/';
-
     test('holds a masthead with tabs on its rule, a raised panel of tiles, tiles in columns with drawings, an icon and a quiet Close, all live', async ({
         page,
     }) => {
@@ -3026,6 +3029,9 @@ test.describe('the pieces together', () => {
             'href',
             TOGETHER
         );
+        await expect(
+            stack.locator('.dk-panel-raised').getByRole('heading', { level: 3 })
+        ).toHaveText('Each piece here, shown alone');
         await expect(stack.locator('.dk-panel-raised .dk-rows-tiles > li > a.dk-row')).toHaveCount(
             3
         );
@@ -3033,31 +3039,74 @@ test.describe('the pieces together', () => {
             stack.locator('.dk-rows-columns > li > a.dk-row > .dk-row-picture')
         ).toHaveCount(5);
         await expect(stack.locator('.site-masthead button .dk-icon')).toHaveCount(1);
-        // A shut dialog is out of the accessibility tree, so its Close is named here by its words,
-        // and by its role once open in the dialog's own test.
-        await expect(stack.locator('dialog .dk-button-quiet .dk-visually-hidden')).toHaveText(
-            'Close'
-        );
-        // The chosen tab's line lies on the masthead's rule.
-        const chosen = await stack.locator('[aria-current="page"]').boundingBox();
-        const masthead = await stack.locator('.site-masthead').boundingBox();
-        if (!chosen || !masthead) throw new Error('no chosen tab or no masthead');
-        expect(Math.abs(chosen.y + chosen.height - (masthead.y + masthead.height))).toBeLessThan(
-            0.5
-        );
+        await expect(stack.locator('dialog .dk-button-quiet')).toHaveText('Close');
+        // The masthead's tabs are the one landmark named Pieces, the section around them a plain
+        // one.
+        await expect(page.getByRole('region', { name: 'Pieces' })).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'Pieces' })).toHaveCount(1);
     });
 
-    test('opens the grounds from its button, and closes them by the quiet Close, back on the button', async ({
+    test("lays the chosen tab's line on the masthead's rule, and stands every tab on a line where they wrap", async ({
+        page,
+    }) => {
+        for (const [width, scale] of [
+            [1280, 1],
+            [390, 1],
+            [320, 2],
+        ] as const) {
+            if (scale !== 1) await textSize(page, scale);
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto(TOGETHER);
+            const at = `${String(width)} at text ${String(scale)}`;
+            const drawn = await page.locator('.site-masthead').evaluate((masthead) => {
+                const tabs = [...masthead.querySelectorAll('.dk-tab')];
+                const chosen = masthead.querySelector('[aria-current="page"]');
+                if (!chosen || tabs.length === 0) throw new Error('the masthead holds no tabs');
+                return {
+                    lines: new Set(tabs.map((tab) => Math.round(tab.getBoundingClientRect().top)))
+                        .size,
+                    rule: masthead.getBoundingClientRect().bottom,
+                    chosen: chosen.getBoundingClientRect().bottom,
+                    edges: tabs.map((tab) => getComputedStyle(tab).borderBottomWidth),
+                };
+            });
+            expect(
+                drawn.edges.filter((edge) => edge === '0px'),
+                at
+            ).toEqual([]);
+            if (drawn.lines === 1)
+                expect(Math.abs(drawn.rule - drawn.chosen), at).toBeLessThan(0.5);
+            if (width === 320) expect(drawn.lines, at).toBeGreaterThan(1);
+        }
+    });
+
+    test('opens the grounds on their title, holds them to the target and the audit, and closes them by Close or Escape back on the button', async ({
         page,
     }) => {
         await page.goto(TOGETHER);
         const opener = page.getByRole('button', { name: 'The grounds' });
         const dialog = page.getByRole('dialog', { name: 'The grounds on this page' });
-        await opener.click();
-        await expect(dialog).toBeVisible();
-        await dialog.getByRole('button', { name: 'Close' }).click();
-        await expect(dialog).toBeHidden();
-        await expect(opener).toBeFocused();
+        for (const width of [1280, 390]) {
+            await page.setViewportSize({ width, height: 900 });
+            await opener.click();
+            await expect(dialog).toBeVisible();
+            // Focus starts on the title, so a long list opens at its start.
+            await expect(
+                dialog.getByRole('heading', { name: 'The grounds on this page' })
+            ).toBeFocused();
+            const close = dialog.getByRole('button', { name: 'Close' });
+            const box = await close.boundingBox();
+            expect(box?.height ?? 0, String(width)).toBeGreaterThanOrEqual(width === 390 ? 44 : 24);
+            const results = await new AxeBuilder({ page }).include('dialog').analyze();
+            expect(
+                results.violations.map(({ id }) => id),
+                String(width)
+            ).toEqual([]);
+            if (width === 1280) await close.click();
+            else await page.keyboard.press('Escape');
+            await expect(dialog).toBeHidden();
+            await expect(opener).toBeFocused();
+        }
     });
 
     test('draws each ground apart from the one it sits on, wide and on a phone, in both themes and forced colors', async ({
@@ -3066,47 +3115,61 @@ test.describe('the pieces together', () => {
         for (const forced of [false, true])
             for (const colorScheme of ['light', 'dark'] as const)
                 for (const width of [320, 1280]) {
-                    await page.emulateMedia({
-                        colorScheme,
-                        forcedColors: forced ? 'active' : 'none',
-                    });
+                    await page.emulateMedia({ colorScheme, forcedColors: 'none' });
+                    if (forced) await forceColors(page);
                     await page.setViewportSize({ width, height: 900 });
                     await page.goto(TOGETHER);
                     const at = `${colorScheme}${forced ? ', forced colors' : ''} at ${String(width)}`;
-                    // Each piece set on a ground, and whether its own ground or its edge sets it
-                    // apart from the ground it sits on.
-                    const apart = await page.evaluate(() => {
+                    // Each piece on a ground: its own ground, the ground under it, and whether its
+                    // edge and its shadow are drawn.
+                    const pieces = await page.evaluate(() => {
+                        const clear = (color: string) =>
+                            color === 'transparent' || /rgba\(.*, 0\)$/.test(color);
                         const opaque = (element: Element | null): string => {
                             for (let at = element; at; at = at.parentElement) {
                                 const ground = getComputedStyle(at).backgroundColor;
-                                if (!/rgba\(.*, 0\)$/.test(ground) && ground !== 'transparent')
-                                    return ground;
+                                if (!clear(ground)) return ground;
                             }
                             return getComputedStyle(document.documentElement).backgroundColor;
                         };
                         return [
-                            '.site-together .dk-panel-raised',
-                            '.site-together .dk-panel-raised .dk-rows-tiles > li > a',
-                            '.site-together .dk-rows-columns > li > a',
-                        ].flatMap((selector) =>
-                            [...document.querySelectorAll(selector)].map((piece) => {
+                            ['raised panel', '.site-together .dk-panel-raised'],
+                            [
+                                'tile on the panel',
+                                '.site-together .dk-panel-raised .dk-rows-tiles > li > a',
+                            ],
+                            ['tile on the page', '.site-together .dk-rows-columns > li > a'],
+                        ].flatMap(([name, selector]) =>
+                            [...document.querySelectorAll(selector ?? '')].map((piece) => {
                                 const drawn = getComputedStyle(piece);
                                 const under = opaque(piece.parentElement);
-                                const edge =
-                                    drawn.borderTopStyle !== 'none' &&
-                                    drawn.borderTopWidth !== '0px' &&
-                                    drawn.borderTopColor !== under &&
-                                    !/rgba\(.*, 0\)$/.test(drawn.borderTopColor);
                                 return {
-                                    selector,
-                                    apart: opaque(piece) !== under || edge,
+                                    name,
+                                    ground: opaque(piece),
+                                    under,
+                                    edge:
+                                        drawn.borderTopStyle !== 'none' &&
+                                        drawn.borderTopWidth !== '0px' &&
+                                        !clear(drawn.borderTopColor) &&
+                                        drawn.borderTopColor !== under,
+                                    shadow: drawn.boxShadow !== 'none',
                                 };
                             })
                         );
                     });
-                    expect(apart.length, at).toBeGreaterThan(0);
+                    expect(pieces.length, at).toBeGreaterThan(0);
+                    const astray = pieces.filter(({ name, ground, under, edge, shadow }) => {
+                        // Forced colors paint every ground the system's, so an edge sets each apart.
+                        if (forced) return !edge;
+                        // A raised panel in light stands on the page's own ground, lifted by its edge
+                        // and its shadow, and a tile always steps its ground off what holds it.
+                        if (name === 'raised panel') return ground === under && !(edge && shadow);
+                        return ground === under;
+                    });
                     expect(
-                        apart.filter((piece) => !piece.apart).map(({ selector }) => selector),
+                        astray.map(
+                            ({ name, ground, under }) => `${name ?? ''}: ${ground} on ${under}`
+                        ),
                         at
                     ).toEqual([]);
                 }
