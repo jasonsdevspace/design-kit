@@ -13,9 +13,9 @@ The kit's chrome keeps clear of a phone's edges on a page that reaches under the
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
 can sit on its container's rule, a text button gains a quiet form for a Close, and a site draws its
-header with kit classes. The theme script is unchanged, so `themeScriptHash` is the same. The
-sheets' budget rises from 9.25 KB to 10.25 KB, set again by the size audit's rule, and the controls'
-stays at 6.25 KB.
+header with kit classes. In forced colors what is chosen shows its words again. The theme script is
+unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
+again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -45,10 +45,14 @@ stays at 6.25 KB.
   `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
   underline and in the text color under a pointer and while held, as wide as a button is tall, open
   or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
-  toast's close is drawn by the same rules. `dk-site-header` draws a site's header under the strip,
-  at the strip's inset and over a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the
-  site's name and its pages as pills, the brand and each page the target tall and the pages wrapping
-  under the brand on a phone. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the
+  toast's close is drawn by the same rules. In forced colors what is chosen keeps the selection's
+  colors, a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's
+  chosen word, the current pill, the chosen tab and the current place in a tab bar, with an edge and
+  a ring in system colors and no shadow, so a browser that paints a backplate behind their words no
+  longer draws the words unseen. `dk-site-header` draws a site's header under the strip, at the
+  strip's inset and over a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's
+  name and its pages as pills, the brand and each page the target tall and the pages wrapping under
+  the brand on a phone. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the
   container at whose foot it sits, drawing no rule of its own and standing a pixel lower, so the
   chosen tab's line lies over the container's rule, and keeping to the foot of a bar that centers
   what it holds.
@@ -74,14 +78,15 @@ stays at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read. A quiet button's colors, its states,
-  its size at every width and in an app, its name and its ring in forced colors are held on the
-  page, a panel and a raised panel in both themes. A site's header starts its brand, and its pages
-  where they wrap, on the strip's edge, keeps each the target tall, reads once with its nav named
-  Site, marks its current page by weight and in forced colors, takes the brand before the pages,
-  lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and the wider
-  spacing. A tab row on its container's rule ends the chosen line and the resting tabs on the
-  container's foot with one rule, in a block and in a bar that centers it, in both themes and in
+  the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
+  of every chosen thing in forced colors and find the selection under its words. A quiet button's
+  colors, its states, its size at every width and in an app, its name and its ring in forced colors
+  are held on the page, a panel and a raised panel in both themes. A site's header starts its brand,
+  and its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with
+  its nav named Site, marks its current page by weight and in forced colors, takes the brand before
+  the pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and
+  the wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
+  the container's foot with one rule, in a block and in a bar that centers it, in both themes and in
   forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
