@@ -435,8 +435,9 @@ test('spaces a content page by the flow, its sections further apart, and holds i
         )
     );
     const title = await box(page.getByRole('heading', { level: 1 }));
-    // Nothing above the first child, a whole step between blocks and the larger step to a section.
-    expect(Math.round(title.y)).toBe(Math.round(main?.top ?? -1));
+    // Room above the title under the header's rule, as an explainer keeps, a whole step between
+    // blocks and the larger step to a section.
+    expect(Math.round(title.y - (main?.top ?? Number.NaN))).toBe(32);
     expect(Math.round((lead?.top ?? 0) - title.y - title.height)).toBe(16);
     expect(
         [first, second].map((section, at) =>

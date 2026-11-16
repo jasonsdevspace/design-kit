@@ -545,6 +545,42 @@ test('draws the skip link below the top safe area and past the side one', async 
     expect(drawn.x).toBeGreaterThanOrEqual(SAFE.left + 16);
 });
 
+for (const [frame, width] of [
+    ['a tab bar', 390],
+    ['a tab bar', 1440],
+    ["an app's frame", 1440],
+] as const)
+    test(`draws the skip link where the strip's links start on a page with ${frame}, ${String(width)} wide`, async ({
+        page,
+    }) => {
+        const strip =
+            '<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio"><a href="#home">Jason Poteet</a></nav></div>';
+        const tabbar =
+            '<nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#play" aria-current="page">Play</a></li></ul></nav>';
+        const skip = '<a class="dk-skip" href="#main-content">Skip to content</a>';
+        const main = '<main id="main-content" tabindex="-1"><h1>Round 3</h1></main>';
+        await writePage(page, {
+            width,
+            height: 700,
+            css: SAFE_CSS,
+            title: 'Round 3',
+            body:
+                frame === 'a tab bar'
+                    ? `${skip}${strip}${main}${tabbar}`
+                    : `${skip}<div class="dk-app">${strip}${main}</div>`,
+        });
+        // A page that ends in a tab bar is its body, so the class goes on the body.
+        if (frame === 'a tab bar')
+            await page.evaluate(() => document.body.classList.add('dk-tabbar-page'));
+        const link = page.getByRole('link', { name: 'Skip to content' });
+        await link.focus();
+        const at = (await box(link, 'the skip link')).x;
+        // Past the side the phone keeps, and on the line the strip's first link starts on.
+        expect(at).toBeGreaterThanOrEqual(SAFE.left + 16);
+        const first = await box(page.getByRole('link', { name: 'Jason Poteet' }), 'the strip');
+        expect(Math.round(at)).toBe(Math.round(first.x));
+    });
+
 test('prints as long and as wide as what it holds, with the body whole', async ({ page }) => {
     await open(page, { width: 1280, css: SAFE_CSS });
     await page.emulateMedia({ media: 'print' });
@@ -707,7 +743,7 @@ const panels = (framed: boolean): string => {
 };
 
 for (const theme of ['light', 'dark'] as const)
-    test(`draws a raised panel on the raised ground, lifted by the card shadow or the page's own, in the ${theme} theme`, async ({
+    test(`draws a raised panel on the raised ground, lifted by the resting shadow or the page's own, in the ${theme} theme`, async ({
         page,
         browserName,
     }) => {
@@ -716,7 +752,7 @@ for (const theme of ['light', 'dark'] as const)
         await writePage(page, { width: 390, theme, title: 'Play', body: panels(true) });
         const ground = theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(42, 42, 42)';
         expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
-        // The card shadow lifts it with no shadow of the page's own, and a plain panel casts none.
+        // The resting shadow lifts it with no shadow of the page's own, and a plain panel casts none.
         expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(
             theme === 'light'
                 ? 'rgba(0, 0, 0, 0.12) 0px 1px 3px 0px'

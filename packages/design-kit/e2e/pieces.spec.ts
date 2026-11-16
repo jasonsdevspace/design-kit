@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { backplateUnderWords, pixels, writePage } from './page.js';
+import { backplateUnderWords, colorOf, pixels, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -590,5 +590,35 @@ test("draws every chosen thing's words in forced colors, on the system's selecti
         }
     } finally {
         await context.close();
+    }
+});
+
+test("rings every chosen thing in the system's text in forced colors, the theme word too", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'only Chromium draws forced colors here');
+    await writePage(page, { title: 'Chosen', body: CHOSEN });
+    await page.emulateMedia({ forcedColors: 'active' });
+    const canvasText = await colorOf(page, 'CanvasText');
+    // Each chosen thing, the element focus lands on, and the one its ring is drawn on.
+    const rings: readonly (readonly [string, string])[] = [
+        ['#pill', '#pill'],
+        ['#toggle', '#toggle'],
+        ['#open', '#open'],
+        ['#cell', '#cell'],
+        ['#tab', '#tab'],
+        ['#tab-toggle', '#tab-toggle'],
+        ['#tab-link', '#tab-link'],
+        ['.dk-theme-switch input:checked', '#theme'],
+    ];
+    for (const [focused, ringed] of rings) {
+        await page.locator(focused).focus();
+        await page.keyboard.press('Shift+Tab');
+        await page.keyboard.press('Tab');
+        await expect(page.locator(focused)).toBeFocused();
+        expect((await style(page.locator(ringed), 'outline-color'))['outline-color'], ringed).toBe(
+            canvasText
+        );
     }
 });
