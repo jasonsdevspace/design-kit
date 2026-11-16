@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import ts from 'typescript';
 
 import { contrast as ratio } from '../examples/palette.js';
@@ -97,14 +97,35 @@ export const themeOf = (page: Page): Promise<string | null> =>
 export const tabKey = (browserName: string): string =>
     browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 
-/** The contrast between two colors the browser resolved to rgb, by the measure the tokens use. */
+/** The red, green, blue and alpha of a color the browser resolved to rgb or to srgb. */
+const channels = (color: string): readonly [number, number, number, number] => {
+    const [red = 0, green = 0, blue = 0, alpha = 1] = (
+        color.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []
+    ).map(Number);
+    if (color.startsWith('rgb')) return [red, green, blue, alpha];
+    if (color.startsWith('color(srgb ')) return [red * 255, green * 255, blue * 255, alpha];
+    throw new Error(`expected a color in rgb or srgb, got ${color}`);
+};
+
+/**
+ * The contrast between two colors the browser resolved, by the measure the tokens use. A
+ * translucent color is weighed over the other, the ground it sits on, since what shows is the two
+ * mixed, so a color drawn at a tenth of its strength measures as faint as it looks.
+ */
 export const contrast = (first: string, second: string): number => {
-    const hex = (color: string) =>
-        `#${(color.match(/[\d.]+/g) ?? [])
+    const [over, under] = channels(first)[3] < 1 ? [first, second] : [second, first];
+    const top = channels(over);
+    const ground = channels(under);
+    if (ground[3] < 1) throw new Error(`expected one of ${first} and ${second} to be opaque`);
+    const hex = (color: readonly number[]) =>
+        `#${color
             .slice(0, 3)
-            .map((part) => Math.round(Number(part)).toString(16).padStart(2, '0'))
+            .map((part) => Math.round(part).toString(16).padStart(2, '0'))
             .join('')}`;
-    return ratio(hex(first), hex(second));
+    const mixed = top
+        .slice(0, 3)
+        .map((part, at) => part * top[3] + (ground[at] ?? 0) * (1 - top[3]));
+    return ratio(hex(mixed), hex(ground));
 };
 
 /** A color as the page resolves it, a system color or a token, from an element asked to take it. */
@@ -117,6 +138,30 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
         probe.remove();
         return resolved;
     }, name);
+
+/**
+ * Turns forced colors on for the page, or off again, and fails where the page does not then match
+ * them, so a test of forced colors never passes on a page drawn in the author's colors.
+ */
+export const forceColors = async (page: Page, active = true): Promise<void> => {
+    await page.emulateMedia({ forcedColors: active ? 'active' : 'none' });
+    expect(
+        await page.evaluate(() => matchMedia('(forced-colors: active)').matches),
+        'whether the page draws in forced colors'
+    ).toBe(active);
+};
+
+/**
+ * Brings focus to the element as the keyboard does, by leaving it backward and coming back, so the
+ * browser draws the ring it keeps for keyboard focus, which focus from a script may not show.
+ */
+export const ringByKeyboard = async (locator: Locator, browserName: string): Promise<void> => {
+    const keys = locator.page().keyboard;
+    await locator.focus();
+    await keys.press(`Shift+${tabKey(browserName)}`);
+    await keys.press(tabKey(browserName));
+    await expect(locator).toBeFocused();
+};
 
 /**
  * A length the browser reports, in pixels, for a check within a twentieth of a pixel, since Firefox
