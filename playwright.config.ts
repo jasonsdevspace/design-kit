@@ -36,6 +36,8 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: Boolean(process.env['CI']),
     retries: process.env['CI'] ? 1 : 0,
+    // A test that passes only on its retry fails the run, so a flake is named rather than hidden.
+    failOnFlakyTests: Boolean(process.env['CI']),
     // In CI, a JSON report too, which the run's summary is written from.
     reporter: process.env['CI']
         ? [
