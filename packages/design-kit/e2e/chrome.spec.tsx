@@ -720,6 +720,24 @@ const pageLook = (page: Page) =>
         };
     });
 
+test('marks a link the strip or the footer names current by any value but false, as a pill does', async ({
+    page,
+}) => {
+    await open(page, { width: 1280, where: 'about' });
+    const link = page.getByRole('navigation', { name: 'Portfolio' }).getByRole('link', {
+        name: 'How it works',
+    });
+    const { strong, normal } = await pageLook(page);
+    for (const [value, weight] of [
+        ['true', strong],
+        ['page', strong],
+        ['false', normal],
+    ] as const) {
+        await link.evaluate((element, to) => element.setAttribute('aria-current', to), value);
+        expect((await linkLook(link)).weight, value).toBe(weight);
+    }
+});
+
 test('draws the link to the current page apart from the others in the strip and the footer', async ({
     page,
 }) => {

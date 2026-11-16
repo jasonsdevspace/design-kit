@@ -230,10 +230,10 @@
     :where(
         .dk-strip-links a:hover,
         .dk-strip-links a:focus-visible,
-        .dk-strip-links a[aria-current='page'],
+        .dk-strip-links a[aria-current]:not([aria-current='false']),
         .dk-footer a:hover,
         .dk-footer a:focus-visible,
-        .dk-footer a[aria-current='page']
+        .dk-footer a[aria-current]:not([aria-current='false'])
     ) {
         color: var(--dk-fg);
     }
@@ -241,9 +241,13 @@
     /*
      * The link to the page a reader is on stands in the page's text, as above, and at the heading's
      * weight, so it is told from the links around it by more than its color, which forced colors
-     * replace. It keeps its underline, so it still reads as a link.
+     * replace. It keeps its underline, so it still reads as a link. Any value but false marks it, as
+     * on a pill or a tab, so a page beneath one the links name marks that link with true.
      */
-    :where(.dk-strip-links a[aria-current='page'], .dk-footer a[aria-current='page']) {
+    :where(
+        .dk-strip-links a[aria-current]:not([aria-current='false']),
+        .dk-footer a[aria-current]:not([aria-current='false'])
+    ) {
         font-weight: var(--dk-weight-strong);
     }
 
