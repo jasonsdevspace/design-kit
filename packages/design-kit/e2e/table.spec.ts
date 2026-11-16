@@ -331,40 +331,6 @@ const scrollTo = (page: Page, where: 'start' | 'middle' | 'end'): Promise<void> 
         element.scrollLeft = getComputedStyle(element).direction === 'rtl' ? -along : along;
     }, where);
 
-/**
- * Waits for the browser to draw a frame, or a short while where it draws none, such as a page in
- * the back, so a test that reads what was drawn never hangs on a frame that does not come.
- */
-const nextFrame = (page: Page): Promise<void> =>
-    page.evaluate(
-        () =>
-            new Promise<void>((drawn) => {
-                requestAnimationFrame(() => {
-                    drawn();
-                });
-                setTimeout(drawn, 500);
-            })
-    );
-
-/**
- * The shade at the frame's start edge and at its end edge, either way it reads, once the browser
- * has drawn it. An animation tied to a scroll can take its new place a frame or more after the
- * scroll, in Firefox above all, so the shades are read after each frame until two readings agree.
- */
-const shades = async (page: Page, dir: 'ltr' | 'rtl' = 'ltr') => {
-    const [start, end] =
-        dir === 'ltr' ? (['left', 'right'] as const) : (['right', 'left'] as const);
-    const read = async () => ({ start: await shadeAt(page, start), end: await shadeAt(page, end) });
-    let before = await read();
-    for (let tries = 0; tries < 10; tries += 1) {
-        await nextFrame(page);
-        const now = await read();
-        if (now.start === before.start && now.end === before.end) return now;
-        before = now;
-    }
-    return before;
-};
-
 /** Whether the browser ties an animation to a scroll, and so draws the shade at all. */
 const drawsShade = (page: Page): Promise<boolean> =>
     page.evaluate(() => CSS.supports('animation-timeline: scroll()'));
@@ -373,6 +339,38 @@ const drawsShade = (page: Page): Promise<boolean> =>
 const SHADED = 12;
 const NONE = 4;
 
+type Shade = 'shaded' | 'none';
+
+/** What an edge shows: a shade, none, or something between, with the figure read. */
+const shadeOf = (value: number): string => {
+    if (value > SHADED) return 'shaded';
+    return value < NONE ? 'none' : `faint, ${String(value)}`;
+};
+
+/**
+ * Waits until the frame's start edge and end edge, either way it reads, show what is wanted, and
+ * fails where they never do. An animation tied to a scroll can take its new place a frame or more
+ * after the scroll, in Firefox above all, so the edges are read again until they reach it.
+ */
+const expectShades = async (
+    page: Page,
+    want: { readonly start?: Shade; readonly end?: Shade },
+    what = 'the edges',
+    dir: 'ltr' | 'rtl' = 'ltr'
+): Promise<void> => {
+    const [start, end] =
+        dir === 'ltr' ? (['left', 'right'] as const) : (['right', 'left'] as const);
+    await expect
+        .poll(
+            async () => ({
+                ...(want.start && { start: shadeOf(await shadeAt(page, start)) }),
+                ...(want.end && { end: shadeOf(await shadeAt(page, end)) }),
+            }),
+            { message: what }
+        )
+        .toEqual(want);
+};
+
 test('shades the edges a frame scrolls toward, and neither end once it is in view', async ({
     page,
 }) => {
@@ -380,23 +378,13 @@ test('shades the edges a frame scrolls toward, and neither end once it is in vie
         for (const dir of ['ltr', 'rtl'] as const) {
             await open(page, { css: UNPINNED, theme, dir });
             // Where the browser cannot tie an animation to a scroll, no edge is shaded at all.
-            const more = (await drawsShade(page)) ? SHADED : -1;
-            const shaded = (value: number, what: string) =>
-                more < 0
-                    ? expect(value, what).toBeLessThan(NONE)
-                    : expect(value, what).toBeGreaterThan(more);
+            const more: Shade = (await drawsShade(page)) ? 'shaded' : 'none';
             const where = `${theme} ${dir}`;
-            let at = await shades(page, dir);
-            expect(at.start, `${where} at the start`).toBeLessThan(NONE);
-            shaded(at.end, `${where} at the start`);
+            await expectShades(page, { start: 'none', end: more }, `${where} at the start`, dir);
             await scrollTo(page, 'middle');
-            at = await shades(page, dir);
-            shaded(at.start, `${where} in the middle`);
-            shaded(at.end, `${where} in the middle`);
+            await expectShades(page, { start: more, end: more }, `${where} in the middle`, dir);
             await scrollTo(page, 'end');
-            at = await shades(page, dir);
-            shaded(at.start, `${where} at the end`);
-            expect(at.end, `${where} at the end`).toBeLessThan(NONE);
+            await expectShades(page, { start: more, end: 'none' }, `${where} at the end`, dir);
         }
     }
 });
@@ -407,9 +395,7 @@ test("hides the start's shade under a pinned column, and shades the end beside i
     await open(page);
     test.skip(!(await drawsShade(page)), 'the browser draws no shade');
     await scrollTo(page, 'middle');
-    const at = await shades(page);
-    expect(at.start).toBeLessThan(NONE);
-    expect(at.end).toBeGreaterThan(SHADED);
+    await expectShades(page, { start: 'none', end: 'shaded' });
 });
 
 test("shades a frame on a ground of its own with no band of the page's ground", async ({
@@ -420,12 +406,9 @@ test("shades a frame on a ground of its own with no band of the page's ground", 
         css: `${UNPINNED} main { --dk-table-ground: var(--dk-highlight); background: var(--dk-highlight); }`,
     });
     test.skip(!(await drawsShade(page)), 'the browser draws no shade');
-    let at = await shades(page);
-    expect(at.start).toBeLessThan(NONE);
-    expect(at.end).toBeGreaterThan(SHADED);
+    await expectShades(page, { start: 'none', end: 'shaded' }, 'at the start');
     await scrollTo(page, 'end');
-    at = await shades(page);
-    expect(at.end).toBeLessThan(NONE);
+    await expectShades(page, { end: 'none' }, 'at the end');
 });
 
 test('shades the frame for a visitor who asks for less motion too', async ({ page }) => {
@@ -433,24 +416,22 @@ test('shades the frame for a visitor who asks for less motion too', async ({ pag
     await open(page, { css: UNPINNED });
     test.skip(!(await drawsShade(page)), 'the browser draws no shade');
     await scrollTo(page, 'middle');
-    const at = await shades(page);
-    expect(at.start).toBeGreaterThan(SHADED);
-    expect(at.end).toBeGreaterThan(SHADED);
+    await expectShades(page, { start: 'shaded', end: 'shaded' });
 });
 
 test('shades no edge of a frame whose table fits, nor any in forced colors', async ({ page }) => {
     await open(page, {
         css: `${UNPINNED} .dk-table :is(th, td):nth-child(n + 3) { display: none; }`,
     });
-    let at = await shades(page);
-    expect(at.start).toBeLessThan(NONE);
-    expect(at.end).toBeLessThan(NONE);
+    await expectShades(page, { start: 'none', end: 'none' }, 'a table that fits');
     await page.emulateMedia({ forcedColors: 'active' });
     await open(page, { css: UNPINNED });
     for (const where of ['start', 'middle'] as const) {
         await scrollTo(page, where);
-        at = await shades(page);
-        expect(at.start, `in forced colors at the ${where}`).toBeLessThan(NONE);
-        expect(at.end, `in forced colors at the ${where}`).toBeLessThan(NONE);
+        await expectShades(
+            page,
+            { start: 'none', end: 'none' },
+            `in forced colors at the ${where}`
+        );
     }
 });
