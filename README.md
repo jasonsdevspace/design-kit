@@ -116,6 +116,7 @@ follow by area.
 | A palette set on a container restyles only what is inside it                                              | `packages/design-kit/e2e/sheets.spec.ts` |
 | The focus ring is drawn in the accent, and not on a section a skip link moves focus to                    | `packages/design-kit/e2e/sheets.spec.ts` |
 | A label hidden from the eye is still read by a screen reader                                              | `packages/design-kit/e2e/sheets.spec.ts` |
+| A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `packages/design-kit/e2e/links.spec.ts`  |
 | Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts` |
 
 </details>

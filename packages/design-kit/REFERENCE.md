@@ -10,10 +10,16 @@ each piece live in both themes.
 `base.css` and `components.css` load after `tokens.css`, since the tokens' first statement declares
 the kit's layer order. `base.css` draws selected text on the accent rather than on the browser's
 blue, since a page keeps one accent, and in the text the accent carries. It sets inline code a step
-smaller than the text around it and lets a long name break anywhere rather than push a narrow
-column wider. Inside a `pre` code takes the block's size, and inside a link it keeps the link's
-underline. The base also puts a pointer cursor
-on a `<summary>`, and on a checkbox or radio and the label around it.
+smaller than the text around it and lets a long name break anywhere rather than push a narrow column
+wider. Inside a `pre` code takes the block's size, and inside a link it keeps the link's underline.
+The kit leaves the browser's underline on a link in running text, in a paragraph, a list, a callout,
+a panel, a dialog, a table, a toast, the strip or the footer, since the accent stands too close to
+the text around it to mark a link by its color alone, and a footer's link takes the footer's own
+muted color. A piece that is a link, such as a button, a pill, a tab, a row or a tab bar's link,
+takes the underline off in its own class, since its edge, its sign or its place in a row of links
+marks it instead, and the site header's brand stands at the header's start, where a link home is
+looked for. A text button puts the underline back, having no edge. The base also puts a pointer
+cursor on a `<summary>`, and on a checkbox or radio and the label around it.
 
 Every token's value, each color in both themes, and the contrast of each color pairing are on [the
 tokens page](https://jasonsdevspace.com/design-kit/tokens/).
@@ -197,10 +203,10 @@ size, the links close to 1rem apart and wrap where they must, and the switches t
 own below them.
 
 The footer's text holds to the measure, as prose does, while its rule runs the page's width.
-Every link in the chrome keeps its underline, and in the footer's text the underline is what
-tells a link from the text around it. The link marked as the current page stands in the page's text
-at the heading's weight, so it is told from the links around it by more than its color, in forced
-colors too, and still reads as a link.
+Every link in the strip and the footer keeps its underline, and in the footer's text the underline
+is what tells a link from the text around it. The link marked as the current page stands in the
+page's text at the heading's weight, so it is told from the links around it by more than its color,
+in forced colors too, and still reads as a link.
 
 </details>
 
