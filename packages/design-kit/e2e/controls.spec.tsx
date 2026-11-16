@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
-import { box, height, KIT, pixels, sideways, style, writePage } from './page.js';
+import { box, colorOf, contrast, height, KIT, pixels, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 
 /*
@@ -395,16 +395,6 @@ const QUIET = ['', 'dk-panel', 'dk-panel dk-panel-raised']
     )
     .join('');
 
-/** What a color the page names resolves to, read from an element drawn in it. */
-const resolved = (page: Page, color: string): Promise<string> =>
-    page.evaluate((named) => {
-        const probe = document.body.appendChild(document.createElement('span'));
-        probe.style.color = named;
-        const drawn = getComputedStyle(probe).color;
-        probe.remove();
-        return drawn;
-    }, color);
-
 test('draws a quiet button muted with no edge or underline, in the text color under a pointer and while held', async ({
     page,
 }) => {
@@ -414,16 +404,28 @@ test('draws a quiet button muted with no edge or underline, in the text color un
             title: 'Quiet',
             body: `<main><h1>Quiet</h1>${QUIET}</main>`,
         });
-        const muted = await resolved(page, 'var(--dk-muted)');
+        const muted = await colorOf(page, 'var(--dk-muted)');
         for (const at of [0, 1, 2]) {
             const close = page.locator(`#close-${String(at)}`);
             expect(
                 await style(close, 'color', 'border-top-width', 'text-decoration-line'),
                 `${theme}, ground ${String(at)}`
             ).toEqual({ color: muted, 'border-top-width': '0px', 'text-decoration-line': 'none' });
+            // The muted words hold 4.5 to 1 on the ground the section draws, or the page's.
+            const ground = await close.evaluate((element) => {
+                const section = element.closest('section');
+                const own = section ? getComputedStyle(section).backgroundColor : '';
+                return own && own !== 'rgba(0, 0, 0, 0)'
+                    ? own
+                    : getComputedStyle(document.body).backgroundColor;
+            });
+            expect(
+                contrast(muted, ground),
+                `${theme}, ground ${String(at)}`
+            ).toBeGreaterThanOrEqual(4.5);
         }
         const close = page.locator('#close-0');
-        const text = await resolved(page, 'var(--dk-fg)');
+        const text = await colorOf(page, 'var(--dk-fg)');
         await close.hover();
         await expect.poll(async () => (await style(close, 'color'))['color']).toBe(text);
         await page.mouse.move(0, 0);
@@ -434,6 +436,22 @@ test('draws a quiet button muted with no edge or underline, in the text color un
         await expect.poll(async () => (await style(close, 'color'))['color']).toBe(text);
         await page.mouse.up();
         await page.mouse.move(0, 0);
+        // Open or off, written by hand, it stays muted with no underline.
+        for (const state of ['aria-expanded', 'aria-disabled']) {
+            await close.evaluate((element, name) => {
+                element.setAttribute(name, 'true');
+            }, state);
+            expect(
+                await style(close, 'color', 'text-decoration-line'),
+                `${theme}, ${state}`
+            ).toEqual({
+                color: muted,
+                'text-decoration-line': 'none',
+            });
+            await close.evaluate((element, name) => {
+                element.removeAttribute(name);
+            }, state);
+        }
         // Its muted words hold their ratio on each ground.
         const results = await new AxeBuilder({ page }).analyze();
         expect(
@@ -469,7 +487,13 @@ test('names a quiet button Close alone, as wide as it is tall, and rings it in f
     `);
     await page.emulateMedia({ forcedColors: 'active' });
     const close = page.locator('#close-0');
-    expect((await style(close, 'color'))['color']).toBe(await resolved(page, 'ButtonText'));
+    expect((await style(close, 'color'))['color']).toBe(await colorOf(page, 'ButtonText'));
+    // Its colors gone, an underline under a pointer is what shows it is pointed at.
+    await close.hover();
+    await expect
+        .poll(async () => (await style(close, 'text-decoration-line'))['text-decoration-line'])
+        .toBe('underline');
+    await page.mouse.move(0, 0);
     await page.locator('#close-0').focus();
     await page.keyboard.press('Shift+Tab');
     await page.keyboard.press('Tab');

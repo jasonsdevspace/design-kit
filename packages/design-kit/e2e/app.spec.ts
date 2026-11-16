@@ -638,8 +638,7 @@ test('holds every control in an app to the target on a wide screen, and leaves t
     });
     const plain = await sizes(page, '#in');
     for (const kind of HELD) expect(plain[kind]?.height, kind).toBeLessThan(44);
-    expect(plain['quiet']?.width, 'quiet').toBe(plain['quiet']?.height);
-    expect(plain['quiet']?.height, 'quiet').toBeGreaterThanOrEqual(24);
+    expect([plain['quiet']?.width, plain['quiet']?.height], 'quiet').toEqual([36, 36]);
 });
 
 test("leaves a demo's strip as it is on a page that ends in a tab bar", async ({ page }) => {

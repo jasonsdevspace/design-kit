@@ -41,8 +41,9 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
   `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
-  underline and in the text color under a pointer and while held, as wide as a button is tall, and
-  in `ButtonText` in forced colors. The toast's close is drawn by the same rules.
+  underline and in the text color under a pointer and while held, as wide as a button is tall, open
+  or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
+  toast's close is drawn by the same rules.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -51,8 +52,9 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   `dk-field-action` row, so a page draws a field with a button, such as a search and the button that
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
   `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
-  same component under its first name. `Button` takes `quiet` beside `text`, which TypeScript
-  refuses with `off`, since a Close always closes.
+  same component under its first name. `Button` takes `quiet` beside `text`, and with no children
+  draws a hidden × beside Close out of sight. TypeScript refuses `quiet` with `off`, since a Close
+  always closes.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through

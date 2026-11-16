@@ -354,29 +354,6 @@
     }
 
     /*
-     * A quiet text button, such as a Close at a panel's corner, in the muted color with no
-     * underline, so it does not compete with the one strong action beside it, and in the text
-     * color under a pointer and while held. It keeps a button's least width, so a × alone is as
-     * wide as the button is tall, and the rules below that take a text button's width away leave
-     * it out. The toast's close is one. It is never off, since a Close always closes.
-     */
-    :where(.dk-button-quiet, .dk-toast-close) {
-        min-width: var(--dk-field-height);
-        color: var(--dk-muted);
-        text-decoration: none;
-    }
-
-    :where(.dk-button-quiet:active, .dk-toast-close:active) {
-        color: var(--dk-fg);
-    }
-
-    @media (hover: hover) {
-        :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
-            color: var(--dk-fg);
-        }
-    }
-
-    /*
      * A toggle that is on, a button whose panel is open, and the theme switch's chosen word, on the
      * highlight with an edge twice as thick in the accent and its words in the page's text, the
      * accent button's included. The highlight alone is close to the page's own ground, so the
@@ -440,6 +417,30 @@
     :where(.dk-button-text:disabled, .dk-button-text[aria-disabled='true']) {
         text-decoration: underline;
         text-decoration-thickness: auto;
+    }
+
+    /*
+     * A quiet text button, such as a Close at a panel's corner, in the muted color with no
+     * underline, so it does not compete with the one strong action beside it, and in the text
+     * color under a pointer and while held, open or off alike, which is why it comes after their
+     * rules. It keeps a button's least width, so a × alone is as
+     * wide as the button is tall, and the rules below that take a text button's width away leave
+     * it out. The toast's close is one. It is never off, since a Close always closes.
+     */
+    :where(.dk-button-quiet, .dk-toast-close) {
+        min-width: var(--dk-field-height);
+        color: var(--dk-muted);
+        text-decoration: none;
+    }
+
+    :where(.dk-button-quiet:active, .dk-toast-close:active) {
+        color: var(--dk-fg);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+            color: var(--dk-fg);
+        }
     }
 
     /* An off toggle that is on keeps its thicker edge, in the line's color, so it still tells. */
@@ -535,9 +536,22 @@
             color: HighlightText;
         }
 
-        /* A quiet button has no edge, so its words are what show it is a button. */
+        /*
+         * A quiet button has no edge, so its words are what show it is a button, and an underline
+         * under a pointer and while held is what shows those, where its colors are gone.
+         */
         :where(.dk-button-quiet, .dk-toast-close) {
             color: ButtonText;
+        }
+
+        :where(.dk-button-quiet:active, .dk-toast-close:active) {
+            text-decoration: underline;
+        }
+
+        @media (hover: hover) {
+            :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+                text-decoration: underline;
+            }
         }
 
         :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {

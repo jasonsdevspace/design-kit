@@ -373,17 +373,18 @@ no minimum width, in the accent and underlined at the size of the text around it
 button's height, so its target holds, which is why it sits beside a block rather than in running
 text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
 color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
-muted text and still with no edge. A quiet button is in the muted text with no underline, and in the
-page's text under a pointer and while held. It keeps a button's least width, so a × alone is as wide
-as the button is tall, and in forced colors its words take `ButtonText`. Where a pointer can hover,
-the edge turns to the focus color under it, and the accent button, or a link drawn as one,
-underlines its words instead, its one cue under a pointer since its edge is already the accent.
-Pressed is the highlight with an edge twice as thick in the accent, and its words in the page's
-text, an accent button's included. Off is the muted text on no ground with an edge in the line
-color, rather than a fade, so its words keep a ratio the palette measures. An off toggle that is on
-keeps the thicker edge, in the line color. In forced colors a pressed button takes the system's
-`Highlight`, and an off one takes `GrayText` on the page's ground, accent or not. An off toggle that
-is on keeps an edge in `Highlight`.
+muted text and still with no edge. Where a pointer can hover, the edge turns to the focus color
+under it, and the accent button, or a link drawn as one, underlines its words instead, its one cue
+under a pointer since its edge is already the accent. Pressed is the highlight with an edge twice as
+thick in the accent, and its words in the page's text, an accent button's included. Off is the muted
+text on no ground with an edge in the line color, rather than a fade, so its words keep a ratio the
+palette measures. An off toggle that is on keeps the thicker edge, in the line color. In forced
+colors a pressed button takes the system's `Highlight`, and an off one takes `GrayText` on the
+page's ground, accent or not. An off toggle that is on keeps an edge in `Highlight`. A quiet button
+has no edge and no underline, in the muted text at rest and the page's text under a pointer and
+while held, open or off alike. It keeps a button's least width, so a × alone is as wide as the
+button is tall, and in forced colors its words take `ButtonText`, underlined under a pointer and
+while held.
 
 A page with a look of its own for a button sets two custom properties and writes no rule over the
 kit's class. `--dk-button-shadow` is a shadow drawn under a button at rest, such as a hard edge
@@ -774,16 +775,16 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 
 **`Button` props**
 
-| `Button`  | Default    | What it does                                                                             |
-| --------- | ---------- | ---------------------------------------------------------------------------------------- |
-| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`                  |
-| `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                                |
-| `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                                 |
-| `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed`, `large` or `tall` |
-| `quiet`   | `false`    | Adds `dk-button-quiet`. TypeScript asks for `text` with it and refuses `off`             |
-| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action                     |
-| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                             |
-| `type`    | `'button'` | The button's type                                                                        |
+| `Button`  | Default    | What it does                                                                                                                                  |
+| --------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `accent`  | `false`    | Adds `dk-button-accent`. TypeScript refuses it with `pressed` or `text`                                                                       |
+| `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                                                                                     |
+| `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                                                                                      |
+| `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed`, `large` or `tall`                                                      |
+| `quiet`   | `false`    | Adds `dk-button-quiet`, and with no children draws a hidden × beside Close out of sight. TypeScript asks for `text` with it and refuses `off` |
+| `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action                                                                          |
+| `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                                                                                  |
+| `type`    | `'button'` | The button's type                                                                                                                             |
 
 Every other prop goes to the `<button>`, `ref` and `className` included, except `style`, `disabled`,
 `aria-disabled` and `aria-pressed`. A click on an off button calls `preventDefault()`, so a submit

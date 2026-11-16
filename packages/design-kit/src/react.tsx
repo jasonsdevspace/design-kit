@@ -267,7 +267,8 @@ export type ButtonProps = NativeButton & {
               readonly pressed?: undefined;
               readonly text: true;
               /**
-               * Quiet, for a Close at a panel's corner: muted with no underline. A Close always
+               * Quiet, for a Close at a panel's corner: muted with no underline. With no children
+               * it draws a × hidden from a screen reader beside Close out of sight. A Close always
                * closes, so a quiet button is never off.
                */
               readonly quiet: true;
@@ -319,7 +320,13 @@ export const Button = ({
                 : onClick
         }
     >
-        {children}
+        {children ??
+            (quiet === true ? (
+                <>
+                    <span aria-hidden="true">×</span>
+                    <span className="dk-visually-hidden">Close</span>
+                </>
+            ) : null)}
     </button>
 );
 
