@@ -3,7 +3,7 @@ import { gzipSync } from 'node:zlib';
 
 import { describe, expect, it } from 'vitest';
 
-import { withoutComments } from './summary.mjs';
+import { SHEET_ORDER, withoutComments } from './summary.mjs';
 
 /*
  * The kit's three sheets as a page's minifier sends them, without their comments and blank lines:
@@ -21,11 +21,10 @@ import { withoutComments } from './summary.mjs';
  * page loads one sheet whatever it draws.
  */
 const BUDGET = 10.25 * 1024;
-const SHEETS = ['tokens.css', 'base.css', 'components.css'];
 
 describe('the sheets', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped together, without their comments and blank lines`, () => {
-        const sent = SHEETS.map((name) =>
+        const sent = SHEET_ORDER.map((name) =>
             withoutComments(
                 readFileSync(new URL(`../packages/design-kit/src/${name}`, import.meta.url), 'utf8')
             )

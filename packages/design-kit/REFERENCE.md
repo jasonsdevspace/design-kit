@@ -82,7 +82,7 @@ page.
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
 | `--dk-app-inset`                                                                                  | how far an app's column stands in from each side of the page, `max(0px, (100% - var(--dk-app-column)) / 2)`                                                                                      |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
-| `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
+| `--dk-flow-step`                                                                                  | the step between the pieces a column holds, `--dk-space-4` in an explainer, a content page, their sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on what each holds |
 | `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's or a raised panel's and the card's          |
 | `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, `--dk-space-4` at 48rem or less, and `--dk-space-4-held` in an app's frame, a tab bar's page and a dialog on either               |
 
@@ -1178,7 +1178,7 @@ unheard. One is enough for a screen, with one more inside a dialog that speaks.
 ```js
 import { attachStatus } from '@jasonsdevspace/design-kit/controls';
 
-const line = document.querySelector < HTMLElement > '.screen-status';
+const line = document.querySelector('.screen-status');
 if (line) {
     const say = attachStatus(line);
     say('Ann moves to seat 2.');
@@ -1189,9 +1189,10 @@ if (line) {
 puts the message in a tenth of a second later, so the same words said twice are heard twice, and
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
-copy button does, through the same function, so a line a page hands to both keeps one timer. A
-stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
-finds its screen's line by a class of its own rather than by its role, which those share.
+copy button does, through the same function, so a line a page hands to both keeps one timer.
+Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
+inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
+its own rather than by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
 what happened on its own line and the two would speak over each other. A field's error is never said
@@ -2168,16 +2169,17 @@ A list of tiles offers a few places to go, such as the games to start, each on a
 ```
 
 A list of tiles is a list of rows with `dk-rows-tiles` beside `dk-rows`, each a link row on a ground
-of its own. The page sets the ground with `--dk-tile-ground`, by a class of its own on the row or in
-its style attribute, and chooses a ground that holds the title and the muted detail at 4.5 to 1, and
-the muted sign at 3 to 1, in both themes, such as with `light-dark()`. A ground that holds the title
-can still leave the detail or the sign faint, so the page checks each. The focus ring sits outside
-the tile, on the ground the kit holds it to, so a tile's ground asks nothing of it. A tile keeps
-what a link row has: the sign that says it leads somewhere on a phone, where nothing hovers, its
-title underlined under a pointer and under a pressing thumb, and its focus ring, drawn outside it,
-as a separate control's is. A tile casts no shadow, so a raised panel above the list stays the one
-thing lifted, and a page that wants its tiles lifted sets `--dk-tile-shadow`, such as to
-`var(--dk-shadow-resting)`. A list with no tiles is not drawn, as a list of rows is not.
+of its own. The page sets the ground with `--dk-tile-ground` by a class of its own on the row, never
+a style attribute, which a strict `style-src` refuses, and chooses a ground that holds the title and
+the muted detail at 4.5 to 1, and the muted sign at 3 to 1, in both themes, such as with
+`light-dark()`. A ground that holds the title can still leave the detail or the sign faint, so the
+page checks each. The focus ring sits outside the tile, on the ground the kit holds it to, so a
+tile's ground asks nothing of it. A tile keeps what a link row has: the sign that says it leads
+somewhere on a phone, where nothing hovers, its title underlined under a pointer and under a
+pressing thumb, and its focus ring, drawn outside it, as a separate control's is. A tile casts no
+shadow, so a raised panel above the list stays the one thing lifted, and a page that wants its tiles
+lifted sets `--dk-tile-shadow`, such as to `var(--dk-shadow-resting)`. A list with no tiles is not
+drawn, as a list of rows is not.
 
 A tile takes a picture at its start as a row does. Where it sits in a panel and the page sets no
 ground, a tile steps off the panel's ground, as a code block does, to the page's ground in a plain

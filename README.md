@@ -328,6 +328,18 @@ options rejected, what the choice costs, and the test behind it.
     A page attaches a toast once and calls one function for every message, which a screen reader
     hears with its way back, at the cost of the one control whose attach function takes nothing
     away.
+16. [A page changes how a piece draws only through the properties it names](docs/decisions/0016-a-page-changes-how-a-piece-draws-only-through-the-properties-it-names.md).
+    A page sets a tile's ground, a raised panel's shadow or a grid's width through a property the
+    kit reads with a fallback, so its look survives the kit's changes, at the cost of the page
+    keeping what sits on a ground it sets to its contrast.
+17. [A content page is a container of its own](docs/decisions/0017-a-content-page-is-a-container.md).
+    A landing or an about page spaces its blocks and sections and holds its prose to the measure
+    with one class, at the cost of a change to the flow's step moving the explainer and the content
+    page together.
+18. [The tokens ship in the design tokens format, written by hand and held by a test](docs/decisions/0018-the-tokens-ship-in-the-design-tokens-format-written-by-hand.md).
+    A tool that reads the format reads the kit's tokens from the package, and a token changed in
+    one file and not the other fails a test, at the cost of a second public copy of the tokens'
+    names, where renaming or dropping one is a breaking change.
 
 </details>
 
@@ -390,15 +402,15 @@ it found to its run's page on GitHub, from `scripts/summary.mjs`.
 
 A release is a tag on main named for the package's version, such as `design-kit-v0.1.0`. The tag,
 the version in `packages/design-kit/package.json` and a heading for it in the package's
-`CHANGELOG.md` have to agree, and no file but its README may be left in
-`packages/design-kit/changes`, or the release workflow stops. It runs every check CI runs, then
-stages on npm, with provenance, the tarball the oldest Node job proved, and only if its checksum is
-the one that job reported. Trusted publishing means no npm token is stored anywhere, and a staged
-version goes live only when it is promoted on the package page. The job that stages installs nothing
-but a pinned npm, checked against the checksum npm's registry gives for it, and fetches nothing
-else. A version with a hyphen is staged under npm's `next` tag and marked as a prerelease on GitHub,
-and each release has a GitHub release with its changelog entry as the notes. The steps a maintainer
-takes around a release are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
+`CHANGELOG.md` have to agree, with no `## Unreleased` heading left, and nothing but its README may
+be left in `packages/design-kit/changes`, or the release workflow stops. It runs every check CI
+runs, then stages on npm, with provenance, the tarball the oldest Node job proved, and only if its
+checksum is the one that job reported. Trusted publishing means no npm token is stored anywhere, and
+a staged version goes live only when it is promoted on the package page. The job that stages
+installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
+fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
+prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
+The steps a maintainer takes around a release are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 
 </details>
 

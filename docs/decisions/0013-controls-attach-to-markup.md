@@ -118,7 +118,7 @@ drops from the controls and a page puts inline in its head, and which is held to
 By the same rule, for the next release the sheets were measured with every piece planned for it in
 place. They weigh 10,220 bytes sent together, against 9,432 without them, and the median a piece
 costs is now 177 bytes, so the rule sets the sheets at 10.25 KB. The package record measures three
-more parts, the site's header, the content page with its lead, and the icon.
+more parts, the site's header, the content page and the icon.
 
 ## How it is tested
 

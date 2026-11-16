@@ -340,6 +340,18 @@ describe('what the sheets style', () => {
         expect(copies).toEqual([]);
     });
 
+    it('asks a page for no style attribute, which the strict policy the kit draws under refuses', () => {
+        const reference = readFileSync(new URL('../REFERENCE.md', folder), 'utf8');
+        const readme = readFileSync(new URL('../README.md', folder), 'utf8');
+        for (const [name, text] of Object.entries({ reference, readme })) {
+            // Advice to write one, in the prose or in the markup a page copies.
+            expect(
+                text.match(/\bin\s+(?:its|the|a)\s+style\s+attribute\b|<[a-z][^>]*\sstyle="/gi),
+                name
+            ).toBeNull();
+        }
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

@@ -868,3 +868,30 @@ test('gives a piece the ground of the nearest container that holds it, however t
     expect(await ground(promo.locator('.dk-table-pinned th'))).toBe('rgb(255, 250, 230)');
     expect(await ground(promo.locator('.dk-code'))).toBe('rgb(250, 240, 210)');
 });
+
+test("draws a panel's title as a heading as it draws it as a paragraph, so either reads alike", async ({
+    page,
+}) => {
+    const title = (tag: string, raised: string) =>
+        `<div class="dk-panel${raised}"><${tag} class="dk-panel-title">Flip 7, round 4</${tag}><p>Ana is next to score.</p></div>`;
+    for (const raised of ['', ' dk-panel-raised']) {
+        await writePage(page, {
+            width: 390,
+            title: 'Play',
+            body: `<main id="main-content"><h1>Play</h1>${title('p', raised)}${title('h2', raised)}</main>`,
+        });
+        const [asParagraph, asHeading] = await Promise.all(
+            ['p', 'h2'].map((tag) =>
+                style(
+                    page.locator(`${tag}.dk-panel-title`),
+                    'font-size',
+                    'font-weight',
+                    'line-height',
+                    'margin-top',
+                    'margin-bottom'
+                )
+            )
+        );
+        expect(asHeading, raised || 'plain').toEqual(asParagraph);
+    }
+});
