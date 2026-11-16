@@ -105,7 +105,7 @@ describe('the tokens', () => {
         expect(components).not.toMatch(/100% - var\(--dk-column\)/);
         expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
         expect(components).toMatch(
-            /:where\(\.dk-strip, \.dk-footer, \.dk-explainer-header, \.dk-explainer\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
+            /:where\(\s*\.dk-strip,\s*\.dk-footer,\s*\.dk-explainer-header,\s*\.dk-explainer,\s*\.dk-site-header\s*\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
         );
     });
 

@@ -70,6 +70,37 @@ export const footer: ReactElement = (
     />
 );
 
+/** A site's header: its brand with its mark and name, and its pages as pills in a nav named Site. */
+export const siteHeader: ReactElement = (
+    <header className="dk-site-header">
+        <a className="dk-site-brand" href="/">
+            <svg className="dk-site-mark" aria-hidden="true" focusable="false" viewBox="0 0 32 32">
+                <rect width="32" height="32" rx="8" fill="currentColor" />
+            </svg>
+            Scorekeeper
+        </a>
+        <nav aria-label="Site">
+            <ul className="dk-pills" role="list">
+                <li>
+                    <a className="dk-pill" href="/" aria-current="page">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <a className="dk-pill" href="/about/">
+                        About
+                    </a>
+                </li>
+                <li>
+                    <a className="dk-pill" href="/app/">
+                        Open the app
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+);
+
 /**
  * An action, the one action a view leads with, a large button, a tall one, a text button, a toggle
  * that is on, and a button that is off, in a row of actions, with the text after it that says why
@@ -728,6 +759,7 @@ export const EXAMPLES = {
     strip,
     stripWaiting,
     footer,
+    siteHeader,
     buttons,
     fields,
     fieldAction,
