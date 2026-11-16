@@ -313,6 +313,32 @@ export const controlStates: ReactElement = (
     </>
 );
 
+/** A content page: its title, its lead, its one action and its sections. */
+export const contentPage: ReactElement = (
+    <main id="main-content" tabIndex={-1} className="dk-page">
+        <h1>Scorekeeper</h1>
+        <p className="dk-lead">
+            Keep score for any card game on one phone passed around the table.
+        </p>
+        <p>
+            <a className="dk-button dk-button-accent" href="/app/">
+                Start a game
+            </a>
+        </p>
+        <section>
+            <h2 id="how">How it works</h2>
+            <p>...</p>
+            <ul>
+                <li>...</li>
+            </ul>
+        </section>
+        <section>
+            <h2 id="games">The games it knows</h2>
+            ...
+        </section>
+    </main>
+);
+
 /** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
@@ -793,6 +819,7 @@ export const EXAMPLES = {
     copyButton,
     statusLine,
     codeHead,
+    contentPage,
     explainerPage,
     steps,
     panel,

@@ -239,10 +239,14 @@
     /*
      * The step between the pieces in what holds a column of them, set on the pieces themselves so
      * a container inside another stands its parent's step from what is around it and gives its own
-     * to what it holds: a whole step in an explainer, each of its sections and an app's body, and a
-     * smaller one in a panel and a dialog, whose room is tighter.
+     * to what it holds: a whole step in an explainer, a content page, each of their sections and an
+     * app's body, and a smaller one in a panel and a dialog, whose room is tighter.
      */
-    :where(.dk-explainer > *, .dk-explainer > section > *, .dk-app-body > *) {
+    :where(
+        :is(.dk-explainer, .dk-page) > *,
+        :is(.dk-explainer, .dk-page) > section > *,
+        .dk-app-body > *
+    ) {
         --dk-flow-step: var(--dk-space-4);
     }
 
