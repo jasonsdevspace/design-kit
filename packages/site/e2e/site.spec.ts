@@ -438,7 +438,7 @@ test.describe('the landing page', () => {
         }
     });
 
-    test('flows the tiles into columns on a wide screen, and into one column on a phone', async ({
+    test("stands every tile on one line on a laptop's screen, and in one column on a phone", async ({
         page,
     }) => {
         await page.goto(BASE);
@@ -453,7 +453,8 @@ test.describe('the landing page', () => {
                     all.map((card) => Math.round(card.getBoundingClientRect().left))
                 )
             );
-            if (many) expect(lefts.size, String(width)).toBeGreaterThan(1);
+            // On a laptop's screen all five stand on one line, none left alone under the rest.
+            if (many) expect(lefts.size, String(width)).toBe(await cards.count());
             else expect(lefts.size, String(width)).toBe(1);
         }
         // On a wide screen, tiles on one line start their previews and titles level, a short one

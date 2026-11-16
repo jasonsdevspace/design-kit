@@ -490,7 +490,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <section>
             <h2 id="in-the-kit">What is in the design kit</h2>
             <p>Each page shows every piece in the light and dark themes.</p>
-            <ul className="dk-rows dk-rows-tiles dk-rows-columns" role="list">
+            <ul className="dk-rows dk-rows-tiles dk-rows-columns site-pages" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
                         <a className="dk-row" href={route.path}>
