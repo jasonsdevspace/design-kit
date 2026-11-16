@@ -92,6 +92,7 @@ describe('the tokens', () => {
         // The sheet read flat, with no space just inside a bracket, so its wrapping does not count.
         const flat = sheet.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
         expect(flat).toContain('--dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);');
+        expect(flat).toContain('--dk-app-inset: max(0px, (100% - var(--dk-app-column)) / 2);');
         for (const side of ['left', 'right'])
             expect(flat, side).toContain(
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`
@@ -100,7 +101,7 @@ describe('the tokens', () => {
         // does, and the column clears the phone's sides itself, so a band inside it starts a step in.
         for (const side of ['left', 'right'])
             expect(flat, side).toContain(
-                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), (100% - var(--dk-app-column)) / 2) + var(--dk-space-4));`
+                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-app-inset)) + var(--dk-space-4));`
             );
         expect(flat).toMatch(
             /:where\(\.dk-app, \.dk-tabbar-page > :not\(\.dk-skip\)\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4\)\); \}/
@@ -108,6 +109,8 @@ describe('the tokens', () => {
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
         expect(components).not.toMatch(/100% - var\(--dk-column\)/);
+        expect(components).not.toMatch(/- var\(--dk-app-column\)/);
+        expect(flat.match(/- var\(--dk-app-column\)/g)).toHaveLength(1);
         expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
         expect(components).toMatch(
             /:where\(\s*\.dk-strip,\s*\.dk-footer,\s*\.dk-explainer-header,\s*\.dk-explainer,\s*\.dk-site-header,\s*\.dk-page\s*\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/

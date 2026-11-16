@@ -298,7 +298,7 @@ describe('what the sheets style', () => {
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
         // The base list, and the pieces that keep a phone's size there too.
         const places = '.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog';
-        const added = new Set(['.dk-toast', '.dk-site-header']);
+        const added = new Set(['.dk-toast']);
         // Every list a piece names the places in, however many of them it kept.
         const lists = [...flat.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)]
             .map(([, list = '']) => list.trim())

@@ -32,6 +32,7 @@ const CSS_ONLY: Readonly<Record<string, string>> = {
     'safe-bottom': 'what the phone keeps, by env()',
     'safe-left': 'what the phone keeps, by env()',
     'column-inset': "a max() with a percentage of the page's width",
+    'app-inset': "a max() with a percentage of the page's width",
     'band-left': 'a calc() of the safe area and the inset',
     'band-right': 'a calc() of the safe area and the inset',
     ground: 'the ground of what holds a piece, which each container sets again',

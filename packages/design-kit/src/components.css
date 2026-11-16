@@ -151,7 +151,9 @@
         hyphens: auto;
     }
 
-    /* The brand is a link home with no edge, so it underlines under a pointer and a pressing thumb. */
+    /*
+     * The brand is a link home with no edge, so it underlines under a pointer and a pressing thumb.
+     */
     :where(.dk-site-brand:active) {
         text-decoration: underline;
     }
@@ -187,8 +189,9 @@
 
     /*
      * Where the page ends at the footer, its last line ends a step above what a phone keeps at its
-     * foot. A tab bar after it clears that itself, and nothing else that may follow a footer, a toast
-     * that floats, a dialog or a script, takes the foot's room, so only a tab bar turns it off.
+     * foot. A tab bar after it clears that itself, and nothing else that may follow a footer, a
+     * toast that floats, a dialog or a script, takes the foot's room, so only a tab bar turns it
+     * off.
      */
     :where(.dk-footer) {
         padding-block: var(--dk-space-4);
@@ -241,8 +244,8 @@
     /*
      * The link to the page a reader is on stands in the page's text, as above, and at the heading's
      * weight, so it is told from the links around it by more than its color, which forced colors
-     * replace. It keeps its underline, so it still reads as a link. Any value but false marks it, as
-     * on a pill or a tab, so a page beneath one the links name marks that link with true.
+     * replace. It keeps its underline, so it still reads as a link. Any value but false marks it,
+     * as on a pill or a tab, so a page beneath one the links name marks that link with true.
      */
     :where(
         .dk-strip-links a[aria-current]:not([aria-current='false']),
@@ -481,18 +484,18 @@
      * wide as the button is tall, and the rules below that take a text button's width away leave
      * it out. The toast's close is one. It is never off, since a Close always closes.
      */
-    :where(.dk-button-quiet, .dk-toast-close) {
+    :where(.dk-button-quiet) {
         min-width: var(--dk-field-height);
         color: var(--dk-muted);
         text-decoration: none;
     }
 
-    :where(.dk-button-quiet:active, .dk-toast-close:active) {
+    :where(.dk-button-quiet:active) {
         color: var(--dk-fg);
     }
 
     @media (hover: hover) {
-        :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+        :where(.dk-button-quiet:hover) {
             color: var(--dk-fg);
         }
     }
@@ -515,7 +518,7 @@
          * A text button keeps no minimum width here either, since this rule comes later in the
          * sheet than its own and would win by its order.
          */
-        :where(.dk-button-text:not(.dk-button-quiet, .dk-toast-close)) {
+        :where(.dk-button-text:not(.dk-button-quiet)) {
             min-width: 0;
         }
     }
@@ -538,7 +541,7 @@
 
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog, .dk-toast)
-            .dk-button-text:not(.dk-button-quiet, .dk-toast-close)
+            .dk-button-text:not(.dk-button-quiet)
     ) {
         min-width: 0;
     }
@@ -586,16 +589,16 @@
          * A quiet button has no edge, so its words are what show it is a button, and an underline
          * under a pointer and while held is what shows those, where its colors are gone.
          */
-        :where(.dk-button-quiet, .dk-toast-close) {
+        :where(.dk-button-quiet) {
             color: ButtonText;
         }
 
-        :where(.dk-button-quiet:active, .dk-toast-close:active) {
+        :where(.dk-button-quiet:active) {
             text-decoration: underline;
         }
 
         @media (hover: hover) {
-            :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+            :where(.dk-button-quiet:hover) {
                 text-decoration: underline;
             }
         }
@@ -1095,7 +1098,14 @@
     }
 
     :where(
-        :is(.dk-page, .dk-page > section) > :is(p, ul:not([class]), ol:not([class]), blockquote)
+        .dk-page > p,
+        .dk-page > ul:not([class]),
+        .dk-page > ol:not([class]),
+        .dk-page > blockquote,
+        .dk-page > section > p,
+        .dk-page > section > ul:not([class]),
+        .dk-page > section > ol:not([class]),
+        .dk-page > section > blockquote
     ) {
         max-width: var(--dk-measure);
     }
@@ -1735,13 +1745,8 @@
     }
 
     :where(
-        :is(
-                .dk-app,
-                .dk-tabbar-page,
-                :root:has(.dk-app, .dk-tabbar-page) .dk-dialog,
-                .dk-site-header
-            )
-            a.dk-pill
+        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) a.dk-pill,
+        .dk-site-header a.dk-pill
     ) {
         min-height: var(--dk-target);
     }
@@ -1922,11 +1927,8 @@
     :where(.dk-app, .dk-tabbar-page) {
         max-width: var(--dk-app-column);
         margin-inline: auto;
-        padding-right: max(
-            0px,
-            var(--dk-safe-right) - max(0px, (100vw - var(--dk-app-column)) / 2)
-        );
-        padding-left: max(0px, var(--dk-safe-left) - max(0px, (100vw - var(--dk-app-column)) / 2));
+        padding-right: max(0px, var(--dk-safe-right) - var(--dk-app-inset));
+        padding-left: max(0px, var(--dk-safe-left) - var(--dk-app-inset));
     }
 
     /*
@@ -2801,7 +2803,9 @@
         font-size: var(--dk-text-lead);
     }
 
-    /* In an explainer a tile's title steps down to the body's size, as a panel's title there does. */
+    /*
+     * In an explainer a tile's title steps down to the body's size, as a panel's title there does.
+     */
     :where(.dk-explainer .dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-body);
     }
