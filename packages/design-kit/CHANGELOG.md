@@ -11,9 +11,10 @@ entry as the notes.
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
-each tile on a ground the page sets, a React field can hold a button beside its control, and a site
-draws its header with kit classes. The theme script is unchanged, so `themeScriptHash` is the same,
-and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
+each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
+can sit on its container's rule, and a site draws its header with kit classes. The theme script is
+unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
+again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -40,6 +41,9 @@ and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   `dk-site-header` draws a site's header under the strip, at the strip's inset and over a rule, with
   a `dk-site-brand` link holding a `dk-site-mark` and the site's name and its pages as pills, the
   brand and each page the target tall and the pages wrapping under the brand on a phone.
+  `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the container at whose foot it
+  sits, drawing no rule of its own and standing a pixel lower, so the chosen tab's line lies over
+  the container's rule, and keeping to the foot of a bar that centers what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -64,7 +68,9 @@ and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with its
   nav named Site, marks its current page by weight and in forced colors, takes the brand before the
   pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and the
-  wider spacing.
+  wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on the
+  container's foot with one rule, in a block and in a bar that centers it, in both themes and in
+  forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
 
