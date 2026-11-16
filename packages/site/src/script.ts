@@ -136,7 +136,7 @@ const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLEleme
  */
 const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: Block) => void) => {
     const list = document.createElement('div');
-    list.className = 'dk-tabs dk-tabs-on-rule';
+    list.className = 'dk-tabs';
     list.setAttribute('role', 'tablist');
     list.setAttribute(
         'aria-label',

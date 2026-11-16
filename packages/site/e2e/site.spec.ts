@@ -1878,6 +1878,60 @@ test.describe('the theme switch', () => {
 });
 
 test.describe('the code of each state', () => {
+    test("keeps the chosen tab's line on the tabs' rule, and the copy button after the tabs and under their rule when it wraps", async ({
+        page,
+    }) => {
+        for (const [width, scale] of [
+            [1280, 1],
+            [390, 1],
+            [320, 2],
+        ] as const) {
+            await textSize(page, scale);
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/design-kit/controls/');
+            const code = page.locator('.site-code').first();
+            await code.locator(':scope > summary').click();
+            const at = `${String(width)} at text ${String(scale)}`;
+            const drawn = await code.locator('.site-code-bar').evaluate((bar) => {
+                const box = (selector: string) => {
+                    const found = bar.querySelector(selector);
+                    if (found === null) throw new Error(`the bar holds no ${selector}`);
+                    return found.getBoundingClientRect();
+                };
+                const tabs = box('.dk-tabs');
+                const lines = new Set(
+                    [...bar.querySelectorAll('.dk-tab')].map((tab) =>
+                        Math.round(tab.getBoundingClientRect().top)
+                    )
+                ).size;
+                return {
+                    rule: getComputedStyle(bar.querySelector('.dk-tabs')!).borderBottomWidth,
+                    tabsBottom: tabs.bottom,
+                    chosenBottom: box('[aria-selected="true"]').bottom,
+                    copyTop: box('.dk-copy').top,
+                    copyAfter: Boolean(
+                        bar
+                            .querySelector('.dk-tabs')!
+                            .compareDocumentPosition(bar.querySelector('.dk-copy')!) &
+                        Node.DOCUMENT_POSITION_FOLLOWING
+                    ),
+                    lines,
+                };
+            });
+            // The tabs draw their own rule, and the copy button follows them for the keyboard.
+            expect(drawn.rule, at).toBe('1px');
+            expect(drawn.copyAfter, at).toBe(true);
+            if (drawn.lines === 1)
+                // On one line the chosen tab's line ends on the rule, or a pixel above it on a kit
+                // whose tabs stand over their row's rule rather than on it.
+                expect(drawn.tabsBottom - drawn.chosenBottom, at).toBeLessThanOrEqual(1);
+            // On the narrowest phone at twice the text size the button wraps under the tabs' rule,
+            // and wider it stands beside the tabs.
+            if (width === 320) expect(drawn.copyTop, at).toBeGreaterThanOrEqual(drawn.tabsBottom);
+            else expect(drawn.copyTop, at).toBeLessThan(drawn.tabsBottom);
+        }
+    });
+
     test("shows each state's markup as the copy beside it draws it", async ({ page }) => {
         for (const path of [
             '/design-kit/controls/',
