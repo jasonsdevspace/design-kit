@@ -138,6 +138,8 @@
          * phone passed around a table is. The target above stays the floor for every control.
          */
         --dk-target-large: 3.5rem;
+        /* The least width of a tile in a list of tiles in columns, so a name of a few words fits. */
+        --dk-tile-least: 15rem;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
         /*

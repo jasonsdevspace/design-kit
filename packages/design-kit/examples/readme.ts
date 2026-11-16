@@ -37,7 +37,9 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'toast',
     'buttonGrid',
     'rows',
+    'rowPicture',
     'rowTiles',
+    'tileColumns',
     'dialog',
 ]);
 

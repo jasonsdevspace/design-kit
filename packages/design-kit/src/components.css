@@ -2605,6 +2605,23 @@
         align-self: center;
     }
 
+    /*
+     * A picture at a row's start, such as a player's face, in a column of its own before the text,
+     * at a size a page may set, so every title in a list starts on one line. It is hidden from a
+     * screen reader, so the link's name starts with its title.
+     */
+    :where(.dk-row:has(> .dk-row-picture)) {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    :where(.dk-row-picture) {
+        align-self: center;
+        width: var(--dk-row-picture-size, var(--dk-target));
+        height: var(--dk-row-picture-size, var(--dk-target));
+        border-radius: var(--dk-radius);
+        object-fit: cover;
+    }
+
     :where(.dk-rows-tall .dk-row) {
         min-height: var(--dk-target-large);
     }
@@ -2676,9 +2693,50 @@
         box-shadow: var(--dk-tile-shadow, none);
     }
 
+    /*
+     * A tile in a panel steps off the panel's ground as a code block does, to the page's, and one in
+     * a raised panel to the card's, where the page sets no ground of its own.
+     */
+    :where(.dk-panel .dk-rows-tiles .dk-row) {
+        background: var(--dk-tile-ground, var(--dk-bg));
+    }
+
+    :where(.dk-panel-raised .dk-rows-tiles .dk-row) {
+        background: var(--dk-tile-ground, var(--dk-surface));
+    }
+
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
     :where(.dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-lead);
+    }
+
+    /*
+     * Tiles in columns, as many as fit at the least width each, in the order they are written row
+     * by row, falling to one column on a phone. A lone last tile keeps one column's width. A tile
+     * there sets its title at the body size, and its picture across its top at the picture's own
+     * shape, with the text, the end and the sign on the line under it.
+     */
+    :where(.dk-rows-columns:has(> li)) {
+        grid-template-columns: repeat(auto-fill, minmax(min(var(--dk-tile-least), 100%), 1fr));
+    }
+
+    :where(.dk-rows-columns .dk-row-title) {
+        font-size: var(--dk-text-body);
+    }
+
+    :where(.dk-rows-columns .dk-row:has(> .dk-row-picture)) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+    }
+
+    :where(.dk-rows-columns .dk-row-picture) {
+        flex-basis: 100%;
+        height: auto;
+    }
+
+    :where(.dk-rows-columns .dk-row-text) {
+        flex: 1;
     }
 
     /* A figure at a row's end, in the mono face with figures of one width, so a column lines up. */
