@@ -125,13 +125,13 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
 export const pixels = (length: string | undefined): number => Number.parseFloat(length ?? '');
 
 /**
- * How much of the box an element's words take is drawn in the element's own fill, the color most
- * of the element is drawn in, read from screenshots through a canvas. Words drawn on the fill
- * leave most of their box in it, and words a browser paints a backplate behind leave little, a
- * check on what shows where a computed style cannot tell. The box holds the words alone, not an
- * icon beside them.
+ * How much of the width an element's words take is covered by the longest unbroken run of pixels
+ * in a color other than the element's own fill, the color most of the element is drawn in, read
+ * from screenshots through a canvas. Words drawn on the fill break every row into short strokes,
+ * and a backplate a browser paints behind them runs the whole width, a check on what shows where a
+ * computed style cannot tell. The box holds the words alone, not an icon beside them.
  */
-export const fillUnderWords = async (locator: Locator): Promise<number> => {
+export const backplateUnderWords = async (locator: Locator): Promise<number> => {
     const page = locator.page();
     await locator.scrollIntoViewIfNeeded();
     const whole = (await locator.screenshot()).toString('base64');
@@ -153,7 +153,7 @@ export const fillUnderWords = async (locator: Locator): Promise<number> => {
     const under = (await page.screenshot({ clip: words })).toString('base64');
     return page.evaluate(
         async ([shotOfWhole = '', shotUnder = '']) => {
-            const pixels = async (data: string) => {
+            const read = async (data: string) => {
                 const image = new Image();
                 image.src = `data:image/png;base64,${data}`;
                 await image.decode();
@@ -163,14 +163,25 @@ export const fillUnderWords = async (locator: Locator): Promise<number> => {
                 const context = canvas.getContext('2d');
                 context?.drawImage(image, 0, 0);
                 const drawn = context?.getImageData(0, 0, image.width, image.height).data;
-                return drawn ? [...new Uint32Array(drawn.buffer)] : [];
+                return {
+                    width: image.width,
+                    pixels: drawn ? [...new Uint32Array(drawn.buffer)] : [],
+                };
             };
             const counts = new Map<number, number>();
-            for (const pixel of await pixels(shotOfWhole))
+            for (const pixel of (await read(shotOfWhole)).pixels)
                 counts.set(pixel, (counts.get(pixel) ?? 0) + 1);
             const fill = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
-            const box = await pixels(shotUnder);
-            return box.filter((pixel) => pixel === fill).length / box.length;
+            const { width, pixels } = await read(shotUnder);
+            let longest = 0;
+            for (let row = 0; row * width < pixels.length; row += 1) {
+                let run = 0;
+                for (let column = 0; column < width; column += 1) {
+                    run = pixels[row * width + column] === fill ? 0 : run + 1;
+                    longest = Math.max(longest, run);
+                }
+            }
+            return longest / width;
         },
         [whole, under] as const
     );

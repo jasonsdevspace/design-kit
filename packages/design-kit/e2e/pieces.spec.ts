@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { fillUnderWords, pixels, writePage } from './page.js';
+import { backplateUnderWords, pixels, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -586,7 +586,7 @@ test("draws every chosen thing's words in forced colors, on the system's selecti
                 await chosen.evaluate((element) => getComputedStyle(element).backgroundColor),
                 id
             ).toBe(selection);
-            expect(await fillUnderWords(chosen), id).toBeGreaterThan(0.5);
+            expect(await backplateUnderWords(chosen), id).toBeLessThan(0.8);
         }
     } finally {
         await context.close();
