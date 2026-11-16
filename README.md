@@ -402,15 +402,15 @@ it found to its run's page on GitHub, from `scripts/summary.mjs`.
 
 A release is a tag on main named for the package's version, such as `design-kit-v0.1.0`. The tag,
 the version in `packages/design-kit/package.json` and a heading for it in the package's
-`CHANGELOG.md` have to agree, and no file but its README may be left in
-`packages/design-kit/changes`, or the release workflow stops. It runs every check CI runs, then
-stages on npm, with provenance, the tarball the oldest Node job proved, and only if its checksum is
-the one that job reported. Trusted publishing means no npm token is stored anywhere, and a staged
-version goes live only when it is promoted on the package page. The job that stages installs nothing
-but a pinned npm, checked against the checksum npm's registry gives for it, and fetches nothing
-else. A version with a hyphen is staged under npm's `next` tag and marked as a prerelease on GitHub,
-and each release has a GitHub release with its changelog entry as the notes. The steps a maintainer
-takes around a release are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
+`CHANGELOG.md` have to agree, with no `## Unreleased` heading left, and nothing but its README may
+be left in `packages/design-kit/changes`, or the release workflow stops. It runs every check CI
+runs, then stages on npm, with provenance, the tarball the oldest Node job proved, and only if its
+checksum is the one that job reported. Trusted publishing means no npm token is stored anywhere, and
+a staged version goes live only when it is promoted on the package page. The job that stages
+installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
+fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
+prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
+The steps a maintainer takes around a release are in [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 
 </details>
 

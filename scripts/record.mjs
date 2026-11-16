@@ -23,7 +23,16 @@ import { pathToFileURL } from 'node:url';
 
 import { functionsOf, piecesOf } from './parts.mjs';
 import { isRunDirectly } from './repository.mjs';
-import { fileRows, filesOf, isModule, isSheet, kb, packedOf, table } from './summary.mjs';
+import {
+    fileRows,
+    filesOf,
+    isModule,
+    isSheet,
+    kb,
+    packedOf,
+    SHEET_ORDER,
+    table,
+} from './summary.mjs';
 
 /**
  * What the record says of the sheets once they are measured without their comments, for a record
@@ -136,9 +145,19 @@ export const recorded = () => {
 export const recordedTable = ({ date, commit: at, machine, node }) =>
     table(['Recorded', 'Commit', 'Machine', 'Node'], [[date, `\`${at}\``, machine, node]]);
 
-/** The sheets a page loads together without their comments, the figure the sheets' budget holds. */
+/**
+ * The sheets a page loads, gzipped together without their comments, the figure the sheets' budget
+ * holds. The record kept before that figure was, which the records' test writes again to hold it to
+ * its page, gives each sheet gzipped on its own, summed, so it reads as it was written.
+ */
 const sheetsOf = (/** @type {Packed} */ packed) =>
-    packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+    packed.sheets ?? packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+
+/** The sentence that gives the sheets together, for a record that keeps that figure. */
+const sheetsTogether = (/** @type {Packed} */ packed) =>
+    packed.sheets === undefined
+        ? ''
+        : ` The sheets a page loads come to ${kb(packed.sheets)} gzipped together without their comments, the figure their budget holds.`;
 
 /**
  * What changed since the package record before this one, for a record that knows it.
@@ -147,10 +166,14 @@ const sheetsOf = (/** @type {Packed} */ packed) =>
  */
 const packageSince = ({ since, ...packed }) => {
     if (!since) return '';
+    // A record that gives the sheets together says only what they came to before, and the record
+    // kept before that figure was reads as it was written.
     const sheets =
-        since.sheets > 0
-            ? `, and the sheets a page loads come to ${kb(sheetsOf(packed))} gzipped without their comments where they came to ${kb(since.sheets)}`
-            : '';
+        since.sheets <= 0
+            ? ''
+            : packed.sheets === undefined
+              ? `, and the sheets a page loads come to ${kb(sheetsOf(packed))} gzipped without their comments where they came to ${kb(since.sheets)}`
+              : `, and the sheets together came to ${kb(since.sheets)}`;
     return ` Since the record of version ${since.version} on ${since.date} at \`${since.commit}\`, it packs ${kb(packed.size)} where it packed ${kb(since.size)}${sheets}.`;
 };
 
@@ -181,6 +204,22 @@ const committed = (name) => {
 };
 
 /**
+ * What a record says changed since the record before it, from that record as committed. A record
+ * whose sheets were summed one by one does not compare with one that joins them, so it gives none,
+ * and the record after it says nothing of the sheets in what changed.
+ *
+ * @param {Packed & { recorded: Recorded }} before
+ * @returns {PackageSince}
+ */
+export const sinceOf = (before) => ({
+    date: before.recorded.date,
+    commit: before.recorded.commit,
+    version: before.version,
+    size: before.size,
+    sheets: before.sheets ?? 0,
+});
+
+/**
  * The package record the run before wrote, as what changed is measured from, or nothing where there
  * is none or it was taken at the commit given.
  *
@@ -192,13 +231,7 @@ export const packageBefore = (at) => {
         committed('package-size')
     );
     if (!before || before.recorded.commit === at.commit) return undefined;
-    return {
-        date: before.recorded.date,
-        commit: before.recorded.commit,
-        version: before.version,
-        size: before.size,
-        sheets: sheetsOf(before),
-    };
+    return sinceOf(before);
 };
 
 /**
@@ -268,7 +301,7 @@ Run \`npm run bench:package\` to reproduce it. The raw results are in [package-s
 What a demo installs when it adds the kit, measured from the tarball \`npm pack\` makes, which is what npm publishes. Each file is shown as it sits in the package and gzipped, as a server would send it. A page loads the sheets it imports${sheetsNote(packed.files)}. Of the modules, the plugin in \`vite.js\` runs only in a build, the theme script from \`theme.js\` goes inline in the page's head, \`react.js\` reaches a visitor only on a page that renders React in the browser, and \`controls.js\` reaches one on a page that attaches a control.
 
 ${recordedTable(at)}
-\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.${packageSince(packed)}
+\`${packed.name}@${packed.version}\`, ${kb(packed.size)} packed.${sheetsTogether(packed)}${packageSince(packed)}
 
 The sheets a page loads:
 
@@ -363,9 +396,7 @@ if (isRunDirectly(import.meta.url)) {
             writeFileSync(join(unpacked, path), content);
         }
         const dist = join(unpacked, 'dist');
-        const sheets = ['tokens.css', 'base.css', 'components.css'].map((name) =>
-            readFileSync(join(dist, name), 'utf8')
-        );
+        const sheets = SHEET_ORDER.map((name) => readFileSync(join(dist, name), 'utf8'));
         /** @type {Record<string, unknown>} */
         const controls = await import(pathToFileURL(join(dist, 'controls.js')).href);
         const parts = {

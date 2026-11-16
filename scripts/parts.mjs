@@ -23,7 +23,7 @@ import { gzipSync } from 'node:zlib';
 import { withoutComments } from './summary.mjs';
 
 /** The kit's pieces by the start of their classes, the longest first, so a grid is not a button. */
-const PIECES = [
+export const PIECES = [
     ['button-grid', 'button grid'],
     ['theme-switch', 'theme switch'],
     ['visually-hidden', 'visually hidden'],
@@ -53,7 +53,6 @@ const PIECES = [
     ['skip', 'skip link'],
     ['site', 'site header'],
     ['page', 'content page'],
-    ['lead', 'content page'],
     ['icon', 'icon'],
     ['rows', 'rows'],
     ['row', 'rows'],
@@ -62,19 +61,31 @@ const PIECES = [
     ['app', 'app frame'],
 ];
 
-/** The piece a selector lays out, the first of the kit's classes outside :not() and :has(). */
-export const pieceOf = (/** @type {string} */ selector, unclassed = "the page's own elements") => {
-    if (selector.startsWith('@keyframes')) return 'animations';
+/** The first of the kit's classes a selector names, outside :not() and :has(), if it names one. */
+const firstClassOf = (/** @type {string} */ selector) => {
     let outside = selector.split(/,(?![^(]*\))/)[0] ?? '';
     // Read outside a :not() or a :has(), whose classes name what is left out or looked for.
     for (let before = ''; before !== outside;) {
         before = outside;
         outside = outside.replace(/:(?:not|has)\((?:[^()]|\([^()]*\))*\)/g, '');
     }
-    const classes = [...outside.matchAll(/\.dk-([a-z-]+)/g)].map((match) => match[1] ?? '');
-    const named = classes[0];
+    return [...outside.matchAll(/\.dk-([a-z-]+)/g)].map((match) => match[1] ?? '')[0];
+};
+
+/** The start in the piece map a selector's first class matches, if any does. */
+export const entryOf = (/** @type {string} */ selector) => {
+    const named = firstClassOf(selector);
+    if (named === undefined) return undefined;
+    return PIECES.find(([start]) => named === start || named.startsWith(`${start}-`))?.[0];
+};
+
+/** The piece a selector lays out, the first of the kit's classes outside :not() and :has(). */
+export const pieceOf = (/** @type {string} */ selector, unclassed = "the page's own elements") => {
+    if (selector.startsWith('@keyframes')) return 'animations';
+    const named = firstClassOf(selector);
     if (named === undefined) return unclassed;
-    return PIECES.find(([start]) => named === start || named.startsWith(`${start}-`))?.[1] ?? named;
+    const start = entryOf(selector);
+    return PIECES.find(([entry]) => entry === start)?.[1] ?? named;
 };
 
 /**
