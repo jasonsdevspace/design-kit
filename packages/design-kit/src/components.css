@@ -2833,9 +2833,15 @@
         font-size: var(--dk-text-body);
     }
 
+    /*
+     * The picture's line and the text's line keep their own heights at the tile's top, so a tile
+     * stretched to a taller one beside it keeps its picture and title where that one has them, and
+     * the room it gains falls under its text.
+     */
     :where(.dk-rows-columns .dk-row:has(> .dk-row-picture)) {
         display: flex;
         flex-wrap: wrap;
+        align-content: start;
         align-items: baseline;
     }
 

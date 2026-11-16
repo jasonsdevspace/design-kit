@@ -753,6 +753,32 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
     }
 });
 
+test('starts each picture and title on one line across tiles in columns, a short tile beside a tall one', async ({
+    page,
+}) => {
+    await writePage(page, { width: 1280, title: 'Pages', body: columns() });
+    const tiles = await page
+        .getByRole('list', { name: 'Pages' })
+        .getByRole('link')
+        .evaluateAll((links) =>
+            links.map((link) => {
+                const top = (selector: string) =>
+                    Math.round(link.querySelector(selector)?.getBoundingClientRect().top ?? 0);
+                return {
+                    tile: Math.round(link.getBoundingClientRect().top),
+                    picture: top('.dk-row-picture'),
+                    title: top('.dk-row-title'),
+                };
+            })
+        );
+    // The second tile's long title wraps, so the first stands beside it on one line, stretched to
+    // its height, and keeps its picture and title where the tall one has them.
+    const [short, tall] = tiles;
+    expect(short?.tile).toBe(tall?.tile);
+    expect(short?.picture).toBe(tall?.picture);
+    expect(short?.title).toBe(tall?.title);
+});
+
 test('keeps tiles in one column on the narrowest phone at twice the text size and the wider spacing, a word cut off nowhere', async ({
     page,
 }) => {
