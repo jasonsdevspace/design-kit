@@ -301,10 +301,12 @@ describe('what the sheets style', () => {
 
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
         // The base list, and the pieces that keep a phone's size there too.
-        const places = '.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog';
+        const places =
+            '.dk-app, .dk-tabbar-page, :root:has(:is(.dk-app, .dk-tabbar-page):not([inert] *)) .dk-dialog';
         const added = new Set(['.dk-toast']);
-        // Every list a piece names the places in, however many of them it kept.
-        const lists = [...flat.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/g)]
+        // Every list a piece names the places in, however many of them it kept, leaving out the
+        // frames a page's own place is told by inside its :has().
+        const lists = [...flat.matchAll(/(?<!has\():is\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)]
             .map(([, list = '']) => list.trim())
             .filter((list) => list.includes('.dk-tabbar-page'));
         expect(lists.length).toBeGreaterThan(0);

@@ -917,3 +917,42 @@ test("draws a panel's title as a heading as it draws it as a paragraph, so eithe
         expect(asHeading, raised || 'plain').toEqual(asParagraph);
     }
 });
+
+test('draws a content page the same with an inert picture of an app and its toast as without one', async ({
+    page,
+}) => {
+    // A content page with a strip, a footer and a dialog, plain and then holding an inert picture
+    // of a frame whose toast is shown, which is not the page's own app.
+    const content = (picture: string) =>
+        `<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio"><a href="#home">Home</a></nav></div>` +
+        `<main class="dk-page"><h1>Pieces</h1><p>Each piece in both themes.</p>${picture}</main>` +
+        `<footer class="dk-footer"><p>A footer.</p></footer>` +
+        `<dialog class="dk-dialog" aria-labelledby="d-title"><h2 class="dk-dialog-title" id="d-title">Options</h2><p>Text.</p></dialog>`;
+    const picture =
+        `<div inert><div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Round 3</h1></header>` +
+        `<main class="dk-app-body" tabindex="0"><p>Ana leads.</p></main>` +
+        `<div class="dk-app-toast"><div class="dk-toast" data-shown data-rows="3"><p class="dk-toast-message">Saved.</p></div></div></div>` +
+        `<div class="dk-tabbar-page"><main><p>Games</p></main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#a">Play</a></li></ul></nav></div></div>`;
+    const drawn = async (body: string) => {
+        await writePage(page, { width: 1280, title: 'Pieces', body });
+        await page.locator('dialog').evaluate((dialog: HTMLDialogElement) => dialog.showModal());
+        return page.evaluate(() => {
+            const read = (selector: string, ...names: string[]) => {
+                const found = document.querySelector(selector);
+                if (found === null) throw new Error(`no ${selector}`);
+                const drawn = getComputedStyle(found);
+                return names.map((name) => `${selector} ${name} ${drawn.getPropertyValue(name)}`);
+            };
+            return [
+                ...read('.dk-strip', 'padding-left', 'padding-right'),
+                ...read('.dk-page', 'padding-left', 'padding-right'),
+                ...read('.dk-footer', 'padding-left', 'padding-bottom'),
+                ...read('.dk-dialog', 'padding-left', 'padding-top'),
+                ...read('html', 'overscroll-behavior-y', 'scroll-padding-bottom'),
+                ...read('body', 'padding-bottom'),
+            ];
+        });
+    };
+    const plain = await drawn(content(''));
+    expect(await drawn(content(picture))).toEqual(plain);
+});
