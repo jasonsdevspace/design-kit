@@ -376,10 +376,10 @@ export const APP: readonly Control[] = [
                                 </button>
                                 <button
                                     type="button"
-                                    className="dk-button dk-button-text dk-toast-close"
+                                    className="dk-button dk-button-text dk-button-quiet dk-toast-close"
                                 >
                                     <span aria-hidden="true">×</span>
-                                    <span className="dk-visually-hidden">Dismiss</span>
+                                    <span className="dk-visually-hidden">Close</span>
                                 </button>
                             </div>
                         </div>
