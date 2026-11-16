@@ -85,6 +85,10 @@ export const buttons: ReactElement = (
                 Save the round
             </Button>
             <Button text>Show the markup</Button>
+            <Button text quiet>
+                <span aria-hidden="true">×</span>
+                <span className="dk-visually-hidden">Close</span>
+            </Button>
             <Button pressed>Members only</Button>
             <Button off aria-describedby="previous-why">
                 Previous

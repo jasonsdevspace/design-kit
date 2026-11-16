@@ -311,6 +311,10 @@ explains.
         Save the round
     </button>
     <button type="button" class="dk-button dk-button-text">Show the markup</button>
+    <button type="button" class="dk-button dk-button-text dk-button-quiet">
+        <span aria-hidden="true">×</span>
+        <span class="dk-visually-hidden">Close</span>
+    </button>
     <button type="button" class="dk-button" aria-pressed="true">Members only</button>
     <button aria-describedby="previous-why" type="button" class="dk-button" aria-disabled="true">
         Previous
@@ -328,6 +332,10 @@ where it is pressed at arm's length, as on a phone passed around a table. It set
 the least width with it, so it goes with `dk-button-large` or without. `dk-button-text` draws a
 button as a link, for an action that sits beside a block or on a line of its own, such as showing
 the markup under a demo. It is never the accent button, never a toggle, never large and never tall.
+`dk-button-quiet` beside `dk-button-text` makes it quiet, for a Close at the corner of a panel, a
+tour or a dialog: muted with no underline, so it does not compete with the view's one strong action.
+It says one word, Close, written out of sight beside a × hidden from a screen reader, as the toast's
+close does, and it is never off, since a Close always closes.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
@@ -365,14 +373,17 @@ no minimum width, in the accent and underlined at the size of the text around it
 button's height, so its target holds, which is why it sits beside a block rather than in running
 text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
 color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
-muted text and still with no edge. Where a pointer can hover, the edge turns to the focus color
-under it, and the accent button, or a link drawn as one, underlines its words instead, its one cue
-under a pointer since its edge is already the accent. Pressed is the highlight with an edge twice as
-thick in the accent, and its words in the page's text, an accent button's included. Off is the muted
-text on no ground with an edge in the line color, rather than a fade, so its words keep a ratio the
-palette measures. An off toggle that is on keeps the thicker edge, in the line color. In forced
-colors a pressed button takes the system's `Highlight`, and an off one takes `GrayText` on the
-page's ground, accent or not. An off toggle that is on keeps an edge in `Highlight`.
+muted text and still with no edge. A quiet button is in the muted text with no underline, and in the
+page's text under a pointer and while held. It keeps a button's least width, so a × alone is as wide
+as the button is tall, and in forced colors its words take `ButtonText`. Where a pointer can hover,
+the edge turns to the focus color under it, and the accent button, or a link drawn as one,
+underlines its words instead, its one cue under a pointer since its edge is already the accent.
+Pressed is the highlight with an edge twice as thick in the accent, and its words in the page's
+text, an accent button's included. Off is the muted text on no ground with an edge in the line
+color, rather than a fade, so its words keep a ratio the palette measures. An off toggle that is on
+keeps the thicker edge, in the line color. In forced colors a pressed button takes the system's
+`Highlight`, and an off one takes `GrayText` on the page's ground, accent or not. An off toggle that
+is on keeps an edge in `Highlight`.
 
 A page with a look of its own for a button sets two custom properties and writes no rule over the
 kit's class. `--dk-button-shadow` is a shadow drawn under a button at rest, such as a hard edge
@@ -769,6 +780,7 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 | `large`   | `false`    | Adds `dk-button-large`. TypeScript refuses it with `text`                                |
 | `tall`    | `false`    | Adds `dk-button-tall`. TypeScript refuses it with `text`                                 |
 | `text`    | `false`    | Adds `dk-button-text`. TypeScript refuses it with `accent`, `pressed`, `large` or `tall` |
+| `quiet`   | `false`    | Adds `dk-button-quiet`. TypeScript asks for `text` with it and refuses `off`             |
 | `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action                     |
 | `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                             |
 | `type`    | `'button'` | The button's type                                                                        |
@@ -1396,9 +1408,13 @@ of view.
                     class="dk-button dk-button-text dk-toast-action"
                     hidden=""
                 ></button>
-                <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
+                <button
+                    type="button"
+                    class="dk-button dk-button-text dk-button-quiet dk-toast-close"
+                    hidden=""
+                >
                     <span aria-hidden="true">×</span>
-                    <span class="dk-visually-hidden">Dismiss</span>
+                    <span class="dk-visually-hidden">Close</span>
                 </button>
             </div>
         </div>
@@ -1691,9 +1707,13 @@ until a message is shown.
     <p class="dk-visually-hidden dk-toast-status" role="status"></p>
     <div class="dk-toast-buttons">
         <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
-        <button type="button" class="dk-button dk-button-text dk-toast-close" hidden="">
+        <button
+            type="button"
+            class="dk-button dk-button-text dk-button-quiet dk-toast-close"
+            hidden=""
+        >
             <span aria-hidden="true">×</span>
-            <span class="dk-visually-hidden">Dismiss</span>
+            <span class="dk-visually-hidden">Close</span>
         </button>
     </div>
 </div>
@@ -1759,10 +1779,9 @@ place in the card without rising again, since the toast stays shown. A message o
 beside the buttons. Where the buttons do not fit beside the message, as on a phone at a large text
 size, with a long action or in a frame narrower than the screen, their group takes the row under it,
 at its end, the action and the close button together. A toast written before 0.7.0, with no group,
-does so only on a screen under 20rem wide. The close button is in the muted text, turning to the
-text color under a pointer, so it stays quiet beside the action, and is the target both ways at
-every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A toast does not
-print.
+does so only on a screen under 20rem wide. The close button is a quiet button, so it stays quiet
+beside the action, and is the target both ways at every width. Outside a frame the toast sits at
+`--dk-stack-toast`, over a bar. A toast does not print.
 
 </details>
 

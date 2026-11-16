@@ -833,7 +833,7 @@ test.describe('the controls page, with the pieces the script attaches', () => {
         await toast.getByRole('button', { name: 'Undo' }).click();
         await expect(toast.locator('.dk-toast-message')).toHaveText('Round 3 is back as it was.');
         await expect(toast.getByRole('button', { name: 'Undo' })).toBeHidden();
-        await expect(toast.getByRole('button', { name: 'Dismiss' })).toBeVisible();
+        await expect(toast.getByRole('button', { name: 'Close' })).toBeVisible();
     });
 
     test('opens each live dialog from its button, and returns focus to it once closed', async ({

@@ -354,6 +354,29 @@
     }
 
     /*
+     * A quiet text button, such as a Close at a panel's corner, in the muted color with no
+     * underline, so it does not compete with the one strong action beside it, and in the text
+     * color under a pointer and while held. It keeps a button's least width, so a × alone is as
+     * wide as the button is tall, and the rules below that take a text button's width away leave
+     * it out. The toast's close is one. It is never off, since a Close always closes.
+     */
+    :where(.dk-button-quiet, .dk-toast-close) {
+        min-width: var(--dk-field-height);
+        color: var(--dk-muted);
+        text-decoration: none;
+    }
+
+    :where(.dk-button-quiet:active, .dk-toast-close:active) {
+        color: var(--dk-fg);
+    }
+
+    @media (hover: hover) {
+        :where(.dk-button-quiet:hover, .dk-toast-close:hover) {
+            color: var(--dk-fg);
+        }
+    }
+
+    /*
      * A toggle that is on, a button whose panel is open, and the theme switch's chosen word, on the
      * highlight with an edge twice as thick in the accent and its words in the page's text, the
      * accent button's included. The highlight alone is close to the page's own ground, so the
@@ -437,7 +460,7 @@
          * A text button keeps no minimum width here either, since this rule comes later in the
          * sheet than its own and would win by its order.
          */
-        :where(.dk-button-text) {
+        :where(.dk-button-text:not(.dk-button-quiet, .dk-toast-close)) {
             min-width: 0;
         }
     }
@@ -447,7 +470,7 @@
      * the target at every width, as on a phone, since the app's column is a phone's on a wide
      * screen too, so one screen has one height of control. The fields, the choices, the theme
      * switch, the pills and the tabs below do the same there. A toast's buttons take the target
-     * too, so its close button is square. A demo's strip and footer are left as they are, so the
+     * too, so its quiet close is square. A demo's strip and footer are left as they are, so the
      * page's chrome is one height on every page of a demo.
      */
     :where(
@@ -460,7 +483,7 @@
 
     :where(
         :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog, .dk-toast)
-            .dk-button-text
+            .dk-button-text:not(.dk-button-quiet, .dk-toast-close)
     ) {
         min-width: 0;
     }
@@ -510,6 +533,11 @@
         ) {
             background: Highlight;
             color: HighlightText;
+        }
+
+        /* A quiet button has no edge, so its words are what show it is a button. */
+        :where(.dk-button-quiet, .dk-toast-close) {
+            color: ButtonText;
         }
 
         :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
@@ -2390,22 +2418,6 @@
 
     :where(.dk-toast-action) {
         padding-inline: var(--dk-space-2);
-    }
-
-    /*
-     * The close button is quiet beside the toast's one action, in the muted color, and turns to the
-     * text color under a pointer, as a button's edge turns, since it has no edge to turn.
-     */
-    :where(.dk-toast-close) {
-        min-width: var(--dk-target);
-        color: var(--dk-muted);
-        text-decoration: none;
-    }
-
-    @media (hover: hover) {
-        :where(.dk-toast-close:hover) {
-            color: var(--dk-fg);
-        }
     }
 
     /*

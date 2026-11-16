@@ -135,7 +135,7 @@ const settle = (page: Page): Promise<unknown> =>
 const message = (page: Page): Locator => page.locator('.dk-toast-message');
 const said = (page: Page): Locator => page.getByRole('status');
 const undo = (page: Page): Locator => page.getByRole('button', { name: 'Undo' });
-const dismiss = (page: Page): Locator => page.getByRole('button', { name: 'Dismiss' });
+const dismiss = (page: Page): Locator => page.getByRole('button', { name: 'Close' });
 
 /** How many elements the page holds. */
 const elements = (page: Page): Promise<number> =>
