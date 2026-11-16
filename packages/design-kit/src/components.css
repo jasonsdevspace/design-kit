@@ -2998,6 +2998,51 @@
     }
 
     /*
+     * In forced colors what is chosen stands in the system's selection colors, each piece by a rule
+     * of its own: a toggle that is on and a button whose panel is open, a pressed cell of a grid,
+     * the theme switch's chosen word, the current pill, the chosen tab and the current place in a
+     * tab bar. A browser that paints a backplate of the page's ground behind their words would
+     * draw the selection's text on its own color, so they keep their colors, with an edge in the
+     * selection's own so each is one block of it, no shadow, and a ring outside them in the
+     * system's text, as forced colors would set them. The rule comes last, after every piece's own, which would otherwise win by order.
+     */
+    @media (forced-colors: active) {
+        :where(
+            .dk-button:is([aria-pressed='true'], :not(.dk-button-text)[aria-expanded='true']):not(
+                    :disabled,
+                    [aria-disabled='true']
+                ),
+            .dk-theme-switch-choice > input:checked + span,
+            .dk-theme-switch-button,
+            a.dk-pill[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true'],
+            .dk-tabbar a[aria-current]:not([aria-current='false'])
+        ) {
+            border-color: Highlight;
+            box-shadow: none;
+            forced-color-adjust: none;
+        }
+
+        /* The tab bar's line over its current place stays in sight, in the selection's text. */
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+            border-color: HighlightText;
+        }
+
+        :where(
+            .dk-button:is([aria-pressed='true'], :not(.dk-button-text)[aria-expanded='true']),
+            .dk-theme-switch-button,
+            a.dk-pill[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true']
+        ):focus-visible {
+            outline-color: CanvasText;
+        }
+    }
+
+    /*
      * Paper is light and the browser drops backgrounds, so on paper a callout and a code block keep
      * an edge in the line color, where the screen's transparent edge would vanish with the ground.
      * A code block and a scrolling table show whole rather than cut at the frame, their code and
