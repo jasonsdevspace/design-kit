@@ -862,6 +862,9 @@ test("says a screen's messages on its own status line, the same words twice, wit
     browser,
 }) => {
     const context = await browser.newContext();
+    // On a stand-in clock, so the moment before a message and the time it holds are stepped through
+    // exactly rather than waited out.
+    await context.clock.install();
     const opened = await tab(
         context,
         true,
@@ -874,38 +877,39 @@ window.heard = said;
 window.attach = () => { window.say = attachStatus(line); };`
     );
     try {
+        await opened.waitForFunction(() => 'attach' in window);
         const line = opened.locator('.screen-line');
         await expect(line).toHaveAttribute('role', 'status');
+        const heard = () =>
+            opened.evaluate(() => [...(window as unknown as { heard: string[] }).heard]);
+        const say = () =>
+            opened.evaluate(() => {
+                (window as unknown as { say: (message: string) => void }).say(
+                    'Ann moves to seat 2.'
+                );
+            });
         // Counted before the line is attached, so attaching it adds nothing either.
         const before = await opened.evaluate(() => document.querySelectorAll('*').length);
         await opened.evaluate(() => {
-            const page = window as unknown as {
-                attach: () => void;
-                say: (message: string) => void;
-            };
-            page.attach();
-            page.say('Ann moves to seat 2.');
+            (window as unknown as { attach: () => void }).attach();
         });
-        await expect(line).toHaveText('Ann moves to seat 2.');
-        // The same words again are put in after the line is emptied, so they are heard again.
-        await opened.evaluate(() => {
-            const page = window as unknown as { say: (message: string) => void };
-            page.say('Ann moves to seat 2.');
-        });
-        await expect
-            .poll(() =>
-                opened.evaluate(
-                    () =>
-                        (window as unknown as { heard: string[] }).heard.filter(
-                            (words) => words === 'Ann moves to seat 2.'
-                        ).length
-                )
-            )
-            .toBe(2);
+        await say();
+        await opened.clock.runFor(100);
+        expect(await line.textContent()).toBe('Ann moves to seat 2.');
+        // The same words again empty the line first and come back a moment later, so a screen
+        // reader hears a change and says them again. Words set over themselves would change
+        // nothing it listens for.
+        await say();
+        expect(await line.textContent()).toBe('');
+        await opened.clock.runFor(100);
+        expect(await line.textContent()).toBe('Ann moves to seat 2.');
+        expect(await heard()).toEqual(['Ann moves to seat 2.', '', 'Ann moves to seat 2.']);
         // The message holds its time, then leaves, so reading by line finds no old words.
-        await opened.waitForTimeout(1500);
-        await expect(line).toHaveText('Ann moves to seat 2.', { timeout: 0 });
-        await expect(line).toHaveText('', { timeout: 1500 });
+        await opened.clock.runFor(1900);
+        expect(await line.textContent()).toBe('Ann moves to seat 2.');
+        await opened.clock.runFor(200);
+        expect(await line.textContent()).toBe('');
+        expect(await heard()).toEqual(['Ann moves to seat 2.', '', 'Ann moves to seat 2.', '']);
         expect(await opened.evaluate(() => document.querySelectorAll('*').length)).toBe(before);
     } finally {
         await context.close();
