@@ -46,13 +46,18 @@ and the controls' at 6.25 KB.
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
   `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
   same component under its first name.
+- **Docs.** The reference lists every property a page sets in a table of its own, each with its
+  default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
+  from the token table. Decision 0016 records why a page changes how a piece draws only through
+  them.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
   their press on a phone where nothing hovers and their edge in forced colors. The React field with
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
-  control. A token test holds the column's inset to one place in the sheets.
+  control. A token test holds the column's inset to one place in the sheets, and a scope test holds
+  the table of properties a page sets to what the sheets read.
 
 ## 0.7.0
 

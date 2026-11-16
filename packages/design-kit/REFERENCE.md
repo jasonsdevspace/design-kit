@@ -27,7 +27,6 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-fg`, `--dk-muted`                                                                           | text, and text that steps back                                                                                                                                                                   |
 | `--dk-line`, `--dk-control`                                                                       | a rule, and a control's edge                                                                                                                                                                     |
 | `--dk-accent`, `--dk-on-accent`                                                                   | links, the lead action, and text on it                                                                                                                                                           |
-| `--dk-focus`                                                                                      | unset, the focus ring and hover edge when a page sets it                                                                                                                                         |
 | `--dk-highlight`                                                                                  | what is chosen or pointed at                                                                                                                                                                     |
 | `--dk-success`, `--dk-success-bg`                                                                 | what went right, and its ground                                                                                                                                                                  |
 | `--dk-danger`, `--dk-danger-bg`                                                                   | what went wrong, and its ground                                                                                                                                                                  |
@@ -60,16 +59,32 @@ tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                         |
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
-| `--dk-button-shadow`, `--dk-button-press`                                                         | unset, a shadow under a button and how a press moves it                                                                                                                                          |
-| `--dk-panel-shadow`                                                                               | unset, a shadow under a raised panel                                                                                                                                                             |
-| `--dk-tile-ground`, `--dk-tile-shadow`                                                            | unset, a tile's ground, read as `--dk-surface`, and a shadow under it                                                                                                                            |
-| `--dk-button-grid-columns`                                                                        | unset, and read as 3, the columns a grid of buttons asks for                                                                                                                                     |
-| `--dk-button-grid-least`                                                                          | unset, and read as the target where the grid is drawn, and the larger target in a tall grid, the least width of a grid's cell                                                                    |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
-| `--dk-table-ground`, `--dk-table-pinned-size`                                                     | unset, the ground under a pinned column, read as the page's, a panel's or a dialog's, and its width, read as 8rem, with no room kept under 17.5rem wide                                          |
-| `--dk-stepper-digits`                                                                             | unset, and read as 2, how many figures a stepper's value has room for                                                                                                                            |
 
 </details>
+
+### Properties a page sets
+
+The kit leaves these unset on the root, so each piece draws its default until a page sets one, on
+its root or on the piece by a class of its own. They are the one way a page changes how a piece
+draws, and a page writes no rule over a kit class for it, as [decision
+0016](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0016-a-page-changes-how-a-piece-draws-only-through-the-properties-it-names.md)
+sets out. Where a property sets a ground, the page chooses a value that keeps what sits on it to its
+contrast, in both themes, which `light-dark()` writes in one value.
+
+| Property                   | Default                                          | What it sets, and what it must hold                                                                                                   |
+| -------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dk-focus`               | the accent                                       | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                          |
+| `--dk-button-shadow`       | none                                             | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                            |
+| `--dk-button-press`        | none, so a held button does not move             | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px` |
+| `--dk-panel-shadow`        | none                                             | A shadow under a raised panel                                                                                                         |
+| `--dk-tile-ground`         | the surface                                      | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign and its focus ring 3 to 1                                |
+| `--dk-tile-shadow`         | none                                             | A shadow under a tile                                                                                                                 |
+| `--dk-button-grid-columns` | 3                                                | The columns a grid of buttons asks for                                                                                                |
+| `--dk-button-grid-least`   | the target, and the larger target in a tall grid | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                 |
+| `--dk-table-ground`        | the page's, a panel's or a dialog's ground       | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                |
+| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide       | The width of a pinned column                                                                                                          |
+| `--dk-stepper-digits`      | 2                                                | The figures a stepper's field keeps room for                                                                                          |
 
 ## Page chrome
 
