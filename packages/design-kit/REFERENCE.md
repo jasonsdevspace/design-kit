@@ -287,6 +287,45 @@ The strip and the footer put `about`, `source` and `license` into their links un
 be a URL the demo's author writes, never one taken from the page's address or a visitor's input,
 which could send a visitor anywhere.
 
+### Site header
+
+<!-- example: siteHeader -->
+
+```html
+<header class="dk-site-header">
+    <a class="dk-site-brand" href="/"
+        ><svg class="dk-site-mark" aria-hidden="true" focusable="false" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="8" fill="currentColor"></rect></svg
+        >Scorekeeper</a
+    >
+    <nav aria-label="Site">
+        <ul class="dk-pills" role="list">
+            <li><a class="dk-pill" href="/" aria-current="page">Home</a></li>
+            <li><a class="dk-pill" href="/about/">About</a></li>
+            <li><a class="dk-pill" href="/app/">Open the app</a></li>
+        </ul>
+    </nav>
+</header>
+```
+
+A site's own pages, such as a landing page and an about page, open under the strip with a
+`header class="dk-site-header"`, the page's one banner. It holds a `dk-site-brand` link home with the
+site's mark and its name, and the site's pages as pills in a `nav`, the current page's link marked
+`aria-current="page"`. The nav is named Site, never the site's own name, which the brand link
+already says, so a screen reader hears the name once, and never Pages, which the pills example uses.
+The mark is the site's own drawing in a `dk-site-mark` slot, 1.75em square so it grows with the
+text, hidden from a screen reader, and a header with no mark draws the name alone. The skip link
+lands on `main`, past the header.
+
+The header starts its brand at the strip's content edge, by the same band insets, and ends on a rule
+in the line color. On a wide screen the brand and the pages share a row, the pages at its end, and
+on a phone or at a large text size the pages wrap onto a row of their own under the brand, starting
+on the same edge, in the order written, so the keyboard still takes the brand and then the pages.
+The brand's name is at the body size and the strong weight, `--dk-space-2` from the mark, and the
+rows stand `--dk-space-3` apart and `--dk-space-5` across. The brand and each page are at least the
+target tall. The kit ships no component for it, since each site renders its links through its own
+router.
+
 ## Buttons, fields and callouts
 
 `components.css` styles a button, a text field, a select, a set of choices and a callout by the

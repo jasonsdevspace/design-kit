@@ -12,10 +12,10 @@ entry as the notes.
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
-can sit on its container's rule, and a text button gains a quiet form for a Close. In forced colors
-what is chosen shows its words again. The theme script is unchanged, so `themeScriptHash` is the
-same. The sheets' budget rises from 9.25 KB to 10.25 KB, set again by the size audit's rule, and the
-controls' stays at 6.25 KB.
+can sit on its container's rule, a text button gains a quiet form for a Close, and a site draws its
+header with kit classes. In forced colors what is chosen shows its words again. The theme script is
+unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
+again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -49,8 +49,11 @@ controls' stays at 6.25 KB.
   colors, a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's
   chosen word, the current pill, the chosen tab and the current place in a tab bar, with an edge and
   a ring in system colors and no shadow, so a browser that paints a backplate behind their words no
-  longer draws the words unseen. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of
-  the container at whose foot it sits, drawing no rule of its own and standing a pixel lower, so the
+  longer draws the words unseen. `dk-site-header` draws a site's header under the strip, at the
+  strip's inset and over a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's
+  name and its pages as pills, the brand and each page the target tall and the pages wrapping under
+  the brand on a phone. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the
+  container at whose foot it sits, drawing no rule of its own and standing a pixel lower, so the
   chosen tab's line lies over the container's rule, and keeping to the foot of a bar that centers
   what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
@@ -67,7 +70,7 @@ controls' stays at 6.25 KB.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through
-  them.
+  them. The reference shows a site's header and names its nav Site.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
@@ -78,9 +81,13 @@ controls' stays at 6.25 KB.
   the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
   of every chosen thing in forced colors and find the selection under its words. A quiet button's
   colors, its states, its size at every width and in an app, its name and its ring in forced colors
-  are held on the page, a panel and a raised panel in both themes. A tab row on its container's rule
-  ends the chosen line and the resting tabs on the container's foot with one rule, in a block and in
-  a bar that centers it, in both themes and in forced colors, and a plain row keeps its own rule.
+  are held on the page, a panel and a raised panel in both themes. A site's header starts its brand,
+  and its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with
+  its nav named Site, marks its current page by weight and in forced colors, takes the brand before
+  the pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and
+  the wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
+  the container's foot with one rule, in a block and in a bar that centers it, in both themes and in
+  forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
 
