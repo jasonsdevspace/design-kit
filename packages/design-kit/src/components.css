@@ -2323,6 +2323,20 @@
         }
     }
 
+    /*
+     * A picture of a frame or of a page that ends in a tab bar, one that carries dk-picture or sits
+     * inside an element with it, is as tall as what it holds, its bars in their places in it rather
+     * than held to the visitor's screen, so a page draws one with no rule of its own.
+     */
+    :where(.dk-app:is(.dk-picture, .dk-picture *), .dk-tabbar-page:is(.dk-picture, .dk-picture *)) {
+        height: auto;
+        min-height: 0;
+    }
+
+    :where(.dk-tabbar-page:is(.dk-picture, .dk-picture *) > .dk-tabbar) {
+        position: static;
+    }
+
     /* The links share the width evenly, however many there are and however long their labels. */
     :where(.dk-tabbar > ul) {
         display: grid;

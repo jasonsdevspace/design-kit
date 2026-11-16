@@ -1646,11 +1646,13 @@ picture's wrapper or to the frame itself and makes it `inert`, so the keyboard a
 pass it by. A frame, a page that ends in a tab bar or a shown toast is a picture when it carries
 `dk-picture` or sits inside an element with the class, and the page around a picture keeps its
 column, its dialogs and its foot as a content page does. A pictured toast sits in its place rather
-than over the foot of the page. Only a toast's attach function reads a height, the toast's and the
-body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows at a
-large text size, so the body ends where the rows below it begin. A toast floats over the foot of the
-body, just above the dock, so showing or hiding one never moves the dock under a thumb about to
-press it again. While one is shown its place opens on a rule, under which the body scrolls as it
+than over the foot of the page. A pictured frame or page that ends in a tab bar is as tall as what
+it holds, its bars in their places in it rather than held to the screen, and the page draws the
+edge, the corners and the room around it. Only a toast's attach function reads a height, the toast's
+and the body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows
+at a large text size, so the body ends where the rows below it begin. A toast floats over the foot
+of the body, just above the dock, so showing or hiding one never moves the dock under a thumb about
+to press it again. While one is shown its place opens on a rule, under which the body scrolls as it
 does under the bar, and the body leaves room for the toast after its last element, as many rows as
 its attach function measured it at, up to five, so its last line scrolls clear of the toast and what
 the keyboard reaches in it stops short of the toast, in a browser with `:has()`. Where the body

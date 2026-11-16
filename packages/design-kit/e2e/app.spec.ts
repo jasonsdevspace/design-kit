@@ -1016,3 +1016,52 @@ test("draws a page with an app's frame of its own as an app's, a picture of anot
     // The app's page draws apart from a content page, so the comparison above tests something.
     expect(alone).not.toEqual(await read(contentPage('')));
 });
+
+for (const [width, height] of [
+    [390, 800],
+    [800, 300],
+] as const)
+    test(`draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place, ${String(width)} by ${String(height)}`, async ({
+        page,
+    }) => {
+        await writePage(page, {
+            width,
+            height,
+            title: 'Pieces',
+            body: contentPage(`${PICTURE}${PICTURED_ITSELF}`),
+        });
+        const drawn = await page.evaluate(() =>
+            [...document.querySelectorAll('.dk-app, .dk-tabbar-page')].map((picture) => {
+                const box = picture.getBoundingClientRect();
+                const parts = [...picture.children].filter(
+                    (child) => getComputedStyle(child).display !== 'none'
+                );
+                const held = parts.reduce(
+                    (sum, child) => sum + child.getBoundingClientRect().height,
+                    0
+                );
+                const bar = picture.querySelector(':scope > .dk-tabbar');
+                return {
+                    kind: picture.className,
+                    height: box.height,
+                    held,
+                    bar: bar === null ? null : getComputedStyle(bar).position,
+                    barEnd:
+                        bar === null
+                            ? null
+                            : Math.round(bar.getBoundingClientRect().bottom - box.bottom),
+                };
+            })
+        );
+        expect(drawn).toHaveLength(4);
+        for (const picture of drawn) {
+            const at = `${picture.kind}, ${String(width)} by ${String(height)}`;
+            // As tall as what it holds, give or take its rows' gaps, and never the screen's height.
+            expect(picture.height, at).toBeLessThan(height);
+            expect(picture.height - picture.held, at).toBeLessThan(64);
+            if (picture.bar !== null) {
+                expect(picture.bar, at).toBe('static');
+                expect(picture.barEnd, at).toBe(0);
+            }
+        }
+    });
