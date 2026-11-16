@@ -135,7 +135,7 @@ const settle = (page: Page): Promise<unknown> =>
 const message = (page: Page): Locator => page.locator('.dk-toast-message');
 const said = (page: Page): Locator => page.getByRole('status');
 const undo = (page: Page): Locator => page.getByRole('button', { name: 'Undo' });
-const dismiss = (page: Page): Locator => page.getByRole('button', { name: 'Dismiss' });
+const closeButton = (page: Page): Locator => page.getByRole('button', { name: 'Close' });
 
 /** How many elements the page holds. */
 const elements = (page: Page): Promise<number> =>
@@ -151,7 +151,7 @@ test('draws nothing before a message, with or without script', async ({ page }) 
             0
         );
         await expect(undo(page)).toBeHidden();
-        await expect(dismiss(page)).toBeHidden();
+        await expect(closeButton(page)).toBeHidden();
     }
 });
 
@@ -171,7 +171,7 @@ test('draws a message and says it politely, without moving focus or adding an el
     await expect(page.locator('#save')).toBeFocused();
     expect(await elements(page)).toBe(before);
     await expect(undo(page)).toBeVisible();
-    await expect(dismiss(page)).toBeVisible();
+    await expect(closeButton(page)).toBeVisible();
 });
 
 test('reaches the action by the keyboard, and choosing it runs it and dismisses the toast', async ({
@@ -202,7 +202,7 @@ test('dismisses by its named close button, and by Escape, with focus back where 
     await page.keyboard.press('Enter');
     await page.keyboard.press(tabKey(browserName));
     await page.keyboard.press(tabKey(browserName));
-    await expect(dismiss(page)).toBeFocused();
+    await expect(closeButton(page)).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(toast(page)).not.toHaveClass(/dk-toast-shown/);
     await expect(page.locator('#save')).toBeFocused();
@@ -228,7 +228,7 @@ test('keeps a toast with an action until dismissed, and lets one without leave a
     await expect(message(page)).toHaveText('Players saved.');
     await page.clock.runFor(200);
     await expect(message(page)).toHaveText('');
-    await expect(dismiss(page)).toBeHidden();
+    await expect(closeButton(page)).toBeHidden();
 });
 
 test('holds the wait while the toast is hovered or has focus, and starts it again after', async ({
@@ -244,7 +244,7 @@ test('holds the wait while the toast is hovered or has focus, and starts it agai
     await expect(message(page)).toHaveText('');
 
     await show(page, 'Players saved.');
-    await dismiss(page).focus();
+    await closeButton(page).focus();
     await page.clock.runFor(20_000);
     await expect(message(page)).toHaveText('Players saved.');
     await page.locator('#save').focus();
@@ -335,7 +335,7 @@ test('moves focus off an action the next message does not have', async ({ page, 
     await expect(undo(page)).toBeFocused();
     await show(page, 'Players saved.');
     await expect(undo(page)).toBeHidden();
-    await expect(dismiss(page)).toBeFocused();
+    await expect(closeButton(page)).toBeFocused();
 });
 
 test('wraps a message of three lines inside the toast, with its action still in reach', async ({
@@ -352,7 +352,7 @@ test('wraps a message of three lines inside the toast, with its action still in 
     const words = await box(message(page), 'the message');
     expect(words.height).toBeGreaterThan(60);
     expect(bottom(words)).toBeLessThanOrEqual(bottom(card));
-    for (const button of [undo(page), dismiss(page)]) {
+    for (const button of [undo(page), closeButton(page)]) {
         const drawn = await box(button, 'a button');
         expect(drawn.x).toBeGreaterThanOrEqual(card.x);
         expect(drawn.x + drawn.width).toBeLessThanOrEqual(card.x + card.width);
@@ -380,7 +380,7 @@ test("sits in an app's frame above the dock, its action one step back from the d
     // A keyboard on the dock's button reaches the toast's action, and its way back, one step back.
     await page.locator('#save').focus();
     await page.keyboard.press(`Shift+${tabKey(browserName)}`);
-    await expect(dismiss(page)).toBeFocused();
+    await expect(closeButton(page)).toBeFocused();
     await page.keyboard.press(`Shift+${tabKey(browserName)}`);
     await expect(undo(page)).toBeFocused();
 });
@@ -399,7 +399,7 @@ test("never moves the frame's dock under the thumb as it shows and leaves, at th
         await show(page, 'Round 3 saved.', 'Undo');
         await settle(page);
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
-        await dismiss(page).click();
+        await closeButton(page).click();
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
     }
 });
@@ -461,7 +461,7 @@ test("keeps the frame's dock in place on a phone on its side at a large text siz
     expect(
         await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
     ).toBeCloseTo(before, 0);
-    await dismiss(page).click();
+    await closeButton(page).click();
     expect(
         await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
     ).toBeCloseTo(before, 0);
@@ -619,7 +619,7 @@ test('puts its buttons together on a row under its message on a phone at a large
         const where = `${String(width)}px at ${String(scale)}x`;
         const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
         const action = await box(undo(page), 'the action');
-        const close = await box(dismiss(page), 'the close button');
+        const close = await box(closeButton(page), 'the close button');
         // Under the message, the action before the close button on one row at its end, or where
         // a face too wide leaves no room for both, each at the end of a row of its own.
         expect(action.y, where).toBeGreaterThanOrEqual(message.y + message.height - 1);
@@ -639,7 +639,7 @@ test('puts its buttons together on a row under its message on a phone at a large
 const together = async (page: Page, action: string, what: string): Promise<void> => {
     const words = await box(message(page), 'the message');
     const doing = await box(page.getByRole('button', { name: action }), 'the action');
-    const close = await box(dismiss(page), 'the close button');
+    const close = await box(closeButton(page), 'the close button');
     const card = await box(toast(page), 'the toast');
     expect(doing.y, what).toBeGreaterThanOrEqual(words.y + words.height - 1);
     expect(Math.abs(close.y - doing.y), what).toBeLessThanOrEqual(1);
@@ -699,7 +699,7 @@ test('keeps its message and buttons on one row where they fit, and again after a
         await show(page, 'Round 3 saved.', 'Undo');
         await settle(page);
         const words = await box(message(page), 'the message');
-        for (const button of [undo(page), dismiss(page)]) {
+        for (const button of [undo(page), closeButton(page)]) {
             const drawn = await box(button, 'a button');
             expect(drawn.y, String(width)).toBeLessThan(words.y + words.height / 2);
         }
@@ -757,7 +757,7 @@ test('keeps the layout it had for a toast written without its group of buttons',
     // too wide leaves no room for both, each at the end of a row of its own, as before the group.
     const words = await box(message(page), 'the message');
     const action = await box(undo(page), 'the action');
-    const close = await box(dismiss(page), 'the close button');
+    const close = await box(closeButton(page), 'the close button');
     const card = await box(toast(page), 'the toast');
     const end = card.x + card.width;
     expect(action.y).toBeGreaterThanOrEqual(words.y + words.height - 1);
@@ -886,7 +886,7 @@ test('keeps room on a page for a toast of as many rows as it takes, measured as 
     expect(bottom(await box(page.locator('#last'), 'the last line'))).toBeLessThanOrEqual(
         (await box(toast(page), 'the toast')).y + 1
     );
-    await dismiss(page).click();
+    await closeButton(page).click();
     await expect(toast(page)).not.toHaveAttribute('data-rows');
 });
 
@@ -921,15 +921,15 @@ test('draws its close button quiet in the muted color, and in the text color und
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
         await page.locator('#save').click();
-        await expect(dismiss(page)).toBeVisible();
-        const read = async () => (await style(dismiss(page), 'color'))['color'] ?? '';
+        await expect(closeButton(page)).toBeVisible();
+        const read = async () => (await style(closeButton(page), 'color'))['color'] ?? '';
         const ground = (await style(toast(page), 'background-color'))['background-color'] ?? '';
         const text = (await style(page.locator('body'), 'color'))['color'];
         const muted = await colorOf(page, 'var(--dk-muted)');
         const quiet = await read();
         expect(quiet, theme).toBe(muted);
         expect(contrast(quiet, ground), theme).toBeGreaterThanOrEqual(4.5);
-        await dismiss(page).hover();
+        await closeButton(page).hover();
         await expect.poll(read, { message: theme }).toBe(text);
         expect(contrast(await read(), ground), theme).toBeGreaterThanOrEqual(4.5);
     }
@@ -989,9 +989,9 @@ test('wraps its buttons under its message and keeps them inside it on a 320px ph
     const card = await box(toast(page), 'the toast');
     // Its buttons wrap onto a row of their own under the message, starting below its middle.
     const words = await box(message(page), 'the message');
-    for (const button of [undo(page), dismiss(page)])
+    for (const button of [undo(page), closeButton(page)])
         expect((await box(button, 'a button')).y).toBeGreaterThan(words.y + words.height / 2);
-    for (const button of [undo(page), dismiss(page)]) {
+    for (const button of [undo(page), closeButton(page)]) {
         const drawn = await box(button, 'a button');
         expect(drawn.x).toBeGreaterThanOrEqual(card.x - 0.5);
         expect(drawn.x + drawn.width).toBeLessThanOrEqual(card.x + card.width + 0.5);
