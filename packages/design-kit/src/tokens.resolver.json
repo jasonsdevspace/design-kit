@@ -1,7 +1,7 @@
 {
     "name": "Design kit tokens",
-    "description": "The design kit's tokens as tokens.css declares them on the root, with each light-dark() color split into a light and a dark context.",
-    "version": "2025-10-01",
+    "description": "The design kit's tokens that tokens.css declares on the root and this format can hold, with each light-dark() color and shadow split into a light and a dark context.",
+    "version": "2025.10",
     "sets": {
         "base": {
             "sources": [

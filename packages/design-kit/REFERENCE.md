@@ -24,13 +24,17 @@ cursor on a `<summary>`, and on a checkbox or radio and the label around it.
 Every token's value, each color in both themes, and the contrast of each color pairing are on [the
 tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 
-The same tokens are in the Design Tokens Community Group's format, 2025.10, in
-`tokens.resolver.json`, which the package exports for a design tool or a build that reads that
-format. It is one resolver document: its base set holds every token with one value, and its theme
-modifier holds each color and shadow in a light and a dark context, light by default, as each
-`light-dark()` splits. A token the format cannot write, a length in `em`, a keyword, or a value the
-browser works out from the page such as the safe area and the band insets, is in `tokens.css` alone,
-and a test holds the two files to each other.
+The tokens `tokens.css` declares on the root are also in the Design Tokens Community Group's format,
+2025.10, in `tokens.resolver.json`, which the package exports for a tool that reads that format. It
+is one resolver document: its base set holds every token the two themes share, and its theme
+modifier splits each color's and shadow's `light-dark()` into a light and a dark context, light by
+default. A token the format cannot write is in `tokens.css` alone: a length in `em`, the keyword
+`auto`, and a value the browser works out as it draws, from the visitor's text size, the page's
+width or what a phone keeps at its edges, as the paddings held by `min()`, the safe area, the
+column's inset and where a band's content starts are. A token set on a piece rather than the root,
+such as `--dk-flow-step`, is left out too. A test holds the two files to each other, and a token
+renamed in the file breaks a tool that reads it as a custom property renamed in the sheet breaks a
+page.
 
 <details>
 <summary>Every token, with its value or role</summary>

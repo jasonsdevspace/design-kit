@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 
 /*
  * `tokens.resolver.json` holds the tokens in the Design Tokens Community Group's format, 2025.10,
- * for a tool that reads that format rather than CSS. Its base set holds every token with one value,
- * and its theme modifier holds each `light-dark()` split into a light and a dark context. Each
- * token is drawn back as the CSS it stands for and held to what `tokens.css` declares on the root,
- * so neither file can change without the other.
+ * for a tool that reads that format rather than CSS. Its base set holds every token the two
+ * themes share, and its theme modifier holds each `light-dark()` split into a light and a dark
+ * context. Each token is drawn back as the CSS it stands for and held to what `tokens.css`
+ * declares on the root, so a value changed in one file and not the other fails.
  */
 
 const sheet = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
@@ -16,21 +16,22 @@ const resolver = JSON.parse(
 ) as Resolver;
 
 /**
- * The tokens the format cannot hold, each for its reason: a length in `em`, which the format's
- * dimension does not allow, a keyword, or a value the browser works out from the page.
+ * The root's tokens the format cannot hold, each with its reason: a length in `em`, which the
+ * format's dimension does not allow, a keyword, or a value the browser works out as it draws, from
+ * the visitor's text size, the page's width or what a phone keeps at its edges.
  */
 const CSS_ONLY: Readonly<Record<string, string>> = {
     'text-code': 'a length in em',
     'tracking-caps': 'a length in em',
     'strip-tools': 'the keyword auto',
-    'app-padding': 'a min() of two lengths',
-    'dialog-padding': 'a min() of two lengths',
-    'field-inline-held': 'a min() of two lengths',
+    'app-padding': 'a min() of a rem and a px length, by the text size',
+    'dialog-padding': 'a min() of a rem and a px length, by the text size',
+    'field-inline-held': 'a min() of a rem and a px length, by the text size',
     'safe-top': 'what the phone keeps, by env()',
     'safe-right': 'what the phone keeps, by env()',
     'safe-bottom': 'what the phone keeps, by env()',
     'safe-left': 'what the phone keeps, by env()',
-    'column-inset': "the page's width less the column",
+    'column-inset': "a max() with a percentage of the page's width",
     'band-left': 'a calc() of the safe area and the inset',
     'band-right': 'a calc() of the safe area and the inset',
 };
@@ -76,7 +77,9 @@ interface Resolver {
 /** What `tokens.css` declares on the root, by each token's name without the prefix. */
 const declaredOnRoot = (): ReadonlyMap<string, string> => {
     const plain = sheet.replace(/\/\*[\s\S]*?\*\//g, '');
-    const open = plain.indexOf('{', plain.indexOf(':where(:root) {'));
+    const root = plain.indexOf(':where(:root) {');
+    if (root < 0) throw new Error('tokens.css declares no :where(:root) block');
+    const open = plain.indexOf('{', root);
     let depth = 0;
     let end = open;
     for (; end < plain.length; end++) {
@@ -107,7 +110,6 @@ const colorCss = (color: Color): string => {
 const css = ({ $type, $value }: Token): string => {
     switch ($type) {
         case 'dimension':
-            return length($value as Dimension);
         case 'duration':
             return length($value as Dimension);
         case 'number':
@@ -140,17 +142,19 @@ const themedCss = (light: Token, dark: Token): string => {
 };
 
 const theme = resolver.modifiers['theme'];
+
+/** The tokens of a set or a context, read inside a test so a resolver of another shape fails it. */
 const only = (sources: readonly Source[] | undefined): Tokens => {
     expect(sources).toHaveLength(1);
     return sources?.[0]?.dk ?? {};
 };
-const base = only(resolver.sets['base']?.sources);
-const light = only(theme?.contexts['light']);
-const dark = only(theme?.contexts['dark']);
+const base = () => only(resolver.sets['base']?.sources);
+const light = () => only(theme?.contexts['light']);
+const dark = () => only(theme?.contexts['dark']);
 
 describe('the tokens in the design tokens format', () => {
     it('is a resolver of the 2025.10 format, its base set first and the theme over it', () => {
-        expect(resolver.version).toBe('2025-10-01');
+        expect(resolver.version).toBe('2025.10');
         expect(resolver.resolutionOrder).toEqual([
             { $ref: '#/sets/base' },
             { $ref: '#/modifiers/theme' },
@@ -161,13 +165,13 @@ describe('the tokens in the design tokens format', () => {
     });
 
     it('names the same tokens in the light and the dark context, and none in the base set too', () => {
-        expect(Object.keys(dark)).toEqual(Object.keys(light));
-        expect(Object.keys(light).filter((name) => name in base)).toEqual([]);
+        expect(Object.keys(dark())).toEqual(Object.keys(light()));
+        expect(Object.keys(light()).filter((name) => name in base())).toEqual([]);
     });
 
     it('holds every token the root declares, or names why the format cannot', () => {
         const declared = declaredOnRoot();
-        const held = [...Object.keys(base), ...Object.keys(light)];
+        const held = [...Object.keys(base()), ...Object.keys(light())];
         expect(
             [...declared.keys()].filter((name) => !held.includes(name) && !(name in CSS_ONLY))
         ).toEqual([]);
@@ -179,9 +183,10 @@ describe('the tokens in the design tokens format', () => {
 
     it('draws each token as the value tokens.css declares for it', () => {
         const declared = declaredOnRoot();
-        for (const [name, token] of Object.entries(base))
+        const darkTokens = dark();
+        for (const [name, token] of Object.entries(base()))
             expect(css(token), name).toBe(declared.get(name));
-        for (const [name, token] of Object.entries(light))
-            expect(themedCss(token, dark[name] as Token), name).toBe(declared.get(name));
+        for (const [name, token] of Object.entries(light()))
+            expect(themedCss(token, darkTokens[name] as Token), name).toBe(declared.get(name));
     });
 });

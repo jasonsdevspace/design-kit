@@ -69,11 +69,10 @@ assert.equal(
     'the tokens declare the kit layers before any rule'
 );
 
-// The tokens in the design tokens format resolve to a resolver document a tool can read.
-const resolver = JSON.parse(
-    readFileSync(fileURLToPath(import.meta.resolve(TOKENS_FORMAT)), 'utf8')
-);
-assert.equal(resolver.version, '2025-10-01', 'the tokens format file is a 2025.10 resolver');
+// The tokens in the design tokens format load from the packed package as a JSON module, as a
+// tool imports them, and are a 2025.10 resolver with both themes.
+const { default: resolver } = await import(TOKENS_FORMAT, { with: { type: 'json' } });
+assert.equal(resolver.version, '2025.10', 'the tokens format file is a 2025.10 resolver');
 assert.deepEqual(
     Object.keys(resolver.modifiers.theme.contexts),
     ['light', 'dark'],

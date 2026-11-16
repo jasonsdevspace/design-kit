@@ -118,7 +118,7 @@ follow by area.
 | A label hidden from the eye is still read by a screen reader                                              | `packages/design-kit/e2e/sheets.spec.ts`          |
 | A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `packages/design-kit/e2e/links.spec.ts`           |
 | Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts`          |
-| The tokens in the design tokens format draw back as what `tokens.css` declares, both themes               | `packages/design-kit/src/tokens.resolver.test.ts` |
+| Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | `packages/design-kit/src/tokens.resolver.test.ts` |
 
 </details>
 
@@ -259,8 +259,8 @@ follow by area.
   test to 10.25 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to 6.25 KB
   gzipped without their comments, and the theme script to 1 KB of its own. The package npm publishes
-  is 63 KB packed, the sheets and modules a page loads together with the README and the types it
-  never does. [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each
+  is 63 KB packed, the sheets and modules a page loads together with the README, the types and the
+  tokens in the design tokens format, which it never does. [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each
   sheet without its comments, and from 0.6.0 what each piece of the sheets and each function of the
   controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
@@ -429,7 +429,7 @@ npm run bench:pages
 ```
 packages/
 ├── design-kit/       the package, its npm README and the reference
-│   ├── src/          the sheets, the theme script, the Vite plugin, the React components and tests
+│   ├── src/          the sheets and a JSON of the tokens, the scripts, the React components, tests
 │   ├── examples/     the markup the reference prints and the site shows, and its tests
 │   ├── e2e/          the browser tests
 │   └── smoke/        the packed package installed as a page would install it

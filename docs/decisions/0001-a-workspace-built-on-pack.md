@@ -57,10 +57,10 @@ demo from npm as it was packed, with no script of the kit's to run.
 
 - The oldest Node job in CI packs the package, which builds it, checks the manifest with publint,
   installs the tarball into an empty project with `--ignore-scripts` on the lowest Node the package
-  admits, finds each sheet where its export resolves, and imports `./theme`, `./vite` and `./react`
-  by the names a demo uses, with Vite not installed and React installed, as a page that draws the
-  components has it. `smoke/package.test.ts` holds the list of what it loads to the package's
-  exports.
+  admits, finds each sheet where its export resolves, imports the tokens' resolver document as a
+  JSON module, and imports `./theme`, `./vite` and `./react` by the names a demo uses, with Vite not
+  installed and React installed, as a page that draws the components has it. `smoke/package.test.ts`
+  holds the list of what it loads to the package's exports.
 - `scripts/license.test.ts` holds each package's `LICENSE` to the one at the root.
 - `scripts/workflows.test.ts` holds every command in the workflows that installs or runs install
   scripts, `npm rebuild` and `npm update` among them, to `--ignore-scripts`, the last flag that names
