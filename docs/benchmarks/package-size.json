@@ -1,13 +1,14 @@
 {
     "recorded": {
-        "date": "2026-11-13",
-        "commit": "0ea7947",
-        "machine": "AMD EPYC 9V45 96-Core Processor, 4 cores",
+        "date": "2026-11-16",
+        "commit": "2caf42c",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.7.0",
-    "size": 64057,
+    "version": "0.8.0",
+    "size": 72422,
+    "sheets": 10248,
     "files": [
         {
             "path": "dist/base.css",
@@ -17,29 +18,29 @@
         },
         {
             "path": "dist/components.css",
-            "size": 111152,
-            "gzip": 24796,
-            "stripped": 7558
+            "size": 124982,
+            "gzip": 28155,
+            "stripped": 8321
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 8791,
-            "gzip": 3190
+            "size": 9581,
+            "gzip": 3429
         },
         {
             "path": "dist/controls.js",
-            "size": 38608,
-            "gzip": 11108
+            "size": 39599,
+            "gzip": 11354
         },
         {
             "path": "dist/react.d.ts",
-            "size": 19453,
-            "gzip": 5584
+            "size": 20924,
+            "gzip": 5937
         },
         {
             "path": "dist/react.js",
-            "size": 19545,
-            "gzip": 5856
+            "size": 20496,
+            "gzip": 6116
         },
         {
             "path": "dist/theme.d.ts",
@@ -53,9 +54,14 @@
         },
         {
             "path": "dist/tokens.css",
-            "size": 11170,
-            "gzip": 3890,
-            "stripped": 1063
+            "size": 15840,
+            "gzip": 5056,
+            "stripped": 1377
+        },
+        {
+            "path": "dist/tokens.resolver.json",
+            "size": 31333,
+            "gzip": 1983
         },
         {
             "path": "dist/vite.d.ts",
@@ -74,192 +80,212 @@
         },
         {
             "path": "package.json",
-            "size": 2234,
-            "gzip": 762
+            "size": 2324,
+            "gzip": 784
         },
         {
             "path": "README.md",
-            "size": 14870,
-            "gzip": 4737
+            "size": 15405,
+            "gzip": 4849
         }
     ],
     "pieces": [
         {
             "piece": "the page's own elements",
             "rules": 31,
-            "gzip": 923
-        },
-        {
-            "piece": "app frame",
-            "rules": 44,
-            "gzip": 852
+            "gzip": 959
         },
         {
             "piece": "tokens",
-            "rules": 4,
-            "gzip": 816
+            "rules": 6,
+            "gzip": 950
+        },
+        {
+            "piece": "app frame",
+            "rules": 46,
+            "gzip": 864
+        },
+        {
+            "piece": "button",
+            "rules": 29,
+            "gzip": 621
         },
         {
             "piece": "strip",
             "rules": 20,
-            "gzip": 480
+            "gzip": 490
         },
         {
-            "piece": "button",
-            "rules": 22,
-            "gzip": 472
+            "piece": "rows",
+            "rules": 28,
+            "gzip": 431
         },
         {
             "piece": "field",
             "rules": 19,
-            "gzip": 417
+            "gzip": 427
         },
         {
             "piece": "explainer",
-            "rules": 21,
-            "gzip": 361
-        },
-        {
-            "piece": "button grid",
-            "rules": 13,
-            "gzip": 339
+            "rules": 22,
+            "gzip": 421
         },
         {
             "piece": "table",
             "rules": 17,
-            "gzip": 324
+            "gzip": 376
+        },
+        {
+            "piece": "button grid",
+            "rules": 12,
+            "gzip": 308
         },
         {
             "piece": "stepper",
             "rules": 11,
-            "gzip": 259
+            "gzip": 279
         },
         {
             "piece": "dialog",
             "rules": 14,
-            "gzip": 255
+            "gzip": 262
         },
         {
             "piece": "theme switch",
             "rules": 14,
-            "gzip": 230
+            "gzip": 246
+        },
+        {
+            "piece": "tab bar",
+            "rules": 15,
+            "gzip": 244
         },
         {
             "piece": "choice",
             "rules": 15,
-            "gzip": 218
+            "gzip": 237
         },
         {
             "piece": "toast",
-            "rules": 12,
-            "gzip": 211
-        },
-        {
-            "piece": "tab bar",
-            "rules": 14,
-            "gzip": 210
-        },
-        {
-            "piece": "rows",
-            "rules": 14,
-            "gzip": 187
+            "rules": 10,
+            "gzip": 219
         },
         {
             "piece": "pills",
-            "rules": 10,
-            "gzip": 134
+            "rules": 12,
+            "gzip": 175
         },
         {
-            "piece": "animations",
-            "rules": 4,
-            "gzip": 120
+            "piece": "tabs",
+            "rules": 8,
+            "gzip": 143
         },
         {
             "piece": "callout",
             "rules": 10,
+            "gzip": 127
+        },
+        {
+            "piece": "animations",
+            "rules": 4,
+            "gzip": 121
+        },
+        {
+            "piece": "footer",
+            "rules": 6,
             "gzip": 119
         },
         {
-            "piece": "tabs",
-            "rules": 7,
-            "gzip": 118
+            "piece": "icon",
+            "rules": 3,
+            "gzip": 104
+        },
+        {
+            "piece": "site header",
+            "rules": 5,
+            "gzip": 92
         },
         {
             "piece": "skip link",
             "rules": 2,
-            "gzip": 104
-        },
-        {
-            "piece": "footer",
-            "rules": 4,
-            "gzip": 82
+            "gzip": 76
         },
         {
             "piece": "steps",
             "rules": 5,
-            "gzip": 77
+            "gzip": 71
         },
         {
             "piece": "code block",
             "rules": 5,
-            "gzip": 69
-        },
-        {
-            "piece": "eyebrow",
-            "rules": 2,
             "gzip": 67
         },
         {
-            "piece": "copy button",
-            "rules": 3,
-            "gzip": 48
+            "piece": "content page",
+            "rules": 4,
+            "gzip": 67
         },
         {
             "piece": "panel",
             "rules": 6,
+            "gzip": 65
+        },
+        {
+            "piece": "eyebrow",
+            "rules": 2,
+            "gzip": 57
+        },
+        {
+            "piece": "copy button",
+            "rules": 3,
             "gzip": 46
         },
         {
             "piece": "visually hidden",
             "rules": 1,
-            "gzip": 17
+            "gzip": 15
         },
         {
             "piece": "actions",
             "rules": 1,
-            "gzip": 2
+            "gzip": 8
         }
     ],
     "functions": [
         {
             "name": "attachToast",
             "alone": 1668,
-            "added": 1059
+            "added": 1061
         },
         {
             "name": "attachStepper",
             "alone": 1466,
-            "added": 978
+            "added": 981
         },
         {
             "name": "attachThemeSwitch",
             "alone": 1781,
-            "added": 698
+            "added": 693
         },
         {
             "name": "attachCopyButton",
             "alone": 1005,
-            "added": 600
+            "added": 602
         },
         {
             "name": "attachTable",
             "alone": 747,
-            "added": 485
+            "added": 487
         },
         {
             "name": "attachDialog",
             "alone": 886,
-            "added": 470
+            "added": 473
+        },
+        {
+            "name": "attachStatus",
+            "alone": 332,
+            "added": 63
         },
         {
             "name": "chooseTheme",
@@ -269,9 +295,9 @@
     ],
     "since": {
         "date": "2026-11-13",
-        "commit": "816565f",
-        "version": "0.6.0",
-        "size": 63154,
-        "sheets": 9433
+        "commit": "0ea7947",
+        "version": "0.7.0",
+        "size": 64057,
+        "sheets": 0
     }
 }
