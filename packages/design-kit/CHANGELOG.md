@@ -13,9 +13,9 @@ The kit's chrome keeps clear of a phone's edges on a page that reaches under the
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
 can sit on its container's rule, a text button gains a quiet form for a Close, and a content page is
-spaced by one class. The theme script is unchanged, so `themeScriptHash` is the same. The sheets'
-budget rises from 9.25 KB to 10.25 KB, set again by the size audit's rule, and the controls' stays
-at 6.25 KB.
+spaced by one class. In forced colors what is chosen shows its words again. The theme script is
+unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
+again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -46,14 +46,18 @@ at 6.25 KB.
   `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
   underline and in the text color under a pointer and while held, as wide as a button is tall, open
   or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
-  toast's close is drawn by the same rules. `dk-page` on a content page's main content spaces what
-  it holds by the flow and its sections `--dk-space-7` apart with no rule between them, sets its
-  `h1` at the display size and a section's `h2` at the title size, starts its text at the strip's
-  inset by the band insets, and holds its prose to the measure. `dk-lead` is the lead under a name
-  of its own, held to the measure, with `dk-explainer-lead` the same rule. `dk-tabs-on-rule` beside
-  `dk-tabs` lays a tab row on the rule of the container at whose foot it sits, drawing no rule of
-  its own and standing a pixel lower, so the chosen tab's line lies over the container's rule, and
-  keeping to the foot of a bar that centers what it holds.
+  toast's close is drawn by the same rules. In forced colors what is chosen keeps the selection's
+  colors, a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's
+  chosen word, the current pill, the chosen tab and the current place in a tab bar, with an edge and
+  a ring in system colors and no shadow, so a browser that paints a backplate behind their words no
+  longer draws the words unseen. `dk-page` on a content page's main content spaces what it holds by
+  the flow and its sections `--dk-space-7` apart with no rule between them, sets its `h1` at the
+  display size and a section's `h2` at the title size, starts its text at the strip's inset by the
+  band insets, and holds its prose to the measure. `dk-lead` is the lead under a name of its own,
+  held to the measure, with `dk-explainer-lead` the same rule. `dk-tabs-on-rule` beside `dk-tabs`
+  lays a tab row on the rule of the container at whose foot it sits, drawing no rule of its own and
+  standing a pixel lower, so the chosen tab's line lies over the container's rule, and keeping to
+  the foot of a bar that centers what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -77,15 +81,16 @@ at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read. A quiet button's colors, its states,
-  its size at every width and in an app, its name and its ring in forced colors are held on the
-  page, a panel and a raised panel in both themes. A content page spaces its blocks by the flow and
-  its sections further apart, starts its text at the strip's inset, sizes its headings, holds its
-  prose and lead to the measure beside a table at the column's width, takes its controls in the
-  markup's order, and cuts nothing off at 320 wide, twice the text size and the wider text spacing.
-  A tab row on its container's rule ends the chosen line and the resting tabs on the container's
-  foot with one rule, in a block and in a bar that centers it, in both themes and in forced colors,
-  and a plain row keeps its own rule.
+  the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
+  of every chosen thing in forced colors and find the selection under its words. A quiet button's
+  colors, its states, its size at every width and in an app, its name and its ring in forced colors
+  are held on the page, a panel and a raised panel in both themes. A content page spaces its blocks
+  by the flow and its sections further apart, starts its text at the strip's inset, sizes its
+  headings, holds its prose and lead to the measure beside a table at the column's width, takes its
+  controls in the markup's order, and cuts nothing off at 320 wide, twice the text size and the
+  wider text spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
+  the container's foot with one rule, in a block and in a bar that centers it, in both themes and in
+  forced colors, and a plain row keeps its own rule.
 
 ## 0.7.0
 

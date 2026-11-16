@@ -123,3 +123,81 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
  * rounds a computed length to a sixty-fourth of a pixel where the others keep the figure written.
  */
 export const pixels = (length: string | undefined): number => Number.parseFloat(length ?? '');
+
+/**
+ * How much of the width an element's words take is covered by the longest unbroken run of pixels
+ * in a color other than the element's own fill, the color most of the element is drawn in, read
+ * from screenshots through a canvas. Words drawn on the fill break every row into short strokes,
+ * and a backplate a browser paints behind them runs the whole width, a check on what shows where a
+ * computed style cannot tell. The box holds the words alone, not an icon beside them, and inside the
+ * element.
+ */
+export const backplateUnderWords = async (locator: Locator): Promise<number> => {
+    const page = locator.page();
+    await locator.scrollIntoViewIfNeeded();
+    const whole = (await locator.screenshot()).toString('base64');
+    const words = await locator.evaluate((element) => {
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        const rects: DOMRect[] = [];
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (!node.textContent?.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            rects.push(range.getBoundingClientRect());
+        }
+        // Within the element's own box, which a line of words can run past on some fonts.
+        const own = element.getBoundingClientRect();
+        const left = Math.max(own.left, Math.min(...rects.map((rect) => rect.left)));
+        const top = Math.max(own.top, Math.min(...rects.map((rect) => rect.top)));
+        const right = Math.min(own.right, Math.max(...rects.map((rect) => rect.right)));
+        const bottom = Math.min(own.bottom, Math.max(...rects.map((rect) => rect.bottom)));
+        return { x: left, y: top, width: right - left, height: bottom - top };
+    });
+    const under = (await page.screenshot({ clip: words })).toString('base64');
+    return page.evaluate(
+        async ([shotOfWhole = '', shotUnder = '']) => {
+            const read = async (data: string) => {
+                const image = new Image();
+                image.src = `data:image/png;base64,${data}`;
+                await image.decode();
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const context = canvas.getContext('2d');
+                context?.drawImage(image, 0, 0);
+                const drawn = context?.getImageData(0, 0, image.width, image.height).data;
+                return {
+                    width: image.width,
+                    pixels: drawn ? [...new Uint32Array(drawn.buffer)] : [],
+                };
+            };
+            const counts = new Map<number, number>();
+            for (const pixel of (await read(shotOfWhole)).pixels)
+                counts.set(pixel, (counts.get(pixel) ?? 0) + 1);
+            const fill = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+            // A shade off the fill still counts as it, since two screenshots can differ by one.
+            const channels = (pixel: number) => [
+                pixel & 255,
+                (pixel >> 8) & 255,
+                (pixel >> 16) & 255,
+            ];
+            const filled = channels(fill ?? 0);
+            const near = (pixel: number) =>
+                channels(pixel).reduce(
+                    (sum, value, at) => sum + Math.abs(value - (filled[at] ?? 0)),
+                    0
+                ) < 24;
+            const { width, pixels } = await read(shotUnder);
+            let longest = 0;
+            for (let row = 0; row * width < pixels.length; row += 1) {
+                let run = 0;
+                for (let column = 0; column < width; column += 1) {
+                    run = near(pixels[row * width + column] ?? 0) ? 0 : run + 1;
+                    longest = Math.max(longest, run);
+                }
+            }
+            return longest / width;
+        },
+        [whole, under] as const
+    );
+};
