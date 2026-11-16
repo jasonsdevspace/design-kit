@@ -7,6 +7,7 @@ import {
     contrast,
     forceColors,
     ringByKeyboard,
+    shadowOf,
     sideways,
     style,
     tabKey,
@@ -377,17 +378,6 @@ test('draws each tile on the ground its page sets, with an edge and a gap in pla
     const body = await box(page.locator('.dk-app-body'));
     expect(Math.round(first.x)).toBe(Math.round(body.x + 16));
 });
-
-/** What a value of the page's resolves to as a tile's shadow, a token's included. */
-const shadowOf = (page: Page, value: string): Promise<string> =>
-    page.evaluate((shadow) => {
-        const probe = document.createElement('span');
-        probe.style.boxShadow = shadow;
-        document.body.append(probe);
-        const resolved = getComputedStyle(probe).boxShadow;
-        probe.remove();
-        return resolved;
-    }, value);
 
 test('draws a tile on the surface with no ground set and no shadow, unless the page sets its own', async ({
     page,

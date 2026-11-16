@@ -139,6 +139,17 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
         return resolved;
     }, name);
 
+/** A shadow as the page resolves it, a token's included, from an element asked to cast it. */
+export const shadowOf = (page: Page, value: string): Promise<string> =>
+    page.evaluate((shadow) => {
+        const probe = document.createElement('span');
+        probe.style.boxShadow = shadow;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).boxShadow;
+        probe.remove();
+        return resolved;
+    }, value);
+
 /**
  * Turns forced colors on for the page, or off again, and fails where the page does not then match
  * them, so a test of forced colors never passes on a page drawn in the author's colors.
