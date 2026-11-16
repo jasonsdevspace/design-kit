@@ -1639,10 +1639,10 @@ ends in a tab bar does the same, as does a dialog on either, and so do a theme s
 tabs there, and a button in a toast. A demo's strip and footer stay as they are on every page. A
 page that shows a picture of a screen, such as a page of a kit's pieces, gives `dk-picture` to the
 picture's wrapper or to the frame itself and makes it `inert`, so the keyboard and a screen reader
-pass it by. A frame, a page that ends in a tab bar or a shown toast that carries `dk-picture` or
-sits inside an element with it is a picture, not the page's own, and a pictured toast sits in its
-place rather than over the screen's foot, so the page around it keeps its column, its dialogs and
-its foot as a content page does. Only a toast's attach function reads a height, the toast's and the
+pass it by. A frame, a page that ends in a tab bar or a shown toast is a picture when it carries
+`dk-picture` or sits inside an element with the class, and the page around a picture keeps its
+column, its dialogs and its foot as a content page does. A pictured toast sits in its place rather
+than over the foot of the page. Only a toast's attach function reads a height, the toast's and the
 body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows at a
 large text size, so the body ends where the rows below it begin. A toast floats over the foot of the
 body, just above the dock, so showing or hiding one never moves the dock under a thumb about to
