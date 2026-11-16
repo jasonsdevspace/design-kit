@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, sideways, style, tabKey, writePage } from './page.js';
+import { backplateUnderWords, box, sideways, style, tabKey, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -182,6 +182,10 @@ test('draws one line in forced colors, over the current link, in a system color'
         ]);
         expect(current['border-top-color']).toBe(current['color']);
         expect((await edge('History'))['border-top-style']).toBe('none');
+        // Its words show as the selection's text, where a backplate would paint them over.
+        expect(
+            await backplateUnderWords(page.getByRole('link', { name: 'Play', exact: true }))
+        ).toBeLessThan(0.8);
         // The current place stands on the highlight, as the current tab and pill do.
         const fill = (name: string) =>
             style(page.getByRole('link', { name, exact: true }), 'background-color').then(
