@@ -9,7 +9,7 @@ import pkg from '../package.json' with { type: 'json' };
 import * as react from '../src/react.js';
 import * as theme from '../src/theme.js';
 import * as vite from '../src/vite.js';
-import { SHEETS, VALUE_EXPORTS } from './exports.mjs';
+import { SHEETS, TOKENS_FORMAT, VALUE_EXPORTS } from './exports.mjs';
 import { floorOf } from './floor.mjs';
 
 /**
@@ -53,7 +53,7 @@ describe('the published package', () => {
     });
 
     it('exports what the smoke test loads, and its own manifest, and nothing else', () => {
-        const named = [...Object.keys(VALUE_EXPORTS), ...SHEETS].map((name) =>
+        const named = [...Object.keys(VALUE_EXPORTS), ...SHEETS, TOKENS_FORMAT].map((name) =>
             name.replace('@jasonsdevspace/design-kit', '.')
         );
         expect(Object.keys(pkg.exports).sort()).toEqual([...named, './package.json'].sort());

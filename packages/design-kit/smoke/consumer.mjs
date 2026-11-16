@@ -16,7 +16,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SHEETS, VALUE_EXPORTS } from './exports.mjs';
+import { SHEETS, TOKENS_FORMAT, VALUE_EXPORTS } from './exports.mjs';
 
 // The job's setup step can quietly install a newer Node than the one asked for, and then
 // everything below proves nothing about the Node it names.
@@ -67,6 +67,17 @@ assert.equal(
     firstStatement,
     '@layer dk.tokens, dk.base, dk.components',
     'the tokens declare the kit layers before any rule'
+);
+
+// The tokens in the design tokens format resolve to a resolver document a tool can read.
+const resolver = JSON.parse(
+    readFileSync(fileURLToPath(import.meta.resolve(TOKENS_FORMAT)), 'utf8')
+);
+assert.equal(resolver.version, '2025-10-01', 'the tokens format file is a 2025.10 resolver');
+assert.deepEqual(
+    Object.keys(resolver.modifiers.theme.contexts),
+    ['light', 'dark'],
+    'the tokens format file holds a light and a dark context'
 );
 
 // Every module loads, and exports exactly what the smoke test lists.

@@ -29,6 +29,7 @@
         "./tokens.css": "./dist/tokens.css",
         "./base.css": "./dist/base.css",
         "./components.css": "./dist/components.css",
+        "./tokens.resolver.json": "./dist/tokens.resolver.json",
         "./theme": {
             "types": "./dist/theme.d.ts",
             "default": "./dist/theme.js"
@@ -60,7 +61,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/*.css dist/",
+        "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/*.css src/tokens.resolver.json dist/",
         "prepack": "npm run build"
     },
     "peerDependencies": {

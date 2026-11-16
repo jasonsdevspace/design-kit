@@ -50,3 +50,6 @@ export const SHEETS = [
     '@jasonsdevspace/design-kit/base.css',
     '@jasonsdevspace/design-kit/components.css',
 ];
+
+/** The tokens in the design tokens format, as a tool that reads that format imports them. */
+export const TOKENS_FORMAT = '@jasonsdevspace/design-kit/tokens.resolver.json';

@@ -24,6 +24,14 @@ cursor on a `<summary>`, and on a checkbox or radio and the label around it.
 Every token's value, each color in both themes, and the contrast of each color pairing are on [the
 tokens page](https://jasonsdevspace.com/design-kit/tokens/).
 
+The same tokens are in the Design Tokens Community Group's format, 2025.10, in
+`tokens.resolver.json`, which the package exports for a design tool or a build that reads that
+format. It is one resolver document: its base set holds every token with one value, and its theme
+modifier holds each color and shadow in a light and a dark context, light by default, as each
+`light-dark()` splits. A token the format cannot write, a length in `em`, a keyword, or a value the
+browser works out from the page such as the safe area and the band insets, is in `tokens.css` alone,
+and a test holds the two files to each other.
+
 <details>
 <summary>Every token, with its value or role</summary>
 
