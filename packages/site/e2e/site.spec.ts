@@ -471,26 +471,29 @@ test.describe('the landing page', () => {
 test("spaces every block of a page by the kit, none of the site's own rules taking its step away", async ({
     page,
 }) => {
-    for (const width of [390, 1280]) {
-        await page.setViewportSize({ width, height: 900 });
-        for (const path of PAGES) {
-            await page.goto(path);
-            // Each block after another in the page or a section, but the list of sections, which
-            // sits in the gutter on a wide screen.
-            const flat = await page.evaluate(() =>
-                [...document.querySelectorAll('.dk-page > *, .dk-page > section > *')]
-                    .filter(
-                        (block) =>
-                            block.previousElementSibling !== null &&
-                            !block.matches('.site-toc, .dk-visually-hidden, [hidden]') &&
-                            !block.previousElementSibling.matches('.dk-visually-hidden, [hidden]')
-                    )
+    for (const path of PAGES) {
+        await page.goto(path);
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            // Each block with a block in sight anywhere before it, as the kit steps them, in the
+            // page or a section, but the list of sections, which sits in the gutter on a wide screen.
+            const flat = await page.evaluate(() => {
+                const shown = (block: Element) => !block.matches('.dk-visually-hidden, [hidden]');
+                return [...document.querySelectorAll('.dk-page > *, .dk-page > section > *')]
+                    .filter((block) => {
+                        const siblings = [...(block.parentElement?.children ?? [])];
+                        return (
+                            shown(block) &&
+                            !block.matches('.site-toc') &&
+                            siblings.slice(0, siblings.indexOf(block)).some(shown)
+                        );
+                    })
                     .filter((block) => parseFloat(getComputedStyle(block).marginTop) === 0)
                     .map(
                         (block) =>
                             `${block.tagName.toLowerCase()}.${[...block.classList].join('.')}`
-                    )
-            );
+                    );
+            });
             expect(flat, `${path} at ${String(width)}`).toEqual([]);
         }
     }
@@ -500,10 +503,10 @@ test.describe('the words each page opens with', () => {
     test('holds every lead to the measure at any width, between a phone and a wide screen too', async ({
         page,
     }) => {
-        for (const width of [...WIDTHS, 900, 1000]) {
-            await page.setViewportSize({ width, height: 900 });
-            for (const path of PAGES) {
-                await page.goto(path);
+        for (const path of PAGES) {
+            await page.goto(path);
+            for (const width of [...WIDTHS, 900, 1000]) {
+                await page.setViewportSize({ width, height: 900 });
                 const leads = await page.locator('.dk-lead').evaluateAll((all) => {
                     const probe = document.body.appendChild(document.createElement('div'));
                     probe.style.width = 'var(--dk-measure)';
@@ -2311,8 +2314,10 @@ test.describe('the state cards', () => {
                 );
                 if (!nav || !heading || !lead) throw new Error(`${at}: no list, heading or lead`);
                 if (width >= 1024) {
-                    // Beside the content, at its side.
+                    // Beside the content, at its side, its words starting level with the title.
                     expect(nav.x + nav.width, at).toBeLessThanOrEqual(heading.x);
+                    const words = await list.locator('.site-toc-words').boundingBox();
+                    expect(Math.abs((words?.y ?? 0) - heading.y), at).toBeLessThanOrEqual(1);
                 } else {
                     // Under the opening, before the first section.
                     expect(nav.y, at).toBeGreaterThanOrEqual(lead.y + lead.height);

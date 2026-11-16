@@ -298,7 +298,7 @@ const Page = ({
         <main
             id="main-content"
             tabIndex={-1}
-            className={sections === undefined ? 'dk-page' : 'dk-page site-main-listed'}
+            className={sections === undefined ? 'dk-page' : 'dk-page site-listed'}
         >
             {title === undefined ? null : <h1>{title}</h1>}
             {lead === undefined ? null : <p className="dk-lead">{lead}</p>}

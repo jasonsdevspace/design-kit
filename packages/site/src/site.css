@@ -18,11 +18,6 @@ body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
-/* The landing page's heading is at the display size, as a content page's title is. */
-.site-hero h1 {
-    font-size: var(--dk-text-display);
-}
-
 /* A table of the site's holds to a width the eye can follow along a row, and scrolls past it. */
 .dk-page > section > .dk-table-title,
 .dk-page > section > .dk-table-scroll {
@@ -62,8 +57,10 @@ body > .dk-strip {
     margin-top: 0;
 }
 
+/* The landing page's heading is at the display size, as a content page's title is. */
 .site-hero h1 {
     margin-block: var(--dk-space-2) var(--dk-space-4);
+    font-size: var(--dk-text-display);
     line-height: var(--dk-leading-tight);
 }
 
@@ -403,28 +400,30 @@ body > .dk-strip {
      * The content keeps the kit's column and its own flow, with the gutter for the list inside the
      * column's start, past the inset where the strip's links start.
      */
-    .site-main-listed {
+    .site-listed {
         position: relative;
         padding-left: calc(var(--dk-band-left) + 12rem + var(--dk-space-6));
     }
 
     /*
-     * The list runs down the whole gutter, from the top of the content to its end, and its words
-     * stay in sight inside it as the page scrolls, stopping at the end of the content rather than
-     * over the footer.
+     * The list runs down the whole gutter, from the top of the content to its end, its words
+     * starting level with the title by the room the content page leaves above it, and they stay in
+     * sight inside it as the page scrolls, stopping at the end of the content rather than over the
+     * footer.
      */
-    .site-main-listed > .site-toc {
+    .site-listed > .site-toc {
         position: absolute;
-        top: var(--dk-space-6);
+        top: 0;
         bottom: 0;
         left: calc(var(--dk-band-left) - var(--dk-space-3));
         width: 12rem;
         margin: 0;
         padding: 0;
+        padding-top: inherit;
         border: 0;
     }
 
-    .site-main-listed > .site-toc > .site-toc-words {
+    .site-listed > .site-toc > .site-toc-words {
         position: sticky;
         top: var(--dk-space-4);
     }
@@ -961,7 +960,6 @@ body > .dk-strip {
  * each file's name over a list of its tests' names, which hold to the measure as prose does.
  */
 .site-held {
-    margin-top: var(--dk-space-4);
     font-size: var(--dk-text-small);
 }
 
