@@ -180,7 +180,9 @@ export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 /**
  * @typedef {{ path: string, size: number, gzip: number, stripped?: number }} PackedFile a file of
  *     the package, raw and gzipped, and a sheet gzipped without its comments too
- * @typedef {{ name: string, version: string, size: number, files: PackedFile[], sheets?: number }} Packed
+ * @typedef {{ name: string, version: string, size: number, files: PackedFile[], sheets?: number }}
+ *     Packed the package, its files, and the sheets a page loads gzipped together without their
+ *     comments, which a tarball with no sheets leaves out
  */
 
 /** Whether a file of the package is a sheet, which a page loads. */
@@ -310,25 +312,31 @@ export const packedOf = (tarball) => {
     if (!manifest) throw new Error(`${tarball} holds no package.json`);
     /** @type {{ name: string, version: string }} */
     const { name, version } = JSON.parse(manifest.bytes.toString('utf8'));
+    // Each sheet without its comments, stripped once for its own figure and for the sheets together.
+    const stripped = new Map(
+        files
+            .filter((file) => isSheet(file.path))
+            .map((file) => [file.path, withoutComments(file.bytes.toString('utf8'))])
+    );
     // The sheets a page loads, joined in the order it loads them and gzipped together without their
-    // comments, the figure the sheets' budget holds, which is less than each gzipped on its own.
-    const sheets = SHEET_ORDER.map((name) => files.find((file) => file.path === `dist/${name}`))
-        .filter((file) => file !== undefined)
-        .map((file) => withoutComments(file.bytes.toString('utf8')))
-        .join('\n');
+    // comments, the figure the sheets' budget holds, which is less than the sum of each gzipped on
+    // its own, since gzip sends what the sheets repeat once. A package with some of the sheets and
+    // not others is a broken build, which is said rather than measured.
+    const ordered = SHEET_ORDER.map((sheet) => stripped.get(`dist/${sheet}`));
+    const found = ordered.filter((text) => text !== undefined);
+    if (found.length > 0 && found.length < SHEET_ORDER.length)
+        throw new Error(`${tarball} holds some of ${SHEET_ORDER.join(', ')} and not the rest`);
     return {
         name,
         version,
         size: statSync(tarball).size,
-        ...(sheets ? { sheets: gzipSync(sheets).length } : {}),
+        ...(found.length > 0 ? { sheets: gzipSync(found.join('\n')).length } : {}),
         files: files
             .map(({ path, bytes }) => ({
                 path,
                 size: bytes.length,
                 gzip: gzipSync(bytes).length,
-                ...(isSheet(path)
-                    ? { stripped: gzipSync(withoutComments(bytes.toString('utf8'))).length }
-                    : {}),
+                ...(isSheet(path) ? { stripped: gzipSync(stripped.get(path) ?? '').length } : {}),
             }))
             .sort((a, b) => a.path.localeCompare(b.path)),
     };

@@ -212,6 +212,12 @@ describe('a sheet without its comments', () => {
         );
         writeFileSync(join(dir, 'package', 'dist', 'theme.js'), 'export const a = 1;\n');
         const tarball = join(dir, 'kit.tgz');
+        // A package with some of the sheets and not the rest is a broken build, said rather than
+        // measured.
+        execFileSync('tar', ['-czf', tarball, '-C', dir, 'package']);
+        expect(() => packedOf(tarball)).toThrow(/holds some of/);
+        for (const name of ['base.css', 'components.css'])
+            writeFileSync(join(dir, 'package', 'dist', name), ':root { --b: 1; }\n');
         execFileSync('tar', ['-czf', tarball, '-C', dir, 'package']);
         const { files } = packedOf(tarball);
         const sheet = files.find((file) => file.path === 'dist/tokens.css');

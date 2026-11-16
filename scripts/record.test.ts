@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 
-import { packageRecord, pagesRecord, recorded, recordedTable } from './record.mjs';
+import { packageRecord, pagesRecord, recorded, recordedTable, sinceOf } from './record.mjs';
 
 /*
  * The records of what the package weighs and how the site's pages score: each says when, at which
@@ -140,6 +140,24 @@ describe('a package record that measures its parts', () => {
 });
 
 describe('a record that follows another', () => {
+    it('compares the sheets with the record before only where it gave them together', () => {
+        const before = {
+            name: '@jasonsdevspace/design-kit',
+            version: '0.7.0',
+            size: 64102,
+            files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9216 }],
+            recorded: { date: '2026-11-13', commit: '0ea7947', machine: 'x', node: 'v24' },
+        };
+        expect(sinceOf(before)).toEqual({
+            date: '2026-11-13',
+            commit: '0ea7947',
+            version: '0.7.0',
+            size: 64102,
+            sheets: 0,
+        });
+        expect(sinceOf({ ...before, sheets: 10221 }).sheets).toBe(10221);
+    });
+
     it('says what changed since the record before', () => {
         const packaged = packageRecord(
             {
@@ -159,7 +177,7 @@ describe('a record that follows another', () => {
             RECORDED
         );
         expect(packaged.markdown).toContain(
-            'Since the record of version 0.5.0 on 2026-11-12 at `7048d11`, it packs 53.0 KB where it packed 51.6 KB, and the sheets a page loads come to 9.0 KB gzipped without their comments where they came to 7.8 KB.'
+            'packed. The sheets a page loads come to 9.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.5.0 on 2026-11-12 at `7048d11`, it packs 53.0 KB where it packed 51.6 KB, and the sheets together came to 7.8 KB.'
         );
         expect(JSON.parse(packaged.json)).toHaveProperty('since.version', '0.5.0');
         // A record taken before the sheets were measured without comments gives no figure for them.
@@ -180,6 +198,28 @@ describe('a record that follows another', () => {
             RECORDED
         );
         expect(earlier.markdown).toContain('it packs 53.0 KB where it packed 40.0 KB.');
+        // The record after one that summed its sheets gives them together, with nothing to compare.
+        const next = packageRecord(
+            {
+                name: '@jasonsdevspace/design-kit',
+                version: '0.8.0',
+                size: 54272,
+                sheets: 10240,
+                files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9216 }],
+                since: sinceOf({
+                    name: '@jasonsdevspace/design-kit',
+                    version: '0.7.0',
+                    size: 40960,
+                    files: [],
+                    recorded: { date: '2026-11-13', commit: '0ea7947', machine: 'x', node: 'v24' },
+                }),
+            },
+            RECORDED
+        );
+        expect(next.markdown).toContain(
+            'The sheets a page loads come to 10.0 KB gzipped together without their comments, the figure their budget holds.'
+        );
+        expect(next.markdown).not.toContain('sheets together came to');
         expect(earlier.markdown).not.toContain('where they came to');
         const paged = pagesRecord(
             [

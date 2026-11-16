@@ -19,4 +19,5 @@ A row can hold a picture at its start, with tiles flowing into columns.
 
 The pull request that bumps the version folds every file here into the version's entry, its opening
 into the entry's opening paragraph and each bullet into the bullet with the same lead-in, and
-deletes the files. The release workflow stops while any file other than this one is left.
+deletes the files. The release workflow stops while anything but this file is left, a link included,
+or while the changelog keeps its `## Unreleased` heading.

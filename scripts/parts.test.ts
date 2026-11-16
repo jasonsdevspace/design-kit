@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { entryOf, pieceOf, PIECES, piecesOf, rulesOf } from './parts.mjs';
-import { withoutComments } from './summary.mjs';
+import { SHEET_ORDER, withoutComments } from './summary.mjs';
 
 /*
  * The measure of what each part of the package costs: a rule counted to the piece it draws, the
@@ -34,7 +34,7 @@ describe('the parts of the package', () => {
 
     it('names no piece in its map that no rule of the sheets is counted by', () => {
         const used = new Set(
-            ['tokens.css', 'base.css', 'components.css'].flatMap((name) =>
+            SHEET_ORDER.flatMap((name) =>
                 rulesOf(
                     withoutComments(
                         readFileSync(

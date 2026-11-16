@@ -84,7 +84,8 @@ export const pieceOf = (/** @type {string} */ selector, unclassed = "the page's 
     if (selector.startsWith('@keyframes')) return 'animations';
     const named = firstClassOf(selector);
     if (named === undefined) return unclassed;
-    return PIECES.find(([start]) => named === start || named.startsWith(`${start}-`))?.[1] ?? named;
+    const start = entryOf(selector);
+    return PIECES.find(([entry]) => entry === start)?.[1] ?? named;
 };
 
 /**
