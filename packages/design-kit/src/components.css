@@ -60,10 +60,11 @@
     /*
      * The strip and the footer run their rules the width of the page and line their content up
      * with the column below, so the page reads as one column from the strip to the footer. An
-     * explainer and the header above it start their text at the same inset. On a phone held on its
-     * side, each keeps its content clear of what the phone keeps at that side.
+     * explainer and the header above it, and a site's header, start their text at the same inset.
+     * On a phone held on its side, each keeps its content clear of what the phone keeps at that
+     * side.
      */
-    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer) {
+    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer, .dk-site-header) {
         padding-right: var(--dk-band-right);
         padding-left: var(--dk-band-left);
     }
@@ -117,6 +118,45 @@
         inline-size: var(--dk-strip-tools);
         min-height: var(--dk-strip);
         margin-inline-start: auto;
+    }
+
+    /*
+     * A site's header, under the strip: its brand, a link home holding the site's mark and its
+     * name, and its pages as pills, on one row over a rule on a wide screen, the pages wrapping
+     * onto a row of their own under the brand on a phone or at a large text size. The mark's slot
+     * grows with the text, and a name too long for a phone breaks rather than pushing the page
+     * sideways. The brand and each page are the target tall, the pages by the rule
+     * that sets an app's pills, and the pills give back the room they keep for the ring, so a page that wraps starts on the strip's content edge.
+     */
+    :where(.dk-site-header) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--dk-space-3) var(--dk-space-5);
+        padding-block: var(--dk-space-2);
+        border-bottom: 1px solid var(--dk-line);
+    }
+
+    :where(.dk-site-brand) {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--dk-space-2);
+        min-height: var(--dk-target);
+        color: var(--dk-fg);
+        font-weight: var(--dk-weight-strong);
+        text-decoration: none;
+        overflow-wrap: anywhere;
+    }
+
+    :where(.dk-site-mark) {
+        flex: none;
+        width: 1.75em;
+        height: 1.75em;
+    }
+
+    :where(.dk-site-header .dk-pills) {
+        margin: 0 calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
     /*
@@ -1647,7 +1687,13 @@
     }
 
     :where(
-        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) a.dk-pill
+        :is(
+                .dk-app,
+                .dk-tabbar-page,
+                :root:has(.dk-app, .dk-tabbar-page) .dk-dialog,
+                .dk-site-header
+            )
+            a.dk-pill
     ) {
         min-height: var(--dk-target);
     }

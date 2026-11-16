@@ -3,9 +3,10 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { SOURCE } from '../examples/examples.js';
+import { siteHeader, SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
 import { box, KIT, style, writePage } from './page.js';
+import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -785,4 +786,126 @@ test("draws the chrome under a policy that allows styles only from the page's ow
     expect(await stripLayout(page)).toMatchObject({ height: 41, tops: [0, 0, 0], gaps: [24, 24] });
     expect(refused).toEqual([]);
     await context.close();
+});
+
+/** A site's own page: the strip, the site's header, its main content and the footer. */
+const sitePage = renderToStaticMarkup(
+    <>
+        <SkipLink />
+        <PortfolioStrip about="./about/" source={SOURCE} />
+        {siteHeader}
+        <main id="main-content" tabIndex={-1}>
+            <h1>Scorekeeper</h1>
+            <p>Keep score for any card game.</p>
+        </main>
+        <DemoFooter name="Scorekeeper" about="./about/" source={SOURCE} />
+    </>
+);
+
+/** Where the site header's parts sit, against the strip's content edge. */
+const headerLayout = async (page: Page) => {
+    const edge = (
+        await box(page.getByRole('navigation', { name: 'Portfolio' }).getByRole('link').first())
+    ).x;
+    const site = page.getByRole('navigation', { name: 'Site' });
+    const brand = await box(page.locator('.dk-site-brand'), 'the brand');
+    const mark = await box(page.locator('.dk-site-mark'), 'the mark');
+    const links = await Promise.all((await site.getByRole('link').all()).map((link) => box(link)));
+    const first = links[0];
+    if (!first) throw new Error('expected the header to have links');
+    return { edge, brand, mark, first, links };
+};
+
+test("lines a site's header up with the strip, its brand and pages the target tall, its pages wrapping under the brand on a phone", async ({
+    page,
+}) => {
+    for (const width of [1280, 320]) {
+        await writePage(page, { width, title: 'Scorekeeper', body: sitePage });
+        const { edge, brand, mark, first, links } = await headerLayout(page);
+        const at = `${String(width)}px`;
+        expect(Math.round(brand.x), at).toBe(Math.round(edge));
+        expect(brand.height, at).toBeGreaterThanOrEqual(44);
+        for (const link of links) expect(link.height, at).toBeGreaterThanOrEqual(44);
+        // The mark's slot, and its step to the name.
+        expect(Math.round(mark.width), at).toBe(28);
+        if (width === 320) {
+            // The pages on a row of their own, starting on the strip's edge, a row step under.
+            expect(Math.round(first.x), at).toBe(Math.round(edge));
+            expect(Math.round(first.y - (brand.y + brand.height)), at).toBe(12);
+        } else expect(first.y, at).toBeLessThan(brand.y + brand.height);
+    }
+    const look = await page.locator('.dk-site-brand').evaluate((brand) => {
+        const style = getComputedStyle(brand);
+        return { size: style.fontSize, gap: style.columnGap };
+    });
+    expect(look).toEqual({ size: '16px', gap: '8px' });
+});
+
+test("reads a site's header once, its nav named Site, its current page marked, and takes the brand before the pages", async ({
+    page,
+}) => {
+    await writePage(page, { width: 320, title: 'Scorekeeper', body: sitePage });
+    await expect(page.getByRole('banner')).toHaveCount(1);
+    await expect(page.getByRole('link', { name: 'Scorekeeper', exact: true })).toHaveCount(1);
+    await expect(
+        page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Home' })
+    ).toHaveAttribute('aria-current', 'page');
+    // The skip link lands on the main content, past the header.
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('main')).toBeFocused();
+    // The brand, then the pages, though the pages wrap under it.
+    await page.locator('.dk-strip a').last().focus();
+    const visited: string[] = [];
+    for (let step = 0; step < 4; step += 1) {
+        await page.keyboard.press('Tab');
+        visited.push(await page.evaluate(() => document.activeElement?.textContent.trim() ?? ''));
+    }
+    expect(visited).toEqual(['Scorekeeper', 'Home', 'About', 'Open the app']);
+    for (const theme of ['light', 'dark'] as const) {
+        await writePage(page, { width: 1280, theme, title: 'Scorekeeper', body: sitePage });
+        // The brand reads as the site's name, not as a link in running text.
+        await expect(page.locator('.dk-site-brand'), theme).toHaveCSS(
+            'text-decoration-line',
+            'none'
+        );
+        // The current page stands apart by its weight as well as its ground.
+        const weights = await page
+            .getByRole('navigation', { name: 'Site' })
+            .getByRole('link')
+            .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
+        expect(new Set(weights).size, theme).toBe(2);
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(
+            results.violations.map(({ id }) => id),
+            theme
+        ).toEqual([]);
+    }
+    // In forced colors the current page takes the system's selection.
+    await page.emulateMedia({ forcedColors: 'active' });
+    const home = page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Home' });
+    expect(await home.evaluate((link) => getComputedStyle(link).backgroundColor)).toBe(
+        await page.evaluate(() => {
+            const probe = document.body.appendChild(document.createElement('span'));
+            probe.style.backgroundColor = 'Highlight';
+            const drawn = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return drawn;
+        })
+    );
+});
+
+test("cuts nothing off a site's header at 320 wide, twice the text size and the wider spacing", async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    await writePage(page, { width: 320, title: 'Scorekeeper', css: SPACED, body: sitePage });
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+        )
+    ).toBe(0);
+    expect(await cutOff(page, '.dk-site-header a')).toEqual([]);
+    const { edge, brand } = await headerLayout(page);
+    expect(Math.round(brand.x)).toBe(Math.round(edge));
 });
