@@ -486,14 +486,22 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <section>
             <h2 id="in-the-kit">What is in the design kit</h2>
             <p>Each page shows every piece in the light and dark themes.</p>
-            <ul className="site-pages" role="list">
+            <ul className="dk-rows dk-rows-tiles dk-rows-columns" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
-                        <span className="site-page-preview" aria-hidden="true">
-                            {PREVIEWS[route.file]}
-                        </span>
-                        <a href={route.path}>{route.nav}</a>
-                        <p>{route.card}</p>
+                        <a className="dk-row" href={route.path}>
+                            <span className="dk-row-picture site-page-preview" aria-hidden="true">
+                                {PREVIEWS[route.file]}
+                            </span>
+                            <span className="dk-row-text">
+                                <span className="dk-row-title">{route.nav}</span>
+                                <span className="dk-visually-hidden">, </span>
+                                <span className="dk-row-detail">{route.card}</span>
+                            </span>
+                            <span className="dk-row-sign" aria-hidden="true">
+                                ›
+                            </span>
+                        </a>
                     </li>
                 ))}
             </ul>

@@ -408,22 +408,44 @@ test.describe('the landing page', () => {
         await expect(page.locator('.site-hero-field').first()).toBeVisible();
     });
 
-    test('gives each page a card with a preview and a short line rather than its search description', async ({
+    test("gives each page a tile with a preview and a short line, the whole tile its link named by the page's name first", async ({
         page,
     }) => {
         await page.goto(BASE);
-        const cards = page.locator('.site-pages > li');
+        const cards = page.locator('.dk-rows-tiles.dk-rows-columns > li');
         const pages = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
         await expect(cards).toHaveCount(pages.length);
         for (const [index, { nav, path, description }] of pages.entries()) {
             const card = cards.nth(index);
-            await expect(card.getByRole('link', { name: nav ?? '', exact: true })).toHaveAttribute(
-                'href',
-                path
-            );
+            const link = card.getByRole('link');
+            await expect(link).toHaveCount(1);
+            await expect(link).toHaveAttribute('href', path);
+            await expect(link).toHaveClass('dk-row');
+            await expect(link).toHaveAccessibleName(new RegExp(`^${nav ?? ''}\\s*,`));
             await expect(card).not.toContainText(description);
             await expect(card.locator('.site-page-preview')).toHaveAttribute('aria-hidden', 'true');
+            await expect(card.locator('.site-page-preview')).toHaveClass(/\bdk-row-picture\b/);
             await expect(card.locator('.site-page-preview')).toBeVisible();
+        }
+    });
+
+    test('flows the tiles into columns on a wide screen, and into one column on a phone', async ({
+        page,
+    }) => {
+        await page.goto(BASE);
+        const cards = page.locator('.dk-rows-tiles.dk-rows-columns > li');
+        for (const [width, many] of [
+            [1280, true],
+            [375, false],
+        ] as const) {
+            await page.setViewportSize({ width, height: 900 });
+            const lefts = new Set(
+                await cards.evaluateAll((all) =>
+                    all.map((card) => Math.round(card.getBoundingClientRect().left))
+                )
+            );
+            if (many) expect(lefts.size, String(width)).toBeGreaterThan(1);
+            else expect(lefts.size, String(width)).toBe(1);
         }
     });
 
@@ -578,7 +600,7 @@ test.describe('the words each page opens with', () => {
         page,
     }) => {
         await page.goto(BASE);
-        const lines = await page.locator('.site-pages > li > p').allTextContents();
+        const lines = await page.locator('.dk-rows-columns > li .dk-row-detail').allTextContents();
         expect(lines).toEqual(CARDED.map((route) => ('card' in route ? route.card : '')));
         for (const [index, { description, path }] of CARDED.entries()) {
             const line = lines[index] ?? '';
