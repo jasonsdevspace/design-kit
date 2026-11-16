@@ -4,7 +4,15 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { backplateUnderWords, colorOf, pixels, style, writePage } from './page.js';
+import {
+    backplateUnderWords,
+    colorOf,
+    forceColors,
+    pixels,
+    ringByKeyboard,
+    style,
+    writePage,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -264,31 +272,20 @@ const tabLook = (tab: Locator) =>
     });
 
 /** The page's text, muted text and accent as it resolves them, and the system's selection colors. */
-const tabColors = (page: Page) =>
-    page.evaluate(() => {
-        const probe = document.createElement('span');
-        document.body.append(probe);
-        const read = (property: 'color' | 'backgroundColor', value: string) => {
-            probe.style[property] = value;
-            return getComputedStyle(probe)[property];
-        };
-        const colors = {
-            text: read('color', 'var(--dk-fg)'),
-            muted: read('color', 'var(--dk-muted)'),
-            accent: read('color', 'var(--dk-accent)'),
-            selection: read('backgroundColor', 'Highlight'),
-            selectionText: read('color', 'HighlightText'),
-        };
-        probe.remove();
-        return colors;
-    });
+const tabColors = async (page: Page) => ({
+    text: await colorOf(page, 'var(--dk-fg)'),
+    muted: await colorOf(page, 'var(--dk-muted)'),
+    accent: await colorOf(page, 'var(--dk-accent)'),
+    selection: await colorOf(page, 'Highlight'),
+    selectionText: await colorOf(page, 'HighlightText'),
+});
 
 test("marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, with no line under the others", async ({
     page,
 }) => {
     for (const theme of ['light', 'dark'] as const) {
         for (const forcedColors of ['none', 'active'] as const) {
-            await page.emulateMedia({ forcedColors });
+            await forceColors(page, forcedColors === 'active');
             await open(page, { theme });
             const at = `${theme} theme, forced colors ${forcedColors}`;
             const chosen = await tabLook(page.getByRole('tab', { name: 'Markup' }));
@@ -310,7 +307,6 @@ test("marks the chosen tab by the page's text over an accent line, and by the sy
             }
         }
     }
-    await page.emulateMedia({ forcedColors: 'none' });
 });
 
 test('draws a tab, a link among pages and a toggle alike, chosen or not', async ({ page }) => {
@@ -391,8 +387,8 @@ const holdsOnRule = async (
         forced,
     }: { theme: 'light' | 'dark'; shape: keyof typeof MASTHEAD; forced: boolean }
 ) => {
+    await forceColors(page, forced);
     await writePage(page, { theme, title: 'Tabs on a rule', css: MASTHEAD[shape], body: ON_RULE });
-    await page.emulateMedia({ forcedColors: forced ? 'active' : 'none' });
     const what = `${theme}, ${shape}${forced ? ', forced colors' : ''}`;
     // One rule, the masthead's: the chosen line ends on its foot, a resting tab leaves it.
     expect(await onRule(page), what).toEqual({
@@ -410,7 +406,6 @@ const holdsOnRule = async (
     expect(forced ? chosen.ground : chosen.line, what).toBe(
         forced ? colors.selection : colors.accent
     );
-    await page.emulateMedia({ forcedColors: 'none' });
 };
 
 test("lays a tab row on its container's rule, the chosen line over it, and a plain row as it was", async ({
@@ -523,13 +518,12 @@ test("draws the switch's own ring, on the chosen word, in the focus color", asyn
 
 test('rings in the accent a part of the page sets, where the page sets no focus color', async ({
     page,
+    browserName,
 }) => {
     await open(page, {
         css: 'main { --dk-accent: light-dark(rgb(0, 112, 64), rgb(0, 112, 64)); }',
     });
-    await page.getByRole('button', { name: 'Filters' }).focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
+    await ringByKeyboard(page.getByRole('button', { name: 'Filters' }), browserName);
     expect(
         await page
             .getByRole('button', { name: 'Filters' })
@@ -553,43 +547,42 @@ const CHOSEN = `<main><h1>Chosen</h1>
 <div class="dk-tabs"><button type="button" class="dk-tab" aria-pressed="true" id="tab-toggle">Open</button></div>
 <p><button type="button" class="dk-button" aria-pressed="true" id="toggle">Members only</button> <button type="button" class="dk-button" aria-expanded="true" id="open">Filters</button></p>
 <div class="dk-theme-switch" role="radiogroup" aria-label="Theme"><label class="dk-theme-switch-choice"><input type="radio" name="theme" checked><span id="theme">System</span></label><label class="dk-theme-switch-choice"><input type="radio" name="theme"><span>Light</span></label></div>
-<div class="dk-button-grid"><button type="button" class="dk-button" aria-pressed="true" id="cell">Bid 3</button><button type="button" class="dk-button" aria-pressed="false">Bid 4</button></div></main>`;
+<div class="dk-button-grid"><button type="button" class="dk-button" aria-pressed="true" id="cell">Bid 3</button><button type="button" class="dk-button" aria-pressed="false">Bid 4</button></div>
+<nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#play" aria-current="page" id="bar">Play</a></li><li><a href="#history">History</a></li></ul></nav></main>`;
+
+/**
+ * The theme switch in a demo's strip, which collapses to its name and one button drawn as the
+ * chosen word is on a screen under 20rem wide, the width it is written at.
+ */
+const COLLAPSED = {
+    width: 300,
+    body: `<main><h1>Chosen</h1><div class="dk-strip"><section class="dk-strip-tools" aria-label="Theme">${shown(drawn(themeSwitch))}</section></div></main>`,
+};
 
 test("draws every chosen thing's words in forced colors, on the system's selection", async ({
-    browser,
+    page,
 }) => {
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await writePage(page, { title: 'Chosen', body: CHOSEN });
-        const selection = await page.evaluate(() => {
-            const probe = document.body.appendChild(document.createElement('span'));
-            probe.style.backgroundColor = 'Highlight';
-            const drawn = getComputedStyle(probe).backgroundColor;
-            probe.remove();
-            return drawn;
-        });
+    // Forced before the page is written, so no ground is still easing from the author's color.
+    await forceColors(page);
+    for (const [written, ids] of [
+        [
+            { body: CHOSEN },
+            ['pill', 'tab', 'tab-link', 'tab-toggle', 'toggle', 'open', 'theme', 'cell', 'bar'],
+        ],
+        [COLLAPSED, ['theme-button']],
+    ] as const) {
+        await writePage(page, { title: 'Chosen', ...written });
+        const selection = await colorOf(page, 'Highlight');
         // On the selection, its words show as the selection's text where a backplate would
         // paint them over.
-        for (const id of [
-            'pill',
-            'tab',
-            'tab-link',
-            'tab-toggle',
-            'toggle',
-            'open',
-            'theme',
-            'cell',
-        ]) {
+        for (const id of ids) {
             const chosen = page.locator(`#${id}`);
-            expect(
-                await chosen.evaluate((element) => getComputedStyle(element).backgroundColor),
-                id
-            ).toBe(selection);
+            await expect(chosen, id).toBeVisible();
+            expect((await style(chosen, 'background-color'))['background-color'], id).toBe(
+                selection
+            );
             expect(await backplateUnderWords(chosen), id).toBeLessThan(0.8);
         }
-    } finally {
-        await context.close();
     }
 });
 
@@ -604,7 +597,7 @@ test('underlines a pill and a tab under a press in forced colors, where their co
             '<main><nav aria-label="Site"><ul class="dk-pills" role="list"><li><a class="dk-pill" href="#about" id="pill">About</a></li></ul></nav>' +
             '<nav aria-label="Categories"><ul class="dk-tabs" role="list"><li><a class="dk-tab" href="#books" id="tab">Books</a></li></ul></nav></main>',
     });
-    await page.emulateMedia({ forcedColors: 'active' });
+    await forceColors(page);
     for (const selector of ['#pill', '#tab']) {
         const target = page.locator(selector);
         expect((await style(target, 'text-decoration-line'))['text-decoration-line']).toBe('none');
@@ -668,27 +661,34 @@ test("rings every chosen thing in the system's text in forced colors, the theme 
     browserName,
 }) => {
     test.skip(browserName !== 'chromium', 'only Chromium draws forced colors here');
-    await writePage(page, { title: 'Chosen', body: CHOSEN });
-    await page.emulateMedia({ forcedColors: 'active' });
-    const canvasText = await colorOf(page, 'CanvasText');
-    // Each chosen thing, the element focus lands on, and the one its ring is drawn on.
-    const rings: readonly (readonly [string, string])[] = [
-        ['#pill', '#pill'],
-        ['#toggle', '#toggle'],
-        ['#open', '#open'],
-        ['#cell', '#cell'],
-        ['#tab', '#tab'],
-        ['#tab-toggle', '#tab-toggle'],
-        ['#tab-link', '#tab-link'],
-        ['.dk-theme-switch input:checked', '#theme'],
-    ];
-    for (const [focused, ringed] of rings) {
-        await page.locator(focused).focus();
-        await page.keyboard.press('Shift+Tab');
-        await page.keyboard.press('Tab');
-        await expect(page.locator(focused)).toBeFocused();
-        expect((await style(page.locator(ringed), 'outline-color'))['outline-color'], ringed).toBe(
-            canvasText
-        );
+    await forceColors(page);
+    // Each chosen thing, the element focus lands on, the one its ring is drawn on, and the ring's
+    // color: the system's text, or the selection's text on the tab bar's current place, whose ring
+    // is drawn inside it on the selection.
+    for (const [written, rings] of [
+        [
+            { body: CHOSEN },
+            [
+                ['#pill', '#pill', 'CanvasText'],
+                ['#toggle', '#toggle', 'CanvasText'],
+                ['#open', '#open', 'CanvasText'],
+                ['#cell', '#cell', 'CanvasText'],
+                ['#tab', '#tab', 'CanvasText'],
+                ['#tab-toggle', '#tab-toggle', 'CanvasText'],
+                ['#tab-link', '#tab-link', 'CanvasText'],
+                ['.dk-theme-switch input:checked', '#theme', 'CanvasText'],
+                ['#bar', '#bar', 'HighlightText'],
+            ],
+        ],
+        [COLLAPSED, [['#theme-button', '#theme-button', 'CanvasText']]],
+    ] as const) {
+        await writePage(page, { title: 'Chosen', ...written });
+        for (const [focused, ringed, color] of rings) {
+            await ringByKeyboard(page.locator(focused), browserName);
+            expect(
+                (await style(page.locator(ringed), 'outline-color'))['outline-color'],
+                ringed
+            ).toBe(await colorOf(page, color));
+        }
     }
 });
