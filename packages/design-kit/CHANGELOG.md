@@ -22,6 +22,8 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
   a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
+  `dk-explainer-lead` is held to the measure wherever it sits, so a lead with it outside an
+  explainer is no wider than `--dk-measure`.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
@@ -38,7 +40,8 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
   `dk-page` on a content page's main content spaces what it holds by the flow and its sections
-  `--dk-space-7` apart with no rule between them, sets its `h1` at the display size and holds its
+  `--dk-space-7` apart with no rule between them, sets its `h1` at the display size and a section's
+  `h2` at the title size, starts its text at the strip's inset by the band insets, and holds its
   prose to the measure. `dk-lead` is the lead under a name of its own, held to the measure, with
   `dk-explainer-lead` the same rule.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
@@ -63,9 +66,10 @@ same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
   the table of properties a page sets to what the sheets read. A content page spaces its blocks by
-  the flow and its sections further apart, holds its prose and lead to the measure beside a table at
-  the column's width, takes its controls in the markup's order, and cuts nothing off at 320 wide,
-  twice the text size and the wider text spacing.
+  the flow and its sections further apart, starts its text at the strip's inset, sizes its headings,
+  holds its prose and lead to the measure beside a table at the column's width, takes its controls
+  in the markup's order, and cuts nothing off at 320 wide, twice the text size and the wider text
+  spacing.
 
 ## 0.7.0
 

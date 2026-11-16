@@ -28,18 +28,20 @@ same flow the explainer uses, and draws nothing else.
 
 ## Decision
 
-Option C. `dk-page` spaces its children by `--dk-flow-step` and its sections by `--dk-space-7`,
-with nothing above its first child, sets its `h1` at the display size, and holds only its prose to
-the measure. The spacing is set between its children, never on their own margins, so a reader's
-own sheet that adds room under a paragraph adds room and breaks nothing. `dk-lead` is the
-explainer's lead under a name of its own, held to the measure wherever it sits.
+Option C. `dk-page` spaces its children by `--dk-flow-step` and its sections by `--dk-space-7`, with
+nothing above its first child, sets its `h1` at the display size and a section's `h2` at the title
+size, starts its text at the strip's inset by the band insets, and holds only its prose to the
+measure. The spacing is set between its children, never on their own margins, so a reader's own
+sheet that adds room under a paragraph adds the room it asks for and breaks nothing. Nothing it sets
+reorders what it holds, so focus and reading follow the markup. `dk-lead` is the explainer's lead
+under a name of its own, held to the measure wherever it sits.
 
 ## Consequences
 
 - A content page needs no rule of its own to space its content, and a page with its own layout is
   left as it was, since nothing reaches it without the class.
-- The page sets its column's width and side padding, as it would around any content, since a
-  landing page and an about page differ in both.
+- A content page lines its text up with the strip and the footer, and keeps clear of a phone's
+  sides, with no padding of its own.
 - The explainer and the content page share the flow's rules, so a change to the flow's step changes
   both, which is what a reader moving between them expects.
 
@@ -48,7 +50,8 @@ explainer's lead under a name of its own, held to the measure wherever it sits.
 The path is in `packages/design-kit`.
 
 - `e2e/layouts.spec.ts` draws a content page and holds the step between its blocks, the larger step
-  between its sections, nothing above its first child, prose and the lead at the measure beside a
-  table at the column's width, its `h1` at the display size, its keyboard order at a phone's width
-  and a wide one, and nothing cut off or scrolling sideways at 320 wide, at twice the text size and
-  under the wider text spacing WCAG allows.
+  between its sections with no rule over them, nothing above its first child, its text at the
+  strip's inset, prose and the lead at the measure beside a table at the column's width, its `h1` at
+  the display size, a section's `h2` at the title size and its lead at the lead size, and its
+  keyboard order at a phone's width and a wide one. At 320 wide, with twice the text size and the
+  wider text spacing WCAG allows together, nothing is cut off or scrolls sideways.

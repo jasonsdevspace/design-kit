@@ -281,7 +281,6 @@ export const controlStates: ReactElement = (
     </>
 );
 
-/** An explainer page, with the parts a demo fills in left as an ellipsis. */
 /** A content page: its title, its lead, its one action and its sections. */
 export const contentPage: ReactElement = (
     <main id="main-content" tabIndex={-1} className="dk-page">
@@ -308,6 +307,7 @@ export const contentPage: ReactElement = (
     </main>
 );
 
+/** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
         <a className="dk-skip" href="#main-content">

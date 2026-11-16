@@ -444,18 +444,41 @@ test('spaces a content page by the flow, its sections further apart, and holds i
         )
     ).toEqual([48, 48]);
     // The prose, the list and the lead hold to the measure, and the table takes the column.
-    expect([lead, prose, list].every((part) => (part?.width ?? 0) <= 34 * 16)).toBe(true);
-    expect(Math.round(table?.width ?? 0)).toBe(Math.round(main?.width ?? -1));
-    // The title at the display size, the lead at the lead size, and no rule over a section.
-    const look = await page.evaluate(() => ({
-        title: getComputedStyle(document.querySelector('h1') ?? document.body).fontSize,
-        lead: getComputedStyle(document.getElementById('lead') ?? document.body).fontSize,
-        rule: getComputedStyle(document.getElementById('second') ?? document.body).borderTopWidth,
-    }));
-    expect(look).toEqual({ title: '28px', lead: '17.6px', rule: '0px' });
+    const wide = Object.entries({ lead, prose, list }).filter(
+        ([, part]) => (part?.width ?? 0) > 34 * 16
+    );
+    expect(wide.map(([name]) => name)).toEqual([]);
+    expect(Math.round(table?.width ?? 0)).toBe(Math.round(title.width));
+    // The title at the display size with no margin of its own above it, a section's heading at the
+    // title size a short step over its text, the lead at the lead size, no rule over a section, and
+    // the text at the strip's inset, the column's on a wide screen.
+    const look = await page.evaluate(() => {
+        const of = (selector: string) =>
+            getComputedStyle(document.querySelector(selector) ?? document.body);
+        const heading = document.querySelector('#second h2')?.getBoundingClientRect();
+        const text = document.querySelector('#second h2 + *')?.getBoundingClientRect();
+        return {
+            title: of('h1').fontSize,
+            above: of('h1').marginTop,
+            heading: of('#second h2').fontSize,
+            step: Math.round((text?.top ?? 0) - (heading?.bottom ?? 0)),
+            lead: of('#lead').fontSize,
+            rule: of('#second').borderTopWidth,
+            inset: Math.round(document.querySelector('h1')?.getBoundingClientRect().left ?? 0),
+        };
+    });
+    expect(look).toEqual({
+        title: '28px',
+        above: '0px',
+        heading: '20px',
+        step: 12,
+        lead: '17.6px',
+        rule: '0px',
+        inset: (1280 - 72 * 16) / 2 + 16,
+    });
 });
 
-test("takes a content page's controls in the markup's order, and cuts nothing off at 320 wide and twice the text size", async ({
+test("takes a content page's controls in the markup's order, and cuts nothing off at 320 wide, twice the text size and the wider text spacing", async ({
     page,
 }) => {
     for (const width of [1280, 375]) {

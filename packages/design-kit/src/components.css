@@ -60,10 +60,11 @@
     /*
      * The strip and the footer run their rules the width of the page and line their content up
      * with the column below, so the page reads as one column from the strip to the footer. An
-     * explainer and the header above it start their text at the same inset. On a phone held on its
-     * side, each keeps its content clear of what the phone keeps at that side.
+     * explainer and the header above it, and a content page, start their text at the same inset.
+     * On a phone held on its side, each keeps its content clear of what the phone keeps at that
+     * side.
      */
-    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer) {
+    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer, .dk-page) {
         padding-right: var(--dk-band-right);
         padding-left: var(--dk-band-left);
     }
@@ -991,12 +992,18 @@
     /*
      * A content page, such as a landing page or an about page: its blocks and its sections spaced
      * by the flow, as an explainer's are, with sections a larger step apart and no rule between
-     * them, and its title at the display size. Only its prose holds to the measure, so a table, a
+     * them, its title at the display size and a section's heading at the title size, a short step
+     * over its text, its text starting at the strip's inset. Only its prose holds to the measure, so a table, a
      * grid of tiles or a figure takes the column. The spacing is set on the page, between what it
-     * holds, so a reader's own sheet that adds room under a paragraph adds room and breaks nothing.
+     * holds, so a reader's own sheet that adds room under a paragraph adds the room it asks for and
+     * breaks nothing.
      */
     :where(.dk-page > h1) {
         font-size: var(--dk-text-display);
+    }
+
+    :where(.dk-page > section > h2) {
+        font-size: var(--dk-text-title);
     }
 
     :where(
@@ -1396,8 +1403,8 @@
     }
 
     /*
-     * In what pads its content, a demo's strip and footer, an explainer and its header, a panel, a
-     * callout, an app's bar and body or a dialog, the switch reaches past the column by the room it
+     * In what pads its content, a demo's strip and footer, an explainer and its header, a content
+     * page, a panel, a callout, an app's bar and body or a dialog, the switch reaches past the column by the room it
      * keeps for its ring, as the pills and a row do, so its first word starts on the column's line
      * and the padding holds the ring. Elsewhere it stays inside, so nothing scrolls sideways.
      */
@@ -1407,6 +1414,7 @@
                 .dk-footer,
                 .dk-explainer-header,
                 .dk-explainer,
+                .dk-page,
                 .dk-panel,
                 .dk-callout,
                 .dk-app-bar,
@@ -2620,13 +2628,13 @@
     }
 
     /*
-     * In what pads its content, an explainer, a panel, a callout, an app's body or a dialog, a row
-     * reaches past the column by that room, as the pills and the choices do, so its words start on
-     * the column's line and the padding holds its ring. A list at a page's bare edge or in a
-     * table's cell keeps its rows inside it, so the page never scrolls sideways and no part of a
-     * ring is cut off.
+     * In what pads its content, an explainer, a content page, a panel, a callout, an app's body
+     * or a dialog, a row reaches past the column by that room, as the pills and the choices do, so
+     * its words start on the column's line and the padding holds its ring. A list at a page's bare
+     * edge or in a table's cell keeps its rows inside it, so the page never scrolls sideways and no
+     * part of a ring is cut off.
      */
-    :where(:is(.dk-explainer, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
+    :where(:is(.dk-explainer, .dk-page, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
         margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
@@ -2931,14 +2939,14 @@
     }
 
     /*
-     * The flow in what holds a column of pieces, an explainer and each of its sections, a panel, an
-     * app's body and a dialog: each piece stands its container's step, --dk-flow-step, from the one
+     * The flow in what holds a column of pieces, an explainer, a content page and each of their
+     * sections, a panel, an app's body and a dialog: each piece stands its container's step, --dk-flow-step, from the one
      * before it, and the first sits at the top. A piece out of sight before the first one adds no
      * step of its own. A dialog in one of them is left alone, so it keeps the place the browser and
      * its own rules give it. The flow comes near the end of the sheet, after every piece's own
      * rules, so a piece's own margin never cancels the step above it, and the room under each is
      * set further up. The steps that differ follow it: the short step under a title, a heading's
-     * own, the further step above a dialog's actions and an explainer's sections, and the smallest
+     * own, the further step above a dialog's actions, an explainer's sections and a content page's, and the smallest
      * step under an eyebrow, a section's number and a section's subheading.
      */
     :where(
@@ -2989,7 +2997,7 @@
         margin-block-start: var(--dk-space-7);
     }
 
-    :where(.dk-explainer > section > h2 + *) {
+    :where(:is(.dk-explainer, .dk-page) > section > h2 + *) {
         margin-block-start: var(--dk-space-3);
     }
 
