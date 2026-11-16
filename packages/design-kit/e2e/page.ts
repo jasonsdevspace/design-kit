@@ -89,6 +89,13 @@ export const sideways = (page: Page): Promise<number> =>
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
 
+/**
+ * What a phone held on its side keeps at each edge, in pixels, and the rule that sets them as the
+ * safe area tokens, one copy for every spec that draws a piece clear of them.
+ */
+export const SIDES = { left: 47, right: 47, bottom: 21 } as const;
+export const SIDES_CSS = `:root { --dk-safe-left: ${String(SIDES.left)}px; --dk-safe-right: ${String(SIDES.right)}px; --dk-safe-bottom: ${String(SIDES.bottom)}px; }`;
+
 /** The theme set on the root, or null where none is. */
 export const themeOf = (page: Page): Promise<string | null> =>
     page.evaluate(() => document.documentElement.getAttribute('data-theme'));
