@@ -40,8 +40,10 @@ test or a look can check. A bug says what happens, what should happen and how to
 A pull request follows the template. Pull requests are squashed, so the title becomes the commit on
 main, and the title and the body both pass the commit message check. The body says what changed and
 why, with no counts, no checklist and no notes to the reviewer, and ends with "Closes #N", or "Part
-of #N" when the issue has more to do. Every check in CI passes before a pull request is merged, the
-browser tests and the Lighthouse audit among them.
+of #N" when the issue has more to do. A pull request that changes what the package ships writes its
+changelog text in a file of its own under `packages/design-kit/changes`, as the README there says,
+rather than in `CHANGELOG.md`. Every check in CI passes before a pull request is merged, the browser
+tests and the Lighthouse audit among them.
 
 ## Releasing
 
@@ -50,8 +52,10 @@ release reaches npm". Around it, a maintainer:
 
 - bumps the version in `packages/design-kit/package.json`, adds a `## VERSION` entry to its
   `CHANGELOG.md` and points the package README's links to the reference at the new version's tag,
-  in a pull request of its own. The entry opens with an **Upgrading.** bullet when a page has to
-  change anything, and files the rest under the lead-ins the entries before it use
+  in a pull request of its own. The entry folds in every change file under
+  `packages/design-kit/changes`, which that pull request deletes, opens with an **Upgrading.**
+  bullet when a page has to change anything, and files the rest under the lead-ins the entries
+  before it use
 - tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
 - promotes the staged version on the package's npm page
 - moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
