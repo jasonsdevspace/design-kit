@@ -74,7 +74,7 @@ ${LINES}
 </main>
 ${
     toast
-        ? '<div class="dk-app-toast"><div class="dk-toast" data-shown id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-toast-close" aria-label="Dismiss">×</button></div></div></div>'
+        ? '<div class="dk-app-toast"><div class="dk-toast" data-shown id="toast"><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status">Round saved. Undo is available.</p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action">Undo</button><button type="button" class="dk-button dk-button-text dk-button-quiet dk-toast-close" aria-label="Close">×</button></div></div></div>'
         : ''
 }
 ${
@@ -568,6 +568,7 @@ for (const theme of ['light', 'dark'] as const) {
 /** A control of each kind, as a screen of an app or a plain page holds them. */
 const CONTROLS = `<button type="button" class="dk-button" data-kind="button">Undo</button>
 <button type="button" class="dk-button dk-button-text" data-kind="text">Rules</button>
+<button type="button" class="dk-button dk-button-text dk-button-quiet" data-kind="quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button>
 <button type="button" class="dk-button dk-button-tall" data-kind="tall">Next round</button>
 <input class="dk-input" aria-label="Name" data-kind="field">
 <select class="dk-select" aria-label="Game" data-kind="select"><option>Hearts</option></select>
@@ -577,7 +578,7 @@ const CONTROLS = `<button type="button" class="dk-button" data-kind="button">Und
 <ul class="dk-pills"><li><a class="dk-pill" href="#games" data-kind="pill">Games</a></li></ul>`;
 
 /** The kinds that are the target tall in an app, and a field's height on a plain wide page. */
-const HELD = ['button', 'field', 'select', 'choice', 'switch', 'tab', 'pill'];
+const HELD = ['button', 'quiet', 'field', 'select', 'choice', 'switch', 'tab', 'pill'];
 
 type Sizes = Partial<Record<string, { readonly height: number; readonly width: number }>>;
 
@@ -625,6 +626,8 @@ test('holds every control in an app to the target on a wide screen, and leaves t
         // A text button keeps no least width, and a tall button its larger target.
         expect(drawn['text']?.height, `${name}, text`).toBe(44);
         expect(drawn['text']?.width, `${name}, text`).toBeLessThan(44);
+        // A quiet button keeps a button's least width, so a × alone is the target across.
+        expect(drawn['quiet']?.width, `${name}, quiet`).toBe(44);
         expect(drawn['tall']?.height, `${name}, tall`).toBe(56);
     }
     // Outside an app, a wide screen keeps the field's height for its controls.
@@ -635,6 +638,7 @@ test('holds every control in an app to the target on a wide screen, and leaves t
     });
     const plain = await sizes(page, '#in');
     for (const kind of HELD) expect(plain[kind]?.height, kind).toBeLessThan(44);
+    expect([plain['quiet']?.width, plain['quiet']?.height], 'quiet').toEqual([36, 36]);
 });
 
 test("leaves a demo's strip as it is on a page that ends in a tab bar", async ({ page }) => {
@@ -650,7 +654,7 @@ test("leaves a demo's strip as it is on a page that ends in a tab bar", async ({
 test("draws the toast's close button at the target both ways on a wide screen, in a frame or not", async ({
     page,
 }) => {
-    const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Dismiss</span></button></div></div>`;
+    const toast = `<div class="dk-toast" data-shown><p class="dk-toast-message" aria-hidden="true">Round saved.</p><p class="dk-visually-hidden dk-toast-status" role="status"></p><div class="dk-toast-buttons"><button type="button" class="dk-button dk-button-text dk-toast-action" hidden></button><button type="button" class="dk-button dk-button-text dk-button-quiet dk-toast-close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></div></div>`;
     // With its group of buttons, and as a toast written before the group drew it.
     const flat = toast
         .replace('<div class="dk-toast-buttons">', '')
@@ -668,7 +672,7 @@ test("draws the toast's close button at the target both ways on a wide screen, i
         ] as const) {
             await writePage(page, { width: 1280, title: 'Round 3', body });
             const close = await box(
-                page.getByRole('button', { name: 'Dismiss' }),
+                page.getByRole('button', { name: 'Close' }),
                 'the close button'
             );
             expect([Math.round(close.width), Math.round(close.height)], `${name} ${kind}`).toEqual([

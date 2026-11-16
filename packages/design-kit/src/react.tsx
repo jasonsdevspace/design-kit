@@ -216,10 +216,10 @@ type NativeButton = Omit<
 /**
  * A button's own props: the accent for the one action a view leads with, `large` for a bigger
  * target, `tall` for the larger target what a screen is for takes, `text` for a button drawn as
- * a link, `pressed` for a toggle that stands alone, and `off`, beside a `<button>`'s own, its
- * `ref` among them, which holds the button drawn for a page that moves focus to it. The accent is
- * never a toggle and never a text button, and a text button is never a toggle, never large and
- * never tall, so none of those go together.
+ * a link, `quiet` beside it for a Close, `pressed` for a toggle that stands alone, and `off`,
+ * beside a `<button>`'s own, its `ref` among them, which holds the button drawn for a page that
+ * moves focus to it. The accent is never a toggle and never a text button, a text button is never
+ * a toggle, never large and never tall, and a quiet one is never off, so none of those go together.
  */
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
@@ -230,6 +230,7 @@ export type ButtonProps = NativeButton & {
               readonly accent?: boolean | undefined;
               readonly pressed?: undefined;
               readonly text?: false | undefined;
+              readonly quiet?: undefined;
               /**
                * A thumb's target tall at every width, with wider inline padding and the body text
                * size.
@@ -246,6 +247,7 @@ export type ButtonProps = NativeButton & {
               /** Whether the toggle is on. False still marks it a toggle, undefined an action. */
               readonly pressed?: boolean | undefined;
               readonly text?: false | undefined;
+              readonly quiet?: undefined;
               readonly large?: boolean | undefined;
               readonly tall?: boolean | undefined;
           }
@@ -256,6 +258,21 @@ export type ButtonProps = NativeButton & {
                * Drawn as a link, with no edge and no inline padding, in the accent and underlined.
                */
               readonly text: true;
+              readonly quiet?: false | undefined;
+              readonly large?: undefined;
+              readonly tall?: undefined;
+          }
+        | {
+              readonly accent?: false | undefined;
+              readonly pressed?: undefined;
+              readonly text: true;
+              /**
+               * Quiet, for a Close at a panel's corner: muted with no underline. With no children
+               * it draws a × hidden from a screen reader beside Close out of sight. A Close always
+               * closes, so a quiet button is never off.
+               */
+              readonly quiet: true;
+              readonly off?: false | undefined;
               readonly large?: undefined;
               readonly tall?: undefined;
           }
@@ -272,6 +289,7 @@ export const Button = ({
     large,
     tall,
     text,
+    quiet,
     pressed,
     off = false,
     type = 'button',
@@ -289,6 +307,7 @@ export const Button = ({
             large === true && 'dk-button-large',
             tall === true && 'dk-button-tall',
             text === true && 'dk-button-text',
+            quiet === true && 'dk-button-quiet',
             className
         )}
         aria-pressed={pressed}
@@ -301,7 +320,13 @@ export const Button = ({
                 : onClick
         }
     >
-        {children}
+        {children ??
+            (quiet === true ? (
+                <>
+                    <span aria-hidden="true">×</span>
+                    <span className="dk-visually-hidden">Close</span>
+                </>
+            ) : null)}
     </button>
 );
 
@@ -883,9 +908,13 @@ export const Toast = ({ className, ref }: ToastProps = {}) => (
         <p className="dk-visually-hidden dk-toast-status" role="status" />
         <div className="dk-toast-buttons">
             <button type="button" className="dk-button dk-button-text dk-toast-action" hidden />
-            <button type="button" className="dk-button dk-button-text dk-toast-close" hidden>
+            <button
+                type="button"
+                className="dk-button dk-button-text dk-button-quiet dk-toast-close"
+                hidden
+            >
                 <span aria-hidden="true">×</span>
-                <span className="dk-visually-hidden">Dismiss</span>
+                <span className="dk-visually-hidden">Close</span>
             </button>
         </div>
     </div>
