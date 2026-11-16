@@ -4,22 +4,28 @@
 [![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
-Colors, type, light and dark themes and basic controls, shared by the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets give a page colors and type in a
-light and a dark theme, a strip above the page and a footer below it, buttons, form fields and
-callouts for messages, the layout of the "How it works" page beside each demo, called the
-explainer, and an app's frame, tab bar, toast, button grid, rows, stepper and dialog.
+Colors, type, light and dark themes and the pieces a page is built from, shared by the demos on
+[jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets draw them.
 
-It is made for those demos, so its strip and footer link to the author's portfolio. The colors, base
-styles and controls work on any page, and a page's own styles win over the kit's without extra
-weight.
+- **The page around the content.** A strip above it, a site header, a footer, a content page with
+  its lead, and the "How it works" page beside each demo, called the explainer.
+- **Controls.** Buttons, a quiet button for Close, form fields and a field with a button, callouts,
+  pills, tabs, an icon and a status line a screen reader speaks.
+- **Lists and panels.** Rows with a picture at their start, rows as tiles that flow into columns,
+  and a panel that can sit raised above a list.
+- **An app's frame.** A tab bar, a toast, a grid of buttons, a stepper and a dialog.
+
+The tokens also ship in the Design Tokens Community Group format, for a tool that reads it.
+
+It is made for those demos, so its strip and footer link to the author's portfolio. The rest works
+on any page, and a page's own styles win over the kit's without extra weight.
 
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 **[See every piece live, in both themes, with its code](https://jasonsdevspace.com/design-kit/)** ·
 [Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md) ·
-[Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md)
-· [Source](https://github.com/jasonsdevspace/design-kit)
+[Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
+[Source](https://github.com/jasonsdevspace/design-kit)
 
 - **No flash of the wrong theme.** A small script in the head sets the theme before the page draws.
 - **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
@@ -27,6 +33,10 @@ weight.
 - **Works under a strict security policy.** The components add no inline styles, so they render
   under `style-src 'self'`, and a strict `script-src` allows the theme script by the hash the kit
   gives.
+- **Clear of a phone's edges.** On a page that draws to the edge of the screen, the strip, the
+  header, the footer and an app's frame keep their content clear of a phone's notch and corners.
+- **Tested where layouts break.** Browser tests draw the pieces in both themes, 320 pixels wide, at
+  twice the text size, under wider text spacing and in forced colors.
 
 ## Setup
 
@@ -43,10 +53,10 @@ Vite.
 @import '@jasonsdevspace/design-kit/components.css';
 ```
 
-In a Vite build, the plugin puts the theme script inline where the page's head holds its marker, and
-`browserFloor()` keeps each `light-dark()` color as written. A page that uses Lightning CSS as
-Vite's CSS transformer passes it `lightningcssFloor()` too, as [Browser support](#browser-support)
-shows.
+In a Vite build, `themeScriptPlugin()` puts the theme script inline where the page's head holds its
+marker, and `browserFloor()` keeps each `light-dark()` color as written. A page that uses Lightning
+CSS as Vite's CSS transformer passes it `lightningcssFloor()` too, as [Browser
+support](#browser-support) shows.
 
 ```ts
 import { browserFloor, themeScriptPlugin } from '@jasonsdevspace/design-kit/vite';
@@ -79,22 +89,23 @@ React `^19.3.0` are optional peers, needed only for the plugin and the component
 
 ## What it exports
 
-| Entry                                             | What it gives                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@jasonsdevspace/design-kit/tokens.css`           | The layer order and every named value, each under the `--dk-` prefix                                                                                                                                                                                                                                                                      |
-| `@jasonsdevspace/design-kit/tokens.resolver.json` | Every named value the format can hold, in the Design Tokens Community Group's format, 2025.10, for a tool that reads that format, with light and dark as the theme's two contexts                                                                                                                                                         |
-| `@jasonsdevspace/design-kit/base.css`             | Type, colors, the selection, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule                                                                                                                                                                                                                               |
-| `@jasonsdevspace/design-kit/components.css`       | The page chrome, buttons and a row of them, fields and a field with a button, callouts, pills, tabs, the eyebrow, an icon, the theme switch, the copy button and a code block's head, the explainer page with its tables, a pinned first column among them, and an app's frame, tab bar, toast, grid of buttons, rows, stepper and dialog |
-| `@jasonsdevspace/design-kit/theme`                | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                                                                                                                                                                                                                                             |
-| `@jasonsdevspace/design-kit/controls`             | `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`, `attachTable()`, `attachStatus()` and `chooseTheme()`, which make the controls work, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener` and `DialogOptions`                                                        |
-| `@jasonsdevspace/design-kit/react`                | The components, the theme switch's, copy button's, stepper's and toast's markup, the props types, `CalloutTone` and the chrome's URLs                                                                                                                                                                                                     |
-| `@jasonsdevspace/design-kit/vite`                 | `themeScriptPlugin()`, `themeScriptHash`, `THEME_PLACEHOLDER`, `browserFloor()` and `lightningcssFloor()`                                                                                                                                                                                                                                 |
+| Entry                                             | What it gives                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@jasonsdevspace/design-kit/tokens.css`           | The layer order and every named value, each under the `--dk-` prefix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `@jasonsdevspace/design-kit/tokens.resolver.json` | Every named value the format can hold, in the Design Tokens Community Group's format, 2025.10, for a tool that reads that format, with light and dark as the theme's two contexts                                                                                                                                                                                                                                                                                                                                                                                |
+| `@jasonsdevspace/design-kit/base.css`             | Type, colors, the selection, the focus ring, `.dk-visually-hidden`, inline code and the reduced-motion rule                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `@jasonsdevspace/design-kit/components.css`       | The page chrome and a site's header, buttons and a row of them, a quiet button, fields and a field with a button, callouts, pills, tabs and a tab row on its container's rule, the eyebrow, an icon, the theme switch, the copy button and a code block's head, a content page and its lead, the explainer page with its panels, a raised one among them, and its tables, a pinned first column among them, and an app's frame, tab bar, toast, grid of buttons, stepper and dialog, and rows, with a picture at a row's start, as tiles and as tiles in columns |
+| `@jasonsdevspace/design-kit/theme`                | `themeScript`, `THEME_KEY`, `THEMES`, `THEME_CHOICES` and the types `Theme` and `ThemeChoice`                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `@jasonsdevspace/design-kit/controls`             | `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`, `attachTable()`, `attachStatus()` and `chooseTheme()`, which make the controls work, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener` and `DialogOptions`                                                                                                                                                                                                                                                                               |
+| `@jasonsdevspace/design-kit/react`                | The components, a props type for each, the `Choice` and `CalloutTone` types and the chrome's URLs                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `@jasonsdevspace/design-kit/vite`                 | `themeScriptPlugin()`, `themeScriptHash`, `THEME_PLACEHOLDER`, `browserFloor()` and `lightningcssFloor()`                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 The `react` entry holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`,
 `SelectField`, `TextareaField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
-`CopyButton`, `CopyStatus`, `StatusLine` and `Toast`, a props type for each named after it, such as
-`ButtonProps`, the `Choice` and `CalloutTone` types a page writes a choice or a tone with, and the
-URLs the chrome links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
+`CopyButton`, `StatusLine`, which `CopyStatus` also names, and `Toast`, a props type for each named
+after it, such as `ButtonProps`, the `Choice` and `CalloutTone` types a page writes a choice or a
+tone with, and the URLs the chrome links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
+`GITHUB_PROFILE_URL`.
 
 ## Using it
 
@@ -129,7 +140,7 @@ input, which could send a visitor anywhere. The skip link, strip and footer are 
 on [the page chrome page](https://jasonsdevspace.com/design-kit/page-chrome/), and their markup,
 rules and props are under [Page
 chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#page-chrome)
-in the reference.
+in the reference, with the markup of a site's header under the strip.
 
 Buttons and fields take their state from the attribute a screen reader already reads, such as
 `aria-pressed` or `aria-invalid`, never a class of the kit's.
@@ -177,7 +188,9 @@ in the reference gives each component's props and the rules a page follows, such
 unavailable button is `aria-disabled` and how a message is made live.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
-gives the markup for each piece, and [Explainer
+gives the markup for each piece, [Content
+pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#content-pages)
+there gives a landing or an about page spaced by one class, and [Explainer
 pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#explainer-pages)
 there gives the steps, panels, tables and code blocks of a "How it works" page.
 
@@ -207,6 +220,13 @@ palette sets the roles again, with both values at once.
 }
 ```
 
+A page whose column, app column or spacing differs from the kit's sets `--dk-column`,
+`--dk-app-column`, `--dk-space-4`, `--dk-space-5` or `--dk-field-inline` on `:root`, since the band
+insets, an app's inset and the paddings held at a size are worked out there from them. A page
+changes how a piece draws only through the properties the reference lists under [Properties a page
+sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#properties-a-page-sets),
+never by a rule over a kit class.
+
 [Layers and
 palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#layers-and-palettes)
 in the reference gives the other order, the reduced-motion rule that holds over a page's own, and
@@ -225,6 +245,9 @@ import { themeScriptHash } from '@jasonsdevspace/design-kit/vite';
 const policy = `script-src 'self' ${themeScriptHash}`;
 ```
 
+A strict `style-src` refuses a `style` attribute, so a page sets a property the kit names, such as
+`--dk-tile-ground`, by a class of its own, as the reference's examples do.
+
 The hash holds as long as nothing after the plugin rewrites the inline script, as an HTML minifier
 would. [The theme
 contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/packages/design-kit/REFERENCE.md#the-theme-contract)
@@ -235,7 +258,7 @@ in the reference gives what the script sets for each saved value, and when it se
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
 and Safari 17.5. What falls short at the floor, such as an empty live callout in Firefox 120, is
 listed under [known
-limitations](https://github.com/jasonsdevspace/design-kit/blob/main/ACCESSIBILITY.md#known-limitations).
+limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.0/ACCESSIBILITY.md#known-limitations).
 
 A Vite build that takes `browserFloor()` as its target, as Setup shows, keeps each `light-dark()` as
 written. A lower target rewrites each one into custom properties set once on the root, so a part of
