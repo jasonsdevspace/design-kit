@@ -23,3 +23,25 @@ export const cutOff = (page: Page, selector: string): Promise<string[]> =>
                 .map((element) => element.className),
         selector
     );
+
+/** The words in the elements given that the browser breaks across two lines, each a cut word. */
+export const brokenWords = (page: Page, selector: string): Promise<string[]> =>
+    page.evaluate((wanted) => {
+        const broken: string[] = [];
+        for (const element of document.querySelectorAll(wanted)) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+                const text = node.textContent ?? '';
+                for (const word of text.matchAll(/\S+/g)) {
+                    const range = document.createRange();
+                    range.setStart(node, word.index);
+                    range.setEnd(node, word.index + word[0].length);
+                    const lines = new Set(
+                        [...range.getClientRects()].map(({ top }) => Math.round(top))
+                    );
+                    if (lines.size > 1) broken.push(word[0]);
+                }
+            }
+        }
+        return broken;
+    }, selector);

@@ -2882,6 +2882,16 @@
         box-shadow: var(--dk-tile-shadow, none);
     }
 
+    /*
+     * A tile in a panel on a phone stands its words in a phone's step held at its size, so the
+     * panel's padding and its own leave its words room at twice the text size.
+     */
+    @media (width <= 48rem) {
+        :where(.dk-panel .dk-rows-tiles .dk-row) {
+            padding-inline: var(--dk-space-4-held);
+        }
+    }
+
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
     :where(.dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-lead);
