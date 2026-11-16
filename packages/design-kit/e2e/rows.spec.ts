@@ -397,7 +397,9 @@ test('draws a tile on the surface with no ground set and no shadow, unless the p
     expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
 });
 
-test("underlines a tile's title under a pointer, and rings it inside", async ({ page }) => {
+test("underlines a tile's title under a pointer, and rings it outside, as a separate control", async ({
+    page,
+}) => {
     await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
     const link = tileList(page).getByRole('link').first();
     const title = link.locator('.dk-row-title');
@@ -409,9 +411,7 @@ test("underlines a tile's title under a pointer, and rings it inside", async ({ 
     await page.keyboard.press('Tab');
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
-    expect(Number.parseFloat(ring['outline-offset'] ?? '')).toBe(
-        -Number.parseFloat(ring['outline-width'] ?? '')
-    );
+    expect(ring['outline-offset']).toBe('2px');
 });
 
 test("underlines a tile's title under a pressing thumb, on a phone where nothing hovers", async ({
@@ -498,7 +498,8 @@ for (const theme of ['light', 'dark'] as const)
 
 /**
  * Reaches each link in a list of tiles by the keyboard, so its ring shows, and measures its title
- * and detail against its own ground at 4.5 to 1 and its sign and ring at 3 to 1, as drawn.
+ * and detail against its own ground at 4.5 to 1 and its sign at 3 to 1, and its ring, drawn outside
+ * it, at 3 to 1 against what the list sits on, as drawn.
  */
 const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
     const links = await list.getByRole('link').all();
@@ -521,9 +522,17 @@ const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
                 contrast(await color(link.locator(part)), ground),
                 `${where}, ${part}`
             ).toBeGreaterThanOrEqual(least);
+        // The nearest ground under the tile, the page's where nothing between has one.
+        const under = await link.evaluate((tile) => {
+            for (let at = tile.parentElement; at; at = at.parentElement) {
+                const drawn = getComputedStyle(at).backgroundColor;
+                if (drawn !== 'rgba(0, 0, 0, 0)') return drawn;
+            }
+            return getComputedStyle(document.documentElement).backgroundColor;
+        });
         expect(
-            contrast(await color(link, 'outline-color'), ground),
-            `${where}, the ring`
+            contrast(await color(link, 'outline-color'), under),
+            `${where}, the ring on ${under}`
         ).toBeGreaterThanOrEqual(3);
     }
 };

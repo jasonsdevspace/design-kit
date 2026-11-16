@@ -2725,6 +2725,15 @@
         outline-offset: calc(-1 * var(--dk-ring-width));
     }
 
+    /*
+     * A tile stands apart from the next by a gap, so its ring sits outside it, as every other
+     * separate control's does, on the ground the kit holds the ring to, rather than on a ground the
+     * page chooses for the tile.
+     */
+    :where(.dk-rows-tiles a.dk-row):focus-visible {
+        outline-offset: var(--dk-ring-offset);
+    }
+
     :where(a.dk-row:active .dk-row-title) {
         text-decoration: underline;
     }
