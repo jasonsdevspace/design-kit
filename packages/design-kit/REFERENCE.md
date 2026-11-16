@@ -704,6 +704,28 @@ the arrow keys moving the choice along the row, and `aria-controls` naming each 
 base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so the ring follows the
 arrow keys.
 
+#### A tab row on its container's rule
+
+```html
+<header class="masthead">
+    <h1>Shelf</h1>
+    <nav aria-label="Categories">
+        <ul class="dk-tabs dk-tabs-on-rule" role="list">
+            <li><a class="dk-tab" href="./" aria-current="page">All</a></li>
+            <li><a class="dk-tab" href="./books/">Books</a></li>
+        </ul>
+    </nav>
+</header>
+```
+
+Where the row sits at the foot of a container that draws a rule of its own, such as a masthead or a
+code block's bar, `dk-tabs-on-rule` beside `dk-tabs` draws no rule and stands a pixel lower, so the
+chosen tab's line lies over the container's rule and the resting tabs leave it showing, rather than
+two rules stacking. The container draws its rule as a border of the kit's 1px line and keeps no
+padding at its foot, so the row reaches its rule, and the row keeps to that foot in a bar that
+centers what it holds, such as a flex row beside a copy button. In forced colors the row draws no
+rule of its own there either, and the chosen tab's mark reaches the container's.
+
 ### Eyebrows
 
 <!-- example: eyebrow -->
