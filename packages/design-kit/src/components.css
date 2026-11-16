@@ -1652,13 +1652,6 @@
         min-height: var(--dk-target);
     }
 
-    @media (forced-colors: active) {
-        :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
-    }
-
     /*
      * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
      * three sites drew by hand for a category among categories, a block of markup beside its React,
@@ -1730,17 +1723,6 @@
     :where(:is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-tab) {
         min-width: var(--dk-target);
         min-height: var(--dk-target);
-    }
-
-    @media (forced-colors: active) {
-        :where(
-            .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
-            .dk-tab[aria-pressed='true']
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
     }
 
     /*
@@ -2227,16 +2209,44 @@
         font-weight: var(--dk-weight-strong);
     }
 
-    /* In forced colors the current place stands on the highlight, as the current tab and pill. */
+    /*
+     * In forced colors the current place stands on the highlight, by the rule after this one.
+     */
     @media (forced-colors: active) {
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
         /* Its focus ring, drawn inside it, in the highlight's text, so it shows on the fill. */
         :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
             outline-color: HighlightText;
+        }
+    }
+
+    /*
+     * In forced colors the current pill, the chosen tab and the current place in a tab bar stand
+     * in the system's selection colors, and keep them, since a browser that paints a backplate of
+     * the page's ground behind their words would draw the selection's text on its own color. Their
+     * edge and a ring outside them take system colors too, as forced colors would. The rule comes
+     * after the three pieces' own, which would otherwise win by their order.
+     */
+    @media (forced-colors: active) {
+        :where(
+            a.dk-pill[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true'],
+            .dk-tabbar a[aria-current]:not([aria-current='false'])
+        ) {
+            border-color: HighlightText;
+            background: Highlight;
+            color: HighlightText;
+            forced-color-adjust: none;
+        }
+
+        :where(
+            a.dk-pill[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-selected='true'],
+            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-pressed='true']
+        ):focus-visible {
+            outline-color: CanvasText;
         }
     }
 

@@ -36,7 +36,10 @@ and the controls' at 6.25 KB.
   link row as a tile, an edge and large corners apart from the next by a gap, on the ground a page
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
-  larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+  larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn. In
+  forced colors the current pill, the chosen tab and the current place in a tab bar keep the
+  selection's colors, with their edge and a ring outside them in system colors, so a browser that
+  paints a backplate behind their words no longer draws the words unseen.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -57,7 +60,9 @@ and the controls' at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read.
+  the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
+  of the current pill, the chosen tab and the tab bar's current place in forced colors and find
+  their fill under their words.
 
 ## 0.7.0
 

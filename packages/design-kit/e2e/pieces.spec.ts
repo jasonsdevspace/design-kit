@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, eyebrow, pills, tabs, themeSwitch } from '../examples/examples.js';
-import { pixels, writePage } from './page.js';
+import { fillUnderWords, pixels, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -477,3 +477,22 @@ for (const theme of ['light', 'dark'] as const) {
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
 }
+
+test("draws the current pill's and the chosen tab's words in forced colors, on the selection", async ({
+    browser,
+}) => {
+    const context = await browser.newContext({ forcedColors: 'active' });
+    try {
+        const page = await context.newPage();
+        await open(page);
+        // The words show as the selection's text, where a backplate would paint them over.
+        for (const chosen of [
+            page.getByRole('link', { name: 'All' }),
+            page.getByRole('tab', { name: 'Markup' }),
+            page.getByRole('button', { name: 'Open' }),
+        ])
+            expect(await fillUnderWords(chosen), await chosen.innerText()).toBeGreaterThan(0.5);
+    } finally {
+        await context.close();
+    }
+});
