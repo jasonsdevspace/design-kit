@@ -105,6 +105,16 @@ export const textToggle = Button({ text: true, pressed: true });
 // @ts-expect-error A text button is not large.
 export const textLarge = Button({ text: true, large: true });
 
+// A quiet button is a text button, and a wrapper can hand its prop on.
+export const close = Button({ text: true, quiet: true, children: 'Close' });
+export const closeOrNot = Button({ text: true, quiet: grown, children: 'Close' });
+
+// @ts-expect-error A quiet button is a text button.
+export const quietAlone = Button({ quiet: true });
+
+// @ts-expect-error A Close always closes, so a quiet button is never off.
+export const quietOff = Button({ text: true, quiet: true, off: true });
+
 // A tall button takes its prop alone or with the large button's, and a wrapper can hand it on.
 export const tallLead = Button({
     tall: true,

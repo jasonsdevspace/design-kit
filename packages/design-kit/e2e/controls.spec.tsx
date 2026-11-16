@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
 import { Callout } from '../src/react.js';
-import { height, KIT, pixels, sideways, style, writePage } from './page.js';
+import { box, colorOf, contrast, height, KIT, pixels, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 
 /*
@@ -383,6 +383,124 @@ test("draws a text button as a link, at the button's height, with its states", a
         'text-decoration-thickness': 'auto',
         'border-top-width': '0px',
     });
+});
+
+/** A quiet Close on the page, on a panel and on a raised panel. */
+const QUIET = ['', 'dk-panel', 'dk-panel dk-panel-raised']
+    .map(
+        (ground, at) =>
+            `<section class="${ground}" aria-label="Ground ${String(at)}"><p>A note.</p>` +
+            `<button type="button" class="dk-button dk-button-text dk-button-quiet" id="close-${String(at)}">` +
+            '<span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></section>'
+    )
+    .join('');
+
+test('draws a quiet button muted with no edge or underline, in the text color under a pointer and while held', async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await writePage(page, {
+            theme,
+            title: 'Quiet',
+            body: `<main><h1>Quiet</h1>${QUIET}</main>`,
+        });
+        const muted = await colorOf(page, 'var(--dk-muted)');
+        for (const at of [0, 1, 2]) {
+            const close = page.locator(`#close-${String(at)}`);
+            expect(
+                await style(close, 'color', 'border-top-width', 'text-decoration-line'),
+                `${theme}, ground ${String(at)}`
+            ).toEqual({ color: muted, 'border-top-width': '0px', 'text-decoration-line': 'none' });
+            // The muted words hold 4.5 to 1 on the ground the section draws, or the page's.
+            const ground = await close.evaluate((element) => {
+                const section = element.closest('section');
+                const own = section ? getComputedStyle(section).backgroundColor : '';
+                return own && own !== 'rgba(0, 0, 0, 0)'
+                    ? own
+                    : getComputedStyle(document.body).backgroundColor;
+            });
+            expect(
+                contrast(muted, ground),
+                `${theme}, ground ${String(at)}`
+            ).toBeGreaterThanOrEqual(4.5);
+        }
+        const close = page.locator('#close-0');
+        const text = await colorOf(page, 'var(--dk-fg)');
+        await close.hover();
+        await expect.poll(async () => (await style(close, 'color'))['color']).toBe(text);
+        await page.mouse.move(0, 0);
+        await expect.poll(async () => (await style(close, 'color'))['color']).toBe(muted);
+        const at = await box(close, 'the quiet button');
+        await page.mouse.move(at.x + at.width / 2, at.y + at.height / 2);
+        await page.mouse.down();
+        await expect.poll(async () => (await style(close, 'color'))['color']).toBe(text);
+        await page.mouse.up();
+        await page.mouse.move(0, 0);
+        // Open or off, written by hand, it stays muted with no underline.
+        for (const state of ['aria-expanded', 'aria-disabled']) {
+            await close.evaluate((element, name) => {
+                element.setAttribute(name, 'true');
+            }, state);
+            expect(
+                await style(close, 'color', 'text-decoration-line'),
+                `${theme}, ${state}`
+            ).toEqual({
+                color: muted,
+                'text-decoration-line': 'none',
+            });
+            await close.evaluate((element, name) => {
+                element.removeAttribute(name);
+            }, state);
+        }
+        // Its muted words hold their ratio on each ground.
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(
+            results.violations.map((violation) => violation.id),
+            theme
+        ).toEqual([]);
+    }
+});
+
+test('names a quiet button Close alone, as wide as it is tall, and rings it in forced colors', async ({
+    page,
+}) => {
+    for (const [width, side] of [
+        [1280, 36],
+        [360, 44],
+    ] as const) {
+        await writePage(page, {
+            width,
+            title: 'Quiet',
+            body: `<main><h1>Quiet</h1>${QUIET}</main>`,
+        });
+        const drawn = await box(page.locator('#close-0'), 'the quiet button');
+        expect([Math.round(drawn.width), Math.round(drawn.height)], `${String(width)}px`).toEqual([
+            side,
+            side,
+        ]);
+    }
+    await expect(page.locator('#close-0')).toHaveAccessibleName('Close');
+    await expect(page.getByRole('region', { name: 'Ground 0' })).toMatchAriaSnapshot(`
+      - region "Ground 0":
+        - paragraph: A note.
+        - button "Close"
+    `);
+    await page.emulateMedia({ forcedColors: 'active' });
+    const close = page.locator('#close-0');
+    expect((await style(close, 'color'))['color']).toBe(await colorOf(page, 'ButtonText'));
+    // Its colors gone, an underline under a pointer is what shows it is pointed at.
+    await close.hover();
+    await expect
+        .poll(async () => (await style(close, 'text-decoration-line'))['text-decoration-line'])
+        .toBe('underline');
+    await page.mouse.move(0, 0);
+    await page.locator('#close-0').focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    const ring = await style(close, 'outline-style', 'outline-width');
+    expect(ring['outline-style']).toBe('solid');
+    expect(parseFloat(ring['outline-width'] ?? '0')).toBeGreaterThanOrEqual(2);
 });
 
 test('draws a textarea as a field, three rows tall, that resizes in height alone', async ({
