@@ -566,14 +566,6 @@
             translate: none;
         }
 
-        :where(
-            .dk-button[aria-pressed='true'],
-            .dk-button:not(.dk-button-text)[aria-expanded='true']
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
         /*
          * A quiet button has no edge, so its words are what show it is a button, and an underline
          * under a pointer and while held is what shows those, where its colors are gone.
@@ -1663,12 +1655,6 @@
      * In forced colors the chosen word, and the button that names it, take the system's
      * selection.
      */
-    @media (forced-colors: active) {
-        :where(.dk-theme-switch-choice > input:checked + span, .dk-theme-switch-button) {
-            background: Highlight;
-            color: HighlightText;
-        }
-    }
 
     /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
@@ -1777,13 +1763,6 @@
         min-height: var(--dk-target);
     }
 
-    @media (forced-colors: active) {
-        :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
-    }
-
     /*
      * Tabs: a row of muted words with the chosen one in the page's text over an accent line, which
      * three sites drew by hand for a category among categories, a block of markup beside its React,
@@ -1867,17 +1846,6 @@
     :where(:is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-tab) {
         min-width: var(--dk-target);
         min-height: var(--dk-target);
-    }
-
-    @media (forced-colors: active) {
-        :where(
-            .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
-            .dk-tab[aria-pressed='true']
-        ) {
-            background: Highlight;
-            color: HighlightText;
-        }
     }
 
     /*
@@ -2398,17 +2366,6 @@
     }
 
     /* In forced colors the current place stands on the highlight, as the current tab and pill. */
-    @media (forced-colors: active) {
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
-            background: Highlight;
-            color: HighlightText;
-        }
-
-        /* Its focus ring, drawn inside it, in the highlight's text, so it shows on the fill. */
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
-            outline-color: HighlightText;
-        }
-    }
 
     /*
      * A toast: a short message that appears over the page, says what just happened and offers one
@@ -2679,12 +2636,6 @@
      * button does, which the grid's own rules above would otherwise replace.
      */
     @media (forced-colors: active) {
-        :where(.dk-button-grid > .dk-button[aria-pressed='true']) {
-            border-color: Highlight;
-            background: Highlight;
-            color: HighlightText;
-        }
-
         :where(
             .dk-button-grid > .dk-button:disabled,
             .dk-button-grid > .dk-button[aria-disabled='true']
@@ -3202,13 +3153,15 @@
     }
 
     /*
-     * In forced colors what is chosen stands in the system's selection colors, each piece by a rule
-     * of its own: a toggle that is on and a button whose panel is open, a pressed cell of a grid,
-     * the theme switch's chosen word, the current pill, the chosen tab and the current place in a
-     * tab bar. A browser that paints a backplate of the page's ground behind their words would
-     * draw the selection's text on its own color, so they keep their colors, with an edge in the
-     * selection's own so each is one block of it, no shadow, and a ring outside them in the
-     * system's text, as forced colors would set them. The rule comes last, after every piece's own, which would otherwise win by order.
+     * In forced colors what is chosen stands in the system's selection colors, every piece by this
+     * one rule, so a piece with a chosen state is added here once: a toggle that is on and a button
+     * whose panel is open, a pressed cell of a grid, the theme switch's chosen word, the current
+     * pill, the chosen tab and the current place in a tab bar. A browser that paints a backplate of
+     * the page's ground behind their words would draw the selection's text on its own color, so
+     * they keep their colors, with an edge in the selection's own so each is one block of it, no
+     * shadow, and a ring outside them in the system's text, as forced colors would set them. A
+     * button that is also unavailable is left out, so its own rule draws it unavailable. The rule
+     * comes last, after every piece's own, which would otherwise win by order.
      */
     @media (forced-colors: active) {
         :where(
@@ -3225,13 +3178,22 @@
             .dk-tabbar a[aria-current]:not([aria-current='false'])
         ) {
             border-color: Highlight;
+            background: Highlight;
             box-shadow: none;
+            color: HighlightText;
             forced-color-adjust: none;
         }
 
-        /* The tab bar's line over its current place stays in sight, in the selection's text. */
+        /*
+         * The tab bar's line over its current place, and its focus ring drawn inside it, stay in
+         * sight in the selection's text.
+         */
         :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
             border-color: HighlightText;
+        }
+
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
+            outline-color: HighlightText;
         }
 
         :where(
