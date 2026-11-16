@@ -327,6 +327,18 @@ const playerRows = (className: string, { Button }: Kit) => (
     </ul>
 );
 
+/** The site's pages a list of tiles leads to, each on a ground the page sets by a class. */
+const GROUNDED = [
+    { ...PAGES[0], ground: 'site-ground-peach' },
+    { ...PAGES[1], ground: 'site-ground-sky' },
+    {
+        title: 'Page chrome',
+        detail: 'The strip, the footer and the skip link',
+        href: '../page-chrome/',
+        ground: 'site-ground-leaf',
+    },
+] as const;
+
 /** The rounds a table of scores holds, each player's score in each. */
 const ROUNDS = [1, 2, 3, 4, 5, 6] as const;
 const SCORES = [
@@ -489,6 +501,25 @@ export const APP: readonly Control[] = [
         ],
     },
     {
+        name: 'Raised panel',
+        laidOut: true,
+        states: [
+            {
+                name: 'The one thing to pick up again, above a list',
+                attribute: 'class="dk-panel dk-panel-raised"',
+                draw: ({ Button }) => (
+                    <div className="dk-panel dk-panel-raised">
+                        <p className="dk-panel-title">Round 4</p>
+                        <p>Ana is next to score, twelve points ahead.</p>
+                        <p>
+                            <Button accent>Go on with the game</Button>
+                        </p>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
         name: 'Rows',
         laidOut: true,
         states: [
@@ -536,6 +567,28 @@ export const APP: readonly Control[] = [
                                         <span className="dk-visually-hidden"> points</span>
                                     </span>
                                 </div>
+                            </li>
+                        ))}
+                    </ul>
+                ),
+            },
+            {
+                name: 'Tiles, each on a ground the page sets',
+                attribute: 'class="dk-rows dk-rows-tiles"',
+                draw: () => (
+                    <ul className="dk-rows dk-rows-tiles" role="list">
+                        {GROUNDED.map(({ title, detail, ground, href }) => (
+                            <li key={href}>
+                                <a className={`dk-row ${ground}`} href={href}>
+                                    <span className="dk-row-text">
+                                        <span className="dk-row-title">{title}</span>
+                                        <span className="dk-visually-hidden">, </span>
+                                        <span className="dk-row-detail">{detail}</span>
+                                    </span>
+                                    <span className="dk-row-sign" aria-hidden="true">
+                                        ›
+                                    </span>
+                                </a>
                             </li>
                         ))}
                     </ul>

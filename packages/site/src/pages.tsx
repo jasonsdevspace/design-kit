@@ -711,8 +711,8 @@ export const App = ({ build }: { readonly build: Build }) => (
         title="App pieces"
         lead={
             <>
-                The frame, tab bar, grids of buttons, rows and pinned table a phone app is drawn
-                from.
+                The frame, tab bar, grids of buttons, raised panel, rows, tiles and pinned table a
+                phone app is drawn from.
             </>
         }
         intro={

@@ -896,7 +896,7 @@ test.describe('the controls page, with the pieces the script attaches', () => {
 });
 
 test.describe('the app pieces page', () => {
-    test('draws the frame and the tab bar as pictures, and the grids, rows and table live', async ({
+    test('draws the frame and the tab bar as pictures, and the grids, panel, rows, tiles and table live', async ({
         page,
     }) => {
         await page.goto('/design-kit/app-pieces/');
@@ -904,7 +904,9 @@ test.describe('the app pieces page', () => {
         await expect(live.locator('.dk-app, .dk-tabbar')).toHaveCount(0);
         await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(4);
         await expect(live.getByRole('group', { name: 'Cards in hand' })).toBeVisible();
-        await expect(live.locator('.dk-rows')).toHaveCount(4);
+        await expect(live.locator('.dk-panel-raised')).toHaveCount(1);
+        await expect(live.locator('.dk-rows')).toHaveCount(5);
+        await expect(live.locator('.dk-rows-tiles > li > a.dk-row')).toHaveCount(3);
         await expect(live.getByRole('table', { name: 'Scores by round' })).toBeVisible();
         // A toast is shown only in a picture of a screen, so no live one waits on the page.
         await expect(page.locator('.dk-toast:not([inert] *)')).toHaveCount(0);
