@@ -19,6 +19,11 @@ describe('the parts of the package', () => {
         ).toBe('dialog');
         expect(pieceOf(':where(.dk-row-title), :where(.dk-table)')).toBe('rows');
         expect(pieceOf(':where(.dk-input:focus-visible)')).toBe('field');
+        // The pieces the next release adds, each under one name.
+        expect(pieceOf(':where(.dk-site-brand)')).toBe('site header');
+        expect(pieceOf(':where(.dk-page > h1)')).toBe('content page');
+        expect(pieceOf(':where(.dk-lead)')).toBe('content page');
+        expect(pieceOf(':where(.dk-icon *)')).toBe('icon');
         expect(pieceOf(':where(a)')).toBe("the page's own elements");
         expect(pieceOf('@keyframes dk-toast-rise')).toBe('animations');
     });
