@@ -15,20 +15,20 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
  * The specs that run in WebKit as well: an app's frame, its tab bar, its toast, the dialog, the
- * stepper and a table's frame, where what stays put, a height that follows the browser's own bars,
- * the native dialog, a number field's inner room and what a frame scrolls to are what Safari draws
- * or does its own way.
+ * stepper, a table's frame and an icon, where what stays put, a height that follows the browser's
+ * own bars, the native dialog, a number field's inner room, what a frame scrolls to and how an svg's
+ * stroke is drawn are what Safari draws or does its own way.
  */
-const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table}.spec.{ts,tsx}';
+const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table,icon}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
  * there unless `appearance: textfield` takes them away, the controls and the pieces, whose
  * lengths Firefox rounds to a sixty-fourth of a pixel, and a table's frame, whose shade a browser
  * draws only where it ties an animation to a scroll, in the current Firefox Playwright brings
- * rather than the kit's floor.
+ * rather than the kit's floor, and an icon, whose stroke each engine draws its own way.
  */
-const FIREFOX = '*/e2e/{stepper,controls,pieces,table}.spec.{ts,tsx}';
+const FIREFOX = '*/e2e/{stepper,controls,pieces,table,icon}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',

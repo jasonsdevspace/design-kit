@@ -704,6 +704,44 @@ the arrow keys moving the choice along the row, and `aria-controls` naming each 
 base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so the ring follows the
 arrow keys.
 
+### Icons
+
+<!-- example: icon -->
+
+```html
+<div class="dk-actions">
+    <button type="button" class="dk-button">
+        <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        Add a player
+    </button>
+    <button type="button" class="dk-button" aria-pressed="false">
+        <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+            <path
+                fill="currentColor"
+                d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"
+            ></path>
+        </svg>
+        <span class="dk-visually-hidden">Favorite game</span>
+    </button>
+</div>
+```
+
+An icon is an inline `svg` with `dk-icon`, one em square so it grows with the text around it, at
+twice the text size too. The sheet strokes it in the text's color, at `max(1.5px, 0.125em)` with
+round caps and joins and no fill, and keeps that width whatever the drawing's scale, so a path drawn
+in a 24 unit box holds its weight at a small size. Forced colors redraw it with the text, in the
+system's text or link color. A mark drawn in fill, such as a brand's, writes `fill="currentColor"`
+on its path, so it takes the text's color too. The kit ships no icons, so a page draws the few it
+needs in a helper of its own. A tab bar's icons keep their own larger size.
+
+An icon says nothing to a screen reader. The markup carries `aria-hidden="true"`, which a sheet
+cannot set, and `focusable="false"`, and every icon sits beside words, in sight or out of it, so an
+icon is never a control's only name. A toggle whose face is an icon alone names itself in a
+`dk-visually-hidden` span, as the star above does. An svg `title` is left out, since a screen reader
+would say it beside the control's own name.
+
 ### Eyebrows
 
 <!-- example: eyebrow -->
