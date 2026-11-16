@@ -18,90 +18,25 @@ body > .dk-strip {
     --dk-strip-tools: 21em;
 }
 
-/* The site's page reads as one column from the strip to the footer, as a demo's does. */
-.site-main {
-    max-width: var(--dk-column);
-    margin-inline: auto;
-    padding: var(--dk-space-6) var(--dk-space-4) 0;
-}
-
-.site-main > :first-child {
-    margin-top: 0;
-}
-
-/*
- * The site's headings on the kit's type scale, as the explainer's are, and each section set off
- * from the one before by more than the space between two states.
- */
-/* The hero's heading is the landing page's own, in a column of the opening rather than the main. */
-:is(.site-main > h1, .site-hero h1) {
+/* The landing page's heading is at the display size, as a content page's title is. */
+.site-hero h1 {
     font-size: var(--dk-text-display);
 }
 
-.site-main > section {
-    margin-top: var(--dk-space-6);
-}
-
-.site-main > section > h2 {
-    margin: 0 0 var(--dk-space-4);
-    font-size: var(--dk-text-heading);
-}
-
 /* A table of the site's holds to a width the eye can follow along a row, and scrolls past it. */
-.site-main > section > .dk-table-title,
-.site-main > section > .dk-table-scroll {
+.dk-page > section > .dk-table-title,
+.dk-page > section > .dk-table-scroll {
     max-width: 48rem;
 }
 
-/* The site's own prose holds to the kit's measure, as an explainer's does. */
-.site-main > p,
-.site-main > section > p {
-    max-width: var(--dk-measure);
-}
-
-.site-lead {
-    font-size: var(--dk-text-lead);
-}
-
 /*
- * The site's header under the strip, lined up with the column: its mark and name, then its own
- * pages as the kit's link pills. On a wide screen the two share the row, and on a phone the pills
- * go under the name and wrap onto a second row. The kit keeps room for its focus ring at the pills'
- * sides, and above and below them the ring reaches into the header's own space.
- */
-.site-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--dk-space-3) var(--dk-space-5);
-    max-width: var(--dk-column);
-    margin-inline: auto;
-    padding: var(--dk-space-4) var(--dk-space-4) 0;
-}
-
-.site-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--dk-space-2);
-    min-height: var(--dk-strip);
-    color: var(--dk-fg);
-    font-weight: var(--dk-weight-strong);
-    text-decoration: none;
-}
-
-/*
- * The site's icon: three square tiles and a round one in the text on the accent, as in a tab, its
- * corners as round for its size as the icon's.
+ * The site's icon in the kit's mark slot: its tiles in the text on the accent, its corners as round
+ * for its size as the icon's.
  */
 .site-mark {
-    display: inline-block;
-    flex: none;
-    width: 1.75em;
-    height: 1.75em;
     border-radius: 21.875%;
     background: var(--dk-accent);
     color: var(--dk-on-accent);
-    font-size: var(--dk-text-small);
 }
 
 .site-mark svg {
@@ -466,10 +401,13 @@ body > .dk-strip {
 }
 
 @media (min-width: 64rem) {
-    /* The content keeps its own column and its own flow, with the gutter on its left for the list. */
+    /*
+     * The content keeps the kit's column and its own flow, with the gutter for the list inside the
+     * column's start, past the inset where the strip's links start.
+     */
     .site-main-listed {
         position: relative;
-        padding-inline-start: calc(var(--dk-space-4) + 12rem + var(--dk-space-6));
+        padding-left: calc(var(--dk-band-left) + 12rem + var(--dk-space-6));
     }
 
     /*
@@ -481,7 +419,7 @@ body > .dk-strip {
         position: absolute;
         top: var(--dk-space-6);
         bottom: 0;
-        left: calc(var(--dk-space-4) - var(--dk-space-3));
+        left: calc(var(--dk-band-left) - var(--dk-space-3));
         width: 12rem;
         margin: 0;
         padding: 0;
@@ -1011,15 +949,6 @@ body > .dk-strip {
     border-bottom: 1px solid var(--dk-line);
 }
 
-/*
- * The tabs are the kit's, whose row carries a rule of its own, so in the bar the row's rule is
- * dropped and the row sits a pixel down, so the chosen tab's line lands on the bar's rule.
- */
-.site-code-bar > .dk-tabs {
-    margin-bottom: -1px;
-    border-bottom-color: transparent;
-}
-
 .site-code-bar + .site-code-panel .dk-code,
 .site-code-panel[role='tabpanel'] .dk-code {
     margin-top: 0;
@@ -1103,6 +1032,17 @@ body > .dk-strip {
 }
 
 /*
+ * The kit lines every band up with an app's column on a page that holds an app's frame, as an app's
+ * own page wants. A page that only pictures one is a content page, so its strip, header, content and
+ * footer keep the column's bands, as on every other page of the site. Each picture keeps the bands
+ * the kit sets inside a frame.
+ */
+:root:has(.site-copy :is(.dk-app, .dk-tabbar-page)) {
+    --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-column-inset)) + var(--dk-space-4));
+    --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-column-inset)) + var(--dk-space-4));
+}
+
+/*
  * The kit turns off a page's pull to refresh wherever an app's frame is, as an app's screen wants.
  * A page that only pictures one reads like any other page, so it keeps the browser's own.
  */
@@ -1126,7 +1066,6 @@ body > .dk-strip {
  * links and the theme switch share one row.
  */
 @media (max-width: 48rem) {
-    .site-brand,
     .site-toc a {
         min-height: var(--dk-target);
     }

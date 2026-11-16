@@ -292,7 +292,7 @@ test.describe('the landing page', () => {
         await expect(main.getByRole('heading', { level: 1 })).toHaveText(
             'One set of colors, type and controls for the demos'
         );
-        await expect(main.locator('.site-lead')).toBeVisible();
+        await expect(main.locator('.dk-lead')).toBeVisible();
         await expect(main.getByRole('link', { name: 'See every control' })).toHaveAttribute(
             'href',
             `${BASE}controls/`
@@ -389,9 +389,9 @@ test.describe('the landing page', () => {
         // Where each block above the buttons ends, so a failure says which one grew.
         const ends = await page.evaluate(() =>
             [
-                '.site-header',
+                '.dk-site-header',
                 'h1',
-                '.site-lead',
+                '.dk-lead',
                 '.site-hero-text > :last-child',
                 '.site-hero-panel',
             ]
@@ -469,6 +469,29 @@ test.describe('the landing page', () => {
 });
 
 test.describe('the words each page opens with', () => {
+    test('holds every lead to the measure at any width, between a phone and a wide screen too', async ({
+        page,
+    }) => {
+        for (const width of [...WIDTHS, 900, 1000]) {
+            await page.setViewportSize({ width, height: 900 });
+            for (const path of PAGES) {
+                await page.goto(path);
+                const leads = await page.locator('.dk-lead').evaluateAll((all) => {
+                    const probe = document.body.appendChild(document.createElement('div'));
+                    probe.style.width = 'var(--dk-measure)';
+                    const measure = probe.getBoundingClientRect().width;
+                    probe.remove();
+                    return all.map((lead) => ({
+                        width: lead.getBoundingClientRect().width,
+                        measure,
+                    }));
+                });
+                for (const { width: wide, measure } of leads)
+                    expect(wide, `${path} at ${String(width)}`).toBeLessThanOrEqual(measure + 0.5);
+            }
+        }
+    });
+
     /** The pages that list their sections and open the same way: every page with a landing card. */
     const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
     const OPENED = CARDED.map(({ path }) => path);
@@ -480,7 +503,7 @@ test.describe('the words each page opens with', () => {
     }) => {
         for (const path of OPENED) {
             await page.goto(path);
-            const lead = (await page.locator('body > main > .site-lead').textContent()) ?? '';
+            const lead = (await page.locator('body > main > .dk-lead').textContent()) ?? '';
             const sentences = lead.split(/(?<=[.?!])\s+/).filter((each) => each.trim() !== '');
             expect(sentences.length, path).toBeLessThanOrEqual(2);
             expect(lead, path).not.toMatch(/screen reader|\battributes?\b|\bclass(es)?\b/i);
@@ -493,14 +516,12 @@ test.describe('the words each page opens with', () => {
         // Every page but the tokens page, whose colors show both themes whatever the page's theme.
         for (const path of OPENED.filter((each) => each !== '/design-kit/tokens/')) {
             await page.goto(path);
-            const opening = await page
-                .locator('main > p:not(.site-lead)')
-                .evaluateAll((paragraphs) =>
-                    paragraphs
-                        .filter((paragraph) => paragraph.nextElementSibling?.matches('nav, p'))
-                        .map((paragraph) => paragraph.textContent)
-                        .join(' ')
-                );
+            const opening = await page.locator('main > p:not(.dk-lead)').evaluateAll((paragraphs) =>
+                paragraphs
+                    .filter((paragraph) => paragraph.nextElementSibling?.matches('nav, p'))
+                    .map((paragraph) => paragraph.textContent)
+                    .join(' ')
+            );
             expect(opening, path).toContain(SWITCH);
         }
     });
@@ -1322,11 +1343,11 @@ test.describe("the site's header", () => {
         page,
     }) => {
         await page.goto('/design-kit/');
-        const brand = (await page.locator('.site-brand').evaluate((link) => link.textContent))
+        const brand = (await page.locator('.dk-site-brand').evaluate((link) => link.textContent))
             .trim()
             .toLowerCase();
         const name = (
-            (await page.locator('header nav.site-header').getAttribute('aria-label')) ?? ''
+            (await page.locator('.dk-site-header > nav').getAttribute('aria-label')) ?? ''
         )
             .trim()
             .toLowerCase();
@@ -1376,7 +1397,7 @@ test.describe("the site's header", () => {
             await page.setViewportSize({ width, height: 800 });
             for (const path of ['/design-kit/', '/design-kit/explainer-pieces/']) {
                 await page.goto(path);
-                const row = await page.locator('.site-header .dk-pills').evaluate((list) => {
+                const row = await page.locator('.dk-site-header .dk-pills').evaluate((list) => {
                     const links = [...list.querySelectorAll('a')].map((link) =>
                         link.getBoundingClientRect()
                     );
@@ -1432,7 +1453,7 @@ test.describe("the site's header", () => {
         page,
     }) => {
         await page.goto('/design-kit/controls/');
-        const room = await page.locator('.site-header .dk-pills').evaluate((list) => {
+        const room = await page.locator('.dk-site-header .dk-pills').evaluate((list) => {
             const style = getComputedStyle(list);
             const root = getComputedStyle(document.documentElement);
             // The kit sets its ring in pixels, the line and the gap outside the box it rings.
@@ -1755,7 +1776,7 @@ test.describe('the theme switch', () => {
                             1
                         );
                     const top = await page
-                        .locator('.site-header')
+                        .locator('.dk-site-header')
                         .evaluate((nav) => nav.getBoundingClientRect().top);
                     moved.push(`${String(width)} at text ${String(scale)}: ${String(top)}`);
                 }
@@ -2257,7 +2278,7 @@ test.describe('the state cards', () => {
                     [
                         list,
                         page.locator('body > main > h1'),
-                        page.locator('body > main > .site-lead'),
+                        page.locator('body > main > .dk-lead'),
                     ].map((each) => each.boundingBox())
                 );
                 if (!nav || !heading || !lead) throw new Error(`${at}: no list, heading or lead`);
@@ -2311,10 +2332,9 @@ test.describe('the state cards', () => {
             for (const path of LISTED) {
                 await page.goto(path);
                 const [heading, lead] = await Promise.all(
-                    [
-                        page.locator('body > main > h1'),
-                        page.locator('body > main > .site-lead'),
-                    ].map((each) => each.boundingBox())
+                    [page.locator('body > main > h1'), page.locator('body > main > .dk-lead')].map(
+                        (each) => each.boundingBox()
+                    )
                 );
                 starts.push(Math.round(heading?.x ?? -1));
                 gaps.push(Math.round((lead?.y ?? 0) - (heading?.y ?? 0) - (heading?.height ?? 0)));
@@ -2337,7 +2357,7 @@ test.describe('the state cards', () => {
                             .querySelector('body > main > h1')
                             ?.getBoundingClientRect();
                         const lead = document
-                            .querySelector('main > .site-lead')
+                            .querySelector('main > .dk-lead')
                             ?.getBoundingClientRect();
                         return Math.round((lead?.top ?? 0) - (heading?.bottom ?? 0));
                     })
@@ -2371,7 +2391,7 @@ test.describe('the state cards', () => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto('/design-kit/controls/');
         const [label, brand] = await Promise.all(
-            [page.locator('.site-toc-name'), page.locator('.site-brand')].map((each) =>
+            [page.locator('.site-toc-name'), page.locator('.dk-site-brand')].map((each) =>
                 each.evaluate((element) => {
                     const range = document.createRange();
                     range.selectNodeContents(element);
@@ -2401,7 +2421,7 @@ test.describe('how each state is shown', () => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto('/design-kit/controls/');
         const gaps = await page.evaluate(() => {
-            const main = document.querySelector('.site-main');
+            const main = document.querySelector('.dk-page');
             if (!main) return [];
             const style = getComputedStyle(main);
             const right = main.getBoundingClientRect().right - parseFloat(style.paddingRight);
@@ -2690,7 +2710,7 @@ test.describe('how each state is shown', () => {
             const found = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .site-header a'
+                        '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .dk-site-header a'
                     ),
                 ].map((element) => ({
                     what: element.textContent.trim().slice(0, 30),
