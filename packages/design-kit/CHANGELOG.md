@@ -13,7 +13,8 @@ The kit's chrome keeps clear of a phone's edges on a page that reaches under the
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, and a tab
 row can sit on its container's rule. The theme script is unchanged, so `themeScriptHash` is the
-same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
+same. The sheets' budget rises from 9.25 KB to 10.25 KB, set again by the size audit's rule, and the
+controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
