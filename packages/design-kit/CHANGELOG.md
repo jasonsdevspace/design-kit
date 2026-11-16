@@ -22,23 +22,24 @@ as written and ask a page for nothing a strict policy refuses. The theme script 
 `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set again by the
 size audit's rule, and the controls' stays at 6.25 KB.
 
-- **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
-  now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
-  `--dk-column` anywhere but `:root` sets it there to keep its column. A dialog's padding and its
-  gap from the screen's edges read `--dk-space-4-held` and `--dk-space-5-held`, a stepper's inline
-  padding reads `--dk-field-inline-held`, and a panel's padding reads `--dk-card-inset`, each worked
-  out on the root, so a page that sets `--dk-space-4`, `--dk-space-5` or `--dk-field-inline` below
-  the root sets it on `:root` to keep those paddings in step. A page that already uses one of the
-  names `--dk-column-inset`, `--dk-band-left`, `--dk-band-right`, `--dk-space-4-held`,
-  `--dk-space-5-held` or `--dk-field-inline-held` for something of its own gets the kit's meaning
-  for it. In an app's frame, on a page that ends in a tab bar and in a dialog on either, a panel
-  keeps a phone's padding at every width and text size, where it padded wider above 48rem. The
-  footer pads its foot past what a phone keeps there unless a tab bar in sight follows it, and a
-  page's own rule for the footer's padding still wins. A toast's close says Close, where it said
-  Dismiss, and is drawn by `dk-button-quiet` alone, so a toast written by hand changes the words out
-  of sight in its close button and gives it that class beside `dk-toast-close`, as the reference's
-  markup and the React `Toast` do. `dk-explainer-lead` is held to the measure wherever it sits, so a
-  lead with it outside an explainer is no wider than `--dk-measure`.
+- **Upgrading.** The strip, the footer, an explainer and its header, and the skip link start their
+  content at `--dk-band-left` and `--dk-band-right`, worked out on the root from `--dk-column` and
+  `--dk-space-4`, and an app's frame and a page that ends in a tab bar pad their sides by
+  `--dk-app-inset`, worked out there from `--dk-app-column`. A dialog's padding and its gap from the
+  screen's edges read `--dk-space-4-held` and `--dk-space-5-held`, a stepper's inline padding reads
+  `--dk-field-inline-held`, and a panel's padding reads `--dk-card-inset`, each worked out on the
+  root too. So a page that sets `--dk-column`, `--dk-app-column`, `--dk-space-4`, `--dk-space-5` or
+  `--dk-field-inline` anywhere but `:root` sets it there to keep its column and those paddings in
+  step. A page that already uses a name the kit now declares, each listed under Tokens, for
+  something of its own gets the kit's meaning for it. In an app's frame, on a page that ends in a
+  tab bar and in a dialog on either, a panel keeps a phone's padding at every width and text size,
+  where it padded wider above 48rem. The footer pads its foot past what a phone keeps there unless a
+  tab bar in sight follows it, and a page's own rule for the footer's padding still wins. A toast's
+  close says Close, where it said Dismiss, and is drawn by `dk-button-quiet` alone, so a toast
+  written by hand changes the words out of sight in its close button and gives it that class beside
+  `dk-toast-close`, as the reference's markup and the React `Toast` do. `dk-explainer-lead` is held
+  to the measure wherever it sits, so a lead with it outside an explainer is no wider than
+  `--dk-measure`.
 
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
@@ -94,37 +95,36 @@ size audit's rule, and the controls' stays at 6.25 KB.
   under its title. `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted
   with no underline and in the text color under a pointer and while held, as wide as a button is
   tall, open or off alike, and in `ButtonText` in forced colors, underlined under a pointer and
-  while held, and the toast's close is drawn by that class alone. `dk-site-header` draws a site's
-  header under the strip, at the strip's inset and over a rule, with a `dk-site-brand` link holding
-  a `dk-site-mark` and the site's name and its pages as pills, the brand and each page the target
-  tall and the pages wrapping under the brand on a phone. The brand underlines under a pointer and a
-  press. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the container at whose
-  foot it sits, drawing no rule of its own and standing a pixel lower, so the chosen tab's line lies
-  over the container's rule, and keeping to the foot of a bar that centers what it holds. A resting
-  pill and tab take the text color under a press, and underline under a press and a pointer in
-  forced colors. A link in the strip or the footer marked current by any value of `aria-current` but
-  false or empty, such as `true` on a page beneath the one it names, stands in the text color at the
-  heading's weight, as one marked `page` does, and an empty value marks nothing anywhere in the kit.
-  In forced colors what is chosen keeps the selection's colors, drawn by one rule at the sheet's
-  end: a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's chosen
-  word, the current pill, the chosen tab and the current place in a tab bar, with an edge and a ring
-  in system colors and no shadow, the theme word's ring now among them, so a browser that paints a
-  backplate behind their words no longer draws the words unseen.
+  while held. `dk-site-header` draws a site's header under the strip, at the strip's inset and over
+  a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's name and its pages as
+  pills, the brand and each page the target tall and the pages wrapping under the brand on a phone.
+  The brand underlines under a pointer and a press. `dk-tabs-on-rule` beside `dk-tabs` lays a tab
+  row on the rule of the container at whose foot it sits, drawing no rule of its own and standing a
+  pixel lower, so the chosen tab's line lies over the container's rule, and keeping to the foot of a
+  bar that centers what it holds. A resting pill and tab take the text color under a press, and
+  underline under a press and a pointer in forced colors. A link in the strip or the footer marked
+  current by any value of `aria-current` but false or empty, such as `true` on a page beneath the
+  one it names, stands in the text color at the heading's weight, as one marked `page` does, and an
+  empty value marks nothing anywhere in the kit. In forced colors what is chosen keeps the
+  selection's colors, drawn by one rule after every piece's own: a toggle that is on, a button whose
+  panel is open, a pressed cell, the theme switch's chosen word, the current pill, the chosen tab
+  and the current place in a tab bar, with an edge and a ring in system colors and no shadow, so a
+  browser that paints a backplate behind their words no longer draws the words unseen.
 
-- **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
-  says a message on it, so the same words said twice are heard twice, and each message leaves two
-  seconds later. A line attached again returns the function it returned first, as decision record 13
-  has every attach function do. It speaks through the same function as the copy button and the
-  stepper, for a screen that says a change without moving focus, so a line handed to a copy button
-  too keeps one timer and a later message replaces an earlier one.
+- **Controls.** `attachStatus` makes a page's own status line speak, for a screen that says a change
+  without moving focus, and returns the function that says a message on it, so the same words said
+  twice are heard twice, and each message leaves two seconds later. It speaks through the same
+  function as the copy button and the stepper, so a line handed to a copy button too keeps one timer
+  and a later message replaces an earlier one. A line attached again returns the function it
+  returned first, as decision 0013 has every attach function do.
 
 - **React.** `InputField` and `SelectField` take an `action`, drawn after the control in a
   `dk-field-action` row, so a page draws a field with a button, such as a search and the button that
   runs it, with its label, hint and error wired as always. A field with no action draws as it did.
   `StatusLine` draws a status line out of sight, in the page from the start, and `CopyStatus` is the
   same component under its first name. `Button` takes `quiet` beside `text`, and with no children
-  draws a hidden × beside Close out of sight. TypeScript refuses `quiet` with `off`, since a Close
-  always closes.
+  draws a × hidden from a screen reader beside Close out of sight. TypeScript refuses `quiet` with
+  `off`, since a Close always closes.
 
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
@@ -140,72 +140,22 @@ size audit's rule, and the controls' stays at 6.25 KB.
   footer's link takes the footer's muted color, that a text button puts it back, and that each other
   piece that is a link takes it off in its own class. The status line's example finds its line with
   `querySelector('.screen-status')`, as the other examples do, where the old line, TypeScript in a
-  JavaScript example, found nothing and never spoke. `attachStatus`'s comment and decision 0015
-  agree that a screen keeps a status line of its own, and that a line handed to a copy button too
-  keeps one timer. The reference says what the tokens file holds and which tokens it leaves to the
-  sheet, the package README lists it with the other exports, and decision 0018 says the file is
-  written by hand, held to the sheet by a test, and that renaming or dropping a token in it or
-  moving it to a later edition is a breaking change.
+  JavaScript example, found nothing and never spoke. Decision 0015 is amended for `attachStatus`.
+  The reference says what the tokens file holds and which tokens it leaves to the sheet, the package
+  README lists it with the other exports, and decision 0018 says the file is written by hand, held
+  to the sheet by a test, and that renaming or dropping a token in it or moving it to a later
+  edition is a breaking change.
 
-- **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
-  the strip, the chrome where it was on a page that reaches under no edge, the footer's foot when a
-  toast, a dialog, a script or a hidden tab bar follows it, and the skip link on the strip's line
-  past a phone's side on a page with a tab bar or an app's frame. They hold a raised panel's ground
-  and its resting shadow in both themes and none in forced colors, while a plain panel and a tile
-  cast none, draw a panel's title alike as a heading and as a paragraph, plain or raised, hold a
-  panel's padding in an app's frame, and nest a dialog in a panel and a panel in a raised panel and
-  set a palette on a container. They measure each tile's title, detail and sign as drawn, on the
-  grounds a page sets, on the surface and on the grounds a panel steps to, in both themes, and its
-  focus ring on what the list sits on, since the audit never measures the ring, and hold a tile's
-  press on a phone where nothing hovers and its edge in forced colors. A row and a tile with a
-  picture start every title on one line with the ring clear of the picture and the title first in
-  the link's name. Tiles flow into columns on a wide page, ending together on each line, and into
-  one on a phone at twice the text size and the wider text spacing, in reading order for the
-  keyboard, keep a tile's ring in view as the keyboard scrolls an app's body, and line a tile's
-  words up with a raised panel's on a wide page, a phone and an app's frame. The rows and tiles run
-  in WebKit too. The React field with a button holds its control and button at one height as the
-  hand-drawn field does, wraps the button under the control on a narrow phone at twice the text
-  size, reaches the button after the control, and sits the button on its control's row on a wide
-  screen at the browser's text size. Browser tests read the drawn pixels of every chosen thing in
-  forced colors and find the selection under its words, and ring every chosen thing by the keyboard
-  in forced colors, the theme word, the collapsed theme switch, the current pill and a tab bar's
-  current place among them. They press a pill, a tab and the brand where nothing hovers and in
-  forced colors, and mark the strip's link by each value of `aria-current`. A quiet button's colors,
-  its states, its size at every width and in an app, its name and its ring in forced colors are held
-  on the page, a panel and a raised panel in both themes. A site's header starts its brand, and its
-  pages where they wrap, on the strip's edge, keeps each the target tall, reads once with its nav
-  named Site, marks its current page by weight and in forced colors, takes the brand before the
-  pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and the
-  wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on the
-  container's foot with one rule, in a block and in a bar that centers it, in both themes and in
-  forced colors, and a plain row keeps its own rule. A content page spaces its blocks by the flow
-  and its sections further apart, leaves its room above the title, starts its text at the strip's
-  inset, sizes its headings, holds its prose and lead to the measure beside a table at the column's
-  width, takes its controls in the markup's order, and cuts nothing off at 320 wide, twice the text
-  size and the wider text spacing. An icon is its line's font size at the usual and a doubled size,
-  stroked in its line's color at a weight that holds in Chromium, Firefox and WebKit, in the
-  system's text and link colors in forced colors, and a control whose face is an icon alone is named
-  by its words. A link is underlined at rest, in a color that shows, in every place it sits in
-  running text from the strip to the footer, a dialog, a table and a toast among them, in both
-  themes and in forced colors, with its underline at 3 to 1 against the ground it sits on, and each
-  piece that is a link draws no underline. A screen's status line is stepped on a stand-in clock and
-  must empty between two same messages. A table frame's shade, a sheet's rise, an icon's doubled
-  stroke and the site's rule mark, chosen things and end shade are read as drawn or as the browser
-  fires them, so each fails when what it names is gone. A translucent color is weighed over its
-  ground in every contrast, a ground or shadow drawn on a token is compared with the token, every
-  loop over found elements counts them first, and CI fails a test that passes only on its retry. A
-  unit test attaches one status line twice and gets the same function, and another line a different
-  one. Token tests hold the column's inset and the app's inset each to one place in the sheets and
-  find no copy of a formula the tokens now hold. Scope tests hold the table of properties a page
-  sets to what the sheets read, hold every list of an app's places to one form, and fail when the
-  reference or the README asks for a style attribute. A test draws each token in the tokens file
-  back as CSS and holds it to what `tokens.css` declares on the root, fails on a token in one file
-  and not the other, and names why each token the format cannot write is left out, and the smoke
-  test loads the file from the packed package. The package record gzips the sheets together, in the
-  order a page loads them, as the budget's test does, and says so in a sentence of its own, where it
-  summed each sheet gzipped on its own and printed more than the budget measured. The release
-  workflow stops while an Unreleased heading or a symbolic link is left, and every entry in the map
-  of what each piece costs is counted by a rule of the sheets.
+- **Tests.** Browser tests hold each new piece and each change above as drawn, in both themes, in
+  forced colors, on a phone where nothing hovers, at 320 wide, at twice the text size and under the
+  wider text spacing, and in Firefox or WebKit too where that engine draws a piece its own way, an
+  icon in both and the rows and tiles in WebKit. Each reads what it names as drawn, so it fails when
+  that is gone, and CI fails a test that passes only on its retry. A test holds
+  `tokens.resolver.json` to `tokens.css`, and the smoke test loads it from the packed package. Scope
+  tests hold the table of properties a page sets to what the sheets read and fail when the reference
+  or the README asks for a style attribute. The package record gzips the sheets together, in the
+  order a page loads them, as the budget's test does, where it summed each sheet gzipped on its own
+  and printed more than the budget measured.
 
 ## 0.7.0
 
