@@ -328,6 +328,18 @@ options rejected, what the choice costs, and the test behind it.
     A page attaches a toast once and calls one function for every message, which a screen reader
     hears with its way back, at the cost of the one control whose attach function takes nothing
     away.
+16. [A page changes how a piece draws only through the properties it names](docs/decisions/0016-a-page-changes-how-a-piece-draws-only-through-the-properties-it-names.md).
+    A page sets a tile's ground, a raised panel's shadow or a grid's width through a property the
+    kit reads with a fallback, so its look survives the kit's changes, at the cost of the page
+    keeping what sits on a ground it sets to its contrast.
+17. [A content page is a container of its own](docs/decisions/0017-a-content-page-is-a-container.md).
+    A landing or an about page spaces its blocks and sections and holds its prose to the measure
+    with one class, at the cost of a change to the flow's step moving the explainer and the content
+    page together.
+18. [The tokens ship in the design tokens format, written by hand and held by a test](docs/decisions/0018-the-tokens-ship-in-the-design-tokens-format-written-by-hand.md).
+    A tool that reads the format reads the kit's tokens from the package, and a token changed in
+    one file and not the other fails a test, at the cost of a second public copy of the tokens'
+    names, where renaming or dropping one is a breaking change.
 
 </details>
 

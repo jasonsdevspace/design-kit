@@ -81,7 +81,7 @@ page.
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                         |
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                           |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
-| `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
+| `--dk-flow-step`                                                                                  | the step between the pieces a column holds, `--dk-space-4` in an explainer, a content page, their sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on what each holds |
 
 </details>
 
@@ -1173,7 +1173,7 @@ unheard. One is enough for a screen, with one more inside a dialog that speaks.
 ```js
 import { attachStatus } from '@jasonsdevspace/design-kit/controls';
 
-const line = document.querySelector < HTMLElement > '.screen-status';
+const line = document.querySelector('.screen-status');
 if (line) {
     const say = attachStatus(line);
     say('Ann moves to seat 2.');
@@ -2162,15 +2162,16 @@ A list of tiles offers a few places to go, such as the games to start, each on a
 ```
 
 A list of tiles is a list of rows with `dk-rows-tiles` beside `dk-rows`, each a link row on a ground
-of its own. The page sets the ground with `--dk-tile-ground`, by a class of its own on the row or in
-its style attribute, and chooses a ground that holds the title and the muted detail at 4.5 to 1, and
-the muted sign and the focus ring, drawn in `--dk-focus`, at 3 to 1, in both themes, such as with
-`light-dark()`. A ground that holds the title can still leave the detail faint or the ring hard to
-see, so the page checks each. A tile keeps what a link row has: the sign that says it leads
-somewhere on a phone, where nothing hovers, its title underlined under a pointer and under a
-pressing thumb, and its focus ring drawn inside it. A tile casts no shadow, so a raised panel above
-the list stays the one thing lifted, and a page that wants its tiles lifted sets `--dk-tile-shadow`,
-such as to `var(--dk-shadow-resting)`. A list with no tiles is not drawn, as a list of rows is not.
+of its own. The page sets the ground with `--dk-tile-ground` by a class of its own on the row, never
+a style attribute, which a strict `style-src` refuses, and chooses a ground that holds the title and
+the muted detail at 4.5 to 1, and the muted sign and the focus ring, drawn in `--dk-focus`, at 3 to
+1, in both themes, such as with `light-dark()`. A ground that holds the title can still leave the
+detail faint or the ring hard to see, so the page checks each. A tile keeps what a link row has: the
+sign that says it leads somewhere on a phone, where nothing hovers, its title underlined under a
+pointer and under a pressing thumb, and its focus ring drawn inside it. A tile casts no shadow, so a
+raised panel above the list stays the one thing lifted, and a page that wants its tiles lifted sets
+`--dk-tile-shadow`, such as to `var(--dk-shadow-resting)`. A list with no tiles is not drawn, as a
+list of rows is not.
 
 A tile takes a picture at its start as a row does. Where it sits in a panel and the page sets no
 ground, a tile steps off the panel's ground, as a code block does, to the page's ground in a plain
