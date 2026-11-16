@@ -20,4 +20,13 @@ describe('the controls', () => {
             'chooseTheme',
         ]);
     });
+
+    it('returns the function a status line was first attached with when it is attached again', async () => {
+        const { attachStatus } = await import('./controls.js');
+        // Attaching touches nothing on the line until a message is said, so any object stands in.
+        const line = {} as HTMLElement;
+        const say = attachStatus(line);
+        expect(attachStatus(line)).toBe(say);
+        expect(attachStatus({} as HTMLElement)).not.toBe(say);
+    });
 });

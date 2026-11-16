@@ -328,19 +328,27 @@ const say = (status: HTMLElement, message: string, keep = false) => {
     );
 };
 
+const attachedLines = new WeakMap<HTMLElement, (message: string) => void>();
+
 /**
  * Returns the function that says a message on a status line, which a page draws out of sight and
  * puts on the page from the start, so a screen reader hears each message without focus moving. A
  * message is put in a moment after the line is emptied, so the same words said twice are heard
- * twice, and leaves after a while, so reading by line finds no old words. It speaks as the copy
- * button and the stepper do, through the same function, so a line a page hands to both this and a
- * copy button keeps one timer, and a later message replaces an earlier one.
+ * twice, and leaves after a while, so reading by line finds no old words. A screen keeps a line of
+ * its own for this, as a toast and a stepper keep theirs. It speaks through the same function as
+ * the copy button and the stepper, so a line handed to a copy button too keeps one timer, and a
+ * later message replaces an earlier one. Attached again, a line returns the function it returned
+ * first.
  */
-export const attachStatus =
-    (line: HTMLElement): ((message: string) => void) =>
-    (message) => {
+export const attachStatus = (line: HTMLElement): ((message: string) => void) => {
+    const already = attachedLines.get(line);
+    if (already) return already;
+    const speak = (message: string) => {
         say(line, message);
     };
+    attachedLines.set(line, speak);
+    return speak;
+};
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
 const select = (element: HTMLElement) => {
