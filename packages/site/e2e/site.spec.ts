@@ -1886,45 +1886,47 @@ test.describe('the code of each state', () => {
             [390, 1],
             [320, 2],
         ] as const) {
-            await textSize(page, scale);
+            if (scale !== 1) await textSize(page, scale);
             await page.setViewportSize({ width, height: 900 });
             await page.goto('/design-kit/controls/');
             const code = page.locator('.site-code').first();
             await code.locator(':scope > summary').click();
             const at = `${String(width)} at text ${String(scale)}`;
             const drawn = await code.locator('.site-code-bar').evaluate((bar) => {
-                const box = (selector: string) => {
-                    const found = bar.querySelector(selector);
-                    if (found === null) throw new Error(`the bar holds no ${selector}`);
-                    return found.getBoundingClientRect();
-                };
-                const tabs = box('.dk-tabs');
-                const lines = new Set(
-                    [...bar.querySelectorAll('.dk-tab')].map((tab) =>
-                        Math.round(tab.getBoundingClientRect().top)
-                    )
-                ).size;
+                const tabs = bar.querySelector('.dk-tabs');
+                const copy = bar.querySelector('.dk-copy');
+                const chosen = bar.querySelector('[aria-selected="true"]');
+                if (!tabs || !copy || !chosen)
+                    throw new Error('the bar holds no tabs or no button');
+                const row = tabs.getBoundingClientRect();
                 return {
-                    rule: getComputedStyle(bar.querySelector('.dk-tabs')!).borderBottomWidth,
-                    tabsBottom: tabs.bottom,
-                    chosenBottom: box('[aria-selected="true"]').bottom,
-                    copyTop: box('.dk-copy').top,
+                    barRule: getComputedStyle(bar).borderBottomWidth,
+                    rule: getComputedStyle(tabs).borderBottomWidth,
+                    tabsBottom: row.bottom,
+                    chosenBottom: chosen.getBoundingClientRect().bottom,
+                    copyTop: copy.getBoundingClientRect().top,
                     copyAfter: Boolean(
-                        bar
-                            .querySelector('.dk-tabs')!
-                            .compareDocumentPosition(bar.querySelector('.dk-copy')!) &
-                        Node.DOCUMENT_POSITION_FOLLOWING
+                        tabs.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING
                     ),
-                    lines,
+                    lines: new Set(
+                        [...tabs.querySelectorAll('.dk-tab')].map((tab) =>
+                            Math.round(tab.getBoundingClientRect().top)
+                        )
+                    ).size,
                 };
             });
-            // The tabs draw their own rule, and the copy button follows them for the keyboard.
+            // The tabs draw the one rule, the bar none, and the copy button follows the tabs for
+            // the keyboard.
+            expect(drawn.barRule, at).toBe('0px');
             expect(drawn.rule, at).toBe('1px');
             expect(drawn.copyAfter, at).toBe(true);
-            if (drawn.lines === 1)
+            if (drawn.lines === 1) {
                 // On one line the chosen tab's line ends on the rule, or a pixel above it on a kit
-                // whose tabs stand over their row's rule rather than on it.
-                expect(drawn.tabsBottom - drawn.chosenBottom, at).toBeLessThanOrEqual(1);
+                // whose tabs stand over their row's rule rather than on it, and never below it.
+                const above = drawn.tabsBottom - drawn.chosenBottom;
+                expect(above, at).toBeGreaterThanOrEqual(0);
+                expect(above, at).toBeLessThanOrEqual(1);
+            }
             // On the narrowest phone at twice the text size the button wraps under the tabs' rule,
             // and wider it stands beside the tabs.
             if (width === 320) expect(drawn.copyTop, at).toBeGreaterThanOrEqual(drawn.tabsBottom);
