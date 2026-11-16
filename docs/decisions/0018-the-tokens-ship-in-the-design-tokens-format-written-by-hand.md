@@ -29,16 +29,17 @@ the other fails a named test.
 
 ## Decision
 
-Option C. `src/tokens.resolver.json` is one resolver document of the 2025.10 edition, named as the
-Resolver module asks: a base set with every token the two themes share, and a theme modifier with
-each color and shadow in a light and a dark context, light by default. The build copies it into
-`dist` as written and the package exports it as `./tokens.resolver.json`. A token the format cannot
-write stays in `tokens.css` alone, and the test names each with its reason.
+Option C. `src/tokens.resolver.json` is one resolver document of the 2025.10 edition: a base set
+with every token the two themes share, and a theme modifier with each color and shadow in a light
+and a dark context, light by default. The build copies it into `dist` as written and the package
+exports it as `./tokens.resolver.json`. A token the format cannot write stays in `tokens.css` alone,
+and the test names each with its reason.
 
-The file's token names, the set's name, the modifier's name and its contexts are public, so renaming
-any of them is a breaking change, as renaming a custom property in the sheet is. A move to a later
-edition of the format is a breaking change too, made in the same file under the same name, with an
-Upgrading note, rather than a second file for each edition.
+The file's token names, the set's name, the modifier's name and its contexts are public once
+released, so renaming or dropping any of them is a breaking change with an Upgrading note, as it is
+for a custom property in the sheet. A move to a later edition of the format is a breaking change
+too, made in the same file under the same name, with an Upgrading note, rather than a second file
+for each edition.
 
 ## Consequences
 

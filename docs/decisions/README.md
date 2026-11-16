@@ -58,6 +58,6 @@ costs, and the test behind it.
     its lead to the measure, and why a reset of every block's margins and the explainer were turned
     down.
 18. [The tokens ship in the design tokens format, written by hand and held by a test](0018-the-tokens-ship-in-the-design-tokens-format-written-by-hand.md):
-    `tokens.resolver.json` as one 2025.10 resolver document shipped as written, renaming a token in
-    it or moving to a later edition a breaking change, and why generating it from the sheet or the
-    sheet from it were turned down.
+    `tokens.resolver.json` as one 2025.10 resolver document shipped as written, renaming or dropping
+    a token in it or moving to a later edition a breaking change, and why generating it from the
+    sheet or the sheet from it were turned down.
