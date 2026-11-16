@@ -918,41 +918,86 @@ test("draws a panel's title as a heading as it draws it as a paragraph, so eithe
     }
 });
 
-test('draws a content page the same with an inert picture of an app and its toast as without one', async ({
+/** A picture of an app's screen, a page that ends in a tab bar and a shown toast, as a page shows one. */
+const PICTURE =
+    `<div class="dk-picture" inert><div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Round 3</h1></header>` +
+    `<main class="dk-app-body" tabindex="0"><p>Ana leads.</p></main>` +
+    `<div class="dk-app-toast"><div class="dk-toast" data-shown data-rows="3"><p class="dk-toast-message">Saved.</p></div></div></div>` +
+    `<div class="dk-tabbar-page"><main><p>Games</p></main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#a">Play</a></li></ul></nav></div></div>`;
+
+/** A dialog with an action, a field and a choice, each of which takes a phone's size in an app. */
+const DIALOG =
+    `<dialog class="dk-dialog" aria-labelledby="d-title"><h2 class="dk-dialog-title" id="d-title">Options</h2>` +
+    `<div class="dk-field"><label class="dk-field-label" for="d-name">Name</label><input class="dk-input" id="d-name"></div>` +
+    `<label class="dk-choice"><input type="checkbox"> Keep scores</label>` +
+    `<div class="dk-dialog-actions"><button type="button" class="dk-button dk-button-accent">Save</button></div></dialog>`;
+
+/** What the page draws that an app's frame of its own changes, read with the dialog open. */
+const pageDrawn = async (page: Page, body: string) => {
+    await writePage(page, { width: 1280, title: 'Pieces', body });
+    await page.locator('dialog').evaluate((dialog: HTMLDialogElement) => dialog.showModal());
+    return page.evaluate(() => {
+        const read = (selector: string, ...names: string[]) => {
+            const found = document.querySelector(selector);
+            if (found === null) throw new Error(`no ${selector}`);
+            const drawn = getComputedStyle(found);
+            return names.map((name) => `${selector} ${name} ${drawn.getPropertyValue(name)}`);
+        };
+        return [
+            ...read('.dk-strip', 'padding-left', 'padding-right'),
+            ...read('body > main', 'padding-left', 'padding-right'),
+            ...read('.dk-footer', 'padding-left', 'padding-bottom'),
+            ...read('.dk-dialog', 'padding-left', 'padding-top'),
+            ...read('.dk-dialog .dk-input', 'min-height'),
+            ...read('.dk-dialog .dk-choice', 'min-height'),
+            ...read('.dk-dialog-actions > .dk-button', 'min-height', 'flex-grow'),
+            ...read('html', 'overscroll-behavior-y', 'scroll-padding-bottom'),
+            ...read('body', 'padding-bottom'),
+        ];
+    });
+};
+
+/** A content page with a strip, a footer and a dialog, holding what `inside` adds to its content. */
+const contentPage = (inside: string, after = '') =>
+    `<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio"><a href="#home">Home</a></nav></div>` +
+    `<main class="dk-page"><h1>Pieces</h1><p>Each piece in both themes.</p>${inside}</main>` +
+    `<footer class="dk-footer"><p>A footer.</p></footer>${DIALOG}${after}`;
+
+/** A toast shown on the page itself, as a content page's own. */
+const LIVE_TOAST = `<div class="dk-toast" data-shown data-rows="3"><p class="dk-toast-message">Copied.</p></div>`;
+
+test('draws a content page the same with a picture of an app and its toast as without one', async ({
     page,
 }) => {
-    // A content page with a strip, a footer and a dialog, plain and then holding an inert picture
-    // of a frame whose toast is shown, which is not the page's own app.
-    const content = (picture: string) =>
+    const plain = await pageDrawn(page, contentPage(''));
+    expect(await pageDrawn(page, contentPage(PICTURE))).toEqual(plain);
+    // A toast of the page's own keeps its room at the page's foot beside a picture, as without one.
+    const toasted = await pageDrawn(page, contentPage('', LIVE_TOAST));
+    expect(toasted).not.toEqual(plain);
+    expect(await pageDrawn(page, contentPage(PICTURE, LIVE_TOAST))).toEqual(toasted);
+});
+
+test("draws a page with an app's frame of its own as an app's, a picture of another beside it or not", async ({
+    page,
+}) => {
+    const own =
+        `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header>` +
+        `<main class="dk-app-body" tabindex="0"><p>Pick a game.</p></main></div>`;
+    const app = (inside: string) =>
         `<div class="dk-strip"><nav class="dk-strip-links" aria-label="Portfolio"><a href="#home">Home</a></nav></div>` +
-        `<main class="dk-page"><h1>Pieces</h1><p>Each piece in both themes.</p>${picture}</main>` +
-        `<footer class="dk-footer"><p>A footer.</p></footer>` +
-        `<dialog class="dk-dialog" aria-labelledby="d-title"><h2 class="dk-dialog-title" id="d-title">Options</h2><p>Text.</p></dialog>`;
-    const picture =
-        `<div inert><div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Round 3</h1></header>` +
-        `<main class="dk-app-body" tabindex="0"><p>Ana leads.</p></main>` +
-        `<div class="dk-app-toast"><div class="dk-toast" data-shown data-rows="3"><p class="dk-toast-message">Saved.</p></div></div></div>` +
-        `<div class="dk-tabbar-page"><main><p>Games</p></main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#a">Play</a></li></ul></nav></div></div>`;
-    const drawn = async (body: string) => {
-        await writePage(page, { width: 1280, title: 'Pieces', body });
+        `${own}${inside}<footer class="dk-footer"><p>A footer.</p></footer>${DIALOG}`;
+    const read = async (body: string) => {
+        await writePage(page, { width: 1280, title: 'Play', body });
         await page.locator('dialog').evaluate((dialog: HTMLDialogElement) => dialog.showModal());
-        return page.evaluate(() => {
-            const read = (selector: string, ...names: string[]) => {
-                const found = document.querySelector(selector);
-                if (found === null) throw new Error(`no ${selector}`);
-                const drawn = getComputedStyle(found);
-                return names.map((name) => `${selector} ${name} ${drawn.getPropertyValue(name)}`);
-            };
-            return [
-                ...read('.dk-strip', 'padding-left', 'padding-right'),
-                ...read('.dk-page', 'padding-left', 'padding-right'),
-                ...read('.dk-footer', 'padding-left', 'padding-bottom'),
-                ...read('.dk-dialog', 'padding-left', 'padding-top'),
-                ...read('html', 'overscroll-behavior-y', 'scroll-padding-bottom'),
-                ...read('body', 'padding-bottom'),
-            ];
-        });
+        return page.evaluate(() =>
+            ['.dk-strip', '.dk-footer', '.dk-dialog'].map(
+                (selector) =>
+                    `${selector} ${getComputedStyle(document.querySelector(selector) ?? document.body).paddingLeft}`
+            )
+        );
     };
-    const plain = await drawn(content(''));
-    expect(await drawn(content(picture))).toEqual(plain);
+    const alone = await read(app(''));
+    expect(await read(app(PICTURE))).toEqual(alone);
+    // The app's page draws apart from a content page, so the comparison above tests something.
+    expect(alone).not.toEqual(await read(contentPage('')));
 });
