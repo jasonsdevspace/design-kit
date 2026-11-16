@@ -176,13 +176,14 @@
 
     /*
      * Where the page ends at the footer, its last line ends a step above what a phone keeps at its
-     * foot. A tab bar or anything else after it clears that itself.
+     * foot. A tab bar after it clears that itself, and nothing else that may follow a footer, a toast
+     * that floats, a dialog or a script, takes the foot's room, so only a tab bar turns it off.
      */
     :where(.dk-footer) {
         padding-block: var(--dk-space-4);
     }
 
-    :where(.dk-footer:not(:has(~ *))) {
+    :where(.dk-footer:not(:has(~ .dk-tabbar))) {
         padding-bottom: calc(var(--dk-space-4) + var(--dk-safe-bottom));
     }
 
