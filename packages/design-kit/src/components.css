@@ -930,7 +930,15 @@
      * clear of a toast, which set the room under that one.
      */
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(dialog)
     ) {
         margin-block-end: 0;
@@ -971,9 +979,30 @@
         font-size: var(--dk-text-display);
     }
 
-    /* What the demo does, in a sentence or two, the second thing a reader reads after the title. */
-    :where(.dk-explainer-lead) {
+    /*
+     * The lead: what a page or a demo does, in a sentence or two, the second thing a reader reads
+     * after the title, at the lead size and held to the measure wherever it sits.
+     */
+    :where(.dk-explainer-lead, .dk-lead) {
+        max-width: var(--dk-measure);
         font-size: var(--dk-text-lead);
+    }
+
+    /*
+     * A content page, such as a landing page or an about page: its blocks and its sections spaced
+     * by the flow, as an explainer's are, with sections a larger step apart and no rule between
+     * them, and its title at the display size. Only its prose holds to the measure, so a table, a
+     * grid of tiles or a figure takes the column. The spacing is set on the page, between what it
+     * holds, so a reader's own sheet that adds room under a paragraph adds room and breaks nothing.
+     */
+    :where(.dk-page > h1) {
+        font-size: var(--dk-text-display);
+    }
+
+    :where(
+        :is(.dk-page, .dk-page > section) > :is(p, ul:not([class]), ol:not([class]), blockquote)
+    ) {
+        max-width: var(--dk-measure);
     }
 
     :where(.dk-explainer > section) {
@@ -2913,14 +2942,30 @@
      * step under an eyebrow, a section's number and a section's subheading.
      */
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(dialog)
     ) {
         margin-block-start: 0;
     }
 
     :where(
-        :is(.dk-explainer, .dk-explainer > section, .dk-panel, .dk-app-body, .dk-dialog)
+        :is(
+                .dk-explainer,
+                .dk-explainer > section,
+                .dk-page,
+                .dk-page > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
             > :not(.dk-visually-hidden, [hidden])
             ~ :not(dialog)
     ) {
@@ -2938,6 +2983,10 @@
 
     :where(.dk-explainer > section) {
         margin-block-start: var(--dk-space-6);
+    }
+
+    :where(.dk-page > :not(.dk-visually-hidden, [hidden]) ~ section) {
+        margin-block-start: var(--dk-space-7);
     }
 
     :where(.dk-explainer > section > h2 + *) {

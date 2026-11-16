@@ -1059,6 +1059,44 @@ React's `StatusLine` draws the line, taking `className` and `ref`, its ref the l
 that hands it to `attachStatus` from an effect. `CopyStatus` is the same component under the name a
 copy button's line was given first.
 
+## Content pages
+
+A content page, such as a landing page or an about page, is a `dk-page` on its main content: its
+title, its lead, its one action and its sections, spaced by the kit with no rule of the page's own.
+
+<!-- example: contentPage -->
+
+```html
+<main id="main-content" tabindex="-1" class="dk-page">
+    <h1>Scorekeeper</h1>
+    <p class="dk-lead">Keep score for any card game on one phone passed around the table.</p>
+    <p><a class="dk-button dk-button-accent" href="/app/">Start a game</a></p>
+    <section>
+        <h2 id="how">How it works</h2>
+        <p>...</p>
+        <ul>
+            <li>...</li>
+        </ul>
+    </section>
+    <section>
+        <h2 id="games">The games it knows</h2>
+        ...
+    </section>
+</main>
+```
+
+`dk-page` spaces what it holds by `--dk-flow-step`, `--dk-space-4`, as an explainer does, with
+nothing above its first child and nothing added by a child out of sight, and stands its sections
+`--dk-space-7` apart, with no rule between them. Its `h1` is at the display size. Only its prose
+holds to the measure, its paragraphs, its plain lists and a quote, so a table, a grid of tiles or a
+figure takes the column. The spacing is set on the page, between what it holds, never on a
+paragraph's own margin, so a reader's own sheet that adds room under a paragraph adds room and
+breaks nothing, and nothing is reordered, so focus and reading follow the markup. `dk-lead` is the
+lead, in the page's text at the lead size and held to the measure, the explainer's lead under a name
+of its own. A page sets its column's width and side padding as it would around any content.
+[Decision 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
+says why a content page is a container of its own.
+
 ## Explainer pages
 
 An explainer is the page that says how a demo works, the one the strip's "How it works" link leads
