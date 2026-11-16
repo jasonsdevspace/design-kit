@@ -357,9 +357,9 @@ const HeroPanel = ({ theme }: { readonly theme: 'light' | 'dark' }) => (
 );
 
 /**
- * A small drawing of what each page shows, for its card on the landing page, drawn by the site's
- * own styles from the kit's tokens. The card's name and description say it in words, so a screen
- * reader passes the drawing by.
+ * A small drawing of what each page shows, across the top of its tile on the landing page, drawn by
+ * the site's own styles from the kit's tokens, with no words of its own, since the tile is one link
+ * named by its page's name and short line. A screen reader passes the drawing by.
  */
 const PREVIEWS: Readonly<
     Record<Exclude<Route['file'], 'index.html' | 'how-it-works/index.html'>, ReactNode>
@@ -375,8 +375,12 @@ const PREVIEWS: Readonly<
     ),
     'controls/index.html': (
         <>
-            <span className="site-preview-button site-preview-button-accent">Save rule</span>
-            <span className="site-preview-button">Filters</span>
+            <span className="site-preview-button site-preview-button-accent">
+                <span className="site-preview-words" />
+            </span>
+            <span className="site-preview-button">
+                <span className="site-preview-words" />
+            </span>
         </>
     ),
     'app-pieces/index.html': (
@@ -400,7 +404,7 @@ const PREVIEWS: Readonly<
 };
 
 /**
- * Whether a page has a card on the landing page: every page in the site's menu but the landing
+ * Whether a page has a tile on the landing page: every page in the site's menu but the landing
  * page itself, each of which has a drawing in PREVIEWS, which the type holds.
  */
 const isCarded = (route: Route): route is Extract<Route, { file: keyof typeof PREVIEWS }> =>
@@ -447,7 +451,7 @@ const Install = ({ version }: { readonly version: string }) => (
 
 /**
  * The landing page: what the kit is, how to install it, its controls working in both themes, a
- * card for each page, and what it is built to.
+ * tile for each page, and what it is built to.
  */
 export const Landing = ({ build }: { readonly build: Build }) => (
     <Page build={build} current="index.html">
@@ -486,14 +490,22 @@ export const Landing = ({ build }: { readonly build: Build }) => (
         <section>
             <h2 id="in-the-kit">What is in the design kit</h2>
             <p>Each page shows every piece in the light and dark themes.</p>
-            <ul className="site-pages" role="list">
+            <ul className="dk-rows dk-rows-tiles dk-rows-columns site-pages" role="list">
                 {ROUTES.filter(isCarded).map((route) => (
                     <li key={route.file}>
-                        <span className="site-page-preview" aria-hidden="true">
-                            {PREVIEWS[route.file]}
-                        </span>
-                        <a href={route.path}>{route.nav}</a>
-                        <p>{route.card}</p>
+                        <a className="dk-row" href={route.path}>
+                            <span className="dk-row-picture site-page-preview" aria-hidden="true">
+                                {PREVIEWS[route.file]}
+                            </span>
+                            <span className="dk-row-text">
+                                <span className="dk-row-title">{route.nav}</span>
+                                <span className="dk-visually-hidden">, </span>
+                                <span className="dk-row-detail">{route.card}</span>
+                            </span>
+                            <span className="dk-row-sign" aria-hidden="true">
+                                ›
+                            </span>
+                        </a>
                     </li>
                 ))}
             </ul>

@@ -184,61 +184,36 @@ body > .dk-strip {
     }
 }
 
-/* A card for each page: a drawing of what it shows, its name as a link and its description. */
+/*
+ * The landing page's five tiles take a narrower least width than the kit's, so on a laptop's screen
+ * all five stand on one line rather than four with one left alone under them.
+ */
 .site-pages {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
-    gap: var(--dk-space-4);
-    padding: 0;
-    list-style: none;
+    --dk-tile-least: 13.25rem;
 }
 
-.site-pages > li {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+/*
+ * A tile stretched to a taller one on its line starts its drawing and its title at its top, level
+ * with that one's, and the room it gains falls under its text.
+ */
+.dk-rows-columns .dk-row:has(> .site-page-preview) {
     align-content: start;
-    gap: var(--dk-space-2);
-    padding: var(--dk-space-4);
-    border: 1px solid var(--dk-line);
-    border-radius: var(--dk-radius-large);
 }
 
-.site-pages a {
-    font-weight: var(--dk-weight-strong);
-    text-decoration: none;
-}
-
-/* The whole card takes the link's click, while the link alone is read and focused. */
-.site-pages a::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-}
-
-.site-pages a:hover {
-    text-decoration: underline;
-}
-
-.site-pages p {
-    margin: 0;
-    color: var(--dk-muted);
-    font-size: var(--dk-text-small);
-}
-
+/*
+ * The drawing of what each page shows, in the picture slot across the top of its tile, on the
+ * page's own ground so it stands apart from the tile's.
+ */
 .site-page-preview {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--dk-space-2);
     height: 5rem;
-    margin-bottom: var(--dk-space-2);
-    border-radius: var(--dk-radius);
-    background: var(--dk-surface);
+    background: var(--dk-bg);
 }
 
-/* The swatches narrow before they would widen a card at a large text size. */
+/* The swatches narrow before they would widen a tile at a large text size. */
 .site-preview-swatch {
     flex: 0 1 1.25rem;
     min-width: 0.5rem;
@@ -266,12 +241,26 @@ body > .dk-strip {
     background: var(--dk-fg);
 }
 
+/*
+ * A button drawn as the kit's are on a page, with a short bar in its text color in place of its
+ * words, so the tile it sits in shows no words but its own name and line.
+ */
 .site-preview-button {
-    padding: var(--dk-space-1) var(--dk-space-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 1.75rem;
     border: 1px solid var(--dk-control);
     border-radius: var(--dk-radius);
     background: var(--dk-bg);
-    font-size: var(--dk-text-caption);
+}
+
+.site-preview-words {
+    width: 55%;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: currentcolor;
 }
 
 .site-preview-button-accent {
