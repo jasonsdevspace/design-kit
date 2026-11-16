@@ -376,23 +376,45 @@ test('draws the sheet at the bottom edge, clear of the home indicator, scrolling
     expect(done.y + done.height).toBeLessThanOrEqual(700 - 34);
 });
 
+/**
+ * The animations the sheet runs from here on, each by its name and the time it ran when it ended,
+ * as the browser fires them, so a rise whose keyframes are gone or never start is caught.
+ */
+const listenForRise = (page: Page): Promise<void> =>
+    // By its id, since a closed dialog has no role to be found by.
+    page.locator('#round-options').evaluate((element) => {
+        const fired: [string, string, number][] = [];
+        (window as unknown as { fired: typeof fired }).fired = fired;
+        for (const type of ['animationstart', 'animationend'])
+            element.addEventListener(type, (event) => {
+                const { animationName, elapsedTime } = event as AnimationEvent;
+                if (event.target === element) fired.push([type, animationName, elapsedTime]);
+            });
+    });
+
+const fired = (page: Page): Promise<[string, string, number][]> =>
+    page.evaluate(() => (window as unknown as { fired: [string, string, number][] }).fired);
+
 test('rises the sheet into place, and opens it in place for less motion', async ({ page }) => {
-    // The computed animation holds while the sheet is open, where the running animation ends
-    // after 250ms, which a slow browser can pass before a read.
-    const rise = () =>
-        sheet(page).evaluate((element) => {
-            const style = getComputedStyle(element);
-            return [style.animationName, parseFloat(style.animationDuration) * 1000];
-        });
     await open(page);
+    await listenForRise(page);
     await page.locator('#options').click();
-    expect(await rise()).toEqual(['dk-sheet-rise', 250]);
+    // The time an animation ran is the browser's own count, so a slow run cannot change it.
+    await expect
+        .poll(() => fired(page))
+        .toEqual([
+            ['animationstart', 'dk-sheet-rise', 0],
+            ['animationend', 'dk-sheet-rise', 0.25],
+        ]);
     await page.keyboard.press('Escape');
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    await listenForRise(page);
     await page.locator('#options').click();
-    const [name, still] = await rise();
-    expect(name).toBe('dk-sheet-rise');
-    expect(Number(still)).toBeLessThan(1);
+    await expect.poll(async () => (await fired(page)).length).toBe(2);
+    const [started, ended] = await fired(page);
+    expect(started?.slice(0, 2)).toEqual(['animationstart', 'dk-sheet-rise']);
+    expect(ended?.slice(0, 2)).toEqual(['animationend', 'dk-sheet-rise']);
+    expect(ended?.[2]).toBeLessThan(0.001);
 });
 
 for (const theme of ['light', 'dark'] as const) {
