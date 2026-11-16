@@ -447,6 +447,24 @@ test.describe('the landing page', () => {
             if (many) expect(lefts.size, String(width)).toBeGreaterThan(1);
             else expect(lefts.size, String(width)).toBe(1);
         }
+        // On a wide screen, tiles on one line start their previews and titles level, a short one
+        // beside one whose line runs longer.
+        await page.setViewportSize({ width: 1280, height: 900 });
+        const lines = await cards.evaluateAll((all) => {
+            const top = (card: Element, selector: string) =>
+                Math.round(card.querySelector(selector)?.getBoundingClientRect().top ?? 0);
+            const byLine = new Map<number, Set<string>>();
+            for (const card of all) {
+                const line = Math.round(card.getBoundingClientRect().top);
+                const tops = byLine.get(line) ?? new Set<string>();
+                tops.add(
+                    `${String(top(card, '.dk-row-picture'))} ${String(top(card, '.dk-row-title'))}`
+                );
+                byLine.set(line, tops);
+            }
+            return [...byLine.values()].map((tops) => tops.size);
+        });
+        for (const tops of lines) expect(tops).toBe(1);
     });
 
     test("puts the build line in the footer's own line, beside the footer's text and under it on a phone", async ({

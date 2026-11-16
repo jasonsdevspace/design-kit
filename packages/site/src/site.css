@@ -185,6 +185,14 @@ body > .dk-strip {
 }
 
 /*
+ * A tile stretched to a taller one on its line starts its drawing and its title at its top, level
+ * with that one's, and the room it gains falls under its text.
+ */
+.dk-rows-columns .dk-row:has(> .site-page-preview) {
+    align-content: start;
+}
+
+/*
  * The drawing of what each page shows, in the picture slot across the top of its tile, on the
  * page's own ground so it stands apart from the tile's.
  */
