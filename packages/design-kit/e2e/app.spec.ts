@@ -838,12 +838,15 @@ test('gives a piece the ground of the nearest container that holds it, however t
     const pinned =
         '<div class="dk-table-scroll"><table class="dk-table dk-table-pinned"><tbody><tr><th scope="row">Ana</th><td>12</td></tr></tbody></table></div>';
     const code = '<pre class="dk-code"><code>npm run e2e</code></pre>';
+    const tile =
+        '<ul class="dk-rows dk-rows-tiles" role="list" aria-label="Games"><li><a class="dk-row" href="#flip"><span class="dk-row-text"><span class="dk-row-title">Flip 7</span></span></a></li></ul>';
     await writePage(page, {
         width: 390,
         title: 'Play',
         body:
-            `<main id="main-content"><div class="dk-panel"><dialog class="dk-dialog" open aria-label="Options">${pinned}</dialog></div>` +
-            `<div class="dk-panel dk-panel-raised"><div class="dk-panel">${code}</div></div></main>`,
+            `<main id="main-content"><div class="dk-panel"><dialog class="dk-dialog" open aria-label="Options">${pinned}${code}${tile}</dialog></div>` +
+            `<div class="dk-panel dk-panel-raised"><div class="dk-panel">${code}</div></div>` +
+            `<section aria-label="Promo" style="--dk-bg: rgb(255, 250, 230); --dk-surface: rgb(250, 240, 210);">${pinned}${code}</section></main>`,
     });
     const ground = async (locator: Locator) =>
         (await style(locator, 'background-color'))['background-color'];
@@ -851,8 +854,17 @@ test('gives a piece the ground of the nearest container that holds it, however t
     expect(await ground(page.locator('.dk-dialog .dk-table-pinned th'))).toBe(
         await colorOf(page, 'var(--dk-raised)')
     );
+    // Its code block and its tile step to the card's, as in a dialog on the page, not the panel's.
+    for (const piece of ['.dk-dialog .dk-code', '.dk-dialog .dk-row'])
+        expect(await ground(page.locator(piece)), piece).toBe(
+            await colorOf(page, 'var(--dk-surface)')
+        );
     // A plain panel inside a raised one gives its code block the page's ground, a step off its own.
     expect(await ground(page.locator('.dk-panel-raised .dk-panel .dk-code'))).toBe(
         await colorOf(page, 'var(--dk-bg)')
     );
+    // A palette a page sets on a container reaches the grounds its pieces take inside it.
+    const promo = page.getByRole('region', { name: 'Promo' });
+    expect(await ground(promo.locator('.dk-table-pinned th'))).toBe('rgb(255, 250, 230)');
+    expect(await ground(promo.locator('.dk-code'))).toBe('rgb(250, 240, 210)');
 });

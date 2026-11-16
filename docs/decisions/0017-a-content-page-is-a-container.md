@@ -28,14 +28,14 @@ same flow the explainer uses, and draws nothing else.
 
 ## Decision
 
-Option C. `dk-page` spaces its children by `--dk-flow-step` and its sections by `--dk-space-7`, with
-`--dk-space-6` above its first child, as an explainer has, so its title clears the header's rule,
-sets its `h1` at the display size and a section's `h2` at the title size, starts its text at the
-strip's inset by the band insets, and holds only its prose to the measure. The spacing is set
-between its children, never on their own margins, so a reader's own sheet that adds room under a
-paragraph adds the room it asks for and breaks nothing. Nothing it sets reorders what it holds, so
-focus and reading follow the markup. `dk-lead` is the explainer's lead under a name of its own, held
-to the measure wherever it sits.
+Option C. `dk-page` spaces its children by `--dk-flow-step`, with the lead `--dk-space-2` under its
+title, and its sections by `--dk-space-7`, with `--dk-space-6` above its first child, as an
+explainer has, so its title clears the header's rule, sets its `h1` at the display size and a
+section's `h2` at the title size, starts its text at the strip's inset by the band insets, and holds
+only its prose to the measure. The spacing is set between its children, never on their own margins,
+so a reader's own sheet that adds room under a paragraph adds the room it asks for and breaks
+nothing. Nothing it sets reorders what it holds, so focus and reading follow the markup. `dk-lead`
+is the explainer's lead under a name of its own, held to the measure wherever it sits.
 
 ## Consequences
 

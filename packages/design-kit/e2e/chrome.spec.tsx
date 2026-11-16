@@ -521,13 +521,14 @@ test('keeps the strip and the footer clear of what a phone keeps at its sides an
     const footer = await box(page.locator('.dk-footer'), 'the footer');
     const last = await box(page.locator('.dk-footer > :last-child'), "the footer's last line");
     expect(Math.round(footer.y + footer.height - (last.y + last.height))).toBe(16 + SIDES.bottom);
-    // What may follow a footer and takes no room at the foot, a toast, a dialog and a script, leaves
-    // the footer clearing it.
+    // What may follow a footer and takes no room at the foot, a toast, a dialog, a script and a
+    // hidden tab bar, leaves the footer clearing it.
     await page.evaluate(() => {
         for (const html of [
             '<div class="dk-toast" role="region" aria-label="Messages"></div>',
             '<dialog class="dk-dialog"></dialog>',
             '<script>void 0</script>',
+            '<nav class="dk-tabbar" aria-label="Sections" hidden></nav>',
         ])
             document.body.insertAdjacentHTML('beforeend', html);
     });
@@ -728,10 +729,12 @@ test('marks a link the strip or the footer names current by any value but false,
         name: 'How it works',
     });
     const { strong, normal } = await pageLook(page);
+    // An empty value is false to a screen reader, so it marks nothing here either.
     for (const [value, weight] of [
         ['true', strong],
         ['page', strong],
         ['false', normal],
+        ['', normal],
     ] as const) {
         await link.evaluate((element, to) => element.setAttribute('aria-current', to), value);
         expect((await linkLook(link)).weight, value).toBe(weight);

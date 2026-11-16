@@ -27,8 +27,8 @@ shares, and many of these are a choice for one piece in one place, such as one g
 several, which a page sets on that piece rather than on its root. A token with a default also
 reads as part of the palette, so a page could not tell a role it must fill from a knob it may leave.
 
-**C. A property the kit names and leaves unset.** The sheets read
-`var(--dk-tile-ground, var(--dk-surface))`, and a page sets `--dk-tile-ground` on its root or on the
+**C. A property the kit names and leaves unset.** The sheets read `var(--dk-tile-ground,
+var(--dk-ground-step, var(--dk-surface)))`, and a page sets `--dk-tile-ground` on its root or on the
 piece by a class of its own. The kit draws the piece, and the property is the one thing the page
 changes.
 
@@ -46,7 +46,7 @@ holds in both themes.
 
 - A page reaches a piece without a rule over a kit class, so a page's look survives the kit's
   changes to how a piece is drawn, as long as the property keeps its name and its meaning.
-- A property that sets a ground hands the page the duty to keep the piece's text and ring to their
+- A property that sets a ground hands the page the duty to keep the piece's text and signs to their
   contrast on it, which the kit's palette test cannot check, so the reference states each duty and a
   page's own audit holds it.
 - Renaming or dropping a property is a change a page must act on, so it goes under Upgrading in the

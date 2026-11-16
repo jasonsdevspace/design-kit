@@ -593,6 +593,34 @@ test("draws every chosen thing's words in forced colors, on the system's selecti
     }
 });
 
+test('underlines a pill and a tab under a press in forced colors, where their color is replaced', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'only Chromium draws forced colors here');
+    await writePage(page, {
+        title: 'Pressed',
+        body:
+            '<main><nav aria-label="Site"><ul class="dk-pills" role="list"><li><a class="dk-pill" href="#about" id="pill">About</a></li></ul></nav>' +
+            '<nav aria-label="Categories"><ul class="dk-tabs" role="list"><li><a class="dk-tab" href="#books" id="tab">Books</a></li></ul></nav></main>',
+    });
+    await page.emulateMedia({ forcedColors: 'active' });
+    for (const selector of ['#pill', '#tab']) {
+        const target = page.locator(selector);
+        expect((await style(target, 'text-decoration-line'))['text-decoration-line']).toBe('none');
+        const drawn = await target.boundingBox();
+        if (!drawn) throw new Error(`${selector} is not drawn`);
+        await page.mouse.move(drawn.x + 4, drawn.y + drawn.height / 2);
+        await page.mouse.down();
+        expect(
+            (await style(target, 'text-decoration-line'))['text-decoration-line'],
+            selector
+        ).toBe('underline');
+        await page.mouse.up();
+        await page.mouse.move(0, 0);
+    }
+});
+
 test("changes a resting pill, a resting tab and the site's brand under a pressing thumb, where nothing hovers", async ({
     browser,
     browserName,

@@ -255,13 +255,17 @@ describe('what the sheets style', () => {
     });
 
     it('lists every property a page may set in the reference, with its default and its duty', () => {
-        // A property the sheets read with a fallback is one a page sets, so the table names each.
+        // A property the sheets read with a fallback is one a page sets, so the table names each,
+        // but for the grounds the kit's containers set, which a piece falls back from where none
+        // holds it.
+        const containers = new Set(['--dk-ground', '--dk-ground-step']);
         const fallbacks = new Map<string, string[]>();
         for (const name of sheets) {
             const css = withoutComments(readFileSync(new URL(name, folder), 'utf8'));
             for (const [, property = '', fallback = ''] of css.matchAll(
                 /var\(\s*(--dk-[\w-]+)\s*,\s*([^)]*)\)/g
             )) {
+                if (containers.has(property)) continue;
                 fallbacks.set(property, [...(fallbacks.get(property) ?? []), fallback.trim()]);
             }
         }

@@ -20,13 +20,13 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
   `--dk-column` anywhere but `:root` sets it there to keep its column. A page that already uses one
-  of those three names for something of its own gets the kit's meaning for it. A footer with nothing
-  after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
+  of those three names for something of its own gets the kit's meaning for it. A footer with no tab
+  bar after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
   a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
   toast's close says Close, where it said Dismiss, so a toast written by hand changes the words out
-  of sight in its close button, and may add `dk-button-quiet` to it as the React `Toast` does,
-  though its own class draws it the same without.
+  of sight in its close button, and gives it `dk-button-quiet` beside `dk-toast-close`, as the React
+  `Toast` does, since that class alone draws it.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
@@ -40,9 +40,9 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
   page's own shadow under it by `--dk-panel-shadow`. `dk-rows-tiles` beside `dk-rows` draws each
   link row as a tile, an edge and large corners apart from the next by a gap, on the ground a page
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
-  `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
-  larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
-  `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
+  `--dk-tile-shadow`. A tile keeps the row's sign, its press and its ring, drawn outside it, is at
+  least the larger target tall, sets its title at the lead size, and an empty list of tiles is not
+  drawn. `dk-button-quiet` beside `dk-button-text` draws a quiet button for a Close, muted with no
   underline and in the text color under a pointer and while held, as wide as a button is tall, open
   or off alike, and in `ButtonText` in forced colors, underlined under a pointer and while held. The
   toast's close is drawn by the same rules. In forced colors what is chosen keeps the selection's

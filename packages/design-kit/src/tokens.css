@@ -208,8 +208,11 @@
          * the root, where these are declared, so a page that changes --dk-column sets it there.
          */
         --dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);
-        /* How far an app's column stands in from each side of the page, worked out as the above. */
-        --dk-app-inset: max(0px, (100% - var(--dk-app-column)) / 2);
+        /*
+         * How far an app's column stands in from each side of the screen, measured on the screen
+         * rather than a box, since what a phone keeps at its sides is measured there too.
+         */
+        --dk-app-inset: max(0px, (100vw - var(--dk-app-column)) / 2);
         /*
          * Where content starts on each side of such a band, as the strip, the footer or a page's
          * own colored section: the column's inset, or what a phone keeps at that side where that
@@ -233,14 +236,6 @@
         --dk-stack-toast: 4;
         --dk-stack-skip: 10;
         /*
-         * The ground of what holds a piece, and the ground a piece set apart on it steps to, such
-         * as a code block or a tile, the page's and the card's here, and each container's below, so
-         * a piece inside a container inside another takes the nearest one's, as the flow's step
-         * does.
-         */
-        --dk-ground: var(--dk-bg);
-        --dk-ground-step: var(--dk-surface);
-        /*
          * How far a card's words stand in from its edge, a panel's and a tile's alike, so a raised
          * panel's text and the tiles under it start on one line: a wider step on a wide page, a
          * phone's on a phone, and in an app's column a phone's held at its size at every width.
@@ -259,12 +254,17 @@
     }
 
     /*
-     * A dialog's ground is the raised one, a panel's the card's, which steps to the page's, and a
-     * raised panel's the raised one, which steps to the card's, since in light it is the page's
-     * own.
+     * The ground of what holds a piece, and the ground a piece set apart on it steps to, such as a
+     * code block or a tile, set on each container and inherited, so a piece inside a container
+     * inside another takes the nearest one's, as the flow's step does. Each is worked out on the
+     * container, so a palette a page sets on a container reaches them. Where no container sets
+     * them, a piece falls back to the page's ground and the card's. A dialog's ground and a raised
+     * panel's are the raised one, which steps to the card's, since in light it is the page's own,
+     * and a panel's is the card's, which steps to the page's.
      */
     :where(.dk-dialog) {
         --dk-ground: var(--dk-raised);
+        --dk-ground-step: var(--dk-surface);
     }
 
     :where(.dk-panel) {

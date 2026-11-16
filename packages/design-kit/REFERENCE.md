@@ -71,7 +71,7 @@ page.
 | `--dk-measure`, `--dk-column`                                                                     | 34rem and 72rem                                                                                                                                                                                  |
 | `--dk-app-column`, `--dk-app-bar`                                                                 | 28rem, the widest an app's frame grows, and 4rem, the least height of its bar                                                                                                                    |
 | `--dk-dialog-width`                                                                               | 32rem, the widest a dialog grows in the middle of a screen                                                                                                                                       |
-| `--dk-space-4-held`                                                                               | `--dk-space-4` stopping at 16px: a panel's padding in an app, a dialog's on a phone and in an app, and a dialog's gap from the screen's edges                                                    |
+| `--dk-space-4-held`                                                                               | `--dk-space-4` stopping at 16px: a panel's and a tile's inset in an app, through `--dk-card-inset`, a dialog's on a phone and in an app, and a dialog's gap from the screen's edges              |
 | `--dk-space-5-held`                                                                               | `--dk-space-5` stopping at 24px, a dialog's padding on a wide screen                                                                                                                             |
 | `--dk-field-inline-held`                                                                          | `--dk-field-inline` stopping at 12px, a stepper's inline padding                                                                                                                                 |
 | `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link                                                                  |
@@ -83,8 +83,8 @@ page.
 | `--dk-app-inset`                                                                                  | how far an app's column stands in from each side of the page, `max(0px, (100% - var(--dk-app-column)) / 2)`                                                                                      |
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
-| `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's, or a raised panel's and the card's         |
-| `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in from their edge, `--dk-space-5`, `--dk-space-4` at 48rem wide or less, and `--dk-space-4-held` in an app's column                                  |
+| `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's or a raised panel's and the card's          |
+| `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, `--dk-space-4` at 48rem or less, and `--dk-space-4-held` in an app's frame, a tab bar's page and a dialog on either               |
 
 </details>
 
@@ -97,21 +97,21 @@ draws, and a page writes no rule over a kit class for it, as [decision
 sets out. Where a property sets a ground, the page chooses a value that keeps what sits on it to its
 contrast, in both themes, which `light-dark()` writes in one value.
 
-| Property                   | Default                                          | What it sets, and what it must hold                                                                                                            |
-| -------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dk-focus`               | the accent                                       | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                   |
-| `--dk-button-shadow`       | none                                             | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                                     |
-| `--dk-button-press`        | none, so a held button does not move             | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px`          |
-| `--dk-panel-shadow`        | the resting shadow                               | A shadow under a raised panel                                                                                                                  |
-| `--dk-tile-ground`         | the ground its container steps to                | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign 3 to 1                                                            |
-| `--dk-tile-shadow`         | none                                             | A shadow under a tile                                                                                                                          |
-| `--dk-row-picture-size`    | the target                                       | The width and height of a picture at a row's start, at most a quarter of the screen. A tile in columns lays its picture across its top instead |
-| `--dk-tile-least`          | 15rem                                            | The least width of a tile in a list of tiles in columns, so a name of a few words fits                                                         |
-| `--dk-button-grid-columns` | 3                                                | The columns a grid of buttons asks for                                                                                                         |
-| `--dk-button-grid-least`   | the target, and the larger target in a tall grid | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                          |
-| `--dk-table-ground`        | the page's, a panel's or a dialog's ground       | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
-| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide       | The width of a pinned column                                                                                                                   |
-| `--dk-stepper-digits`      | 2                                                | The figures a stepper's field keeps room for                                                                                                   |
+| Property                   | Default                                                            | What it sets, and what it must hold                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dk-focus`               | the accent                                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                   |
+| `--dk-button-shadow`       | none                                                               | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                                     |
+| `--dk-button-press`        | none, so a held button does not move                               | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px`          |
+| `--dk-panel-shadow`        | the resting shadow                                                 | A shadow under a raised panel                                                                                                                  |
+| `--dk-tile-ground`         | `--dk-ground-step`, the card's on a page and the page's in a panel | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign 3 to 1                                                            |
+| `--dk-tile-shadow`         | none                                                               | A shadow under a tile                                                                                                                          |
+| `--dk-row-picture-size`    | the target                                                         | The width and height of a picture at a row's start, at most a quarter of the screen. A tile in columns lays its picture across its top instead |
+| `--dk-tile-least`          | 15rem                                                              | The least width of a tile in a list of tiles in columns, so a name of a few words fits                                                         |
+| `--dk-button-grid-columns` | 3                                                                  | The columns a grid of buttons asks for                                                                                                         |
+| `--dk-button-grid-least`   | the target, and the larger target in a tall grid                   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                          |
+| `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
+| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
+| `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
 
 ## Page chrome
 
@@ -217,11 +217,12 @@ On a wide screen the strip is one 2.5rem row over a 1px rule, in the small text,
 size, the links close to 1rem apart and wrap where they must, and the switches take a row of their
 own below them.
 
-The footer's text holds to the measure, as prose does, while its rule runs the page's width.
-Every link in the strip and the footer keeps its underline, and in the footer's text the underline
-is what tells a link from the text around it. The link marked as the current page stands in the
-page's text at the heading's weight, so it is told from the links around it by more than its color,
-in forced colors too, and still reads as a link.
+The footer's text holds to the measure, as prose does, while its rule runs the page's width. Every
+link in the strip and the footer keeps its underline, and in the footer's text the underline is what
+tells a link from the text around it. The link marked current, by `aria-current="page"` or by
+`"true"` on a page beneath the one it names, stands in the page's text at the heading's weight, so
+it is told from the links around it by more than its color, in forced colors too, and still reads as
+a link.
 
 </details>
 
@@ -229,16 +230,17 @@ The strip and the footer run their rules the width of the page and line their co
 page's column, `--dk-column`, 72rem wide by default and centered, inset by 1rem. A page whose column
 is another width sets `--dk-column` to it on `:root`, as it sets a color role.
 
-On a page that says `viewport-fit=cover`, the strip starts its links below what a phone held
-upright keeps at its top, and on a phone held on its side the strip, the footer, an explainer and
-its header start their content past what the phone keeps at each side, where that is more than the
-column's inset. Where the page ends at the footer, its last line ends a step above what the phone
-keeps at its foot. On a page that ends in a tab bar, whose column already clears the phone's sides
-and whose bar clears its foot, the chrome pads for neither again. `--dk-band-left` and
-`--dk-band-right` hold where that content starts, so a page's own band that runs the width of the
-page, such as a colored section, lines its content up with the strip by padding its sides with them.
-Each takes its percentage from the width of the box that holds the element it pads, so a band that
-fills the page reads the page's width, and reads `--dk-column` from the root.
+On a page that says `viewport-fit=cover`, the strip starts its links below what a phone held upright
+keeps at its top, and on a phone held on its side the strip, the footer, an explainer and its header
+start their content past what the phone keeps at each side, where that is more than the column's
+inset. Unless a tab bar follows the footer, its last line ends a step above what the phone keeps at
+its foot, whether a toast, a dialog or a script comes after it or nothing does. On a page that ends
+in a tab bar, whose column already clears the phone's sides and whose bar clears its foot, the
+chrome pads for neither again. `--dk-band-left` and `--dk-band-right` hold where that content
+starts, so a page's own band that runs the width of the page, such as a colored section, lines its
+content up with the strip by padding its sides with them. Each takes its percentage from the width
+of the box that holds the element it pads, so a band that fills the page reads the page's width, and
+reads `--dk-column` from the root.
 
 A page with React draws the same markup from the components.
 
@@ -1230,15 +1232,15 @@ title, its lead, its one action and its sections, spaced by the kit with no rule
 `dk-page` spaces what it holds by `--dk-flow-step`, `--dk-space-4`, as an explainer does, with
 `--dk-space-6` above its first child under the header's rule and nothing added by a child out of
 sight, and stands its sections `--dk-space-7` apart, with no rule between them. Its `h1` is at the
-display size, and a section's `h2` at the title size, `--dk-space-3` over its text. It starts its
-text at the strip's inset, by the same band insets, so the page reads as one column from the strip
-to the footer and keeps clear of a phone's sides. Only its prose holds to the measure, its
-paragraphs, its plain lists and a quote, so a table, a grid of tiles or a figure takes the column.
-The spacing is set on the page, between what it holds, never on a paragraph's own margin, so a
-reader's own sheet that adds room under a paragraph adds the room it asks for and breaks nothing,
-and nothing is reordered, so focus and reading follow the markup. `dk-lead` is the lead, in the
-page's text color at the lead size and held to the measure, the explainer's lead under a name of its
-own. [Decision
+display size, with the lead `--dk-space-2` under it, as an explainer's is, and a section's `h2` at
+the title size, `--dk-space-3` over its text. It starts its text at the strip's inset, by the same
+band insets, so the page reads as one column from the strip to the footer and keeps clear of a
+phone's sides. Only its prose holds to the measure, its paragraphs, its plain lists and a quote, so
+a table, a grid of tiles or a figure takes the column. The spacing is set on the page, between what
+it holds, never on a paragraph's own margin, so a reader's own sheet that adds room under a
+paragraph adds the room it asks for and breaks nothing, and nothing is reordered, so focus and
+reading follow the markup. `dk-lead` is the lead, in the page's text color at the lead size and held
+to the measure, the explainer's lead under a name of its own. [Decision
 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
 says why a content page is a container of its own.
 
@@ -1360,11 +1362,11 @@ which would be a region landmark, or a `figure`.
 
 A panel sits on `--dk-surface` with an edge in the line color and large corners. The edge is what
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
-padded 1.5rem, and 1rem at 48rem wide or less. In an app's frame, on a page that ends in a tab bar
-and in a dialog on either, where the column is a phone's, it is padded 1rem at every width and no
-more than 16px at any text size. What it holds is spaced
-0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer its
-title steps down to the body size.
+padded by `--dk-card-inset`, which a tile's sides share: 1.5rem, and 1rem at 48rem wide or less. In
+an app's frame, on a page that ends in a tab bar and in a dialog on either, where the column is a
+phone's, it is padded 1rem at every width and no more than 16px at any text size. What it holds is
+spaced 0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer
+its title steps down to the body size, as a tile's title there does.
 
 </details>
 
@@ -1951,9 +1953,10 @@ place in the card without rising again, since the toast stays shown. A message o
 beside the buttons. Where the buttons do not fit beside the message, as on a phone at a large text
 size, with a long action or in a frame narrower than the screen, their group takes the row under it,
 at its end, the action and the close button together. A toast written before 0.7.0, with no group,
-does so only on a screen under 20rem wide. The close button is a quiet button, so it stays quiet
-beside the action, and is the target both ways at every width. Outside a frame the toast sits at
-`--dk-stack-toast`, over a bar. A toast does not print.
+does so only on a screen under 20rem wide. The close button carries `dk-button-quiet` beside
+`dk-toast-close`, and that class alone draws it, so it stays quiet beside the action, and is the
+target both ways at every width. Outside a frame the toast sits at `--dk-stack-toast`, over a bar. A
+toast does not print.
 
 </details>
 
@@ -2219,15 +2222,16 @@ several places is not one link and is not a tile.
 <details>
 <summary>How the tiles are drawn</summary>
 
-A tile's title is at the lead size, since a tile is a place to go that stands alone. Tiles stand
-`--dk-space-3` apart, each with an edge in the line color and large corners, in place of the rule
-between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and below and
-`--dk-card-inset` at its sides, as a panel is, so its words start on a raised panel's line, and its
-detail wraps within it at any text size. With no ground set, a tile sits on `--dk-surface` and casts
-no shadow. A tile stays inside the column in an explainer, a panel, a callout, an app's body or a
-dialog, where a row reaches past it, since its edge, not its words, lines up with the column. In
-forced colors the edge stays, in the system's color, and the ground and any shadow give way to the
-system's.
+A tile's title is at the lead size, since a tile is a place to go that stands alone, and at the body
+size in an explainer, as a panel's title there is. Tiles stand `--dk-space-3` apart, each with an
+edge in the line color and large corners, in place of the rule between rows. Each is at least
+`--dk-target-large` tall, padded `--dk-space-3` above and below and `--dk-card-inset` at its sides,
+as a panel is, so its words start on a raised panel's line, and its detail wraps within it at any
+text size. With no ground set, a tile sits on the ground its container steps to, `--dk-ground-step`,
+`--dk-surface` on a page, and casts no shadow. A tile stays inside the column in an explainer, a
+panel, a callout, an app's body or a dialog, where a row reaches past it, since its edge, not its
+words, lines up with the column. In forced colors the edge stays, in the system's color, and the
+ground and any shadow give way to the system's.
 
 </details>
 

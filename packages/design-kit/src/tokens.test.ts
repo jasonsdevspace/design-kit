@@ -92,7 +92,7 @@ describe('the tokens', () => {
         // The sheet read flat, with no space just inside a bracket, so its wrapping does not count.
         const flat = sheet.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
         expect(flat).toContain('--dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);');
-        expect(flat).toContain('--dk-app-inset: max(0px, (100% - var(--dk-app-column)) / 2);');
+        expect(flat).toContain('--dk-app-inset: max(0px, (100vw - var(--dk-app-column)) / 2);');
         for (const side of ['left', 'right'])
             expect(flat, side).toContain(
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`

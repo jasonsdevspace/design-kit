@@ -596,6 +596,48 @@ test("sets a tile's title in an explainer at the body size, as a panel's title t
     ).toBe('16px');
 });
 
+test("keeps a tile's whole ring in view as the keyboard scrolls an app's body to it", async ({
+    page,
+}) => {
+    const many = Array.from(
+        { length: 12 },
+        (_, at) =>
+            `<li><a class="dk-row" href="#game-${String(at)}"><span class="dk-row-text"><span class="dk-row-title">Game ${String(at + 1)}</span></span></a></li>`
+    ).join('');
+    await writePage(page, {
+        width: 320,
+        height: 568,
+        title: 'Play',
+        body: `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header><main class="dk-app-body" id="main-content" tabindex="0"><ul class="dk-rows dk-rows-tiles" role="list" aria-label="Start a new game">${many}</ul></main></div>`,
+    });
+    const body = page.locator('.dk-app-body');
+    await body.focus();
+    const ring = 4;
+    const links = await body.getByRole('link').all();
+    // Forward from the body to the last tile, then back from it to the first.
+    for (const [key, presses] of [
+        ['Tab', links.length],
+        ['Shift+Tab', links.length - 1],
+    ] as const) {
+        // Each tile as the keyboard reaches it, since one scrolled just into view sits at the edge.
+        for (let at = 0; at < presses; at += 1) {
+            await page.keyboard.press(key);
+            const focused = page.locator(':focus');
+            await expect(focused).toHaveClass(/dk-row/);
+            const [tile, port] = await Promise.all([
+                box(focused, 'the focused tile'),
+                body.evaluate((element) => {
+                    const top = element.getBoundingClientRect().top + element.clientTop;
+                    return { top, bottom: top + element.clientHeight };
+                }),
+            ]);
+            const where = `${key}, press ${String(at + 1)}`;
+            expect(tile.y - ring, where).toBeGreaterThanOrEqual(port.top - 0.5);
+            expect(tile.y + tile.height + ring, where).toBeLessThanOrEqual(port.bottom + 0.5);
+        }
+    }
+});
+
 /** A picture drawn at once, of the shape a page's preview has. */
 const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#8a8a8a"/></svg>')}`;
 

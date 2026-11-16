@@ -188,16 +188,16 @@
     }
 
     /*
-     * Where the page ends at the footer, its last line ends a step above what a phone keeps at its
-     * foot. A tab bar after it clears that itself, and nothing else that may follow a footer, a
-     * toast that floats, a dialog or a script, takes the foot's room, so only a tab bar turns it
+     * The footer's last line ends a step above what a phone keeps at its foot, unless a tab bar
+     * follows it, which clears that itself. A toast, a dialog or a script after it takes none of
+     * the foot's room, and a hidden tab bar clears nothing, so only a tab bar in sight turns this
      * off.
      */
     :where(.dk-footer) {
         padding-block: var(--dk-space-4);
     }
 
-    :where(.dk-footer:not(:has(~ .dk-tabbar))) {
+    :where(.dk-footer:not(:has(~ .dk-tabbar:not([hidden])))) {
         padding-bottom: calc(var(--dk-space-4) + var(--dk-safe-bottom));
     }
 
@@ -233,10 +233,10 @@
     :where(
         .dk-strip-links a:hover,
         .dk-strip-links a:focus-visible,
-        .dk-strip-links a[aria-current]:not([aria-current='false']),
+        .dk-strip-links a[aria-current]:not([aria-current='false'], [aria-current='']),
         .dk-footer a:hover,
         .dk-footer a:focus-visible,
-        .dk-footer a[aria-current]:not([aria-current='false'])
+        .dk-footer a[aria-current]:not([aria-current='false'], [aria-current=''])
     ) {
         color: var(--dk-fg);
     }
@@ -248,8 +248,8 @@
      * as on a pill or a tab, so a page beneath one the links name marks that link with true.
      */
     :where(
-        .dk-strip-links a[aria-current]:not([aria-current='false']),
-        .dk-footer a[aria-current]:not([aria-current='false'])
+        .dk-strip-links a[aria-current]:not([aria-current='false'], [aria-current='']),
+        .dk-footer a[aria-current]:not([aria-current='false'], [aria-current=''])
     ) {
         font-weight: var(--dk-weight-strong);
     }
@@ -480,9 +480,9 @@
      * A quiet text button, such as a Close at a panel's corner, in the muted color with no
      * underline, so it does not compete with the one strong action beside it, and in the text
      * color under a pointer and while held, open or off alike, which is why it comes after their
-     * rules. It keeps a button's least width, so a × alone is as
-     * wide as the button is tall, and the rules below that take a text button's width away leave
-     * it out. The toast's close is one. It is never off, since a Close always closes.
+     * rules. It keeps a button's least width, so a × alone is as wide as the button is tall, and
+     * the rules below that take a text button's width away leave it out. A toast's close carries
+     * this class beside its own, which draws nothing. It is never off, since a Close always closes.
      */
     :where(.dk-button-quiet) {
         min-width: var(--dk-field-height);
@@ -575,7 +575,8 @@
 
     /*
      * In forced colors the page's own grounds and shadows are gone, so a pressed toggle, or a
-     * button whose panel is open, takes the system's highlight, an off button the system's gray on
+     * button whose panel is open, takes the system's highlight by the rule at the sheet's end for
+     * every chosen thing, an off button the system's gray on
      * the page's ground as a disabled one does, and an off toggle that is on an edge in the
      * highlight.
      */
@@ -1359,7 +1360,7 @@
         inset-inline-start: 0;
         z-index: var(--dk-stack-pinned);
         border-inline-end: 1px solid var(--dk-line);
-        background: var(--dk-table-ground, var(--dk-ground));
+        background: var(--dk-table-ground, var(--dk-ground, var(--dk-bg)));
     }
 
     :where(.dk-table-scroll:has(> .dk-table-pinned)) {
@@ -1394,7 +1395,7 @@
         padding: var(--dk-space-3) var(--dk-space-4);
         border: 1px solid transparent;
         border-radius: var(--dk-radius);
-        background: var(--dk-ground-step);
+        background: var(--dk-ground-step, var(--dk-surface));
         font-size: var(--dk-text-code);
         line-height: var(--dk-leading-body);
     }
@@ -1640,11 +1641,6 @@
     }
 
     /*
-     * In forced colors the chosen word, and the button that names it, take the system's
-     * selection.
-     */
-
-    /*
      * The line a visitor without script reads where the switch, or a strip's switches, would be, in
      * the muted text at the strip's size. In a strip it takes the switches' place and wraps where
      * the section is narrow, as at a large text size on a phone, since a line cut off and scrolled
@@ -1724,7 +1720,7 @@
         }
     }
 
-    :where(a.dk-pill[aria-current]:not([aria-current='false'])) {
+    :where(a.dk-pill[aria-current]:not([aria-current='false'], [aria-current=''])) {
         background: var(--dk-highlight);
         color: var(--dk-fg);
         font-weight: var(--dk-weight-strong);
@@ -1820,7 +1816,7 @@
 
     :where(
         .dk-tab[aria-selected='true'],
-        .dk-tab[aria-current]:not([aria-current='false']),
+        .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
         .dk-tab[aria-pressed='true']
     ) {
         padding-bottom: 0;
@@ -2347,14 +2343,12 @@
         color: var(--dk-fg);
     }
 
-    :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+    :where(.dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])) {
         padding-top: var(--dk-space-1);
         border-top: var(--dk-indicator-width) solid var(--dk-accent);
         color: var(--dk-fg);
         font-weight: var(--dk-weight-strong);
     }
-
-    /* In forced colors the current place stands on the highlight, as the current tab and pill. */
 
     /*
      * A toast: a short message that appears over the page, says what just happened and offers one
@@ -2744,6 +2738,13 @@
         outline-offset: var(--dk-ring-offset);
     }
 
+    /*
+     * A tile brought into view by the keyboard stops short of the edge by its ring, so none is cut.
+     */
+    :where(.dk-rows-tiles a.dk-row) {
+        scroll-margin: calc(var(--dk-ring-width) + var(--dk-ring-offset));
+    }
+
     :where(a.dk-row:active .dk-row-title) {
         text-decoration: underline;
     }
@@ -2794,7 +2795,7 @@
         padding: var(--dk-space-3) var(--dk-card-inset);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
-        background: var(--dk-tile-ground, var(--dk-ground-step));
+        background: var(--dk-tile-ground, var(--dk-ground-step, var(--dk-surface)));
         box-shadow: var(--dk-tile-shadow, none);
     }
 
@@ -3165,11 +3166,11 @@
                 ),
             .dk-theme-switch-choice > input:checked + span,
             .dk-theme-switch-button,
-            a.dk-pill[aria-current]:not([aria-current='false']),
+            a.dk-pill[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-pressed='true'],
-            .dk-tabbar a[aria-current]:not([aria-current='false'])
+            .dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])
         ) {
             border-color: Highlight;
             background: Highlight;
@@ -3182,20 +3183,22 @@
          * The tab bar's line over its current place, and its focus ring drawn inside it, stay in
          * sight in the selection's text.
          */
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])) {
+        :where(.dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])) {
             border-color: HighlightText;
         }
 
-        :where(.dk-tabbar a[aria-current]:not([aria-current='false'])):focus-visible {
+        :where(
+            .dk-tabbar a[aria-current]:not([aria-current='false'], [aria-current=''])
+        ):focus-visible {
             outline-color: HighlightText;
         }
 
         :where(
             .dk-button:is([aria-pressed='true'], :not(.dk-button-text)[aria-expanded='true']),
             .dk-theme-switch-button,
-            a.dk-pill[aria-current]:not([aria-current='false']),
+            a.dk-pill[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-selected='true'],
-            .dk-tab[aria-current]:not([aria-current='false']),
+            .dk-tab[aria-current]:not([aria-current='false'], [aria-current='']),
             .dk-tab[aria-pressed='true']
         ):focus-visible {
             outline-color: CanvasText;
@@ -3207,6 +3210,20 @@
          */
         :where(.dk-theme-switch-choice > input:checked:focus-visible + span) {
             outline-color: CanvasText;
+        }
+
+        /*
+         * A pill or a tab shows a press and a pointer by its color, which forced colors replace, so
+         * there it underlines, as a quiet button does.
+         */
+        :where(a.dk-pill:active, .dk-tab:active) {
+            text-decoration: underline;
+        }
+
+        @media (hover: hover) {
+            :where(a.dk-pill:hover, .dk-tab:hover) {
+                text-decoration: underline;
+            }
         }
     }
 
