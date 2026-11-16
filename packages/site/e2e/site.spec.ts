@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { colorOf as systemColor, forceColors } from '../../design-kit/e2e/page.js';
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, declaredIn } from '../../design-kit/examples/palette.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
@@ -43,6 +42,29 @@ const textSize = async (page: Page, scale: number) => {
     const size = await page.evaluate(() => getComputedStyle(document.documentElement).fontSize);
     expect(size, 'the text size the browser draws').toBe(`${String(Math.round(16 * scale))}px`);
 };
+
+/**
+ * Turns forced colors on for the page, and fails where the page does not then match them, so a
+ * test of forced colors never passes on a page drawn in the author's colors.
+ */
+const forceColors = async (page: Page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    expect(
+        await page.evaluate(() => matchMedia('(forced-colors: active)').matches),
+        'whether the page draws in forced colors'
+    ).toBe(true);
+};
+
+/** A system color as the page resolves it, from an element asked to take it. */
+const systemColor = (page: Page, name: string) =>
+    page.evaluate((color) => {
+        const probe = document.createElement('span');
+        probe.style.color = color;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+    }, name);
 
 /** How far the page itself scrolls sideways, which is nothing when it reflows. */
 const sideways = (page: Page) =>

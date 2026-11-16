@@ -106,27 +106,25 @@ const RULES = [
     ['solid', 'none'],
 ];
 
-test('draws a rule between rows and none after the last, in both themes', async ({ page }) => {
+test('draws a rule between rows and none after the last, in both themes and forced colors', async ({
+    page,
+    browserName,
+}) => {
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
         expect(await rules(page), theme).toEqual(RULES);
     }
-});
-
-test("draws the rule between rows in the system's text color in forced colors", async ({
-    page,
-    browserName,
-}) => {
-    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
-    await forceColors(page);
-    await open(page);
-    expect(await rules(page)).toEqual(RULES);
-    // The rule takes the system's text color, so it is drawn and seen.
-    expect(
-        await items(games(page))
-            .nth(1)
-            .evaluate((row) => getComputedStyle(row).borderTopColor)
-    ).toBe(await colorOf(page, 'CanvasText'));
+    // Forced colors where an engine draws them, the rule in the system's text, so it is seen.
+    if (browserName !== 'webkit') {
+        await forceColors(page);
+        await open(page);
+        expect(await rules(page), 'forced colors').toEqual(RULES);
+        expect(
+            await items(games(page))
+                .nth(1)
+                .evaluate((row) => getComputedStyle(row).borderTopColor)
+        ).toBe(await colorOf(page, 'CanvasText'));
+    }
 });
 
 test('draws each row at the target, and the larger target in a tall list', async ({ page }) => {
