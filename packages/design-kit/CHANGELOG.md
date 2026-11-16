@@ -11,9 +11,9 @@ entry as the notes.
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
-each tile on a ground the page sets, and a React field can hold a button beside its control. The
-theme script is unchanged, so `themeScriptHash` is the same, and the sheets' budget stays at 9.25 KB
-and the controls' at 6.25 KB.
+each tile on a ground the page sets, a React field can hold a button beside its control, and a site
+draws its header with kit classes. The theme script is unchanged, so `themeScriptHash` is the same,
+and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -37,6 +37,9 @@ and the controls' at 6.25 KB.
   sets by `--dk-tile-ground` or the surface where it sets none, with a page's own shadow by
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
+  `dk-site-header` draws a site's header under the strip, at the strip's inset and over a rule, with
+  a `dk-site-brand` link holding a `dk-site-mark` and the site's name and its pages as pills, the
+  brand and each page the target tall and the pages wrapping under the brand on a phone.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -49,7 +52,7 @@ and the controls' at 6.25 KB.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through
-  them.
+  them. The reference shows a site's header and names its nav Site.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
@@ -57,7 +60,11 @@ and the controls' at 6.25 KB.
   a button holds its control and button at one height as the hand-drawn field does, wraps the button
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
-  the table of properties a page sets to what the sheets read.
+  the table of properties a page sets to what the sheets read. A site's header starts its brand, and
+  its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with its
+  nav named Site, marks its current page by weight and in forced colors, takes the brand before the
+  pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and the
+  wider spacing.
 
 ## 0.7.0
 
