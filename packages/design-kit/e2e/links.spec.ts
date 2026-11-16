@@ -1,14 +1,15 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { style, writePage } from './page.js';
+import { contrast, forceColors, groundOf, style, writePage } from './page.js';
 
 /*
  * A link in running text is told from the words around it by its underline, since the accent
  * stands too close to the text to mark it by color alone, and in the footer a link takes the
  * footer's own muted color, so the underline is all that marks it. The kit leaves the browser's
- * underline on a plain link wherever one sits in running text, drawn in a color that shows, in both
- * themes and in forced colors, and a text button puts it back. A piece that is a link, such as a
- * button, a pill, a tab, a row, a tab bar's link or the site's brand, takes it off in its own class.
+ * underline on a plain link wherever one sits in running text, drawn at 3 to 1 against the ground
+ * it sits on, in both themes and in forced colors, and a text button puts it back. A piece that is
+ * a link, such as a button, a pill, a tab, a row, a tab bar's link or the site's brand, takes it
+ * off in its own class.
  */
 
 const RUNNING = `<p>Read <a href="#rules">the rules</a> first.</p>`;
@@ -53,9 +54,12 @@ const open = async (page: Page, theme: 'light' | 'dark') => {
     await page.mouse.move(0, 0);
 };
 
-/** Each link, named by its place and its words, with its line and that line's color at rest. */
+/**
+ * Each link, named by its place and its words, with its line, that line's color at rest and the
+ * ground it is drawn on.
+ */
 const lines = async (page: Page, kind: 'in' | 'piece') => {
-    const found = new Map<string, { line: string; color: string }>();
+    const found = new Map<string, { line: string; color: string; ground: string }>();
     for (const holder of await page.locator(`[data-${kind}]`).all()) {
         const place = (await holder.getAttribute(`data-${kind}`)) ?? '';
         for (const link of await holder.locator('a').all()) {
@@ -63,6 +67,8 @@ const lines = async (page: Page, kind: 'in' | 'piece') => {
             found.set(`${place}, ${(await link.innerText()).trim()}`, {
                 line: drawn['text-decoration-line'] ?? '',
                 color: drawn['text-decoration-color'] ?? '',
+                // Only a link in running text is measured on its ground.
+                ground: kind === 'in' ? await groundOf(link) : '',
             });
         }
     }
@@ -70,13 +76,16 @@ const lines = async (page: Page, kind: 'in' | 'piece') => {
     return found;
 };
 
-/** A color the browser resolved, seen when it has any alpha at all. */
-const shows = (color: string): boolean => !/^rgba\(.*,\s*0\)$|^transparent$/.test(color);
-
+/**
+ * Each link in running text underlined, the line at 3 to 1 against its ground, the ratio a mark
+ * that is not text takes, and no piece that is a link.
+ */
 const holdsEach = async (page: Page) => {
-    for (const [where, { line, color }] of await lines(page, 'in')) {
+    for (const [where, { line, color, ground }] of await lines(page, 'in')) {
         expect(line, where).toBe('underline');
-        expect(shows(color), `${where}, ${color}`).toBe(true);
+        expect(contrast(color, ground), `${where}, ${color} on ${ground}`).toBeGreaterThanOrEqual(
+            3
+        );
     }
     for (const [what, { line }] of await lines(page, 'piece')) expect(line, what).toBe('none');
 };
@@ -92,8 +101,7 @@ for (const theme of ['light', 'dark'] as const)
 test('underlines a link in running text in forced colors, and no piece that is a link', async ({
     page,
 }) => {
+    await forceColors(page);
     await open(page, 'light');
-    await page.emulateMedia({ forcedColors: 'active' });
-    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
     await holdsEach(page);
 });

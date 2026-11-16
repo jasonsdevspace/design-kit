@@ -1,7 +1,17 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, colorOf, sheet, sideways, style, tabKey, writePage } from './page.js';
+import {
+    box,
+    colorOf,
+    forceColors,
+    shadowOf,
+    sheet,
+    sideways,
+    style,
+    tabKey,
+    writePage,
+} from './page.js';
 import { cutOff } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -750,24 +760,23 @@ for (const theme of ['light', 'dark'] as const)
         const raised = page.locator('.dk-panel-raised');
         const plain = page.locator('.dk-panel:not(.dk-panel-raised)');
         await writePage(page, { width: 390, theme, title: 'Play', body: panels(true) });
-        const ground = theme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(42, 42, 42)';
-        expect((await style(raised, 'background-color'))['background-color']).toBe(ground);
-        // The resting shadow lifts it with no shadow of the page's own, and a plain panel casts none.
-        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(
-            theme === 'light'
-                ? 'rgba(0, 0, 0, 0.12) 0px 1px 3px 0px'
-                : 'rgba(0, 0, 0, 0.4) 0px 1px 3px 0px'
+        expect((await style(raised, 'background-color'))['background-color']).toBe(
+            await colorOf(page, 'var(--dk-raised)')
         );
+        // The resting shadow lifts it with no shadow of the page's own, and a plain panel casts none.
+        const resting = await shadowOf(page, 'var(--dk-shadow-resting)');
+        expect(resting).not.toBe('none');
+        expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(resting);
         expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
         // Forced colors draw no shadow, where an engine draws them.
         if (browserName !== 'webkit') {
-            await page.emulateMedia({ forcedColors: 'active' });
+            await forceColors(page);
             expect((await style(raised, 'box-shadow'))['box-shadow']).toBe('none');
-            await page.emulateMedia({ forcedColors: 'none' });
+            await forceColors(page, false);
         }
         // A plain panel stays on the card ground.
         expect((await style(plain, 'background-color'))['background-color']).toBe(
-            theme === 'light' ? 'rgb(245, 245, 245)' : 'rgb(30, 30, 30)'
+            await colorOf(page, 'var(--dk-surface)')
         );
 
         await writePage(page, {
@@ -778,7 +787,7 @@ for (const theme of ['light', 'dark'] as const)
             body: panels(true),
         });
         expect((await style(raised, 'box-shadow'))['box-shadow']).toBe(
-            'rgba(0, 0, 0, 0.5) 0px 2px 0px 0px'
+            await shadowOf(page, 'var(--dk-panel-shadow)')
         );
         expect((await style(plain, 'box-shadow'))['box-shadow']).toBe('none');
     });
@@ -787,20 +796,32 @@ test("pads a panel alike at every width in an app's frame, and by the page's wid
     page,
 }) => {
     const panel = '<div class="dk-panel"><p>A panel.</p></div>';
+    // Each place with how many panels it holds, so a panel left unfound fails rather than passes
+    // unread.
     const places = {
-        frame: panels(true),
-        'tab bar page': `<div class="dk-tabbar-page"><main id="main-content">${panel}</main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="./">Play</a></li></ul></nav></div>`,
-        'dialog over a frame': `${panels(true)}<dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
-        plain: panels(false),
-        'dialog on a plain page': `<main id="main-content"><p>A page.</p></main><dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+        frame: [panels(true), 2],
+        'tab bar page': [
+            `<div class="dk-tabbar-page"><main id="main-content">${panel}</main><nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="./">Play</a></li></ul></nav></div>`,
+            1,
+        ],
+        'dialog over a frame': [
+            `${panels(true)}<dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+            1,
+        ],
+        plain: [panels(false), 2],
+        'dialog on a plain page': [
+            `<main id="main-content"><p>A page.</p></main><dialog class="dk-dialog" open aria-label="Options">${panel}</dialog>`,
+            1,
+        ],
     } as const;
     for (const width of [320, 1280])
-        for (const [name, body] of Object.entries(places)) {
+        for (const [name, [body, count]] of Object.entries(places)) {
             await writePage(page, { width, title: 'Play', body });
             const phone = name !== 'plain' && name !== 'dialog on a plain page';
             const scope = name.startsWith('dialog')
                 ? page.locator('.dk-dialog .dk-panel')
                 : page.locator('.dk-panel');
+            await expect(scope, name).toHaveCount(count);
             for (const one of await scope.all())
                 expect(
                     (await style(one, 'padding-left'))['padding-left'],
@@ -814,6 +835,7 @@ test("keeps a panel in an app's frame to a phone's padding at twice the text siz
 }) => {
     await textSize(page, 2);
     await writePage(page, { width: 390, title: 'Play', body: panels(true) });
+    await expect(page.locator('.dk-panel')).toHaveCount(2);
     for (const panel of await page.locator('.dk-panel').all())
         expect((await style(panel, 'padding-left'))['padding-left']).toBe('16px');
 });

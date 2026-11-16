@@ -43,6 +43,29 @@ const textSize = async (page: Page, scale: number) => {
     expect(size, 'the text size the browser draws').toBe(`${String(Math.round(16 * scale))}px`);
 };
 
+/**
+ * Turns forced colors on for the page, and fails where the page does not then match them, so a
+ * test of forced colors never passes on a page drawn in the author's colors.
+ */
+const forceColors = async (page: Page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    expect(
+        await page.evaluate(() => matchMedia('(forced-colors: active)').matches),
+        'whether the page draws in forced colors'
+    ).toBe(true);
+};
+
+/** A system color as the page resolves it, from an element asked to take it. */
+const systemColor = (page: Page, name: string) =>
+    page.evaluate((color) => {
+        const probe = document.createElement('span');
+        probe.style.color = color;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+    }, name);
+
 /** How far the page itself scrolls sideways, which is nothing when it reflows. */
 const sideways = (page: Page) =>
     page.evaluate(
@@ -250,29 +273,15 @@ for (const path of PAGES) {
 test.describe('the landing page', () => {
     test("draws each rule mark in the system's text color in forced colors", async ({ page }) => {
         await page.goto('/design-kit/');
-        await expect(page.locator('.site-rule-mark').first()).toBeAttached();
-        // A browser reports the author's colors to a script even while it forces its own, so the
-        // test reads the fill the sheet's forced colors rules give the mark.
-        const fills = await page.evaluate(() => {
-            const inside = (rules: CSSRuleList): CSSRule[] =>
-                [...rules].flatMap((rule) =>
-                    rule instanceof CSSGroupingRule ? [rule, ...inside(rule.cssRules)] : [rule]
-                );
-            return [...document.styleSheets]
-                .flatMap((sheet) => inside(sheet.cssRules))
-                .filter(
-                    (rule): rule is CSSMediaRule =>
-                        rule instanceof CSSMediaRule && rule.conditionText.includes('forced-colors')
-                )
-                .flatMap((rule) => [...rule.cssRules])
-                .filter(
-                    (rule): rule is CSSStyleRule =>
-                        rule instanceof CSSStyleRule &&
-                        rule.selectorText.includes('.site-rule-mark')
-                )
-                .map((rule) => rule.style.fill.toLowerCase());
-        });
-        expect(fills).toEqual(['canvastext']);
+        await forceColors(page);
+        const marks = page.locator('.site-rule-mark');
+        await expect(marks.first()).toBeAttached();
+        const canvasText = await systemColor(page, 'CanvasText');
+        const fills = await marks.evaluateAll((all) =>
+            all.map((mark) => getComputedStyle(mark).fill)
+        );
+        expect(fills.length).toBeGreaterThan(0);
+        expect(fills).toEqual(fills.map(() => canvasText));
     });
 
     test('opens with a heading, a lead, and links to the controls and to how the kit works', async ({
@@ -937,7 +946,11 @@ test.describe('the app pieces page', () => {
         expect(drawn.scrolls).toBe(true);
         if (drawn.ties) {
             expect(drawn.images).toBe(2);
-            expect(drawn.sizes).toMatch(/^0px 100%, \d+(\.\d+)?px 100%$/);
+            // At the start, the start's shade has no width and the end's has some.
+            const [start, end = ''] = drawn.sizes.split(', ');
+            expect(start).toBe('0px 100%');
+            expect(end).toMatch(/^[\d.]+px 100%$/);
+            expect(Number.parseFloat(end)).toBeGreaterThan(0);
         }
     });
 
@@ -1378,32 +1391,34 @@ test.describe("the site's header", () => {
         page,
     }) => {
         await page.goto('/design-kit/controls/');
-        // A browser reports the author's colors to a script even while it forces its own, so the
-        // test reads the rules the sheet keeps for forced colors, which set the system's own.
-        // The kit's rules sit in its layers, so the rules are read at any depth.
-        const forced = await page.evaluate(() => {
-            const inside = (rules: CSSRuleList): CSSRule[] =>
-                [...rules].flatMap((rule) =>
-                    rule instanceof CSSGroupingRule ? [rule, ...inside(rule.cssRules)] : [rule]
-                );
-            return [...document.styleSheets]
-                .flatMap((sheet) => inside(sheet.cssRules))
-                .filter(
-                    (rule): rule is CSSMediaRule =>
-                        rule instanceof CSSMediaRule && rule.conditionText.includes('forced-colors')
+        await forceColors(page);
+        for (const chosen of [
+            '.dk-theme-switch-choice > input:checked + span',
+            'a.dk-pill[aria-current="page"]',
+            '.dk-tab[aria-selected="true"]',
+        ]) {
+            const found = page.locator(chosen);
+            expect(await found.count(), chosen).toBeGreaterThan(0);
+            // Each beside the selection's color where it sits, since a copy in the other theme
+            // takes that scheme's. Polled, since a ground still easing from the author's color is
+            // drawn in the forced one at the author's alpha until it arrives.
+            await expect
+                .poll(
+                    () =>
+                        found.evaluateAll((all) =>
+                            all.map((element) => {
+                                const probe = document.createElement('span');
+                                probe.style.backgroundColor = 'Highlight';
+                                element.after(probe);
+                                const selection = getComputedStyle(probe).backgroundColor;
+                                probe.remove();
+                                return getComputedStyle(element).backgroundColor === selection;
+                            })
+                        ),
+                    { message: chosen }
                 )
-                .flatMap((rule) => [...rule.cssRules])
-                .filter(
-                    (rule): rule is CSSStyleRule =>
-                        rule instanceof CSSStyleRule &&
-                        rule.style.backgroundColor.toLowerCase() === 'highlight'
-                )
-                .map((rule) => rule.selectorText)
-                .join(',');
-        });
-        expect(forced).toContain('.dk-theme-switch-choice > input:checked + span');
-        expect(forced).toContain('a.dk-pill[aria-current]');
-        expect(forced).toContain('.dk-tab[aria-selected="true"]');
+                .not.toContain(false);
+        }
     });
 
     test('keeps each segment one width as the choice moves', async ({ page }) => {

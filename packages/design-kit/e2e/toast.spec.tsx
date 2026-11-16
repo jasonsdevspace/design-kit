@@ -3,7 +3,18 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Toast } from '../src/react.js';
-import { box, colorOf, contrast, js, KIT, ORIGIN, sideways, style, tabKey } from './page.js';
+import {
+    box,
+    colorOf,
+    contrast,
+    forceColors,
+    js,
+    KIT,
+    ORIGIN,
+    sideways,
+    style,
+    tabKey,
+} from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -946,24 +957,19 @@ test('returns the one function it showed with when attached again', async ({ pag
 });
 
 test('draws a solid edge round a shown toast in forced colors, where its shadow is gone', async ({
-    browser,
+    page,
     browserName,
 }) => {
     test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        await page.locator('#save').click();
-        await expect(toast(page)).toBeVisible();
-        const edge = await toast(page).evaluate((element) => {
-            const style = getComputedStyle(element);
-            return [style.borderTopStyle, style.borderTopWidth];
-        });
-        expect(edge).toEqual(['solid', '1px']);
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    await page.locator('#save').click();
+    await expect(toast(page)).toBeVisible();
+    const edge = await toast(page).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return [style.borderTopStyle, style.borderTopWidth];
+    });
+    expect(edge).toEqual(['solid', '1px']);
 });
 
 test('prints no toast, shown or not', async ({ page }) => {

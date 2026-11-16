@@ -5,7 +5,17 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { siteHeader, SOURCE } from '../examples/examples.js';
 import { Button, DemoFooter, PortfolioStrip, SkipLink, ThemeSwitch } from '../src/react.js';
-import { box, KIT, style, writePage } from './page.js';
+import {
+    box,
+    colorOf,
+    forceColors,
+    KIT,
+    SIDES,
+    SIDES_CSS,
+    sideways,
+    style,
+    writePage,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -398,7 +408,7 @@ test("draws the focused skip link as a box in forced colors, by an edge in the l
                 ground: style.backgroundColor,
             };
         });
-    await page.emulateMedia({ forcedColors: 'active' });
+    await forceColors(page);
     await page.keyboard.press('Tab');
     await expect(skip).toBeFocused();
     // The system draws the edge in the color it gives the link's words, which its ground is not.
@@ -407,7 +417,7 @@ test("draws the focused skip link as a box in forced colors, by an edge in the l
     expect(forced.edgeColor).toBe(forced.color);
     expect(forced.edgeColor).not.toBe(forced.ground);
     // Outside forced colors the edge is transparent and the box is the size it was.
-    await page.emulateMedia({ forcedColors: 'none' });
+    await forceColors(page, false);
     expect((await look()).edgeColor).toBe('rgba(0, 0, 0, 0)');
     // The same size as a link drawn by 0.3.1's rule, padding alone and no edge, in the same page.
     const shown = await box(skip, 'the skip link');
@@ -493,10 +503,6 @@ test("runs the footer's rule the width of the page, with its text in the column"
     // Its sentence holds to the measure, as the page's prose does, however wide the column.
     expect(text.width).toBeLessThanOrEqual(34 * 16);
 });
-
-/** What a phone held on its side keeps at each edge, set as the safe area tokens. */
-const SIDES = { left: 47, right: 47, bottom: 21 };
-const SIDES_CSS = `:root { --dk-safe-left: ${String(SIDES.left)}px; --dk-safe-right: ${String(SIDES.right)}px; --dk-safe-bottom: ${String(SIDES.bottom)}px; }`;
 
 /** The padding a piece is drawn with on each side, in pixels. */
 const sidesOf = async (locator: Locator) => {
@@ -746,7 +752,7 @@ test('draws the link to the current page apart from the others in the strip and 
 }) => {
     for (const theme of ['light', 'dark'] as const) {
         for (const forcedColors of ['none', 'active'] as const) {
-            await page.emulateMedia({ forcedColors });
+            await forceColors(page, forcedColors === 'active');
             await open(page, { width: 1280, theme, where: 'about' });
             for (const [where, name] of [
                 ['navigation', 'Portfolio'],
@@ -921,43 +927,44 @@ test("reads a site's header once, its nav named Site, its current page marked, a
         visited.push(await page.evaluate(() => document.activeElement?.textContent.trim() ?? ''));
     }
     expect(visited).toEqual(['Scorekeeper', 'Home', 'About', 'Open the app']);
-    for (const [width, theme] of [
-        [1280, 'light'],
-        [1280, 'dark'],
-        [320, 'light'],
-        [320, 'dark'],
-    ] as const) {
-        await writePage(page, { width, theme, title: 'Scorekeeper', body: sitePage });
-        // The brand reads as the site's name, not as a link in running text.
-        await expect(page.locator('.dk-site-brand'), theme).toHaveCSS(
-            'text-decoration-line',
-            'none'
-        );
-        // The current page stands apart by its weight as well as its ground.
-        const weights = await page
-            .getByRole('navigation', { name: 'Site', exact: true })
-            .getByRole('link')
-            .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
-        expect(new Set(weights).size, theme).toBe(2);
-        const results = await new AxeBuilder({ page }).analyze();
-        expect(
-            results.violations.map(({ id }) => id),
-            theme
-        ).toEqual([]);
-    }
-    // In forced colors the current page takes the system's selection.
-    await page.emulateMedia({ forcedColors: 'active' });
+});
+
+for (const theme of ['light', 'dark'] as const)
+    test(`draws a site's brand as its name and its current page apart by weight, with no audit findings, in the ${theme} theme`, async ({
+        page,
+    }) => {
+        for (const width of [1280, 320]) {
+            await writePage(page, { width, theme, title: 'Scorekeeper', body: sitePage });
+            const at = `${String(width)}px`;
+            // The brand reads as the site's name, not as a link in running text.
+            await expect(page.locator('.dk-site-brand'), at).toHaveCSS(
+                'text-decoration-line',
+                'none'
+            );
+            // The current page stands apart by its weight as well as its ground.
+            const weights = await page
+                .getByRole('navigation', { name: 'Site', exact: true })
+                .getByRole('link')
+                .evaluateAll((links) => links.map((link) => getComputedStyle(link).fontWeight));
+            expect(new Set(weights).size, at).toBe(2);
+            const results = await new AxeBuilder({ page }).analyze();
+            expect(
+                results.violations.map(({ id }) => id),
+                at
+            ).toEqual([]);
+        }
+    });
+
+test("marks a site's current page with the system's selection in forced colors", async ({
+    page,
+}) => {
+    await forceColors(page);
+    await writePage(page, { width: 320, title: 'Scorekeeper', body: sitePage });
     const home = page
         .getByRole('navigation', { name: 'Site', exact: true })
         .getByRole('link', { name: 'Home' });
     expect(await home.evaluate((link) => getComputedStyle(link).backgroundColor)).toBe(
-        await page.evaluate(() => {
-            const probe = document.body.appendChild(document.createElement('span'));
-            probe.style.backgroundColor = 'Highlight';
-            const drawn = getComputedStyle(probe).backgroundColor;
-            probe.remove();
-            return drawn;
-        })
+        await colorOf(page, 'Highlight')
     );
 });
 
@@ -966,11 +973,7 @@ test("cuts nothing off a site's header at 320 wide, twice the text size and the 
 }) => {
     await textSize(page, 2);
     await writePage(page, { width: 320, title: 'Scorekeeper', css: SPACED, body: sitePage });
-    expect(
-        await page.evaluate(
-            () => document.documentElement.scrollWidth - document.documentElement.clientWidth
-        )
-    ).toBe(0);
+    expect(await sideways(page)).toBe(0);
     expect(await cutOff(page, '.dk-site-header a')).toEqual([]);
     const { edge, brand } = await headerLayout(page);
     expect(Math.round(brand.x)).toBe(Math.round(edge));

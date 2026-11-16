@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, style, writePage } from './page.js';
+import { box, forceColors, style, writePage } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -194,18 +194,13 @@ test('takes the ground a page sets for a table on a ground of its own', async ({
 });
 
 test('keeps the pinned cells on top, on a ground that hides what passes under, in forced colors', async ({
-    browser,
+    page,
 }) => {
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        await scrollBy(page, 120);
-        for (const player of PLAYERS) expect(await onTop(page, cell(page, player))).toBe(player);
-        expect(await ground(cell(page, 'Ana'))).not.toBe('rgba(0, 0, 0, 0)');
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    await scrollBy(page, 120);
+    for (const player of PLAYERS) expect(await onTop(page, cell(page, player))).toBe(player);
+    expect(await ground(cell(page, 'Ana'))).not.toBe('rgba(0, 0, 0, 0)');
 });
 
 test("draws each row's rule under a pinned cell as it travels, and a rule where the column stops", async ({

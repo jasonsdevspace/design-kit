@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import ts from 'typescript';
 
 import { contrast as ratio } from '../examples/palette.js';
@@ -89,6 +89,13 @@ export const sideways = (page: Page): Promise<number> =>
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
 
+/**
+ * What a phone held on its side keeps at each edge, in pixels, and the rule that sets them as the
+ * safe area tokens, one copy for every spec that draws a piece clear of them.
+ */
+export const SIDES = { left: 47, right: 47, bottom: 21 } as const;
+export const SIDES_CSS = `:root { --dk-safe-left: ${String(SIDES.left)}px; --dk-safe-right: ${String(SIDES.right)}px; --dk-safe-bottom: ${String(SIDES.bottom)}px; }`;
+
 /** The theme set on the root, or null where none is. */
 export const themeOf = (page: Page): Promise<string | null> =>
     page.evaluate(() => document.documentElement.getAttribute('data-theme'));
@@ -97,14 +104,61 @@ export const themeOf = (page: Page): Promise<string | null> =>
 export const tabKey = (browserName: string): string =>
     browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 
-/** The contrast between two colors the browser resolved to rgb, by the measure the tokens use. */
+/** The red, green, blue and alpha of a color the browser resolved to rgb or to srgb. */
+export const channels = (color: string): readonly [number, number, number, number] => {
+    const [red = 0, green = 0, blue = 0, alpha = 1] = (
+        color.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []
+    ).map(Number);
+    if (color.startsWith('rgb')) return [red, green, blue, alpha];
+    if (color.startsWith('color(srgb ')) return [red * 255, green * 255, blue * 255, alpha];
+    throw new Error(`expected a color in rgb or srgb, got ${color}`);
+};
+
+/**
+ * The contrast between a color the browser resolved and the ground it sits on, by the measure the
+ * tokens use. A translucent color is weighed over its ground, since what shows is the two mixed, so
+ * a color drawn at a tenth of its strength measures as faint as it looks. The ground must be
+ * opaque, as `groundOf` gives it, since a translucent ground is only known over what shows through.
+ */
 export const contrast = (first: string, second: string): number => {
-    const hex = (color: string) =>
-        `#${(color.match(/[\d.]+/g) ?? [])
+    const top = channels(first);
+    const ground = channels(second);
+    if (ground[3] < 1)
+        throw new Error(`expected an opaque ground, got ${second}: measure it with groundOf`);
+    const hex = (color: readonly number[]) =>
+        `#${color
             .slice(0, 3)
-            .map((part) => Math.round(Number(part)).toString(16).padStart(2, '0'))
+            .map((part) => Math.round(part).toString(16).padStart(2, '0'))
             .join('')}`;
-    return ratio(hex(first), hex(second));
+    const mixed = top
+        .slice(0, 3)
+        .map((part, at) => part * top[3] + (ground[at] ?? 0) * (1 - top[3]));
+    return ratio(hex(mixed), hex(ground));
+};
+
+/**
+ * The ground the element the locator finds is drawn on: the backgrounds of it and of what holds it,
+ * laid one over another from the root's up, so a translucent one is weighed over what shows
+ * through it, or a failure where nothing under it is opaque.
+ */
+export const groundOf = async (locator: Locator): Promise<string> => {
+    const layers = await locator.evaluate((element) => {
+        const found: string[] = [];
+        for (let at: Element | null = element; at; at = at.parentElement)
+            found.push(getComputedStyle(at).backgroundColor);
+        return found.reverse();
+    });
+    const from = layers.findLastIndex((layer) => channels(layer)[3] === 1);
+    if (from < 0)
+        throw new Error(`expected an opaque ground under the element, got ${layers.join(', ')}`);
+    let ground = channels(layers[from] ?? '').slice(0, 3);
+    for (const layer of layers.slice(from + 1)) {
+        const [red, green, blue, alpha] = channels(layer);
+        ground = [red, green, blue].map(
+            (part, at) => part * alpha + (ground[at] ?? 0) * (1 - alpha)
+        );
+    }
+    return `rgb(${ground.map((part) => String(Math.round(part))).join(', ')})`;
 };
 
 /** A color as the page resolves it, a system color or a token, from an element asked to take it. */
@@ -117,6 +171,41 @@ export const colorOf = (page: Page, name: string): Promise<string> =>
         probe.remove();
         return resolved;
     }, name);
+
+/** A shadow as the page resolves it, a token's included, from an element asked to cast it. */
+export const shadowOf = (page: Page, value: string): Promise<string> =>
+    page.evaluate((shadow) => {
+        const probe = document.createElement('span');
+        probe.style.boxShadow = shadow;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).boxShadow;
+        probe.remove();
+        return resolved;
+    }, value);
+
+/**
+ * Turns forced colors on for the page, or off again, and fails where the page does not then match
+ * them, so a test of forced colors never passes on a page drawn in the author's colors.
+ */
+export const forceColors = async (page: Page, active = true): Promise<void> => {
+    await page.emulateMedia({ forcedColors: active ? 'active' : 'none' });
+    expect(
+        await page.evaluate(() => matchMedia('(forced-colors: active)').matches),
+        'whether the page draws in forced colors'
+    ).toBe(active);
+};
+
+/**
+ * Brings focus to the element as the keyboard does, by leaving it backward and coming back, so the
+ * browser draws the ring it keeps for keyboard focus, which focus from a script may not show.
+ */
+export const ringByKeyboard = async (locator: Locator, browserName: string): Promise<void> => {
+    const keys = locator.page().keyboard;
+    await locator.focus();
+    await keys.press(`Shift+${tabKey(browserName)}`);
+    await keys.press(tabKey(browserName));
+    await expect(locator).toBeFocused();
+};
 
 /**
  * A length the browser reports, in pixels, for a check within a twentieth of a pixel, since Firefox

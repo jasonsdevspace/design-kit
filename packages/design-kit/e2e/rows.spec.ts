@@ -1,7 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, colorOf, contrast, sideways, style, writePage } from './page.js';
+import {
+    box,
+    colorOf,
+    contrast,
+    forceColors,
+    groundOf,
+    ringByKeyboard,
+    shadowOf,
+    sideways,
+    style,
+    tabKey,
+    writePage,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -79,47 +91,40 @@ const items = (list: Locator): Locator => list.getByRole('listitem');
 /** Where a drawn element ends, down the page. */
 const bottom = (drawn: { y: number; height: number }): number => drawn.y + drawn.height;
 
+/** The rule above each row and below it, as drawn. */
+const rules = (page: Page) =>
+    items(games(page)).evaluateAll((rows) =>
+        rows.map((row) => {
+            const drawn = getComputedStyle(row);
+            return [drawn.borderTopStyle, drawn.borderBottomStyle];
+        })
+    );
+
+/** A rule between rows and none after the last. */
+const RULES = [
+    ['none', 'none'],
+    ['solid', 'none'],
+    ['solid', 'none'],
+];
+
 test('draws a rule between rows and none after the last, in both themes and forced colors', async ({
     page,
-    browser,
+    browserName,
 }) => {
-    const rules = async (on: Page) =>
-        items(games(on)).evaluateAll((rows) =>
-            rows.map((row) => {
-                const drawn = getComputedStyle(row);
-                return [drawn.borderTopStyle, drawn.borderBottomStyle];
-            })
-        );
-    const expected = [
-        ['none', 'none'],
-        ['solid', 'none'],
-        ['solid', 'none'],
-    ];
-    const ruleColor = (on: Page) =>
-        items(games(on))
-            .nth(1)
-            .evaluate((row) => getComputedStyle(row).borderTopColor);
     for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
-        expect(await rules(page), theme).toEqual(expected);
+        expect(await rules(page), theme).toEqual(RULES);
     }
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const forced = await context.newPage();
-        await open(forced);
-        expect(await rules(forced)).toEqual(expected);
-        // The rule takes the system's text color, so it is drawn and seen.
-        const text = await forced.evaluate(() => {
-            const probe = document.createElement('span');
-            probe.style.color = 'CanvasText';
-            document.body.append(probe);
-            const resolved = getComputedStyle(probe).color;
-            probe.remove();
-            return resolved;
-        });
-        expect(await ruleColor(forced)).toBe(text);
-    } finally {
-        await context.close();
+    // Forced colors where an engine draws them, the rule in the system's text, so it is seen.
+    if (browserName !== 'webkit') {
+        await forceColors(page);
+        await open(page);
+        expect(await rules(page), 'forced colors').toEqual(RULES);
+        expect(
+            await items(games(page))
+                .nth(1)
+                .evaluate((row) => getComputedStyle(row).borderTopColor)
+        ).toBe(await colorOf(page, 'CanvasText'));
     }
 });
 
@@ -140,6 +145,7 @@ test('draws each row at the target, and the larger target in a tall list', async
 
 test('makes a link row one stop named by its words, title first, with its ring around the whole row', async ({
     page,
+    browserName,
 }) => {
     await open(page);
     const link = games(page).getByRole('link').first();
@@ -153,7 +159,7 @@ test('makes a link row one stop named by its words, title first, with its ring a
     expect((await box(sign, 'the sign')).x).toBeGreaterThan(
         (await box(link.locator('.dk-row-figure'), 'the figure')).x
     );
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     await expect(link).toBeFocused();
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
@@ -166,6 +172,7 @@ test('makes a link row one stop named by its words, title first, with its ring a
 
 test("makes a button at a row's end its own stop, named for what it does and to which row", async ({
     page,
+    browserName,
 }) => {
     await open(page);
     const players = page.getByRole('list', { name: 'Players' });
@@ -174,7 +181,7 @@ test("makes a button at a row's end its own stop, named for what it does and to 
     // The keyboard goes through every game, then each player's button, and nothing else.
     const reached: string[] = [];
     for (let stop = 0; stop < GAMES.length + 2; stop += 1) {
-        await page.keyboard.press('Tab');
+        await page.keyboard.press(tabKey(browserName));
         reached.push(
             await page.evaluate(
                 () =>
@@ -382,23 +389,37 @@ test('draws a tile on the surface with no ground set and no shadow, unless the p
             await colorOf(page, 'var(--dk-surface)')
         );
     }
-    const link = tileList(page).getByRole('link').first();
     await writePage(page, {
         width: 390,
         css: ':root { --dk-tile-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',
         title: 'Play',
         body: tiles(false),
     });
-    expect((await style(link, 'box-shadow'))['box-shadow']).toBe(
-        'rgba(0, 0, 0, 0.5) 0px 2px 0px 0px'
-    );
-    // Forced colors draw no shadow, a page's own included.
-    await page.emulateMedia({ forcedColors: 'active' });
+    const link = tileList(page).getByRole('link').first();
+    const shadow = (await style(link, 'box-shadow'))['box-shadow'];
+    expect(shadow).not.toBe('none');
+    expect(shadow).toBe(await shadowOf(page, 'var(--dk-tile-shadow)'));
+});
+
+test("draws no tile's shadow in forced colors, a page's own included", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    await forceColors(page);
+    await writePage(page, {
+        width: 390,
+        css: ':root { --dk-tile-shadow: 0 2px 0 rgb(0 0 0 / 0.5); }',
+        title: 'Play',
+        body: tiles(false),
+    });
+    const link = tileList(page).getByRole('link').first();
     expect((await style(link, 'box-shadow'))['box-shadow']).toBe('none');
 });
 
 test("underlines a tile's title under a pointer, and rings it outside, as a separate control", async ({
     page,
+    browserName,
 }) => {
     await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
     const link = tileList(page).getByRole('link').first();
@@ -406,9 +427,7 @@ test("underlines a tile's title under a pointer, and rings it outside, as a sepa
     await link.hover();
     expect((await style(title, 'text-decoration-line'))['text-decoration-line']).toBe('underline');
     await page.mouse.move(0, 0);
-    await link.focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
+    await ringByKeyboard(link, browserName);
     const ring = await style(link, 'outline-style', 'outline-offset', 'outline-width');
     expect(ring['outline-style']).toBe('solid');
     expect(ring['outline-offset']).toBe('2px');
@@ -437,26 +456,25 @@ test("underlines a tile's title under a pressing thumb, on a phone where nothing
     }
 });
 
-test("keeps a tile's edge in forced colors, in the system's link color", async ({ browser }) => {
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
-        // A link takes the system's link color in forced colors, and its edge with it.
-        const link = tileList(page).getByRole('link').first();
-        const drawn = await style(
-            link,
-            'border-top-style',
-            'border-top-color',
-            'color',
-            'box-shadow'
-        );
-        expect(drawn['border-top-style']).toBe('solid');
-        expect(drawn['border-top-color']).toBe(drawn['color']);
-        expect(drawn['box-shadow']).toBe('none');
-    } finally {
-        await context.close();
-    }
+test("keeps a tile's edge in forced colors, in the system's link color", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
+    await forceColors(page);
+    await writePage(page, { width: 390, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    // A link takes the system's link color in forced colors, and its edge with it.
+    const drawn = await style(
+        tileList(page).getByRole('link').first(),
+        'border-top-style',
+        'border-top-color',
+        'color',
+        'box-shadow'
+    );
+    expect(drawn['border-top-style']).toBe('solid');
+    expect(drawn['border-top-color']).toBe(drawn['color']);
+    expect(drawn['color']).toBe(await colorOf(page, 'LinkText'));
+    expect(drawn['box-shadow']).toBe('none');
 });
 
 test('draws an empty list of tiles not at all', async ({ page }) => {
@@ -501,16 +519,13 @@ for (const theme of ['light', 'dark'] as const)
  * and detail against its own ground at 4.5 to 1 and its sign at 3 to 1, and its ring, drawn outside
  * it, at 3 to 1 against what the list sits on, as drawn.
  */
-const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
+const holdsItsRatios = async (list: Locator, at: string, browserName: string) => {
     const links = await list.getByRole('link').all();
     expect(links.length, at).toBeGreaterThan(0);
     const color = async (part: Locator, property = 'color') =>
         (await style(part, property))[property] ?? '';
     for (const link of links) {
-        await link.focus();
-        await page.keyboard.press('Shift+Tab');
-        await page.keyboard.press('Tab');
-        await expect(link).toBeFocused();
+        await ringByKeyboard(link, browserName);
         const ground = await color(link, 'background-color');
         const where = `${at}, ${ground}`;
         for (const [part, least] of [
@@ -523,13 +538,7 @@ const holdsItsRatios = async (page: Page, list: Locator, at: string) => {
                 `${where}, ${part}`
             ).toBeGreaterThanOrEqual(least);
         // The nearest ground under the tile, the page's where nothing between has one.
-        const under = await link.evaluate((tile) => {
-            for (let at = tile.parentElement; at; at = at.parentElement) {
-                const drawn = getComputedStyle(at).backgroundColor;
-                if (drawn !== 'rgba(0, 0, 0, 0)') return drawn;
-            }
-            return getComputedStyle(document.documentElement).backgroundColor;
-        });
+        const under = await groundOf(link.locator('..'));
         expect(
             contrast(await color(link, 'outline-color'), under),
             `${where}, the ring on ${under}`
@@ -544,6 +553,7 @@ for (const theme of ['light', 'dark'] as const)
     for (const grounds of [true, false])
         test(`holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on ${grounds ? "the page's grounds" : 'the surface'} in the ${theme} theme`, async ({
             page,
+            browserName,
         }) => {
             await writePage(page, {
                 width: 390,
@@ -553,7 +563,7 @@ for (const theme of ['light', 'dark'] as const)
                 body: tiles(grounds),
             });
             await expect(tileList(page).getByRole('link')).toHaveCount(3);
-            await holdsItsRatios(page, tileList(page), theme);
+            await holdsItsRatios(tileList(page), theme, browserName);
         });
 
 for (const [where, width] of [
@@ -598,6 +608,7 @@ test("sets a tile's title in an explainer at the body size, as a panel's title t
 
 test("keeps a tile's whole ring in view as the keyboard scrolls an app's body to it", async ({
     page,
+    browserName,
 }) => {
     const many = Array.from(
         { length: 12 },
@@ -616,8 +627,8 @@ test("keeps a tile's whole ring in view as the keyboard scrolls an app's body to
     const links = await body.getByRole('link').all();
     // Forward from the body to the last tile, then back from it to the first.
     for (const [key, presses] of [
-        ['Tab', links.length],
-        ['Shift+Tab', links.length - 1],
+        [tabKey(browserName), links.length],
+        [`Shift+${tabKey(browserName)}`, links.length - 1],
     ] as const) {
         // Each tile as the keyboard reaches it, since one scrolled just into view sits at the edge.
         for (let at = 0; at < presses; at += 1) {
@@ -654,6 +665,7 @@ const pictureList = (label: string, classes: string, size = ''): string =>
 
 test('starts every title on one line beside a picture, in a row and a tile, with the ring clear of it', async ({
     page,
+    browserName,
 }) => {
     await writePage(page, {
         width: 390,
@@ -666,7 +678,7 @@ test('starts every title on one line beside a picture, in a row and a tile, with
         for (const link of links) {
             const title = await box(link.locator('.dk-row-title'));
             starts.add(Math.round(title.x));
-            await link.focus();
+            await ringByKeyboard(link, browserName);
             const ring = parseFloat((await style(link, 'outline-width'))['outline-width'] ?? '0');
             const row = await box(link);
             const picture = await box(link.locator('.dk-row-picture'));
@@ -702,6 +714,7 @@ const places = (page: Page) =>
 
 test('flows tiles into columns on a wide page, one column on a phone, in reading order for the keyboard', async ({
     page,
+    browserName,
 }) => {
     for (const width of [1280, 320]) {
         await writePage(page, { width, title: 'Pages', body: columns() });
@@ -722,7 +735,7 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
         await page.getByRole('heading', { name: 'Pages' }).click();
         const visited: string[] = [];
         for (const _ of NAMES) {
-            await page.keyboard.press('Tab');
+            await page.keyboard.press(tabKey(browserName));
             visited.push(
                 await page.evaluate(() => document.activeElement?.getAttribute('href') ?? '')
             );
@@ -738,9 +751,12 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
         expect(title.y, `${String(width)}px`).toBeGreaterThanOrEqual(picture.y + picture.height);
         expect((await style(tile.locator('.dk-row-title'), 'font-size'))['font-size']).toBe('16px');
     }
-    // At twice the text size and the wider spacing a visitor may set, on the narrowest phone, one
-    // column, and a row, a tile and a large picture a page sets, none scrolling sideways or cutting
-    // off a word.
+});
+
+test('keeps tiles in one column on the narrowest phone at twice the text size and the wider spacing, a word cut off nowhere', async ({
+    page,
+}) => {
+    // A row, a tile and a large picture a page sets, none scrolling sideways or cutting off a word.
     await textSize(page, 2);
     await writePage(page, {
         width: 320,
@@ -757,10 +773,11 @@ test('flows tiles into columns on a wide page, one column on a phone, in reading
     expect(await cutOff(page, '.dk-row-text')).toEqual([]);
 });
 
-test("steps a tile's ground off a plain panel to the page's, and off a raised one to the card's", async ({
-    page,
-}) => {
-    for (const theme of ['light', 'dark'] as const) {
+for (const theme of ['light', 'dark'] as const)
+    test(`steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the ${theme} theme`, async ({
+        page,
+        browserName,
+    }) => {
         await writePage(page, {
             theme,
             title: 'Grounds',
@@ -774,21 +791,15 @@ test("steps a tile's ground off a plain panel to the page's, and off a raised on
                 .getByRole('link')
                 .first()
                 .evaluate((link) => getComputedStyle(link).backgroundColor);
-        expect(await ground('In a panel'), theme).toBe(await colorOf(page, 'var(--dk-bg)'));
-        expect(await ground('In a raised panel'), theme).toBe(
-            await colorOf(page, 'var(--dk-surface)')
-        );
+        expect(await ground('In a panel')).toBe(await colorOf(page, 'var(--dk-bg)'));
+        expect(await ground('In a raised panel')).toBe(await colorOf(page, 'var(--dk-surface)'));
         // The title, the muted detail, the sign and the ring hold their ratios on each stepped ground.
         for (const label of ['In a panel', 'In a raised panel'])
             await holdsItsRatios(
-                page,
                 page.getByRole('list', { name: label }),
-                `${theme}, ${label}`
+                `${theme}, ${label}`,
+                browserName
             );
         const results = await new AxeBuilder({ page }).analyze();
-        expect(
-            results.violations.map(({ id }) => id),
-            theme
-        ).toEqual([]);
-    }
-});
+        expect(results.violations.map(({ id }) => id)).toEqual([]);
+    });

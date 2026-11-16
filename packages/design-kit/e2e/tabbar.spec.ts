@@ -1,7 +1,17 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { backplateUnderWords, box, sideways, style, tabKey, writePage } from './page.js';
+import {
+    backplateUnderWords,
+    box,
+    colorOf,
+    forceColors,
+    ringByKeyboard,
+    sideways,
+    style,
+    tabKey,
+    writePage,
+} from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -157,49 +167,45 @@ test('tells the current link apart by its weight and a line, forced colors inclu
 });
 
 test('draws one line in forced colors, over the current link, in a system color', async ({
-    browser,
+    page,
     browserName,
 }) => {
     test.skip(browserName === 'webkit', 'WebKit has no forced colors to draw');
-    const context = await browser.newContext({ forcedColors: 'active' });
-    try {
-        const page = await context.newPage();
-        await open(page);
-        const edge = (name: string) =>
-            style(
-                page.getByRole('link', { name, exact: true }),
-                'border-top-width',
-                'border-top-style',
-                'border-top-color',
-                'color'
-            );
-        // A solid line in the color forced colors give the link's own words, where the accent
-        // is gone, and no edge at all on a link at rest for forced colors to paint.
-        const current = await edge('Play');
-        expect([current['border-top-width'], current['border-top-style']]).toEqual([
-            '2px',
-            'solid',
-        ]);
-        expect(current['border-top-color']).toBe(current['color']);
-        expect((await edge('History'))['border-top-style']).toBe('none');
-        // Its words show as the selection's text, where a backplate would paint them over.
-        expect(
-            await backplateUnderWords(page.getByRole('link', { name: 'Play', exact: true }))
-        ).toBeLessThan(0.8);
-        // The current place stands on the highlight, as the current tab and pill do.
-        const fill = (name: string) =>
-            style(page.getByRole('link', { name, exact: true }), 'background-color').then(
-                (read) => read['background-color']
-            );
-        expect(await fill('Play')).not.toBe(await fill('History'));
-        expect(await fill('Play')).not.toBe('rgba(0, 0, 0, 0)');
-        // Its focus ring is drawn inside it, so it takes a color that shows on the highlight.
-        const play = page.getByRole('link', { name: 'Play', exact: true });
-        await play.focus();
-        expect((await style(play, 'outline-color'))['outline-color']).not.toBe(await fill('Play'));
-    } finally {
-        await context.close();
-    }
+    await forceColors(page);
+    await open(page);
+    const edge = (name: string) =>
+        style(
+            page.getByRole('link', { name, exact: true }),
+            'border-top-width',
+            'border-top-style',
+            'border-top-color',
+            'color'
+        );
+    // A solid line in the color forced colors give the link's own words, where the accent
+    // is gone, and no edge at all on a link at rest for forced colors to paint.
+    const current = await edge('Play');
+    expect([current['border-top-width'], current['border-top-style']]).toEqual(['2px', 'solid']);
+    expect(current['border-top-color']).toBe(current['color']);
+    expect((await edge('History'))['border-top-style']).toBe('none');
+    // Its words show as the selection's text, where a backplate would paint them over.
+    expect(
+        await backplateUnderWords(page.getByRole('link', { name: 'Play', exact: true }))
+    ).toBeLessThan(0.8);
+    // The current place stands on the highlight, as the current tab and pill do.
+    const fill = (name: string) =>
+        style(page.getByRole('link', { name, exact: true }), 'background-color').then(
+            (read) => read['background-color']
+        );
+    const highlight = await colorOf(page, 'Highlight');
+    expect(await fill('Play')).toBe(highlight);
+    expect(await fill('History')).not.toBe(highlight);
+    // Its focus ring is drawn inside it, so it takes the selection's text, which shows on the
+    // highlight.
+    const play = page.getByRole('link', { name: 'Play', exact: true });
+    await ringByKeyboard(play, browserName);
+    expect((await style(play, 'outline-color'))['outline-color']).toBe(
+        await colorOf(page, 'HighlightText')
+    );
 });
 
 test('takes no placing of its own in a wrapper, so a frame clears the home indicator once', async ({

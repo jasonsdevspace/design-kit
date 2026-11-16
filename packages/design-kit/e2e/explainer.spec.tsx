@@ -4,7 +4,17 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { SOURCE, steps } from '../examples/examples.js';
 import { Callout, DemoFooter, PortfolioStrip, SkipLink } from '../src/react.js';
-import { box, KIT, sideways, style, writePage } from './page.js';
+import {
+    box,
+    colorOf,
+    forceColors,
+    KIT,
+    SIDES,
+    SIDES_CSS,
+    sideways,
+    style,
+    writePage,
+} from './page.js';
 import { SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -150,18 +160,17 @@ test('lines the explainer up with the strip, and holds its prose to the measure'
 test('keeps the explainer and its header clear of what a phone keeps at its sides', async ({
     page,
 }) => {
-    await open(page, {
-        width: 844,
-        extra: ':root { --dk-safe-left: 47px; --dk-safe-right: 47px; }',
-    });
+    await open(page, { width: 844, extra: SIDES_CSS });
     for (const [name, locator] of [
         ['the link back', page.locator('.dk-explainer-header a')],
         ['the title', page.getByRole('heading', { level: 1 })],
         ['the lead', page.locator('.dk-explainer-lead')],
     ] as const)
-        expect(Math.round((await box(locator)).x), name).toBe(47 + 16);
+        expect(Math.round((await box(locator)).x), name).toBe(SIDES.left + 16);
     const explainer = page.locator('.dk-explainer');
-    expect((await style(explainer, 'padding-right'))['padding-right']).toBe('63px');
+    expect((await style(explainer, 'padding-right'))['padding-right']).toBe(
+        `${String(SIDES.right + 16)}px`
+    );
 });
 
 test('keeps a line of prose to eighty characters or fewer on a wide screen', async ({ page }) => {
@@ -408,11 +417,10 @@ test('makes a landmark of no section, and of each frame, and keeps the steps a l
 });
 
 test('sets a panel on the card ground, with an edge that stays in forced colors', async ({
-    browser,
+    page,
 }) => {
-    for (const forcedColors of ['none', 'active'] as const) {
-        const context = await browser.newContext({ forcedColors });
-        const page = await context.newPage();
+    for (const forced of [false, true]) {
+        await forceColors(page, forced);
         await open(page);
         const panel = page.locator('.dk-panel');
         const drawn = await style(
@@ -423,14 +431,13 @@ test('sets a panel on the card ground, with an edge that stays in forced colors'
         );
         expect(drawn['border-top-style']).toBe('solid');
         expect(drawn['border-top-color']).not.toBe('rgba(0, 0, 0, 0)');
-        if (forcedColors === 'none') expect(drawn['background-color']).toBe('rgb(245, 245, 245)');
-        // A code block in a panel sits on the page's own ground, so it reads as inside it.
-        if (forcedColors === 'none') {
+        if (!forced) {
+            expect(drawn['background-color']).toBe(await colorOf(page, 'var(--dk-surface)'));
+            // A code block in a panel sits on the page's own ground, so it reads as inside it.
             expect(
                 (await style(panel.locator('.dk-code'), 'background-color'))['background-color']
-            ).toBe('rgb(255, 255, 255)');
+            ).toBe(await colorOf(page, 'var(--dk-bg)'));
         }
-        await context.close();
     }
 });
 
