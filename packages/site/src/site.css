@@ -194,9 +194,11 @@ body > .dk-strip {
 
 /*
  * The drawing of what each page shows, in the picture slot across the top of its tile, on the
- * page's own ground so it stands apart from the tile's.
+ * page's own ground so it stands apart from the tile's. It keeps its colors in forced colors, as an
+ * image does, since its swatches and bars are drawn as grounds the system would otherwise drop.
  */
 .site-page-preview {
+    forced-color-adjust: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1080,4 +1082,20 @@ body > .dk-strip {
 
 .site-ground-leaf {
     --dk-tile-ground: light-dark(rgb(232 245 222), rgb(30 56 20));
+}
+
+/*
+ * The pieces together's masthead draws its own rule right under its row of tabs, which stands on
+ * it, and keeps no padding at its foot. Its heading and button wrap above the row, never under it.
+ */
+.site-masthead {
+    border-block-end: 1px solid var(--dk-line);
+}
+
+.site-masthead-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--dk-space-3);
 }

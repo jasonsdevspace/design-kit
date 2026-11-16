@@ -583,7 +583,7 @@ test.describe('the words each page opens with', () => {
 
     /** The pages that list their sections and open the same way: every page with a landing card. */
     const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
-    const OPENED = CARDED.map(({ path }) => path);
+    const OPENED = [...CARDED.map(({ path }) => path), '/design-kit/together/'];
     /** The one way every page says how to see the other theme. */
     const SWITCH = 'choose Light or Dark next to Theme, at the top of the page';
 
@@ -607,7 +607,7 @@ test.describe('the words each page opens with', () => {
             await page.goto(path);
             const opening = await page.locator('main > p:not(.dk-lead)').evaluateAll((paragraphs) =>
                 paragraphs
-                    .filter((paragraph) => paragraph.nextElementSibling?.matches('nav, p'))
+                    .filter((paragraph) => paragraph.nextElementSibling?.matches('nav, p, section'))
                     .map((paragraph) => paragraph.textContent)
                     .join(' ')
             );
@@ -2883,23 +2883,29 @@ test.describe('how each state is shown', () => {
             [390, 44],
         ] as const) {
             await page.setViewportSize({ width, height: 900 });
-            await page.goto('/design-kit/controls/');
-            const found = await page.evaluate(() =>
+            for (const [path, selector] of [
                 [
-                    ...document.querySelectorAll<HTMLElement>(
-                        '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .dk-site-header a'
-                    ),
-                ].map((element) => ({
-                    what: element.textContent.trim().slice(0, 30),
-                    height: element.getBoundingClientRect().height,
-                    cursor: getComputedStyle(element).cursor,
-                }))
-            );
-            expect(found.length).toBeGreaterThan(0);
-            expect(
-                found.filter(({ height, cursor }) => height < least || cursor !== 'pointer'),
-                String(width)
-            ).toEqual([]);
+                    '/design-kit/controls/',
+                    '.site-code > summary, .site-code [role="tab"], .dk-theme-switch label, .dk-site-header a',
+                ],
+                ['/design-kit/together/', '.site-together a, .site-masthead button'],
+            ] as const) {
+                await page.goto(path);
+                const found = await page.evaluate(
+                    (within) =>
+                        [...document.querySelectorAll<HTMLElement>(within)].map((element) => ({
+                            what: element.textContent.trim().slice(0, 30),
+                            height: element.getBoundingClientRect().height,
+                            cursor: getComputedStyle(element).cursor,
+                        })),
+                    selector
+                );
+                expect(found.length, path).toBeGreaterThan(0);
+                expect(
+                    found.filter(({ height, cursor }) => height < least || cursor !== 'pointer'),
+                    `${path} at ${String(width)}`
+                ).toEqual([]);
+            }
         }
     });
 
@@ -3002,5 +3008,107 @@ test.describe(() => {
     test('says the switch needs scripts, where scripts are off', async ({ page }) => {
         await page.goto('/design-kit/tokens/');
         await expect(page.locator('#theme').locator('..')).toContainText('With scripts on');
+    });
+});
+
+test.describe('the pieces together', () => {
+    const TOGETHER = '/design-kit/together/';
+
+    test('holds a masthead with tabs on its rule, a raised panel of tiles, tiles in columns with drawings, an icon and a quiet Close, all live', async ({
+        page,
+    }) => {
+        await page.goto(TOGETHER);
+        const stack = page.locator('.site-together');
+        await expect(stack.locator('[inert], .dk-picture')).toHaveCount(0);
+        const tabs = stack.getByRole('navigation', { name: 'Pieces' }).getByRole('link');
+        await expect(tabs).toHaveCount(3);
+        await expect(stack.locator('.dk-tabs-on-rule [aria-current="page"]')).toHaveAttribute(
+            'href',
+            TOGETHER
+        );
+        await expect(stack.locator('.dk-panel-raised .dk-rows-tiles > li > a.dk-row')).toHaveCount(
+            3
+        );
+        await expect(
+            stack.locator('.dk-rows-columns > li > a.dk-row > .dk-row-picture')
+        ).toHaveCount(5);
+        await expect(stack.locator('.site-masthead button .dk-icon')).toHaveCount(1);
+        // A shut dialog is out of the accessibility tree, so its Close is named here by its words,
+        // and by its role once open in the dialog's own test.
+        await expect(stack.locator('dialog .dk-button-quiet .dk-visually-hidden')).toHaveText(
+            'Close'
+        );
+        // The chosen tab's line lies on the masthead's rule.
+        const chosen = await stack.locator('[aria-current="page"]').boundingBox();
+        const masthead = await stack.locator('.site-masthead').boundingBox();
+        if (!chosen || !masthead) throw new Error('no chosen tab or no masthead');
+        expect(Math.abs(chosen.y + chosen.height - (masthead.y + masthead.height))).toBeLessThan(
+            0.5
+        );
+    });
+
+    test('opens the grounds from its button, and closes them by the quiet Close, back on the button', async ({
+        page,
+    }) => {
+        await page.goto(TOGETHER);
+        const opener = page.getByRole('button', { name: 'The grounds' });
+        const dialog = page.getByRole('dialog', { name: 'The grounds on this page' });
+        await opener.click();
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: 'Close' }).click();
+        await expect(dialog).toBeHidden();
+        await expect(opener).toBeFocused();
+    });
+
+    test('draws each ground apart from the one it sits on, wide and on a phone, in both themes and forced colors', async ({
+        page,
+    }) => {
+        for (const forced of [false, true])
+            for (const colorScheme of ['light', 'dark'] as const)
+                for (const width of [320, 1280]) {
+                    await page.emulateMedia({
+                        colorScheme,
+                        forcedColors: forced ? 'active' : 'none',
+                    });
+                    await page.setViewportSize({ width, height: 900 });
+                    await page.goto(TOGETHER);
+                    const at = `${colorScheme}${forced ? ', forced colors' : ''} at ${String(width)}`;
+                    // Each piece set on a ground, and whether its own ground or its edge sets it
+                    // apart from the ground it sits on.
+                    const apart = await page.evaluate(() => {
+                        const opaque = (element: Element | null): string => {
+                            for (let at = element; at; at = at.parentElement) {
+                                const ground = getComputedStyle(at).backgroundColor;
+                                if (!/rgba\(.*, 0\)$/.test(ground) && ground !== 'transparent')
+                                    return ground;
+                            }
+                            return getComputedStyle(document.documentElement).backgroundColor;
+                        };
+                        return [
+                            '.site-together .dk-panel-raised',
+                            '.site-together .dk-panel-raised .dk-rows-tiles > li > a',
+                            '.site-together .dk-rows-columns > li > a',
+                        ].flatMap((selector) =>
+                            [...document.querySelectorAll(selector)].map((piece) => {
+                                const drawn = getComputedStyle(piece);
+                                const under = opaque(piece.parentElement);
+                                const edge =
+                                    drawn.borderTopStyle !== 'none' &&
+                                    drawn.borderTopWidth !== '0px' &&
+                                    drawn.borderTopColor !== under &&
+                                    !/rgba\(.*, 0\)$/.test(drawn.borderTopColor);
+                                return {
+                                    selector,
+                                    apart: opaque(piece) !== under || edge,
+                                };
+                            })
+                        );
+                    });
+                    expect(apart.length, at).toBeGreaterThan(0);
+                    expect(
+                        apart.filter((piece) => !piece.apart).map(({ selector }) => selector),
+                        at
+                    ).toEqual([]);
+                }
     });
 });

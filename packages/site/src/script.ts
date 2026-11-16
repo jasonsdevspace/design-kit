@@ -316,16 +316,21 @@ for (const stepper of document.querySelectorAll<HTMLElement>('main .site-copy .d
 }
 
 /*
- * The live copy of each dialog, opened by the button before it, which focus returns to when it
- * closes. The previews draw the dialog in place, and are never attached.
+ * The live copy of each dialog, and the pieces together's, opened by the button that names it,
+ * which focus returns to when it closes. The previews draw the dialog in place, and are never
+ * attached.
  */
 for (const dialog of document.querySelectorAll<HTMLDialogElement>(
-    'main .site-copy:not([inert]) .dk-dialog'
+    'main .site-copy:not([inert]) .dk-dialog, main .site-together .dk-dialog'
 )) {
     const open = attachDialog(dialog);
-    document
-        .querySelector<HTMLButtonElement>(`main button[aria-controls="${CSS.escape(dialog.id)}"]`)
-        ?.addEventListener('click', open);
+    const opener = document.querySelector<HTMLButtonElement>(
+        `main button[aria-controls="${CSS.escape(dialog.id)}"]`
+    );
+    if (!opener) continue;
+    opener.addEventListener('click', open);
+    // An opener that waits hidden until its dialog works is shown now that it does.
+    opener.hidden = false;
 }
 
 /*
