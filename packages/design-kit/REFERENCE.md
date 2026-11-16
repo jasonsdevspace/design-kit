@@ -2223,6 +2223,21 @@ picture and title at its top, level with the tall one's, with the room it gains 
 Without `dk-rows-columns` a list of tiles stays one column. A card that leads to several places is
 not one link and is not a tile.
 
+How many tiles a list holds and how wide its column is decide whether one is left alone on the last
+line, so at some widths one always is. A lone last tile stays at one column's width, at the start of
+its line and in the list's order, since it reads as part of the list there. Stretched across the
+line or set in its middle it would look like the one that matters most, and moving tiles to fill the
+line would take the keyboard out of the order the eye reads. A page whose count of tiles leaves one
+alone at the widths its readers use most sets `--dk-tile-least` on its list by a class of its own,
+so the tiles stand on fewer lines. Five tiles in the kit's column stand on one line on a laptop's
+screen at 13.25rem, three over two at a tablet's width, and one under another on a phone.
+
+```css
+.game-list {
+    --dk-tile-least: 13.25rem;
+}
+```
+
 <details>
 <summary>How the tiles are drawn</summary>
 
