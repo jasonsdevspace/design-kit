@@ -249,7 +249,13 @@
         }
     }
 
-    :where(:is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog)) {
+    :where(
+        :is(
+            .dk-app,
+            .dk-tabbar-page,
+            :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *)) .dk-dialog
+        )
+    ) {
         --dk-card-inset: var(--dk-space-4-held);
     }
 
@@ -278,12 +284,13 @@
     }
 
     /*
-     * On a page with an app's frame or a tab bar, what sits on the screen outside the app's
-     * column, such as the skip link, starts where that column starts its content, past what a phone
-     * keeps at its sides. The column clears those sides itself, so a band inside it, such as a
-     * demo's strip, starts its content a step in and pays for the sides no second time.
+     * On a page with an app's frame or a tab bar of its own, rather than one pictured inside a
+     * dk-picture, what sits on the screen outside the app's column, such as the skip link,
+     * starts where that column starts its content, past what a phone keeps at its sides. The column
+     * clears those sides itself, so a band inside it, such as a demo's strip, starts its content a
+     * step in and pays for the sides no second time.
      */
-    :where(:root:has(.dk-app, .dk-tabbar-page)) {
+    :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture *))) {
         --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4));
         --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4));
     }

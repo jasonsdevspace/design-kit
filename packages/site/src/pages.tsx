@@ -150,9 +150,9 @@ const SiteFooter = ({
 /**
  * The site's header under the strip, the kit's site header: its mark and name, leading to the
  * landing page, and its own pages as the kit's link pills in the site's navigation, the current one
- * marked as the page. It is the page's banner, as the explainer's header is, so a screen reader that
- * moves to the banner finds the way around the site on every page. The mark is the site's icon in
- * the kit's slot, its tiles drawn in the text on the accent and in the page's own theme, in the
+ * marked as the page. It is the page's banner, as the explainer's header is, so a screen reader
+ * that moves to the banner finds the way around the site on every page. The mark is the site's icon
+ * in the kit's slot, its tiles drawn in the text on the accent and in the page's own theme, in the
  * site's own markup, so the policy that refuses outside styles holds. It is hidden from a screen
  * reader, which hears the name.
  */
@@ -476,7 +476,7 @@ export const Landing = ({ build }: { readonly build: Build }) => (
                 </p>
             </div>
             <figure className="site-hero-demo">
-                <div className="site-hero-panels" inert>
+                <div className="site-hero-panels dk-picture" inert>
                     <HeroPanel theme="light" />
                     <HeroPanel theme="dark" />
                 </div>
@@ -560,16 +560,17 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
 );
 
 /**
- * One state of a control, in one card: its name as a heading and the code that draws it at
- * the top, then its copies, and its code at the foot. The state is drawn live in the visitor's
- * theme and again in the other theme beside it. The other copy is inert, so the keyboard and a
- * screen reader pass over it, and its ids are its own, so the page never holds one twice. The live
- * copy is a group named by the state's name alone, so a screen reader moving from control to
- * control hears which state it is in. A pictured state's copy in the visitor's theme is inert too,
- * and both its copies are labeled as pictures. Each copy is labeled by its theme's name: the live
- * one marked Live, the other a preview, which the site's script explains when it is tapped, and a
- * picture a picture. The code is closed until a reader opens it: its markup, and the React a page
- * writes for it where a component draws it, which the site's script shows as tabs.
+ * One state of a control, in one card: its name as a heading and the code that draws it at the top,
+ * then its copies, and its code at the foot. The state is drawn live in the visitor's theme and
+ * again in the other theme beside it. The other copy is inert, so the keyboard and a screen reader
+ * pass over it, and its ids are its own, so the page never holds one twice. The live copy is a
+ * group named by the state's name alone, so a screen reader moving from control to control hears
+ * which state it is in. A pictured state's copy in the visitor's theme is inert too, and both its
+ * copies are labeled as pictures. Each copy is labeled by its theme's name: the live one marked
+ * Live, the other a preview, which the site's script explains when it is tapped, and a picture a
+ * picture. Every inert copy is a dk-picture, so a frame, a page that ends in a tab bar or a toast
+ * in one is not the page's own. The code is closed until a reader opens it: its markup, and the
+ * React a page writes for it where a component draws it, which the site's script shows as tabs.
  */
 const StateShown = ({
     state,
@@ -596,7 +597,7 @@ const StateShown = ({
         </div>
         <div className="site-state-copies">
             {pictured ? (
-                <div className="site-copy" inert>
+                <div className="site-copy dk-picture" inert>
                     <p className="site-copy-label">
                         <ThemeName of="page" />, a picture
                     </p>
@@ -610,7 +611,7 @@ const StateShown = ({
                     {state.draw(kit, (name) => name)}
                 </div>
             )}
-            <div className="site-copy site-other" inert>
+            <div className="site-copy site-other dk-picture" inert>
                 <p className="site-copy-label">
                     <ThemeName of="other" />
                     {pictured ? ', a picture' : ', preview only'}
