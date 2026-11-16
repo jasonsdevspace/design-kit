@@ -821,6 +821,42 @@ test('keeps tiles in one column on the narrowest phone at twice the text size an
     expect(await cutOff(page, '.dk-row-text')).toEqual([]);
 });
 
+/** The words in the elements given that the browser breaks across two lines, each a cut word. */
+const brokenWords = (page: Page, selector: string): Promise<string[]> =>
+    page.evaluate((wanted) => {
+        const broken: string[] = [];
+        for (const element of document.querySelectorAll(wanted)) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+                const text = node.textContent ?? '';
+                for (const word of text.matchAll(/\S+/g)) {
+                    const range = document.createRange();
+                    range.setStart(node, word.index);
+                    range.setEnd(node, word.index + word[0].length);
+                    const lines = new Set(
+                        [...range.getClientRects()].map(({ top }) => Math.round(top))
+                    );
+                    if (lines.size > 1) broken.push(word[0]);
+                }
+            }
+        }
+        return broken;
+    }, selector);
+
+test('keeps every word of a tile whole in a plain and a raised panel on the narrowest phone at twice the text size', async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    const tiles = `<ul class="dk-rows dk-rows-tiles" role="list"><li><a class="dk-row" href="#raised"><span class="dk-row-text"><span class="dk-row-title">Raised panel</span><span class="dk-visually-hidden">, </span><span class="dk-row-detail">Places to go, each on its own ground</span></span><span class="dk-row-sign" aria-hidden="true">›</span></a></li></ul>`;
+    await writePage(page, {
+        width: 320,
+        title: 'Pieces',
+        body: `<main class="dk-page"><h1>Pieces</h1><div class="dk-panel">${tiles}</div><div class="dk-panel dk-panel-raised">${tiles}</div></main>`,
+    });
+    expect(await brokenWords(page, '.dk-panel .dk-row-text')).toEqual([]);
+    expect(await sideways(page)).toBe(0);
+});
+
 for (const theme of ['light', 'dark'] as const)
     test(`steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the ${theme} theme`, async ({
         page,
