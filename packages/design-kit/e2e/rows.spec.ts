@@ -17,7 +17,7 @@ import { textSize } from './text-size.js';
  * apart and inside the column of an app's body, with the row's sign, press and ring, a page's shadow
  * only where it sets one, the larger target with its detail inside it at twice the text size, its
  * edge in forced colors, an empty list not at all, and no audit findings in either theme with its
- * grounds set.
+ * grounds set, its words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them.
  */
 
 const GAMES = [
@@ -496,6 +496,46 @@ for (const theme of ['light', 'dark'] as const)
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
+
+// The audit reads the title and the detail, but not the sign, which is hidden from a screen reader,
+// nor the ring, so each is measured on each ground as the reference asks.
+test("holds a tile's words at 4.5 to 1 on the ground its page sets, and its sign and ring at 3 to 1", async ({
+    page,
+}) => {
+    for (const theme of ['light', 'dark'] as const) {
+        await writePage(page, {
+            width: 390,
+            theme,
+            css: GROUNDS_CSS,
+            title: 'Play',
+            body: tiles(),
+        });
+        await page.locator('.dk-app-body').focus();
+        for (const link of await tileList(page).getByRole('link').all()) {
+            await page.keyboard.press('Tab');
+            await expect(link).toBeFocused();
+            const color = async (part: Locator, property = 'color') =>
+                (await style(part, property))[property] ?? '';
+            const ground = await color(link, 'background-color');
+            const at = `${theme}, ${ground}`;
+            expect(
+                contrast(await color(link.locator('.dk-row-title')), ground),
+                at
+            ).toBeGreaterThanOrEqual(4.5);
+            expect(
+                contrast(await color(link.locator('.dk-row-detail')), ground),
+                at
+            ).toBeGreaterThanOrEqual(4.5);
+            expect(
+                contrast(await color(link.locator('.dk-row-sign')), ground),
+                at
+            ).toBeGreaterThanOrEqual(3);
+            expect(contrast(await color(link, 'outline-color'), ground), at).toBeGreaterThanOrEqual(
+                3
+            );
+        }
+    }
+});
 
 /** A picture drawn at once, of the shape a page's preview has. */
 const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#8a8a8a"/></svg>')}`;
