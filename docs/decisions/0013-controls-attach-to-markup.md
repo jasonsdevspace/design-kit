@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, and in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, and in 0.8.2 to set it at 10.5 KB, once its corner Close took the sheets past 10.25 KB
 
 ## Context
 
@@ -119,6 +119,11 @@ By the same rule, for 0.8.0 the sheets were measured with every piece planned fo
 weigh 10,220 bytes sent together, against 9,432 without them, and the median a piece costs is now
 177 bytes, so the rule sets the sheets at 10.25 KB. The package record measures three more parts,
 the site's header, the content page and the icon.
+
+For 0.8.2 the sheets were measured with its three changes in place, a tile in a panel holding its
+inset, a Close in the corner and a picture drawn at its content's height. They weigh 10,538 bytes
+sent together, and the median a piece costs is now 179 bytes, so the rule sets the sheets at 10.5
+KB.
 
 ## How it is tested
 
