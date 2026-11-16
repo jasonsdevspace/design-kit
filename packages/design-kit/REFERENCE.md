@@ -2144,11 +2144,14 @@ A list of tiles offers a few places to go, such as the games to start, each on a
 
 A list of tiles is a list of rows with `dk-rows-tiles` beside `dk-rows`, each a link row on a ground
 of its own. The page sets the ground with `--dk-tile-ground`, by a class of its own on the row or in
-its style attribute, and chooses a ground its text keeps its contrast on in both themes, such as
-with `light-dark()`. A tile keeps what a link row has: the sign that says it leads somewhere on a
-phone, where nothing hovers, its title underlined under a pointer and under a pressing thumb, and
-its focus ring drawn inside it. A page with a shadow of its own for a tile sets `--dk-tile-shadow`,
-or `none` for no shadow. A list with no tiles is not drawn, as a list of rows is not.
+its style attribute, and chooses a ground that holds the title and the muted detail at 4.5 to 1, and
+the muted sign and the focus ring, drawn in `--dk-focus`, at 3 to 1, in both themes, such as with
+`light-dark()`. A ground that holds the title can still leave the detail faint or the ring hard to
+see, so the page checks each. A tile keeps what a link row has: the sign that says it leads
+somewhere on a phone, where nothing hovers, its title underlined under a pointer and under a
+pressing thumb, and its focus ring drawn inside it. A page with a shadow of its own for a tile sets
+`--dk-tile-shadow`, or `none` for no shadow. A list with no tiles is not drawn, as a list of rows is
+not.
 
 A tile takes a picture at its start as a row does. Where it sits in a panel and the page sets no
 ground, a tile steps off the panel's ground, as a code block does, to the page's ground in a plain
