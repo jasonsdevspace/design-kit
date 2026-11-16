@@ -224,6 +224,24 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
+                name: 'A field with a button beside its control',
+                attribute: 'class="dk-field-action"',
+                react: `<InputField
+    id="search"
+    type="search"
+    label="Search the games"
+    action={<Button type="submit">Search</Button>}
+/>`,
+                draw: ({ InputField, Button }, id) => (
+                    <InputField
+                        id={id('search')}
+                        type="search"
+                        label="Search the games"
+                        action={<Button type="submit">Search</Button>}
+                    />
+                ),
+            },
+            {
                 name: 'A drop-down waiting for a choice',
                 attribute: 'class="dk-select"',
                 react: `<SelectField id="sort" label="Sort by">

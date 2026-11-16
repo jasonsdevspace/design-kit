@@ -271,12 +271,18 @@ const tabBar = (className: string, current = 'Play') => (
     </nav>
 );
 
-/** A screen in an app's frame, its toast's place holding what `toast` draws there. */
+/**
+ * A screen in an app's frame, its toast's place holding what `toast` draws there and its body what
+ * `content` draws, a line of the game's standing unless a screen says otherwise.
+ */
 const screen = (
     { Button }: Kit,
     id: (name: string) => string,
-    body: string,
-    toast: ReactElement
+    {
+        body,
+        toast,
+        content = <p>Ana leads by twelve points, with two rounds to play.</p>,
+    }: { readonly body: string; readonly toast: ReactElement; readonly content?: ReactElement }
 ) => (
     <div className="dk-app">
         <header className="dk-app-bar">
@@ -284,7 +290,7 @@ const screen = (
             <Button text>Scores</Button>
         </header>
         <main id={id(body)} tabIndex={0} className="dk-app-body">
-            <p>Ana leads by twelve points, with two rounds to play.</p>
+            {content}
         </main>
         <div className="dk-app-toast">{toast}</div>
         <section className="dk-app-dock" aria-label="Actions">
@@ -327,6 +333,67 @@ const playerRows = (className: string, { Button }: Kit) => (
     </ul>
 );
 
+/** The site's pages a list of tiles leads to, each on a ground the page sets by a class. */
+const GROUNDED = [
+    { ...PAGES[0], ground: 'site-ground-peach' },
+    { ...PAGES[1], ground: 'site-ground-sky' },
+    {
+        title: 'Page chrome',
+        detail: 'The strip, the footer and the skip link',
+        href: '../page-chrome/',
+        ground: 'site-ground-leaf',
+    },
+] as const;
+
+/**
+ * A list of rows that each lead to a page, as plain rows or, given `dk-rows-tiles`, as tiles, a
+ * page's own ground class on each row that has one.
+ */
+const pageRows = (
+    className: string,
+    pages: readonly {
+        readonly title: string;
+        readonly detail: string;
+        readonly href: string;
+        readonly ground?: string;
+    }[]
+) => (
+    <ul className={className} role="list">
+        {pages.map(({ title, detail, href, ground }) => (
+            <li key={href}>
+                <a className={ground === undefined ? 'dk-row' : `dk-row ${ground}`} href={href}>
+                    <span className="dk-row-text">
+                        <span className="dk-row-title">{title}</span>
+                        <span className="dk-visually-hidden">, </span>
+                        <span className="dk-row-detail">{detail}</span>
+                    </span>
+                    <span className="dk-row-sign" aria-hidden="true">
+                        ›
+                    </span>
+                </a>
+            </li>
+        ))}
+    </ul>
+);
+
+/**
+ * A raised panel, the one thing to pick up again, as the reference writes it. Its link leads into
+ * an app, so the site shows it only as a picture.
+ */
+export const panelRaised: State = {
+    name: 'The game to pick up again',
+    attribute: 'class="dk-panel dk-panel-raised"',
+    draw: () => (
+        <div className="dk-panel dk-panel-raised">
+            <p className="dk-panel-title">Flip 7, round 4</p>
+            <p>Ana is next to score.</p>
+            <a className="dk-button dk-button-accent dk-button-tall" href="/game/?id=12">
+                Continue the game
+            </a>
+        </div>
+    ),
+};
+
 /** The rounds a table of scores holds, each player's score in each. */
 const ROUNDS = [1, 2, 3, 4, 5, 6] as const;
 const SCORES = [
@@ -348,7 +415,7 @@ export const APP: readonly Control[] = [
             {
                 name: 'A screen with a bar, a body and a dock',
                 attribute: 'class="dk-app"',
-                draw: (kit, id) => screen(kit, id, 'round-3', <kit.Toast />),
+                draw: (kit, id) => screen(kit, id, { body: 'round-3', toast: <kit.Toast /> }),
             },
             {
                 name: 'A screen with a toast above its dock',
@@ -356,34 +423,49 @@ export const APP: readonly Control[] = [
                 // Drawn as a shown toast is, since a picture is never attached, and marked shown
                 // by data-shown, the attribute the kit draws a shown toast from.
                 draw: (kit, id) =>
-                    screen(
-                        kit,
-                        id,
-                        'round-3-saved',
-                        <div className="dk-toast" data-shown="">
-                            <p className="dk-toast-message" aria-hidden="true">
-                                Round 3 saved.
-                            </p>
-                            <p className="dk-visually-hidden dk-toast-status" role="status">
-                                Round 3 saved. Undo is available.
-                            </p>
-                            <div className="dk-toast-buttons">
-                                <button
-                                    type="button"
-                                    className="dk-button dk-button-text dk-toast-action"
-                                >
-                                    Undo
-                                </button>
-                                <button
-                                    type="button"
-                                    className="dk-button dk-button-text dk-button-quiet dk-toast-close"
-                                >
-                                    <span aria-hidden="true">×</span>
-                                    <span className="dk-visually-hidden">Close</span>
-                                </button>
+                    screen(kit, id, {
+                        body: 'round-3-saved',
+                        toast: (
+                            <div className="dk-toast" data-shown="">
+                                <p className="dk-toast-message" aria-hidden="true">
+                                    Round 3 saved.
+                                </p>
+                                <p className="dk-visually-hidden dk-toast-status" role="status">
+                                    Round 3 saved. Undo is available.
+                                </p>
+                                <div className="dk-toast-buttons">
+                                    <button
+                                        type="button"
+                                        className="dk-button dk-button-text dk-toast-action"
+                                    >
+                                        Undo
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="dk-button dk-button-text dk-button-quiet dk-toast-close"
+                                    >
+                                        <span aria-hidden="true">×</span>
+                                        <span className="dk-visually-hidden">Close</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ),
+                        ),
+                    }),
+            },
+            {
+                name: 'A screen with a raised panel above a list of tiles',
+                attribute: 'class="dk-rows dk-rows-tiles"',
+                draw: (kit, id) =>
+                    screen(kit, id, {
+                        body: 'play',
+                        toast: <kit.Toast />,
+                        content: (
+                            <>
+                                {panelRaised.draw(kit, id)}
+                                {pageRows('dk-rows dk-rows-tiles', GROUNDED)}
+                            </>
+                        ),
+                    }),
             },
         ],
     },
@@ -489,30 +571,19 @@ export const APP: readonly Control[] = [
         ],
     },
     {
+        name: 'Raised panel',
+        pictured: true,
+        laidOut: true,
+        states: [panelRaised],
+    },
+    {
         name: 'Rows',
         laidOut: true,
         states: [
             {
                 name: 'Rows that each lead to a page',
                 attribute: 'class="dk-row-sign"',
-                draw: () => (
-                    <ul className="dk-rows" role="list">
-                        {PAGES.map(({ title, detail, href }) => (
-                            <li key={href}>
-                                <a className="dk-row" href={href}>
-                                    <span className="dk-row-text">
-                                        <span className="dk-row-title">{title}</span>
-                                        <span className="dk-visually-hidden">, </span>
-                                        <span className="dk-row-detail">{detail}</span>
-                                    </span>
-                                    <span className="dk-row-sign" aria-hidden="true">
-                                        ›
-                                    </span>
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                ),
+                draw: () => pageRows('dk-rows', PAGES),
             },
             {
                 name: 'Rows that each hold a button',
@@ -545,6 +616,17 @@ export const APP: readonly Control[] = [
                 name: "Tall rows, pressed at arm's length",
                 attribute: 'class="dk-rows dk-rows-tall"',
                 draw: (kit) => playerRows('dk-rows dk-rows-tall', kit),
+            },
+        ],
+    },
+    {
+        name: 'Tiles',
+        laidOut: true,
+        states: [
+            {
+                name: 'Tiles, each on a ground the page sets',
+                attribute: 'class="dk-rows dk-rows-tiles"',
+                draw: () => pageRows('dk-rows dk-rows-tiles', GROUNDED),
             },
         ],
     },

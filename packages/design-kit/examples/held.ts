@@ -122,6 +122,8 @@ export const HELD = {
                 "the field passes the control's own attributes through",
                 'the field draws a native select with its options, wired the same way',
                 'the field draws a textarea with its text as a value, wired the same way',
+                'the field draws an action beside the control in the field action row, after the control',
+                'the field draws a field with no action as it did, and wires its hint and error with one',
                 'the choice field draws a fieldset with its label as the legend, and a label of a radio and its word for each choice',
                 'the choice field describes the set by its hint, then its error, and marks a radio group invalid only with one',
                 'the choice field draws checkboxes in a row where the field asks, with a gloss after a word, each marked by an error',
@@ -148,6 +150,14 @@ export const HELD = {
         {
             file: 'e2e/ref.spec.ts',
             titles: ["moves focus to the control each field's ref holds"],
+        },
+        {
+            file: 'e2e/layouts.spec.ts',
+            titles: [
+                "reaches the React field's button after its control, and names it by its own words",
+                "stands a field's control and its button at one height at every width and text size",
+                "wraps a long label on a field's button and a dialog's action rather than run past the page",
+            ],
         },
     ],
     Callouts: [
@@ -310,6 +320,32 @@ export const HELD = {
             ],
         },
     ],
+    'Raised panel': [
+        {
+            file: 'e2e/app.spec.ts',
+            titles: [
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `draws a raised panel on the raised ground, lifted by the resting shadow or the page's own, in the ${theme} theme`
+                ),
+                'keeps a pinned column and a code block apart from a raised panel on grounds of their own',
+                'gives a piece the ground of the nearest container that holds it, however they nest',
+            ],
+        },
+        {
+            file: 'e2e/rows.spec.ts',
+            titles: [
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the ${theme} theme`
+                ),
+                ...['on a wide page', 'on a phone', "on an app's frame"].map(
+                    (where) =>
+                        `starts a tile's words on the line a raised panel's start on above it, ${where}`
+                ),
+            ],
+        },
+    ],
     Rows: [
         {
             file: 'e2e/rows.spec.ts',
@@ -324,6 +360,29 @@ export const HELD = {
                 'keeps a row with a button as tall as one without, the button in the middle and every ring off the words',
                 'has no audit findings in the light theme',
                 'has no audit findings in the dark theme',
+            ],
+        },
+    ],
+    Tiles: [
+        {
+            file: 'e2e/rows.spec.ts',
+            titles: [
+                'draws each tile on the ground its page sets, with an edge and a gap in place of the rule',
+                'draws a tile on the surface with no ground set and no shadow, unless the page sets its own',
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on the page's grounds in the ${theme} theme`
+                ),
+                "underlines a tile's title under a pointer, and rings it outside, as a separate control",
+                "underlines a tile's title under a pressing thumb, on a phone where nothing hovers",
+                "keeps a tile's edge in forced colors, in the system's link color",
+                'keeps a tile at the larger target, its detail wrapping inside it at twice the text size',
+                "keeps a tile's whole ring in view as the keyboard scrolls an app's body to it",
+                ...BOTH_THEMES(
+                    (theme) => `has no audit findings for a list of tiles in the ${theme} theme`
+                ),
+                "draws no tile's shadow in forced colors, a page's own included",
+                'draws an empty list of tiles not at all',
             ],
         },
     ],

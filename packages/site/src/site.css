@@ -574,11 +574,16 @@ body > .dk-strip {
     background: var(--dk-surface);
 }
 
+/*
+ * The frames around a state and its copies hold their padding at a size rather than grow with the
+ * text, as the kit's own frames do, so at twice the text size on a narrow phone a piece inside them
+ * keeps the room it would have on a page of its own.
+ */
 .site-state-copies {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--dk-space-3);
-    padding: var(--dk-space-4);
+    padding: var(--dk-space-4-held);
 }
 
 /*
@@ -595,7 +600,7 @@ body > .dk-strip {
  */
 .site-copy {
     min-width: 0;
-    padding: var(--dk-space-4);
+    padding: var(--dk-space-4-held);
     border: 1px solid var(--dk-line);
     border-radius: var(--dk-radius);
     background: var(--dk-bg);
@@ -1162,4 +1167,20 @@ body > .dk-strip {
     :root:not([data-theme]) .site-other {
         color-scheme: light;
     }
+}
+
+/*
+ * The grounds the app pieces page sets on its tiles, by a class rather than a style attribute,
+ * which the site's policy refuses.
+ */
+.site-ground-peach {
+    --dk-tile-ground: light-dark(rgb(255 236 214), rgb(74 46 20));
+}
+
+.site-ground-sky {
+    --dk-tile-ground: light-dark(rgb(220 240 255), rgb(20 46 74));
+}
+
+.site-ground-leaf {
+    --dk-tile-ground: light-dark(rgb(232 245 222), rgb(30 56 20));
 }

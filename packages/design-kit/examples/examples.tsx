@@ -394,15 +394,7 @@ export const steps: ReactElement = pieces.steps.draw(kit, pieces.asWritten);
 export const panel: ReactElement = pieces.panel.draw(kit, pieces.asWritten);
 
 /** A raised panel in an app's body: the one thing to pick up again, above the rest. */
-export const panelRaised: ReactElement = (
-    <div className="dk-panel dk-panel-raised">
-        <p className="dk-panel-title">Flip 7, round 4</p>
-        <p>Ana is next to score.</p>
-        <a className="dk-button dk-button-accent dk-button-tall" href="/game/?id=12">
-            Continue the game
-        </a>
-    </div>
-);
+export const panelRaised: ReactElement = pieces.panelRaised.draw(kit, pieces.asWritten);
 
 /** A table of figures, titled, in a frame that scrolls inside itself. */
 export const table: ReactElement = pieces.table.draw(kit, pieces.asWritten);

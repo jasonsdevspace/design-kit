@@ -5,7 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
-import { colorOf, declaredIn } from '../../design-kit/examples/palette.js';
+import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
 /*
@@ -896,18 +896,85 @@ test.describe('the controls page, with the pieces the script attaches', () => {
 });
 
 test.describe('the app pieces page', () => {
-    test('draws the frame and the tab bar as pictures, and the grids, rows and table live', async ({
+    test('draws the frame, the tab bar and the raised panel as pictures, and the grids, rows, tiles and table live', async ({
         page,
     }) => {
         await page.goto('/design-kit/app-pieces/');
         const live = page.locator('.site-copy:not([inert])');
         await expect(live.locator('.dk-app, .dk-tabbar')).toHaveCount(0);
-        await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(4);
+        await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(6);
+        // The raised panel links into an app, so it is a picture, alone and in a screen above tiles.
+        await expect(live.locator('.dk-panel-raised')).toHaveCount(0);
+        await expect(
+            page.locator('.site-copy[inert] .dk-app-body > .dk-panel-raised + .dk-rows-tiles')
+        ).toHaveCount(2);
         await expect(live.getByRole('group', { name: 'Cards in hand' })).toBeVisible();
-        await expect(live.locator('.dk-rows')).toHaveCount(4);
+        await expect(live.locator('.dk-rows')).toHaveCount(5);
+        await expect(live.locator('.dk-rows-tiles > li > a.dk-row')).toHaveCount(3);
         await expect(live.getByRole('table', { name: 'Scores by round' })).toBeVisible();
         // A toast is shown only in a picture of a screen, so no live one waits on the page.
         await expect(page.locator('.dk-toast:not([inert] *)')).toHaveCount(0);
+    });
+
+    test("draws each tile on a ground of the site's own, its words at 4.5 to 1 and its sign at 3 to 1", async ({
+        page,
+    }) => {
+        for (const colorScheme of ['light', 'dark'] as const) {
+            await page.emulateMedia({ colorScheme });
+            await page.goto('/design-kit/app-pieces/');
+            const tiles = page.locator('.site-copy:not([inert]) .dk-rows-tiles > li > a.dk-row');
+            await expect(tiles).toHaveCount(3);
+            // Each tile's ground, which must be opaque, and each part's color laid over it, as hex.
+            const drawn = await tiles.evaluateAll((all) => {
+                const channels = (color: string) => {
+                    const [r = 0, g = 0, b = 0, a = 1] = (
+                        color.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []
+                    ).map(Number);
+                    return color.startsWith('color(srgb ')
+                        ? [r * 255, g * 255, b * 255, a]
+                        : [r, g, b, a];
+                };
+                const hex = (parts: readonly number[]) =>
+                    `#${parts
+                        .slice(0, 3)
+                        .map((part) => Math.round(part).toString(16).padStart(2, '0'))
+                        .join('')}`;
+                const probe = document.body.appendChild(document.createElement('div'));
+                probe.style.background = 'var(--dk-surface)';
+                const surface = hex(channels(getComputedStyle(probe).backgroundColor));
+                probe.remove();
+                return all.map((tile) => {
+                    const ground = channels(getComputedStyle(tile).backgroundColor);
+                    const over = (selector: string) => {
+                        const part = tile.querySelector(selector);
+                        const [r = 0, g = 0, b = 0, a = 1] = channels(
+                            part === null ? '' : getComputedStyle(part).color
+                        );
+                        return hex(
+                            [r, g, b].map((value, at) => value * a + (ground[at] ?? 0) * (1 - a))
+                        );
+                    };
+                    return {
+                        name: tile.querySelector('.dk-row-title')?.textContent ?? '',
+                        opaque: ground[3] === 1,
+                        ground: hex(ground),
+                        surface,
+                        title: over('.dk-row-title'),
+                        detail: over('.dk-row-detail'),
+                        sign: over('.dk-row-sign'),
+                    };
+                });
+            });
+            for (const { name, opaque, ground, surface, title, detail, sign } of drawn) {
+                const where = `${colorScheme}, ${name}`;
+                expect(opaque, where).toBe(true);
+                expect(ground, where).not.toBe(surface);
+                expect(contrast(title, ground), `${where}, title`).toBeGreaterThanOrEqual(4.5);
+                expect(contrast(detail, ground), `${where}, detail`).toBeGreaterThanOrEqual(4.5);
+                expect(contrast(sign, ground), `${where}, sign`).toBeGreaterThanOrEqual(3);
+            }
+            expect(new Set(drawn.map(({ ground }) => ground)).size, colorScheme).toBe(3);
+        }
     });
 
     test("pictures a shown toast with its buttons in their group, as the kit's own Toast draws them", async ({
