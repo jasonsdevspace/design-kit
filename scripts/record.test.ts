@@ -146,7 +146,8 @@ describe('a record that follows another', () => {
                 name: '@jasonsdevspace/design-kit',
                 version: '0.6.0',
                 size: 54272,
-                files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9216 }],
+                sheets: 9216,
+                files: [{ path: 'dist/components.css', size: 6144, gzip: 2048, stripped: 9999 }],
                 since: {
                     date: '2026-11-12',
                     commit: '7048d11',

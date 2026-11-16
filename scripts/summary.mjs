@@ -180,11 +180,14 @@ export const kb = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 /**
  * @typedef {{ path: string, size: number, gzip: number, stripped?: number }} PackedFile a file of
  *     the package, raw and gzipped, and a sheet gzipped without its comments too
- * @typedef {{ name: string, version: string, size: number, files: PackedFile[] }} Packed
+ * @typedef {{ name: string, version: string, size: number, files: PackedFile[], sheets?: number }} Packed
  */
 
 /** Whether a file of the package is a sheet, which a page loads. */
 export const isSheet = (/** @type {string} */ path) => path.endsWith('.css');
+
+/** The sheets in the order a page loads them, as the sheets' budget joins them. */
+export const SHEET_ORDER = ['tokens.css', 'base.css', 'components.css'];
 
 /**
  * A sheet without its comments and blank lines, which is most of what a page's minifier takes out
@@ -307,10 +310,17 @@ export const packedOf = (tarball) => {
     if (!manifest) throw new Error(`${tarball} holds no package.json`);
     /** @type {{ name: string, version: string }} */
     const { name, version } = JSON.parse(manifest.bytes.toString('utf8'));
+    // The sheets a page loads, joined in the order it loads them and gzipped together without their
+    // comments, the figure the sheets' budget holds, which is less than each gzipped on its own.
+    const sheets = SHEET_ORDER.map((name) => files.find((file) => file.path === `dist/${name}`))
+        .filter((file) => file !== undefined)
+        .map((file) => withoutComments(file.bytes.toString('utf8')))
+        .join('\n');
     return {
         name,
         version,
         size: statSync(tarball).size,
+        ...(sheets ? { sheets: gzipSync(sheets).length } : {}),
         files: files
             .map(({ path, bytes }) => ({
                 path,

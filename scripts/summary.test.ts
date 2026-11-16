@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +12,7 @@ import {
     packageSummary,
     packedOf,
     playwrightSummary,
+    SHEET_ORDER,
     table,
     withoutComments,
     writeSummary,
@@ -215,6 +217,25 @@ describe('a sheet without its comments', () => {
         const sheet = files.find((file) => file.path === 'dist/tokens.css');
         expect(sheet?.stripped).toBeLessThan(sheet?.gzip ?? 0);
         expect(files.find((file) => file.path === 'dist/theme.js')).not.toHaveProperty('stripped');
+    });
+
+    it('measures the sheets joined in the order a page loads them, as their budget does', () => {
+        const dir = mkdtempSync(join(tmpdir(), 'packed-'));
+        made.push(dir);
+        mkdirSync(join(dir, 'package', 'dist'), { recursive: true });
+        writeFileSync(join(dir, 'package', 'package.json'), '{"name":"@o/kit","version":"1.0.0"}');
+        const sheet = (name: string) =>
+            `/* The ${name}. */\n` + `:where(.dk-${name}) { color: var(--dk-fg); }\n`.repeat(20);
+        for (const name of SHEET_ORDER)
+            writeFileSync(join(dir, 'package', 'dist', name), sheet(name.replace('.css', '')));
+        const tarball = join(dir, 'kit.tgz');
+        execFileSync('tar', ['-czf', tarball, '-C', dir, 'package']);
+        const { files, sheets } = packedOf(tarball);
+        const joined = SHEET_ORDER.map((name) => withoutComments(sheet(name.replace('.css', ''))));
+        expect(sheets).toBe(gzipSync(joined.join('\n')).length);
+        // Gzipped together they share what repeats, so they come to less than each on its own.
+        const summed = files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+        expect(sheets ?? summed).toBeLessThan(summed);
     });
 });
 

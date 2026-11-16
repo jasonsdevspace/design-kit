@@ -136,9 +136,13 @@ export const recorded = () => {
 export const recordedTable = ({ date, commit: at, machine, node }) =>
     table(['Recorded', 'Commit', 'Machine', 'Node'], [[date, `\`${at}\``, machine, node]]);
 
-/** The sheets a page loads together without their comments, the figure the sheets' budget holds. */
+/**
+ * The sheets a page loads, gzipped together without their comments, the figure the sheets' budget
+ * holds. A record taken before that figure was kept gives each sheet gzipped on its own, summed, so
+ * it reads as it was written.
+ */
 const sheetsOf = (/** @type {Packed} */ packed) =>
-    packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
+    packed.sheets ?? packed.files.reduce((sum, file) => sum + (file.stripped ?? 0), 0);
 
 /**
  * What changed since the package record before this one, for a record that knows it.
@@ -197,7 +201,8 @@ export const packageBefore = (at) => {
         commit: before.recorded.commit,
         version: before.version,
         size: before.size,
-        sheets: sheetsOf(before),
+        // A record whose sheets were summed one by one does not compare with one that joins them.
+        sheets: before.sheets ?? 0,
     };
 };
 

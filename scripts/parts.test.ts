@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
-import { pieceOf, piecesOf, rulesOf } from './parts.mjs';
+import { entryOf, pieceOf, PIECES, piecesOf, rulesOf } from './parts.mjs';
+import { withoutComments } from './summary.mjs';
 
 /*
  * The measure of what each part of the package costs: a rule counted to the piece it draws, the
@@ -22,10 +25,27 @@ describe('the parts of the package', () => {
         // The pieces the next release adds, each under one name.
         expect(pieceOf(':where(.dk-site-brand)')).toBe('site header');
         expect(pieceOf(':where(.dk-page > h1)')).toBe('content page');
-        expect(pieceOf(':where(.dk-lead)')).toBe('content page');
+        // The lead shares the explainer's lead's rule, which names it first.
+        expect(pieceOf(':where(.dk-explainer-lead, .dk-lead)')).toBe('explainer');
         expect(pieceOf(':where(.dk-icon *)')).toBe('icon');
         expect(pieceOf(':where(a)')).toBe("the page's own elements");
         expect(pieceOf('@keyframes dk-toast-rise')).toBe('animations');
+    });
+
+    it('names no piece in its map that no rule of the sheets is counted by', () => {
+        const used = new Set(
+            ['tokens.css', 'base.css', 'components.css'].flatMap((name) =>
+                rulesOf(
+                    withoutComments(
+                        readFileSync(
+                            new URL(`../packages/design-kit/src/${name}`, import.meta.url),
+                            'utf8'
+                        )
+                    )
+                ).map(({ selector }) => entryOf(selector))
+            )
+        );
+        expect(PIECES.map(([start]) => start).filter((start) => !used.has(start))).toEqual([]);
     });
 
     it('finds each rule inside the layers and media queries that hold it', () => {
