@@ -128,6 +128,31 @@ export const contrast = (first: string, second: string): number => {
     return ratio(hex(mixed), hex(ground));
 };
 
+/**
+ * The ground the element the locator finds is drawn on: the backgrounds of it and of what holds it,
+ * laid one over another from the root's up, so a translucent one is weighed over what shows
+ * through it, or a failure where nothing under it is opaque.
+ */
+export const groundOf = async (locator: Locator): Promise<string> => {
+    const layers = await locator.evaluate((element) => {
+        const found: string[] = [];
+        for (let at: Element | null = element; at; at = at.parentElement)
+            found.push(getComputedStyle(at).backgroundColor);
+        return found.reverse();
+    });
+    const from = layers.findLastIndex((layer) => channels(layer)[3] === 1);
+    if (from < 0)
+        throw new Error(`expected an opaque ground under the element, got ${layers.join(', ')}`);
+    let ground = channels(layers[from] ?? '').slice(0, 3);
+    for (const layer of layers.slice(from + 1)) {
+        const [red, green, blue, alpha] = channels(layer);
+        ground = [red, green, blue].map(
+            (part, at) => part * alpha + (ground[at] ?? 0) * (1 - alpha)
+        );
+    }
+    return `rgb(${ground.map((part) => String(Math.round(part))).join(', ')})`;
+};
+
 /** A color as the page resolves it, a system color or a token, from an element asked to take it. */
 export const colorOf = (page: Page, name: string): Promise<string> =>
     page.evaluate((color) => {
