@@ -16,9 +16,9 @@ import { withoutComments } from './summary.mjs';
  * Set by the rule of the size audit of record 13: what the three sheets weigh sent together, with
  * room for one more piece of the usual size, the median a piece costs, rounded up to the next
  * quarter of a kilobyte. Set so in 0.6.0, again in 0.7.0 once the toast's group of buttons and the
- * table's shade left too little room for another piece, and again for the next release, measured
- * once with every piece planned for it. The app's pieces stay in the components
- * sheet, so a page loads one sheet whatever it draws.
+ * table's shade left too little room for another piece, and again for the next release, whose
+ * planned pieces took the sheets past 9.25 KB. The app's pieces stay in the components sheet, so a
+ * page loads one sheet whatever it draws.
  */
 const BUDGET = 10.25 * 1024;
 const SHEETS = ['tokens.css', 'base.css', 'components.css'];
