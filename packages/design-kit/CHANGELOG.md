@@ -12,8 +12,8 @@ entry as the notes.
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
 each tile on a ground the page sets, a React field can hold a button beside its control, a tab row
-can sit on its container's rule, a text button gains a quiet form for a Close, and a content page is
-spaced by one class. In forced colors what is chosen shows its words again. The theme script is
+can sit on its container's rule, a text button gains a quiet form for a Close, and a site draws its
+header with kit classes. In forced colors what is chosen shows its words again. The theme script is
 unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB to 10.25 KB, set
 again by the size audit's rule, and the controls' stays at 6.25 KB.
 
@@ -23,11 +23,10 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
   of those three names for something of its own gets the kit's meaning for it. A footer with nothing
   after it pads its foot past what a phone keeps there, and a page's own rule for the footer's
   padding still wins. In an app's frame, on a page that ends in a tab bar and in a dialog on either,
-  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem.
-  `dk-explainer-lead` is held to the measure wherever it sits, so a lead with it outside an
-  explainer is no wider than `--dk-measure`. A toast's close says Close, where it said Dismiss, so a
-  toast written by hand changes the words out of sight in its close button, and may add
-  `dk-button-quiet` to it as the React `Toast` does, though its own class draws it the same without.
+  a panel keeps a phone's padding at every width and text size, where it padded wider above 48rem. A
+  toast's close says Close, where it said Dismiss, so a toast written by hand changes the words out
+  of sight in its close button, and may add `dk-button-quiet` to it as the React `Toast` does,
+  though its own class draws it the same without.
 - **Tokens.** `--dk-column-inset` is how far the column stands in from each side of a band the width
   of the page, and `--dk-band-left` and `--dk-band-right` are where a band's content starts: the
   column's inset or what a phone keeps at that side, where that is more, then `--dk-space-4`. A
@@ -50,14 +49,13 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
   colors, a toggle that is on, a button whose panel is open, a pressed cell, the theme switch's
   chosen word, the current pill, the chosen tab and the current place in a tab bar, with an edge and
   a ring in system colors and no shadow, so a browser that paints a backplate behind their words no
-  longer draws the words unseen. `dk-page` on a content page's main content spaces what it holds by
-  the flow and its sections `--dk-space-7` apart with no rule between them, sets its `h1` at the
-  display size and a section's `h2` at the title size, starts its text at the strip's inset by the
-  band insets, and holds its prose to the measure. `dk-lead` is the lead under a name of its own,
-  held to the measure, with `dk-explainer-lead` the same rule. `dk-tabs-on-rule` beside `dk-tabs`
-  lays a tab row on the rule of the container at whose foot it sits, drawing no rule of its own and
-  standing a pixel lower, so the chosen tab's line lies over the container's rule, and keeping to
-  the foot of a bar that centers what it holds.
+  longer draws the words unseen. `dk-site-header` draws a site's header under the strip, at the
+  strip's inset and over a rule, with a `dk-site-brand` link holding a `dk-site-mark` and the site's
+  name and its pages as pills, the brand and each page the target tall and the pages wrapping under
+  the brand on a phone. `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the
+  container at whose foot it sits, drawing no rule of its own and standing a pixel lower, so the
+  chosen tab's line lies over the container's rule, and keeping to the foot of a bar that centers
+  what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -72,8 +70,7 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
 - **Docs.** The reference lists every property a page sets in a table of its own, each with its
   default and, for a ground, the contrast what sits on it must hold, and `--dk-focus` moves there
   from the token table. Decision 0016 records why a page changes how a piece draws only through
-  them. The reference shows a content page and its lead, and decision 0017 says why a content page
-  is a container of its own.
+  them. The reference shows a site's header and names its nav Site.
 - **Tests.** Browser tests hold the chrome past a phone's sides, top and foot, a band lined up with
   the strip, the chrome where it was on a page that reaches under no edge, a raised panel's ground
   and shadow in both themes, a panel's padding in an app's frame, tiles on their page's grounds,
@@ -84,11 +81,11 @@ again by the size audit's rule, and the controls' stays at 6.25 KB.
   the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
   of every chosen thing in forced colors and find the selection under its words. A quiet button's
   colors, its states, its size at every width and in an app, its name and its ring in forced colors
-  are held on the page, a panel and a raised panel in both themes. A content page spaces its blocks
-  by the flow and its sections further apart, starts its text at the strip's inset, sizes its
-  headings, holds its prose and lead to the measure beside a table at the column's width, takes its
-  controls in the markup's order, and cuts nothing off at 320 wide, twice the text size and the
-  wider text spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
+  are held on the page, a panel and a raised panel in both themes. A site's header starts its brand,
+  and its pages where they wrap, on the strip's edge, keeps each the target tall, reads once with
+  its nav named Site, marks its current page by weight and in forced colors, takes the brand before
+  the pages, lands the skip link past it, and cuts nothing off at 320 wide, twice the text size and
+  the wider spacing. A tab row on its container's rule ends the chosen line and the resting tabs on
   the container's foot with one rule, in a block and in a bar that centers it, in both themes and in
   forced colors, and a plain row keeps its own rule.
 
