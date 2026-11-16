@@ -11,9 +11,10 @@ entry as the notes.
 
 The kit's chrome keeps clear of a phone's edges on a page that reaches under them, a panel gains a
 raised form for the one thing to pick up again above a list, a list of link rows gains a tile form,
-each tile on a ground the page sets, and a React field can hold a button beside its control. In
-forced colors what is chosen shows its words again. The theme script is unchanged, so
-`themeScriptHash` is the same, and the sheets' budget stays at 9.25 KB and the controls' at 6.25 KB.
+each tile on a ground the page sets, a React field can hold a button beside its control, and a tab
+row can sit on its container's rule. In forced colors what is chosen shows its words again. The
+theme script is unchanged, so `themeScriptHash` is the same. The sheets' budget rises from 9.25 KB
+to 10.25 KB, set again by the size audit's rule, and the controls' stays at 6.25 KB.
 
 - **Upgrading.** The strip, the footer, an explainer and its header read `--dk-column` on the root
   now, through `--dk-column-inset`, `--dk-band-left` and `--dk-band-right`, so a page that sets
@@ -41,6 +42,9 @@ forced colors what is chosen shows its words again. The theme script is unchange
   panel is open, a pressed cell, the theme switch's chosen word, the current pill, the chosen tab
   and the current place in a tab bar, with an edge and a ring in system colors and no shadow, so a
   browser that paints a backplate behind their words no longer draws the words unseen.
+  `dk-tabs-on-rule` beside `dk-tabs` lays a tab row on the rule of the container at whose foot it
+  sits, drawing no rule of its own and standing a pixel lower, so the chosen tab's line lies over
+  the container's rule, and keeping to the foot of a bar that centers what it holds.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported
@@ -62,7 +66,10 @@ forced colors what is chosen shows its words again. The theme script is unchange
   under the control on a narrow phone at twice the text size, and reaches the button after the
   control. A token test holds the column's inset to one place in the sheets, and a scope test holds
   the table of properties a page sets to what the sheets read. Browser tests read the drawn pixels
-  of every chosen thing in forced colors and find the selection under its words.
+  of every chosen thing in forced colors and find the selection under its words. A tab row on its
+  container's rule ends the chosen line and the resting tabs on the container's foot with one rule,
+  in a block and in a bar that centers it, in both themes and in forced colors, and a plain row
+  keeps its own rule.
 
 ## 0.7.0
 
