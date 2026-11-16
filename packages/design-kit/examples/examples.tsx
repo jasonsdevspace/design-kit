@@ -765,6 +765,53 @@ export const rowTiles: ReactElement = (
     </ul>
 );
 
+/** A list of players, each row a link with the player's picture at its start. */
+export const rowPicture: ReactElement = (
+    <ul className="dk-rows" role="list">
+        <li>
+            <a className="dk-row" href="/players/ana/">
+                <img className="dk-row-picture" src="/players/ana.jpg" alt="" loading="lazy" />
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Ana</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">Played 12 games</span>
+                </span>
+                <span className="dk-row-sign" aria-hidden="true">
+                    ›
+                </span>
+            </a>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
+/** A list of tiles in columns, each a page with a picture of it across its top. */
+export const tileColumns: ReactElement = (
+    <ul className="dk-rows dk-rows-tiles dk-rows-columns" role="list">
+        <li>
+            <a className="dk-row" href="/design-kit/buttons/">
+                <img
+                    className="dk-row-picture"
+                    src="/previews/buttons.png"
+                    alt=""
+                    width="480"
+                    height="270"
+                    loading="lazy"
+                />
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Buttons</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">Every kind and state</span>
+                </span>
+                <span className="dk-row-sign" aria-hidden="true">
+                    ›
+                </span>
+            </a>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
 /** The theme switch, as the component draws it before a page attaches it. */
 export const themeSwitch: ReactElement = <ThemeSwitch id="theme" />;
 
@@ -834,7 +881,9 @@ export const EXAMPLES = {
     buttonGrid,
     icon,
     rows,
+    rowPicture,
     rowTiles,
+    tileColumns,
     dialog,
 } as const satisfies Readonly<Record<string, ReactElement>>;
 
