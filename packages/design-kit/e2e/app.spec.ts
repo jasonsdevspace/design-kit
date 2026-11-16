@@ -983,6 +983,12 @@ test('draws a content page the same with a picture of an app and its toast as wi
     const toasted = await pageDrawn(page, contentPage('', LIVE_TOAST));
     expect(toasted).not.toEqual(plain);
     expect(await pageDrawn(page, contentPage(PICTURE, LIVE_TOAST))).toEqual(toasted);
+    expect(await pageDrawn(page, contentPage(PICTURED_ITSELF, LIVE_TOAST))).toEqual(toasted);
+    // A pictured toast sits in its place, as one in a frame does, rather than over the screen's foot.
+    await pageDrawn(page, contentPage(PICTURED_ITSELF));
+    await expect(page.locator('.dk-toast.dk-picture')).toHaveCSS('position', 'static');
+    await pageDrawn(page, contentPage(PICTURE));
+    await expect(page.locator('.dk-picture > .dk-app .dk-toast')).toHaveCSS('position', 'static');
 });
 
 test("draws a page with an app's frame of its own as an app's, a picture of another beside it or not", async ({
@@ -1006,6 +1012,7 @@ test("draws a page with an app's frame of its own as an app's, a picture of anot
     };
     const alone = await read(app(''));
     expect(await read(app(PICTURE))).toEqual(alone);
+    expect(await read(app(PICTURED_ITSELF))).toEqual(alone);
     // The app's page draws apart from a content page, so the comparison above tests something.
     expect(alone).not.toEqual(await read(contentPage('')));
 });

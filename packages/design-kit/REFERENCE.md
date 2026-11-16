@@ -1639,27 +1639,29 @@ ends in a tab bar does the same, as does a dialog on either, and so do a theme s
 tabs there, and a button in a toast. A demo's strip and footer stay as they are on every page. A
 page that shows a picture of a screen, such as a page of a kit's pieces, gives `dk-picture` to the
 picture's wrapper or to the frame itself and makes it `inert`, so the keyboard and a screen reader
-pass it by. A frame, a page that ends in a tab bar or a shown toast that carries the class or sits
-inside it is not the page's own, so the page around it keeps its column, its dialogs and its foot as
-a content page does. Only a toast's attach function reads a height, the toast's and the body's, as
-it shows and while it stays. A dock grows with what it holds and a tab bar grows at a large text
-size, so the body ends where the rows below it begin. A toast floats over the foot of the body, just
-above the dock, so showing or hiding one never moves the dock under a thumb about to press it again.
-While one is shown its place opens on a rule, under which the body scrolls as it does under the bar,
-and the body leaves room for the toast after its last element, as many rows as its attach function
-measured it at, up to five, so its last line scrolls clear of the toast and what the keyboard
-reaches in it stops short of the toast, in a browser with `:has()`. Where the body would keep less
-than a row and a half above that room, as on a phone on its side or at a large text size, the toast
-takes its row above the dock instead, so nothing in the body is covered by it or the bar, and the
-attach function scrolls the page by as much as the dock moved, so the dock stays under the thumb.
-The toast is measured again while it stays, as the screen turns or the text size changes. The room
-is that element's margin, so the body ends in a block, such as a paragraph or a list, as its content
-does. On a screen too short for the frame the toast takes its row above the dock, and the page keeps
-the dock in place as the toast comes and goes, in a browser that keeps a scroll position by what is
-on screen, as Chrome and Firefox do. Each row but the body's is never shorter than what it holds,
-and the body keeps 8rem, a few lines, so where the rows come to more than the screen the page
-scrolls and no row covers its neighbor or squeezes the body to nothing. What the body holds out of
-sight, such as a row's words for a screen reader, scrolls with it and never lengthens the page.
+pass it by. A frame, a page that ends in a tab bar or a shown toast that carries `dk-picture` or
+sits inside an element with it is a picture, not the page's own, and a pictured toast sits in its
+place rather than over the screen's foot, so the page around it keeps its column, its dialogs and
+its foot as a content page does. Only a toast's attach function reads a height, the toast's and the
+body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows at a
+large text size, so the body ends where the rows below it begin. A toast floats over the foot of the
+body, just above the dock, so showing or hiding one never moves the dock under a thumb about to
+press it again. While one is shown its place opens on a rule, under which the body scrolls as it
+does under the bar, and the body leaves room for the toast after its last element, as many rows as
+its attach function measured it at, up to five, so its last line scrolls clear of the toast and what
+the keyboard reaches in it stops short of the toast, in a browser with `:has()`. Where the body
+would keep less than a row and a half above that room, as on a phone on its side or at a large text
+size, the toast takes its row above the dock instead, so nothing in the body is covered by it or the
+bar, and the attach function scrolls the page by as much as the dock moved, so the dock stays under
+the thumb. The toast is measured again while it stays, as the screen turns or the text size changes.
+The room is that element's margin, so the body ends in a block, such as a paragraph or a list, as
+its content does. On a screen too short for the frame the toast takes its row above the dock, and
+the page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll
+position by what is on screen, as Chrome and Firefox do. Each row but the body's is never shorter
+than what it holds, and the body keeps 8rem, a few lines, so where the rows come to more than the
+screen the page scrolls and no row covers its neighbor or squeezes the body to nothing. What the
+body holds out of sight, such as a row's words for a screen reader, scrolls with it and never
+lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. The bar pads itself past `--dk-safe-top`, so its ground runs up

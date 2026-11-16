@@ -341,6 +341,17 @@ describe('what the sheets style', () => {
             /\.dk-app\b(?!-)|\.dk-tabbar-page|\.dk-toast\[data-shown/.test(held)
         );
         expect(app.length).toBeGreaterThan(0);
+        // One compound each, so a list of frames can't leave one of them out of the exclusion.
+        const topLevelComma = (held: string) => {
+            let depth = 0;
+            for (const sign of held) {
+                if (sign === '(') depth++;
+                if (sign === ')') depth--;
+                if (sign === ',' && depth === 0) return true;
+            }
+            return false;
+        };
+        expect(app.filter(topLevelComma)).toEqual([]);
         expect(app.filter((held) => !held.endsWith(':not(.dk-picture, .dk-picture *)'))).toEqual(
             []
         );

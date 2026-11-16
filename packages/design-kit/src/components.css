@@ -2416,7 +2416,8 @@
         margin-inline: auto;
     }
 
-    :where(.dk-app .dk-toast) {
+    /* A toast in a frame, or in a picture or pictured itself, sits in its place in the flow. */
+    :where(.dk-app .dk-toast, .dk-picture .dk-toast, .dk-toast.dk-picture) {
         position: static;
         max-width: none;
     }
