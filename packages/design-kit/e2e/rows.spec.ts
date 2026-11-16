@@ -556,6 +556,46 @@ for (const theme of ['light', 'dark'] as const)
             await holdsItsRatios(page, tileList(page), theme);
         });
 
+for (const [where, width] of [
+    ['a wide page', 1280],
+    ['a phone', 390],
+    ["an app's frame", 1280],
+] as const)
+    test(`starts a tile's words on the line a raised panel's start on above it, on ${where}`, async ({
+        page,
+    }) => {
+        const body =
+            '<div class="dk-panel dk-panel-raised"><p class="dk-panel-title">Flip 7, round 4</p></div>' +
+            tiles(false)
+                .replace(/^<div class="dk-app">.*?<ul/, '<ul')
+                .replace(/<\/main><\/div>$/, '');
+        await writePage(page, {
+            width,
+            title: 'Play',
+            body:
+                where === "an app's frame"
+                    ? `<div class="dk-app"><main class="dk-app-body" id="main-content">${body}</main></div>`
+                    : `<main id="main-content">${body}</main>`,
+        });
+        const panel = await box(page.locator('.dk-panel-title'), "the panel's title");
+        const tile = await box(tileList(page).locator('.dk-row-title').first(), "a tile's title");
+        expect(Math.round(tile.x), where).toBe(Math.round(panel.x));
+    });
+
+test("sets a tile's title in an explainer at the body size, as a panel's title there", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'How it works',
+        body: `<main class="dk-explainer" id="main-content"><h1>How it works</h1>${tiles(false)
+            .replace(/^<div class="dk-app">.*?<ul/, '<ul')
+            .replace(/<\/main><\/div>$/, '')}</main>`,
+    });
+    expect(
+        (await style(tileList(page).locator('.dk-row-title').first(), 'font-size'))['font-size']
+    ).toBe('16px');
+});
+
 /** A picture drawn at once, of the shape a page's preview has. */
 const PICTURE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#8a8a8a"/></svg>')}`;
 

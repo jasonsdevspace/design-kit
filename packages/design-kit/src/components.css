@@ -1172,11 +1172,12 @@
     /*
      * A panel, a region of a page set apart on the card's ground, at the body's size, with no
      * tone and no role. Its edge in the line's color is what draws it, since the card's ground is
-     * close to the page's, and it stays in forced colors. Its title steps down to the body's size
-     * inside an explainer, under the section's heading.
+     * close to the page's, and it stays in forced colors. Its words stand in by the card's inset,
+     * as a tile's do, and its title steps down to the body's size inside an explainer, under the
+     * section's heading.
      */
     :where(.dk-panel) {
-        padding: var(--dk-space-5);
+        padding: var(--dk-card-inset);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-surface);
@@ -1416,12 +1417,6 @@
         margin: 0;
     }
 
-    @media (width <= 48rem) {
-        :where(.dk-panel) {
-            padding: var(--dk-space-4);
-        }
-    }
-
     /*
      * A raised panel sits on the raised ground, a step above the cards on a page, for the one
      * thing to pick up again above a list. It casts the resting shadow, which lifts it where the
@@ -1430,17 +1425,6 @@
     :where(.dk-panel-raised) {
         background: var(--dk-raised);
         box-shadow: var(--dk-panel-shadow, var(--dk-shadow-resting));
-    }
-
-    /*
-     * In an app's frame, on a page that ends in a tab bar, and in a dialog on either, the column is
-     * a phone's at every width, so a panel keeps a phone's padding at every width and text size,
-     * as a dialog there does.
-     */
-    :where(
-        :is(.dk-app, .dk-tabbar-page, :root:has(.dk-app, .dk-tabbar-page) .dk-dialog) .dk-panel
-    ) {
-        padding: var(--dk-space-4-held);
     }
 
     /*
@@ -2805,7 +2789,7 @@
     :where(.dk-rows-tiles .dk-row) {
         min-height: var(--dk-target-large);
         margin-inline: 0;
-        padding: var(--dk-space-3) var(--dk-space-4);
+        padding: var(--dk-space-3) var(--dk-card-inset);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-tile-ground, var(--dk-ground-step));
@@ -2815,6 +2799,11 @@
     /* A tile is a place to go that stands alone, so its title is at the lead size. */
     :where(.dk-rows-tiles .dk-row-title) {
         font-size: var(--dk-text-lead);
+    }
+
+    /* In an explainer a tile's title steps down to the body's size, as a panel's title there does. */
+    :where(.dk-explainer .dk-rows-tiles .dk-row-title) {
+        font-size: var(--dk-text-body);
     }
 
     /*
@@ -3117,7 +3106,7 @@
     }
 
     :where(
-        .dk-explainer > h1 + *,
+        :is(.dk-explainer, .dk-page) > h1 + *,
         .dk-table-title + *,
         :not(.dk-code-head) > .dk-code-title + *,
         .dk-code-head + *

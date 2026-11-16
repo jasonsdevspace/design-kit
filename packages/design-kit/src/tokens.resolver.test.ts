@@ -36,6 +36,7 @@ const CSS_ONLY: Readonly<Record<string, string>> = {
     'band-right': 'a calc() of the safe area and the inset',
     ground: 'the ground of what holds a piece, which each container sets again',
     'ground-step': 'the ground a piece steps to, which each container sets again',
+    'card-inset': 'a step that narrows on a phone and in an app, by a media query and a container',
 };
 
 interface Dimension {

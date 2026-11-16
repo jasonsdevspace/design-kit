@@ -83,6 +83,7 @@ page.
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`                                |
 | `--dk-flow-step`                                                                                  | the step between pieces in what holds a column of them, `--dk-space-4` in an explainer, its sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on the pieces each holds |
 | `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's, or a raised panel's and the card's         |
+| `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in from their edge, `--dk-space-5`, `--dk-space-4` at 48rem wide or less, and `--dk-space-4-held` in an app's column                                  |
 
 </details>
 
@@ -2220,11 +2221,12 @@ several places is not one link and is not a tile.
 A tile's title is at the lead size, since a tile is a place to go that stands alone. Tiles stand
 `--dk-space-3` apart, each with an edge in the line color and large corners, in place of the rule
 between rows. Each is at least `--dk-target-large` tall, padded `--dk-space-3` above and below and
-`--dk-space-4` at its sides, and its detail wraps within it at any text size. With no ground set, a
-tile sits on `--dk-surface` and casts no shadow. A tile stays inside the column in an explainer, a
-panel, a callout, an app's body or a dialog, where a row reaches past it, since its edge, not its
-words, lines up with the column. In forced colors the edge stays, in the system's color, and the
-ground and any shadow give way to the system's.
+`--dk-card-inset` at its sides, as a panel is, so its words start on a raised panel's line, and its
+detail wraps within it at any text size. With no ground set, a tile sits on `--dk-surface` and casts
+no shadow. A tile stays inside the column in an explainer, a panel, a callout, an app's body or a
+dialog, where a row reaches past it, since its edge, not its words, lines up with the column. In
+forced colors the edge stays, in the system's color, and the ground and any shadow give way to the
+system's.
 
 </details>
 
