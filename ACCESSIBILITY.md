@@ -56,6 +56,22 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   An icon takes the system's text or link color, and a raised panel and a tile cast no shadow.
 - **Lighthouse.** Every page of the site scores a hundred for accessibility.
 
+## Checked by hand
+
+The tests here run no screen reader, real phone or Windows contrast theme, so these were checked by
+hand on November 16, 2026, on the system and browser versions current that day, and each worked.
+
+- **Screen readers.** The toast, the copy button, the stepper, the status line, the dialog and the
+  sheet, the tabs, the field with a button and the tiles were walked with NVDA 2026.3 in Firefox and
+  in Chrome on Windows, VoiceOver on macOS, on an iPhone 18 Pro and on a 14-inch iPad Pro, and
+  TalkBack on a Pixel 10. The status line spoke the same words twice when they were put in twice, in
+  NVDA and in VoiceOver on iOS.
+- **Phones.** On the iPhone and the Pixel, each held on its side, a page kept clear of the notch,
+  the on-screen keyboard left a field with a button and a sheet usable, and at twice the text size
+  nothing was cut off.
+- **A Windows contrast theme.** A tile's edge, a quiet Close's focus ring and a tab row's rule each
+  showed.
+
 ## Where it works
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
@@ -103,7 +119,8 @@ is its CSS transformer, as the package README shows.
   documented support rather than from a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
   states the browser gives it, and a status line through the words put in it, the same words said
-  twice put in twice.
+  twice put in twice. The screen readers themselves were walked by hand, as [Checked by
+  hand](#checked-by-hand) records.
 - The criteria a tool cannot judge, such as whether a heading describes its section or a link's
   words say where it leads, are held by no test here.
 - A page that sets its own palette answers for the contrast of its own pairings.
