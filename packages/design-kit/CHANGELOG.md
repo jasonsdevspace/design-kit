@@ -38,8 +38,8 @@ budget stays at 9.25 KB and the controls' at 6.25 KB.
   `--dk-tile-shadow`. A tile keeps the row's sign, its press and its inner ring, is at least the
   larger target tall, sets its title at the lead size, and an empty list of tiles is not drawn.
   `dk-icon` draws an inline svg one em square, stroked in the text's color at `max(1.5px, 0.125em)`
-  that does not scale with the drawing, with round caps and joins and no fill, and a tab bar's icons
-  keep their own size.
+  that does not scale with the drawing, with round caps and joins and no fill, a path drawn in fill
+  with no outline, and a tab bar's icons at their own size with the stroke that size takes.
 - **Controls.** `attachStatus` makes a page's own status line speak and returns the function that
   says a message on it, so the same words said twice are heard twice, and each message leaves two
   seconds later. It speaks through the function the copy button and the stepper use, now exported

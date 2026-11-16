@@ -471,7 +471,6 @@ export const tabs: ReactElement = (
     </>
 );
 
-/** An eyebrow over a heading. */
 /** A button with an icon beside its words, and a toggle whose only face is a filled icon. */
 export const icon: ReactElement = (
     <div className="dk-actions">
@@ -493,6 +492,7 @@ export const icon: ReactElement = (
     </div>
 );
 
+/** An eyebrow over a heading. */
 export const eyebrow: ReactElement = (
     <>
         <p className="dk-eyebrow">Signed in as a guest</p>

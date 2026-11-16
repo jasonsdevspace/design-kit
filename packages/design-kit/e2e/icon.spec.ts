@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
+import { renderToStaticMarkup } from 'react-dom/server';
 
+import { icon } from '../examples/examples.js';
 import { colorOf, writePage } from './page.js';
 
 /*
@@ -19,7 +21,7 @@ const ICONS = (() => {
         `<p style="font-size: 2em">${glyph('doubled')} Add a player</p>` +
         `<p><a href="#players">${glyph('in-link')} Players</a></p>` +
         `<p style="font-size: 0.5rem">${glyph('small')} A caption</p>` +
-        `<button type="button" class="dk-button" aria-pressed="false" id="star"><svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg><span class="dk-visually-hidden">Favorite game</span></button>` +
+        renderToStaticMarkup(icon) +
         `</main><nav class="dk-tabbar" aria-label="Places"><a href="#home" aria-current="page">${glyph('in-bar')}<span>Home</span></a></nav>`
     );
 })();
@@ -56,13 +58,19 @@ test("sizes an icon to its line's text, strokes it in the text's color at a weig
         }
         expect((await iconLook(page, 'in-text')).width).toBe('2px');
         expect((await iconLook(page, 'small')).width).toBe('1.5px');
-        // A tab bar keeps its own larger icon.
-        expect((await iconLook(page, 'in-bar')).height).toBe(24);
+        // A tab bar keeps its own larger icon, at the stroke an icon of that size takes.
+        expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 24, width: '3px' });
+        // A mark drawn in fill takes no outline.
+        const star = page.locator('button[aria-pressed] path');
+        expect(await star.evaluate((path) => getComputedStyle(path).stroke), theme).toBe('none');
+        // A control whose face is an icon alone is named by its words out of sight.
+        await expect(page.locator('button[aria-pressed]')).toHaveAccessibleName('Favorite game');
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(
+            results.violations.map(({ id }) => id),
+            theme
+        ).toEqual([]);
     }
-    // A control whose face is an icon alone is named by its words out of sight.
-    await expect(page.locator('#star')).toHaveAccessibleName('Favorite game');
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations.map(({ id }) => id)).toEqual([]);
 });
 
 test("redraws an icon in the system's text and link colors in forced colors", async ({

@@ -733,8 +733,11 @@ twice the text size too. The sheet strokes it in the text's color, at `max(1.5px
 round caps and joins and no fill, and keeps that width whatever the drawing's scale, so a path drawn
 in a 24 unit box holds its weight at a small size. Forced colors redraw it with the text, in the
 system's text or link color. A mark drawn in fill, such as a brand's, writes `fill="currentColor"`
-on its path, so it takes the text's color too. The kit ships no icons, so a page draws the few it
-needs in a helper of its own. A tab bar's icons keep their own larger size.
+on its path, so it takes the text's color too, and the sheet leaves it with no outline. The sheet
+reaches only paths written inside the icon, so a page draws them there rather than through a `use`
+of a sprite, whose paths keep a stroke that scales. The kit ships no icons, so a page draws the few
+it needs in a helper of its own. A tab bar's icons keep their own larger size, at the stroke an icon
+of that size takes.
 
 An icon says nothing to a screen reader. The markup carries `aria-hidden="true"`, which a sheet
 cannot set, and `focusable="false"`, and every icon sits beside words, in sight or out of it, so an

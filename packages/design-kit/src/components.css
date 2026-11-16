@@ -1766,6 +1766,11 @@
         vector-effect: non-scaling-stroke;
     }
 
+    /* A mark drawn in fill takes no outline, which would round its corners and fill its holes. */
+    :where(.dk-icon [fill]:not([fill='none'])) {
+        stroke: none;
+    }
+
     /*
      * A copy button's words share one cell, so the button is as wide as its longest word whatever
      * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
@@ -2230,6 +2235,11 @@
         flex: none;
         width: 1.5rem;
         height: 1.5rem;
+    }
+
+    /* A kit icon there keeps the stroke an icon of its size takes beside text of that size. */
+    :where(.dk-tabbar .dk-icon) {
+        stroke-width: max(1.5px, 0.1875rem);
     }
 
     @media (hover: hover) {
