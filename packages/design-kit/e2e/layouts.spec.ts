@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -79,6 +79,38 @@ const selectActionDrawn = renderToStaticMarkup(
     )
 );
 
+/**
+ * Which rows a field's control and its button take: one on a wide screen at the browser's text
+ * size, which has room for both, two on a narrow phone at twice the text size, which has room for
+ * neither beside the other, and either between.
+ */
+const rowsAt = (width: number, size: number): 'one' | 'two' | 'either' => {
+    if (width === 1280 && size === 1) return 'one';
+    return width === 320 && size === 2 ? 'two' : 'either';
+};
+
+/** Where a field's control and its button sit, at one height or the button under the control. */
+const holdsFieldAction = async (
+    page: Page,
+    [control, button]: readonly [Locator, Locator],
+    what: string,
+    rows: 'one' | 'two' | 'either'
+) => {
+    const field = await box(control, 'the control');
+    const action = await box(button, 'the button');
+    if (rows === 'one') expect(Math.abs(action.y - field.y), `${what}, one row`).toBeLessThan(1);
+    if (Math.round(action.y) === Math.round(field.y)) {
+        expect(action.height, what).toBeCloseTo(field.height, 0);
+        expect(action.x, what).toBeGreaterThan(field.x + field.width);
+    } else {
+        // Moved under the control where the row has no room for both.
+        expect(action.y, what).toBeGreaterThanOrEqual(bottom(field));
+    }
+    if (rows === 'two') expect(action.y, `${what}, wrapped`).toBeGreaterThanOrEqual(bottom(field));
+    expect(field.width, what).toBeGreaterThanOrEqual(10 * 16 - 1);
+    expect(await sideways(page), what).toBe(0);
+};
+
 test("stands a select's control and its button as an input's, drawn by React", async ({
     page,
     browserName,
@@ -91,16 +123,15 @@ test("stands a select's control and its button as an input's, drawn by React", a
                 body: `<main>${selectActionDrawn}</main>`,
             });
             if (browserName === 'chromium') await textSize(page, size);
-            const what = `${String(width)}px, text ${String(size)}`;
-            const select = await box(
-                page.getByRole('combobox', { name: 'Sort the products' }),
-                'the select'
+            await holdsFieldAction(
+                page,
+                [
+                    page.getByRole('combobox', { name: 'Sort the products' }),
+                    page.getByRole('button', { name: 'Sort' }),
+                ],
+                `${String(width)}px, text ${String(size)}`,
+                rowsAt(width, size)
             );
-            const button = await box(page.getByRole('button', { name: 'Sort' }), 'the button');
-            if (Math.round(button.y) === Math.round(select.y))
-                expect(button.height, what).toBeCloseTo(select.height, 0);
-            else expect(button.y, what).toBeGreaterThanOrEqual(bottom(select));
-            expect(await sideways(page), what).toBe(0);
         }
 });
 
@@ -117,23 +148,6 @@ test("reaches the React field's button after its control, and names it by its ow
     await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeFocused();
 });
 
-/** Where a field's control and its button sit, at one height or the button under the control. */
-const holdsFieldAction = async (page: Page, what: string, narrow = false) => {
-    const input = await box(page.getByRole('searchbox'), 'the control');
-    const button = await box(page.getByRole('button', { name: 'Search' }), 'the button');
-    if (Math.round(button.y) === Math.round(input.y)) {
-        expect(button.height, what).toBeCloseTo(input.height, 0);
-        expect(button.x, what).toBeGreaterThan(input.x + input.width);
-    } else {
-        // Moved under the control where the row has no room for both.
-        expect(button.y, what).toBeGreaterThanOrEqual(bottom(input));
-    }
-    // A narrow phone at twice the text size has no room for both on one row.
-    if (narrow) expect(button.y, `${what}, wrapped`).toBeGreaterThanOrEqual(bottom(input));
-    expect(input.width, what).toBeGreaterThanOrEqual(10 * 16 - 1);
-    expect(await sideways(page), what).toBe(0);
-};
-
 test("stands a field's control and its button at one height at every width and text size", async ({
     page,
     browserName,
@@ -149,8 +163,9 @@ test("stands a field's control and its button at one height at every width and t
                 if (browserName === 'chromium') await textSize(page, size);
                 await holdsFieldAction(
                     page,
+                    [page.getByRole('searchbox'), page.getByRole('button', { name: 'Search' })],
                     `${how}, ${String(width)}px, text ${String(size)}`,
-                    width === 320 && size === 2
+                    rowsAt(width, size)
                 );
             }
 });
