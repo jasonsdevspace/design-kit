@@ -57,19 +57,19 @@ size audit's rule.
 - **Tests.** A browser test draws tiles in a plain and a raised panel on a content page at 320 wide
   and twice the text size, finds no word drawn across two lines or cut off, and holds a lone panel
   and a tile on the page to the card's inset. Browser tests set a Close in the corner of a dialog
-  and a panel at 320 and 1280 wide, and hold it to the target, clear of the title, which wraps, its
-  ring inside the dialog and clear of what follows, centered on the title's first line, an eyebrow
-  above the title and a button at its own width, a hidden panel hidden, forced colors and the audit,
-  in Chromium and WebKit, and again at twice the text size in Chromium. A dialog on a page with an
-  app keeps a phone's padding at 1280 wide. Dialogs open with focus on their first answer, a field
-  before the answers, a group's checked radio, or the title where the answer is disabled or there is
-  none, with no `autofocus` written, a borrowed place in the order given back, and a Close that
-  closes with no script. A browser test draws a pictured frame with its dock and tab row and a
-  pictured page that ends in a tab bar on a page with safe areas, on a phone and a wide screen, and
-  holds each to what it holds, its tab bar to its foot in its place and none of the room a phone
-  keeps at its edges. The specs wait for a piece's entrance through one helper they share, so the
-  app frame's tests read a shown toast once it has risen into place and a browser's timing no longer
-  fails them.
+  and a panel at 320 and 1280 wide, in Chromium and WebKit and again at twice the text size in
+  Chromium, and hold it to the target, clear of the title, which wraps, its ring inside the dialog
+  and clear of what follows, an eyebrow above the title and a button at its own width, and at the
+  default text size centered on the title's first line. They hold a hidden panel hidden, forced
+  colors and the audit in both browsers. A dialog on a page with an app keeps a phone's padding at
+  1280 wide. Dialogs open with focus on their first answer, a field before the answers, a group's
+  checked radio, or the title where the answer is disabled or there is none, with no `autofocus`
+  written, a borrowed place in the order given back, and a Close that closes with no script. A
+  browser test draws a pictured frame with its dock and tab row and a pictured page that ends in a
+  tab bar on a page with safe areas, on a phone and a wide screen, and holds each to what it holds,
+  its tab bar to its foot in its place and none of the room a phone keeps at its edges. The specs
+  wait for a piece's entrance through one helper they share, so the app frame's tests read a shown
+  toast once it has risen into place and a browser's timing no longer fails them.
 
 ## 0.8.1
 
