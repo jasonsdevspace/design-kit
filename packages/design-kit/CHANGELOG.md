@@ -10,17 +10,22 @@ entry as the notes.
 ## 0.8.5
 
 A panel hands focus back to its button by one rule, decided by where focus is as it closes, in
-Safari and on iOS as in every other browser, Escape closes a panel, and a toast hands focus back
+Safari and on iOS as in Chromium and Firefox, Escape closes a panel, and a toast hands focus back
 from a press of its buttons in Safari. No token is added or renamed and the theme script is
 unchanged, so `themeScriptHash` is the same.
 
-- **Upgrading.** The kit writes `tabindex="-1"` on an attached panel and on the place a link in it
-  sends focus to, and `tabindex="0"` on a panel's button, its corner Close and a toast's Close and
-  action, where the page set none, and keeps a tabindex the page set. A page's own `[tabindex]` and
-  `:focus` rules match these, and in Safari these buttons become stops for Tab. Escape in a panel
-  now closes it, so a piece of the page's own in a panel that takes Escape for itself calls
-  `preventDefault` on the press. A panel the page closes from its code, where focus is in it or was
-  lost from it after the visitor's last press there, moves focus to its button and scrolls to it.
+- **Upgrading.** The kit writes `tabindex="0"` on a panel's button, its corner Close and a toast's
+  Close and action, and `tabindex="-1"` on an attached panel, each where the page set none, and on
+  the place a link in a panel sends focus to where that place takes no focus of its own. It keeps a
+  tabindex the page set. A press on a panel's text now puts focus on the panel, with no ring, so a
+  page's own `[tabindex]`, `:focus` and `:focus-within` rules match these, and in Safari these
+  buttons become stops for Tab. Escape in a panel or on its button now closes the panel and marks
+  the press handled, so a dialog around it stays open on that press, and a piece of the page's own
+  in a panel that takes Escape for itself calls `preventDefault` on the press. A panel the page
+  closes from its code while nothing has focus, after the visitor's last focus or press was in it,
+  now moves focus to its button and scrolls to it, as it did where focus was in the panel. A page
+  closes a panel from a press's `click`, since a close from its `pointerdown` comes before the
+  browser moves focus for the press.
 - **Controls.** However a panel closes, by its button, its Close, Escape, a Done of the page's own
   or `set`, focus goes to its button where focus is in the panel, or where nothing has focus and the
   visitor's last place, the last focus that moved or their last press, was in it, and stays anywhere
@@ -32,11 +37,14 @@ unchanged, so `themeScriptHash` is the same.
   writes them, and a panel the page draws again while it is open takes them as a press in it begins.
   Escape with focus in a panel or on its button closes the innermost such panel and marks the press
   handled, so a dialog around it stays open, unless the page has handled it, it ends typing in a
-  script such as Japanese, it is in a dialog or a popover inside the panel, or focus is on a search
-  with words in it or on a combobox or a button whose list or menu is open. A press of a button that
-  is off does nothing, and focus never goes back to one. A toast's Close and action carry a tabindex
-  as a panel's do, so a press of either in Safari leaves focus in the toast and it goes back as the
-  toast leaves.
+  script such as Japanese, in Safari too, it is in a dialog or a popover inside the panel, or focus
+  is on a search with words in it, on a combobox or a button whose list or menu is open, or on a
+  panel's button that is off. Where no button takes focus, the first thing after the panel that
+  focus goes to is one the keyboard reaches by Tab, so another open panel does not take it. A dialog
+  opened by a press inside an element with a tabindex of -1, a panel among them, no longer takes
+  that element for what opened it, so focus goes back to the nearest control around the press or to
+  the element whose listener heard it. A toast's Close and action carry a tabindex as a panel's do,
+  so a press of either in Safari leaves focus in the toast and it goes back as the toast leaves.
 - **React.** `Toast` draws its Close and its action with `tabIndex={0}`.
 - **Docs.** Record 19 states the panel's rule, the research into React Aria, Radix, Headless UI,
   Ariakit and WebKit behind it, and the options turned down, and record 13 measures the controls
@@ -45,9 +53,11 @@ unchanged, so `themeScriptHash` is the same.
   why.
 - **Tests.** The panel's browser tests run each case of the rule in Chromium and WebKit with real
   presses, and a WebKit test holds that a pressed button with no tabindex stays unfocused there, so
-  the tests of Safari's way keep testing it. A toast's Close and action pressed by pointer and tap
-  find focus back where it was. The theme switch, the copy button and the pieces are tested in
-  WebKit too, where the switch's choices open and close by pointer and tap as in Chromium.
+  the tests of Safari's way keep testing it. A toast's Close and action pressed by pointer, and its
+  Close tapped in WebKit, find focus back where it was, and the tests hold that the kit writes the
+  tabindexes on a panel's and a toast's buttons and keeps those a page set. The theme switch, the
+  copy button and the pieces are tested in WebKit too, where the switch's choices open by pointer
+  and close on a pick or a tap beside them, as in Chromium.
 
 ## 0.8.4
 
