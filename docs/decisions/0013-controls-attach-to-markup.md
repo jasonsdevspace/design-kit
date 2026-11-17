@@ -130,6 +130,12 @@ with a button attaches so its corner Close needs no script of the page's own. Ev
 together weighs 6,802 bytes, past the 6.25 KB the budget held, and the median a function adds is
 now 616 bytes, so the rule sets the controls at 7.25 KB.
 
+The sheets were measured for 0.8.4 too, with its bands, its icon sizes and the app frame's named
+sides in place. They weigh 10,916 bytes sent together, 92 bytes under the 10.75 KB they hold, and
+the median a piece costs is now 165 bytes. A piece of the usual size would take them past the
+budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
+it, as the rule has it, so the piece that does says so with its figures.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
