@@ -242,8 +242,9 @@
         --dk-stack-skip: 10;
         /*
          * How far a card's words stand in from its edge, a panel's and a tile's alike, so a raised
-         * panel's text and the tiles under it start on one line: a wider step on a wide page, a
-         * phone's on a phone, and in an app's column a phone's held at its size at every width.
+         * panel's text and the tiles under it start on one line: a wider step on a wide page, and a
+         * phone's held at its size on a phone and in an app's column at every width, so a panel and
+         * the tiles in it leave their words room at twice the text size.
          */
         --dk-card-inset: var(--dk-space-5);
         /*
@@ -256,7 +257,7 @@
 
     @media (width <= 48rem) {
         :where(:root) {
-            --dk-card-inset: var(--dk-space-4);
+            --dk-card-inset: var(--dk-space-4-held);
             --dk-dialog-inset: var(--dk-space-4-held);
         }
     }
