@@ -953,9 +953,9 @@ test.describe('the controls page, with the pieces the script attaches', () => {
             const live = page.locator('.site-copy:not([inert])').filter({
                 has: page.locator('[id$="round-tips"]'),
             });
-            const opener = live.getByRole('button', { name: 'Round tips' });
+            const opener = live.getByRole('button', { name: 'Tips', exact: true });
             const panel = live.locator('[id$="round-tips"]');
-            const close = panel.getByRole('button', { name: 'Close round tips' });
+            const close = panel.getByRole('button', { name: 'Close tips' });
             await expect(panel).toBeVisible();
             await expect(
                 panel.locator(':scope > .dk-panel-title + .dk-close > button')
@@ -965,16 +965,25 @@ test.describe('the controls page, with the pieces the script attaches', () => {
                 const button = element.querySelector('.dk-close button')?.getBoundingClientRect();
                 const title = element.querySelector('.dk-panel-title')?.getBoundingClientRect();
                 if (!button || !title) throw new Error('no Close or no title');
+                const box = element.getBoundingClientRect();
                 return {
                     size: Math.min(button.width, button.height),
                     besideTitle: button.left - title.right,
                     belowTitle: button.top - title.bottom,
+                    inside:
+                        button.top >= box.top &&
+                        button.right <= box.right &&
+                        button.left >= box.left &&
+                        button.bottom <= box.bottom,
                 };
             });
             expect(corner.size, String(width)).toBeGreaterThanOrEqual(44);
             expect(corner.besideTitle, String(width)).toBeGreaterThanOrEqual(-0.5);
             expect(corner.belowTitle, String(width)).toBeLessThan(0);
-            const results = await new AxeBuilder({ page }).include('main').analyze();
+            expect(corner.inside, String(width)).toBe(true);
+            const results = await new AxeBuilder({ page })
+                .include('.site-copy:not([inert]) [id$="round-tips"]')
+                .analyze();
             expect(
                 results.violations.map(({ id }) => id),
                 String(width)
@@ -1222,6 +1231,9 @@ test.describe('the app pieces page', () => {
                         const words = body?.querySelector(
                             ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
                         );
+                        if (frame.matches('.dk-app') && (!body || !words)) {
+                            throw new Error('a picture of a screen with no body to read');
+                        }
                         const bodyRoom =
                             body && words
                                 ? body.getBoundingClientRect().bottom -
