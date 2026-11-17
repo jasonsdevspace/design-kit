@@ -942,9 +942,11 @@ const openersOf = (id: string): HTMLButtonElement[] =>
 
 /**
  * What a visitor's last press passed through, from what it landed on up, kept until the next
- * press, so a panel it was in still counts after the page draws the pressed button away.
+ * press, so a panel it was in still counts after the page draws the pressed button away, and where
+ * focus was as the press landed, before the page's own handlers for it ran.
  */
 let pressedPath: readonly EventTarget[] = [];
+let focusAtPress: Element | null = null;
 
 /** The button that opened each panel that is open, let go as the panel closes. */
 const lastOpener = new Map<string, HTMLButtonElement>();
@@ -973,12 +975,21 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    // Focus that fell to what holds the panel after a press inside it, the body or a main that
-    // takes focus, as Safari leaves it, counts as the panel's, and focus anywhere else is where the
-    // visitor or the page put it.
+    // Focus still where the browser put it after a visitor's press on a control in the panel, on
+    // what holds the panel, the body or a main that takes focus, as Safari leaves it, counts as the
+    // panel's. Focus the page moved, and focus after a press on the panel's plain text, is left.
     const active = document.activeElement;
+    // The press counts where a control it landed on comes before the panel in its path, so a
+    // control the page drew away still counts and a main around the panel does not.
+    const control = pressedPath.findIndex(
+        (node) => node instanceof Element && node.matches(FOCUSABLE)
+    );
     const held =
-        panel.contains(active) || (!!active?.contains(panel) && pressedPath.includes(panel));
+        panel.contains(active) ||
+        (active === focusAtPress &&
+            !!active?.contains(panel) &&
+            control > -1 &&
+            control < pressedPath.indexOf(panel));
     panel.hidden = !open;
     if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
@@ -997,7 +1008,10 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
  */
 const onPanelPress = (event: MouseEvent): void => {
     const target = event.target instanceof Element ? event.target : null;
-    if (event.isTrusted) pressedPath = event.composedPath();
+    if (event.isTrusted) {
+        pressedPath = event.composedPath();
+        focusAtPress = document.activeElement;
+    }
     const button = target?.closest('button');
     if (!button) return;
     if (attachedPanels.has(button)) {

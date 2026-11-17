@@ -8,8 +8,8 @@ import { servePage, tabKey } from './page.js';
  * button opening and closing it by pointer and by keyboard, the corner Close closing it with the
  * button marked collapsed and focus back on it, the set returned opening and closing it from the
  * page's code, the detach letting the button go, and a button attached twice returning the same.
- * A visitor's press of the Close hands focus back however it is pressed, and a close from the
- * page's code only where focus was in the panel.
+ * A close hands focus back where focus was in the panel, or is still where the browser put it after
+ * a visitor's press on a control in the panel, and leaves focus the page moved where it is.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -755,4 +755,69 @@ test.describe('on a touch screen', () => {
         await expect(panel(page)).toBeHidden();
         await expect(button(page)).toBeFocused();
     });
+});
+
+test('leaves focus on the main a link in the panel moves it to as it closes the panel', async ({
+    page,
+    browserName,
+}) => {
+    // Safari has put focus on the main already, so a move there before closing is no move at all,
+    // and the reference has a page move focus after it closes the panel.
+    test.skip(browserName === 'webkit', 'focus is on the main already in WebKit');
+    await open(page);
+    await button(page).click();
+    // A router's link that moves focus to the main content that holds the panel.
+    await page.evaluate(() => {
+        document.querySelector('#deal')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            document.querySelector<HTMLElement>('main')?.focus();
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        });
+    });
+    await page.locator('#deal').click();
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('main')).toBeFocused();
+});
+
+test("moves no focus when the page's code closes the panel after a press on its plain text", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#round-tips .dk-panel-title').click();
+    await page.evaluate(() => {
+        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).not.toBeFocused();
+});
+
+test("moves no focus when the page's script clicks the Close after a press on the panel's plain text", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#round-tips .dk-panel-title').click();
+    await page.evaluate(() => {
+        document.querySelector<HTMLButtonElement>('#round-tips .dk-close button')?.click();
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).not.toBeFocused();
+});
+
+test('leaves focus where a page moves it after closing the panel, in every engine', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        document.querySelector('#deal')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+            document.querySelector<HTMLElement>('main')?.focus();
+        });
+    });
+    await page.locator('#deal').click();
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('main')).toBeFocused();
 });

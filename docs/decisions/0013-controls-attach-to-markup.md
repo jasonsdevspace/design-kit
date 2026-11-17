@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, and in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, and in 0.8.5 for the panel's focus on closing, which sets the controls' budget at 7.75 KB
 
 ## Context
 
@@ -137,17 +137,20 @@ the median a piece costs is now 165 bytes. A piece of the usual size would take 
 budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
 it, as the rule has it, so the piece that does says so with its figures.
 
-For 0.8.5 the panel's focus on closing is settled after three tries in one release. A press in
-Safari or on iOS neither focuses the pressed button nor leaves focus where it was, and puts it on
-what holds the button, the body or a main that takes focus. Moving focus only where it was in the
-panel left a pointer's Close on the body. Handing it back for a press of the Close alone left a
-Done button of the page's own on the body. Taking any focus on the body as lost pulled a visitor
-back to the panel when the page closed it on a timer. The rule kept is that a closing panel hands
-focus to its button where focus was in it, or where focus fell to what holds it after the
-visitor's last press was inside it, and leaves focus anywhere else where the visitor or the page
-put it. The kit keeps the path of the last press rather than a timer, so a Done whose handler
-waits or draws the button away still counts. An option on `set` to hand focus back was turned
-down, since every page would have to ask for it and the drop-in rule has the kit do it.
+For 0.8.5 the panel's focus on closing is settled. A press in Safari or on iOS neither focuses the
+pressed button nor leaves focus where it was, and puts it on what holds the button, the body or a
+main that takes focus. Moving focus only where it was in the panel, as 0.8.4 did, left a pointer's
+Close on the body. Handing it back for a press of the Close alone left a Done button of the page's
+own on the body. Taking any focus on the body as lost pulled a visitor back to the panel when the
+page closed it on a timer, and keeping a press inside the panel alone pulled them back after a tap
+on its plain text, or away from a main the page moved focus to. The rule kept is that a closing
+panel hands focus to its button where focus was in it, or where focus is still where the browser put
+it after the visitor's last press on a control in the panel, and leaves focus anywhere else where
+the visitor or the page put it. The kit keeps the path of the last press and where focus was as it
+landed, rather than a timer, so a Done whose handler waits or draws the button away still counts. An
+option on `set` to hand focus back was turned down, since every page would have to ask for it and
+the drop-in rule has the kit do it. With the rule in place every function sent together weighs 7,027
+bytes and the median a function adds is 665 bytes, so the rule sets the controls at 7.75 KB.
 
 ## How it is tested
 
