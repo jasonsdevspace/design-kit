@@ -1,14 +1,14 @@
 {
     "recorded": {
-        "date": "2026-11-16",
-        "commit": "d510aea",
-        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
+        "date": "2026-11-17",
+        "commit": "8f1544d",
+        "machine": "Intel(R) Xeon(R) 6975P-C, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.8.1",
-    "size": 73609,
-    "sheets": 10376,
+    "version": "0.8.2",
+    "size": 74879,
+    "sheets": 10664,
     "files": [
         {
             "path": "dist/base.css",
@@ -18,9 +18,9 @@
         },
         {
             "path": "dist/components.css",
-            "size": 127962,
-            "gzip": 28549,
-            "stripped": 8444
+            "size": 131147,
+            "gzip": 29090,
+            "stripped": 8682
         },
         {
             "path": "dist/controls.d.ts",
@@ -29,8 +29,8 @@
         },
         {
             "path": "dist/controls.js",
-            "size": 39599,
-            "gzip": 11354
+            "size": 41422,
+            "gzip": 11930
         },
         {
             "path": "dist/react.d.ts",
@@ -54,9 +54,9 @@
         },
         {
             "path": "dist/tokens.css",
-            "size": 16068,
-            "gzip": 5120,
-            "stripped": 1402
+            "size": 16800,
+            "gzip": 5262,
+            "stripped": 1441
         },
         {
             "path": "dist/tokens.resolver.json",
@@ -93,194 +93,199 @@
         {
             "piece": "the page's own elements",
             "rules": 31,
-            "gzip": 979
+            "gzip": 1026
         },
         {
             "piece": "tokens",
             "rules": 6,
-            "gzip": 943
+            "gzip": 963
         },
         {
             "piece": "app frame",
-            "rules": 46,
-            "gzip": 863
+            "rules": 47,
+            "gzip": 928
         },
         {
             "piece": "button",
             "rules": 29,
-            "gzip": 622
+            "gzip": 638
         },
         {
             "piece": "strip",
             "rules": 20,
-            "gzip": 469
+            "gzip": 478
         },
         {
             "piece": "rows",
             "rules": 29,
-            "gzip": 435
+            "gzip": 469
         },
         {
             "piece": "field",
             "rules": 19,
-            "gzip": 428
+            "gzip": 437
         },
         {
             "piece": "explainer",
             "rules": 22,
-            "gzip": 414
+            "gzip": 416
         },
         {
             "piece": "table",
             "rules": 17,
-            "gzip": 360
+            "gzip": 374
         },
         {
             "piece": "button grid",
             "rules": 12,
-            "gzip": 298
+            "gzip": 332
         },
         {
-            "piece": "dialog",
-            "rules": 14,
-            "gzip": 265
+            "piece": "panel",
+            "rules": 15,
+            "gzip": 321
         },
         {
             "piece": "stepper",
             "rules": 11,
-            "gzip": 257
+            "gzip": 272
+        },
+        {
+            "piece": "tab bar",
+            "rules": 16,
+            "gzip": 267
         },
         {
             "piece": "choice",
             "rules": 15,
-            "gzip": 232
+            "gzip": 242
         },
         {
             "piece": "theme switch",
             "rules": 14,
-            "gzip": 230
-        },
-        {
-            "piece": "tab bar",
-            "rules": 15,
-            "gzip": 219
+            "gzip": 233
         },
         {
             "piece": "toast",
             "rules": 10,
-            "gzip": 184
+            "gzip": 212
+        },
+        {
+            "piece": "dialog",
+            "rules": 10,
+            "gzip": 209
         },
         {
             "piece": "pills",
             "rules": 12,
-            "gzip": 151
+            "gzip": 177
         },
         {
             "piece": "tabs",
             "rules": 9,
-            "gzip": 146
+            "gzip": 159
         },
         {
             "piece": "callout",
             "rules": 10,
-            "gzip": 125
+            "gzip": 134
         },
         {
             "piece": "footer",
             "rules": 6,
-            "gzip": 122
+            "gzip": 133
         },
         {
             "piece": "animations",
             "rules": 4,
-            "gzip": 116
-        },
-        {
-            "piece": "icon",
-            "rules": 3,
-            "gzip": 92
+            "gzip": 121
         },
         {
             "piece": "site header",
             "rules": 5,
-            "gzip": 92
+            "gzip": 101
+        },
+        {
+            "piece": "icon",
+            "rules": 3,
+            "gzip": 100
         },
         {
             "piece": "skip link",
             "rules": 2,
-            "gzip": 76
+            "gzip": 83
         },
         {
             "piece": "steps",
             "rules": 5,
-            "gzip": 73
+            "gzip": 81
         },
         {
             "piece": "code block",
             "rules": 5,
-            "gzip": 65
-        },
-        {
-            "piece": "panel",
-            "rules": 6,
-            "gzip": 65
+            "gzip": 79
         },
         {
             "piece": "content page",
             "rules": 4,
-            "gzip": 63
+            "gzip": 74
         },
         {
             "piece": "eyebrow",
             "rules": 2,
-            "gzip": 58
+            "gzip": 62
         },
         {
             "piece": "copy button",
             "rules": 3,
-            "gzip": 53
+            "gzip": 50
+        },
+        {
+            "piece": "picture",
+            "rules": 1,
+            "gzip": 29
         },
         {
             "piece": "visually hidden",
             "rules": 1,
-            "gzip": 17
+            "gzip": 22
         },
         {
             "piece": "actions",
             "rules": 1,
-            "gzip": 10
+            "gzip": 14
         }
     ],
     "functions": [
         {
             "name": "attachToast",
             "alone": 1668,
-            "added": 1061
+            "added": 1054
         },
         {
             "name": "attachStepper",
             "alone": 1466,
-            "added": 981
+            "added": 976
+        },
+        {
+            "name": "attachDialog",
+            "alone": 1246,
+            "added": 802
         },
         {
             "name": "attachThemeSwitch",
             "alone": 1781,
-            "added": 693
+            "added": 685
         },
         {
             "name": "attachCopyButton",
             "alone": 1005,
-            "added": 602
+            "added": 598
         },
         {
             "name": "attachTable",
             "alone": 747,
-            "added": 487
-        },
-        {
-            "name": "attachDialog",
-            "alone": 886,
-            "added": 473
+            "added": 481
         },
         {
             "name": "attachStatus",
@@ -295,9 +300,9 @@
     ],
     "since": {
         "date": "2026-11-16",
-        "commit": "2caf42c",
-        "version": "0.8.0",
-        "size": 72422,
-        "sheets": 10248
+        "commit": "d510aea",
+        "version": "0.8.1",
+        "size": 73609,
+        "sheets": 10376
     }
 }
