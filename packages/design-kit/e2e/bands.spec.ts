@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, sideways, style, writePage } from './page.js';
+import { box, lengthOf, pixels, sideways, style, writePage } from './page.js';
 import { brokenWords, cutOff } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -53,38 +53,60 @@ const BODY = `<main id="main-content">
 
 const open = (page: Page, width: number) => writePage(page, { width, title: 'Bands', body: BODY });
 
+/** A length the element the locator finds computes, in pixels, to compare with a token's. */
+const read = async (locator: Locator, name: string): Promise<number> =>
+    pixels((await style(locator, name))[name]);
+
 test("sizes a band's title, its heading and its sections, and keeps a group under the heading that names it", async ({
     page,
 }) => {
     await open(page, 1280);
-    expect((await style(page.locator('#title'), 'font-size'))['font-size']).toBe('28px');
-    expect((await style(page.locator('#games-title'), 'font-size'))['font-size']).toBe('24px');
-    expect((await style(page.locator('#cards'), 'font-size'))['font-size']).toBe('20px');
-    expect((await style(page.locator('#cards-text'), 'margin-top'))['margin-top']).toBe('12px');
+    const display = await lengthOf(page, 'var(--dk-text-display)');
+    const heading = await lengthOf(page, 'var(--dk-text-heading)');
+    const title = await lengthOf(page, 'var(--dk-text-title)');
+    const under = await lengthOf(page, 'var(--dk-space-3)');
+    expect(await read(page.locator('#title'), 'font-size')).toBe(display);
+    expect(await read(page.locator('#games-title'), 'font-size')).toBe(heading);
+    expect(await read(page.locator('#cards'), 'font-size')).toBe(title);
+    expect(await read(page.locator('#cards-text'), 'margin-top')).toBe(under);
     // A group under the heading that names it stands the flow's step, and a section after text a
     // section's.
-    expect((await style(page.locator('#kinds'), 'margin-top'))['margin-top']).toBe('16px');
-    expect((await style(page.locator('section:has(> #more)'), 'margin-top'))['margin-top']).toBe(
-        '48px'
+    expect(await read(page.locator('#kinds'), 'margin-top')).toBe(
+        await lengthOf(page, 'var(--dk-space-4)')
     );
-    expect((await style(page.locator('#more'), 'font-size'))['font-size']).toBe('20px');
-    expect((await style(page.locator('#more-text'), 'margin-top'))['margin-top']).toBe('12px');
+    expect(await read(page.locator('section:has(> #more)'), 'margin-top')).toBe(
+        await lengthOf(page, 'var(--dk-space-7)')
+    );
+    expect(await read(page.locator('#more'), 'font-size')).toBe(title);
+    expect(await read(page.locator('#more-text'), 'margin-top')).toBe(under);
     expect((await style(page.locator('#more-text'), 'margin-bottom'))['margin-bottom']).toBe('0px');
 });
 
 test("lines a band's content up with the column and spaces it by the flow", async ({ page }) => {
     await open(page, 1280);
-    // The column is 72rem in the middle of 1280px, and content starts a step in from it.
+    // The column stands in the middle of 1280px, and content starts a step in from it.
+    const side =
+        (1280 - (await lengthOf(page, 'var(--dk-column)'))) / 2 +
+        (await lengthOf(page, 'var(--dk-space-4)'));
     const sides = await style(page.locator('#games'), 'padding-left', 'padding-right');
-    expect(sides).toEqual({ 'padding-left': '80px', 'padding-right': '80px' });
-    expect((await style(page.locator('#hero'), 'padding-top'))['padding-top']).toBe('48px');
+    expect(sides).toEqual({
+        'padding-left': `${String(side)}px`,
+        'padding-right': `${String(side)}px`,
+    });
+    expect(await read(page.locator('#hero'), 'padding-top')).toBe(
+        await lengthOf(page, 'var(--dk-space-7)')
+    );
     // A page's own room above and below, set by its property, wins.
     expect((await style(page.locator('#games'), 'padding-top'))['padding-top']).toBe('32px');
     const eyebrow = await box(page.locator('#games .dk-eyebrow'));
     const heading = await box(page.locator('#games-title'));
     const text = await box(page.locator('#games-text'));
-    expect(Math.round(heading.y - (eyebrow.y + eyebrow.height))).toBe(4);
-    expect(Math.round(text.y - (heading.y + heading.height))).toBe(16);
+    expect(Math.round(heading.y - (eyebrow.y + eyebrow.height))).toBe(
+        await lengthOf(page, 'var(--dk-space-1)')
+    );
+    expect(Math.round(text.y - (heading.y + heading.height))).toBe(
+        await lengthOf(page, 'var(--dk-space-4)')
+    );
 });
 
 test("spaces a grid's items in a band by its gap alone, and a stack's pieces by the flow", async ({
@@ -97,9 +119,11 @@ test("spaces a grid's items in a band by its gap alone, and a stack's pieces by 
     expect((await style(page.locator('#picture'), 'margin-top'))['margin-top']).toBe('0px');
     const title = await box(page.locator('#title'));
     const lead = await box(page.locator('#lead'));
-    expect(Math.round(lead.y - (title.y + title.height))).toBe(8);
-    expect((await style(page.locator('#stack > p:last-child'), 'margin-top'))['margin-top']).toBe(
-        '16px'
+    expect(Math.round(lead.y - (title.y + title.height))).toBe(
+        await lengthOf(page, 'var(--dk-space-2)')
+    );
+    expect(await read(page.locator('#stack > p:last-child'), 'margin-top')).toBe(
+        await lengthOf(page, 'var(--dk-space-4)')
     );
 });
 
@@ -115,13 +139,17 @@ for (const [width, columns] of [
         const android = await box(page.locator('#android'));
         expect(iphone.y === android.y).toBe(columns === 2);
         for (const id of ['iphone', 'android']) {
-            expect((await style(page.locator(`#${id}`), 'font-size'))['font-size']).toBe('20px');
-            expect((await style(page.locator(`#${id}-text`), 'margin-top'))['margin-top'], id).toBe(
-                '12px'
+            expect(await read(page.locator(`#${id}`), 'font-size')).toBe(
+                await lengthOf(page, 'var(--dk-text-title)')
+            );
+            expect(await read(page.locator(`#${id}-text`), 'margin-top'), id).toBe(
+                await lengthOf(page, 'var(--dk-space-3)')
             );
         }
         // The group stands a section's step under the lead, as the section after it does.
-        expect((await style(page.locator('#ways'), 'margin-top'))['margin-top']).toBe('48px');
+        expect(await read(page.locator('#ways'), 'margin-top')).toBe(
+            await lengthOf(page, 'var(--dk-space-7)')
+        );
     });
 
 test('has no audit findings', async ({ page }) => {
@@ -144,8 +172,8 @@ test("keeps a content page's section a section's step under the page's own headi
     page,
 }) => {
     await open(page, 1280);
-    expect((await style(page.locator('#updates-section'), 'margin-top'))['margin-top']).toBe(
-        '48px'
+    expect(await read(page.locator('#updates-section'), 'margin-top')).toBe(
+        await lengthOf(page, 'var(--dk-space-7)')
     );
 });
 

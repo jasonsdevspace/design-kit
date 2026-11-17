@@ -171,13 +171,17 @@
         /*
          * The padding of a panel and a tile on a phone and in an app's frame, and of a dialog on a
          * phone, and a wide dialog's, each stopping at its usual size so a large text size leaves
-         * what they hold its room. The phone's step also pads an app frame's sides and a toast's,
-         * and steps a band in on an app's page. A field's inline padding held the same way keeps a
-         * stepper's figures room.
+         * what they hold its room. A field's inline padding held the same way keeps a stepper's
+         * figures room.
          */
         --dk-space-4-held: min(var(--dk-space-4), 16px);
         --dk-space-5-held: min(var(--dk-space-5), 24px);
         --dk-field-inline-held: min(var(--dk-field-inline), 12px);
+        /*
+         * How far an app frame's words stand in from its sides, the phone's held step, which a
+         * toast's sides and a band's on an app's page match.
+         */
+        --dk-app-side: var(--dk-space-4-held);
 
         /*
          * What floats over the page, deeper on a dark page, where a soft shadow shows little, and
@@ -308,12 +312,8 @@
      * at its size, as the frame's own sides are, so at a large text size the words keep their room.
      */
     :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))) {
-        --dk-band-left: calc(
-            max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4-held)
-        );
-        --dk-band-right: calc(
-            max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4-held)
-        );
+        --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-app-side));
+        --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-app-side));
     }
 
     /*
@@ -328,9 +328,21 @@
         --dk-app-body: 0px;
     }
 
+    /*
+     * The size of an icon drawn larger than its text, in an icon-only button and in a tab bar,
+     * which its stroke is drawn from.
+     */
+    :where(.dk-button-icon .dk-icon) {
+        --dk-icon-size: 1.25rem;
+    }
+
+    :where(.dk-tabbar a > svg) {
+        --dk-icon-size: 1.5rem;
+    }
+
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {
-        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4-held));
-        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4-held));
+        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-app-side));
+        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-app-side));
     }
 
     /*

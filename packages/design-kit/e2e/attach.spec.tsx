@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { js, KIT, ORIGIN, themeOf } from './page.js';
+import { ORIGIN, servePage, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -57,28 +57,14 @@ const BARE = `import { attachThemeSwitch, chooseTheme } from './controls.js';
 window.kit = { attachThemeSwitch, chooseTheme };
 window.attachFirst = () => attachThemeSwitch(document.querySelector('.dk-theme-switch'));`;
 
-const page = (attach: boolean) =>
-    `<!doctype html><html lang="en"><head><title>Controls</title>` +
-    `<script>${themeScript}</script><link rel="stylesheet" href="/kit.css"></head><body>${MARKUP}` +
-    (attach ? '<script type="module" src="/page.js"></script>' : '') +
-    `</body></html>`;
-
-const FILES: Readonly<Record<string, readonly [string, string]>> = {
-    '/kit.css': [KIT, 'text/css'],
-    '/controls.js': [js('controls.ts'), 'text/javascript'],
-    '/theme.js': [js('theme.ts'), 'text/javascript'],
-    '/page.js': [ATTACH, 'text/javascript'],
-};
-
 /** A tab on the test origin, every file served from memory under the policy. */
 const tab = async (context: BrowserContext, attach = true, script = ATTACH): Promise<Page> => {
-    await context.route(`${ORIGIN}/**`, (route) => {
-        const path = new URL(route.request().url()).pathname;
-        const [body, contentType] =
-            path === '/page.js'
-                ? [script, 'text/javascript']
-                : (FILES[path] ?? [page(attach), 'text/html']);
-        return route.fulfill({ body, contentType, headers: { 'content-security-policy': POLICY } });
+    await servePage(context, {
+        title: 'Controls',
+        head: `<script>${themeScript}</script>`,
+        body: MARKUP,
+        script: attach ? script : undefined,
+        headers: { 'content-security-policy': POLICY },
     });
     const opened = await context.newPage();
     await opened.goto(`${ORIGIN}/`);

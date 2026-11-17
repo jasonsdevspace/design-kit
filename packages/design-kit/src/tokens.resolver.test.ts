@@ -27,6 +27,7 @@ const CSS_ONLY: Readonly<Record<string, string>> = {
     'space-4-held': 'a min() of a rem and a px length, by the text size',
     'space-5-held': 'a min() of a rem and a px length, by the text size',
     'field-inline-held': 'a min() of a rem and a px length, by the text size',
+    'app-side': 'the held step, a min() of a rem and a px length, by the text size',
     'safe-top': 'what the phone keeps, by env()',
     'safe-right': 'what the phone keeps, by env()',
     'safe-bottom': 'what the phone keeps, by env()',

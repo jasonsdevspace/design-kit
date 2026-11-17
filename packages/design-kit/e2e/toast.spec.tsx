@@ -8,9 +8,7 @@ import {
     colorOf,
     contrast,
     forceColors,
-    js,
-    KIT,
-    ORIGIN,
+    servePage,
     settle,
     sideways,
     style,
@@ -87,26 +85,15 @@ const open = async (
         readonly clock?: boolean;
     } = {}
 ): Promise<void> => {
-    const files: Readonly<Record<string, readonly [string, string]>> = {
-        '/kit.css': [`${KIT}${css}`, 'text/css'],
-        '/controls.js': [js('controls.ts'), 'text/javascript'],
-        '/theme.js': [js('theme.ts'), 'text/javascript'],
-        '/page.js': [ATTACH, 'text/javascript'],
-    };
-    await page.route(`${ORIGIN}/**`, (route) => {
-        const path = new URL(route.request().url()).pathname;
-        const [served, contentType] = files[path] ?? [
-            `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Scores</title>` +
-                `<link rel="stylesheet" href="/kit.css"></head><body>${body}` +
-                (attach ? '<script type="module" src="/page.js"></script>' : '') +
-                '</body></html>',
-            'text/html',
-        ];
-        return route.fulfill({ body: served, contentType });
-    });
     if (clock) await page.clock.install();
     await page.setViewportSize({ width, height });
-    await page.goto(`${ORIGIN}/`);
+    await servePage(page, {
+        title: 'Scores',
+        body,
+        script: attach ? ATTACH : undefined,
+        theme,
+        css,
+    });
     if (attach) await page.waitForFunction(() => 'kit' in window);
 };
 

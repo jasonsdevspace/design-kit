@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, forceColors, js, KIT, ORIGIN, tabKey } from './page.js';
+import { box, forceColors, servePage, tabKey } from './page.js';
 
 /*
  * What the keyboard reaches in a table's frame, in Chromium and in WebKit: a link cut by the
@@ -55,26 +55,15 @@ const open = async (
         readonly theme?: 'light' | 'dark';
     } = {}
 ): Promise<void> => {
-    const files: Readonly<Record<string, readonly [string, string]>> = {
-        '/kit.css': [`${KIT}${css}`, 'text/css'],
-        '/controls.js': [js('controls.ts'), 'text/javascript'],
-        '/theme.js': [js('theme.ts'), 'text/javascript'],
-        '/page.js': [ATTACH, 'text/javascript'],
-    };
-    await page.route(`${ORIGIN}/**`, (route) => {
-        const path = new URL(route.request().url()).pathname;
-        const [served, contentType] = files[path] ?? [
-            `<!doctype html><html lang="en" dir="${dir}" data-theme="${theme}"><head>` +
-                `<title>Scores</title><link rel="stylesheet" href="/kit.css"></head><body>` +
-                `<main><h1>Scores</h1>${table(player, wide)}</main>` +
-                (attach ? '<script type="module" src="/page.js"></script>' : '') +
-                '</body></html>',
-            'text/html',
-        ];
-        return route.fulfill({ body: served, contentType });
-    });
     await page.setViewportSize({ width: 320, height: 700 });
-    await page.goto(`${ORIGIN}/`);
+    await servePage(page, {
+        title: 'Scores',
+        body: `<main><h1>Scores</h1>${table(player, wide)}</main>`,
+        script: attach ? ATTACH : undefined,
+        theme,
+        dir,
+        css,
+    });
     if (attach) await page.waitForFunction(() => 'ready' in window);
 };
 

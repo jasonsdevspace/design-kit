@@ -2,11 +2,34 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
+
+/**
+ * A copy of the kit's `footRoom` in `e2e/spacing.ts`, since the site reaches the kit only through
+ * its pinned release and the shared examples. The room left between the last drawn child of the
+ * element the locator finds and its padding edge at its foot, which is none where what it holds
+ * ends at its padding. The child's own margin counts as room rather than being taken off, since the
+ * kit sets a last child's margin to nothing, so a margin left under it shows. The one the kit keeps
+ * there on purpose, for a toast floating over an app's body, is room a test names.
+ */
+const footRoom = (locator: Locator): Promise<number> =>
+    locator.evaluate((container) => {
+        const last = container.querySelector(
+            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+        );
+        if (!last) throw new Error('expected a drawn child to measure the foot from');
+        const style = getComputedStyle(container);
+        return (
+            container.getBoundingClientRect().bottom -
+            Number.parseFloat(style.borderBottomWidth) -
+            Number.parseFloat(style.paddingBottom) -
+            last.getBoundingClientRect().bottom
+        );
+    });
 
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the path
@@ -74,6 +97,32 @@ const sideways = (page: Page) =>
     page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
+
+/**
+ * Fails where the Close in the corner of what the locator finds runs under its title or into it,
+ * or stands off the title's first line, which the kit's own test measures by the line's middle, so
+ * the Close reads beside the question it closes.
+ */
+const closeBesideTitle = async (holder: Locator, at: string) => {
+    const drawn = await holder.evaluate((element) => {
+        const title = element.querySelector(':scope > :has(+ .dk-close)');
+        const close = element.querySelector(':scope > .dk-close button');
+        if (!title || !close) throw new Error('no title or no Close');
+        const words = title.getBoundingClientRect();
+        const button = close.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(title);
+        const first = range.getClientRects()[0] ?? words;
+        return {
+            besideTitle: button.left - words.right,
+            belowTitle: button.top - words.bottom,
+            offLine: button.top + button.height / 2 - (first.top + first.height / 2),
+        };
+    });
+    expect(drawn.besideTitle, at).toBeGreaterThanOrEqual(-0.5);
+    expect(drawn.belowTitle, at).toBeLessThan(0);
+    expect(Math.abs(drawn.offLine), at).toBeLessThanOrEqual(1);
+};
 
 /**
  * The elements whose text runs past a box that hides what overflows, skipping a frame that scrolls
@@ -963,13 +1012,10 @@ test.describe('the controls page, with the pieces the script attaches', () => {
             // The Close is the target, in the corner beside the title.
             const corner = await panel.evaluate((element) => {
                 const button = element.querySelector('.dk-close button')?.getBoundingClientRect();
-                const title = element.querySelector('.dk-panel-title')?.getBoundingClientRect();
-                if (!button || !title) throw new Error('no Close or no title');
+                if (!button) throw new Error('no Close');
                 const box = element.getBoundingClientRect();
                 return {
                     size: Math.min(button.width, button.height),
-                    besideTitle: button.left - title.right,
-                    belowTitle: button.top - title.bottom,
                     inside:
                         button.top >= box.top &&
                         button.right <= box.right &&
@@ -978,8 +1024,7 @@ test.describe('the controls page, with the pieces the script attaches', () => {
                 };
             });
             expect(corner.size, String(width)).toBeGreaterThanOrEqual(44);
-            expect(corner.besideTitle, String(width)).toBeGreaterThanOrEqual(-0.5);
-            expect(corner.belowTitle, String(width)).toBeLessThan(0);
+            await closeBesideTitle(panel, String(width));
             expect(corner.inside, String(width)).toBe(true);
             const results = await new AxeBuilder({ page })
                 .include('.site-copy:not([inert]) [id$="round-tips"]')
@@ -1220,41 +1265,42 @@ test.describe('the app pieces page', () => {
             await page.setViewportSize({ width, height: 900 });
             const pictures = await page
                 .locator('.site-copy[inert] > :is(.dk-app, .dk-tabbar-page)')
-                .evaluateAll((frames) =>
-                    frames.map((frame) => {
-                        const box = frame.getBoundingClientRect();
-                        const last = frame.lastElementChild?.getBoundingClientRect();
-                        const edge = parseFloat(getComputedStyle(frame).borderBottomWidth);
-                        // A frame's body ends one padding below its words, with no room kept for
-                        // lines a picture cannot scroll to.
-                        const body = frame.querySelector(':scope > .dk-app-body');
-                        const words = body?.querySelector(
-                            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
-                        );
-                        if (frame.matches('.dk-app') && (!body || !words)) {
-                            throw new Error('a picture of a screen with no body to read');
-                        }
-                        const bodyRoom =
-                            body && words
-                                ? body.getBoundingClientRect().bottom -
-                                  parseFloat(getComputedStyle(body).paddingBottom) -
-                                  words.getBoundingClientRect().bottom -
-                                  parseFloat(getComputedStyle(words).marginBottom)
-                                : 0;
-                        return {
-                            bodyRoom,
-                            spare: box.height - frame.scrollHeight - 2 * edge,
-                            foot: last ? box.bottom - edge - last.bottom : 0,
-                            tall: box.height < window.innerHeight,
-                        };
-                    })
-                );
+                .all();
             expect(pictures.length, String(width)).toBeGreaterThan(0);
-            for (const [index, drawn] of pictures.entries()) {
+            for (const [index, picture] of pictures.entries()) {
                 const at = `${String(width)}, picture ${String(index)}`;
+                const drawn = await picture.evaluate((frame) => {
+                    const box = frame.getBoundingClientRect();
+                    const last = frame.lastElementChild?.getBoundingClientRect();
+                    const edge = parseFloat(getComputedStyle(frame).borderBottomWidth);
+                    // The room the kit keeps under the body's last line for a toast floating over
+                    // it, as that line's margin, so the toast never covers the line.
+                    const words = frame.querySelector(
+                        ':scope > .dk-app-body > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+                    );
+                    const floats = frame.querySelector('.dk-toast[data-shown]:not([data-row])');
+                    return {
+                        app: frame.matches('.dk-app'),
+                        toastRoom:
+                            floats && words ? parseFloat(getComputedStyle(words).marginBottom) : 0,
+                        spare: box.height - frame.scrollHeight - 2 * edge,
+                        foot: last ? box.bottom - edge - last.bottom : 0,
+                        tall: box.height < window.innerHeight,
+                    };
+                });
                 expect(Math.abs(drawn.spare), at).toBeLessThanOrEqual(1);
                 expect(Math.abs(drawn.foot), at).toBeLessThanOrEqual(1);
-                expect(Math.abs(drawn.bodyRoom), at).toBeLessThanOrEqual(1);
+                // A frame's body ends one padding below its words, with no room kept for lines a
+                // picture cannot scroll to, but for the toast's where one floats over it.
+                if (drawn.app) {
+                    expect(
+                        Math.abs(
+                            (await footRoom(picture.locator(':scope > .dk-app-body'))) -
+                                drawn.toastRoom
+                        ),
+                        at
+                    ).toBeLessThanOrEqual(1);
+                }
                 expect(drawn.tall, at).toBe(true);
             }
         }
@@ -3215,19 +3261,12 @@ test.describe('the pieces together', () => {
             // The Close is the target at every width, in the corner beside the title.
             const corner = await dialog.evaluate((element) => {
                 const button = element.querySelector('.dk-close button')?.getBoundingClientRect();
-                const title = element.querySelector('.dk-dialog-title')?.getBoundingClientRect();
-                if (!button || !title) throw new Error('no Close or no title');
-                return {
-                    width: button.width,
-                    height: button.height,
-                    belowTitle: button.top - title.bottom,
-                    besideTitle: button.left - title.right,
-                };
+                if (!button) throw new Error('no Close');
+                return { width: button.width, height: button.height };
             });
             expect(corner.width, String(width)).toBeGreaterThanOrEqual(44);
             expect(corner.height, String(width)).toBeGreaterThanOrEqual(44);
-            expect(corner.belowTitle, String(width)).toBeLessThan(0);
-            expect(corner.besideTitle, String(width)).toBeGreaterThanOrEqual(-0.5);
+            await closeBesideTitle(dialog, String(width));
             const results = await new AxeBuilder({ page }).include('dialog').analyze();
             expect(
                 results.violations.map(({ id }) => id),
