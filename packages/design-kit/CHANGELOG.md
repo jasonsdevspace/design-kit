@@ -9,35 +9,45 @@ entry as the notes.
 
 ## 0.8.5
 
-A panel closed by a visitor hands focus back to the button that opened it however they pressed, in
-Safari and on iOS as in every other browser, and never moves a focus the visitor or the page put
-somewhere else. No token is added or renamed and the theme script is unchanged, so
-`themeScriptHash` is the same.
+A panel hands focus back to its button by one rule, decided by where focus is as it closes, in
+Safari and on iOS as in every other browser, Escape closes a panel, and a toast hands focus back
+from a press of its buttons in Safari. No token is added or renamed and the theme script is
+unchanged, so `themeScriptHash` is the same.
 
-- **Controls.** Safari and iOS neither focus a button a pointer or a tap presses nor leave focus
-  where it was, and put it on what holds the button, the body or a `main` that takes focus, so a
-  panel closed that way left the visitor's place on the body, and with VoiceOver on iOS the cursor
-  on what was just hidden. The kit now keeps the path of a visitor's last press, and a panel that
-  closes while focus is in it, or sits on what holds it after that press was inside the panel,
-  moves focus to the button that opened it. That covers the corner Close by key, pointer or touch,
-  and a Done of the page's own that calls `set(false)`, even where its handler waits for a save or
-  draws the button away. Focus anywhere else stays where it is: a page that moves focus to a field
-  or a link's target before closing keeps it there, a press in one panel that closes another leaves
-  focus alone, a click the page's script gives the Close moves focus only where it was in the
-  panel, and a close from the page's code after the visitor moved on does not pull them back. One
-  press that closes an outer panel and an inner one leaves focus on the outer panel's button. A
-  page closes a panel from a press's `click`, since a close from its `pointerdown` comes before the
-  browser moves focus for the press.
-- **Docs.** The reference's corner Close says where focus goes however a panel closes, how a link
-  in a panel fares, and that a page closes a panel from a `click`. Record 13 names the rule and the
-  three tries this release turned down.
-- **Tests.** The panel's browser tests run in WebKit as well, with a test that a pointer press
-  leaves a button unfocused there, so the tests of Safari's way keep testing it. They close a panel
-  by its Close by key, pointer and touch, by a Done of the page's own pressed as the browser presses
-  it and as Safari leaves focus, by one that waits, one drawn away and one that moves focus first,
-  by a link that moves focus and one that moves none, by a press in another panel, by the page's
-  script with focus inside and outside, and from the page's code after the visitor moved on, and
-  close an outer and an inner panel with one press.
+- **Upgrading.** The kit writes `tabindex="-1"` on an attached panel and on the place a link in it
+  sends focus to, and `tabindex="0"` on a panel's button, its corner Close and a toast's Close and
+  action, where the page set none, and keeps a tabindex the page set. A page's own `[tabindex]` and
+  `:focus` rules match these, and in Safari these buttons become stops for Tab. Escape in a panel
+  now closes it, so a piece of the page's own in a panel that takes Escape for itself calls
+  `preventDefault` on the press. A panel the page closes from its code, where focus is in it or was
+  lost from it after the visitor's last press there, moves focus to its button and scrolls to it.
+- **Controls.** However a panel closes, by its button, its Close, Escape, a Done of the page's own
+  or `set`, focus goes to its button where focus is in the panel, or where nothing has focus and the
+  visitor's last place, the last focus that moved or their last press, was in it, and stays anywhere
+  else, so a page that moves focus to what it shows as a panel closes keeps it there, before or
+  after the close. A Done that waits on a save, or that the page turns off or draws away, still
+  hands focus back. Where focus goes back and the visitor's last press was a link in the panel to a
+  place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
+  that place. Safari focuses a pressed button only where it has a tabindex, which is why the kit
+  writes them, and a panel the page draws again while it is open takes them as a press in it begins.
+  Escape with focus in a panel or on its button closes the innermost such panel and marks the press
+  handled, so a dialog around it stays open, unless the page has handled it, it ends typing in a
+  script such as Japanese, it is in a dialog or a popover inside the panel, or focus is on a search
+  with words in it or on a combobox or a button whose list or menu is open. A press of a button that
+  is off does nothing, and focus never goes back to one. A toast's Close and action carry a tabindex
+  as a panel's do, so a press of either in Safari leaves focus in the toast and it goes back as the
+  toast leaves.
+- **React.** `Toast` draws its Close and its action with `tabIndex={0}`.
+- **Docs.** Record 19 states the panel's rule, the research into React Aria, Radix, Headless UI,
+  Ariakit and WebKit behind it, and the options turned down, and record 13 measures the controls
+  with it in place, within the 7.5 KB they hold. Record 15 adds the toast's tabindex. The
+  reference's corner Close and toast, and the accessibility statement, say what the kit writes and
+  why.
+- **Tests.** The panel's browser tests run each case of the rule in Chromium and WebKit with real
+  presses, and a WebKit test holds that a pressed button with no tabindex stays unfocused there, so
+  the tests of Safari's way keep testing it. A toast's Close and action pressed by pointer and tap
+  find focus back where it was. The theme switch, the copy button and the pieces are tested in
+  WebKit too, where the switch's choices open and close by pointer and tap as in Chromium.
 
 ## 0.8.4
 
