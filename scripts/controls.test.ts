@@ -18,9 +18,9 @@ import { sentOf } from './parts.mjs';
 /*
  * Set in 0.6.0 from the size audit of record 13: what a page's bundler sends for every function,
  * with room for one more of the usual size, the median a function adds, rounded up to the next
- * quarter of a kilobyte.
+ * quarter of a kilobyte. Set again by the same rule for 0.8.4, with attachPanel in place.
  */
-const BUDGET = 6.25 * 1024;
+const BUDGET = 7.25 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

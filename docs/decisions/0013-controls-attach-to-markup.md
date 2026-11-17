@@ -125,6 +125,11 @@ inset, a Close in the corner and a picture drawn at its content's height, the la
 after the Close. They weigh 10,695 bytes sent together, and the median a piece costs is now 193
 bytes, so the rule sets the sheets at 10.75 KB.
 
+For 0.8.4 the controls were measured with `attachPanel` in place, which a page that opens a panel
+with a button attaches so its corner Close needs no script of the page's own. Every function sent
+together weighs 6,697 bytes, more than the room 6.25 KB had left, and the median a function adds is
+now 598 bytes, so the rule sets the controls at 7.25 KB.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
