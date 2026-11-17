@@ -1,10 +1,10 @@
-import { type BrowserContext, expect, type Page, test } from '@playwright/test';
+import { type Browser, type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { ORIGIN, servePage, themeOf } from './page.js';
+import { ORIGIN, servePage, tabKey, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -76,6 +76,36 @@ const first = (opened: Page) => opened.getByRole('radiogroup', { name: 'Theme' }
 
 /** The switch inside the holder, attached through the element that holds it. */
 const held = (opened: Page) => opened.locator('#holder').getByRole('radiogroup', { name: 'Theme' });
+
+/**
+ * A context whose pages may copy. Chromium writes to the clipboard only once leave is granted,
+ * while WebKit, as Safari does, lets a press write to it and has no such leave to grant.
+ */
+const copying = async (browser: Browser, browserName: string): Promise<BrowserContext> => {
+    const context = await browser.newContext();
+    if (browserName !== 'webkit')
+        await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    return context;
+};
+
+/**
+ * What the clipboard holds. WebKit, as Safari does, refuses a script's read outside a paste, so
+ * there the clipboard is pasted into a field of the test's own, taken away once read.
+ */
+const clipboardOf = async (opened: Page, browserName: string): Promise<string> => {
+    if (browserName !== 'webkit') return opened.evaluate(() => navigator.clipboard.readText());
+    const field = await opened.evaluateHandle(() =>
+        document.body.appendChild(document.createElement('textarea'))
+    );
+    await field.focus();
+    await opened.keyboard.press('ControlOrMeta+V');
+    const pasted = await field.evaluate((element) => {
+        element.remove();
+        return element.value;
+    });
+    await field.dispose();
+    return pasted;
+};
 
 test('keeps both controls hidden where no script attaches them', async ({ browser }) => {
     const context = await browser.newContext();
@@ -268,9 +298,9 @@ test('draws a choice the page holds on a switch attached again after every switc
 
 test('attaches one element as a copy button though it was attached as a switch first', async ({
     browser,
+    browserName,
 }) => {
-    const context = await browser.newContext();
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const context = await copying(browser, browserName);
     const opened = await tab(context);
     await opened.evaluate(() => {
         const kit = (
@@ -309,9 +339,9 @@ test('attaches one element as a copy button though it was attached as a switch f
 
 test('copies from the new source and speaks on the new line when attached again with them, its word back to Copy', async ({
     browser,
+    browserName,
 }) => {
-    const context = await browser.newContext();
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const context = await copying(browser, browserName);
     const opened = await tab(context);
     const button = opened.locator('.dk-copy');
     // Copied from the first source, its word says so.
@@ -351,16 +381,16 @@ test('copies from the new source and speaks on the new line when attached again 
     expect(shownAfter).toBe(0);
     await button.click();
     await expect(button).toHaveAccessibleName('Copied install command');
-    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe('npm run verify');
+    expect(await clipboardOf(opened, browserName)).toBe('npm run verify');
     await expect(opened.locator('#other-status')).toHaveText('Copied.');
     await context.close();
 });
 
 test('puts a copy button back to Copy, hidden, when it is taken away mid-message', async ({
     browser,
+    browserName,
 }) => {
-    const context = await browser.newContext();
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const context = await copying(browser, browserName);
     const opened = await tab(context);
     const button = opened.locator('.dk-copy');
     await button.click();
@@ -380,18 +410,16 @@ test('puts a copy button back to Copy, hidden, when it is taken away mid-message
 
 test('copies the source on a click or on Enter, says Copied on the button and the status line, then Copy again', async ({
     browser,
+    browserName,
 }) => {
-    const context = await browser.newContext();
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    const context = await copying(browser, browserName);
     const opened = await tab(context);
     const button = opened.locator('.dk-copy');
     await expect(button).toHaveAccessibleName('Copy install command');
     await button.click();
     await expect(button).toHaveAccessibleName('Copied install command');
     await expect(opened.getByRole('status')).toHaveText('Copied.');
-    expect(await opened.evaluate(() => navigator.clipboard.readText())).toBe(
-        'npm install @jasonsdevspace/design-kit'
-    );
+    expect(await clipboardOf(opened, browserName)).toBe('npm install @jasonsdevspace/design-kit');
     await expect(button).toHaveAccessibleName('Copy install command', { timeout: 4000 });
     // From the keyboard too, which reaches the button as a button and so the same press.
     await button.focus();
@@ -566,19 +594,21 @@ test('moves the choice with the arrow keys without closing, and closes on Escape
 
 test('closes the choices where they are when focus leaves the switch, and keeps them when it lands on the button', async ({
     browser,
+    browserName,
 }) => {
     const context = await browser.newContext();
     const { opened, button, radio } = await collapsed(context);
+    const tab = tabKey(browserName);
     await button.click();
     await expect(radio('System')).toBeFocused();
     // Back to the button, which is the switch's own, so nothing closes.
-    await opened.keyboard.press('Shift+Tab');
+    await opened.keyboard.press(`Shift+${tab}`);
     await expect(button).toBeFocused();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    await opened.keyboard.press('Tab');
+    await opened.keyboard.press(tab);
     await expect(radio('System')).toBeFocused();
     // Out of the switch, and the choices close without pulling focus back.
-    await opened.keyboard.press('Tab');
+    await opened.keyboard.press(tab);
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).not.toBeFocused();
     await expect(radio('System')).toBeHidden();
@@ -739,9 +769,10 @@ test('keeps a choice the browser will not save drawn over one another tab saves'
     const context = await browser.newContext({ colorScheme: 'light' });
     const opened = await tab(context, true, BARE);
     // Storage that reads but will not take this page's choice, as a full quota does, while the
-    // other tab's saves still go through.
+    // other tab's saves still go through. Set on the prototype, since WebKit, as the standard says,
+    // takes a property defined on the storage itself as an item saved under that name.
     await opened.evaluate(() => {
-        Object.defineProperty(localStorage, 'setItem', {
+        Object.defineProperty(Storage.prototype, 'setItem', {
             value: () => {
                 throw new Error('full');
             },
