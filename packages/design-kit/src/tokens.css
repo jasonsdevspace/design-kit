@@ -171,7 +171,9 @@
         /*
          * The padding of a panel and a tile on a phone and in an app's frame, and of a dialog on a
          * phone, and a wide dialog's, each stopping at its usual size so a large text size leaves
-         * what they hold its room. A field's inline padding held the same way keeps a stepper's figures room.
+         * what they hold its room. The phone's step also pads an app frame's sides and a toast's,
+         * and steps a band in on an app's page. A field's inline padding held the same way keeps a
+         * stepper's figures room.
          */
         --dk-space-4-held: min(var(--dk-space-4), 16px);
         --dk-space-5-held: min(var(--dk-space-5), 24px);
@@ -302,11 +304,16 @@
      * picture or sits inside an element with it, what sits on the screen outside the app's column,
      * such as the skip link, starts where that column starts its content, past what a phone keeps
      * at its sides. The column clears those sides itself, so a band inside it, such as a demo's
-     * strip, starts its content a step in and pays for the sides no second time.
+     * strip, starts its content a step in and pays for the sides no second time. The step is held
+     * at its size, as the frame's own sides are, so at a large text size the words keep their room.
      */
     :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))) {
-        --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4));
-        --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4));
+        --dk-band-left: calc(
+            max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4-held)
+        );
+        --dk-band-right: calc(
+            max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4-held)
+        );
     }
 
     /*
@@ -322,8 +329,8 @@
     }
 
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {
-        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4));
-        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4));
+        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4-held));
+        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4-held));
     }
 
     /*
