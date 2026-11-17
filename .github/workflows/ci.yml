@@ -122,12 +122,16 @@ jobs:
 
             # The site draws the version of the kit it pins, so a change to the kit is not on the
             # site until it is released. The site's tests run again over this commit's kit, packed
-            # and installed under the site's alias without saving it, so a change that breaks the
+            # and installed under the site's alias in the site's own workspace without saving it, so
+            # a kit whose version is not the pin's still replaces the release the site resolves, and
+            # a check holds what the site resolves to the kit just built. A change that breaks the
             # site's audits or its policy fails here, before it is released, not when the pin moves.
             - name: Site tests over this commit's kit
               run: |
                   npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
-                  npm install --no-save --ignore-scripts "design-kit-release@file:$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
+                  kit="$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
+                  npm install --no-save --ignore-scripts --workspace packages/site "design-kit-release@file:$kit"
+                  node scripts/check-site-kit.mjs "$kit"
                   rm -f playwright-results.json
                   status=0
                   npx playwright test packages/site --project chromium || status=$?
