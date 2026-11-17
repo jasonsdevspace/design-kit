@@ -302,11 +302,16 @@
      * picture or sits inside an element with it, what sits on the screen outside the app's column,
      * such as the skip link, starts where that column starts its content, past what a phone keeps
      * at its sides. The column clears those sides itself, so a band inside it, such as a demo's
-     * strip, starts its content a step in and pays for the sides no second time.
+     * strip, starts its content a step in and pays for the sides no second time. The step is held
+     * at its size, as the frame's own sides are, so at a large text size the words keep their room.
      */
     :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))) {
-        --dk-band-left: calc(max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4));
-        --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4));
+        --dk-band-left: calc(
+            max(var(--dk-safe-left), var(--dk-app-inset)) + var(--dk-space-4-held)
+        );
+        --dk-band-right: calc(
+            max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4-held)
+        );
     }
 
     /*
@@ -322,8 +327,8 @@
     }
 
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {
-        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4));
-        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4));
+        --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4-held));
+        --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4-held));
     }
 
     /*

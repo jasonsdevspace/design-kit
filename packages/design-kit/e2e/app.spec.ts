@@ -833,6 +833,26 @@ test("pads a panel alike at every width in an app's frame, and by the page's wid
         }
 });
 
+test("pads the frame's bar, body, toast and dock by a phone's step on a 320px phone at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await doubled(page, browserName);
+    await open(page, { width: 320, height: 900, toast: true });
+    for (const part of ['.dk-app-bar', '.dk-app-body', '.dk-app-toast', '.dk-app-dock']) {
+        const sides = await style(page.locator(part), 'padding-left', 'padding-right');
+        expect(sides, part).toEqual({ 'padding-left': '16px', 'padding-right': '16px' });
+    }
+});
+
+test("pads the frame's sides by a phone's step at the default text size", async ({ page }) => {
+    await open(page, { width: 390, toast: true });
+    for (const part of ['.dk-app-bar', '.dk-app-body', '.dk-app-toast', '.dk-app-dock'])
+        expect((await style(page.locator(part), 'padding-left'))['padding-left'], part).toBe(
+            '16px'
+        );
+});
+
 test("keeps a panel in an app's frame to a phone's padding at twice the text size", async ({
     page,
 }) => {
