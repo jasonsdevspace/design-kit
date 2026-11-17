@@ -3247,6 +3247,85 @@
         margin-block-start: var(--dk-space-5);
     }
 
+    /*
+     * A quiet Close in the top corner of a dialog or a panel, in a dk-close after the title, a
+     * dialog's a form that closes it with no script. It is placed in the corner rather than laid
+     * out, so nothing else in the container moves or stretches, and a panel that holds one is
+     * placed relative to it. It is centered on a title's first line, measured from the container's
+     * padding, and never comes nearer the edge than its own ring, which a dialog clips. What comes
+     * before it keeps free at its end the room the Close takes past the padding, and the title is
+     * never shorter than keeps the Close's ring clear of what follows. The Close is the target at
+     * every width.
+     */
+    :where(.dk-panel:has(> .dk-close)) {
+        position: relative;
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > :has(~ .dk-close)) {
+        margin-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-space-4-held),
+            (1.5rem + var(--dk-target)) / 2
+        );
+    }
+
+    :where(.dk-panel > :has(~ .dk-close)) {
+        margin-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-card-inset),
+            (1.5rem + var(--dk-target)) / 2
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > :has(+ .dk-close)) {
+        min-height: calc(
+            max(
+                    2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -
+                        var(--dk-space-4-held),
+                    (1.5rem + var(--dk-target)) / 2 + var(--dk-ring-width) + var(--dk-ring-offset)
+                ) -
+                var(--dk-flow-step)
+        );
+    }
+
+    :where(.dk-panel > :has(+ .dk-close)) {
+        min-height: calc(
+            max(
+                    2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -
+                        var(--dk-card-inset),
+                    (1.5rem + var(--dk-target)) / 2 + var(--dk-ring-width) + var(--dk-ring-offset)
+                ) -
+                var(--dk-flow-step)
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > .dk-close) {
+        position: absolute;
+        inset-block-start: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-space-4-held) + (1.5rem - var(--dk-target)) / 2
+        );
+        inset-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-space-4-held) + (1.5rem - var(--dk-target)) / 2
+        );
+        margin: 0;
+    }
+
+    :where(.dk-panel > .dk-close) {
+        inset-block-start: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-card-inset) + (1.5rem - var(--dk-target)) / 2
+        );
+        inset-inline-end: max(
+            var(--dk-ring-width) + var(--dk-ring-offset),
+            var(--dk-card-inset) + (1.5rem - var(--dk-target)) / 2
+        );
+    }
+
+    :where(:is(.dk-panel, .dk-dialog) > .dk-close > .dk-button) {
+        min-width: var(--dk-target);
+        min-height: var(--dk-target);
+    }
+
     :where(
         .dk-explainer-number + h2,
         .dk-explainer > section > h3 + *,

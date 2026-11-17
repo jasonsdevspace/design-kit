@@ -22,7 +22,9 @@ const OPTIONS = Array.from(
 const BODY = `<main><h1>Round 3</h1>
 <p><button type="button" class="dk-button" id="end">End the game</button>
 <button type="button" class="dk-button" id="options">Round options</button>
-<button type="button" class="dk-button" id="must">Choose a dealer</button></p>
+<button type="button" class="dk-button" id="must">Choose a dealer</button>
+<button type="button" class="dk-button" id="leaving">Leave</button>
+<button type="button" class="dk-button" id="noting">Notes</button></p>
 <div id="toolbar"><button type="button" class="dk-button" id="held"><span>Delegated</span></button></div>
 <p><button type="button" class="dk-button" id="gone">Opens and goes</button>
 <button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
@@ -38,6 +40,16 @@ ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
 <h2 class="dk-dialog-title" id="round-options-title" tabindex="-1" autofocus>Round options</h2>${OPTIONS}
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Done</button></form>
 </dialog>
+<dialog class="dk-dialog" id="leave" aria-labelledby="leave-title">
+<h2 class="dk-dialog-title" id="leave-title">Leave the game for now?</h2>
+<form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
+<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="stay">Keep playing</button></form>
+</dialog>
+<dialog class="dk-dialog" id="notes" aria-labelledby="notes-title">
+<h2 class="dk-dialog-title" id="notes-title">Notes on the round</h2>
+<form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
+<p>Ana dealt.</p>
+</dialog>
 <dialog class="dk-dialog" id="dealer" aria-labelledby="dealer-title">
 <h2 class="dk-dialog-title" id="dealer-title">Who deals first?</h2>
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="ana">Ana</button></form>
@@ -51,6 +63,8 @@ const wire = (button, dialog, options) => {
 wire('#end', '#end-game');
 wire('#options', '#round-options');
 wire('#must', '#dealer', { stay: true });
+wire('#leaving', '#leave');
+wire('#noting', '#notes');
 // Attached again with other options, which the same function then follows.
 window.kit = { attachDialog };
 // A listener on a part of the page that holds the button, as a page that delegates its clicks has.
@@ -335,6 +349,17 @@ test('takes the options it is attached with again, and keeps them when attached 
         await page.keyboard.press('Escape');
         await expect(endGame(page), JSON.stringify(given)).toBeHidden();
     }
+});
+
+test('moves focus off a Close in the corner to the first answer, or the title where there is none, with no autofocus written', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#leaving').click();
+    await expect(page.getByRole('button', { name: 'Keep playing' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await page.locator('#noting').click();
+    await expect(page.locator('#notes-title')).toBeFocused();
 });
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {

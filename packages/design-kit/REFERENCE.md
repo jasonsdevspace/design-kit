@@ -401,9 +401,10 @@ the least width with it, so it goes with `dk-button-large` or without. `dk-butto
 button as a link, for an action that sits beside a block or on a line of its own, such as showing
 the markup under a demo. It is never the accent button, never a toggle, never large and never tall.
 `dk-button-quiet` beside `dk-button-text` makes it quiet, for a Close at the corner of a panel, a
-tour or a dialog: muted with no underline, so it does not compete with the view's one strong action.
-It says one word, Close, written out of sight beside a × hidden from a screen reader, as the toast's
-close does, and it is never off, since a Close always closes.
+tour or a dialog, which a `dk-close` sets there as [A Close in the corner](#a-close-in-the-corner)
+shows: muted with no underline, so it does not compete with the view's one strong action. It says
+one word, Close, written out of sight beside a × hidden from a screen reader, as the toast's close
+does, and it is never off, since a Close always closes.
 
 A toggle that stands alone carries `aria-pressed`, `"true"` or `"false"`, and keeps the same label
 in both states, since the attribute already says which it is. An action carries no `aria-pressed` at
@@ -2373,6 +2374,63 @@ its last line clear of the home indicator. It rises into place over `--dk-durati
 opens, at once for a visitor who asks for less motion.
 
 </details>
+
+### A Close in the corner
+
+<!-- example: cornerClose -->
+
+```html
+<dialog
+    class="dk-dialog"
+    id="leave-game"
+    aria-labelledby="leave-game-title"
+    aria-describedby="leave-game-text"
+>
+    <h2 class="dk-dialog-title" id="leave-game-title">Leave the game for now?</h2>
+    <form class="dk-close" method="dialog">
+        <button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close">
+            <span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span>
+        </button>
+    </form>
+    <p id="leave-game-text">The scores are kept, and the game waits where you left it.</p>
+    <form class="dk-dialog-actions" method="dialog">
+        <button type="submit" class="dk-button" value="stay" autofocus="">Keep playing</button
+        ><button type="submit" class="dk-button dk-button-accent" value="leave">
+            Leave the game
+        </button>
+    </form>
+</dialog>
+<div class="dk-panel" id="round-tips">
+    <h3 class="dk-panel-title">Round tips</h3>
+    <div class="dk-close">
+        <button type="button" class="dk-button dk-button-text dk-button-quiet">
+            <span aria-hidden="true">×</span
+            ><span class="dk-visually-hidden">Close round tips</span>
+        </button>
+    </div>
+    <p>Ana deals first, and the cards go round to the left.</p>
+</div>
+```
+
+A quiet Close sits in the top corner of a dialog or a panel in a `dk-close` right after the title,
+which wraps beside it rather than run under it. In a dialog the `dk-close` is a `form
+method="dialog"`, so a press closes the dialog with no script and leaves `close` in its
+`returnValue`, apart from an answer. The Close comes after the title, so the keyboard and a screen
+reader meet the dialog's name first, and it never takes focus as the dialog opens: a dialog that
+asks a question gives its first answer `autofocus`, and a sheet its title, as above. Where nothing
+asks for focus, as when React's `autoFocus` writes no attribute, `attachDialog` moves it off the
+Close to the first answer, or to the title where the dialog has none. It keeps the ×, with Close out
+of sight beside it, and is the target at every width, centered on the title's first line. It is
+placed in the corner rather than laid out, so what the dialog or panel holds stays in its order and
+at its own width, and what comes before the Close keeps free the room it takes, so a title or an
+eyebrow wraps beside it. Its ring stays inside the dialog and clear of what follows the title. A
+dialog has one Close, in the corner or among its actions, never both, and a dialog attached to stay,
+which must be answered, has none.
+
+A panel's Close names what it closes out of sight, such as Close round tips, since a panel has no
+name of its own, and the page's script that hides the panel moves focus to what comes after it
+first, or to the heading before it where nothing follows, so the keyboard keeps its place. The kit
+draws the Close and leaves what it closes to the page.
 
 ## Layers and palettes
 

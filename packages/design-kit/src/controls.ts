@@ -865,6 +865,16 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         if (dialog.open) return;
         opener = openerOf(from);
         dialog.showModal();
+        // A Close in the corner never takes focus as the dialog opens, which it would where nothing
+        // in the dialog asks for focus, as when React's autoFocus writes no attribute, so the first
+        // answer takes it, or the title where the dialog has none.
+        if (dialog.querySelector(':scope > .dk-close')?.contains(document.activeElement)) {
+            const first =
+                dialog.querySelector<HTMLElement>('.dk-dialog-actions > *') ??
+                dialog.querySelector<HTMLElement>('.dk-dialog-title');
+            if (first?.matches('.dk-dialog-title')) first.tabIndex = -1;
+            first?.focus();
+        }
     };
     attachedDialogs.set(dialog, { open, set });
     return open;

@@ -20,7 +20,7 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * scrolls to, how an svg's stroke is drawn and how a phone's list of rows is pressed and reached
  * by the keyboard are what Safari draws or does its own way.
  */
-const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,stepper,table,icon,rows}.spec.{ts,tsx}';
+const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
