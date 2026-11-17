@@ -11,8 +11,9 @@ import { textSize } from './text-size.js';
  * small caption, stroked in its line's color with no fill and a stroke that does not scale with
  * the drawing, measured in pixels on a doubled line, at least one and a half pixels, a tab bar's
  * icon at the bar's own size and a lighter stroke, an icon-only button's icon larger than its
- * text, both doubling at twice the text size, the system's text and link colors in forced colors, and a toggle
- * whose face is an icon alone named by its words out of sight, with no audit findings.
+ * text, both doubling at twice the text size, the system's text and link colors in forced
+ * colors, and a toggle whose face is an icon alone named by its words out of sight, with no audit
+ * findings.
  */
 /** An icon in a line of text, in a doubled line, in a link, in a small caption, and in a tab bar. */
 const ICONS = (() => {

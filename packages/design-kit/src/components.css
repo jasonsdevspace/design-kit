@@ -1915,7 +1915,7 @@
      * reads in a square the target wide rather than at the button's small text, and still grows
      * when a reader raises the text size. Its stroke stays the one the button's text gives it.
      */
-    :where(.dk-button-icon > .dk-icon) {
+    :where(.dk-button-icon .dk-icon) {
         width: 1.25rem;
         height: 1.25rem;
     }
@@ -2401,8 +2401,7 @@
 
     /*
      * A kit icon there is stroked at the weight of a line drawn two in twenty four, two pixels at
-     * the default size, so it weighs no more than its label and a resting tab stays light beside
-     * the current one.
+     * the default size, so it weighs no more than the label under it.
      */
     :where(.dk-tabbar .dk-icon) {
         stroke-width: max(1.5px, 0.125rem);

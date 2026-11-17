@@ -112,14 +112,14 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'A button whose face is an icon alone',
                 attribute: 'class="dk-button dk-button-icon"',
-                react: `<Button className="dk-button-icon">
+                react: `<Button icon>
     <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
         <path d="M12 19V5M6 11l6-6 6 6" />
     </svg>
     <span className="dk-visually-hidden">Move Ann up</span>
 </Button>`,
                 draw: ({ Button }) => (
-                    <Button className="dk-button-icon">
+                    <Button icon>
                         <svg
                             className="dk-icon"
                             aria-hidden="true"

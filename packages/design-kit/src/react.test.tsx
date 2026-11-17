@@ -282,6 +282,21 @@ describe('the button', () => {
         );
     });
 
+    it('draws a button whose face is an icon alone by its class, a toggle among them', () => {
+        expect(renderToStaticMarkup(<Button icon>+</Button>)).toBe(
+            '<button type="button" class="dk-button dk-button-icon">+</button>'
+        );
+        expect(
+            renderToStaticMarkup(
+                <Button icon pressed={false}>
+                    +
+                </Button>
+            )
+        ).toBe(
+            '<button type="button" class="dk-button dk-button-icon" aria-pressed="false">+</button>'
+        );
+    });
+
     it('draws a tall button by its class, with the large button or without', () => {
         expect(renderToStaticMarkup(<Button tall>Save the round</Button>)).toBe(
             '<button type="button" class="dk-button dk-button-tall">Save the round</button>'
