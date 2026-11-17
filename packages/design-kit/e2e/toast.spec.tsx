@@ -234,6 +234,34 @@ test('hands focus back where it was when its action is pressed by pointer, Safar
     await expect(page.locator('#save')).toBeFocused();
 });
 
+test("gives a hand-written toast's buttons a tabindex, and keeps one the page set", async ({
+    page,
+}) => {
+    // Markup a page writes by hand, one button with no tabindex and one with the page's own.
+    const written = PAGE.replace(' tabindex="0"', '').replace(' tabindex="0"', ' tabindex="-1"');
+    expect(written).not.toBe(PAGE);
+    await open(page, { body: written });
+    await expect(page.locator('.dk-toast-action')).toHaveAttribute('tabindex', '0');
+    await expect(page.locator('.dk-toast-close')).toHaveAttribute('tabindex', '-1');
+});
+
+test.describe('on a touch screen', () => {
+    test.use({ hasTouch: true });
+
+    test('hands focus back where it was when its close button is tapped', async ({
+        page,
+        browserName,
+    }) => {
+        test.skip(browserName !== 'webkit', "a tap is tested where Safari's way is, in WebKit");
+        await open(page);
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        await closeButton(page).tap();
+        await expect(toast(page)).not.toHaveClass(/dk-toast-shown/);
+        await expect(page.locator('#save')).toBeFocused();
+    });
+});
+
 test('draws its buttons with a tabindex of their own, so Safari focuses them on a press', async ({
     page,
 }) => {
