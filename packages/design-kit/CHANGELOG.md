@@ -7,6 +7,57 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.8.2
+
+A tile in a panel keeps every word whole on a phone at twice the text size, a quiet Close has a
+place in the top corner of a dialog and a panel, and a picture of a frame or of a page that ends in
+a tab bar is as tall as what it holds. No token is renamed and the theme script is unchanged, so
+`themeScriptHash` is the same. The sheets' budget rises from 10.25 KB to 10.75 KB, set again by the
+size audit's rule.
+
+- **Upgrading.** A page that pictures a frame or a page that ends in a tab bar with `dk-picture`
+  draws it as tall as what it holds, where it was the screen's height, so a page that set only an
+  edge or corners on it and wants it taller sets a least height of its own.
+- **Tokens.** `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom` and `--dk-safe-left` are none
+  inside an element with `dk-picture`, since a picture touches no edge of the visitor's screen.
+- **Sheets.** A tile inside a panel at 48rem wide or less stands its words in `--dk-space-4-held`,
+  1rem and no more than 16px at any text size, so the panel's padding and its own leave its words
+  room on a phone at twice the text size, where they broke inside themselves, while a panel and a
+  tile on the page keep the card's inset and at the default text size nothing moves. `dk-close`
+  right after a dialog's or a panel's title places a quiet Close in the top corner, centered on the
+  title's first line, without laying out what else the dialog or panel holds, so an eyebrow stays
+  above the title and a button keeps its own width. What comes before the Close keeps free the room
+  it takes, so the title wraps beside it, and the title is never shorter than keeps the Close's ring
+  clear of what follows. The Close is the target at every width and text size, and a dialog's
+  `dk-close` is a `form method="dialog"`, so it closes the dialog with no script. A frame or a page
+  that ends in a tab bar that carries `dk-picture` or sits inside an element with it is as tall as
+  what it holds, where it was the screen's height, and its tab bar sits at its foot in its place
+  rather than held to the visitor's screen or raised over the page, so a page draws a picture of a
+  screen with no rule of its own for its size.
+- **Controls.** `attachDialog` moves focus off a corner Close as the dialog opens, to the first
+  answer or the title, where nothing in the dialog asks for focus, as when React's `autoFocus`
+  writes no attribute.
+- **Docs.** The reference's panels say a tile in a panel holds its inset on a phone. Its dialog
+  shows a Close in the corner of a dialog and a panel: it comes after the title, never takes focus
+  as a dialog opens, one Close to a dialog and none in one that must be answered, and a panel's
+  names what it closes. Its app frame and tab bar say a pictured frame or page is as tall as what it
+  holds, its bar in its place, and the page draws its edge, corners and room. Decision record 13
+  records the sheets' new budget.
+- **Tests.** A browser test draws tiles in a plain and a raised panel on a content page at 320 wide
+  and twice the text size, finds no word drawn across two lines or cut off, and holds a lone panel
+  and a tile on the page to the card's inset. Browser tests set a Close in the corner of a dialog
+  and a panel at 320 and 1280 wide, at the default and twice the text size, and hold it to the
+  target, clear of the title, which wraps, its ring inside the dialog and clear of what follows, an
+  eyebrow above the title and a button at its own width, a dialog opening on its first answer and
+  closing by the Close with no script, focus moved off the Close with no `autofocus` written, a
+  hidden panel hidden, forced colors and the audit, in Chromium and WebKit. A browser test draws a
+  pictured frame with its dock and tab row and a pictured page that ends in a tab bar on a page with
+  safe areas, on a phone and a wide screen, and holds each to what it holds, its tab bar to its foot
+  in its place and none of the room a phone keeps at its edges. The app frame's tests read a shown
+  toast once it has risen into place, through one helper the specs share, so a browser's timing no
+  longer fails them. The sheets' budget rises to 10.75 KB, measured with every change in place at
+  10,695 bytes, with 193 bytes the median a piece costs.
+
 ## 0.8.1
 
 A page that pictures an app's screen with `dk-picture` no longer draws as an app's page, a tile in
