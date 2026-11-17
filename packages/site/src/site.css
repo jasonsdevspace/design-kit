@@ -984,40 +984,28 @@ body > .dk-strip {
 }
 
 /*
- * A picture of an app's screen, or of a page that ends in a tab bar, is a box in the copy rather
- * than the whole screen it is drawn for: as tall as a phone's screen held upright, or as tall as
- * what it holds at a larger text size, since an inert body cannot be scrolled, with an edge where
- * the screen's would be. A picture of a page that ends in a tab bar is shorter, since it shows
- * only where the bar sits.
+ * A picture of an app's screen, or of a page that ends in a tab bar, is drawn by the kit as tall as
+ * what it holds, its bar in its place. The site draws the edge and corners where the screen's would
+ * be, and the room around a page's words.
  */
 .site-copy > :is(.dk-app, .dk-tabbar-page) {
-    height: auto;
-    min-height: 30rem;
     border: 1px solid var(--dk-line);
     border-radius: var(--dk-radius-large);
     overflow: clip;
-}
-
-.site-copy > .dk-tabbar-page {
-    min-height: 14rem;
 }
 
 .site-copy .dk-tabbar-page > main {
     padding: var(--dk-space-4);
 }
 
-/* The bar in a picture sits at the end of its box rather than sticking to the visitor's screen. */
-.site-copy .dk-tabbar-page > .dk-tabbar {
-    position: static;
-}
-
 /*
  * A dialog's preview is drawn open in its place under its button, since the inert copy cannot be
- * opened, rather than over the page as a dialog that is not modal would be.
+ * opened, rather than over the page as a dialog that is not modal would be. It holds what is placed
+ * in it, so a Close in its corner stays in the copy.
  */
 .site-other .dk-dialog {
     display: block;
-    position: static;
+    position: relative;
     margin: var(--dk-space-3) auto 0;
 }
 

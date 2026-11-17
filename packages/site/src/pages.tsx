@@ -866,6 +866,12 @@ export const Together = ({ build }: { readonly build: Build }) => (
                 <h2 className="dk-dialog-title" id="together-grounds-title" tabIndex={-1} autoFocus>
                     The grounds on this page
                 </h2>
+                <form className="dk-close" method="dialog">
+                    <button type="submit" className="dk-button dk-button-text dk-button-quiet">
+                        <span aria-hidden="true">×</span>
+                        <span className="dk-visually-hidden">Close</span>
+                    </button>
+                </form>
                 <ul role="list">
                     <li>
                         The page, on <code>--dk-bg</code>.
@@ -884,11 +890,6 @@ export const Together = ({ build }: { readonly build: Build }) => (
                         This dialog, on <code>--dk-raised</code> over the scrim.
                     </li>
                 </ul>
-                <form className="dk-dialog-actions" method="dialog">
-                    <button type="submit" className="dk-button dk-button-text dk-button-quiet">
-                        Close
-                    </button>
-                </form>
             </dialog>
         </section>
     </Page>
