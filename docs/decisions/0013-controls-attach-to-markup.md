@@ -162,8 +162,9 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   the press, focus moved out of a panel the page's code closes, to what follows it or the main
   content, a Close in later content that reuses its id ignored, a button with no `aria-controls`
   refused, the same returned for a button attached twice, a stale detach leaving a button attached
-  again alone, focus back on the button whose `set` opened the panel, and the listener taken off
-  only once every button is let go.
+  again alone, focus back on the button whose `set` opened the panel, the listener taken off only
+  once every button is let go, a button the page points at another panel followed, and no
+  accessibility violation with the panel open or closed.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

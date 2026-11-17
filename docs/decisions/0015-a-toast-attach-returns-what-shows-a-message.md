@@ -70,11 +70,11 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   returns the function it returned first.
 - A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
   closes it and what lets the button go, since a page calls the first from its own code and a
-  button can leave the page while its panel stays. It is the one control that listens on the
-  document rather than on its own elements, through one listener early in the press for every
-  panel, since a panel or its Close drawn again would lose a listener of its own and a page's
-  handler that stops the press would keep a Close from closing it. The listener comes off once
-  every button is let go.
+  button can leave the page while its panel stays. It hears its buttons and Closes through one
+  listener on the document, early in the press, rather than on the elements themselves, since a
+  panel or its Close drawn again would lose a listener of its own and a page's handler that stops
+  the press would keep a Close from closing it. The listener comes off once every button is let
+  go.
 
 ## How it is tested
 

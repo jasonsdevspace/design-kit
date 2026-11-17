@@ -317,3 +317,17 @@ test('follows a button whose aria-controls the page changes to another panel', a
     await close(page).click();
     await expect(panel(page)).toBeHidden();
 });
+
+test("hands focus back to the button that opened the panel when another button's set closes it", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#deal').focus();
+    await page.evaluate(() => {
+        const { panels } = window as unknown as { panels: { set: (open: boolean) => void }[] };
+        panels[2]?.set(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});

@@ -3,14 +3,14 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 /*
  * What the kit's theme switch, copy button, stepper, toast, dialog, panel, table and status line
  * do, for a page to attach to the markup the components draw or a page writes by hand. Each attach
- * function finds its control's parts by their classes. The switch, the copy button and the stepper
- * show their control, which the markup keeps hidden so a visitor without script meets no control
- * that does nothing, and return a function that takes it away again, as the table's does.
- * `attachToast` returns instead the function that shows a message in it, `attachDialog` the
- * function that opens it, `attachPanel` the functions that open or close its panel and let its
- * button go, and `attachStatus` the function that says a message. Nothing runs when the module is
- * imported, and nothing here sets a style, so a page's policy can refuse every style it did not
- * serve.
+ * function finds its control's parts by their classes, and `attachPanel` its panel by the id its
+ * button names. The switch, the copy button and the stepper show their control, which the markup
+ * keeps hidden so a visitor without script meets no control that does nothing, and return a
+ * function that takes it away again, as the table's does. `attachToast` returns instead the
+ * function that shows a message in it, `attachDialog` the function that opens it, `attachPanel`
+ * the functions that open or close its panel and let its button go, and `attachStatus` the
+ * function that says a message. Nothing runs when the module is imported, and nothing here sets a
+ * style, so a page's policy can refuse every style it did not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -944,10 +944,11 @@ let attachedCount = 0;
 
 /**
  * Shows or hides a panel and marks every attached button that names it to match. Where focus was
- * in the panel as it closes, it goes to the button that opened it, or the first that names it,
- * else to the first thing after the panel that takes it, and where nothing does, to the body of
- * the app's frame or the page's main content, as the toast's does, so the keyboard keeps its place
- * rather than being left on what was just hidden.
+ * in the panel as it closes, it goes to the button given, the one that opened the panel, else to
+ * the first attached button that names it and takes focus, else to the first thing after the
+ * panel that takes it, and where nothing does, to the body of the app's frame or the page's main
+ * content, as the toast's does, so the keyboard keeps its place rather than being left on what was
+ * just hidden.
  */
 const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
@@ -977,9 +978,8 @@ const onPanelPress = (event: MouseEvent): void => {
     const target = event.target instanceof Element ? event.target : null;
     const button = target?.closest('button');
     if (!button) return;
-    if (button instanceof HTMLButtonElement && attachedPanels.has(button)) {
-        const id = panelIdOf(button);
-        showPanel(id, button.getAttribute('aria-expanded') !== 'true', button);
+    if (attachedPanels.has(button)) {
+        showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
         return;
     }
     const panel = button.closest('.dk-close')?.parentElement;
@@ -994,12 +994,12 @@ const onPanelPress = (event: MouseEvent): void => {
  * which lets the button go, after which neither does anything. The panel starts as the button's
  * aria-expanded says, and the markup writes hidden on a panel that starts closed, so it never
  * shows before the script runs. A press of the button turns it the other way, and every attached
- * button that names the panel follows. A press of the Close, or a close from the page's code while
- * focus is in the panel, moves focus to the button that opened it. The button and the panel are
- * found at each press, so either drawn again keeps working once a new button is attached. One
- * listener on the page serves every panel, the one control that listens on the document, and it
- * comes off once every button is let go. A panel's id must be the only one of its kind on the
- * page. Attached again, a button returns what it returned first.
+ * button that names the panel follows. Where focus is in the panel, a press of the Close or a close
+ * from `set` moves it to the button that opened the panel. The panel is found at each press, so
+ * one drawn again keeps working, and a button drawn again works once it is attached. One listener
+ * on the document hears the buttons and the Closes of every panel, and it comes off once every
+ * button is let go. A panel's id must be the only one on the page. Attached again, a button
+ * returns what it returned first.
  */
 export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const already = attachedPanels.get(opener);
@@ -1008,7 +1008,8 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const attached = () => attachedPanels.get(opener) === control;
     const control: PanelControl = {
         set: (open) => {
-            if (attached()) showPanel(panelIdOf(opener), open, opener);
+            const id = panelIdOf(opener);
+            if (attached()) showPanel(id, open, lastOpener.get(id) ?? opener);
         },
         detach: () => {
             if (!attached()) return;
