@@ -940,6 +940,9 @@ const openersOf = (id: string): HTMLButtonElement[] =>
         (button) => attachedPanels.has(button) && panelIdOf(button) === id
     );
 
+/** What a visitor's press landed on, while the page's own handlers for that press run. */
+let pressedIn: Element | null = null;
+
 /** The button that opened each panel that is open, let go as the panel closes. */
 const lastOpener = new Map<string, HTMLButtonElement>();
 
@@ -951,23 +954,22 @@ let attachedCount = 0;
 
 /**
  * Shows or hides a panel and marks every attached button that names it to match. Where focus was in
- * the panel as it closes, a visitor pressed the panel's own Close, or nothing has focus, as a press
- * in Safari leaves it, focus goes to the button given, the one that opened the panel, else to the
- * first attached button that names it and takes focus, else to the first thing after the panel that
- * takes it, and where nothing does, to the body of the app's frame or the page's main content, as
- * the toast's does, so the keyboard keeps its place rather than being left on what was just hidden.
- * Focus anywhere else stays where it is.
+ * the panel as it closes, or a visitor's press inside the panel closed it, its Close or a button of
+ * the page's own, which Safari leaves focus off, focus goes to the button given, the one that
+ * opened the panel, else to the first attached button that names it and takes focus, else to the
+ * first thing after the panel that takes it, and where nothing does, to the body of the app's frame
+ * or the page's main content, as the toast's does, so the keyboard keeps its place rather than
+ * being left on what was just hidden. A close from the page's code at any other time leaves focus
+ * where it is.
  */
-const showPanel = (id: string, open: boolean, by?: HTMLButtonElement, pressed = false): void => {
+const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    // Focus on the page's body, where a press in Safari leaves it, was the panel's to lose.
-    const held =
-        pressed || panel.contains(document.activeElement) || (!panel.hidden && !focusedNow());
+    const held = panel.contains(document.activeElement) || panel.contains(pressedIn);
     panel.hidden = !open;
     if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
@@ -986,6 +988,14 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement, pressed = 
  */
 const onPanelPress = (event: MouseEvent): void => {
     const target = event.target instanceof Element ? event.target : null;
+    // Where a visitor's press lands, kept while the page's own handlers for it run, so a panel
+    // they close from inside it hands focus back, though Safari took focus off what was pressed.
+    if (event.isTrusted) {
+        pressedIn = target;
+        setTimeout(() => {
+            pressedIn = null;
+        });
+    }
     const button = target?.closest('button');
     if (!button) return;
     if (attachedPanels.has(button)) {
@@ -996,10 +1006,7 @@ const onPanelPress = (event: MouseEvent): void => {
     const panel = button.closest('.dk-close')?.parentElement;
     const id = panel?.id;
     if (!id || document.getElementById(id) !== panel) return;
-    // A visitor's own press hands focus back, and a click from the page's script does only where
-    // focus was in the panel or nothing has focus, as a close from `set` does.
-    if (lastOpener.has(id) || openersOf(id).length)
-        showPanel(id, false, lastOpener.get(id), event.isTrusted);
+    if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
 };
 
 /**
@@ -1010,11 +1017,12 @@ const onPanelPress = (event: MouseEvent): void => {
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
  * the panel follows. A visitor's press of the Close, by key, pointer or touch, moves focus to the
- * button that opened the panel, and a close from `set` does where focus was in the panel or nothing
- * has focus. The panel is found at each press, so one drawn again keeps working, and a button drawn
- * again works once it is attached. One listener on the document hears the buttons and the Closes of
- * every panel, and it comes off once every button is let go. A panel's id must be the only one on
- * the page. Attached again, a button returns what it returned first.
+ * button that opened the panel, and so does a close from `set` where focus was in the panel or a
+ * visitor's press inside it closed it. The panel is found at each press, so one drawn again keeps
+ * working, and a button drawn again works once it is attached. One listener on the document hears
+ * the buttons and the Closes of every panel, and it comes off once every button is let go. A
+ * panel's id must be the only one on the page. Attached again, a button returns what it returned
+ * first.
  */
 export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const already = attachedPanels.get(opener);
@@ -1042,11 +1050,8 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     // takes the place of the button that opened it.
     const id = panelIdOf(opener);
     const panel = document.getElementById(id);
-    // A panel the markup starts closed is closed without moving focus, since no visitor closed it.
-    const open = opener.getAttribute('aria-expanded') === 'true';
     if (startedPanels.has(id) && panel) opener.setAttribute('aria-expanded', String(!panel.hidden));
-    else if (open || !panel) control.set(open);
-    else panel.hidden = true;
+    else control.set(opener.getAttribute('aria-expanded') === 'true');
     startedPanels.add(id);
     return control;
 };

@@ -2516,12 +2516,13 @@ visitor pressed it by key, pointer or touch, so the keyboard and a screen reader
 with no script of the page's own. A panel that starts closed carries `hidden` in its markup, so it
 never shows before the script runs. What it returns, of the type `PanelControl`, holds `set`, of the
 type `SetPanel`, which opens or closes the panel from the page's own code, as `tips.set(false)`, and
-moves focus to the button that opened it where focus was in the panel or nothing has focus, as a
-press in Safari leaves it, and leaves focus anywhere else where it is, since the page's code may
-close it while the visitor is elsewhere, and `detach`, which lets the button go, as a page does when
-it takes the button away, after which `set` does nothing. The first button attached for a panel
-starts it as its markup says, and a button attached for it later, one drawn again among them, marks
-itself as the panel is and leaves the panel alone. A press of a button that is off, with
+moves focus to the button that opened it where focus was in the panel, or where a visitor's press
+inside the panel, on a button of the page's own, closed it, since Safari takes focus off what such a
+press lands on. A close from the page's code at any other time leaves focus where it is, since the
+visitor may be elsewhere. What it returns also holds `detach`, which lets the button go, as a page
+does when it takes the button away, after which `set` does nothing. The first button attached for a
+panel starts it as its markup says, and a button attached for it later, one drawn again among them,
+marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
 returns the same, and one with no `aria-controls` is refused with an error that says so. The button
 and the panel are found at each press, so a panel drawn again keeps working, and one listener on the

@@ -451,32 +451,46 @@ test("leaves focus where it is when the page's script clicks the Close", async (
     await expect(page.locator('#after-panels')).toBeFocused();
 });
 
-test("hands focus back when the page's code closes the panel while nothing has focus", async ({
+test("hands focus back when a button of the page's own in the panel closes it, as Safari leaves focus", async ({
     page,
 }) => {
     await open(page);
     await button(page).click();
-    // Nothing has focus, as a press of the page's own button in Safari leaves it.
     await page.evaluate(() => {
-        (document.activeElement as HTMLElement | null)?.blur();
-        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        const done = document.createElement('button');
+        done.type = 'button';
+        done.id = 'done';
+        done.textContent = 'Done';
+        // The press neither focuses the button nor leaves focus where it was, as in Safari.
+        done.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            (document.activeElement as HTMLElement | null)?.blur();
+        });
+        done.addEventListener('click', () => {
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        });
+        document.querySelector('#round-tips')?.append(done);
     });
+    await page.locator('#done').click();
     await expect(panel(page)).toBeHidden();
     await expect(button(page)).toBeFocused();
 });
 
-test('hands focus back from a Close pressed while nothing has focus', async ({ page }) => {
+test("leaves focus alone when the page's code closes the panel later, with nothing focused", async ({
+    page,
+}) => {
     await open(page);
     await button(page).click();
     await page.evaluate(() => {
-        document
-            .querySelector('#round-tips .dk-close button')
-            ?.addEventListener('mousedown', (event) => event.preventDefault());
         (document.activeElement as HTMLElement | null)?.blur();
     });
-    await close(page).click();
+    // A close a moment after the press, such as from a timer, is the page's, not the visitor's.
+    await page.waitForTimeout(50);
+    await page.evaluate(() => {
+        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
     await expect(panel(page)).toBeHidden();
-    await expect(button(page)).toBeFocused();
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 });
 
 test('moves no focus when it attaches a button whose markup starts its panel closed', async ({
