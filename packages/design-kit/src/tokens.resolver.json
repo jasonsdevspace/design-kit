@@ -265,6 +265,13 @@
                                 "unit": "rem"
                             }
                         },
+                        "app-body": {
+                            "$type": "dimension",
+                            "$value": {
+                                "value": 8,
+                                "unit": "rem"
+                            }
+                        },
                         "dialog-width": {
                             "$type": "dimension",
                             "$value": {

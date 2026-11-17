@@ -161,6 +161,11 @@
         --dk-app-column: 28rem;
         /* The least height of the bar across the top of an app's frame, under the top safe area. */
         --dk-app-bar: 4rem;
+        /*
+         * The least height of an app's body, a few lines it can scroll, so a short screen never
+         * squeezes it to nothing. A picture cannot scroll, so its body keeps none.
+         */
+        --dk-app-body: 8rem;
         /* The widest a dialog grows in the middle of a screen. */
         --dk-dialog-width: 32rem;
         /*
@@ -305,13 +310,14 @@
 
     /*
      * A picture of a screen touches no edge of the visitor's, so nothing in it keeps room for what a
-     * phone keeps at its edges.
+     * phone keeps at its edges, and it cannot scroll, so its body keeps no least height.
      */
     :where(.dk-picture) {
         --dk-safe-top: 0px;
         --dk-safe-right: 0px;
         --dk-safe-bottom: 0px;
         --dk-safe-left: 0px;
+        --dk-app-body: 0px;
     }
 
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {

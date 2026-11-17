@@ -70,6 +70,7 @@ page.
 | `--dk-strip`, `--dk-strip-tools`                                                                  | 2.5rem, and `auto`, the room kept for switches                                                                                                                                                   |
 | `--dk-measure`, `--dk-column`                                                                     | 34rem and 72rem                                                                                                                                                                                  |
 | `--dk-app-column`, `--dk-app-bar`                                                                 | 28rem, the widest an app's frame grows, and 4rem, the least height of its bar                                                                                                                    |
+| `--dk-app-body`                                                                                   | 8rem, the least height of an app's body, a few lines it can scroll, and none in a picture                                                                                                        |
 | `--dk-dialog-width`                                                                               | 32rem, the widest a dialog grows in the middle of a screen                                                                                                                                       |
 | `--dk-space-4-held`                                                                               | `--dk-space-4` stopping at 16px: a panel's and a tile's inset in an app, through `--dk-card-inset`, a dialog's on a phone and in an app, and a dialog's gap from the screen's edges              |
 | `--dk-space-5-held`                                                                               | `--dk-space-5` stopping at 24px, a dialog's padding on a wide screen                                                                                                                             |
@@ -1665,8 +1666,8 @@ The room is that element's margin, so the body ends in a block, such as a paragr
 its content does. On a screen too short for the frame the toast takes its row above the dock, and
 the page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll
 position by what is on screen, as Chrome and Firefox do. Each row but the body's is never shorter
-than what it holds, and the body keeps 8rem, a few lines, so where the rows come to more than the
-screen the page scrolls and no row covers its neighbor or squeezes the body to nothing. What the
+than what it holds, and the body keeps `--dk-app-body`, 8rem, a few lines, so where the rows come to
+more than the screen the page scrolls and no row covers its neighbor or squeezes the body to nothing. What the
 body holds out of sight, such as a row's words for a screen reader, scrolls with it and never
 lengthens the page.
 

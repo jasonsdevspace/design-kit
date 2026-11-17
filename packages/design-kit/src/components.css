@@ -1952,7 +1952,7 @@
         display: grid;
         grid-template:
             'bar' max-content
-            'body' minmax(8rem, 1fr)
+            'body' minmax(var(--dk-app-body), 1fr)
             'toast' max-content
             'dock' max-content
             'tabs' max-content
