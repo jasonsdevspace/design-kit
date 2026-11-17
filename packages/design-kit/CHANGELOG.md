@@ -13,14 +13,17 @@ A picture of an app's frame ends its body at what it holds, and a panel and the 
 their inset on a phone at any text size. `--dk-app-body` is added and no token is renamed, and the
 theme script is unchanged, so `themeScriptHash` is the same.
 
-- **Upgrading.** A page that set `--dk-space-4` above 16px to widen a phone's panels and tiles sees
-  them padded 16px, since the card's inset on a phone is now the held step. Such a page sets
-  `--dk-card-inset` in a query of its own instead.
+- **Upgrading.** A pictured frame whose body holds less than 8rem is drawn shorter, ending at what
+  it holds, so a page that wants it as tall as before sets `--dk-app-body: 8rem` on the picture. A
+  phone's panels and tiles are padded no more than 16px at any text size, since the card's inset on
+  a phone is now the held step. A page that set `--dk-space-4` above 16px to widen them, or that
+  wants their inset to grow with the text as it did, sets `--dk-card-inset` in a query of its own.
 - **Tokens.** `--dk-app-body` is the least height of an app's body, 8rem, a few lines it can scroll,
-  and none inside an element with `dk-picture`, since a picture cannot scroll. `--dk-card-inset` is
-  `--dk-space-4-held` at 48rem wide or less, 1rem and no more than 16px at any text size, where it
-  grew with the text, as a dialog's and an app column's insets already hold. On a page wider than
-  48rem it is `--dk-space-5` as before, and at the default text size nothing moves.
+  and none on an element with `dk-picture` and inside it, since a picture cannot scroll.
+  `--dk-card-inset` is `--dk-space-4-held` at 48rem wide or less, 1rem and no more than 16px at any
+  text size, where it grew with the text, as a dialog's and an app column's insets already hold. On
+  a page wider than 48rem it is `--dk-space-5` as before, and at the default text size nothing
+  moves.
 - **Sheets.** A frame's body keeps `--dk-app-body`, so a pictured frame's body ends at what it
   holds, where it kept 8rem and left an empty band under a few words, and a pictured frame drawn
   taller than what it holds still gives the room to its body, its bars at its foot. The rule that
@@ -30,8 +33,9 @@ theme script is unchanged, so `themeScriptHash` is the same.
   line.
 - **Docs.** The reference's tokens name `--dk-app-body` and say the card inset is held on a phone,
   its app frame says the body keeps `--dk-app-body`, and its panels say a panel and its tiles hold
-  their inset on a phone. Its corner Close says where a held padding leaves it a little below the
-  title's first line, and that `attachDialog` moves focus to the first field or answer after it.
+  their inset on a phone. Its corner Close says it sits a little below the title's first line where
+  a held padding leaves no room above it, and that `attachDialog` moves focus to the first field or
+  answer after it.
 - **Tests.** Browser tests find a pictured frame's body ending one padding below its last child at
   390 and 1280 wide, and a pictured frame drawn taller than what it holds keeping its bars at its
   foot. A dialog that ends in a list or a paragraph stands the same room at its foot as at its top,
