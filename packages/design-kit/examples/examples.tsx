@@ -530,7 +530,7 @@ export const icon: ReactElement = (
             </svg>
             Add a player
         </button>
-        <button type="button" className="dk-button" aria-pressed="false">
+        <button type="button" className="dk-button dk-button-icon" aria-pressed="false">
             <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
                 <path
                     fill="currentColor"

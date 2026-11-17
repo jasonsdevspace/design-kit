@@ -1956,6 +1956,16 @@
     }
 
     /*
+     * A button whose face is an icon alone, marked dk-button-icon, draws its icon at 1.25rem, so it
+     * reads in a square the target wide rather than at the button's small text, and still grows
+     * when a reader raises the text size. Its stroke stays the one the button's text gives it.
+     */
+    :where(.dk-button-icon .dk-icon) {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    /*
      * A copy button's words share one cell, so the button is as wide as its longest word whatever
      * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
      * from the button's name.
@@ -2021,7 +2031,9 @@
     /*
      * The bar: the screen's name, with room for a mark before it and one action after it, over a
      * rule. It pads itself past the top safe area, so its ground runs up under a notch and its
-     * words start below it.
+     * words start below it. The bar, the body, the toast's place and the dock pad their sides by a
+     * phone's step held at its size, as a panel's words stand in, so at a large text size the
+     * frame's words keep their room and start on a panel's line.
      */
     :where(.dk-app-bar) {
         grid-area: bar;
@@ -2030,7 +2042,7 @@
         gap: var(--dk-space-3);
         box-sizing: content-box;
         min-height: var(--dk-app-bar);
-        padding: var(--dk-safe-top) var(--dk-space-4) 0;
+        padding: var(--dk-safe-top) var(--dk-space-4-held) 0;
         border-bottom: 1px solid var(--dk-line);
     }
 
@@ -2082,7 +2094,7 @@
         /* What it holds out of sight scrolls with it, rather than lengthening the page. */
         position: relative;
         min-height: 0;
-        padding: var(--dk-space-4);
+        padding: var(--dk-space-4) var(--dk-space-4-held);
         overflow-y: auto;
     }
 
@@ -2103,7 +2115,7 @@
     /* A toast's place, above the dock, as wide as the frame and as tall as the toast in it. */
     :where(.dk-app-toast) {
         grid-area: toast;
-        padding-inline: var(--dk-space-4);
+        padding-inline: var(--dk-space-4-held);
     }
 
     /*
@@ -2250,7 +2262,7 @@
         grid-area: dock;
         display: grid;
         gap: var(--dk-space-2);
-        padding: var(--dk-space-3) var(--dk-space-4);
+        padding: var(--dk-space-3) var(--dk-space-4-held);
         border-top: 1px solid var(--dk-line);
     }
 
@@ -2434,9 +2446,12 @@
         height: 1.5rem;
     }
 
-    /* A kit icon there keeps the stroke an icon of its size takes beside text of that size. */
+    /*
+     * A kit icon there is stroked at the weight of a line drawn two in twenty four, two pixels at
+     * the default size, so it weighs no more than the label under it.
+     */
     :where(.dk-tabbar .dk-icon) {
-        stroke-width: max(1.5px, 0.1875rem);
+        stroke-width: max(1.5px, 0.125rem);
     }
 
     @media (hover: hover) {
@@ -2464,16 +2479,17 @@
      * shown, so until then it draws nothing and covers nothing.
      *
      * On a page it sits at the bottom of the screen, clear of the home indicator, in the app's
-     * column, over the page. In an app's frame it sits in the frame's place for it, floating over
+     * column, over the page, a phone's held step from each side, as an app's frame pads its own.
+     * Its words stand in by the same held step, so at a large text size they keep their room. In an app's frame it sits in the frame's place for it, floating over
      * the foot of the body just above the dock, which never moves, and the body leaves room for it.
      */
     :where(.dk-toast) {
         position: fixed;
-        right: calc(var(--dk-safe-right) + var(--dk-space-4));
+        right: calc(var(--dk-safe-right) + var(--dk-space-4-held));
         bottom: calc(var(--dk-safe-bottom) + var(--dk-space-4));
-        left: calc(var(--dk-safe-left) + var(--dk-space-4));
+        left: calc(var(--dk-safe-left) + var(--dk-space-4-held));
         z-index: var(--dk-stack-toast);
-        max-width: calc(var(--dk-app-column) - 2 * var(--dk-space-4));
+        max-width: calc(var(--dk-app-column) - 2 * var(--dk-space-4-held));
         margin-inline: auto;
     }
 
@@ -2591,7 +2607,7 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0 var(--dk-space-2);
-        padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4);
+        padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4-held);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-raised);
@@ -2630,7 +2646,7 @@
      * its buttons sit where they did.
      */
     :where(.dk-toast[data-shown]:has(> .dk-toast-buttons)) {
-        padding-inline-end: var(--dk-space-4);
+        padding-inline-end: var(--dk-space-4-held);
     }
 
     :where(.dk-toast-buttons) {
@@ -2639,7 +2655,7 @@
         justify-content: flex-end;
         gap: 0 var(--dk-space-2);
         min-width: 0;
-        margin-inline: auto calc(var(--dk-space-1) - var(--dk-space-4));
+        margin-inline: auto calc(var(--dk-space-1) - var(--dk-space-4-held));
     }
 
     :where(.dk-toast-action) {
@@ -2664,7 +2680,7 @@
         }
 
         :where(.dk-toast[data-shown]:not(:has(> .dk-toast-buttons)) > .dk-toast-message) {
-            padding-inline-end: calc(var(--dk-space-4) - var(--dk-space-1));
+            padding-inline-end: calc(var(--dk-space-4-held) - var(--dk-space-1));
         }
     }
 
@@ -2912,9 +2928,15 @@
         font-weight: var(--dk-weight-medium);
     }
 
+    /*
+     * A row's detail wraps pretty where the browser can, which keeps a line of several from ending
+     * on one word alone, as a game's last word under its tile might on a phone. Only the style of
+     * wrapping is set, so a detail in a row the page keeps from wrapping stays on its line.
+     */
     :where(.dk-row-detail) {
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
+        text-wrap-style: pretty;
     }
 
     /*
