@@ -11,59 +11,66 @@ entry as the notes.
 
 A landing page draws its bands, a column of pieces in a grid and a group of sections from the kit,
 a panel a button opens is attached by its button so its corner Close needs no script of the page's
-own, an icon-only button draws its icon large enough to read, an app's frame keeps its sides at no
-more than 16px at any text size, and a row's detail wraps pretty. `--dk-app-side`, `--dk-band-room`
-and `--dk-icon-size` are added and no token is renamed, and the theme script is unchanged, so
-`themeScriptHash` is the same.
+own, an icon-only button draws its icon large enough to read and a tab bar's icons are stroked no
+heavier than their labels, an app's frame keeps its sides at no more than 16px at any text size,
+and a row's detail wraps pretty. `--dk-app-side` and `--dk-icon-size` are added and no token is
+renamed, and the theme script is unchanged, so `themeScriptHash` is the same. The controls' budget
+rises from 6.25 KB to 7.25 KB, set again by the size audit's rule.
 
 - **Upgrading.** A page that lines its own content up with an app frame's sides, or with a toast's
   words, by `--dk-space-4` moves to `--dk-app-side`, which matches them at any text size. A page
   that set `--dk-space-4` or its root font size above 16px finds a frame's sides, its dock's, a
-  toast's, the band insets on an app's page and a dialog's gap from the screen's edges held at
-  16px. A button whose face is an icon alone adds `dk-button-icon`, or takes `icon` on `Button`, to
-  draw its icon at 1.25rem. Without it the icon stays at the button's text size, as before.
+  toast's and the band insets on an app's page held at 16px. A button whose face is an icon alone
+  adds `dk-button-icon`, or takes `icon` on `Button`, to draw its icon at 1.25rem. Without it the
+  icon stays at the button's text size, as before.
 - **Tokens.** `--dk-app-side` is how far an app frame's words stand in from its sides, the held
   step, and on a page with an app's frame or a tab bar `--dk-band-left` and `--dk-band-right` step
-  in by it, so the skip link and a demo's strip start where the frame's words do. `--dk-band-room`
-  is a band's room above and below, `--dk-space-7` until a page sets it. `--dk-icon-size` is the
-  size of an icon drawn larger than its text, 1.25rem in an icon-only button and 1.5rem in a tab.
+  in by it, so the skip link and a demo's strip start where the frame's words do. `--dk-icon-size`
+  is the size of an icon drawn larger than its text, set by the kit on those icons, 1.25rem in an
+  icon-only button and 1.5rem in a tab bar.
 - **Sheets.** `dk-band` lines a band the width of the screen up with the column, spaces it by the
-  flow and holds its prose to the measure. `dk-stack` is the flow with no room of its own, for a
-  column in a grid's cell, its prose held to the measure too. `dk-sections` sets sections side by
-  side, each with a page section's heading and steps, a section's step from what comes before it,
-  or the flow's step under the heading that names it. A content page's sections keep their room
-  under its headings. An app's bar, body, toast place and dock pad their sides by `--dk-app-side`,
-  16px at the default text size as before, and a toast stands that far from a page's sides and pads
-  its words by it. `dk-button-icon` draws its `dk-icon` at 1.25rem, and an icon-only button's icon
-  and a tab's are stroked by one rule at two in twenty four of their size, so a tab's weighs no
-  more than its label and an icon-only button's is a little lighter than its text's stroke.
-  `dk-row-detail` sets `text-wrap-style: pretty`, the style alone, so a row a page keeps from
-  wrapping stays on its line. The corner Close's rules check their container before they look
-  ahead for the Close, so a page with a long list restyles in less time in Chromium.
+  flow, with `--dk-band-room` above and below it, `--dk-space-7` until a page sets it, and holds its
+  prose to the measure, and a row and a switch in a band reach past its column by their ring.
+  `dk-stack` is the flow with no room of its own, for a column in a grid's cell, its prose held to
+  the measure too. `dk-sections` sets sections side by side, each with a page section's heading and
+  steps, a section's step from what comes before it, or the flow's step under the heading that
+  names it. A content page's sections keep their room under its headings. An app's bar, body, toast
+  place and dock pad their sides by `--dk-app-side`, 16px at the default text size as before, and a
+  toast stands that far from a page's sides and pads its words by it. `dk-button-icon` draws its
+  `dk-icon` at 1.25rem, and an icon-only button's icon and a tab bar's `dk-icon` are stroked by one
+  rule, two in twenty four of `--dk-icon-size` and never under 1.5px, so a tab's, 3px before at the
+  default text size, is now 2px, no heavier than its label. `dk-row-detail` sets
+  `text-wrap-style: pretty`, the style alone, so a row a page keeps from wrapping stays on its line,
+  and a browser that cannot wrap pretty drops the rule. The corner Close's rules check their
+  container before they look ahead for the Close, so a page with a long list restyles in less time
+  in Chromium.
 - **Controls.** `attachPanel(button)` opens and closes the panel the button names in
   `aria-controls`, every attached button that names it following, closes it by its corner Close
   with focus back on the button that opened it, and returns a `PanelControl`, whose `set`, a
   `SetPanel`, opens or closes it from the page's own code and whose `detach` lets the button go.
-  Where no button takes focus, it goes to what follows the panel, else to the app frame's body or
-  the page's main content. One listener on the page serves every panel and comes off once every
-  button is let go. A button with no `aria-controls` is refused, and a Close in later content that
-  reuses a panel's id leaves the panel alone. The controls' budget is 7.25 KB, set by the budgets'
-  rule with it in place.
+  The panel starts as the button's `aria-expanded` says. Where no button takes focus, it goes to
+  what follows the panel, else to the app frame's body or the page's main content. One listener on
+  the page serves every panel and comes off once every button is let go. A button with no
+  `aria-controls` is refused, and a Close in later content that reuses a panel's id leaves the
+  panel alone.
 - **React.** `Button` takes `icon`, which adds `dk-button-icon`, with an action or a toggle.
 - **Docs.** The reference shows a landing page in bands drawn from its example, lists
   `--dk-band-room` among the properties a page sets and `--dk-app-side` and `--dk-icon-size` among
-  the tokens, shows the star toggle with `dk-button-icon`, and says the frame's sides are held. Its
-  corner Close attaches its panel with `attachPanel`, and says the page's script that hides a panel
-  no button opens moves focus to what comes after it, or to the heading before it where nothing
-  follows. The README lists the new pieces, `attachPanel`, `PanelControl` and `SetPanel`. Records
-  13, 15 and 17 are amended for the panel, the controls' and the sheets' budgets, and the bands.
+  the tokens, shows the star toggle with `dk-button-icon` and says when to add it, and says the
+  frame's sides are held. Its corner Close attaches its panel with `attachPanel`, and says the
+  page's script that hides a panel no button opens moves focus to what comes after it, or to the
+  heading before it where nothing follows. The README lists the new pieces, `attachPanel`,
+  `PanelControl` and `SetPanel`. Record 13 sets the controls' budget and records the sheets' weight
+  against the median piece, record 15 is amended for `attachPanel` and record 17 for the bands.
 - **Tests.** Browser tests cover the bands, the stack and the group of sections on a wide page, a
-  phone and a 320px phone at twice the text size, the frame's held sides, an icon-only button's
-  icon and its stroke at both text sizes, a row's pretty detail, and the panel by button, Close,
-  keyboard and pointer, with focus, detach, a redrawn panel and a reused id. The specs share their
-  measures of a container's foot, the lines of text, a token's length and a page that loads the
-  controls, double the text size only once the page is drawn, and keep one list of the package's
-  exports, which the README is checked against.
+  phone and a 320px phone at twice the text size, a row and a switch reaching past a band's column,
+  the frame's held sides, an icon-only button's icon and its stroke at both text sizes, a row's
+  pretty detail, and the panel by button, Close, keyboard and pointer, with focus, detach, a redrawn
+  panel and a reused id, audited open and closed. The specs share their measures of a container's
+  foot, the lines of text, a token's length and a page that loads the controls, compare with tokens
+  where a relation is meant, double the text size only once the page is drawn, and keep one list of
+  the package's exports, which the README is checked against. The token tests read their lists by
+  what they hold rather than by order.
 
 ## 0.8.3
 
