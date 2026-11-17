@@ -450,3 +450,55 @@ test("leaves focus where it is when the page's script clicks the Close", async (
     await expect(panel(page)).toBeHidden();
     await expect(page.locator('#after-panels')).toBeFocused();
 });
+
+test("hands focus back when the page's code closes the panel while nothing has focus", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    // Nothing has focus, as a press of the page's own button in Safari leaves it.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test('hands focus back from a Close pressed while nothing has focus', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        document
+            .querySelector('#round-tips .dk-close button')
+            ?.addEventListener('mousedown', (event) => event.preventDefault());
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test('moves no focus when it attaches a button whose markup starts its panel closed', async ({
+    page,
+}) => {
+    await open(page);
+    const moved = await page.evaluate(() => {
+        const panel = document.createElement('div');
+        panel.id = 'quiet-panel';
+        panel.className = 'dk-panel';
+        panel.innerHTML = '<p>Shown until attached.</p>';
+        const opener = document.createElement('button');
+        opener.type = 'button';
+        opener.id = 'quiet-button';
+        opener.textContent = 'Quiet';
+        opener.setAttribute('aria-controls', 'quiet-panel');
+        opener.setAttribute('aria-expanded', 'false');
+        document.querySelector('main')?.append(opener, panel);
+        (document.activeElement as HTMLElement | null)?.blur();
+        (window as unknown as { attach: (selector: string) => unknown }).attach('#quiet-button');
+        return document.activeElement !== document.body;
+    });
+    expect(moved).toBe(false);
+    await expect(page.locator('#quiet-panel')).toBeHidden();
+});

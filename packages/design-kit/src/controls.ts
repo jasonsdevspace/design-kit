@@ -951,21 +951,23 @@ let attachedCount = 0;
 
 /**
  * Shows or hides a panel and marks every attached button that names it to match. Where focus was in
- * the panel as it closes, or a visitor pressed the panel's own Close, which a browser that does not
- * focus a pressed button leaves focus off, it goes to the button given, the one that opened the
- * panel, else to the first attached button that names it and takes focus, else to the first thing
- * after the panel that takes it, and where nothing does, to the body of the app's frame or the
- * page's main content, as the toast's does, so the keyboard keeps its place rather than being left
- * on what was just hidden.
+ * the panel as it closes, a visitor pressed the panel's own Close, or nothing has focus, as a press
+ * in Safari leaves it, focus goes to the button given, the one that opened the panel, else to the
+ * first attached button that names it and takes focus, else to the first thing after the panel that
+ * takes it, and where nothing does, to the body of the app's frame or the page's main content, as
+ * the toast's does, so the keyboard keeps its place rather than being left on what was just hidden.
+ * Focus anywhere else stays where it is.
  */
-const showPanel = (id: string, open: boolean, by?: HTMLButtonElement, closed = false): void => {
+const showPanel = (id: string, open: boolean, by?: HTMLButtonElement, pressed = false): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    const held = closed || panel.contains(document.activeElement);
+    // Focus on the page's body, where a press in Safari leaves it, was the panel's to lose.
+    const held =
+        pressed || panel.contains(document.activeElement) || (!panel.hidden && !focusedNow());
     panel.hidden = !open;
     if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
@@ -995,7 +997,7 @@ const onPanelPress = (event: MouseEvent): void => {
     const id = panel?.id;
     if (!id || document.getElementById(id) !== panel) return;
     // A visitor's own press hands focus back, and a click from the page's script does only where
-    // focus was in the panel, as a close from `set` does.
+    // focus was in the panel or nothing has focus, as a close from `set` does.
     if (lastOpener.has(id) || openersOf(id).length)
         showPanel(id, false, lastOpener.get(id), event.isTrusted);
 };
@@ -1008,11 +1010,11 @@ const onPanelPress = (event: MouseEvent): void => {
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
  * the panel follows. A visitor's press of the Close, by key, pointer or touch, moves focus to the
- * button that opened the panel, and a close from `set` does where focus was in the panel. The panel
- * is found at each press, so one drawn again keeps working, and a button drawn again works once it
- * is attached. One listener on the document hears the buttons and the Closes of every panel, and it
- * comes off once every button is let go. A panel's id must be the only one on the page. Attached
- * again, a button returns what it returned first.
+ * button that opened the panel, and a close from `set` does where focus was in the panel or nothing
+ * has focus. The panel is found at each press, so one drawn again keeps working, and a button drawn
+ * again works once it is attached. One listener on the document hears the buttons and the Closes of
+ * every panel, and it comes off once every button is let go. A panel's id must be the only one on
+ * the page. Attached again, a button returns what it returned first.
  */
 export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const already = attachedPanels.get(opener);
@@ -1040,8 +1042,11 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     // takes the place of the button that opened it.
     const id = panelIdOf(opener);
     const panel = document.getElementById(id);
+    // A panel the markup starts closed is closed without moving focus, since no visitor closed it.
+    const open = opener.getAttribute('aria-expanded') === 'true';
     if (startedPanels.has(id) && panel) opener.setAttribute('aria-expanded', String(!panel.hidden));
-    else control.set(opener.getAttribute('aria-expanded') === 'true');
+    else if (open || !panel) control.set(open);
+    else panel.hidden = true;
     startedPanels.add(id);
     return control;
 };
