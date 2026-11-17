@@ -111,6 +111,12 @@ is its CSS transformer, as the package README shows.
 - Without script, Chromium and Safari leave a link or a button in a table's frame where it is when
   the keyboard reaches it partly in view. The frame's room at its end brings in one with no more
   than a target's width showing, and `attachTable` brings in the rest.
+- Safari focuses a pressed button only where it has a tabindex, so the kit gives an attached
+  panel's button and its corner Close `tabindex="0"` where the page set none, and the panel
+  `tabindex="-1"`, so a press anywhere in it leaves focus in it. In Safari's default settings those
+  buttons are then stops for Tab where the page's other buttons are not, as with the libraries that
+  give their buttons a tabindex. TalkBack and VoiceOver on iOS are walked on a device before a
+  release that changes a panel, since a panel that takes focus may be read as one stop.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.
