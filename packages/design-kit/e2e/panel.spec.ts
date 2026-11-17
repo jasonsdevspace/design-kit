@@ -8,6 +8,8 @@ import { servePage, tabKey } from './page.js';
  * button opening and closing it by pointer and by keyboard, the corner Close closing it with the
  * button marked collapsed and focus back on it, the set returned opening and closing it from the
  * page's code, the detach letting the button go, and a button attached twice returning the same.
+ * A visitor's press of the Close hands focus back however it is pressed, and a close from the
+ * page's code only where focus was in the panel.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -415,6 +417,35 @@ test("leaves focus where it is when the page's code closes the panel with focus 
     await page.locator('#after-panels').focus();
     await page.evaluate(() => {
         (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('#after-panels')).toBeFocused();
+});
+
+test('hands focus back from a Close a press leaves unfocused, as Safari leaves it, in every engine', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    // Keep the press from focusing the Close, and focus outside the panel, as a press in Safari
+    // leaves it.
+    await page.evaluate(() => {
+        document
+            .querySelector('#round-tips .dk-close button')
+            ?.addEventListener('mousedown', (event) => event.preventDefault());
+    });
+    await page.locator('#after-panels').focus();
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test("leaves focus where it is when the page's script clicks the Close", async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#after-panels').focus();
+    await page.evaluate(() => {
+        document.querySelector<HTMLButtonElement>('#round-tips .dk-close button')?.click();
     });
     await expect(panel(page)).toBeHidden();
     await expect(page.locator('#after-panels')).toBeFocused();

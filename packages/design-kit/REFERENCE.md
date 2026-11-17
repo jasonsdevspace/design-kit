@@ -2511,15 +2511,16 @@ const tips = attachPanel(document.querySelector('[aria-controls="round-tips"]'))
 ```
 
 Then the button opens and closes the panel, every attached button that names it follows, and the
-Close closes it, marks the buttons collapsed and moves focus to the button that opened it, whether
-it was pressed by key, pointer or touch, so the keyboard and a screen reader keep their place, with
-no script of the page's own. A panel that starts closed carries `hidden` in its markup, so it never
-shows before the script runs. What it returns, of the type `PanelControl`, holds `set`, of the type
-`SetPanel`, which opens or closes the panel from the page's own code, as `tips.set(false)`, and
-moves focus to the button that opened it the same way, and `detach`, which lets the button go, as a
-page does when it takes the button away, after which `set` does nothing. The first button attached
-for a panel starts it as its markup says, and a button attached for it later, one drawn again among
-them, marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
+Close closes it, marks the buttons collapsed and moves focus to the button that opened it, whether a
+visitor pressed it by key, pointer or touch, so the keyboard and a screen reader keep their place,
+with no script of the page's own. A panel that starts closed carries `hidden` in its markup, so it
+never shows before the script runs. What it returns, of the type `PanelControl`, holds `set`, of the
+type `SetPanel`, which opens or closes the panel from the page's own code, as `tips.set(false)`, and
+moves focus to the button that opened it where focus was in the panel, since the page's code may
+close it while the visitor is elsewhere, and `detach`, which lets the button go, as a page does when
+it takes the button away, after which `set` does nothing. The first button attached for a panel
+starts it as its markup says, and a button attached for it later, one drawn again among them, marks
+itself as the panel is and leaves the panel alone. A press of a button that is off, with
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
 returns the same, and one with no `aria-controls` is refused with an error that says so. The button
 and the panel are found at each press, so a panel drawn again keeps working, and one listener on the
