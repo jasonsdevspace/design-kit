@@ -84,7 +84,7 @@ page.
 | `--dk-app-inset`                                                                                  | how far an app's column stands in from each side of the screen, `max(0px, (100vw - var(--dk-app-column)) / 2)`                                                                                                                                                                                                              |
 | `--dk-app-side`                                                                                   | `--dk-space-4-held`, how far an app frame's words stand in from its sides, which a toast's sides and a band's on an app's page match                                                                                                                                                                                        |
 | `--dk-icon-size`                                                                                  | 1.25rem on an icon-only button's icon and 1.5rem on a tab bar's, set by the kit on those icons, which a stroke of two in twenty four of it follows                                                                                                                                                                          |
-| `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`, held on an app's page                                                                                                                                    |
+| `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`, or `--dk-app-side` on an app's page                                                                                                                      |
 | `--dk-flow-step`                                                                                  | the step between the pieces a column holds, `--dk-space-4` in an explainer, a content page, a band, their sections, a section in a group and an app's body, and `--dk-space-3` in a panel and a dialog, set on what each holds, and in a stack the step of what holds it, and how tall a title beside a corner Close stands |
 | `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's or a raised panel's and the card's                                                                                                                                     |
 | `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, and `--dk-space-4-held` at 48rem or less and in an app's frame, a tab bar's page and a dialog on either                                                                                                                                                      |
@@ -1732,10 +1732,10 @@ a notch and its title starts below it. The frame pads itself past the side safe 
 lowest part, the tab bar, or the dock or the body where nothing comes after it, pads itself past
 `--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds stays clear
 of it, even where the page scrolls whole. The bar, the body, the toast's place and the dock pad
-their sides by `--dk-space-4-held`, no more than 16px at any text size, as a panel's words stand in,
-so at a large text size the frame's words keep their room. On a page with an app's frame or a tab
-bar, the band insets take the same held step, so the skip link and a demo's strip start where the
-frame's words do.
+their sides by `--dk-app-side`, the held step, no more than 16px at any text size, as a panel's
+words stand in, so at a large text size the frame's words keep their room. On a page with an app's
+frame or a tab bar, the band insets take the same held step, so the skip link and a demo's strip
+start where the frame's words do.
 
 The bar is `--dk-app-bar` tall, 4rem, or taller where a long title wraps, which it does within the
 room the mark and the action leave. On a phone at a large text size, under 16rem wide, the title
@@ -1767,19 +1767,25 @@ holding a list of links, from two to five, each a label with room for an icon ov
     <ul>
         <li>
             <a href="/" aria-current="page">
-                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                    ...
+                </svg>
                 Play
             </a>
         </li>
         <li>
             <a href="/history/">
-                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                    ...
+                </svg>
                 History
             </a>
         </li>
         <li>
             <a href="/players/">
-                <svg aria-hidden="true" viewBox="0 0 24 24">...</svg>
+                <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                    ...
+                </svg>
                 Players
             </a>
         </li>
@@ -2507,19 +2513,20 @@ const tips = attachPanel(document.querySelector('[aria-controls="round-tips"]'))
 Then the button opens and closes the panel, every attached button that names it follows, and the
 Close closes it, marks the buttons collapsed and moves focus to the button that opened it where
 focus was in the panel, so the keyboard keeps its place, with no script of the page's own. A panel
-that starts closed carries `hidden` in its markup, so it never shows before the script runs. What
-it returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes
-the panel from the page's own code, as `tips.set(false)`, and moves focus to the button that
-opened it the same way, and `detach`, which lets the button go, as a page does when it takes the
-button away, after which `set` does nothing. A button attached again returns the same, and one
-with no `aria-controls` is refused with an error that says so. The button and the panel are found
-at each press, so a panel drawn again keeps working, and one listener on the page serves every
-panel, taken off once every button is let go. Where no attached button that names the panel takes
-focus, focus goes to the first thing after the panel that takes it, else to the app frame's body
-or the page's main content, as a toast's does. A panel's id must be the only one on the page, so a
-page that shows markup its visitors wrote prefixes or strips the ids in it. A panel no button
-opens is closed by the page's own script, which moves focus to what comes after the panel, or to
-the heading before it where nothing follows.
+that starts closed carries `hidden` in its markup, so it never shows before the script runs. A
+button attached while another already names its panel follows the panel as it is, and a press of an
+off button, one with `aria-disabled`, does nothing. What it returns, of the type `PanelControl`,
+holds `set`, of the type `SetPanel`, which opens or closes the panel from the page's own code, as
+`tips.set(false)`, and moves focus to the button that opened it the same way, and `detach`, which
+lets the button go, as a page does when it takes the button away, after which `set` does nothing. A
+button attached again returns the same, and one with no `aria-controls` is refused with an error
+that says so. The button and the panel are found at each press, so a panel drawn again keeps
+working, and one listener on the page serves every panel, taken off once every button is let go.
+Where no attached button that names the panel takes focus, focus goes to the first thing after the
+panel that takes it, else to the app frame's body or the page's main content, as a toast's does. A
+panel's id must be the only one on the page, so a page that shows markup its visitors wrote prefixes
+or strips the ids in it. A panel no button opens is closed by the page's own script, which moves
+focus to what comes after the panel, or to the heading before it where nothing follows.
 
 ## Layers and palettes
 

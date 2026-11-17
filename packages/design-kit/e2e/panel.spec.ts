@@ -315,3 +315,34 @@ test("hands focus back to the button that opened the panel when another button's
     await expect(panel(page)).toBeHidden();
     await expect(button(page)).toBeFocused();
 });
+
+test('leaves the panel alone when an off button is pressed', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        document.querySelector('#tips-button')?.setAttribute('aria-disabled', 'true');
+    });
+    // An off button stays in the tab order, so a keyboard still reaches and presses it.
+    await button(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('keeps an open panel open when a second button is attached to it', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await expect(panel(page)).toBeVisible();
+    await page.evaluate(() => {
+        const later = document.createElement('button');
+        later.type = 'button';
+        later.id = 'tips-later';
+        later.textContent = 'Tips again';
+        later.setAttribute('aria-controls', 'round-tips');
+        later.setAttribute('aria-expanded', 'false');
+        document.querySelector('main')?.append(later);
+        (window as unknown as { attach: (selector: string) => unknown }).attach('#tips-later');
+    });
+    await expect(panel(page)).toBeVisible();
+    await expect(page.locator('#tips-later')).toHaveAttribute('aria-expanded', 'true');
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+});

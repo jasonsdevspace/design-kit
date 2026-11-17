@@ -611,7 +611,12 @@ export const tabBar: ReactElement = (
         <ul>
             <li>
                 <a href="/" aria-current="page">
-                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <svg
+                        className="dk-icon"
+                        aria-hidden="true"
+                        focusable="false"
+                        viewBox="0 0 24 24"
+                    >
                         ...
                     </svg>
                     Play
@@ -619,7 +624,12 @@ export const tabBar: ReactElement = (
             </li>
             <li>
                 <a href="/history/">
-                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <svg
+                        className="dk-icon"
+                        aria-hidden="true"
+                        focusable="false"
+                        viewBox="0 0 24 24"
+                    >
                         ...
                     </svg>
                     History
@@ -627,7 +637,12 @@ export const tabBar: ReactElement = (
             </li>
             <li>
                 <a href="/players/">
-                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <svg
+                        className="dk-icon"
+                        aria-hidden="true"
+                        focusable="false"
+                        viewBox="0 0 24 24"
+                    >
                         ...
                     </svg>
                     Players

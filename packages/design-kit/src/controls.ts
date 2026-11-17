@@ -979,7 +979,9 @@ const onPanelPress = (event: MouseEvent): void => {
     const button = target?.closest('button');
     if (!button) return;
     if (attachedPanels.has(button)) {
-        showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
+        // An off button keeps its place to say why it is off, not to act.
+        if (button.getAttribute('aria-disabled') !== 'true')
+            showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
         return;
     }
     const panel = button.closest('.dk-close')?.parentElement;
@@ -991,10 +993,11 @@ const onPanelPress = (event: MouseEvent): void => {
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
- * which lets the button go, after which neither does anything. The panel starts as the button's
- * aria-expanded says, and the markup writes hidden on a panel that starts closed, so it never
- * shows before the script runs. A press of the button turns it the other way, and every attached
- * button that names the panel follows. Where focus is in the panel, a press of the Close or a close
+ * which lets the button go, after which neither does anything. The panel starts as the first
+ * button's aria-expanded says, and a button attached later follows the panel as it is. The markup
+ * writes hidden on a panel that starts closed, so it never shows before the script runs. A press
+ * of the button turns it the other way, unless the button is off, and every attached button that
+ * names the panel follows. Where focus is in the panel, a press of the Close or a close
  * from `set` moves it to the button that opened the panel. The panel is found at each press, so
  * one drawn again keeps working, and a button drawn again works once it is attached. One listener
  * on the document hears the buttons and the Closes of every panel, and it comes off once every
@@ -1020,7 +1023,11 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     };
     attachedPanels.set(opener, control);
     if (!attachedCount++) document.addEventListener('click', onPanelPress, true);
-    control.set(opener.getAttribute('aria-expanded') === 'true');
+    // The first button for a panel starts it as its markup says, and a later one follows it.
+    const id = panelIdOf(opener);
+    const panel = document.getElementById(id);
+    const named = openersOf(id).some((button) => button !== opener);
+    control.set(named && panel ? !panel.hidden : opener.getAttribute('aria-expanded') === 'true');
     return control;
 };
 
