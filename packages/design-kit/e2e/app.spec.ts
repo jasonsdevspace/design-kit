@@ -5,6 +5,7 @@ import {
     box,
     colorOf,
     forceColors,
+    settle,
     shadowOf,
     sheet,
     sideways,
@@ -119,6 +120,9 @@ const open = async (
     } = {}
 ): Promise<void> => {
     await writePage(page, { width, height, theme, css, title: 'Round 3', body: screen(parts) });
+    // A shown toast rises into place, so a test reads it once it has arrived, wherever a browser
+    // would otherwise catch it on the way.
+    if (parts.toast) await settle(page.locator('#toast'));
 };
 
 const bar = (page: Page) => page.locator('.dk-app-bar');
@@ -605,8 +609,6 @@ test('prints as long and as wide as what it holds, with the body whole', async (
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme`, async ({ page }) => {
         await open(page, { theme, toast: true, tabs: true, dock: 2 });
-        // The toast rises into place, so the audit reads its colors once it has arrived.
-        await page.waitForFunction(() => document.getAnimations().length === 0);
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations).toEqual([]);
     });

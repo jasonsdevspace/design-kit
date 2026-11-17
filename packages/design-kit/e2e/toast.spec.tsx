@@ -11,6 +11,7 @@ import {
     js,
     KIT,
     ORIGIN,
+    settle,
     sideways,
     style,
     tabKey,
@@ -139,10 +140,7 @@ interface Kit {
 const toast = (page: Page): Locator => page.locator('.dk-toast');
 
 /** Waits for the toast's entrance to end, so it is measured, and audited, where it comes to rest. */
-const settle = (page: Page): Promise<unknown> =>
-    toast(page).evaluate((element) =>
-        Promise.all(element.getAnimations().map((animation) => animation.finished))
-    );
+const settled = (page: Page): Promise<unknown> => settle(toast(page));
 const message = (page: Page): Locator => page.locator('.dk-toast-message');
 const said = (page: Page): Locator => page.getByRole('status');
 const undo = (page: Page): Locator => page.getByRole('button', { name: 'Undo' });
@@ -358,7 +356,7 @@ test('wraps a message of three lines inside the toast, with its action still in 
         'Round 3 saved. Ana leads with 142, Ben is at 128, and the game ends at 200 points, so two more rounds may settle it.',
         'Undo'
     );
-    await settle(page);
+    await settled(page);
     const card = await box(toast(page), 'the toast');
     const words = await box(message(page), 'the message');
     expect(words.height).toBeGreaterThan(60);
@@ -379,7 +377,7 @@ test("sits in an app's frame above the dock, its action one step back from the d
 }) => {
     await open(page, { body: FRAME });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     await page.locator('.dk-app-body').evaluate((element) => {
         element.scrollTop = element.scrollHeight;
     });
@@ -408,7 +406,7 @@ test("never moves the frame's dock under the thumb as it shows and leaves, at th
         const save = page.locator('#save');
         const before = await box(save, "the dock's button");
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, shown`).toEqual(before);
         await closeButton(page).click();
         expect(await box(save, "the dock's button"), `at ${String(scale)}x, gone`).toEqual(before);
@@ -439,7 +437,7 @@ test("keeps what the keyboard reaches in the frame's body clear of the toast and
             element.children[Math.floor(element.children.length / 2)]?.after(line);
         });
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         const where = `${String(width)} by ${String(height)} at ${String(scale)}x`;
         await page.locator('#mid').focus();
         const link = await box(page.locator('#mid'), 'the link');
@@ -468,7 +466,7 @@ test("keeps the frame's dock in place on a phone on its side at a large text siz
         .locator('#save')
         .evaluate((element) => element.getBoundingClientRect().top);
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     expect(
         await page.locator('#save').evaluate((element) => element.getBoundingClientRect().top)
     ).toBeCloseTo(before, 0);
@@ -497,7 +495,7 @@ test("stops what the keyboard reaches in the frame's body short of a toast float
             element.children[Math.floor(element.children.length / 2)]?.after(line);
         });
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         // The body scrolled so the link sits at its foot, under the toast, then reached by the
         // keyboard from the body itself, as a visitor tabbing on through the screen reaches it.
         await page.locator('.dk-app-body').evaluate((element) => {
@@ -526,7 +524,7 @@ test("sends focus to the frame's body when its action is chosen and nothing had 
         (document.activeElement as HTMLElement | null)?.blur();
     });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     await undo(page).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.dk-app-body')).toBeFocused();
@@ -542,7 +540,7 @@ test("sends focus to the frame's body, not to an earlier message's control, when
         (document.activeElement as HTMLElement | null)?.blur();
     });
     await show(page, 'Round 4 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     await undo(page).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.dk-app-body')).toBeFocused();
@@ -554,7 +552,7 @@ test("sends focus to the frame's body where what it would go back to no longer t
     await open(page, { body: FRAME });
     await page.locator('#save').focus();
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     await undo(page).focus();
     // The action hides what focus came from rather than taking it from the page.
     await page.locator('#save').evaluate((element) => {
@@ -572,7 +570,7 @@ test("sends focus to the page's main content when its action is chosen and nothi
         (document.activeElement as HTMLElement | null)?.blur();
     });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     await undo(page).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('main')).toBeFocused();
@@ -588,7 +586,7 @@ test('leaves the page where it is when what has focus is not under the toast or 
         (element as HTMLElement).focus({ preventScroll: true });
     });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     expect(await page.evaluate(() => window.scrollY)).toBe(120);
 });
 
@@ -607,7 +605,7 @@ test('keeps what had focus in view, clear of the toast, as it shows on a page', 
         element.focus({ preventScroll: true });
     });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(
         (await box(toast(page), 'the toast')).y + 1
     );
@@ -626,7 +624,7 @@ test('puts its buttons together on a row under its message on a phone at a large
         await open(page, { width });
         await textSize(page, scale);
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         const where = `${String(width)}px at ${String(scale)}x`;
         const message = await box(toast(page).locator('.dk-toast-message'), 'the message');
         const action = await box(undo(page), 'the action');
@@ -686,7 +684,7 @@ test('keeps its buttons together at its end wherever they wrap under its message
     ]) {
         await open(page, { width, body, css });
         await show(page, 'Round 3 saved.', action);
-        await settle(page);
+        await settled(page);
         await together(page, action, what);
         // The message on its row of its own stands as far from the toast's end as from its start.
         const card = await box(toast(page), 'the toast');
@@ -705,10 +703,10 @@ test('keeps its message and buttons on one row where they fit, and again after a
     for (const width of [390, 320]) {
         await open(page, { width });
         await show(page, 'Round 3 saved.', 'Put the round back');
-        await settle(page);
+        await settled(page);
         await together(page, 'Put the round back', String(width));
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         const words = await box(message(page), 'the message');
         for (const button of [undo(page), closeButton(page)]) {
             const drawn = await box(button, 'a button');
@@ -722,7 +720,7 @@ test("keeps a toast with no action on one row in an app's frame narrower than th
 }) => {
     await open(page, { width: 1280, body: FRAME, css: '.dk-app { inline-size: 290px; }' });
     await show(page, 'Round 3 saved.');
-    await settle(page);
+    await settled(page);
     await expect(toast(page)).toHaveAttribute('data-rows', '1');
 });
 
@@ -745,7 +743,7 @@ test('stands its message as far from either edge on a 320px phone at twice the t
     await open(page, { width: 320 });
     await textSize(page, 2);
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     const [start, end] = await room(page);
     expect(Math.abs(end - start)).toBeLessThanOrEqual(1);
 });
@@ -763,7 +761,7 @@ test('keeps the layout it had for a toast written without its group of buttons',
     await open(page, { width: 320, body: PAGE.replace(TOAST, flat) });
     await textSize(page, 2);
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     // Under the message, the action before the close button on one row at its end, or where a face
     // too wide leaves no room for both, each at the end of a row of its own, as before the group.
     const words = await box(message(page), 'the message');
@@ -786,7 +784,7 @@ test('sits at the foot of a page clear of the home indicator, in the app column'
 }) => {
     await open(page, { css: ':root { --dk-safe-bottom: 34px; }' });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     const card = await box(toast(page), 'the toast');
     expect(bottom(card)).toBe(700 - 34 - 16);
     expect(card.x).toBe(16);
@@ -799,14 +797,14 @@ test('sits at the foot of a page clear of the home indicator, in the app column'
         css: ':root { --dk-safe-left: 47px; --dk-safe-right: 47px; }',
     });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     const side = await box(toast(page), 'the toast');
     expect(side.x).toBeGreaterThanOrEqual(47 + 16);
     expect(side.x + side.width).toBeLessThanOrEqual(844 - 47 - 16);
 
     await open(page, { width: 1280, height: 700 });
     await show(page, 'Round 3 saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     const wide = await box(toast(page), 'the toast');
     expect(wide.width).toBe(448 - 32);
     expect(wide.x).toBe((1280 - wide.width) / 2);
@@ -826,7 +824,7 @@ for (const width of [390, 320]) {
             ),
         });
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         const card = await box(toast(page), 'the toast');
         // The link scrolled to the foot of the screen, under the toast, then reached by the keyboard.
         await page.locator('#foot').evaluate((element) => {
@@ -858,7 +856,7 @@ test('keeps room on a page for a toast whose buttons wrap under its message at t
     await open(page, { width: 390, css: '.dk-toast-message { flex-basis: 100%; }' });
     await textSize(page, 2);
     await show(page, 'Saved.', 'Undo');
-    await settle(page);
+    await settled(page);
     const card = await box(toast(page), 'the toast');
     const action = await box(page.getByRole('button', { name: 'Undo' }), 'the action');
     // The buttons sit under the message, so the toast is two rows tall.
@@ -881,7 +879,7 @@ test('keeps room on a page for a toast of as many rows as it takes, measured as 
     await textSize(page, 2);
     // A message that wraps, in any face, over its buttons.
     await show(page, 'Round 3 is saved for every player at the table tonight.', 'Undo');
-    await settle(page);
+    await settled(page);
     const card = await box(toast(page), 'the toast');
     const rows = Number(await toast(page).getAttribute('data-rows'));
     expect(rows).toBeGreaterThanOrEqual(3);
@@ -908,7 +906,7 @@ test('measures its room again when the text size changes while it is shown', asy
     test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
     await open(page, { width: 390 });
     await show(page, 'Round 3 is saved for every player at the table tonight.', 'Undo');
-    await settle(page);
+    await settled(page);
     const before = Number(await toast(page).getAttribute('data-rows'));
     await textSize(page, 2);
     await expect
@@ -921,7 +919,7 @@ for (const theme of ['light', 'dark'] as const) {
         await open(page, { theme });
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
         await show(page, 'Round 3 saved.', 'Undo');
-        await settle(page);
+        await settled(page);
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });
 }

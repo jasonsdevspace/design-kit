@@ -290,3 +290,13 @@ export const backplateUnderWords = async (locator: Locator): Promise<number> => 
         [whole, under] as const
     );
 };
+
+/**
+ * Waits for what the element given plays as it arrives to end, such as a toast's rise or a sheet's,
+ * so it is measured where it comes to rest. It waits on the element's own animations alone, so one
+ * elsewhere on the page that never ends, such as a table's scroll shade, does not hold it up.
+ */
+export const settle = (locator: Locator): Promise<unknown> =>
+    locator.evaluate((element) =>
+        Promise.all(element.getAnimations().map((animation) => animation.finished))
+    );

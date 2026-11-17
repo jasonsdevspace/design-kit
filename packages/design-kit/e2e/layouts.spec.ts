@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { buttons, codeHead, dialog, fieldAction, themeSwitch } from '../examples/examples.js';
 import { Button, InputField, SelectField } from '../src/react.js';
-import { box, sideways, writePage } from './page.js';
+import { box, settle, sideways, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -377,11 +377,7 @@ test("leaves a dialog in an app's body where the browser and its own rules put i
             (element as HTMLDialogElement).showModal();
         });
         // Read once it has finished arriving.
-        await page
-            .locator(`#${id}`)
-            .evaluate((element) =>
-                Promise.all(element.getAnimations().map((animation) => animation.finished))
-            );
+        await settle(page.locator(`#${id}`));
         const drawn = await box(page.locator(`#${id}`), id);
         if (id === 'round-options') {
             // A sheet rises from the bottom edge.
