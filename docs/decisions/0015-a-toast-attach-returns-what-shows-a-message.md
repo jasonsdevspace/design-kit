@@ -75,6 +75,9 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   panel or its Close drawn again would lose a listener of its own and a page's handler that stops
   the press would keep a Close from closing it. The listener comes off once every button is let
   go.
+- A toast's Close and its action take `tabindex="0"` where the page set none, so Safari, which
+  focuses a pressed button only where it has a tabindex, leaves focus in the toast on a press or a
+  tap and focus goes back as it leaves, as record 19 has the kit do for a panel's buttons.
 
 ## How it is tested
 

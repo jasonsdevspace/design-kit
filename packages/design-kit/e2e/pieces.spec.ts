@@ -11,6 +11,7 @@ import {
     pixels,
     ringByKeyboard,
     style,
+    tabKey,
     writePage,
 } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
@@ -529,9 +530,10 @@ test('keeps the copy button as wide as its longest word, whichever word shows', 
 
 test("rings focus and edges a pointer's button in the focus color a page sets", async ({
     page,
+    browserName,
 }) => {
     await open(page, { css: ':root { --dk-focus: rgb(0, 128, 128); }' });
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     const ring = await page.evaluate(() =>
         document.activeElement === null ? '' : getComputedStyle(document.activeElement).outlineColor
     );
@@ -546,9 +548,12 @@ test("rings focus and edges a pointer's button in the focus color a page sets", 
         .toBe('rgb(0, 128, 128)');
 });
 
-test("draws the switch's own ring, on the chosen word, in the focus color", async ({ page }) => {
+test("draws the switch's own ring, on the chosen word, in the focus color", async ({
+    page,
+    browserName,
+}) => {
     await open(page, { css: ':root { --dk-focus: rgb(0, 128, 128); }' });
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(tabKey(browserName));
     await expect(page.getByRole('radio', { name: 'Light' })).toBeFocused();
     const ring = await word(page, 'Light').evaluate((element) => {
         const style = getComputedStyle(element);
