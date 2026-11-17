@@ -518,9 +518,12 @@ body > .dk-strip {
  */
 .site-copy {
     min-width: 0;
-    padding: var(--dk-space-4-held);
+    --site-copy-pad: var(--dk-space-4-held);
+    --site-copy-radius: var(--dk-radius);
+
+    padding: var(--site-copy-pad);
     border: 1px solid var(--dk-line);
-    border-radius: var(--dk-radius);
+    border-radius: var(--site-copy-radius);
     background: var(--dk-bg);
     color: var(--dk-fg);
 }
@@ -1084,10 +1087,10 @@ body > .dk-strip {
  * width of the screen, so a band on a ground of its own shows where it starts and ends.
  */
 .site-copy > div:has(> .dk-band) {
-    margin-inline: calc(-1 * var(--dk-space-4-held));
-    margin-block-end: calc(-1 * var(--dk-space-4-held));
-    border-end-start-radius: calc(var(--dk-radius) - 1px);
-    border-end-end-radius: calc(var(--dk-radius) - 1px);
+    margin-inline: calc(-1 * var(--site-copy-pad));
+    margin-block-end: calc(-1 * var(--site-copy-pad));
+    border-end-start-radius: calc(var(--site-copy-radius) - 1px);
+    border-end-end-radius: calc(var(--site-copy-radius) - 1px);
     overflow: clip;
 }
 

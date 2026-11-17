@@ -914,8 +914,9 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         lead={
             <>
                 Page chrome is the frame a demo draws around its content: the skip link, the strip
-                across the top that says whose demo it is, and the footer. It puts the same links in
-                the same places on every demo built with the design kit.
+                across the top that says whose demo it is, the footer, and the bands a landing page
+                inside it runs in. It puts the same links in the same places on every demo built
+                with the design kit.
             </>
         }
         intro={

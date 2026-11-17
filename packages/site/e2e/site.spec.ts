@@ -2198,16 +2198,22 @@ test.describe('the code of each state', () => {
                 };
                 /**
                  * The panels of a copy as the markup draws them, without the tabindex the site's
-                 * script gives a panel, its corner Close and its button as it attaches them, so
-                 * Safari focuses a press and focus can go back.
+                 * script gives a button with a panel, the panel it names and that panel's corner
+                 * Close as it attaches them, so Safari focuses a press and focus can go back. Only
+                 * where the code prints no tabindex of its own, which the script would have kept.
                  */
-                const panelsAsWritten = (copy: HTMLElement) => {
-                    for (const panel of copy.querySelectorAll('.dk-panel[tabindex="-1"]'))
-                        panel.removeAttribute('tabindex');
-                    for (const button of copy.querySelectorAll(
-                        ':is(button[aria-controls], .dk-panel > .dk-close button)[tabindex="0"]'
-                    ))
+                const panelsAsWritten = (copy: HTMLElement, shown: string) => {
+                    if (/tabindex/i.test(shown)) return;
+                    for (const button of copy.querySelectorAll('button[aria-controls]')) {
+                        const id = button.getAttribute('aria-controls')?.trim().split(/\s+/)[0];
+                        const panel = id ? copy.querySelector(`[id="${CSS.escape(id)}"]`) : null;
+                        if (!panel) continue;
                         button.removeAttribute('tabindex');
+                        panel.removeAttribute('tabindex');
+                        panel
+                            .querySelector(':scope > .dk-close button')
+                            ?.removeAttribute('tabindex');
+                    }
                 };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
@@ -2225,7 +2231,7 @@ test.describe('the code of each state', () => {
                     for (const hidden of copy.querySelectorAll('[hidden]'))
                         hidden.removeAttribute('hidden');
                     steppersAsWritten(copy);
-                    panelsAsWritten(copy);
+                    panelsAsWritten(copy, shown);
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
@@ -2275,11 +2281,14 @@ test.describe('the code of each state', () => {
             ['/design-kit/page-chrome/', CHROME],
         ] as const) {
             await page.goto(path);
-            const drawn = controls.flatMap(({ states }) => states).filter(({ react }) => react);
-            await expect(
-                page.locator('.site-code-name', { hasText: /^React, / }),
-                path
-            ).toHaveCount(drawn.length);
+            const drawn = controls
+                .flatMap(({ states }) => states)
+                .filter(({ react }) => react)
+                .map(({ name }) => `React, ${name}`);
+            const shown = await page
+                .locator('.site-code-name', { hasText: /^React, / })
+                .allTextContents();
+            expect(shown.map((name) => name.trim()).sort(), path).toEqual(drawn.sort());
         }
         await page.goto('/design-kit/explainer-pieces/');
         await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);

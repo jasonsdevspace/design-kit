@@ -10,12 +10,13 @@ import {
 
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
- * each block of code, attaches the kit's steppers, dialogs, panels and toast where a page shows them, and
- * adds what the kit does not ship: tabs where a state's code has two blocks, the live copies of the
- * states a reader can change, and the note a tap on a preview brings. The theme script the kit puts
- * inline has already drawn the theme before this runs, so the switch shows the choice, and saves
- * and draws a new one. It saves under the portfolio's key and with the portfolio's values, so a
- * choice made here holds on every page of jasonsdevspace.com, and the other way around.
+ * each block of code, attaches the kit's steppers, dialogs, panels and toast where a page shows
+ * them, and adds what the kit does not ship: tabs where a state's code has two blocks, the live
+ * copies of the states a reader can change, and the note a tap on a preview brings. The theme
+ * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
+ * choice, and saves and draws a new one. It saves under the portfolio's key and with the
+ * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
+ * other way around.
  */
 
 /**
@@ -265,10 +266,8 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('main .site-co
 }
 
 /*
- * The live copies of the states a reader can change. A toggle flips what it says it is, and a
- * button that names a panel opens and closes it, so what a control says it is stays true after it
- * is pressed. A theme switch's button is the kit's to open, and is left to it. The previews in the
- * other theme stay as they are drawn.
+ * The live copies of the toggles, each of which flips what it says it is, so what it says stays
+ * true after it is pressed. The previews in the other theme stay as they are drawn.
  */
 for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     'main .site-copy:not([inert]) button[aria-pressed]'
@@ -279,11 +278,14 @@ for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     });
 }
 
-// Each panel a live button opens is the kit's to open and close, its corner Close among them.
+// Each panel a live button opens is the kit's to open and close, its corner Close among them. A
+// theme switch's button is the kit's switch to open, and a button naming no panel is passed over,
+// since attachPanel refuses it and would stop the rest of this script.
 for (const opener of document.querySelectorAll<HTMLButtonElement>(
-    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button, [aria-controls=""])'
-))
-    attachPanel(opener);
+    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button)'
+)) {
+    if (opener.getAttribute('aria-controls')?.trim()) attachPanel(opener);
+}
 
 /*
  * Every stepper, the previews among them, since the kit hides a stepper's buttons until it is
