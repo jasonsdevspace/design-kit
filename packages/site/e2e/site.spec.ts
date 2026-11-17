@@ -6,6 +6,8 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
+import { CHROME } from '../../design-kit/examples/pieces.js';
+import { CONTROLS } from '../../design-kit/examples/states.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
 /**
@@ -2221,21 +2223,49 @@ test.describe('the code of each state', () => {
         }
     });
 
+    test('keeps the page chrome page to one top-level heading, the pictures out of it', async ({
+        page,
+        browserName,
+    }) => {
+        // Read from the browser's own accessibility tree, which leaves out what is inert, as a
+        // screen reader does, where Playwright's role queries count it.
+        test.skip(browserName !== 'chromium', 'the tree is read through Chromium');
+        await page.goto('/design-kit/page-chrome/');
+        const session = await page.context().newCDPSession(page);
+        const { nodes } = (await session.send('Accessibility.getFullAXTree')) as {
+            nodes: {
+                ignored: boolean;
+                role?: { value?: string };
+                name?: { value?: string };
+                properties?: { name: string; value: { value?: unknown } }[];
+            }[];
+        };
+        const titles = nodes
+            .filter(
+                ({ ignored, role, properties }) =>
+                    !ignored &&
+                    role?.value === 'heading' &&
+                    properties?.some(({ name, value }) => name === 'level' && value.value === 1)
+            )
+            .map(({ name }) => name?.value);
+        expect(titles).toEqual(['Page chrome']);
+    });
+
     test('shows React for each state a component draws, and markup alone for the rest', async ({
         page,
     }) => {
-        for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
+        // A state shows React where a component draws it, as its `react` says, and markup alone
+        // where it has none, as bands, which are classes a page writes.
+        for (const [path, controls] of [
+            ['/design-kit/controls/', CONTROLS],
+            ['/design-kit/page-chrome/', CHROME],
+        ] as const) {
             await page.goto(path);
-            // Bands are classes a page writes, with no component to draw them.
-            const bands = page.locator('section:has(> h2#bands)');
-            const states =
-                (await page.locator('.site-state').count()) -
-                (await bands.locator('.site-state').count());
+            const drawn = controls.flatMap(({ states }) => states).filter(({ react }) => react);
             await expect(
                 page.locator('.site-code-name', { hasText: /^React, / }),
                 path
-            ).toHaveCount(states);
-            await expect(bands.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);
+            ).toHaveCount(drawn.length);
         }
         await page.goto('/design-kit/explainer-pieces/');
         await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);

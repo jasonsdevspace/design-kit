@@ -10,7 +10,7 @@ import {
 
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
- * each block of code, attaches the kit's steppers, dialogs and toast where a page shows them, and
+ * each block of code, attaches the kit's steppers, dialogs, panels and toast where a page shows them, and
  * adds what the kit does not ship: tabs where a state's code has two blocks, the live copies of the
  * states a reader can change, and the note a tap on a preview brings. The theme script the kit puts
  * inline has already drawn the theme before this runs, so the switch shows the choice, and saves
@@ -281,7 +281,7 @@ for (const toggle of document.querySelectorAll<HTMLButtonElement>(
 
 // Each panel a live button opens is the kit's to open and close, its corner Close among them.
 for (const opener of document.querySelectorAll<HTMLButtonElement>(
-    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button)'
+    'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button, [aria-controls=""])'
 ))
     attachPanel(opener);
 

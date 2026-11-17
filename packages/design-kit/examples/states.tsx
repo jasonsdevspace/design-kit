@@ -110,29 +110,6 @@ export const CONTROLS: readonly Control[] = [
                 draw: ({ Button }) => <Button pressed={false}>Members only</Button>,
             },
             {
-                name: 'A button whose face is an icon alone',
-                attribute: 'class="dk-button dk-button-icon"',
-                react: `<Button icon>
-    <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-        <path d="M12 19V5M6 11l6-6 6 6" />
-    </svg>
-    <span className="dk-visually-hidden">Move Ana up</span>
-</Button>`,
-                draw: ({ Button }) => (
-                    <Button icon>
-                        <svg
-                            className="dk-icon"
-                            aria-hidden="true"
-                            focusable="false"
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M12 19V5M6 11l6-6 6 6" />
-                        </svg>
-                        <span className="dk-visually-hidden">Move Ana up</span>
-                    </Button>
-                ),
-            },
-            {
                 name: 'A button whose panel starts open',
                 attribute: 'aria-expanded="true"',
                 react: `<>
@@ -223,6 +200,29 @@ export const CONTROLS: readonly Control[] = [
                 attribute: 'class="dk-button dk-button-tall"',
                 react: `<Button tall>Save the round</Button>`,
                 draw: ({ Button }) => <Button tall>Save the round</Button>,
+            },
+            {
+                name: 'A button whose face is an icon alone',
+                attribute: 'class="dk-button dk-button-icon"',
+                react: `<Button icon>
+    <svg className="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+        <path d="M12 19V5M6 11l6-6 6 6" />
+    </svg>
+    <span className="dk-visually-hidden">Move Ana up</span>
+</Button>`,
+                draw: ({ Button }) => (
+                    <Button icon>
+                        <svg
+                            className="dk-icon"
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M12 19V5M6 11l6-6 6 6" />
+                        </svg>
+                        <span className="dk-visually-hidden">Move Ana up</span>
+                    </Button>
+                ),
             },
             {
                 name: 'A button drawn as a link, beside a block',

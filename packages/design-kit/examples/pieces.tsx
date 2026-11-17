@@ -116,7 +116,7 @@ export const CHROME: readonly Control[] = [
                                 </p>
                             </div>
                         </section>
-                        <section className="dk-band">
+                        <section className="dk-band site-ground-band">
                             <h2>Install it</h2>
                             <div className="dk-sections">
                                 <section>
