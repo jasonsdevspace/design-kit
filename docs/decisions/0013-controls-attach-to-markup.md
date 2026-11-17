@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, and in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, and in 0.8.4 to set the controls' budget at 7.25 KB, once `attachPanel` took them past 6.25 KB
 
 ## Context
 
@@ -127,8 +127,8 @@ bytes, so the rule sets the sheets at 10.75 KB.
 
 For 0.8.4 the controls were measured with `attachPanel` in place, which a page that opens a panel
 with a button attaches so its corner Close needs no script of the page's own. Every function sent
-together weighs 6,697 bytes, more than the room 6.25 KB had left, and the median a function adds is
-now 598 bytes, so the rule sets the controls at 7.25 KB.
+together weighs 6,799 bytes, past the 6.25 KB the budget held, and the median a function adds is
+now 613 bytes, so the rule sets the controls at 7.25 KB.
 
 ## How it is tested
 
@@ -156,6 +156,13 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   at the target with nothing below the strip moved, a pick by pointer closing them with focus on
   the button, the arrow keys moving the choice without closing them, Escape and a tap outside
   closing them, a swipe beside them leaving them open, and the row of choices back at 20rem.
+- `e2e/panel.spec.ts` attaches a panel by its button and finds it started as the button says, opened
+  and closed by the button and by its corner Close by pointer and keyboard with focus back on the
+  button, every button that names it in step, a panel drawn again closed past a handler that stops
+  the press, focus moved out of a panel the page's code closes, to what follows it or the main
+  content, a Close in later content that reuses its id ignored, a button with no `aria-controls`
+  refused, the same returned for a button attached twice, and the listener taken off once every
+  button is let go.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

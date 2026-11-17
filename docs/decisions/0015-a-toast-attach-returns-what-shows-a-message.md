@@ -1,6 +1,6 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message
+**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
 
 ## Context
 
@@ -68,6 +68,13 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   The function returns what says a message rather than what takes the line away, since a line holds
   nothing to take away, and keeps record 13's rule for being called again: a line attached again
   returns the function it returned first.
+- A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
+  closes it and what lets the button go, since a page calls the first from its own code and a
+  button can leave the page while its panel stays. It is the one control that listens on the
+  document rather than on its own elements, through one listener early in the press for every
+  panel, since a panel or its Close drawn again would lose a listener of its own and a page's
+  handler that stops the press would keep a Close from closing it. The listener comes off once
+  every button is let go.
 
 ## How it is tested
 

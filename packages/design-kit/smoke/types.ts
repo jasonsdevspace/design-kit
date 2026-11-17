@@ -13,6 +13,7 @@ import {
     ThemeSwitch,
     Toast,
 } from '@jasonsdevspace/design-kit/react';
+import { attachPanel, type PanelControl, type SetPanel } from '@jasonsdevspace/design-kit/controls';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import {
     browserFloor,
@@ -191,3 +192,10 @@ export const summary = Callout({
 // A wrapper hands on a button's accent as it got it, and it compiles.
 const lead: true | undefined = undefined;
 export const handedAccent = Button({ accent: lead, children: 'Save rule' });
+
+// A panel's button returns the set that opens or closes the panel and the detach that lets it go.
+export const panelOf = (button: HTMLButtonElement): PanelControl => attachPanel(button);
+export const setOf = (button: HTMLButtonElement): SetPanel => attachPanel(button).set;
+
+// @ts-expect-error A panel opens or closes by a boolean.
+export const setByWord = (set: SetPanel) => set('open');
