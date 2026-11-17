@@ -1,7 +1,7 @@
 {
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.8.3",
-    "description": "Design tokens, also in the Design Tokens Community Group format, base styles, a theme script, and the pieces of the demos on jasonsdevspace.com: page chrome and a site header, a content page and an explainer, buttons, fields, callouts, tabs, pills, an icon, a theme switch, a copy button and a status line, rows and tiles, panels and a raised panel, and an app's frame, tab bar, toast, grid of buttons, stepper and dialog.",
+    "version": "0.8.4",
+    "description": "Design tokens, also in the Design Tokens Community Group format, base styles, a theme script, and the pieces of the demos on jasonsdevspace.com: page chrome and a site header, a content page, bands and a group of sections for a landing page, an explainer, buttons, fields, callouts, tabs, pills, an icon, a theme switch, a copy button and a status line, rows and tiles, panels and a raised panel, and an app's frame, tab bar, toast, grid of buttons, stepper and dialog.",
     "keywords": [
         "design-tokens",
         "design-system",
