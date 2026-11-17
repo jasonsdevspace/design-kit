@@ -821,7 +821,7 @@ test('keeps tiles in one column on the narrowest phone at twice the text size an
     expect(await cutOff(page, '.dk-row-text')).toEqual([]);
 });
 
-test('keeps every word of a tile whole in a plain and a raised panel on the narrowest phone at twice the text size, and a lone panel and tile as they were', async ({
+test("keeps every word of a tile whole in a plain and a raised panel on the narrowest phone at twice the text size, a panel and a tile holding the card's inset", async ({
     page,
 }) => {
     await textSize(page, 2);
@@ -834,21 +834,19 @@ test('keeps every word of a tile whole in a plain and a raised panel on the narr
     expect(await brokenWords(page, '.dk-panel .dk-row-text')).toEqual([]);
     expect(await cutOff(page, '.dk-panel .dk-row-text')).toEqual([]);
     expect(await sideways(page)).toBe(0);
-    // Only a tile inside a panel holds its inset: a panel and a tile on the page keep the card's
-    // inset, which grows with the text.
-    const inset = await page.evaluate(() =>
-        getComputedStyle(document.documentElement).getPropertyValue('font-size')
-    );
-    const rem = parseFloat(inset);
-    expect((await style(page.locator('#lone'), 'padding-left'))['padding-left']).toBe(
-        `${String(rem)}px`
-    );
-    expect((await style(page.locator('#page-tiles .dk-row'), 'padding-left'))['padding-left']).toBe(
-        `${String(rem)}px`
-    );
-    expect(
-        (await style(page.locator('.dk-panel .dk-row').first(), 'padding-left'))['padding-left']
-    ).toBe('16px');
+    // A panel, a tile in it and a tile on the page each hold the card's inset at 16px on a phone,
+    // so the panel's padding and the tile's together leave its words room.
+    for (const selector of [
+        '#lone',
+        '#page-tiles .dk-row',
+        '.dk-panel:not(.dk-panel-raised) .dk-row',
+        '.dk-panel-raised .dk-row',
+    ]) {
+        expect(
+            (await style(page.locator(selector).first(), 'padding-left'))['padding-left'],
+            selector
+        ).toBe('16px');
+    }
 });
 
 for (const theme of ['light', 'dark'] as const)

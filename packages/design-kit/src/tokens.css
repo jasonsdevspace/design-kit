@@ -169,9 +169,9 @@
         /* The widest a dialog grows in the middle of a screen. */
         --dk-dialog-width: 32rem;
         /*
-         * The padding of a panel in an app's frame and of a dialog on a phone, and a wide
-         * dialog's, each stopping at its usual size so a large text size leaves what they hold
-         * its room. A field's inline padding held the same way keeps a stepper's figures room.
+         * The padding of a panel and a tile on a phone and in an app's frame, and of a dialog on a
+         * phone, and a wide dialog's, each stopping at its usual size so a large text size leaves
+         * what they hold its room. A field's inline padding held the same way keeps a stepper's figures room.
          */
         --dk-space-4-held: min(var(--dk-space-4), 16px);
         --dk-space-5-held: min(var(--dk-space-5), 24px);
@@ -242,8 +242,9 @@
         --dk-stack-skip: 10;
         /*
          * How far a card's words stand in from its edge, a panel's and a tile's alike, so a raised
-         * panel's text and the tiles under it start on one line: a wider step on a wide page, a
-         * phone's on a phone, and in an app's column a phone's held at its size at every width.
+         * panel's text and the tiles under it start on one line: a wider step on a wide page, and a
+         * phone's held at its size on a phone and in an app's column at every width, so a panel and
+         * the tiles in it leave their words room at twice the text size.
          */
         --dk-card-inset: var(--dk-space-5);
         /*
@@ -256,7 +257,7 @@
 
     @media (width <= 48rem) {
         :where(:root) {
-            --dk-card-inset: var(--dk-space-4);
+            --dk-card-inset: var(--dk-space-4-held);
             --dk-dialog-inset: var(--dk-space-4-held);
         }
     }

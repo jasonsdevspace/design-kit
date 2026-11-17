@@ -100,8 +100,8 @@ for (const [width, scale] of [
             // The long title wraps beside the Close on a phone rather than run under it.
             if (width === 320) expect(drawn.lines, at).toBeGreaterThan(1);
             // The Close stands on the title's first line, where the title follows nothing. At twice
-            // the text a dialog's held padding leaves no room above it, and the Close keeps its ring
-            // inside the dialog instead.
+            // the text a held padding, a dialog's or a panel's on a phone, leaves no room above it,
+            // and the Close keeps its ring inside what holds it instead.
             if (scale === 1) {
                 expect(Math.abs(drawn.closeMiddle - drawn.firstLine), at).toBeLessThanOrEqual(1);
             }
