@@ -15,7 +15,7 @@ own, an icon-only button draws its icon large enough to read and a tab bar's ico
 heavier than their labels, an app's frame keeps its sides at no more than 16px at any text size,
 and a row's detail wraps pretty. `--dk-app-side` and `--dk-icon-size` are added and no token is
 renamed, and the theme script is unchanged, so `themeScriptHash` is the same. The controls' budget
-rises from 6.25 KB to 7.25 KB, set again by the size audit's rule.
+rises from 6.25 KB to 7.5 KB, set again by the size audit's rule.
 
 - **Upgrading.** A page that lines its own content up with an app frame's sides, or with a toast's
   words, by `--dk-space-4` moves to `--dk-app-side`, which matches them at any text size. A page
@@ -45,32 +45,36 @@ rises from 6.25 KB to 7.25 KB, set again by the size audit's rule.
   container before they look ahead for the Close, so a page with a long list restyles in less time
   in Chromium.
 - **Controls.** `attachPanel(button)` opens and closes the panel the button names in
-  `aria-controls`, every attached button that names it following, closes it by its corner Close
-  with focus back on the button that opened it, and returns a `PanelControl`, whose `set`, a
-  `SetPanel`, opens or closes it from the page's own code and whose `detach` lets the button go.
-  The panel starts as the button's `aria-expanded` says. Where no button takes focus, it goes to
-  what follows the panel, else to the app frame's body or the page's main content. One listener on
-  the page serves every panel and comes off once every button is let go. A button with no
-  `aria-controls` is refused, and a Close in later content that reuses a panel's id leaves the
+  `aria-controls`, every attached button that names it following, closes it by its corner Close with
+  focus back on the button that opened it, and returns a `PanelControl`, whose `set`, a `SetPanel`,
+  opens or closes it from the page's own code and whose `detach` lets the button go. The first
+  button attached for a panel starts it as its `aria-expanded` says, and a button attached for it
+  later, one drawn again among them, marks itself as the panel is and leaves the panel alone. A
+  press of a button that is off, with `aria-disabled="true"`, does nothing, as a stepper's off
+  button does, and focus never goes back to one as the panel closes. Where no button takes focus, it
+  goes to what follows the panel, else to the app frame's body or the page's main content. One
+  listener on the page serves every panel and comes off once every button is let go. A button with
+  no `aria-controls` is refused, and a Close in later content that reuses a panel's id leaves the
   panel alone.
 - **React.** `Button` takes `icon`, which adds `dk-button-icon`, with an action or a toggle.
 - **Docs.** The reference shows a landing page in bands drawn from its example, lists
   `--dk-band-room` among the properties a page sets and `--dk-app-side` and `--dk-icon-size` among
-  the tokens, shows the star toggle with `dk-button-icon` and says when to add it, and says the
-  frame's sides are held. Its corner Close attaches its panel with `attachPanel`, and says the
-  page's script that hides a panel no button opens moves focus to what comes after it, or to the
-  heading before it where nothing follows. The README lists the new pieces, `attachPanel`,
-  `PanelControl` and `SetPanel`. Record 13 sets the controls' budget and records the sheets' weight
-  against the median piece, record 15 is amended for `attachPanel` and record 17 for the bands.
+  the tokens, shows the star toggle with `dk-button-icon` and says when to add it, says the frame's
+  sides are held, and draws its tab bar's icons with `dk-icon`, so they take the kit's stroke. Its
+  corner Close attaches its panel with `attachPanel`, and says the page's script that hides a panel
+  no button opens moves focus to what comes after it, or to the heading before it where nothing
+  follows. The README lists the new pieces, `attachPanel`, `PanelControl` and `SetPanel`. Record 13
+  sets the controls' budget and records the sheets' weight against the median piece, record 15 is
+  amended for `attachPanel` and record 17 for the bands.
 - **Tests.** Browser tests cover the bands, the stack and the group of sections on a wide page, a
   phone and a 320px phone at twice the text size, a row and a switch reaching past a band's column,
   the frame's held sides, an icon-only button's icon and its stroke at both text sizes, a row's
   pretty detail, and the panel by button, Close, keyboard and pointer, with focus, detach, a redrawn
-  panel and a reused id, audited open and closed. The specs share their measures of a container's
-  foot, the lines of text, a token's length and a page that loads the controls, compare with tokens
-  where a relation is meant, double the text size only once the page is drawn, and keep one list of
-  the package's exports, which the README is checked against. The token tests read their lists by
-  what they hold rather than by order.
+  panel, a reused id, an off button and a button attached later, audited open and closed. The specs
+  share their measures of a container's foot, the lines of text, a token's length and a page that
+  loads the controls, compare with tokens where a relation is meant, double the text size only once
+  the page is drawn, and keep one list of the package's exports, which the README is checked
+  against. The token tests read their lists by what they hold rather than by order.
 
 ## 0.8.3
 
