@@ -626,6 +626,42 @@ export const CONTROLS: readonly Control[] = [
                     </>
                 ),
             },
+            {
+                name: 'A panel closed by the Close in its corner',
+                attribute: 'class="dk-close"',
+                react: `<>
+    <Button aria-expanded aria-controls="round-tips">
+        Round tips
+    </Button>
+    <div id="round-tips" className="dk-panel">
+        <h3 className="dk-panel-title">Round tips</h3>
+        <div className="dk-close">
+            <Button text quiet>
+                <span aria-hidden="true">×</span>
+                <span className="dk-visually-hidden">Close round tips</span>
+            </Button>
+        </div>
+        <p>Ana deals first, and the cards go round to the left.</p>
+    </div>
+</>`,
+                draw: ({ Button }, id) => (
+                    <>
+                        <Button aria-expanded aria-controls={id('round-tips')}>
+                            Round tips
+                        </Button>
+                        <div id={id('round-tips')} className="dk-panel">
+                            <h3 className="dk-panel-title">Round tips</h3>
+                            <div className="dk-close">
+                                <Button text quiet>
+                                    <span aria-hidden="true">×</span>
+                                    <span className="dk-visually-hidden">Close round tips</span>
+                                </Button>
+                            </div>
+                            <p>Ana deals first, and the cards go round to the left.</p>
+                        </div>
+                    </>
+                ),
+            },
         ],
     },
     {

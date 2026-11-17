@@ -290,6 +290,13 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
         opener.setAttribute('aria-expanded', String(open));
         panel.hidden = !open;
     });
+    // A Close in the panel's corner closes it as its button would, and hands focus back to the
+    // button, so the keyboard is not left on what was just hidden.
+    panel.querySelector(':scope > .dk-close button')?.addEventListener('click', () => {
+        opener.setAttribute('aria-expanded', 'false');
+        panel.hidden = true;
+        opener.focus();
+    });
 }
 
 /*

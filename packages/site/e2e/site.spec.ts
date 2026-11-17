@@ -944,6 +944,69 @@ test.describe('the controls page', () => {
 });
 
 test.describe('the controls page, with the pieces the script attaches', () => {
+    test('closes a panel by the Close in its corner, back on its button, and keeps the Close in the picture', async ({
+        page,
+    }) => {
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/design-kit/controls/');
+            const live = page.locator('.site-copy:not([inert])').filter({
+                has: page.locator('[id$="round-tips"]'),
+            });
+            const opener = live.getByRole('button', { name: 'Round tips' });
+            const panel = live.locator('[id$="round-tips"]');
+            const close = panel.getByRole('button', { name: 'Close round tips' });
+            await expect(panel).toBeVisible();
+            await expect(
+                panel.locator(':scope > .dk-panel-title + .dk-close > button')
+            ).toHaveCount(1);
+            // The Close is the target, in the corner beside the title.
+            const corner = await panel.evaluate((element) => {
+                const button = element.querySelector('.dk-close button')?.getBoundingClientRect();
+                const title = element.querySelector('.dk-panel-title')?.getBoundingClientRect();
+                if (!button || !title) throw new Error('no Close or no title');
+                return {
+                    size: Math.min(button.width, button.height),
+                    besideTitle: button.left - title.right,
+                    belowTitle: button.top - title.bottom,
+                };
+            });
+            expect(corner.size, String(width)).toBeGreaterThanOrEqual(44);
+            expect(corner.besideTitle, String(width)).toBeGreaterThanOrEqual(-0.5);
+            expect(corner.belowTitle, String(width)).toBeLessThan(0);
+            const results = await new AxeBuilder({ page }).include('main').analyze();
+            expect(
+                results.violations.map(({ id }) => id),
+                String(width)
+            ).toEqual([]);
+            // Pressed, it closes the panel as the button would, and focus goes back to the button.
+            await close.click();
+            await expect(panel).toBeHidden();
+            await expect(opener).toHaveAttribute('aria-expanded', 'false');
+            await expect(opener).toBeFocused();
+            await opener.click();
+            await expect(panel).toBeVisible();
+            // The picture of the panel in the other theme keeps its Close inside it.
+            const inside = await page
+                .locator('.site-copy[inert] [id^="round-tips"]')
+                .first()
+                .evaluate((element) => {
+                    const box = element.getBoundingClientRect();
+                    const button = element
+                        .querySelector('.dk-close button')
+                        ?.getBoundingClientRect();
+                    if (!button) throw new Error('no Close in the picture');
+                    return (
+                        button.top >= box.top &&
+                        button.right <= box.right &&
+                        button.bottom <= box.bottom &&
+                        button.left >= box.left
+                    );
+                });
+            expect(inside, String(width)).toBe(true);
+        }
+    });
+
     test('shows a toast with Undo, which shows one with no action in its place', async ({
         page,
     }) => {
@@ -1153,7 +1216,21 @@ test.describe('the app pieces page', () => {
                         const box = frame.getBoundingClientRect();
                         const last = frame.lastElementChild?.getBoundingClientRect();
                         const edge = parseFloat(getComputedStyle(frame).borderBottomWidth);
+                        // A frame's body ends one padding below its words, with no room kept for
+                        // lines a picture cannot scroll to.
+                        const body = frame.querySelector(':scope > .dk-app-body');
+                        const words = body?.querySelector(
+                            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+                        );
+                        const bodyRoom =
+                            body && words
+                                ? body.getBoundingClientRect().bottom -
+                                  parseFloat(getComputedStyle(body).paddingBottom) -
+                                  words.getBoundingClientRect().bottom -
+                                  parseFloat(getComputedStyle(words).marginBottom)
+                                : 0;
                         return {
+                            bodyRoom,
                             spare: box.height - frame.scrollHeight - 2 * edge,
                             foot: last ? box.bottom - edge - last.bottom : 0,
                             tall: box.height < window.innerHeight,
@@ -1165,6 +1242,7 @@ test.describe('the app pieces page', () => {
                 const at = `${String(width)}, picture ${String(index)}`;
                 expect(Math.abs(drawn.spare), at).toBeLessThanOrEqual(1);
                 expect(Math.abs(drawn.foot), at).toBeLessThanOrEqual(1);
+                expect(Math.abs(drawn.bodyRoom), at).toBeLessThanOrEqual(1);
                 expect(drawn.tall, at).toBe(true);
             }
         }
