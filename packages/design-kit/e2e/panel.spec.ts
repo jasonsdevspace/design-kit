@@ -315,3 +315,94 @@ test("hands focus back to the button that opened the panel when another button's
     await expect(panel(page)).toBeHidden();
     await expect(button(page)).toBeFocused();
 });
+
+test('leaves the panel alone when an off button is pressed, open or closed, by key or pointer', async ({
+    page,
+}) => {
+    await open(page);
+    const off = () =>
+        page.evaluate(() => {
+            document.querySelector('#tips-button')?.setAttribute('aria-disabled', 'true');
+        });
+    await off();
+    // An off button stays in the tab order, so a keyboard still reaches and presses it.
+    await button(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'false');
+    // Opened by the other button, the panel stays open when the off one is pressed.
+    await page.locator('#tips-again').click();
+    await expect(panel(page)).toBeVisible();
+    await button(page).click({ force: true });
+    await expect(panel(page)).toBeVisible();
+    await expect(page.locator('#tips-again')).toHaveAttribute('aria-expanded', 'true');
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('hands focus to a button that is not off when the panel closes', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        document.querySelector('#tips-button')?.setAttribute('aria-disabled', 'true');
+    });
+    await page.locator('#deal').focus();
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('#tips-again')).toBeFocused();
+});
+
+test('keeps an open panel open when a second button is attached to it', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await expect(panel(page)).toBeVisible();
+    await page.evaluate(() => {
+        const later = document.createElement('button');
+        later.type = 'button';
+        later.id = 'tips-later';
+        later.textContent = 'Tips again';
+        later.setAttribute('aria-controls', 'round-tips');
+        later.setAttribute('aria-expanded', 'false');
+        document.querySelector('main')?.append(later);
+        (window as unknown as { attach: (selector: string) => unknown }).attach('#tips-later');
+    });
+    await expect(panel(page)).toBeVisible();
+    await expect(page.locator('#tips-later')).toHaveAttribute('aria-expanded', 'true');
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('keeps an open panel open when its button is drawn again', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        const { panels } = window as unknown as { panels: { detach: () => void }[] };
+        panels[0]?.detach();
+        panels[2]?.detach();
+        const old = document.querySelector('#tips-button');
+        const drawn = old?.cloneNode(true) as HTMLButtonElement;
+        drawn.setAttribute('aria-expanded', 'false');
+        old?.replaceWith(drawn);
+        (window as unknown as { attach: (selector: string) => unknown }).attach('#tips-button');
+    });
+    await expect(panel(page)).toBeVisible();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('marks a button attached later as the panel is, without taking the place of the one that opened it', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        const later = document.createElement('button');
+        later.type = 'button';
+        later.id = 'tips-later';
+        later.textContent = 'Tips once more';
+        later.setAttribute('aria-controls', 'round-tips');
+        later.setAttribute('aria-expanded', 'false');
+        document.querySelector('main')?.prepend(later);
+        (window as unknown as { attach: (selector: string) => unknown }).attach('#tips-later');
+    });
+    await page.locator('#deal').focus();
+    await close(page).click();
+    await expect(button(page)).toBeFocused();
+});
