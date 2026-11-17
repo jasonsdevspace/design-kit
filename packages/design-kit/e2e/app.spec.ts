@@ -22,7 +22,8 @@ import { textSize } from './text-size.js';
  * clear of the bottom one, one top heading, the body's last line scrolled clear of everything below
  * it at a doubled text size with a few lines kept for the body, the page scrolled whole where a
  * doubled text size leaves too little height, nothing out of sight lengthening the page, a toast's
- * place above the dock whatever the dock holds, the frame as tall as the screen at any height, a
+ * place above the dock whatever the dock holds, the frame as tall as the screen at any height and a
+ * picture of one as tall as what it holds, clear of no safe area, a
  * column in the middle of a wide screen and the full width of a phone, a long title wrapping, one
  * long word breaking inside the bar on a 320px phone at twice the text size, the keyboard going
  * bar, body, dock, the frame printing whole, and no audit findings in either theme.
@@ -1017,51 +1018,64 @@ test("draws a page with an app's frame of its own as an app's, a picture of anot
     expect(alone).not.toEqual(await read(contentPage('')));
 });
 
+/** A picture of a frame with a bar, a body, a dock and a tab row, and of a page that ends in a tab bar. */
+const PICTURED_SCREEN =
+    `<div class="dk-picture" inert><div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Round 3</h1></header>` +
+    `<main class="dk-app-body" tabindex="0"><p>Ana leads.</p></main>` +
+    `<section class="dk-app-dock" aria-label="Actions"><button type="button" class="dk-button dk-button-accent dk-button-tall">Save the round</button></section>` +
+    `<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul><li><a href="#a" aria-current="page">Play</a></li><li><a href="#b">Games</a></li></ul></nav></div></div>` +
+    `<div class="dk-tabbar-page dk-picture" inert><main><p>Games</p></main><nav class="dk-tabbar" aria-label="Places"><ul><li><a href="#a">Play</a></li></ul></nav></div>`;
+
 for (const [width, height] of [
     [390, 800],
-    [800, 300],
+    [1280, 500],
 ] as const)
-    test(`draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place, ${String(width)} by ${String(height)}`, async ({
+    test(`draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place and clear of no safe area, ${String(width)} by ${String(height)}`, async ({
         page,
     }) => {
         await writePage(page, {
             width,
             height,
             title: 'Pieces',
-            body: contentPage(`${PICTURE}${PICTURED_ITSELF}`),
+            css: `:root { --dk-safe-top: ${String(SAFE.top)}px; --dk-safe-right: ${String(SAFE.right)}px; --dk-safe-bottom: ${String(SAFE.bottom)}px; --dk-safe-left: ${String(SAFE.left)}px; }`,
+            body: contentPage(PICTURED_SCREEN),
         });
         const drawn = await page.evaluate(() =>
             [...document.querySelectorAll('.dk-app, .dk-tabbar-page')].map((picture) => {
                 const box = picture.getBoundingClientRect();
-                const parts = [...picture.children].filter(
-                    (child) => getComputedStyle(child).display !== 'none'
-                );
-                const held = parts.reduce(
-                    (sum, child) => sum + child.getBoundingClientRect().height,
-                    0
-                );
-                const bar = picture.querySelector(':scope > .dk-tabbar');
+                // Each row it holds, the toast's place left out, which floats over the body.
+                const held = [...picture.children]
+                    .filter(
+                        (child) =>
+                            !child.matches('.dk-app-toast') &&
+                            getComputedStyle(child).display !== 'none'
+                    )
+                    .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
+                const last = picture.lastElementChild;
+                const bar = picture.querySelector(':scope > .dk-app-bar');
                 return {
                     kind: picture.className,
                     height: box.height,
                     held,
-                    bar: bar === null ? null : getComputedStyle(bar).position,
-                    barEnd:
-                        bar === null
-                            ? null
-                            : Math.round(bar.getBoundingClientRect().bottom - box.bottom),
+                    lastEnd: Math.round((last?.getBoundingClientRect().bottom ?? 0) - box.bottom),
+                    lastPosition: last === null ? '' : getComputedStyle(last).position,
+                    lastPad: last === null ? 0 : parseFloat(getComputedStyle(last).paddingBottom),
+                    barPad: bar === null ? 0 : parseFloat(getComputedStyle(bar).paddingTop),
                 };
             })
         );
-        expect(drawn).toHaveLength(4);
+        expect(drawn).toHaveLength(2);
         for (const picture of drawn) {
             const at = `${picture.kind}, ${String(width)} by ${String(height)}`;
             // As tall as what it holds, give or take its rows' gaps, and never the screen's height.
             expect(picture.height, at).toBeLessThan(height);
-            expect(picture.height - picture.held, at).toBeLessThan(64);
-            if (picture.bar !== null) {
-                expect(picture.bar, at).toBe('static');
-                expect(picture.barEnd, at).toBe(0);
-            }
+            expect(picture.height - picture.held, at).toBeGreaterThanOrEqual(-0.5);
+            expect(picture.height - picture.held, at).toBeLessThan(32);
+            // Its last row, the tab bar, ends at its foot, in its place rather than held to the
+            // screen, with none of the room a phone keeps at its foot.
+            expect(picture.lastEnd, at).toBe(0);
+            expect(picture.lastPosition, at).toBe('static');
+            expect(picture.lastPad, at).toBeLessThan(SAFE.bottom);
+            expect(picture.barPad, at).toBeLessThan(SAFE.top);
         }
     });

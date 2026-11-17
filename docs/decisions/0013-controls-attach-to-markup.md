@@ -122,7 +122,7 @@ the site's header, the content page and the icon.
 
 For 0.8.2 the sheets were measured with its three changes in place, a tile in a panel holding its
 inset, a Close in the corner and a picture drawn at its content's height, the last of which lands
-after the Close. They weigh 10,660 bytes sent together, and the median a piece costs is now 212
+after the Close. They weigh 10,695 bytes sent together, and the median a piece costs is now 193
 bytes, so the rule sets the sheets at 10.75 KB.
 
 ## How it is tested

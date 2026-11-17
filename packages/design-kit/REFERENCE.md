@@ -1670,8 +1670,9 @@ body holds out of sight, such as a row's words for a screen reader, scrolls with
 lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
-do not push the dock out of view. The bar pads itself past `--dk-safe-top`, so its ground runs up
-under a notch and its title starts below it. The frame pads itself past the side safe areas, and its
+do not push the dock out of view. A pictured frame is as tall as what it holds instead, as the app
+frame's first paragraph says. The bar pads itself past `--dk-safe-top`, so its ground runs up under
+a notch and its title starts below it. The frame pads itself past the side safe areas, and its
 lowest part, the tab bar, or the dock or the body where nothing comes after it, pads itself past
 `--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds stays clear
 of it, even where the page scrolls whole.
@@ -1757,12 +1758,14 @@ wraps within its share at a large text size and the bar grows with it, so nothin
 `dk-tabbar` draws the bar and places nothing. `dk-tabbar-page` is the app's column, as a frame is:
 `--dk-app-column` wide at most, in the middle of a wide screen, at least as tall as the screen, and
 padded past the side safe areas. The bar in it sticks to the bottom of the screen while the page
-scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. On a short page
-it is still at the bottom. At the page's end it sits after the last of the content and never over
-it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's height
-with a label on two lines, so what the keyboard reaches, or a link within the page leads to, stops
-short of the bar and is never under it, in a browser with `:has()`. A label that wraps past two
-lines makes the bar taller than that, so a label is a short word or two.
+scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. In a picture
+the page is as tall as what it holds and its bar sits at its foot, raised over nothing and with no
+room for a phone's edges. On a short page it is still at the bottom. At the page's end it sits after
+the last of the content and never over it, so the page pads by no height. The page's root has a
+`scroll-padding-bottom` of the bar's height with a label on two lines, so what the keyboard reaches,
+or a link within the page leads to, stops short of the bar and is never under it, in a browser with
+`:has()`. A label that wraps past two lines makes the bar taller than that, so a label is a short
+word or two.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
 lines tall, the bar scrolls with the page and waits at its end, so it takes no part of a screen that
