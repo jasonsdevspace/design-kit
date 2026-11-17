@@ -2423,9 +2423,8 @@ method="dialog"`, so a press closes the dialog with no script and leaves `close`
 `returnValue`, apart from an answer. The Close comes after the title, so the keyboard and a screen
 reader meet the dialog's name first, and it never takes focus as the dialog opens: a dialog that
 asks a question gives its first answer `autofocus`, and a sheet its title, as above. Where nothing
-asks for focus, as when React's `autoFocus` writes no attribute, `attachDialog` moves it off the
-Close to the first answer, or to the title where the dialog has none. It keeps the ×, with Close out
-of sight beside it, and is the target at every width, centered on the title's first line. It is
+asks for focus, as when React's `autoFocus` writes no attribute, `attachDialog` moves it off the Close to the first field or answer after it that takes focus, or to the title where nothing can. It keeps the ×, with Close out
+of sight beside it, and is the target at every width, centered on the title's first line wherever the padding leaves it room. At a large text size, where a dialog's or a phone's panel padding is held at 16px, it keeps its ring inside instead and sits a little below that line. It is
 placed in the corner rather than laid out, so what the dialog or panel holds stays in its order and
 at its own width, and what comes before the Close keeps free the room it takes, so a title or an
 eyebrow wraps beside it. Its ring stays inside the dialog and clear of what follows the title. A

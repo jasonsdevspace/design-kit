@@ -836,7 +836,12 @@ test("keeps every word of a tile whole in a plain and a raised panel on the narr
     expect(await sideways(page)).toBe(0);
     // A panel, a tile in it and a tile on the page each hold the card's inset at 16px on a phone,
     // so the panel's padding and the tile's together leave its words room.
-    for (const selector of ['#lone', '#page-tiles .dk-row', '.dk-panel .dk-row']) {
+    for (const selector of [
+        '#lone',
+        '#page-tiles .dk-row',
+        '.dk-panel:not(.dk-panel-raised) .dk-row',
+        '.dk-panel-raised .dk-row',
+    ]) {
         expect(
             (await style(page.locator(selector).first(), 'padding-left'))['padding-left'],
             selector
