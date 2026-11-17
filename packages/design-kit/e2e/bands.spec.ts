@@ -45,7 +45,7 @@ const BODY = `<main id="main-content">
 <ul class="dk-rows" role="list" aria-label="Games"><li><a class="dk-row" id="band-row" href="#game">Flip 7</a></li></ul>
 <div class="dk-theme-switch" id="band-switch" role="radiogroup" aria-label="Theme"><label class="dk-theme-switch-choice"><input type="radio" name="theme" checked><span>System</span></label><label class="dk-theme-switch-choice"><input type="radio" name="theme"><span>Light</span></label></div>
 </section>
-<div class="dk-page" id="reach-page"><h1>Settings</h1>
+<div class="dk-page" id="reach-page"><h1>Menu</h1>
 <ul class="dk-rows" role="list" aria-label="Places"><li><a class="dk-row" id="page-row" href="#home">Home</a></li></ul>
 <div class="dk-theme-switch" id="page-switch" role="radiogroup" aria-label="Page theme"><label class="dk-theme-switch-choice"><input type="radio" name="page-theme" checked><span>System</span></label><label class="dk-theme-switch-choice"><input type="radio" name="page-theme"><span>Dark</span></label></div>
 </div>
