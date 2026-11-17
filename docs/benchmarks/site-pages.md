@@ -6,17 +6,17 @@ Each page of jasonsdevspace.com/design-kit/, built and served locally, on a firs
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-17 | `881cba2` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.2 |
+| 2026-11-17 | `26dd384` | AMD EPYC 9V74 80-Core Processor, 4 cores | v24.22.2 |
 
-Measured with Lighthouse 13.6.0 in Chrome 158, the site drawing from version 0.8.2 of the kit. Since the record on 2026-11-17 at `8f1544d`, when the site drew from version 0.8.1 of the kit, the pages download 212.7 KB together where they downloaded 209.3 KB.
+Measured with Lighthouse 13.6.0 in Chrome 158, the site drawing from version 0.8.3 of the kit. Since the record on 2026-11-17 at `881cba2`, when the site drew from version 0.8.2 of the kit, the pages download 213.2 KB together where they downloaded 212.7 KB.
 
 | Page                          | Accessibility | Performance | Largest paint | Layout shift | Downloads | Requests |
 | ----------------------------- | ------------- | ----------- | ------------- | ------------ | --------- | -------- |
-| /design-kit/                  | 100           | 100         | 756 ms        | 0.000        | 23.4 KB   | 4        |
-| /design-kit/tokens/           | 100           | 100         | 756 ms        | 0.000        | 27.2 KB   | 4        |
-| /design-kit/controls/         | 100           | 100         | 905 ms        | 0.000        | 37.2 KB   | 4        |
-| /design-kit/app-pieces/       | 100           | 100         | 755 ms        | 0.000        | 29.4 KB   | 4        |
-| /design-kit/page-chrome/      | 100           | 100         | 755 ms        | 0.000        | 24.3 KB   | 4        |
-| /design-kit/explainer-pieces/ | 100           | 100         | 756 ms        | 0.000        | 24.5 KB   | 4        |
+| /design-kit/                  | 100           | 100         | 755 ms        | 0.000        | 23.4 KB   | 4        |
+| /design-kit/tokens/           | 100           | 100         | 958 ms        | 0.000        | 27.2 KB   | 4        |
+| /design-kit/controls/         | 100           | 100         | 904 ms        | 0.000        | 37.6 KB   | 4        |
+| /design-kit/app-pieces/       | 100           | 100         | 754 ms        | 0.000        | 29.4 KB   | 4        |
+| /design-kit/page-chrome/      | 100           | 100         | 754 ms        | 0.000        | 24.4 KB   | 4        |
+| /design-kit/explainer-pieces/ | 100           | 100         | 755 ms        | 0.000        | 24.6 KB   | 4        |
 | /design-kit/together/         | 100           | 100         | 754 ms        | 0.000        | 22.8 KB   | 4        |
-| /design-kit/how-it-works/     | 100           | 100         | 942 ms        | 0.000        | 23.8 KB   | 4        |
+| /design-kit/how-it-works/     | 100           | 100         | 754 ms        | 0.000        | 23.8 KB   | 4        |
