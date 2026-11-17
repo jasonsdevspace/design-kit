@@ -9,21 +9,35 @@ entry as the notes.
 
 ## 0.8.5
 
-A panel's corner Close hands focus back to the button that opened the panel however a visitor
-presses it. No token is added or renamed and the theme script is unchanged, so
+A panel closed by a visitor hands focus back to the button that opened it however they pressed, in
+Safari and on iOS as in every other browser, and never moves a focus the visitor or the page put
+somewhere else. No token is added or renamed and the theme script is unchanged, so
 `themeScriptHash` is the same.
 
-- **Controls.** A visitor's press of a panel's corner Close moves focus to the button that opened
-  the panel by key, pointer or touch. Safari, Firefox on macOS and iOS do not focus a button a
-  pointer or a tap presses, and Safari takes focus off what had it, so a Close pressed that way
-  left focus on the page's body, and with VoiceOver on iOS the cursor on what was just hidden. A
-  close from `set`, and a click the page's own script gives the Close, still move focus only where
-  it was in the panel, since the page's code may close it while the visitor is elsewhere.
-- **Docs.** The reference's corner Close says the Close hands focus back however a visitor presses
-  it, and that a close from `set` moves focus only where it was in the panel.
-- **Tests.** The panel's browser tests run in WebKit as well. A test keeps a press from focusing
-  the Close, as Safari does, and finds focus handed back in every engine, and tests close a panel
-  from `set` and by a script's click with focus outside it and find focus left where it was.
+- **Controls.** Safari and iOS neither focus a button a pointer or a tap presses nor leave focus
+  where it was, and put it on what holds the button, the body or a `main` that takes focus, so a
+  panel closed that way left the visitor's place on the body, and with VoiceOver on iOS the cursor
+  on what was just hidden. The kit now keeps the path of a visitor's last press, and a panel that
+  closes while focus is in it, or sits on what holds it after that press was inside the panel,
+  moves focus to the button that opened it. That covers the corner Close by key, pointer or touch,
+  and a Done of the page's own that calls `set(false)`, even where its handler waits for a save or
+  draws the button away. Focus anywhere else stays where it is: a page that moves focus to a field
+  or a link's target before closing keeps it there, a press in one panel that closes another leaves
+  focus alone, a click the page's script gives the Close moves focus only where it was in the
+  panel, and a close from the page's code after the visitor moved on does not pull them back. One
+  press that closes an outer panel and an inner one leaves focus on the outer panel's button. A
+  page closes a panel from a press's `click`, since a close from its `pointerdown` comes before the
+  browser moves focus for the press.
+- **Docs.** The reference's corner Close says where focus goes however a panel closes, how a link
+  in a panel fares, and that a page closes a panel from a `click`. Record 13 names the rule and the
+  three tries this release turned down.
+- **Tests.** The panel's browser tests run in WebKit as well, with a test that a pointer press
+  leaves a button unfocused there, so the tests of Safari's way keep testing it. They close a panel
+  by its Close by key, pointer and touch, by a Done of the page's own pressed as the browser presses
+  it and as Safari leaves focus, by one that waits, one drawn away and one that moves focus first,
+  by a link that moves focus and one that moves none, by a press in another panel, by the page's
+  script with focus inside and outside, and from the page's code after the visitor moved on, and
+  close an outer and an inner panel with one press.
 
 ## 0.8.4
 
