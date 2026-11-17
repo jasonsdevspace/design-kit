@@ -1051,13 +1051,10 @@
     :where(
         :is(
                 .dk-explainer,
-                .dk-explainer > section,
                 .dk-page,
-                .dk-page > section,
                 .dk-band,
-                .dk-band > section,
                 .dk-stack,
-                .dk-sections > section,
+                :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -1136,13 +1133,13 @@
     /*
      * A band: a part of a landing page the width of the screen, such as one on a ground of its
      * own, its content lined up with the column as the strip's is and spaced by the flow, as a
-     * content page's is, with room above and below it that a page sets to its own. A grid it holds
-     * is one piece of its flow, so the grid's items stand apart by its gap alone, and a column of
-     * pieces in a grid's cell, such as a hero's words beside its picture, is a stack, the flow with
-     * no room of its own.
+     * content page's is, with --dk-band-room above and below it, --dk-space-7 until a page sets
+     * it. A grid it holds is one piece of its flow, so the grid's items stand apart by its gap
+     * alone, and a column of pieces in a grid's cell, such as a hero's words beside its picture, is
+     * a stack, the flow with no room of its own.
      */
     :where(.dk-band) {
-        padding-block: var(--dk-space-7);
+        padding-block: var(--dk-band-room, var(--dk-space-7));
     }
 
     /*
@@ -1157,19 +1154,10 @@
         gap: var(--dk-space-7);
     }
 
+    /* Prose a page, a band, a stack or a section of theirs holds keeps to the measure. */
     :where(
-        .dk-page > p,
-        .dk-page > ul:not([class]),
-        .dk-page > ol:not([class]),
-        .dk-page > blockquote,
-        .dk-page > section > p,
-        .dk-page > section > ul:not([class]),
-        .dk-page > section > ol:not([class]),
-        .dk-page > section > blockquote,
-        :is(.dk-band, .dk-sections) > section > p,
-        :is(.dk-band, .dk-sections) > section > ul:not([class]),
-        :is(.dk-band, .dk-sections) > section > ol:not([class]),
-        :is(.dk-band, .dk-sections) > section > blockquote
+        :is(.dk-page, .dk-band, .dk-stack, :is(.dk-page, .dk-band, .dk-sections) > section)
+            > :is(p, ul:not([class]), ol:not([class]), blockquote)
     ) {
         max-width: var(--dk-measure);
     }
@@ -3242,13 +3230,10 @@
     :where(
         :is(
                 .dk-explainer,
-                .dk-explainer > section,
                 .dk-page,
-                .dk-page > section,
                 .dk-band,
-                .dk-band > section,
                 .dk-stack,
-                .dk-sections > section,
+                :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -3261,13 +3246,10 @@
     :where(
         :is(
                 .dk-explainer,
-                .dk-explainer > section,
                 .dk-page,
-                .dk-page > section,
                 .dk-band,
-                .dk-band > section,
                 .dk-stack,
-                .dk-sections > section,
+                :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -3297,8 +3279,12 @@
         margin-block-start: var(--dk-space-7);
     }
 
-    /* A group or a section right under the heading that names it stands the flow's step below. */
-    :where(:is(.dk-page, .dk-band) > :is(h2, h3) + :is(section, .dk-sections)) {
+    /*
+     * A group right under the heading that names it, or a section right under a band's own
+     * heading, stands the flow's step below it. A content page's sections keep their room under
+     * its headings.
+     */
+    :where(:is(.dk-page, .dk-band) > :is(h2, h3) + .dk-sections, .dk-band > :is(h2, h3) + section) {
         margin-block-start: var(--dk-flow-step);
     }
 
@@ -3325,27 +3311,28 @@
      * padding, and never comes nearer the edge than its own ring, which a dialog clips. What comes
      * before it keeps free at its end the room the Close takes past the padding, and the title is
      * never shorter than keeps the Close's ring clear of what follows. The Close is the target at
-     * every width.
+     * every width. Each rule that looks ahead for the Close checks the container first, so a
+     * browser does not look ahead from every element of a long list on the page.
      */
     :where(.dk-panel:has(> .dk-close)) {
         position: relative;
     }
 
-    :where(:is(.dk-panel, .dk-dialog) > :has(~ .dk-close)) {
+    :where(:where(:is(.dk-panel, .dk-dialog) > *):has(~ .dk-close)) {
         margin-inline-end: max(
             var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-dialog-inset),
             (1.5rem + var(--dk-target)) / 2
         );
     }
 
-    :where(.dk-panel > :has(~ .dk-close)) {
+    :where(:where(.dk-panel > *):has(~ .dk-close)) {
         margin-inline-end: max(
             var(--dk-ring-width) + var(--dk-ring-offset) + var(--dk-target) - var(--dk-card-inset),
             (1.5rem + var(--dk-target)) / 2
         );
     }
 
-    :where(:is(.dk-panel, .dk-dialog) > :has(+ .dk-close)) {
+    :where(:where(:is(.dk-panel, .dk-dialog) > *):has(+ .dk-close)) {
         min-height: calc(
             max(
                     2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -
@@ -3356,7 +3343,7 @@
         );
     }
 
-    :where(.dk-panel > :has(+ .dk-close)) {
+    :where(:where(.dk-panel > *):has(+ .dk-close)) {
         min-height: calc(
             max(
                     2 * (var(--dk-ring-width) + var(--dk-ring-offset)) + var(--dk-target) -

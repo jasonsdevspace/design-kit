@@ -114,6 +114,7 @@ contrast, in both themes, which `light-dark()` writes in one value.
 | `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
+| `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
 
 ## Page chrome
 
@@ -1261,6 +1262,8 @@ A landing page that runs in bands the width of the screen, each on a ground of i
 band with `dk-band` rather than a content page, and a group of sections side by side with
 `dk-sections`:
 
+<!-- example: bands -->
+
 ```html
 <main id="main-content" tabindex="-1">
     <section class="dk-band hero" aria-labelledby="title">
@@ -1290,16 +1293,17 @@ band with `dk-band` rather than a content page, and a group of sections side by 
 ```
 
 A band starts its content at the band insets, as the strip and a content page do, and spaces what it
-holds by the flow, with `--dk-space-7` above and below it that a page's own padding replaces, and the
-ground, the edge and the room are the page's to set. Its `h1` is at the display size, in a stack too,
-and its `h2` at the heading size, and a section it holds spaces as a content page's does. A grid the
-band holds is one piece of its flow, so the grid's items stand apart by its gap alone, and a column of
-pieces in a grid's cell, such as a hero's words beside its picture, is a `dk-stack`, the flow with no
-room of its own, at the step of what holds it. `dk-sections` sets its sections as many to a row as fit
-at 20rem or more, one to a row on a phone, `--dk-space-7` apart, each with its heading, an `h2` under
-a page's `h1` or an `h3` under a band's `h2`, at the title size and `--dk-space-3` over its text, and
-its prose held to the measure. A group stands a section's step from what comes before it, or the
-flow's step under the heading that names it, so a group and a section under it read as one page.
+holds by the flow, with `--dk-band-room` above and below it, `--dk-space-7` until a page sets it,
+and the ground and the edge are the page's to set. Its `h1` is at the display size, in a stack too,
+and its `h2` at the heading size, and a section it holds spaces as a content page's does. Its own
+prose and a stack's are held to the measure. A grid the band holds is one piece of its flow, so the
+grid's items stand apart by its gap alone, and a column of pieces in a grid's cell, such as a hero's
+words beside its picture, is a `dk-stack`, the flow with no room of its own, at the step of what
+holds it. `dk-sections` sets its sections as many to a row as fit at 20rem or more, one to a row on
+a phone, `--dk-space-7` apart, each with its heading, an `h2` under a page's `h1` or an `h3` under a
+band's `h2`, at the title size and `--dk-space-3` over its text, and its prose held to the measure.
+A group stands a section's step from what comes before it, or the flow's step under the heading that
+names it, so a group and a section under it read as one page.
 
 ## Explainer pages
 

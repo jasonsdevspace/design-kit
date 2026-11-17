@@ -10,7 +10,10 @@ export const SPACED =
     '* { line-height: 1.5 !important; letter-spacing: 0.12em !important;' +
     ' word-spacing: 0.16em !important } p { margin-bottom: 2em !important }';
 
-/** The classes of the elements given that cut their own content off, by width or by height. */
+/**
+ * The elements given that cut their own content off, by width or by height, each by its class,
+ * else its id, else its tag, so a failure names what was cut.
+ */
 export const cutOff = (page: Page, selector: string): Promise<string[]> =>
     page.evaluate(
         (wanted) =>
@@ -20,7 +23,7 @@ export const cutOff = (page: Page, selector: string): Promise<string[]> =>
                         element.scrollWidth > element.clientWidth + 1 ||
                         element.scrollHeight > element.clientHeight + 1
                 )
-                .map((element) => element.className),
+                .map((element) => element.className || element.id || element.localName),
         selector
     );
 
