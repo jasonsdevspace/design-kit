@@ -1028,6 +1028,24 @@ const PICTURED_SCREEN =
     `<nav class="dk-app-tabs dk-tabbar" aria-label="Sections"><ul><li><a href="#a" aria-current="page">Play</a></li><li><a href="#b">Games</a></li></ul></nav></div></div>` +
     `<div class="dk-tabbar-page dk-picture" inert><main><p>Games</p></main><nav class="dk-tabbar" aria-label="Places"><ul><li><a href="#a">Play</a></li></ul></nav></div>`;
 
+test('gives a pictured frame drawn taller than what it holds the room in its body, its bars at its foot', async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 390,
+        title: 'Pieces',
+        css: '.dk-picture .dk-app { height: 40rem; }',
+        body: contentPage(PICTURED_SCREEN),
+    });
+    const foot = await page.locator('.dk-picture .dk-app').evaluate((frame) => {
+        const box = frame.getBoundingClientRect();
+        const last = frame.lastElementChild?.getBoundingClientRect();
+        if (!last) throw new Error('an empty frame');
+        return box.bottom - parseFloat(getComputedStyle(frame).borderBottomWidth) - last.bottom;
+    });
+    expect(Math.abs(foot)).toBeLessThanOrEqual(1);
+});
+
 for (const [width, height] of [
     [390, 800],
     [1280, 500],
@@ -1057,14 +1075,18 @@ for (const [width, height] of [
                 const bar = picture.querySelector(':scope > .dk-app-bar');
                 // What a frame's body holds ends one padding above its foot, with no room left over
                 // for lines a picture cannot scroll to. A tab bar's page spaces its own main.
-                const body = picture.querySelector(':scope > .dk-app-body');
-                const words = body?.lastElementChild?.getBoundingClientRect().bottom ?? 0;
-                const bodyRoom =
-                    body === null
-                        ? 0
-                        : body.getBoundingClientRect().bottom -
-                          parseFloat(getComputedStyle(body).paddingBottom) -
-                          words;
+                let bodyRoom = 0;
+                if (picture.matches('.dk-app')) {
+                    const body = picture.querySelector(':scope > .dk-app-body');
+                    const words = body?.querySelector(
+                        ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+                    );
+                    if (!body || !words) throw new Error('a pictured frame with no body to read');
+                    bodyRoom =
+                        body.getBoundingClientRect().bottom -
+                        parseFloat(getComputedStyle(body).paddingBottom) -
+                        words.getBoundingClientRect().bottom;
+                }
                 return {
                     kind: picture.className,
                     height: box.height,

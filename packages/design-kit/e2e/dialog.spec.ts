@@ -396,22 +396,38 @@ test('moves focus off a Close in the corner to the first thing after it that tak
     await expect(page.locator('#notes-title')).not.toHaveAttribute('tabindex');
 });
 
-test('stands the same room at its foot as at its top, whatever it ends in', async ({ page }) => {
-    await open(page);
-    await page.locator('#noting').click();
-    const room = await page.locator('#notes').evaluate((dialog) => {
-        const box = dialog.getBoundingClientRect();
-        const style = getComputedStyle(dialog);
-        const title = dialog.querySelector('.dk-dialog-title')?.getBoundingClientRect();
-        const last = dialog.lastElementChild?.getBoundingClientRect();
-        if (!title || !last) throw new Error('no title or nothing after it');
-        return {
-            top: title.top - box.top - parseFloat(style.borderTopWidth),
-            foot: box.bottom - parseFloat(style.borderBottomWidth) - last.bottom,
-        };
+for (const width of [390, 1280])
+    test(`stands the same room at its foot as at its top, ending in a list or a paragraph, ${String(width)} wide`, async ({
+        page,
+    }) => {
+        await open(page, { width });
+        await page.locator('#noting').click();
+        const notes = page.locator('#notes');
+        const room = () =>
+            notes.evaluate((dialog) => {
+                const box = dialog.getBoundingClientRect();
+                const style = getComputedStyle(dialog);
+                const title = dialog.querySelector('.dk-dialog-title')?.getBoundingClientRect();
+                const last = dialog.lastElementChild?.getBoundingClientRect();
+                if (!title || !last) throw new Error('no title or nothing after it');
+                return (
+                    box.bottom -
+                    parseFloat(style.borderBottomWidth) -
+                    parseFloat(style.paddingBottom) -
+                    last.bottom -
+                    (title.top -
+                        box.top -
+                        parseFloat(style.borderTopWidth) -
+                        parseFloat(style.paddingTop))
+                );
+            });
+        // The room past each padding, at the foot and above the title, is the same.
+        expect(Math.abs(await room()), 'a list').toBeLessThanOrEqual(1);
+        await notes.locator('ul').evaluate((list) => {
+            list.remove();
+        });
+        expect(Math.abs(await room()), 'a paragraph').toBeLessThanOrEqual(1);
     });
-    expect(Math.abs(room.foot - room.top)).toBeLessThanOrEqual(1);
-});
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {
     await open(page);

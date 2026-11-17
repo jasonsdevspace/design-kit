@@ -68,6 +68,7 @@ describe('the tokens', () => {
             'column',
             'app-column',
             'app-bar',
+            'app-body',
             ...['pinned', 'raised', 'bar', 'toast', 'skip'].map((layer) => `stack-${layer}`),
             'shadow-raised',
             'shadow-resting',
