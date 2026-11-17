@@ -1530,8 +1530,8 @@
      * In what pads its content, a demo's strip and footer, an explainer and its header, a site's
      * header, a content page, a band, a panel, a callout, an app's bar and body or a dialog, the
      * switch reaches past the column by the room it keeps for its ring, as the pills and a row do,
-     * so its first word starts on the column's line and the padding holds the ring. Elsewhere it stays
-     * inside, so nothing scrolls sideways.
+     * so its first word starts on the column's line and the padding holds the ring. Elsewhere it
+     * stays inside, so nothing scrolls sideways.
      */
     :where(
         :is(
@@ -2383,8 +2383,8 @@
     /*
      * A picture of a frame or of a page that ends in a tab bar, one that carries dk-picture or sits
      * inside an element with it, is as tall as what it holds, its bars in their places in it rather
-     * than held to the visitor's screen or raised over the page, so a page draws one with no rule of
-     * its own. On paper every frame is drawn so, by the print rules.
+     * than held to the visitor's screen or raised over the page, so a page draws one with no rule
+     * of its own. On paper every frame is drawn so, by the print rules.
      */
     :where(.dk-app:is(.dk-picture, .dk-picture *), .dk-tabbar-page:is(.dk-picture, .dk-picture *)) {
         height: auto;
@@ -2480,8 +2480,9 @@
      *
      * On a page it sits at the bottom of the screen, clear of the home indicator, in the app's
      * column, over the page, a phone's held step from each side, as an app's frame pads its own.
-     * Its words stand in by the same held step, so at a large text size they keep their room. In an app's frame it sits in the frame's place for it, floating over
-     * the foot of the body just above the dock, which never moves, and the body leaves room for it.
+     * Its words stand in by the same held step, so at a large text size they keep their room. In an
+     * app's frame it sits in the frame's place for it, floating over the foot of the body just
+     * above the dock, which never moves, and the body leaves room for it.
      */
     :where(.dk-toast) {
         position: fixed;

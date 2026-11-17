@@ -14,7 +14,7 @@ import {
     writePage,
 } from './page.js';
 import { cutOff } from './spacing.js';
-import { textSize } from './text-size.js';
+import { doubled, textSize } from './text-size.js';
 
 /*
  * An app's frame as a browser draws it, in Chromium and in WebKit, since a bar that stays put and a
@@ -38,25 +38,6 @@ const SAFE_CSS = `:root {
     --dk-safe-bottom: ${String(SAFE.bottom)}px;
     --dk-safe-left: ${String(SAFE.left)}px;
 }`;
-
-/**
- * The visitor's text size doubled. Chromium takes the browser's own setting, which every rem is
- * drawn from, a media query's included. WebKit takes a root size, which no media query reads, so a
- * test of what a media query does at twice the text size asks for the setting and runs in Chromium
- * alone, and the rest run in both.
- */
-const doubled = async (
-    page: Page,
-    browserName: string,
-    { setting = false }: { readonly setting?: boolean } = {}
-): Promise<void> => {
-    if (browserName === 'chromium') {
-        await textSize(page, 2);
-        return;
-    }
-    test.skip(setting, 'only the browser setting reaches a media query, set through Chromium');
-    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
-};
 
 const LINES = Array.from(
     { length: 40 },
@@ -837,8 +818,8 @@ test("pads the frame's bar, body, toast and dock by a phone's step on a 320px ph
     page,
     browserName,
 }) => {
-    await doubled(page, browserName);
     await open(page, { width: 320, height: 900, toast: true });
+    await doubled(page, browserName);
     for (const part of ['.dk-app-bar', '.dk-app-body', '.dk-app-toast', '.dk-app-dock']) {
         const sides = await style(page.locator(part), 'padding-left', 'padding-right');
         expect(sides, part).toEqual({ 'padding-left': '16px', 'padding-right': '16px' });
@@ -857,13 +838,13 @@ test("starts the skip link where the frame's words start, on a 320px phone at tw
     page,
     browserName,
 }) => {
-    await doubled(page, browserName);
     await writePage(page, {
         width: 320,
         height: 900,
         title: 'Round 3',
         body: `<a class="dk-skip" href="#main-content">Skip to content</a>${screen()}`,
     });
+    await doubled(page, browserName);
     await page.locator('.dk-skip').focus();
     const skip = await box(page.locator('.dk-skip'));
     const words = await page

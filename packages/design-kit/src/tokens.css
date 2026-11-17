@@ -250,9 +250,9 @@
          */
         --dk-card-inset: var(--dk-space-5);
         /*
-         * How far a dialog's content stands in from its edge, which its corner Close is placed from:
-         * the larger step held at its size on a wide page, and a phone's held at its size on a phone
-         * and on a page with an app's column.
+         * How far a dialog's content stands in from its edge, which its corner Close is placed
+         * from: the larger step held at its size on a wide page, and a phone's held at its size on
+         * a phone and on a page with an app's column.
          */
         --dk-dialog-inset: var(--dk-space-5-held);
     }
@@ -317,8 +317,8 @@
     }
 
     /*
-     * A picture of a screen touches no edge of the visitor's, so nothing in it keeps room for what a
-     * phone keeps at its edges, and it cannot scroll, so its body keeps no least height.
+     * A picture of a screen touches no edge of the visitor's, so nothing in it keeps room for what
+     * a phone keeps at its edges, and it cannot scroll, so its body keeps no least height.
      */
     :where(.dk-picture) {
         --dk-safe-top: 0px;

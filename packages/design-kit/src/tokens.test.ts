@@ -104,8 +104,8 @@ describe('the tokens', () => {
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-column-inset)) + var(--dk-space-4));`
             );
         // On a page with an app's column, what sits outside it starts where the column's content
-        // does, and the column clears the phone's sides itself, so a band inside it starts a step in,
-        // the step held at its size as the frame's own sides are.
+        // does, and the column clears the phone's sides itself, so a band inside it starts a step
+        // in, the step held at its size as the frame's own sides are.
         for (const side of ['left', 'right'])
             expect(flat, side).toContain(
                 `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-app-inset)) + var(--dk-space-4-held));`
