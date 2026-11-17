@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { icon } from '../examples/examples.js';
@@ -30,8 +30,11 @@ const ICONS = (() => {
 })();
 
 /** An icon's drawn height, its line's font size, and its stroke. */
-const iconLook = (page: Page, id: string) =>
-    page.locator(`#${id}`).evaluate((icon) => {
+const iconLook = (page: Page, id: string) => lookOf(page.locator(`#${id}`));
+
+/** The same, for an icon found another way. */
+const lookOf = (icon: Locator) =>
+    icon.evaluate((icon) => {
         const style = getComputedStyle(icon);
         const line = getComputedStyle(icon.parentElement ?? icon);
         return {
@@ -120,13 +123,16 @@ for (const theme of ['light', 'dark'] as const)
             0
         );
         expect((await iconLook(page, 'small')).width).toBe('1.5px');
-        // A tab bar keeps its own larger icon, stroked no heavier than its label.
-        expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 24, width: '2px' });
-        // A button whose face is an icon alone draws it at 1.25rem, larger than its small text.
-        const alone = page.locator('button[aria-pressed] svg');
-        expect(await alone.evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(
-            20
-        );
+        // A tab bar's icon and an icon-only button's are larger than their text, 1.5rem and
+        // 1.25rem, and each is stroked at two in twenty four of its own size by one rule.
+        const bar = await iconLook(page, 'in-bar');
+        const alone = await lookOf(page.locator('button[aria-pressed] svg'));
+        expect([bar.height, alone.height]).toEqual([24, 20]);
+        for (const look of [bar, alone])
+            expect(pixels(look.width), `${theme}, ${String(look.height)}`).toBeCloseTo(
+                look.height / 12,
+                1
+            );
         // A mark drawn in fill takes no outline.
         const star = page.locator('button[aria-pressed] path');
         expect(await star.evaluate((path) => getComputedStyle(path).stroke), theme).toBe('none');
@@ -144,9 +150,10 @@ test("grows an icon-only button's icon with the text, to twice its size at twice
 }) => {
     await textSize(page, 2);
     await writePage(page, { title: 'Icons', body: ICONS });
-    const alone = page.locator('button[aria-pressed] svg');
-    expect(await alone.evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(40);
-    expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 48, width: '4px' });
+    const bar = await iconLook(page, 'in-bar');
+    const alone = await lookOf(page.locator('button[aria-pressed] svg'));
+    expect([bar.height, alone.height]).toEqual([48, 40]);
+    for (const look of [bar, alone]) expect(pixels(look.width)).toBeCloseTo(look.height / 12, 1);
 });
 
 test("redraws an icon in the system's text and link colors in forced colors", async ({

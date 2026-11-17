@@ -22,6 +22,21 @@ import {
 const sheet = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 const declared = declaredIn(sheet);
 
+/** A sheet read flat, with no space just inside a bracket, so how it is wrapped does not count. */
+const flatten = (css: string): string =>
+    css.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
+
+/** The selectors in the `:where()` list of the rule whose declarations start with the one given. */
+const holdersOf = (css: string, declaration: string): string[] => {
+    const flat = flatten(css);
+    const end = flat.indexOf(`) { ${declaration}`);
+    const start = flat.lastIndexOf(':where(', end);
+    return flat
+        .slice(start + ':where('.length, end)
+        .split(',')
+        .map((selector) => selector.trim());
+};
+
 describe('the tokens', () => {
     it('names every custom property with the kit prefix', () => {
         expect([...declared.keys()].filter((name) => !name.startsWith('--dk-'))).toEqual([]);
@@ -85,7 +100,7 @@ describe('the tokens', () => {
     it("reads each safe area from the browser's own inset, and is zero where it reports none and in a picture", () => {
         // The root reads the browser's inset, and a picture of a screen, which touches no edge of
         // the visitor's, sets each to none.
-        const flat = sheet.replace(/\s+/g, ' ');
+        const flat = flatten(sheet);
         for (const edge of ['top', 'right', 'bottom', 'left']) {
             expect(flat, edge).toContain(`--dk-safe-${edge}: env(safe-area-inset-${edge}, 0px);`);
             expect(flat, edge).toMatch(
@@ -95,8 +110,7 @@ describe('the tokens', () => {
     });
 
     it("holds where a full-width band's content starts on each side, past the phone's side, written once", () => {
-        // The sheet read flat, with no space just inside a bracket, so its wrapping does not count.
-        const flat = sheet.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
+        const flat = flatten(sheet);
         expect(flat).toContain('--dk-column-inset: max(0px, (100% - var(--dk-column)) / 2);');
         expect(flat).toContain('--dk-app-inset: max(0px, (100vw - var(--dk-app-column)) / 2);');
         for (const side of ['left', 'right'])
@@ -105,13 +119,17 @@ describe('the tokens', () => {
             );
         // On a page with an app's column, what sits outside it starts where the column's content
         // does, and the column clears the phone's sides itself, so a band inside it starts a step
-        // in, the step held at its size as the frame's own sides are.
-        for (const side of ['left', 'right'])
+        // in by the app frame's own sides.
+        for (const side of ['left', 'right']) {
             expect(flat, side).toContain(
-                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-app-inset)) + var(--dk-space-4-held));`
+                `--dk-band-${side}: calc(max(var(--dk-safe-${side}), var(--dk-app-inset)) + var(--dk-app-side));`
             );
-        expect(flat).toMatch(
-            /:where\(\.dk-app, \.dk-tabbar-page > :not\(\.dk-skip\)\) \{ --dk-band-left: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4-held\)\); --dk-band-right: calc\(var\(--dk-column-inset\) \+ var\(--dk-space-4-held\)\); \}/
+            expect(flat, side).toContain(
+                `--dk-band-${side}: calc(var(--dk-column-inset) + var(--dk-app-side));`
+            );
+        }
+        expect(holdersOf(sheet, '--dk-band-left: calc(var(--dk-column-inset)')).toEqual(
+            expect.arrayContaining(['.dk-app', '.dk-tabbar-page > :not(.dk-skip)'])
         );
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
@@ -119,8 +137,17 @@ describe('the tokens', () => {
         expect(components).not.toMatch(/- var\(--dk-app-column\)/);
         expect(flat.match(/- var\(--dk-app-column\)/g)).toHaveLength(1);
         expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
-        expect(components).toMatch(
-            /:where\(\s*\.dk-strip,\s*\.dk-footer,\s*\.dk-explainer-header,\s*\.dk-explainer,\s*\.dk-site-header,\s*\.dk-page,\s*\.dk-band\s*\) \{\s*padding-right: var\(--dk-band-right\);\s*padding-left: var\(--dk-band-left\);/
+        // Every piece that runs the width of the page starts its content at the band insets.
+        expect(holdersOf(components, 'padding-right: var(--dk-band-right);')).toEqual(
+            expect.arrayContaining([
+                '.dk-strip',
+                '.dk-footer',
+                '.dk-explainer-header',
+                '.dk-explainer',
+                '.dk-site-header',
+                '.dk-page',
+                '.dk-band',
+            ])
         );
     });
 

@@ -1920,7 +1920,7 @@
      * color with round caps and joins and no fill, so forced colors redraw it with the text. Its
      * stroke holds its weight whatever the drawing's scale, and never goes under one and a half
      * pixels, where it reads faint on a screen of low density. A path that draws a mark in fill
-     * says so on itself. A tab bar's icons keep their larger size, set later in the sheet.
+     * says so on itself. An icon-only button's and a tab bar's are larger, set below.
      */
     :where(.dk-icon) {
         flex: none;
@@ -1945,12 +1945,15 @@
 
     /*
      * A button whose face is an icon alone, marked dk-button-icon, draws its icon at 1.25rem, so it
-     * reads in a square the target wide rather than at the button's small text, and still grows
-     * when a reader raises the text size. Its stroke stays the one the button's text gives it.
+     * reads in a square the target wide rather than at the button's small text, and a tab bar its
+     * icons at 1.5rem, and both still grow when a reader raises the text size. An icon drawn larger
+     * than its text is stroked at two in twenty four of its own size, the weight of a label beside
+     * it, rather than at its text's.
      */
-    :where(.dk-button-icon .dk-icon) {
-        width: 1.25rem;
-        height: 1.25rem;
+    :where(:is(.dk-button-icon, .dk-tabbar) .dk-icon) {
+        width: var(--dk-icon-size);
+        height: var(--dk-icon-size);
+        stroke-width: max(1.5px, var(--dk-icon-size) / 12);
     }
 
     /*
@@ -2030,7 +2033,7 @@
         gap: var(--dk-space-3);
         box-sizing: content-box;
         min-height: var(--dk-app-bar);
-        padding: var(--dk-safe-top) var(--dk-space-4-held) 0;
+        padding: var(--dk-safe-top) var(--dk-app-side) 0;
         border-bottom: 1px solid var(--dk-line);
     }
 
@@ -2082,7 +2085,7 @@
         /* What it holds out of sight scrolls with it, rather than lengthening the page. */
         position: relative;
         min-height: 0;
-        padding: var(--dk-space-4) var(--dk-space-4-held);
+        padding: var(--dk-space-4) var(--dk-app-side);
         overflow-y: auto;
     }
 
@@ -2103,7 +2106,7 @@
     /* A toast's place, above the dock, as wide as the frame and as tall as the toast in it. */
     :where(.dk-app-toast) {
         grid-area: toast;
-        padding-inline: var(--dk-space-4-held);
+        padding-inline: var(--dk-app-side);
     }
 
     /*
@@ -2250,7 +2253,7 @@
         grid-area: dock;
         display: grid;
         gap: var(--dk-space-2);
-        padding: var(--dk-space-3) var(--dk-space-4-held);
+        padding: var(--dk-space-3) var(--dk-app-side);
         border-top: 1px solid var(--dk-line);
     }
 
@@ -2434,14 +2437,6 @@
         height: 1.5rem;
     }
 
-    /*
-     * A kit icon there is stroked at the weight of a line drawn two in twenty four, two pixels at
-     * the default size, so it weighs no more than the label under it.
-     */
-    :where(.dk-tabbar .dk-icon) {
-        stroke-width: max(1.5px, 0.125rem);
-    }
-
     @media (hover: hover) {
         :where(.dk-tabbar a:hover) {
             color: var(--dk-fg);
@@ -2474,11 +2469,11 @@
      */
     :where(.dk-toast) {
         position: fixed;
-        right: calc(var(--dk-safe-right) + var(--dk-space-4-held));
+        right: calc(var(--dk-safe-right) + var(--dk-app-side));
         bottom: calc(var(--dk-safe-bottom) + var(--dk-space-4));
-        left: calc(var(--dk-safe-left) + var(--dk-space-4-held));
+        left: calc(var(--dk-safe-left) + var(--dk-app-side));
         z-index: var(--dk-stack-toast);
-        max-width: calc(var(--dk-app-column) - 2 * var(--dk-space-4-held));
+        max-width: calc(var(--dk-app-column) - 2 * var(--dk-app-side));
         margin-inline: auto;
     }
 
@@ -2596,7 +2591,7 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0 var(--dk-space-2);
-        padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-space-4-held);
+        padding: var(--dk-space-1) var(--dk-space-1) var(--dk-space-1) var(--dk-app-side);
         border: 1px solid var(--dk-line);
         border-radius: var(--dk-radius-large);
         background: var(--dk-raised);
@@ -2635,7 +2630,7 @@
      * its buttons sit where they did.
      */
     :where(.dk-toast[data-shown]:has(> .dk-toast-buttons)) {
-        padding-inline-end: var(--dk-space-4-held);
+        padding-inline-end: var(--dk-app-side);
     }
 
     :where(.dk-toast-buttons) {
@@ -2644,7 +2639,7 @@
         justify-content: flex-end;
         gap: 0 var(--dk-space-2);
         min-width: 0;
-        margin-inline: auto calc(var(--dk-space-1) - var(--dk-space-4-held));
+        margin-inline: auto calc(var(--dk-space-1) - var(--dk-app-side));
     }
 
     :where(.dk-toast-action) {
@@ -2669,7 +2664,7 @@
         }
 
         :where(.dk-toast[data-shown]:not(:has(> .dk-toast-buttons)) > .dk-toast-message) {
-            padding-inline-end: calc(var(--dk-space-4-held) - var(--dk-space-1));
+            padding-inline-end: calc(var(--dk-app-side) - var(--dk-space-1));
         }
     }
 
