@@ -19,7 +19,7 @@ import { textSize } from './text-size.js';
 const BODY = `<main id="main-content">
 <section class="dk-band" id="hero" aria-labelledby="title">
 <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 2rem; align-items: start">
-<div class="dk-stack" id="stack"><p class="dk-eyebrow">For game night</p><h1 id="title">Game Table Tally</h1><p id="lead">Keep the score.</p><p><a href="#open">Open the app</a></p></div>
+<div class="dk-stack" id="stack"><p class="dk-eyebrow">For game night</p><h1 id="title">Game Table Tally</h1><p id="lead">Keep the score.</p><p id="stack-text">One phone passed around the table.</p><p><a href="#open">Open the app</a></p></div>
 <div id="picture">A picture of the table.</div>
 </div>
 </section>
@@ -61,7 +61,8 @@ test("sizes a band's title, its heading and its sections, and keeps a group unde
     expect((await style(page.locator('#games-title'), 'font-size'))['font-size']).toBe('24px');
     expect((await style(page.locator('#cards'), 'font-size'))['font-size']).toBe('20px');
     expect((await style(page.locator('#cards-text'), 'margin-top'))['margin-top']).toBe('12px');
-    // A group under the heading that names it stands the flow's step, a section after text a section's.
+    // A group under the heading that names it stands the flow's step, and a section after text a
+    // section's.
     expect((await style(page.locator('#kinds'), 'margin-top'))['margin-top']).toBe('16px');
     expect((await style(page.locator('section:has(> #more)'), 'margin-top'))['margin-top']).toBe(
         '48px'
@@ -129,11 +130,13 @@ test('has no audit findings', async ({ page }) => {
     expect(results.violations.map(({ id }) => id)).toEqual([]);
 });
 
-test("holds a band's own prose to the measure, as a content page's", async ({ page }) => {
+test("holds a band's and a stack's own prose to the measure, as a content page's", async ({
+    page,
+}) => {
     await open(page, 1280);
     const measure = (await style(page.locator('#install-lead'), 'max-width'))['max-width'];
     expect(measure).not.toBe('none');
-    for (const id of ['#games-text', '#more-text', '#cards-text'])
+    for (const id of ['#games-text', '#more-text', '#cards-text', '#stack-text'])
         expect((await style(page.locator(id), 'max-width'))['max-width'], id).toBe(measure);
 });
 

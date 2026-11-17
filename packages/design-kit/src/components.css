@@ -1154,9 +1154,9 @@
         gap: var(--dk-space-7);
     }
 
-    /* Prose a page, a band or a section of theirs holds keeps to the measure. */
+    /* Prose a page, a band, a stack or a section of theirs holds keeps to the measure. */
     :where(
-        :is(.dk-page, .dk-band, :is(.dk-page, .dk-band, .dk-sections) > section)
+        :is(.dk-page, .dk-band, .dk-stack, :is(.dk-page, .dk-band, .dk-sections) > section)
             > :is(p, ul:not([class]), ol:not([class]), blockquote)
     ) {
         max-width: var(--dk-measure);

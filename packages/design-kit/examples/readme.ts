@@ -44,10 +44,17 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'dialog',
 ]);
 
+/**
+ * The preload React writes ahead of an image it draws on the server, which a page that writes its
+ * markup by hand does not, so the reference leaves it out.
+ */
+const HOISTED = /<link rel="preload" as="image"[^>]*\/>/g;
+
 /** An example's markup as a page writes it, laid out as the repository's formatter lays out. */
 export const htmlOf = async (name: ExampleName): Promise<string> => {
     try {
-        return await laidOut(renderToStaticMarkup(EXAMPLES[name]), LAID_OUT.has(name));
+        const markup = renderToStaticMarkup(EXAMPLES[name]).replaceAll(HOISTED, '');
+        return await laidOut(markup, LAID_OUT.has(name));
     } catch (error) {
         throw new Error(`the ${name} example could not be laid out`, { cause: error });
     }

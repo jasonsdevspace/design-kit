@@ -62,14 +62,14 @@ its content at the band insets and spaces it by the flow, with `--dk-band-room` 
 stack is the flow with no room of its own, for a column of pieces in a grid's cell. A group sets
 sections side by side, each with a page section's heading and steps.
 
-Option B. A band's own prose and a section's are held to the measure as a content page's are. A
-group, or a section in a band, right under the heading that names it stands the flow's step below
-it, while a content page's sections keep their room under its headings, as before. The cost is that
-every container joins the same lists in the sheet, the flow's, the measure's and those a row and a
-switch use to reach past the column by their ring, so a new container is added to each, and those
-lists are written with `:is()` where that keeps them shorter. `e2e/bands.spec.ts` holds the bands,
-the stack, the group, the measure, the reach, the held sides on an app's page and a phone at twice
-the text size.
+Option B. A band's own prose, a stack's and a section's are held to the measure as a content page's
+are. A group, or a section in a band, right under the heading that names it stands the flow's step
+below it, while a content page's sections keep their room under its headings, as before. The cost is
+that every container joins the same lists in the sheet, the flow's, the measure's and those a row
+and a switch use to reach past the column by their ring, so a new container is added to each, and
+those lists are written with `:is()` where that keeps them shorter. `e2e/bands.spec.ts` holds the
+bands, the stack, the group, the measure, the reach, the held sides on an app's page and a phone at
+twice the text size.
 
 ## How it is tested
 
