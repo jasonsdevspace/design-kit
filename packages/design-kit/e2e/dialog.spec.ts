@@ -52,6 +52,7 @@ ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
 <h2 class="dk-dialog-title" id="notes-title">Notes on the round</h2>
 <form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
 <p>Ana dealt.</p>
+<ul><li>Ben cut the deck.</li></ul>
 </dialog>
 <dialog class="dk-dialog" id="name" aria-labelledby="name-title">
 <h2 class="dk-dialog-title" id="name-title">Name the new player</h2>
@@ -393,6 +394,23 @@ test('moves focus off a Close in the corner to the first thing after it that tak
     await page.keyboard.press('Escape');
     await expect(page.locator('#notes')).toBeHidden();
     await expect(page.locator('#notes-title')).not.toHaveAttribute('tabindex');
+});
+
+test('stands the same room at its foot as at its top, whatever it ends in', async ({ page }) => {
+    await open(page);
+    await page.locator('#noting').click();
+    const room = await page.locator('#notes').evaluate((dialog) => {
+        const box = dialog.getBoundingClientRect();
+        const style = getComputedStyle(dialog);
+        const title = dialog.querySelector('.dk-dialog-title')?.getBoundingClientRect();
+        const last = dialog.lastElementChild?.getBoundingClientRect();
+        if (!title || !last) throw new Error('no title or nothing after it');
+        return {
+            top: title.top - box.top - parseFloat(style.borderTopWidth),
+            foot: box.bottom - parseFloat(style.borderBottomWidth) - last.bottom,
+        };
+    });
+    expect(Math.abs(room.foot - room.top)).toBeLessThanOrEqual(1);
 });
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {

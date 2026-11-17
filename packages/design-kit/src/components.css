@@ -2339,6 +2339,11 @@
         z-index: auto;
     }
 
+    /* A picture's body cannot scroll, so it keeps no least height and ends at what it holds. */
+    :where(.dk-app:is(.dk-picture, .dk-picture *)) {
+        grid-template-rows: repeat(5, max-content);
+    }
+
     /* The links share the width evenly, however many there are and however long their labels. */
     :where(.dk-tabbar > ul) {
         display: grid;

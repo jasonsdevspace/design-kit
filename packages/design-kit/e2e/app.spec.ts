@@ -1055,6 +1055,16 @@ for (const [width, height] of [
                     .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
                 const last = picture.lastElementChild;
                 const bar = picture.querySelector(':scope > .dk-app-bar');
+                // What a frame's body holds ends one padding above its foot, with no room left over
+                // for lines a picture cannot scroll to. A tab bar's page spaces its own main.
+                const body = picture.querySelector(':scope > .dk-app-body');
+                const words = body?.lastElementChild?.getBoundingClientRect().bottom ?? 0;
+                const bodyRoom =
+                    body === null
+                        ? 0
+                        : body.getBoundingClientRect().bottom -
+                          parseFloat(getComputedStyle(body).paddingBottom) -
+                          words;
                 return {
                     kind: picture.className,
                     height: box.height,
@@ -1063,6 +1073,7 @@ for (const [width, height] of [
                     lastPosition: last === null ? '' : getComputedStyle(last).position,
                     lastPad: last === null ? 0 : parseFloat(getComputedStyle(last).paddingBottom),
                     barPad: bar === null ? 0 : parseFloat(getComputedStyle(bar).paddingTop),
+                    bodyRoom,
                 };
             })
         );
@@ -1079,5 +1090,6 @@ for (const [width, height] of [
             expect(picture.lastPosition, at).toBe('static');
             expect(picture.lastPad, at).toBeLessThan(SAFE.bottom);
             expect(picture.barPad, at).toBeLessThan(SAFE.top);
+            expect(Math.abs(picture.bodyRoom), at).toBeLessThanOrEqual(1);
         }
     });
