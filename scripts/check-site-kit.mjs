@@ -4,64 +4,122 @@
  * CI packs the kit and installs it under the site's alias before running the site's tests again.
  * Where the kit's version is not the one the site pins, as on a release's pull request, npm can
  * keep the pinned release in the site's own `node_modules`, and the site would then be tested over
- * a release it already pins. This compares what the site resolves under its alias with the kit
- * just built, file by file, and fails naming each file that differs.
+ * a release it already pins. This compares the `dist` the site resolves under its alias with the
+ * `dist` the packed tarball holds, both ways, and fails naming each file that differs, that only
+ * one of them holds, or a side that holds nothing.
  *
- * Run as `node scripts/check-site-kit.mjs` after the install, from the repository's root.
+ * Run as `node scripts/check-site-kit.mjs <tarball>` after the install, from any folder.
  */
-import { readdirSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { isRunDirectly } from './repository.mjs';
+import { filesOf } from './summary.mjs';
+
+/** The repository's root, found from this script rather than from where it is run. */
+const ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 /**
- * Every file under a folder, as paths relative to it.
+ * Every file under a folder, as paths relative to it with forward slashes, or none where the
+ * folder is not there.
  *
  * @param {string} root
- * @returns {string[]}
+ * @returns {Map<string, Buffer>}
  */
 const filesUnder = (root) =>
-    readdirSync(root, { recursive: true, withFileTypes: true })
-        .filter((entry) => entry.isFile())
-        .map((entry) => relative(root, join(entry.parentPath, entry.name)))
-        .sort();
+    new Map(
+        existsSync(root)
+            ? readdirSync(root, { recursive: true, withFileTypes: true })
+                  .filter((entry) => entry.isFile())
+                  .map((entry) => {
+                      const file = join(entry.parentPath, entry.name);
+                      return [relative(root, file).split('\\').join('/'), readFileSync(file)];
+                  })
+            : []
+    );
 
 /**
- * The files of the kit just built that the copy the site resolves lacks or holds otherwise, each
- * said as a sentence, or none where the site resolves this kit.
+ * The files under `dist/` in a packed tarball, keyed by their path inside `dist`. The tarball's
+ * paths are read inside the package, as `filesOf` gives them.
  *
- * @param {string} built the kit's `dist`, as packing built it
- * @param {string} resolved the `dist` of the package the site resolves under its alias
+ * @param {Buffer} tarball
+ * @returns {Map<string, Buffer>}
+ */
+export const packedDist = (tarball) =>
+    new Map(
+        filesOf(tarball)
+            .filter(({ path }) => path.startsWith('dist/'))
+            .map(({ path, bytes }) => [path.slice('dist/'.length), bytes])
+    );
+
+/**
+ * How the kit the site resolves differs from the kit just packed, each said as a sentence, or
+ * none where they hold the same files with the same bytes.
+ *
+ * @param {Map<string, Buffer>} packed
+ * @param {Map<string, Buffer>} resolved
  * @returns {string[]}
  */
-export const kitDifferences = (built, resolved) => {
-    const theirs = new Set(filesUnder(resolved));
-    return filesUnder(built).flatMap((file) => {
-        if (!theirs.has(file)) return [`${file} is missing from the kit the site resolves`];
-        return readFileSync(join(built, file)).equals(readFileSync(join(resolved, file)))
-            ? []
-            : [`${file} differs from this commit's kit`];
+export const kitDifferences = (packed, resolved) => {
+    if (packed.size === 0) return ["this commit's packed kit holds no dist"];
+    if (resolved.size === 0) return ['the kit the site resolves holds no dist'];
+    const files = [...new Set([...packed.keys(), ...resolved.keys()])].sort();
+    return files.flatMap((file) => {
+        const ours = packed.get(file);
+        const theirs = resolved.get(file);
+        if (!theirs) return [`${file} is missing from the kit the site resolves`];
+        if (!ours) return [`${file} is in the kit the site resolves and not in this commit's kit`];
+        return ours.equals(theirs) ? [] : [`${file} differs from this commit's kit`];
     });
 };
 
-if (isRunDirectly(import.meta.url)) {
-    const manifest = realpathSync(
-        createRequire(join(process.cwd(), 'packages/site/package.json')).resolve(
-            'design-kit-release/package.json'
-        )
-    );
-    const resolved = join(dirname(manifest), 'dist');
-    const differences = kitDifferences(join(process.cwd(), 'packages/design-kit/dist'), resolved);
-    if (differences.length > 0) {
-        console.error(
-            `The site resolves its kit from ${relative(process.cwd(), dirname(manifest))}, which is not this commit's kit:`
+/**
+ * Where the site resolves its alias from, and how that kit differs from the tarball given.
+ *
+ * @param {string} given the repository's root
+ * @param {Buffer} tarball the kit as packed
+ * @returns {{ from: string, differences: string[] }}
+ */
+export const siteKitProblems = (given, tarball) => {
+    // The root as the file system names it, so a path found through a link reads from it.
+    const root = realpathSync(given);
+    let manifest;
+    try {
+        manifest = realpathSync(
+            createRequire(join(root, 'packages/site/package.json')).resolve(
+                'design-kit-release/package.json'
+            )
         );
-        for (const difference of differences) console.error(`- ${difference}`);
+    } catch {
+        return { from: '', differences: ['the site resolves no kit under its alias'] };
+    }
+    const from = relative(root, dirname(manifest)).split('\\').join('/');
+    return {
+        from,
+        differences: kitDifferences(
+            packedDist(tarball),
+            filesUnder(join(dirname(manifest), 'dist'))
+        ),
+    };
+};
+
+if (isRunDirectly(import.meta.url)) {
+    const [path] = process.argv.slice(2);
+    if (!path || !existsSync(path)) {
+        console.error('Pass the packed kit: node scripts/check-site-kit.mjs <tarball>');
         process.exitCode = 1;
     } else {
-        console.log(
-            `The site resolves this commit's kit, from ${relative(process.cwd(), dirname(manifest))}.`
-        );
+        const { from, differences } = siteKitProblems(ROOT, readFileSync(path));
+        if (differences.length > 0) {
+            console.error(
+                `The site does not resolve this commit's kit${from ? `, from ${from}` : ''}:`
+            );
+            for (const difference of differences) console.error(`- ${difference}`);
+            process.exitCode = 1;
+        } else {
+            console.log(`The site resolves this commit's kit, from ${from}.`);
+        }
     }
 }
