@@ -2516,22 +2516,23 @@ visitor pressed it by key, pointer or touch, so the keyboard and a screen reader
 with no script of the page's own. A panel that starts closed carries `hidden` in its markup, so it
 never shows before the script runs. What it returns, of the type `PanelControl`, holds `set`, of the
 type `SetPanel`, which opens or closes the panel from the page's own code, as `tips.set(false)`, and
-moves focus to the button that opened it where focus was in the panel, or where a visitor's press
-inside the panel, on a button of the page's own, closed it, since Safari takes focus off what such a
-press lands on. A close from the page's code at any other time leaves focus where it is, since the
-visitor may be elsewhere. What it returns also holds `detach`, which lets the button go, as a page
-does when it takes the button away, after which `set` does nothing. The first button attached for a
-panel starts it as its markup says, and a button attached for it later, one drawn again among them,
-marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
-`aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
-returns the same, and one with no `aria-controls` is refused with an error that says so. The button
-and the panel are found at each press, so a panel drawn again keeps working, and one listener on the
-page serves every panel, taken off once every button is let go. Where no attached button that names
-the panel takes focus, focus goes to the first thing after the panel that takes it, else to the app
-frame's body or the page's main content, as a toast's does. A panel's id must be the only one on the
-page, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A panel no
-button opens is closed by the page's own script, which moves focus to what comes after the panel, or
-to the heading before it where nothing follows.
+moves focus to the button that opened it where focus was in the panel, or where it fell to what
+holds the panel, the body or a main that takes focus, after the visitor's last press was inside the
+panel, as Safari leaves it after a press of a button of the page's own, even one whose handler waits
+or draws the button away. Focus anywhere else, where the visitor or the page put it, stays where it
+is. What it returns also holds `detach`, which lets the button go, as a page does when it takes the
+button away, after which `set` does nothing. The first button attached for a panel starts it as its
+markup says, and a button attached for it later, one drawn again among them, marks itself as the
+panel is and leaves the panel alone. A press of a button that is off, with `aria-disabled="true"`,
+does nothing, and focus never goes back to one. A button attached again returns the same, and one
+with no `aria-controls` is refused with an error that says so. The button and the panel are found at
+each press, so a panel drawn again keeps working, and one listener on the page serves every panel,
+taken off once every button is let go. Where no attached button that names the panel takes focus,
+focus goes to the first thing after the panel that takes it, else to the app frame's body or the
+page's main content, as a toast's does. A panel's id must be the only one on the page, so a page
+that shows markup its visitors wrote prefixes or strips the ids in it. A panel no button opens is
+closed by the page's own script, which moves focus to what comes after the panel, or to the heading
+before it where nothing follows.
 
 ## Layers and palettes
 
