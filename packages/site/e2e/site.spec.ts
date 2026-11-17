@@ -1135,15 +1135,38 @@ test.describe('the app pieces page', () => {
         }
     });
 
-    test("draws each screen as a phone's height in a box of its own, its bars inside it, and the page around them as a content page", async ({
+    test('draws each screen as tall as what it holds in a box of its own, its bars inside it, and the page around them as a content page', async ({
         page,
     }) => {
         await page.setViewportSize({ width: 320, height: 640 });
         await page.goto('/design-kit/app-pieces/');
         for (const screen of await page.locator('.site-copy > .dk-app').all()) {
-            const box = await screen.boundingBox();
-            expect(box?.height ?? 0).toBeGreaterThanOrEqual(30 * 16);
             await expect(screen).toHaveCSS('overflow', 'clip');
+        }
+        // Each picture of a screen is as tall as what it holds, by the kit, its bar at its foot.
+        for (const width of [320, 390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            const pictures = await page
+                .locator('.site-copy[inert] > :is(.dk-app, .dk-tabbar-page)')
+                .evaluateAll((frames) =>
+                    frames.map((frame) => {
+                        const box = frame.getBoundingClientRect();
+                        const last = frame.lastElementChild?.getBoundingClientRect();
+                        const edge = parseFloat(getComputedStyle(frame).borderBottomWidth);
+                        return {
+                            spare: box.height - frame.scrollHeight - 2 * edge,
+                            foot: last ? box.bottom - edge - last.bottom : 0,
+                            tall: box.height < window.innerHeight,
+                        };
+                    })
+                );
+            expect(pictures.length, String(width)).toBeGreaterThan(0);
+            for (const [index, drawn] of pictures.entries()) {
+                const at = `${String(width)}, picture ${String(index)}`;
+                expect(Math.abs(drawn.spare), at).toBeLessThanOrEqual(1);
+                expect(Math.abs(drawn.foot), at).toBeLessThanOrEqual(1);
+                expect(drawn.tall, at).toBe(true);
+            }
         }
         for (const bar of await page.locator('.site-copy .dk-tabbar-page > .dk-tabbar').all()) {
             await expect(bar).toHaveCSS('position', 'static');
@@ -3039,7 +3062,11 @@ test.describe('the pieces together', () => {
             stack.locator('.dk-rows-columns > li > a.dk-row > .dk-row-picture')
         ).toHaveCount(5);
         await expect(stack.locator('.site-masthead button .dk-icon')).toHaveCount(1);
-        await expect(stack.locator('dialog .dk-button-quiet')).toHaveText('Close');
+        // The grounds' Close is in the dialog's corner, after its title, and none among answers.
+        await expect(stack.locator('dialog > .dk-dialog-title + .dk-close > button')).toHaveCount(
+            1
+        );
+        await expect(stack.locator('dialog .dk-dialog-actions')).toHaveCount(0);
         // The masthead's tabs are the one landmark named Pieces, the section around them a plain
         // one.
         await expect(page.getByRole('region', { name: 'Pieces' })).toHaveCount(0);
@@ -3095,8 +3122,22 @@ test.describe('the pieces together', () => {
                 dialog.getByRole('heading', { name: 'The grounds on this page' })
             ).toBeFocused();
             const close = dialog.getByRole('button', { name: 'Close' });
-            const box = await close.boundingBox();
-            expect(box?.height ?? 0, String(width)).toBeGreaterThanOrEqual(width === 390 ? 44 : 24);
+            // The Close is the target at every width, in the corner beside the title.
+            const corner = await dialog.evaluate((element) => {
+                const button = element.querySelector('.dk-close button')?.getBoundingClientRect();
+                const title = element.querySelector('.dk-dialog-title')?.getBoundingClientRect();
+                if (!button || !title) throw new Error('no Close or no title');
+                return {
+                    width: button.width,
+                    height: button.height,
+                    belowTitle: button.top - title.bottom,
+                    besideTitle: button.left - title.right,
+                };
+            });
+            expect(corner.width, String(width)).toBeGreaterThanOrEqual(44);
+            expect(corner.height, String(width)).toBeGreaterThanOrEqual(44);
+            expect(corner.belowTitle, String(width)).toBeLessThan(0);
+            expect(corner.besideTitle, String(width)).toBeGreaterThanOrEqual(-0.5);
             const results = await new AxeBuilder({ page }).include('dialog').analyze();
             expect(
                 results.violations.map(({ id }) => id),
