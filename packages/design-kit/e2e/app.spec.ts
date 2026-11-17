@@ -14,7 +14,7 @@ import {
     writePage,
 } from './page.js';
 import { cutOff } from './spacing.js';
-import { doubled, textSize } from './text-size.js';
+import { doubled } from './text-size.js';
 
 /*
  * An app's frame as a browser draws it, in Chromium and in WebKit, since a bar that stays put and a
@@ -860,9 +860,10 @@ test("starts the skip link where the frame's words start, on a 320px phone at tw
 
 test("keeps a panel in an app's frame to a phone's padding at twice the text size", async ({
     page,
+    browserName,
 }) => {
-    await textSize(page, 2);
     await writePage(page, { width: 390, title: 'Play', body: panels(true) });
+    await doubled(page, browserName);
     await expect(page.locator('.dk-panel')).toHaveCount(2);
     for (const panel of await page.locator('.dk-panel').all())
         expect((await style(panel, 'padding-left'))['padding-left']).toBe('16px');

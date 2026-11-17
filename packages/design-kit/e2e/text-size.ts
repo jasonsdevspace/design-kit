@@ -28,7 +28,8 @@ export const textSize = async (page: Page, scale: number): Promise<void> => {
  * setting, which every rem is drawn from, a media query's included. Another engine takes a root
  * size, which no media query reads, so a test of what a media query does at twice the text size
  * asks for the setting and runs in Chromium alone, and the rest run in every engine. Writing the
- * page replaces the root size, so the page must be drawn first, and the size is read back.
+ * page replaces the root size, so the page must be drawn first, the size is read back, and a test
+ * that writes the page again doubles it again.
  */
 export const doubled = async (
     page: Page,

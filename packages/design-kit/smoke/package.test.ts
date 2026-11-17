@@ -56,7 +56,7 @@ describe('the published package', () => {
         );
     });
 
-    it("names every value a module exports in the README's row for that module", () => {
+    it("names every value the theme, controls and Vite modules export in the README's row for each", () => {
         const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
         // The components' row says what they are rather than naming each, as the reference does.
         const listed = Object.entries(VALUE_EXPORTS).filter(
