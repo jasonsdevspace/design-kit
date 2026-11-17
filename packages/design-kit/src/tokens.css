@@ -295,6 +295,17 @@
         --dk-band-right: calc(max(var(--dk-safe-right), var(--dk-app-inset)) + var(--dk-space-4));
     }
 
+    /*
+     * A picture of a screen touches no edge of the visitor's, so nothing in it keeps room for what a
+     * phone keeps at its edges.
+     */
+    :where(.dk-picture) {
+        --dk-safe-top: 0px;
+        --dk-safe-right: 0px;
+        --dk-safe-bottom: 0px;
+        --dk-safe-left: 0px;
+    }
+
     :where(.dk-app, .dk-tabbar-page > :not(.dk-skip)) {
         --dk-band-left: calc(var(--dk-column-inset) + var(--dk-space-4));
         --dk-band-right: calc(var(--dk-column-inset) + var(--dk-space-4));

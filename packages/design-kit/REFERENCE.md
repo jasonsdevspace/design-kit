@@ -1646,11 +1646,13 @@ picture's wrapper or to the frame itself and makes it `inert`, so the keyboard a
 pass it by. A frame, a page that ends in a tab bar or a shown toast is a picture when it carries
 `dk-picture` or sits inside an element with the class, and the page around a picture keeps its
 column, its dialogs and its foot as a content page does. A pictured toast sits in its place rather
-than over the foot of the page. Only a toast's attach function reads a height, the toast's and the
-body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows at a
-large text size, so the body ends where the rows below it begin. A toast floats over the foot of the
-body, just above the dock, so showing or hiding one never moves the dock under a thumb about to
-press it again. While one is shown its place opens on a rule, under which the body scrolls as it
+than over the foot of the page. A pictured frame or page that ends in a tab bar is as tall as what
+it holds, its bars in their places in it rather than held to the screen, and the page draws the
+edge, the corners and the room around it. Only a toast's attach function reads a height, the toast's
+and the body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows
+at a large text size, so the body ends where the rows below it begin. A toast floats over the foot
+of the body, just above the dock, so showing or hiding one never moves the dock under a thumb about
+to press it again. While one is shown its place opens on a rule, under which the body scrolls as it
 does under the bar, and the body leaves room for the toast after its last element, as many rows as
 its attach function measured it at, up to five, so its last line scrolls clear of the toast and what
 the keyboard reaches in it stops short of the toast, in a browser with `:has()`. Where the body
@@ -1668,8 +1670,9 @@ body holds out of sight, such as a row's words for a screen reader, scrolls with
 lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
-do not push the dock out of view. The bar pads itself past `--dk-safe-top`, so its ground runs up
-under a notch and its title starts below it. The frame pads itself past the side safe areas, and its
+do not push the dock out of view. A pictured frame is as tall as what it holds instead, as the app
+frame's first paragraph says. The bar pads itself past `--dk-safe-top`, so its ground runs up under
+a notch and its title starts below it. The frame pads itself past the side safe areas, and its
 lowest part, the tab bar, or the dock or the body where nothing comes after it, pads itself past
 `--dk-safe-bottom`, so its ground runs down under the home indicator and what it holds stays clear
 of it, even where the page scrolls whole.
@@ -1755,12 +1758,14 @@ wraps within its share at a large text size and the bar grows with it, so nothin
 `dk-tabbar` draws the bar and places nothing. `dk-tabbar-page` is the app's column, as a frame is:
 `--dk-app-column` wide at most, in the middle of a wide screen, at least as tall as the screen, and
 padded past the side safe areas. The bar in it sticks to the bottom of the screen while the page
-scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. On a short page
-it is still at the bottom. At the page's end it sits after the last of the content and never over
-it, so the page pads by no height. The page's root has a `scroll-padding-bottom` of the bar's height
-with a label on two lines, so what the keyboard reaches, or a link within the page leads to, stops
-short of the bar and is never under it, in a browser with `:has()`. A label that wraps past two
-lines makes the bar taller than that, so a label is a short word or two.
+scrolls, over the page at `--dk-stack-bar`, and pads itself past `--dk-safe-bottom`. In a picture
+the page is as tall as what it holds and its bar sits at its foot, raised over nothing and with no
+room for a phone's edges. On a short page it is still at the bottom. At the page's end it sits after
+the last of the content and never over it, so the page pads by no height. The page's root has a
+`scroll-padding-bottom` of the bar's height with a label on two lines, so what the keyboard reaches,
+or a link within the page leads to, stops short of the bar and is never under it, in a browser with
+`:has()`. A label that wraps past two lines makes the bar taller than that, so a label is a short
+word or two.
 
 On a screen less than 24rem tall, a phone on its side or a page zoomed until its window is a few
 lines tall, the bar scrolls with the page and waits at its end, so it takes no part of a screen that

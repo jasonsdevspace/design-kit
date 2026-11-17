@@ -81,11 +81,16 @@ describe('the tokens', () => {
         expect(scale.filter((name) => !declared.has(`--dk-${name}`))).toEqual([]);
     });
 
-    it("reads each safe area from the browser's own inset, and is zero where it reports none", () => {
-        for (const edge of ['top', 'right', 'bottom', 'left'])
-            expect(declared.get(`--dk-safe-${edge}`), edge).toBe(
-                `env(safe-area-inset-${edge}, 0px)`
+    it("reads each safe area from the browser's own inset, and is zero where it reports none and in a picture", () => {
+        // The root reads the browser's inset, and a picture of a screen, which touches no edge of
+        // the visitor's, sets each to none.
+        const flat = sheet.replace(/\s+/g, ' ');
+        for (const edge of ['top', 'right', 'bottom', 'left']) {
+            expect(flat, edge).toContain(`--dk-safe-${edge}: env(safe-area-inset-${edge}, 0px);`);
+            expect(flat, edge).toMatch(
+                new RegExp(`:where\\(\\.dk-picture\\) \\{[^}]*--dk-safe-${edge}: 0px;`)
             );
+        }
     });
 
     it("holds where a full-width band's content starts on each side, past the phone's side, written once", () => {
