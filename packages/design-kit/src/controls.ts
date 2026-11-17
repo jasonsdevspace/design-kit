@@ -526,6 +526,10 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
+    // Safari focuses a pressed button only where it has a tabindex, so a press of either button
+    // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
+    for (const button of [actionButton, close])
+        if (!button.hasAttribute('tabindex')) button.tabIndex = 0;
     // While a message is shown, the toast is measured again whenever its size or the screen's
     // changes, a turned phone or a new text size among them, so its room never goes stale.
     const remeasure = () => {

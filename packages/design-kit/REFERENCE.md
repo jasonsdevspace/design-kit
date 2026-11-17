@@ -1644,11 +1644,13 @@ of view.
             <div class="dk-toast-buttons">
                 <button
                     type="button"
+                    tabindex="0"
                     class="dk-button dk-button-text dk-toast-action"
                     hidden=""
                 ></button>
                 <button
                     type="button"
+                    tabindex="0"
                     class="dk-button dk-button-text dk-button-quiet dk-toast-close"
                     hidden=""
                 >
@@ -1966,9 +1968,15 @@ until a message is shown.
     <p class="dk-toast-message" aria-hidden="true"></p>
     <p class="dk-visually-hidden dk-toast-status" role="status"></p>
     <div class="dk-toast-buttons">
-        <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
         <button
             type="button"
+            tabindex="0"
+            class="dk-button dk-button-text dk-toast-action"
+            hidden=""
+        ></button>
+        <button
+            type="button"
+            tabindex="0"
             class="dk-button dk-button-text dk-button-quiet dk-toast-close"
             hidden=""
         >
@@ -2005,10 +2013,13 @@ while the pointer is over it or focus is in it. When a message arrives, what has
 view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
 it, focus goes back to the last control outside the toast that had focus when a message arrived, and
 where there was none, or it no longer takes focus, to the body of the app's frame, or on a page with
-no frame to its main content where that takes focus. An action runs after the toast has left, so
-where it takes away what focus came from, it moves focus itself. A message with no action replaces
-one with an action and its way back, so a page shows one another only when the first is done with.
-More than one action is a dialog's job.
+no frame to its main content where that takes focus. Its Close and its action carry `tabindex="0"`,
+which `Toast` draws and `attachToast` adds where a page's markup has none, so Safari, which focuses
+a pressed button only where it has a tabindex, leaves focus in the toast on a press and focus goes
+back as the toast leaves. An action runs after the toast has left, so where it takes away what focus
+came from, it moves focus itself. A message with no action replaces one with an action and its way
+back, so a page shows one another only when the first is done with. More than one action is a
+dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
