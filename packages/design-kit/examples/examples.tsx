@@ -339,6 +339,35 @@ export const contentPage: ReactElement = (
     </main>
 );
 
+/** A landing page in bands: a hero with its words in a stack, and a band with a group of sections. */
+export const bands: ReactElement = (
+    <main id="main-content" tabIndex={-1}>
+        <section className="dk-band hero" aria-labelledby="title">
+            <div className="hero-grid">
+                <div className="dk-stack">
+                    <p className="dk-eyebrow">For game night</p>
+                    <h1 id="title">Scorekeeper</h1>
+                    <p className="dk-lead">Keep score for any card game on one phone.</p>
+                </div>
+                <img src="table.jpg" alt="Cards laid out on a table" />
+            </div>
+        </section>
+        <section className="dk-band" aria-labelledby="install">
+            <h2 id="install">Install it</h2>
+            <div className="dk-sections">
+                <section aria-labelledby="iphone">
+                    <h3 id="iphone">On an iPhone</h3>
+                    <p>...</p>
+                </section>
+                <section aria-labelledby="android">
+                    <h3 id="android">On an Android phone</h3>
+                    <p>...</p>
+                </section>
+            </div>
+        </section>
+    </main>
+);
+
 /** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
@@ -907,6 +936,7 @@ export const EXAMPLES = {
     statusLine,
     codeHead,
     contentPage,
+    bands,
     explainerPage,
     steps,
     panel,
