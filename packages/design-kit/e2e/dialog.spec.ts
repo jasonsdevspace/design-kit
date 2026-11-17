@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, forceColors, js, KIT, ORIGIN, style } from './page.js';
+import { box, forceColors, js, KIT, ORIGIN, settle, style } from './page.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -24,7 +24,9 @@ const BODY = `<main><h1>Round 3</h1>
 <button type="button" class="dk-button" id="options">Round options</button>
 <button type="button" class="dk-button" id="must">Choose a dealer</button>
 <button type="button" class="dk-button" id="leaving">Leave</button>
-<button type="button" class="dk-button" id="noting">Notes</button></p>
+<button type="button" class="dk-button" id="noting">Notes</button>
+<button type="button" class="dk-button" id="naming">Name</button>
+<button type="button" class="dk-button" id="waiting">Wait</button></p>
 <div id="toolbar"><button type="button" class="dk-button" id="held"><span>Delegated</span></button></div>
 <p><button type="button" class="dk-button" id="gone">Opens and goes</button>
 <button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
@@ -50,6 +52,17 @@ ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
 <form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
 <p>Ana dealt.</p>
 </dialog>
+<dialog class="dk-dialog" id="name" aria-labelledby="name-title">
+<h2 class="dk-dialog-title" id="name-title">Name the new player</h2>
+<form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
+<label class="dk-field"><span class="dk-field-label">Name</span><input class="dk-input" id="new-name"></label>
+<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="add">Add</button></form>
+</dialog>
+<dialog class="dk-dialog" id="wait" aria-labelledby="wait-title">
+<h2 class="dk-dialog-title" id="wait-title">Waiting for the dealer</h2>
+<form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
+<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="deal" disabled>Deal</button></form>
+</dialog>
 <dialog class="dk-dialog" id="dealer" aria-labelledby="dealer-title">
 <h2 class="dk-dialog-title" id="dealer-title">Who deals first?</h2>
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="ana">Ana</button></form>
@@ -65,6 +78,8 @@ wire('#options', '#round-options');
 wire('#must', '#dealer', { stay: true });
 wire('#leaving', '#leave');
 wire('#noting', '#notes');
+wire('#naming', '#name');
+wire('#waiting', '#wait');
 // Attached again with other options, which the same function then follows.
 window.kit = { attachDialog };
 // A listener on a part of the page that holds the button, as a page that delegates its clicks has.
@@ -122,12 +137,6 @@ const open = async (
 
 const endGame = (page: Page): Locator => page.getByRole('dialog', { name: 'End the game now?' });
 const sheet = (page: Page): Locator => page.getByRole('dialog', { name: 'Round options' });
-
-/** Waits for a dialog's entrance to end, so it is measured where it comes to rest. */
-const settle = (dialog: Locator): Promise<unknown> =>
-    dialog.evaluate((element) =>
-        Promise.all(element.getAnimations().map((animation) => animation.finished))
-    );
 
 /** A color as the page resolves it, from an element asked to take it. */
 const resolved = (page: Page, color: string): Promise<string> =>
@@ -351,15 +360,27 @@ test('takes the options it is attached with again, and keeps them when attached 
     }
 });
 
-test('moves focus off a Close in the corner to the first answer, or the title where there is none, with no autofocus written', async ({
+test('moves focus off a Close in the corner to the first thing after it that takes focus, or the title, with no autofocus written', async ({
     page,
 }) => {
     await open(page);
     await page.locator('#leaving').click();
     await expect(page.getByRole('button', { name: 'Keep playing' })).toBeFocused();
     await page.keyboard.press('Escape');
+    // A field before the answers is what the visitor came to fill in, so it takes focus first.
+    await page.locator('#naming').click();
+    await expect(page.locator('#new-name')).toBeFocused();
+    await page.keyboard.press('Escape');
+    // An answer that cannot take focus is passed over, and the title takes it, never the Close.
+    await page.locator('#waiting').click();
+    await expect(page.locator('#wait-title')).toBeFocused();
+    await page.keyboard.press('Escape');
     await page.locator('#noting').click();
     await expect(page.locator('#notes-title')).toBeFocused();
+    // The title had no place in the order, so it gives back the one it took once the dialog closes.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#notes')).toBeHidden();
+    await expect(page.locator('#notes-title')).not.toHaveAttribute('tabindex');
 });
 
 test('opens a long sheet at its top, with focus on its title', async ({ page }) => {

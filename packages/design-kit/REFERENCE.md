@@ -85,6 +85,7 @@ page.
 | `--dk-flow-step`                                                                                  | the step between the pieces a column holds, `--dk-space-4` in an explainer, a content page, their sections and an app's body, and `--dk-space-3` in a panel and a dialog, set on what each holds |
 | `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's or a raised panel's and the card's          |
 | `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, `--dk-space-4` at 48rem or less, and `--dk-space-4-held` in an app's frame, a tab bar's page and a dialog on either               |
+| `--dk-dialog-inset`                                                                               | how far a dialog's content stands in, which its corner Close is placed from, `--dk-space-5-held`, and `--dk-space-4-held` at 48rem or less and on a page with an app's frame or a tab bar's page |
 
 </details>
 

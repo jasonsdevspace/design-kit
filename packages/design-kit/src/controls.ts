@@ -867,13 +867,26 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         dialog.showModal();
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
         // in the dialog asks for focus, as when React's autoFocus writes no attribute, so the first
-        // answer takes it, or the title where the dialog has none.
-        if (dialog.querySelector(':scope > .dk-close')?.contains(document.activeElement)) {
-            const first =
-                dialog.querySelector<HTMLElement>('.dk-dialog-actions > *') ??
-                dialog.querySelector<HTMLElement>('.dk-dialog-title');
-            if (first?.matches('.dk-dialog-title')) first.tabIndex = -1;
-            first?.focus();
+        // thing after it that takes focus does, a field before the answers included, or the title.
+        const close = dialog.querySelector(':scope > .dk-close');
+        if (close?.contains(document.activeElement)) {
+            for (const next of dialog.querySelectorAll<HTMLElement>(
+                'a[href], button, input, select, textarea, [tabindex]'
+            )) {
+                if (close.contains(next) || close.compareDocumentPosition(next) & 2) continue;
+                next.focus();
+                if (document.activeElement === next) return;
+            }
+            const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
+            if (!title) return;
+            // A title the page gave no place in the order takes one for now, and gives it back.
+            if (!title.hasAttribute('tabindex')) {
+                title.tabIndex = -1;
+                dialog.addEventListener('close', () => title.removeAttribute('tabindex'), {
+                    once: true,
+                });
+            }
+            title.focus();
         }
     };
     attachedDialogs.set(dialog, { open, set });

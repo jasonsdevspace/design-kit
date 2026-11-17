@@ -36,6 +36,7 @@ const CSS_ONLY: Readonly<Record<string, string>> = {
     'band-left': 'a calc() of the safe area and the inset',
     'band-right': 'a calc() of the safe area and the inset',
     'card-inset': 'a step that narrows on a phone and in an app, by a media query and a container',
+    'dialog-inset': 'a step that narrows on a phone and on a page with an app, by a media query',
 };
 
 interface Dimension {
