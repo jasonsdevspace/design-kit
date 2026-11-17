@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, and in 0.8.4 to set the controls' budget at 7.25 KB, once `attachPanel` took them past 6.25 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, and in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB
 
 ## Context
 
@@ -126,9 +126,10 @@ after the Close. They weigh 10,695 bytes sent together, and the median a piece c
 bytes, so the rule sets the sheets at 10.75 KB.
 
 For 0.8.4 the controls were measured with `attachPanel` in place, which a page that opens a panel
-with a button attaches so its corner Close needs no script of the page's own. Every function sent
-together weighs 6,802 bytes, past the 6.25 KB the budget held, and the median a function adds is
-now 616 bytes, so the rule sets the controls at 7.25 KB.
+with a button attaches so its corner Close needs no script of the page's own, and with the fixes
+that keep an off button from acting and a button attached later from moving the panel. Every
+function sent together weighs 6,898 bytes, past the 6.25 KB the budget held, and the median a
+function adds is now 668 bytes, so the rule sets the controls at 7.5 KB.
 
 The sheets were measured for 0.8.4 too, with its bands, its icon sizes and the app frame's named
 sides in place. They weigh 10,916 bytes sent together, 92 bytes under the 10.75 KB they hold, and
@@ -169,8 +170,9 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   content, a Close in later content that reuses its id ignored, a button with no `aria-controls`
   refused, the same returned for a button attached twice, a stale detach leaving a button attached
   again alone, focus back on the button whose `set` opened the panel, the listener taken off only
-  once every button is let go, a button the page points at another panel followed, and no
-  accessibility violation with the panel open or closed.
+  once every button is let go, a button the page points at another panel followed, an off button's
+  press ignored and focus kept off it, a button attached later or drawn again following the panel as
+  it is, and no accessibility violation with the panel open or closed.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

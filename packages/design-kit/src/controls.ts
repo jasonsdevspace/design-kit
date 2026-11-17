@@ -22,6 +22,10 @@ const focusedNow = (): Element | null => {
     return active === document.body ? null : active;
 };
 
+/** Whether a control is marked off, kept in the tab order to say why rather than to act. */
+const isOff = (control: Element | undefined): boolean =>
+    control?.getAttribute('aria-disabled') === 'true';
+
 /**
  * Focuses the first of the elements given that takes focus, one that is hidden, off or gone from
  * the page being passed over, so focus never falls to nowhere while a place for it is named.
@@ -698,7 +702,7 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     const press = (raise: boolean) => () => {
         mark();
         const button = raise ? up : down;
-        if (button.getAttribute('aria-disabled') === 'true') return;
+        if (isOff(button)) return;
         const before = input.value;
         try {
             if (raise) input.stepUp();
@@ -939,6 +943,9 @@ const openersOf = (id: string): HTMLButtonElement[] =>
 /** The button that opened each panel that is open, let go as the panel closes. */
 const lastOpener = new Map<string, HTMLButtonElement>();
 
+/** The panels a button has started, so a button attached later follows the panel as it is. */
+const startedPanels = new Set<string>();
+
 /** How many buttons are attached and not let go, so the one listener comes off with the last. */
 let attachedCount = 0;
 
@@ -959,7 +966,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (!panel) return;
     const held = panel.contains(document.activeElement);
     panel.hidden = !open;
-    if (open || !held || focusFirst(by, ...openers)) return;
+    if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
         ...[...document.querySelectorAll(FOCUSABLE)].filter(
             (next) => panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
@@ -979,7 +986,8 @@ const onPanelPress = (event: MouseEvent): void => {
     const button = target?.closest('button');
     if (!button) return;
     if (attachedPanels.has(button)) {
-        showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
+        if (!isOff(button))
+            showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
         return;
     }
     const panel = button.closest('.dk-close')?.parentElement;
@@ -991,10 +999,11 @@ const onPanelPress = (event: MouseEvent): void => {
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
- * which lets the button go, after which neither does anything. The panel starts as the button's
- * aria-expanded says, and the markup writes hidden on a panel that starts closed, so it never
- * shows before the script runs. A press of the button turns it the other way, and every attached
- * button that names the panel follows. Where focus is in the panel, a press of the Close or a close
+ * which lets the button go, after which neither does anything. The panel starts as the first
+ * button's aria-expanded says, and a button attached later follows the panel as it is. The markup
+ * writes hidden on a panel that starts closed, so it never shows before the script runs. A press
+ * of the button turns it the other way, unless the button is off, and every attached button that
+ * names the panel follows. Where focus is in the panel, a press of the Close or a close
  * from `set` moves it to the button that opened the panel. The panel is found at each press, so
  * one drawn again keeps working, and a button drawn again works once it is attached. One listener
  * on the document hears the buttons and the Closes of every panel, and it comes off once every
@@ -1015,12 +1024,21 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
             if (!attached()) return;
             attachedPanels.delete(opener);
             for (const [id, button] of lastOpener) if (button === opener) lastOpener.delete(id);
-            if (!--attachedCount) document.removeEventListener('click', onPanelPress, true);
+            if (--attachedCount) return;
+            document.removeEventListener('click', onPanelPress, true);
+            startedPanels.clear();
         },
     };
     attachedPanels.set(opener, control);
     if (!attachedCount++) document.addEventListener('click', onPanelPress, true);
-    control.set(opener.getAttribute('aria-expanded') === 'true');
+    // The first button for a panel starts it as its markup says, and a later one, a button drawn
+    // again among them, only marks itself as the panel is, so it neither moves the panel nor
+    // takes the place of the button that opened it.
+    const id = panelIdOf(opener);
+    const panel = document.getElementById(id);
+    if (startedPanels.has(id) && panel) opener.setAttribute('aria-expanded', String(!panel.hidden));
+    else control.set(opener.getAttribute('aria-expanded') === 'true');
+    startedPanels.add(id);
     return control;
 };
 
