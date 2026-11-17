@@ -64,7 +64,15 @@
      * same inset. On a phone held on its side, each keeps its content clear of what the phone keeps
      * at that side.
      */
-    :where(.dk-strip, .dk-footer, .dk-explainer-header, .dk-explainer, .dk-site-header, .dk-page) {
+    :where(
+        .dk-strip,
+        .dk-footer,
+        .dk-explainer-header,
+        .dk-explainer,
+        .dk-site-header,
+        .dk-page,
+        .dk-band
+    ) {
         padding-right: var(--dk-band-right);
         padding-left: var(--dk-band-left);
     }
@@ -1046,6 +1054,10 @@
                 .dk-explainer > section,
                 .dk-page,
                 .dk-page > section,
+                .dk-band,
+                .dk-band > section,
+                .dk-stack,
+                .dk-sections > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -1109,12 +1121,40 @@
      * between what it holds, so a reader's own sheet that adds room under a paragraph adds the room
      * it asks for and breaks nothing.
      */
-    :where(.dk-page > h1) {
+    :where(:is(.dk-page, .dk-band, .dk-stack) > h1) {
         font-size: var(--dk-text-display);
     }
 
-    :where(.dk-page > section > h2) {
+    :where(.dk-band > h2) {
+        font-size: var(--dk-text-heading);
+    }
+
+    :where(:is(.dk-page, .dk-band) > section > h2, .dk-sections > section > :is(h2, h3)) {
         font-size: var(--dk-text-title);
+    }
+
+    /*
+     * A band: a part of a landing page the width of the screen, such as one on a ground of its
+     * own, its content lined up with the column as the strip's is and spaced by the flow, as a
+     * content page's is, with room above and below it that a page sets to its own. A grid it holds
+     * is one piece of its flow, so the grid's items stand apart by its gap alone, and a column of
+     * pieces in a grid's cell, such as a hero's words beside its picture, is a stack, the flow with
+     * no room of its own.
+     */
+    :where(.dk-band) {
+        padding-block: var(--dk-space-7);
+    }
+
+    /*
+     * A group of sections side by side, such as two ways to do one thing, as many to a row as fit
+     * at 20rem or more and one to a row on a phone. Each section keeps a page section's heading and
+     * steps, so a page with a group and a section under it reads as one page, and the group stands
+     * a section's step from what comes before it.
+     */
+    :where(.dk-sections) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+        gap: var(--dk-space-7);
     }
 
     :where(
@@ -1125,7 +1165,11 @@
         .dk-page > section > p,
         .dk-page > section > ul:not([class]),
         .dk-page > section > ol:not([class]),
-        .dk-page > section > blockquote
+        .dk-page > section > blockquote,
+        :is(.dk-band, .dk-sections) > section > p,
+        :is(.dk-band, .dk-sections) > section > ul:not([class]),
+        :is(.dk-band, .dk-sections) > section > ol:not([class]),
+        :is(.dk-band, .dk-sections) > section > blockquote
     ) {
         max-width: var(--dk-measure);
     }
@@ -1484,9 +1528,9 @@
 
     /*
      * In what pads its content, a demo's strip and footer, an explainer and its header, a site's
-     * header, a content page, a panel, a callout, an app's bar and body or a dialog, the switch
-     * reaches past the column by the room it keeps for its ring, as the pills and a row do, so its
-     * first word starts on the column's line and the padding holds the ring. Elsewhere it stays
+     * header, a content page, a band, a panel, a callout, an app's bar and body or a dialog, the
+     * switch reaches past the column by the room it keeps for its ring, as the pills and a row do,
+     * so its first word starts on the column's line and the padding holds the ring. Elsewhere it stays
      * inside, so nothing scrolls sideways.
      */
     :where(
@@ -1497,6 +1541,7 @@
                 .dk-explainer,
                 .dk-site-header,
                 .dk-page,
+                .dk-band,
                 .dk-panel,
                 .dk-callout,
                 .dk-app-bar,
@@ -2794,13 +2839,16 @@
     }
 
     /*
-     * In what pads its content, an explainer, a content page, a panel, a callout, an app's body
-     * or a dialog, a row reaches past the column by that room, as the pills and the choices do, so
-     * its words start on the column's line and the padding holds its ring. A list at a page's bare
-     * edge or in a table's cell keeps its rows inside it, so the page never scrolls sideways and no
-     * part of a ring is cut off.
+     * In what pads its content, an explainer, a content page, a band, a panel, a callout, an app's
+     * body or a dialog, a row reaches past the column by that room, as the pills and the choices
+     * do, so its words start on the column's line and the padding holds its ring. A list at a
+     * page's bare edge or in a table's cell keeps its rows inside it, so the page never scrolls
+     * sideways and no part of a ring is cut off.
      */
-    :where(:is(.dk-explainer, .dk-page, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog) .dk-row) {
+    :where(
+        :is(.dk-explainer, .dk-page, .dk-band, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog)
+            .dk-row
+    ) {
         margin-inline: calc(-1 * (var(--dk-ring-width) + var(--dk-ring-offset)));
     }
 
@@ -3180,7 +3228,8 @@
 
     /*
      * The flow in what holds a column of pieces, an explainer, a content page and each of their
-     * sections, a panel, an app's body and a dialog: each piece stands its container's step,
+     * sections, a band and its sections, a stack, a section in a group, a panel, an app's body
+     * and a dialog: each piece stands its container's step,
      * --dk-flow-step, from the one before it, and the first sits at the top. A piece out of sight
      * before the first one adds no step of its own. A dialog in one of them is left alone, so it
      * keeps the place the browser and its own rules give it. The flow comes near the end of the
@@ -3196,6 +3245,10 @@
                 .dk-explainer > section,
                 .dk-page,
                 .dk-page > section,
+                .dk-band,
+                .dk-band > section,
+                .dk-stack,
+                .dk-sections > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -3211,6 +3264,10 @@
                 .dk-explainer > section,
                 .dk-page,
                 .dk-page > section,
+                .dk-band,
+                .dk-band > section,
+                .dk-stack,
+                .dk-sections > section,
                 .dk-panel,
                 .dk-app-body,
                 .dk-dialog
@@ -3222,7 +3279,7 @@
     }
 
     :where(
-        :is(.dk-explainer, .dk-page) > h1 + *,
+        :is(.dk-explainer, .dk-page, .dk-band, .dk-stack) > h1 + *,
         .dk-table-title + *,
         :not(.dk-code-head) > .dk-code-title + *,
         .dk-code-head + *
@@ -3234,11 +3291,21 @@
         margin-block-start: var(--dk-space-6);
     }
 
-    :where(.dk-page > :not(.dk-visually-hidden, [hidden]) ~ section) {
+    :where(
+        :is(.dk-page, .dk-band) > :not(.dk-visually-hidden, [hidden]) ~ :is(section, .dk-sections)
+    ) {
         margin-block-start: var(--dk-space-7);
     }
 
-    :where(:is(.dk-explainer, .dk-page) > section > h2 + *) {
+    /* A group or a section right under the heading that names it stands the flow's step below. */
+    :where(:is(.dk-page, .dk-band) > :is(h2, h3) + :is(section, .dk-sections)) {
+        margin-block-start: var(--dk-flow-step);
+    }
+
+    :where(
+        :is(.dk-explainer, .dk-page, .dk-band) > section > h2 + *,
+        .dk-sections > section > :is(h2, h3) + *
+    ) {
         margin-block-start: var(--dk-space-3);
     }
 

@@ -1255,6 +1255,52 @@ to the measure, the explainer's lead under a name of its own. [Decision
 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
 says why a content page is a container of its own.
 
+### Bands and groups of sections
+
+A landing page that runs in bands the width of the screen, each on a ground of its own, draws each
+band with `dk-band` rather than a content page, and a group of sections side by side with
+`dk-sections`:
+
+```html
+<main id="main-content" tabindex="-1">
+    <section class="dk-band hero" aria-labelledby="title">
+        <div class="hero-grid">
+            <div class="dk-stack">
+                <p class="dk-eyebrow">For game night</p>
+                <h1 id="title">Scorekeeper</h1>
+                <p class="dk-lead">Keep score for any card game on one phone.</p>
+            </div>
+            <img src="table.jpg" alt="Cards laid out on a table" />
+        </div>
+    </section>
+    <section class="dk-band" aria-labelledby="install">
+        <h2 id="install">Install it</h2>
+        <div class="dk-sections">
+            <section aria-labelledby="iphone">
+                <h3 id="iphone">On an iPhone</h3>
+                <p>...</p>
+            </section>
+            <section aria-labelledby="android">
+                <h3 id="android">On an Android phone</h3>
+                <p>...</p>
+            </section>
+        </div>
+    </section>
+</main>
+```
+
+A band starts its content at the band insets, as the strip and a content page do, and spaces what it
+holds by the flow, with `--dk-space-7` above and below it that a page's own padding replaces, and the
+ground, the edge and the room are the page's to set. Its `h1` is at the display size, in a stack too,
+and its `h2` at the heading size, and a section it holds spaces as a content page's does. A grid the
+band holds is one piece of its flow, so the grid's items stand apart by its gap alone, and a column of
+pieces in a grid's cell, such as a hero's words beside its picture, is a `dk-stack`, the flow with no
+room of its own, at the step of what holds it. `dk-sections` sets its sections as many to a row as fit
+at 20rem or more, one to a row on a phone, `--dk-space-7` apart, each with its heading, an `h2` under
+a page's `h1` or an `h3` under a band's `h2`, at the title size and `--dk-space-3` over its text, and
+its prose held to the measure. A group stands a section's step from what comes before it, or the
+flow's step under the heading that names it, so a group and a section under it read as one page.
+
 ## Explainer pages
 
 An explainer is the page that says how a demo works, the one the strip's "How it works" link leads
