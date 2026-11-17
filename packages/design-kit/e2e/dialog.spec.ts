@@ -26,7 +26,8 @@ const BODY = `<main><h1>Round 3</h1>
 <button type="button" class="dk-button" id="leaving">Leave</button>
 <button type="button" class="dk-button" id="noting">Notes</button>
 <button type="button" class="dk-button" id="naming">Name</button>
-<button type="button" class="dk-button" id="waiting">Wait</button></p>
+<button type="button" class="dk-button" id="waiting">Wait</button>
+<button type="button" class="dk-button" id="seating">Seat</button></p>
 <div id="toolbar"><button type="button" class="dk-button" id="held"><span>Delegated</span></button></div>
 <p><button type="button" class="dk-button" id="gone">Opens and goes</button>
 <button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
@@ -63,6 +64,12 @@ ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
 <form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="deal" disabled>Deal</button></form>
 </dialog>
+<dialog class="dk-dialog" id="seat" aria-labelledby="seat-title">
+<h2 class="dk-dialog-title" id="seat-title">Who deals?</h2>
+<form class="dk-close" method="dialog"><button type="submit" class="dk-button dk-button-text dk-button-quiet" value="close"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close</span></button></form>
+<fieldset><legend>Dealer</legend><label><input type="radio" name="deals" id="deals-ana"> Ana</label><label><input type="radio" name="deals" id="deals-ben" checked> Ben</label></fieldset>
+<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="done">Done</button></form>
+</dialog>
 <dialog class="dk-dialog" id="dealer" aria-labelledby="dealer-title">
 <h2 class="dk-dialog-title" id="dealer-title">Who deals first?</h2>
 <form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button" value="ana">Ana</button></form>
@@ -80,6 +87,7 @@ wire('#leaving', '#leave');
 wire('#noting', '#notes');
 wire('#naming', '#name');
 wire('#waiting', '#wait');
+wire('#seating', '#seat');
 // Attached again with other options, which the same function then follows.
 window.kit = { attachDialog };
 // A listener on a part of the page that holds the button, as a page that delegates its clicks has.
@@ -374,6 +382,10 @@ test('moves focus off a Close in the corner to the first thing after it that tak
     // An answer that cannot take focus is passed over, and the title takes it, never the Close.
     await page.locator('#waiting').click();
     await expect(page.locator('#wait-title')).toBeFocused();
+    await page.keyboard.press('Escape');
+    // A radio group takes focus on its checked radio, where the order would reach it.
+    await page.locator('#seating').click();
+    await expect(page.locator('#deals-ben')).toBeFocused();
     await page.keyboard.press('Escape');
     await page.locator('#noting').click();
     await expect(page.locator('#notes-title')).toBeFocused();

@@ -256,10 +256,6 @@
         }
     }
 
-    :where(:root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))) {
-        --dk-dialog-inset: var(--dk-space-4-held);
-    }
-
     :where(
         :is(
             .dk-app,
@@ -268,6 +264,7 @@
         )
     ) {
         --dk-card-inset: var(--dk-space-4-held);
+        --dk-dialog-inset: var(--dk-space-4-held);
     }
 
     /*

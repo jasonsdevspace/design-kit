@@ -788,6 +788,45 @@ const attachedDialogs = new WeakMap<
 /** What a press can land on that takes focus, so a press inside a button finds the button. */
 const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
 
+/**
+ * Moves focus off a dialog's corner Close as it opens, to the first field or answer after it that
+ * takes focus in the order, else to the title. A link or button among the dialog's words is passed
+ * over, so a long dialog opens at its top rather than scrolled down to it.
+ */
+const moveOffClose = (dialog: HTMLDialogElement, close: Element): void => {
+    for (const next of dialog.querySelectorAll<HTMLElement>(
+        ':is(input, select, textarea):not([tabindex="-1"]), .dk-dialog-actions > *'
+    )) {
+        if (close.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_PRECEDING) continue;
+        // A radio whose group has a checked one is not where the order goes.
+        if (
+            next instanceof HTMLInputElement &&
+            next.type === 'radio' &&
+            !next.checked &&
+            next.name &&
+            dialog.querySelector(`input[type="radio"][name="${CSS.escape(next.name)}"]:checked`)
+        ) {
+            continue;
+        }
+        next.focus();
+        if (document.activeElement === next) return;
+    }
+    const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
+    if (!title) return;
+    // A title the page gave no place in the order borrows one, and gives it back as focus leaves.
+    if (!title.hasAttribute('tabindex')) {
+        title.tabIndex = -1;
+        title.addEventListener(
+            'blur',
+            () => {
+                if (title.getAttribute('tabindex') === '-1') title.removeAttribute('tabindex');
+            },
+            { once: true }
+        );
+    }
+    title.focus();
+};
+
 /** The element focus goes back to, from what the page handed over, else what had focus. */
 const openerOf = (from: DialogOpener | undefined): Element | null => {
     const found =
@@ -866,28 +905,9 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         opener = openerOf(from);
         dialog.showModal();
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
-        // in the dialog asks for focus, as when React's autoFocus writes no attribute, so the first
-        // thing after it that takes focus does, a field before the answers included, or the title.
+        // in the dialog asks for focus, as when React's autoFocus writes no attribute.
         const close = dialog.querySelector(':scope > .dk-close');
-        if (close?.contains(document.activeElement)) {
-            for (const next of dialog.querySelectorAll<HTMLElement>(
-                'a[href], button, input, select, textarea, [tabindex]'
-            )) {
-                if (close.contains(next) || close.compareDocumentPosition(next) & 2) continue;
-                next.focus();
-                if (document.activeElement === next) return;
-            }
-            const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
-            if (!title) return;
-            // A title the page gave no place in the order takes one for now, and gives it back.
-            if (!title.hasAttribute('tabindex')) {
-                title.tabIndex = -1;
-                dialog.addEventListener('close', () => title.removeAttribute('tabindex'), {
-                    once: true,
-                });
-            }
-            title.focus();
-        }
+        if (close?.contains(document.activeElement)) moveOffClose(dialog, close);
     };
     attachedDialogs.set(dialog, { open, set });
     return open;

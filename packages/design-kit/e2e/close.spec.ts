@@ -162,6 +162,22 @@ for (const [width, scale] of [
         expect(ring.right, String(width)).toBeGreaterThanOrEqual(0);
     });
 
+test("pads a dialog on a page with an app by a phone's step at every width, its Close on its title's line", async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 1280,
+        title: 'Round 3',
+        body: `<div class="dk-app"></div>${BODY}`,
+    });
+    await openDialog(page);
+    expect(
+        await page.locator('#end-game').evaluate((dialog) => getComputedStyle(dialog).paddingTop)
+    ).toBe('16px');
+    const drawn = await corner(page, '#end-game');
+    expect(Math.abs(drawn.closeMiddle - drawn.firstLine)).toBeLessThanOrEqual(1);
+});
+
 test("opens a dialog on its first answer, meets the Close after the title's question, and closes by it with no script", async ({
     page,
     browserName,
