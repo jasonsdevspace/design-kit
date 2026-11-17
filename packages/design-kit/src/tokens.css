@@ -337,13 +337,13 @@
     /*
      * The step between the pieces in what holds a column of them, set on the pieces themselves so
      * a container inside another stands its parent's step from what is around it and gives its own
-     * to what it holds: a whole step in an explainer, a content page, each of their sections, a band,
-     * a stack, a section in a group and an app's body, and a smaller one in a panel and a dialog,
-     * whose room is tighter.
+     * to what it holds: a whole step in an explainer, a content page, a band, each of their
+     * sections, a section in a group and an app's body, and a smaller one in a panel and a dialog,
+     * whose room is tighter. A stack gives what it holds the step of what holds it.
      */
     :where(
-        :is(.dk-explainer, .dk-page, .dk-band, .dk-stack) > *,
-        :is(.dk-explainer, .dk-page, .dk-sections) > section > *,
+        :is(.dk-explainer, .dk-page, .dk-band) > *,
+        :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section > *,
         .dk-app-body > *
     ) {
         --dk-flow-step: var(--dk-space-4);

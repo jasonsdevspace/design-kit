@@ -21,6 +21,10 @@ const BODY = `<main id="main-content">
 </section>
 <section class="dk-band" id="games" aria-labelledby="games-title" style="padding-block: 2rem">
 <p class="dk-eyebrow">Your table</p><h2 id="games-title">The games it scores</h2><p id="games-text">Three games, each by its own rules.</p>
+<section aria-labelledby="more"><h2 id="more">More to come</h2><p id="more-text">Each game by its own rules.</p></section>
+</section>
+<section class="dk-band" id="kinds-band" aria-labelledby="kinds-title"><h2 id="kinds-title">The kinds of game</h2>
+<div class="dk-sections" id="kinds"><section aria-labelledby="cards"><h3 id="cards">Card games</h3><p id="cards-text">Flip 7 and Skyjo.</p></section></div>
 </section>
 <div class="dk-page" id="install">
 <h1>Install the app</h1>
@@ -34,6 +38,24 @@ const BODY = `<main id="main-content">
 </main>`;
 
 const open = (page: Page, width: number) => writePage(page, { width, title: 'Bands', body: BODY });
+
+test("sizes a band's title, its heading and its sections, and keeps a group under the heading that names it", async ({
+    page,
+}) => {
+    await open(page, 1280);
+    expect((await style(page.locator('#title'), 'font-size'))['font-size']).toBe('28px');
+    expect((await style(page.locator('#games-title'), 'font-size'))['font-size']).toBe('24px');
+    expect((await style(page.locator('#cards'), 'font-size'))['font-size']).toBe('20px');
+    expect((await style(page.locator('#cards-text'), 'margin-top'))['margin-top']).toBe('12px');
+    // A group under the heading that names it stands the flow's step, a section after text a section's.
+    expect((await style(page.locator('#kinds'), 'margin-top'))['margin-top']).toBe('16px');
+    expect((await style(page.locator('section:has(> #more)'), 'margin-top'))['margin-top']).toBe(
+        '48px'
+    );
+    expect((await style(page.locator('#more'), 'font-size'))['font-size']).toBe('20px');
+    expect((await style(page.locator('#more-text'), 'margin-top'))['margin-top']).toBe('12px');
+    expect((await style(page.locator('#more-text'), 'margin-bottom'))['margin-bottom']).toBe('0px');
+});
 
 test("lines a band's content up with the column and spaces it by the flow", async ({ page }) => {
     await open(page, 1280);
