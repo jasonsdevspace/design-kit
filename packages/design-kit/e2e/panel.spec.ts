@@ -704,3 +704,55 @@ test('leaves a button a pointer presses unfocused in WebKit, as Safari does, so 
     await button(page).click();
     await expect(button(page)).not.toBeFocused();
 });
+
+test('leaves focus where a link in the panel moves it as it closes the panel', async ({ page }) => {
+    await open(page);
+    await button(page).click();
+    // A router's link that takes the page's own way and moves focus to what it shows.
+    await page.evaluate(() => {
+        const heading = document.createElement('h2');
+        heading.id = 'dealing';
+        heading.tabIndex = -1;
+        heading.textContent = 'Dealing';
+        document.querySelector('main')?.append(heading);
+        document.querySelector('#deal')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            heading.focus();
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        });
+    });
+    await page.locator('#deal').click();
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('#dealing')).toBeFocused();
+});
+
+test('hands focus back when a link in the panel closes it and moves no focus of its own', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    // A router's link that shows its page without moving focus, as many do.
+    await page.evaluate(() => {
+        document.querySelector('#deal')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        });
+    });
+    await page.locator('#deal').click();
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test.describe('on a touch screen', () => {
+    test.use({ hasTouch: true });
+
+    test('hands focus back when the Close is tapped', async ({ page, browserName }) => {
+        test.skip(browserName !== 'webkit', "a tap is tested where Safari's way is, in WebKit");
+        await open(page);
+        await button(page).tap();
+        await expect(panel(page)).toBeVisible();
+        await close(page).tap();
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+    });
+});
