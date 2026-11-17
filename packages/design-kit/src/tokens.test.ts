@@ -30,6 +30,7 @@ const flatten = (css: string): string =>
 const holdersOf = (css: string, declaration: string): string[] => {
     const flat = flatten(css);
     const end = flat.indexOf(`) { ${declaration}`);
+    if (end < 0) throw new Error(`expected a rule that starts with ${declaration}`);
     const start = flat.lastIndexOf(':where(', end);
     return flat
         .slice(start + ':where('.length, end)
@@ -128,9 +129,13 @@ describe('the tokens', () => {
                 `--dk-band-${side}: calc(var(--dk-column-inset) + var(--dk-app-side));`
             );
         }
-        expect(holdersOf(sheet, '--dk-band-left: calc(var(--dk-column-inset)')).toEqual(
-            expect.arrayContaining(['.dk-app', '.dk-tabbar-page > :not(.dk-skip)'])
-        );
+        // Both sides are set in the one rule, which may name more holders than these.
+        expect(
+            holdersOf(
+                sheet,
+                '--dk-band-left: calc(var(--dk-column-inset) + var(--dk-app-side)); --dk-band-right: calc(var(--dk-column-inset) + var(--dk-app-side));'
+            )
+        ).toEqual(expect.arrayContaining(['.dk-app', '.dk-tabbar-page > :not(.dk-skip)']));
         // The sheets read the band insets, and none works the column's inset out again.
         const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
         expect(components).not.toMatch(/100% - var\(--dk-column\)/);
@@ -138,7 +143,12 @@ describe('the tokens', () => {
         expect(flat.match(/- var\(--dk-app-column\)/g)).toHaveLength(1);
         expect(components).toMatch(/\.dk-skip \{[^}]*\bleft: var\(--dk-band-left\);/);
         // Every piece that runs the width of the page starts its content at the band insets.
-        expect(holdersOf(components, 'padding-right: var(--dk-band-right);')).toEqual(
+        expect(
+            holdersOf(
+                components,
+                'padding-right: var(--dk-band-right); padding-left: var(--dk-band-left);'
+            )
+        ).toEqual(
             expect.arrayContaining([
                 '.dk-strip',
                 '.dk-footer',

@@ -25,7 +25,7 @@ const ICONS = (() => {
         `<p><a href="#players">${glyph('in-link')} Players</a></p>` +
         `<p style="font-size: 0.5rem">${glyph('small')} A caption</p>` +
         renderToStaticMarkup(icon) +
-        `</main><nav class="dk-tabbar" aria-label="Places"><a href="#home" aria-current="page">${glyph('in-bar')}<span>Home</span></a></nav>`
+        `</main><nav class="dk-tabbar" aria-label="Places"><a href="#home" aria-current="page">${glyph('in-bar')}<span>Home ${glyph('in-label')}</span></a></nav>`
     );
 })();
 
@@ -128,6 +128,9 @@ for (const theme of ['light', 'dark'] as const)
         const bar = await iconLook(page, 'in-bar');
         const alone = await lookOf(page.locator('button[aria-pressed] svg'));
         expect([bar.height, alone.height]).toEqual([24, 20]);
+        // An icon in a tab's label is not the tab's icon, so it keeps its label's size.
+        const inLabel = await iconLook(page, 'in-label');
+        expect(inLabel.height).toBe(inLabel.font);
         for (const look of [bar, alone])
             expect(pixels(look.width), `${theme}, ${String(look.height)}`).toBeCloseTo(
                 look.height / 12,

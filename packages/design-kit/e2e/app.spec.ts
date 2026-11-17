@@ -4,7 +4,6 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import {
     box,
     colorOf,
-    footRoom,
     forceColors,
     lengthOf,
     settle,
@@ -15,7 +14,7 @@ import {
     tabKey,
     writePage,
 } from './page.js';
-import { cutOff } from './spacing.js';
+import { cutOff, footRoom } from './spacing.js';
 import { doubled } from './text-size.js';
 
 /*
@@ -1069,7 +1068,16 @@ test('gives a pictured frame drawn taller than what it holds the room in its bod
         css: '.dk-picture .dk-app { height: 40rem; }',
         body: contentPage(PICTURED_SCREEN),
     });
-    expect(Math.abs(await footRoom(page.locator('.dk-picture .dk-app')))).toBeLessThanOrEqual(1);
+    // Measured to the frame's border, since the bars sit at its very foot.
+    const foot = await page.locator('.dk-picture .dk-app').evaluate((frame) => {
+        const last = frame.lastElementChild?.getBoundingClientRect();
+        if (!last) throw new Error('expected the frame to hold its bars');
+        const box = frame.getBoundingClientRect();
+        return (
+            box.bottom - Number.parseFloat(getComputedStyle(frame).borderBottomWidth) - last.bottom
+        );
+    });
+    expect(Math.abs(foot)).toBeLessThanOrEqual(1);
 });
 
 for (const [width, height] of [

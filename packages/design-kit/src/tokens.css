@@ -336,7 +336,7 @@
         --dk-icon-size: 1.25rem;
     }
 
-    :where(.dk-tabbar .dk-icon) {
+    :where(.dk-tabbar a > svg) {
         --dk-icon-size: 1.5rem;
     }
 

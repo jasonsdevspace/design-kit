@@ -67,3 +67,25 @@ export const lineTops = (locator: Locator): Promise<number[]> =>
         }
         return [...tops].sort((first, second) => first - second);
     });
+
+/**
+ * The room left between the last drawn child of the element the locator finds and its padding edge
+ * at its foot, which is none where what it holds ends at its padding. The child's own margin counts
+ * as room rather than being taken off, since the kit sets a last child's margin to nothing, so a
+ * margin left under it shows. The one the kit keeps there on purpose, for a toast floating over an
+ * app's body, is room a test names.
+ */
+export const footRoom = (locator: Locator): Promise<number> =>
+    locator.evaluate((container) => {
+        const last = container.querySelector(
+            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+        );
+        if (!last) throw new Error('expected a drawn child to measure the foot from');
+        const style = getComputedStyle(container);
+        return (
+            container.getBoundingClientRect().bottom -
+            Number.parseFloat(style.borderBottomWidth) -
+            Number.parseFloat(style.paddingBottom) -
+            last.getBoundingClientRect().bottom
+        );
+    });

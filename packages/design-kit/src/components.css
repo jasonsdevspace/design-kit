@@ -1950,7 +1950,7 @@
      * than its text is stroked at two in twenty four of its own size, the weight of a label beside
      * it, rather than at its text's.
      */
-    :where(:is(.dk-button-icon, .dk-tabbar) .dk-icon) {
+    :where(.dk-button-icon .dk-icon, .dk-tabbar a > .dk-icon) {
         width: var(--dk-icon-size);
         height: var(--dk-icon-size);
         stroke-width: max(1.5px, var(--dk-icon-size) / 12);
@@ -2433,8 +2433,8 @@
 
     :where(.dk-tabbar a > svg) {
         flex: none;
-        width: 1.5rem;
-        height: 1.5rem;
+        width: var(--dk-icon-size);
+        height: var(--dk-icon-size);
     }
 
     @media (hover: hover) {

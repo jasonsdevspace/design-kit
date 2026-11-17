@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { box, footRoom, forceColors, servePage, settle, style } from './page.js';
+import { box, forceColors, servePage, settle, style } from './page.js';
+import { footRoom } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*

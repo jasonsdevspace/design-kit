@@ -241,8 +241,13 @@ export const shadowOf = (page: Page, value: string): Promise<string> =>
 export const lengthOf = (page: Page, value: string): Promise<number> =>
     page.evaluate((length) => {
         const root = getComputedStyle(document.documentElement);
-        for (const [, name = ''] of length.matchAll(/var\((--[\w-]+)/g))
-            if (!root.getPropertyValue(name).trim()) throw new Error(`expected ${name} declared`);
+        for (const [, name = ''] of length.matchAll(/var\((--[\w-]+)/g)) {
+            const raw = root.getPropertyValue(name).trim();
+            if (!raw) throw new Error(`expected ${name} declared on the root`);
+            // A color or a keyword would come back as no length at all, so it is refused.
+            if (!raw.includes('var(') && !CSS.supports('width', raw))
+                throw new Error(`expected ${name} to be a length, got ${raw}`);
+        }
         const probe = document.createElement('div');
         probe.style.marginLeft = length;
         if (!probe.style.marginLeft) throw new Error(`expected a length, got ${length}`);
@@ -251,28 +256,6 @@ export const lengthOf = (page: Page, value: string): Promise<number> =>
         probe.remove();
         return resolved;
     }, value);
-
-/**
- * The room left between the last drawn child of the element the locator finds and its padding edge
- * at its foot, which is none where what it holds ends at its padding. The child's own margin counts
- * as room rather than being taken off, since the kit sets a last child's margin to nothing, so a
- * margin left under it shows. The one the kit keeps there on purpose, for a toast floating over an
- * app's body, is room a test names.
- */
-export const footRoom = (locator: Locator): Promise<number> =>
-    locator.evaluate((container) => {
-        const last = container.querySelector(
-            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
-        );
-        if (!last) throw new Error('expected a drawn child to measure the foot from');
-        const style = getComputedStyle(container);
-        return (
-            container.getBoundingClientRect().bottom -
-            Number.parseFloat(style.borderBottomWidth) -
-            Number.parseFloat(style.paddingBottom) -
-            last.getBoundingClientRect().bottom
-        );
-    });
 
 /**
  * Turns forced colors on for the page, or off again, and fails where the page does not then match

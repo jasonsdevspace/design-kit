@@ -8,6 +8,29 @@ import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
+/**
+ * A copy of the kit's `footRoom` in `e2e/spacing.ts`, since the site reaches the kit only through
+ * its pinned release and the shared examples. The room left between the last drawn child of the
+ * element the locator finds and its padding edge at its foot, which is none where what it holds
+ * ends at its padding. The child's own margin counts as room rather than being taken off, since the
+ * kit sets a last child's margin to nothing, so a margin left under it shows. The one the kit keeps
+ * there on purpose, for a toast floating over an app's body, is room a test names.
+ */
+const footRoom = (locator: Locator): Promise<number> =>
+    locator.evaluate((container) => {
+        const last = container.querySelector(
+            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+        );
+        if (!last) throw new Error('expected a drawn child to measure the foot from');
+        const style = getComputedStyle(container);
+        return (
+            container.getBoundingClientRect().bottom -
+            Number.parseFloat(style.borderBottomWidth) -
+            Number.parseFloat(style.paddingBottom) -
+            last.getBoundingClientRect().bottom
+        );
+    });
+
 /*
  * The built site as a visitor gets it, from the preview the Playwright config serves under the path
  * GitHub Pages gives it: every page with no audit findings in either theme on a phone and a wide
@@ -74,28 +97,6 @@ const sideways = (page: Page) =>
     page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
-
-/**
- * The room left between the last drawn child of the element the locator finds and its padding edge
- * at its foot, measured as the kit's own tests measure it. The child's margin counts as room
- * rather than being taken off, since the kit sets a last child's margin to nothing, so a margin
- * left under it shows. The one the kit keeps there on purpose, for a toast floating over an app's
- * body, is room a test names.
- */
-const footRoom = (locator: Locator) =>
-    locator.evaluate((container) => {
-        const last = container.querySelector(
-            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
-        );
-        if (!last) throw new Error('expected a drawn child to measure the foot from');
-        const style = getComputedStyle(container);
-        return (
-            container.getBoundingClientRect().bottom -
-            Number.parseFloat(style.borderBottomWidth) -
-            Number.parseFloat(style.paddingBottom) -
-            last.getBoundingClientRect().bottom
-        );
-    });
 
 /**
  * Fails where the Close in the corner of what the locator finds runs under its title or into it,
