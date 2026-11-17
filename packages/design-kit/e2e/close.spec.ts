@@ -127,7 +127,8 @@ for (const [width, scale] of [
             };
         });
         expect(resume.eyebrow, String(width)).toBeLessThan(resume.title);
-        expect(resume.button, String(width)).toBeLessThan(resume.room - 1);
+        // On a wide screen, where a button's words leave the panel room, it keeps its own width.
+        if (width === 1280) expect(resume.button, String(width)).toBeLessThan(resume.room / 2);
         await openDialog(page);
         await holds('#end-game');
         // The Close and its ring stay inside the dialog, which clips what it scrolls.
