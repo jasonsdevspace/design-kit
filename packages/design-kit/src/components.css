@@ -2864,9 +2864,15 @@
         font-weight: var(--dk-weight-medium);
     }
 
+    /*
+     * A row's detail wraps pretty where the browser can, which keeps a line of several from ending
+     * on one word alone, as a game's last word under its tile might on a phone. Only the style of
+     * wrapping is set, so a detail in a row the page keeps from wrapping stays on its line.
+     */
     :where(.dk-row-detail) {
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
+        text-wrap-style: pretty;
     }
 
     /*

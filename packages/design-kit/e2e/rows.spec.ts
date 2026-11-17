@@ -28,9 +28,9 @@ import { textSize } from './text-size.js';
  * of tiles draws each link on the ground its page sets, or the surface with none, a gap and an edge
  * apart and inside the column of an app's body, with the row's sign, press and ring, a page's shadow
  * only where it sets one, the larger target with its detail inside it at twice the text size, its
- * edge in forced colors, an empty list not at all, and no audit findings in either theme with its
- * grounds set, and its words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them and on the
- * surface.
+ * edge in forced colors, an empty list not at all, a long detail wrapped pretty, its last line
+ * holding more than one word, and no audit findings in either theme with its grounds set, and its
+ * words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them and on the surface.
  */
 
 const GAMES = [
@@ -499,6 +499,49 @@ test('keeps a tile at the larger target, its detail wrapping inside it at twice 
         expect(detail.x + detail.width).toBeLessThanOrEqual(drawn.x + drawn.width);
     }
     expect(await sideways(page)).toBe(0);
+});
+
+test("wraps a tile's long detail pretty, so its last line holds more than one word", async ({
+    page,
+}) => {
+    await writePage(page, { width: 320, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    // Where a browser cannot wrap pretty yet, the rule is dropped and the detail wraps as before.
+    const pretty = await page.evaluate(() => CSS.supports('text-wrap-style', 'pretty'));
+    test.skip(!pretty, 'This browser does not wrap pretty yet.');
+    const detail = tileList(page).locator('.dk-row-detail').first();
+    const found = await detail.evaluate((element) => {
+        element.textContent =
+            'From two to eight players, each with a hand of cards, scored round by round to the end';
+        /** How many words the detail's last line holds. */
+        const lastLine = () => {
+            const tops: number[] = [];
+            const text = element.firstChild;
+            if (!text) return 0;
+            const words = (text.textContent ?? '').split(' ');
+            let at = 0;
+            for (const word of words) {
+                const range = document.createRange();
+                range.setStart(text, at);
+                range.setEnd(text, at + word.length);
+                tops.push(Math.round(range.getBoundingClientRect().top));
+                at += word.length + 1;
+            }
+            const last = Math.max(...tops);
+            return tops.filter((top) => top === last).length;
+        };
+        // A width at which wrapping word by word leaves one word alone on the last line.
+        element.style.display = 'block';
+        for (let width = 280; width >= 120; width -= 1) {
+            element.style.width = `${String(width)}px`;
+            element.style.textWrapStyle = 'auto';
+            if (lastLine() !== 1) continue;
+            element.style.removeProperty('text-wrap-style');
+            return { width, words: lastLine() };
+        }
+        return null;
+    });
+    expect(found, 'a width that strands one word').not.toBeNull();
+    expect(found?.words, `at ${String(found?.width)}px`).toBeGreaterThan(1);
 });
 
 for (const theme of ['light', 'dark'] as const)
