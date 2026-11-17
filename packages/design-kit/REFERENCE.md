@@ -2432,10 +2432,21 @@ dialog has one Close, in the corner or among its actions, never both, and a dial
 which must be answered, has none.
 
 A panel's Close names what it closes out of sight, such as Close round tips, since a panel has no
-name of its own, and the page's script that hides the panel moves focus so the keyboard keeps its
-place: to the button that opened the panel, where one did, else to what comes after it, or to the
-heading before it where nothing follows. The kit
-draws the Close and leaves what it closes to the page.
+name of its own. A panel a button opens, the button naming it in `aria-controls` and saying in
+`aria-expanded` whether it starts open, is attached by its button:
+
+```js
+import { attachPanel } from '@jasonsdevspace/design-kit/controls';
+
+const setTips = attachPanel(document.querySelector('[aria-controls="round-tips"]'));
+```
+
+Then the button opens and closes the panel, and the Close closes it, marks the button collapsed and
+moves focus to the button, so the keyboard keeps its place, with no script of the page's own. The
+function it returns opens or closes the panel from the page's own code, as `setTips(false)`, and a
+button attached again returns the same one. A panel no button opens is closed by the page's own
+script, which moves focus to what comes after the panel, or to the heading before it where nothing
+follows.
 
 ## Layers and palettes
 

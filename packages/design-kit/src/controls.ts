@@ -913,6 +913,42 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     return open;
 };
 
+const attachedPanels = new WeakMap<HTMLButtonElement, (open: boolean) => void>();
+
+/**
+ * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
+ * close it, and returns the function that opens or closes it from the page's own code. The panel
+ * starts as the button's aria-expanded says. A press of the button turns it the other way, and a
+ * press of the Close closes it, marks the button collapsed and moves focus to the button, so the
+ * keyboard keeps its place rather than being left on what was just hidden. The panel is found by
+ * its id at each press, so one drawn again takes the same button. Attached again, a button returns
+ * the function it returned first.
+ */
+export const attachPanel = (opener: HTMLButtonElement): ((open: boolean) => void) => {
+    const already = attachedPanels.get(opener);
+    if (already) return already;
+    const panel = () => document.getElementById(opener.getAttribute('aria-controls') ?? '');
+    const set = (open: boolean) => {
+        opener.setAttribute('aria-expanded', String(open));
+        const shown = panel();
+        if (shown) shown.hidden = !open;
+    };
+    set(opener.getAttribute('aria-expanded') === 'true');
+    opener.addEventListener('click', () => {
+        set(opener.getAttribute('aria-expanded') !== 'true');
+    });
+    // One listener on the page reaches a Close however often the panel is drawn again.
+    document.addEventListener('click', (event) => {
+        const shown = panel();
+        const close = event.target instanceof Element ? event.target.closest('button') : null;
+        if (!shown || !close || close.closest('.dk-close')?.parentElement !== shown) return;
+        set(false);
+        opener.focus();
+    });
+    attachedPanels.set(opener, set);
+    return set;
+};
+
 /** The pinned cell in the row of what has focus, in this frame, unless focus is in it. */
 const pinnedBeside = (frame: Element, reached: Element): Element | undefined => {
     const pinned = reached.closest('tr')?.firstElementChild;
