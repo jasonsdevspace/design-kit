@@ -13,8 +13,9 @@ const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-b
 
 const BODY = `<main class="dk-page"><h1>Round 3</h1>
 <p><button type="button" class="dk-button" id="tips-button" aria-expanded="false" aria-controls="round-tips">Tips</button>
-<button type="button" class="dk-button" id="rules-button" aria-expanded="true" aria-controls="rules">Rules</button></p>
-<div class="dk-panel" id="round-tips"><h2 class="dk-panel-title">Round tips</h2>${CLOSE}<p>Ana deals first.</p></div>
+<button type="button" class="dk-button" id="rules-button" aria-expanded="true" aria-controls="rules">Rules</button>
+<button type="button" class="dk-button" id="tips-again" aria-expanded="false" aria-controls="round-tips">More tips</button></p>
+<div class="dk-panel" id="round-tips" hidden><h2 class="dk-panel-title">Round tips</h2>${CLOSE}<p><a href="#deal" id="deal">How to deal</a></p></div>
 <div class="dk-panel" id="rules"><h2 class="dk-panel-title">Rules</h2><p>The lowest score wins.</p></div>
 <p><a href="#after">After the panels</a></p>
 </main>`;
@@ -22,7 +23,14 @@ const BODY = `<main class="dk-page"><h1>Round 3</h1>
 const ATTACH = `import { attachPanel } from './controls.js';
 const tips = attachPanel(document.querySelector('#tips-button'));
 attachPanel(document.querySelector('#rules-button'));
+attachPanel(document.querySelector('#tips-again'));
+// A page's own handler that stops a click inside the panel.
+document.querySelector('#round-tips').addEventListener('click', (event) => event.stopPropagation());
 window.setTips = tips;
+window.redrawPanel = () => {
+    const panel = document.querySelector('#round-tips');
+    panel.replaceWith(panel.cloneNode(true));
+};
 window.sameTips = attachPanel(document.querySelector('#tips-button')) === tips;
 window.ready = true;`;
 
@@ -82,9 +90,8 @@ test('closes the panel by its Close by keyboard, with focus back on its button',
     await button(page).focus();
     await page.keyboard.press('Enter');
     await expect(panel(page)).toBeVisible();
-    // The Close is the next stop after the button that opened the panel and the one beside it.
-    await page.keyboard.press(tabKey(browserName));
-    await page.keyboard.press(tabKey(browserName));
+    // The Close is the next stop after the button that opened the panel and the two beside it.
+    for (let stop = 0; stop < 3; stop += 1) await page.keyboard.press(tabKey(browserName));
     await expect(close(page)).toBeFocused();
     await page.keyboard.press('Space');
     await expect(panel(page)).toBeHidden();
@@ -106,4 +113,56 @@ test("opens and closes the panel from the page's code, and returns one function 
     await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
     await button(page).click();
     await expect(panel(page)).toBeHidden();
+});
+
+test('keeps every button that names the panel in step, and hands focus back to the one that opened it', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#tips-again').click();
+    await expect(panel(page)).toBeVisible();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#tips-again')).toHaveAttribute('aria-expanded', 'true');
+    await close(page).click();
+    await expect(page.locator('#tips-again')).toBeFocused();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'false');
+});
+
+test("closes a panel drawn again by its Close, past a page's handler that stops the press", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        (window as unknown as { redrawPanel: () => void }).redrawPanel();
+    });
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test("moves focus out of the panel when the page's code closes it with focus inside", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#deal').focus();
+    await page.evaluate(() => {
+        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).toBeFocused();
+});
+
+test('moves focus to what follows the panel where no button that names it is left', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.evaluate(() => {
+        for (const id of ['#tips-button', '#tips-again']) document.querySelector(id)?.remove();
+    });
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
+    await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
 });

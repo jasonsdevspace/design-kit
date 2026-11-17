@@ -2441,12 +2441,16 @@ import { attachPanel } from '@jasonsdevspace/design-kit/controls';
 const setTips = attachPanel(document.querySelector('[aria-controls="round-tips"]'));
 ```
 
-Then the button opens and closes the panel, and the Close closes it, marks the button collapsed and
-moves focus to the button, so the keyboard keeps its place, with no script of the page's own. The
-function it returns opens or closes the panel from the page's own code, as `setTips(false)`, and a
-button attached again returns the same one. A panel no button opens is closed by the page's own
-script, which moves focus to what comes after the panel, or to the heading before it where nothing
-follows.
+Then the button opens and closes the panel, every attached button that names it follows, and the
+Close closes it, marks the buttons collapsed and moves focus to the button that opened it, so the
+keyboard keeps its place, with no script of the page's own. A panel that starts closed carries
+`hidden` in its markup, so it never shows before the script runs. The function it returns, of the
+type `SetPanel`, opens or closes the panel from the page's own code, as `setTips(false)`, and moves
+focus to the button the same way where focus was in the panel, and a button attached again returns
+the same one. The button and the panel are found at each press, so a panel drawn again keeps
+working, and one listener on the page serves every panel. Where no attached button is left, focus
+goes to what comes after the panel, or to the heading before it where nothing follows. A panel no
+button opens is closed by the page's own script, which moves focus the same way.
 
 ## Layers and palettes
 
