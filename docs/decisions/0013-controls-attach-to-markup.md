@@ -127,8 +127,8 @@ bytes, so the rule sets the sheets at 10.75 KB.
 
 For 0.8.4 the controls were measured with `attachPanel` in place, which a page that opens a panel
 with a button attaches so its corner Close needs no script of the page's own. Every function sent
-together weighs 6,799 bytes, past the 6.25 KB the budget held, and the median a function adds is
-now 613 bytes, so the rule sets the controls at 7.25 KB.
+together weighs 6,802 bytes, past the 6.25 KB the budget held, and the median a function adds is
+now 616 bytes, so the rule sets the controls at 7.25 KB.
 
 ## How it is tested
 
@@ -161,8 +161,9 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   button, every button that names it in step, a panel drawn again closed past a handler that stops
   the press, focus moved out of a panel the page's code closes, to what follows it or the main
   content, a Close in later content that reuses its id ignored, a button with no `aria-controls`
-  refused, the same returned for a button attached twice, and the listener taken off once every
-  button is let go.
+  refused, the same returned for a button attached twice, a stale detach leaving a button attached
+  again alone, focus back on the button whose `set` opened the panel, and the listener taken off
+  only once every button is let go.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

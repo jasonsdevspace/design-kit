@@ -2499,7 +2499,8 @@ focus was in it, so the keyboard keeps its place, with no script of the page's o
 starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
 returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes the
 panel from the page's own code, as `tips.set(false)`, and moves focus to the button the same way,
-and `detach`, which lets the button go, as a page does when it takes the button away. A button
+and `detach`, which lets the button go, as a page does when it takes the button away, after which
+`set` does nothing. A button
 attached again returns the same, and one with no `aria-controls` is refused with an error that
 says so. The button and the panel are found at each press, so a panel drawn again keeps working,
 and one listener on the page serves every panel, taken off once every button is let go. Where no

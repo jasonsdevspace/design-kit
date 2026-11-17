@@ -936,11 +936,11 @@ const openersOf = (id: string): HTMLButtonElement[] =>
         (button) => attachedPanels.has(button) && panelIdOf(button) === id
     );
 
-/** How many attached buttons name each panel, counted whether or not they are still in the page. */
-const buttonsNaming = new Map<string, number>();
-
-/** The button whose press opened each panel that is open, let go as the panel closes. */
+/** The button that opened each panel that is open, let go as the panel closes. */
 const lastOpener = new Map<string, HTMLButtonElement>();
+
+/** How many buttons are attached and not let go, so the one listener comes off with the last. */
+let attachedCount = 0;
 
 /**
  * Shows or hides a panel and marks every attached button that names it to match. Where focus was
@@ -953,6 +953,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
+    if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
     const held = panel.contains(document.activeElement);
@@ -968,8 +969,9 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
 
 /**
  * One listener for every attached panel, early in the press, so a page's own handler that stops a
- * click inside the panel does not keep its Close from closing it. A Close acts only in the panel
- * its id finds, so content that reuses the id cannot close or mark the real one.
+ * click inside the panel does not keep its Close from closing it. A Close closes a panel an
+ * attached button opened or names, and only the panel its id finds, so content that reuses the id
+ * after it cannot close or mark the real one.
  */
 const onPanelPress = (event: MouseEvent): void => {
     const target = event.target instanceof Element ? event.target : null;
@@ -977,51 +979,47 @@ const onPanelPress = (event: MouseEvent): void => {
     if (!button) return;
     if (button instanceof HTMLButtonElement && attachedPanels.has(button)) {
         const id = panelIdOf(button);
-        const open = button.getAttribute('aria-expanded') !== 'true';
-        if (open) lastOpener.set(id, button);
-        showPanel(id, open, button);
+        showPanel(id, button.getAttribute('aria-expanded') !== 'true', button);
         return;
     }
     const panel = button.closest('.dk-close')?.parentElement;
-    if (!panel?.id || !buttonsNaming.has(panel.id) || document.getElementById(panel.id) !== panel)
-        return;
-    showPanel(panel.id, false, lastOpener.get(panel.id));
+    const id = panel?.id;
+    if (!id || document.getElementById(id) !== panel) return;
+    if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
 };
 
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
- * which lets the button go. The panel starts as the button's aria-expanded says, and the markup
- * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
- * the button turns it the other way, and every attached button that names the panel follows. A
- * press of the Close, or a close from the page's code while focus is in the panel, moves focus to
- * the button that opened it. The button and the panel are found at each press, so either drawn
- * again keeps working once a new button is attached. One listener on the page serves every panel,
- * the one control that listens on the document, and it comes off once every button is let go. A
- * panel's id must be the only one of its kind on the page. Attached again, a button returns what
- * it returned first.
+ * which lets the button go, after which neither does anything. The panel starts as the button's
+ * aria-expanded says, and the markup writes hidden on a panel that starts closed, so it never
+ * shows before the script runs. A press of the button turns it the other way, and every attached
+ * button that names the panel follows. A press of the Close, or a close from the page's code while
+ * focus is in the panel, moves focus to the button that opened it. The button and the panel are
+ * found at each press, so either drawn again keeps working once a new button is attached. One
+ * listener on the page serves every panel, the one control that listens on the document, and it
+ * comes off once every button is let go. A panel's id must be the only one of its kind on the
+ * page. Attached again, a button returns what it returned first.
  */
 export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const already = attachedPanels.get(opener);
     if (already) return already;
-    const id = panelIdOf(opener);
-    if (!id) throw new Error("a panel's button needs aria-controls");
-    const set: SetPanel = (open) => {
-        showPanel(id, open, opener);
+    if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
+    const attached = () => attachedPanels.get(opener) === control;
+    const control: PanelControl = {
+        set: (open) => {
+            if (attached()) showPanel(panelIdOf(opener), open, opener);
+        },
+        detach: () => {
+            if (!attached()) return;
+            attachedPanels.delete(opener);
+            for (const [id, button] of lastOpener) if (button === opener) lastOpener.delete(id);
+            if (!--attachedCount) document.removeEventListener('click', onPanelPress, true);
+        },
     };
-    const detach = () => {
-        if (!attachedPanels.delete(opener)) return;
-        const left = (buttonsNaming.get(id) ?? 1) - 1;
-        if (left) buttonsNaming.set(id, left);
-        else buttonsNaming.delete(id);
-        if (!left || lastOpener.get(id) === opener) lastOpener.delete(id);
-        if (!buttonsNaming.size) document.removeEventListener('click', onPanelPress, true);
-    };
-    const control = { set, detach };
     attachedPanels.set(opener, control);
-    if (!buttonsNaming.size) document.addEventListener('click', onPanelPress, true);
-    buttonsNaming.set(id, (buttonsNaming.get(id) ?? 0) + 1);
-    set(opener.getAttribute('aria-expanded') === 'true');
+    if (!attachedCount++) document.addEventListener('click', onPanelPress, true);
+    control.set(opener.getAttribute('aria-expanded') === 'true');
     return control;
 };
 

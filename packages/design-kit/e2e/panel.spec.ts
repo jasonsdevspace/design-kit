@@ -50,6 +50,7 @@ window.redrawPanel = () => {
     panel.replaceWith(drawn);
 };
 window.sameTips = attachPanel(document.querySelector('#tips-button')) === tips;
+window.attach = (selector) => attachPanel(document.querySelector(selector));
 try {
     attachPanel(document.querySelector('#no-panel'));
 } catch (error) {
@@ -249,21 +250,70 @@ test('leaves the panel alone when a Close in later content that reuses its id is
     await expect(page.locator('.dk-panel#round-tips')).toBeVisible();
 });
 
-test('lets a button go when detached, and takes the listener off once every button is let go', async ({
+test('lets a button go when detached, and takes the listener off only once every button is let go', async ({
     page,
 }) => {
     await open(page);
     await button(page).click();
-    await page.evaluate(() => {
-        const { panels } = window as unknown as { panels: { detach: () => void }[] };
-        for (const control of panels) control.detach();
-    });
-    expect(
-        await page.evaluate(() => (window as unknown as { listenersOff: number }).listenersOff)
-    ).toBe(1);
+    const detach = (indexes: readonly number[]) =>
+        page.evaluate((chosen) => {
+            const { panels } = window as unknown as { panels: { detach: () => void }[] };
+            for (const index of chosen) panels[index]?.detach();
+            return (window as unknown as { listenersOff: number }).listenersOff;
+        }, indexes);
+    // The tips' two buttons go, and the rules' button still works on the listener.
+    expect(await detach([0, 2])).toBe(0);
     await close(page).click();
     await expect(panel(page)).toBeVisible();
     await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
     await page.locator('#rules-button').click();
-    await expect(page.locator('#rules')).toBeVisible();
+    await expect(page.locator('#rules')).toBeHidden();
+    expect(await detach([1, 3])).toBe(1);
+    await page.locator('#rules-button').click();
+    await expect(page.locator('#rules')).toBeHidden();
+});
+
+test('leaves a button attached again alone when what was returned before is detached', async ({
+    page,
+}) => {
+    await open(page);
+    const same = await page.evaluate(() => {
+        const { panels, attach } = window as unknown as {
+            panels: { detach: () => void }[];
+            attach: (selector: string) => unknown;
+        };
+        const before = panels[0];
+        before?.detach();
+        const again = attach('#tips-button');
+        before?.detach();
+        return again !== before;
+    });
+    expect(same).toBe(true);
+    await button(page).click();
+    await expect(panel(page)).toBeVisible();
+});
+
+test('hands focus back to the button whose set opened the panel', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        const { panels } = window as unknown as { panels: { set: (open: boolean) => void }[] };
+        panels[2]?.set(true);
+    });
+    await expect(panel(page)).toBeVisible();
+    await page.locator('#deal').focus();
+    await close(page).click();
+    await expect(page.locator('#tips-again')).toBeFocused();
+});
+
+test('follows a button whose aria-controls the page changes to another panel', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        document.querySelector('#notes-button')?.setAttribute('aria-controls', 'round-tips');
+        const { panels } = window as unknown as { panels: { set: (open: boolean) => void }[] };
+        panels[3]?.set(true);
+    });
+    await expect(panel(page)).toBeVisible();
+    await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+    await close(page).click();
+    await expect(panel(page)).toBeHidden();
 });
