@@ -9,17 +9,10 @@ import { describe, expect, it } from 'vitest';
 describe('the controls', () => {
     it('load in plain Node without reaching for the browser', async () => {
         const controls = await import('./controls.js');
-        expect(Object.keys(controls).sort()).toEqual([
-            'attachCopyButton',
-            'attachDialog',
-            'attachPanel',
-            'attachStatus',
-            'attachStepper',
-            'attachTable',
-            'attachThemeSwitch',
-            'attachToast',
-            'chooseTheme',
-        ]);
+        // Only functions, which run nothing until a page calls one. Which functions is held in
+        // smoke/exports.mjs, which the package's test compares with this module.
+        expect(Object.keys(controls).length).toBeGreaterThan(0);
+        for (const value of Object.values(controls)) expect(typeof value).toBe('function');
     });
 
     it('returns the function a status line was first attached with when it is attached again', async () => {

@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import pkg from '../package.json' with { type: 'json' };
+import * as controls from '../src/controls.js';
 import * as react from '../src/react.js';
 import * as theme from '../src/theme.js';
 import * as vite from '../src/vite.js';
@@ -50,6 +51,25 @@ describe('the published package', () => {
         expect(Object.keys(vite).sort()).toEqual(
             [...VALUE_EXPORTS['@jasonsdevspace/design-kit/vite']].sort()
         );
+        expect(Object.keys(controls).sort()).toEqual(
+            [...VALUE_EXPORTS['@jasonsdevspace/design-kit/controls']].sort()
+        );
+    });
+
+    it("names every value the theme, controls and Vite modules export in the README's row for each", () => {
+        const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+        // The components' row says what they are rather than naming each, as the reference does.
+        const listed = Object.entries(VALUE_EXPORTS).filter(
+            ([module]) => !module.endsWith('/react')
+        );
+        for (const [module, names] of listed) {
+            const row = readme.split('\n').find((line) => line.startsWith(`| \`${module}\``));
+            expect(row, module).toBeDefined();
+            const missing = names.filter(
+                (name) => !row?.includes(`\`${name}\``) && !row?.includes(`\`${name}()\``)
+            );
+            expect(missing, module).toEqual([]);
+        }
     });
 
     it('exports what the smoke test loads, and its own manifest, and nothing else', () => {

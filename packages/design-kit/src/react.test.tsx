@@ -382,6 +382,9 @@ describe('the button', () => {
         // @ts-expect-error A text button is not tall.
         const raised = <Button text tall children="Go" />;
         expect(renderToStaticMarkup(raised)).toBeTruthy();
+        // @ts-expect-error A text button is not an icon button.
+        const pictured = <Button text icon children="Go" />;
+        expect(renderToStaticMarkup(pictured)).toBeTruthy();
         // @ts-expect-error A quiet button is a text button.
         const alone = <Button quiet />;
         expect(renderToStaticMarkup(alone)).toBeTruthy();

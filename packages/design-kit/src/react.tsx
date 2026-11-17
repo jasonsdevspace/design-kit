@@ -217,10 +217,10 @@ type NativeButton = Omit<
  * A button's own props: the accent for the one action a view leads with, `large` for a bigger
  * target, `tall` for the larger target what a screen is for takes, `icon` for a face that is an
  * icon alone, `text` for a button drawn as a link, `quiet` beside it for a Close, `pressed` for a
- * toggle that stands alone, and `off`,
- * beside a `<button>`'s own, its `ref` among them, which holds the button drawn for a page that
- * moves focus to it. The accent is never a toggle and never a text button, a text button is never
- * a toggle, never large and never tall, and a quiet one is never off, so none of those go together.
+ * toggle that stands alone, and `off`, beside a `<button>`'s own, its `ref` among them, which
+ * holds the button drawn for a page that moves focus to it. The accent is never a toggle and never
+ * a text button, a text button is never a toggle, never large, never tall and never an icon, and a
+ * quiet one is never off, so none of those go together.
  */
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */

@@ -12,7 +12,7 @@ import {
     tabKey,
     writePage,
 } from './page.js';
-import { textSize } from './text-size.js';
+import { doubled } from './text-size.js';
 
 /*
  * A tab bar as a browser draws it, in Chromium and in WebKit, since a bar stuck to the bottom of
@@ -27,22 +27,6 @@ import { textSize } from './text-size.js';
 
 const SAFE_BOTTOM = 34;
 const SAFE_CSS = `:root { --dk-safe-bottom: ${String(SAFE_BOTTOM)}px; }`;
-
-/** The visitor's text size doubled, by the browser's own setting where a media query must read it. */
-const doubled = async (
-    page: Page,
-    browserName: string,
-    { setting = false }: { readonly setting?: boolean } = {}
-): Promise<void> => {
-    if (browserName === 'chromium') {
-        await textSize(page, 2);
-        return;
-    }
-    // WebKit takes a root size, which no media query reads, so a test of what one does at twice
-    // the text size runs in Chromium alone.
-    test.skip(setting, 'only the browser setting reaches a media query, set through Chromium');
-    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
-};
 
 const ICON =
     '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>';

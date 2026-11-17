@@ -22,3 +22,28 @@ export const textSize = async (page: Page, scale: number): Promise<void> => {
     const size = await page.evaluate(() => getComputedStyle(document.documentElement).fontSize);
     expect(size, 'the text size the browser draws').toBe(`${String(Math.round(16 * scale))}px`);
 };
+
+/**
+ * The visitor's text size doubled, once the page is drawn. Chromium takes the browser's own
+ * setting, which every rem is drawn from, a media query's included. Another engine takes a root
+ * size, which no media query reads, so a test of what a media query does at twice the text size
+ * asks for the setting and runs in Chromium alone, and the rest run in every engine. Writing the
+ * page replaces the root size, so the page must be drawn first, the size is read back, and a test
+ * that writes the page again doubles it again.
+ */
+export const doubled = async (
+    page: Page,
+    browserName: string,
+    { setting = false }: { readonly setting?: boolean } = {}
+): Promise<void> => {
+    const drawn = await page.evaluate(() => document.body.childElementCount > 0);
+    expect(drawn, 'the page is drawn before its text is doubled').toBe(true);
+    if (browserName === 'chromium') {
+        await textSize(page, 2);
+        return;
+    }
+    test.skip(setting, 'only the browser setting reaches a media query, set through Chromium');
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+    const size = await page.evaluate(() => getComputedStyle(document.documentElement).fontSize);
+    expect(size, 'the text size the page draws').toBe('32px');
+};
