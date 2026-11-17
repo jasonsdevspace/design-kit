@@ -18,47 +18,58 @@ size audit's rule.
 - **Upgrading.** A frame or a page that ends in a tab bar pictured with `dk-picture` is drawn as
   tall as what it holds, where it was the screen's height, so a page that set only an edge or
   corners on one and wants it taller sets a least height of its own. A page's own rule for a
-  picture's height or its tab bar's place still holds, and can go.
+  picture's height or its tab bar's place still holds, and can go. A page's own rule that reads
+  `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom` or `--dk-safe-left` inside a picture now
+  reads zero there.
 - **Tokens.** `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom` and `--dk-safe-left` are zero
   on an element with `dk-picture` and inside it, since a picture touches no edge of the visitor's
-  screen.
+  screen. `--dk-dialog-inset` is new, how far a dialog's content stands in: `--dk-space-5-held`, and
+  `--dk-space-4-held` at 48rem wide or less and in a dialog on a page with an app's frame or a tab
+  bar's page. A dialog pads by it, as it did by those steps before, and its corner Close is placed
+  from it.
 - **Sheets.** A tile inside a panel on a screen 48rem wide or less stands its words in
   `--dk-space-4-held`, 1rem and no more than 16px at any text size, so the panel's padding and its
   own leave its words room on a phone at twice the text size, where they broke inside themselves. A
   panel and a tile on the page keep the card's inset, and at the default text size nothing moves.
-  `dk-close` right after a dialog's or a panel's title places a quiet Close in the top corner,
-  centered on the title's first line, without laying out what else the dialog or panel holds, so an
-  eyebrow stays above the title and a button keeps its own width. What comes before the Close keeps
-  free the room it takes, so the title wraps beside it, and the title is never shorter than keeps
-  the Close's ring clear of what follows. The Close is the target at every width and text size, and
-  a dialog's `dk-close` is a `form method="dialog"`, so it closes the dialog with no script. A frame
-  or a page that ends in a tab bar that carries `dk-picture` or sits inside an element with it is as
-  tall as what it holds, where it was the screen's height, and its tab bar sits at its foot in its
-  place rather than held to the visitor's screen or raised over the page, so a page draws a picture
-  of a screen with no rule of its own for its size.
-- **Controls.** `attachDialog` moves focus off a corner Close as the dialog opens, to the first
-  answer or the title, where nothing in the dialog asks for focus, as when React's `autoFocus`
-  writes no attribute.
-- **Docs.** The reference's panels say a tile in a panel holds its inset on a phone. Its dialog
-  shows a Close in the corner of a dialog and a panel: it comes after the title, never takes focus
-  as a dialog opens, one Close to a dialog and none in one that must be answered, and a panel's
-  names what it closes. Its app frame and tab bar say a pictured frame or page is as tall as what it
-  holds, its bar in its place, and the page draws its edge, corners and room. Decision record 13
-  records the sheets' new budget.
+  `dk-close` right after a dialog's or a panel's title places a quiet Close in the top corner
+  without laying out what else the dialog or panel holds, so an eyebrow stays above the title and a
+  button keeps its own width. Where the title comes first the Close is centered on its first line,
+  wherever the padding leaves it room, and it never comes nearer the edge than its own ring. What
+  comes before the Close keeps free the room it takes, so the title wraps beside it, and the title
+  is never shorter than keeps the Close's ring clear of what follows. The Close is the target at
+  every width and text size, and a dialog's `dk-close` is a `form method="dialog"`, so it closes the
+  dialog with no script. A frame or a page that ends in a tab bar that carries `dk-picture` or sits
+  inside an element with it is as tall as what it holds, where it was the screen's height, and its
+  tab bar sits at its foot in its place rather than held to the visitor's screen or raised over the
+  page, so a page draws a picture of a screen with no rule of its own for its size.
+- **Controls.** Where a dialog would open with focus on its corner Close, as when React's
+  `autoFocus` writes no attribute, `attachDialog` moves focus to the first field or answer after the
+  Close that takes focus, a radio group's checked radio where it has one. It passes over one that
+  cannot, such as a disabled answer, and a link or button among the dialog's words, so a long dialog
+  opens at its top. Where nothing can, the title takes focus, and a title the page gave no place in
+  the order gives back the one it borrows as focus leaves it.
+- **Docs.** The reference's tokens name `--dk-dialog-inset`, and its panels say a tile in a panel
+  holds its inset on a phone. Its dialog shows a Close in the corner of a dialog and a panel: it
+  comes after the title, never takes focus as a dialog opens, one Close to a dialog and none in one
+  that must be answered, and a panel's names what it closes. Its app frame and tab bar say a
+  pictured frame or page is as tall as what it holds, its bar in its place, and the page draws its
+  edge, corners and room. Decision record 13 records the sheets' new budget.
 - **Tests.** A browser test draws tiles in a plain and a raised panel on a content page at 320 wide
   and twice the text size, finds no word drawn across two lines or cut off, and holds a lone panel
   and a tile on the page to the card's inset. Browser tests set a Close in the corner of a dialog
-  and a panel at 320 and 1280 wide, at the default and twice the text size, and hold it to the
-  target, clear of the title, which wraps, its ring inside the dialog and clear of what follows, an
-  eyebrow above the title and a button at its own width, a dialog opening on its first answer and
-  closing by the Close with no script, focus moved off the Close with no `autofocus` written, a
-  hidden panel hidden, forced colors and the audit, in Chromium and WebKit. A browser test draws a
-  pictured frame with its dock and tab row and a pictured page that ends in a tab bar on a page with
-  safe areas, on a phone and a wide screen, and holds each to what it holds, its tab bar to its foot
-  in its place and none of the room a phone keeps at its edges. The app frame's tests read a shown
-  toast once it has risen into place, through one helper the specs share, so a browser's timing no
-  longer fails them. The sheets' budget rises to 10.75 KB, measured with every change in place at
-  10,695 bytes, and 193 bytes the median a piece costs.
+  and a panel at 320 and 1280 wide, and hold it to the target, clear of the title, which wraps, its
+  ring inside the dialog and clear of what follows, centered on the title's first line, an eyebrow
+  above the title and a button at its own width, a hidden panel hidden, forced colors and the audit,
+  in Chromium and WebKit, and again at twice the text size in Chromium. A dialog on a page with an
+  app keeps a phone's padding at 1280 wide. Dialogs open with focus on their first answer, a field
+  before the answers, a group's checked radio, or the title where the answer is disabled or there is
+  none, with no `autofocus` written, a borrowed place in the order given back, and a Close that
+  closes with no script. A browser test draws a pictured frame with its dock and tab row and a
+  pictured page that ends in a tab bar on a page with safe areas, on a phone and a wide screen, and
+  holds each to what it holds, its tab bar to its foot in its place and none of the room a phone
+  keeps at its edges. The specs wait for a piece's entrance through one helper they share, so the
+  app frame's tests read a shown toast once it has risen into place and a browser's timing no longer
+  fails them.
 
 ## 0.8.1
 
