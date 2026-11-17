@@ -1,13 +1,13 @@
 {
     "recorded": {
         "date": "2026-11-17",
-        "commit": "26dd384",
+        "commit": "eac14af",
         "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.8.4",
-    "size": 78460,
+    "version": "0.8.5",
+    "size": 80461,
     "sheets": 10918,
     "files": [
         {
@@ -24,13 +24,13 @@
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 11144,
-            "gzip": 3896
+            "size": 11485,
+            "gzip": 4023
         },
         {
             "path": "dist/controls.js",
-            "size": 47675,
-            "gzip": 13628
+            "size": 54576,
+            "gzip": 15507
         },
         {
             "path": "dist/react.d.ts",
@@ -39,8 +39,8 @@
         },
         {
             "path": "dist/react.js",
-            "size": 20537,
-            "gzip": 6126
+            "size": 20563,
+            "gzip": 6140
         },
         {
             "path": "dist/theme.d.ts",
@@ -268,34 +268,34 @@
     ],
     "functions": [
         {
+            "name": "attachPanel",
+            "alone": 2092,
+            "added": 1412
+        },
+        {
             "name": "attachToast",
-            "alone": 1691,
-            "added": 1027
+            "alone": 1739,
+            "added": 1053
         },
         {
             "name": "attachStepper",
             "alone": 1485,
-            "added": 967
+            "added": 968
         },
         {
             "name": "attachDialog",
-            "alone": 1252,
-            "added": 712
-        },
-        {
-            "name": "attachPanel",
-            "alone": 1245,
-            "added": 692
+            "alone": 1267,
+            "added": 689
         },
         {
             "name": "attachThemeSwitch",
             "alone": 1781,
-            "added": 668
+            "added": 657
         },
         {
             "name": "attachCopyButton",
             "alone": 1005,
-            "added": 597
+            "added": 602
         },
         {
             "name": "attachTable",
@@ -305,7 +305,7 @@
         {
             "name": "attachStatus",
             "alone": 332,
-            "added": 62
+            "added": 63
         },
         {
             "name": "chooseTheme",
@@ -315,9 +315,9 @@
     ],
     "since": {
         "date": "2026-11-17",
-        "commit": "881cba2",
-        "version": "0.8.3",
-        "size": 74933,
-        "sheets": 10642
+        "commit": "26dd384",
+        "version": "0.8.4",
+        "size": 78460,
+        "sheets": 10918
     }
 }
