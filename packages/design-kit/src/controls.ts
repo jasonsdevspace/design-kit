@@ -950,21 +950,22 @@ const startedPanels = new Set<string>();
 let attachedCount = 0;
 
 /**
- * Shows or hides a panel and marks every attached button that names it to match. Where focus was
- * in the panel as it closes, it goes to the button given, the one that opened the panel, else to
- * the first attached button that names it and takes focus, else to the first thing after the
- * panel that takes it, and where nothing does, to the body of the app's frame or the page's main
- * content, as the toast's does, so the keyboard keeps its place rather than being left on what was
- * just hidden.
+ * Shows or hides a panel and marks every attached button that names it to match. Where focus was in
+ * the panel as it closes, or the panel's own Close was pressed, which a browser that does not focus
+ * a pressed button leaves focus off, it goes to the button given, the one that opened the panel,
+ * else to the first attached button that names it and takes focus, else to the first thing after
+ * the panel that takes it, and where nothing does, to the body of the app's frame or the page's
+ * main content, as the toast's does, so the keyboard keeps its place rather than being left on what
+ * was just hidden.
  */
-const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
+const showPanel = (id: string, open: boolean, by?: HTMLButtonElement, closed = false): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    const held = panel.contains(document.activeElement);
+    const held = closed || panel.contains(document.activeElement);
     panel.hidden = !open;
     if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
@@ -993,7 +994,7 @@ const onPanelPress = (event: MouseEvent): void => {
     const panel = button.closest('.dk-close')?.parentElement;
     const id = panel?.id;
     if (!id || document.getElementById(id) !== panel) return;
-    if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
+    if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id), true);
 };
 
 /**

@@ -15,12 +15,13 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
  * The specs that run in WebKit as well: an app's frame, its tab bar, its toast, the dialog, the
- * stepper, a table's frame, an icon and the rows and tiles, where what stays put, a height that
- * follows the browser's own bars, the native dialog, a number field's inner room, what a frame
- * scrolls to, how an svg's stroke is drawn and how a phone's list of rows is pressed and reached
- * by the keyboard are what Safari draws or does its own way.
+ * stepper, a table's frame, an icon, the rows and tiles and a panel, where what stays put, a
+ * height that follows the browser's own bars, the native dialog, a number field's inner room, what
+ * a frame scrolls to, how an svg's stroke is drawn, how a phone's list of rows is pressed and
+ * reached by the keyboard and where focus is after a button is pressed by pointer, which Safari
+ * leaves off the button, are what Safari draws or does its own way.
  */
-const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows}.spec.{ts,tsx}';
+const WEBKIT = '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows,panel}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons

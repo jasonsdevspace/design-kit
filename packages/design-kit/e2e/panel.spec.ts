@@ -406,3 +406,16 @@ test('marks a button attached later as the panel is, without taking the place of
     await close(page).click();
     await expect(button(page)).toBeFocused();
 });
+
+test("leaves focus where it is when the page's code closes the panel with focus outside it", async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    await page.locator('#after-panels').focus();
+    await page.evaluate(() => {
+        (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await expect(page.locator('#after-panels')).toBeFocused();
+});

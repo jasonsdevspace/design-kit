@@ -2511,24 +2511,24 @@ const tips = attachPanel(document.querySelector('[aria-controls="round-tips"]'))
 ```
 
 Then the button opens and closes the panel, every attached button that names it follows, and the
-Close closes it, marks the buttons collapsed and moves focus to the button that opened it where
-focus was in the panel, so the keyboard keeps its place, with no script of the page's own. A panel
-that starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
-returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes the
-panel from the page's own code, as `tips.set(false)`, and moves focus to the button that opened it
-the same way, and `detach`, which lets the button go, as a page does when it takes the button away,
-after which `set` does nothing. The first button attached for a panel starts it as its markup says,
-and a button attached for it later, one drawn again among them, marks itself as the panel is and
-leaves the panel alone. A press of a button that is off, with `aria-disabled="true"`, does nothing,
-and focus never goes back to one. A button attached again returns the same, and one with no
-`aria-controls` is refused with an error that says so. The button and the panel are found at each
-press, so a panel drawn again keeps working, and one listener on the page serves every panel, taken
-off once every button is let go. Where no attached button that names the panel takes focus, focus
-goes to the first thing after the panel that takes it, else to the app frame's body or the page's
-main content, as a toast's does. A panel's id must be the only one on the page, so a page that shows
-markup its visitors wrote prefixes or strips the ids in it. A panel no button opens is closed by the
-page's own script, which moves focus to what comes after the panel, or to the heading before it
-where nothing follows.
+Close closes it, marks the buttons collapsed and moves focus to the button that opened it, whether
+it was pressed by key, pointer or touch, so the keyboard and a screen reader keep their place, with
+no script of the page's own. A panel that starts closed carries `hidden` in its markup, so it never
+shows before the script runs. What it returns, of the type `PanelControl`, holds `set`, of the type
+`SetPanel`, which opens or closes the panel from the page's own code, as `tips.set(false)`, and
+moves focus to the button that opened it the same way, and `detach`, which lets the button go, as a
+page does when it takes the button away, after which `set` does nothing. The first button attached
+for a panel starts it as its markup says, and a button attached for it later, one drawn again among
+them, marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
+`aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
+returns the same, and one with no `aria-controls` is refused with an error that says so. The button
+and the panel are found at each press, so a panel drawn again keeps working, and one listener on the
+page serves every panel, taken off once every button is let go. Where no attached button that names
+the panel takes focus, focus goes to the first thing after the panel that takes it, else to the app
+frame's body or the page's main content, as a toast's does. A panel's id must be the only one on the
+page, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A panel no
+button opens is closed by the page's own script, which moves focus to what comes after the panel, or
+to the heading before it where nothing follows.
 
 ## Layers and palettes
 
