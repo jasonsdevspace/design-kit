@@ -97,14 +97,17 @@ const clipboardOf = async (opened: Page, browserName: string): Promise<string> =
     const field = await opened.evaluateHandle(() =>
         document.body.appendChild(document.createElement('textarea'))
     );
-    await field.focus();
-    await opened.keyboard.press('ControlOrMeta+V');
-    const pasted = await field.evaluate((element) => {
-        element.remove();
-        return element.value;
-    });
-    await field.dispose();
-    return pasted;
+    try {
+        await field.focus();
+        await opened.keyboard.press('ControlOrMeta+V');
+        return await field.evaluate((element) => element.value);
+    } finally {
+        // Taken away however the paste went, so the test goes on with the page as it left it.
+        await field.evaluate((element) => {
+            element.remove();
+        });
+        await field.dispose();
+    }
 };
 
 test('keeps both controls hidden where no script attaches them', async ({ browser }) => {
@@ -598,17 +601,17 @@ test('closes the choices where they are when focus leaves the switch, and keeps 
 }) => {
     const context = await browser.newContext();
     const { opened, button, radio } = await collapsed(context);
-    const tab = tabKey(browserName);
+    const forward = tabKey(browserName);
     await button.click();
     await expect(radio('System')).toBeFocused();
     // Back to the button, which is the switch's own, so nothing closes.
-    await opened.keyboard.press(`Shift+${tab}`);
+    await opened.keyboard.press(`Shift+${forward}`);
     await expect(button).toBeFocused();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    await opened.keyboard.press(tab);
+    await opened.keyboard.press(forward);
     await expect(radio('System')).toBeFocused();
     // Out of the switch, and the choices close without pulling focus back.
-    await opened.keyboard.press(tab);
+    await opened.keyboard.press(forward);
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).not.toBeFocused();
     await expect(radio('System')).toBeHidden();
@@ -617,6 +620,7 @@ test('closes the choices where they are when focus leaves the switch, and keeps 
 
 test('moves no focus on a press on the button or a choice, so the choices stay until the click', async ({
     browser,
+    browserName,
 }) => {
     // A browser that gives a pressed button no focus blurs the open choices as the press begins,
     // which would close them for the click to open again, so the press moves no focus at all.
@@ -650,8 +654,8 @@ test('moves no focus on a press on the button or a choice, so the choices stay u
     await opened.mouse.down({ button: 'right' });
     await opened.mouse.up({ button: 'right' });
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    await opened.keyboard.press('Tab');
-    await opened.keyboard.press('Tab');
+    await opened.keyboard.press(tabKey(browserName));
+    await opened.keyboard.press(tabKey(browserName));
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await context.close();
 });
@@ -772,11 +776,9 @@ test('keeps a choice the browser will not save drawn over one another tab saves'
     // other tab's saves still go through. Set on the prototype, since WebKit, as the standard says,
     // takes a property defined on the storage itself as an item saved under that name.
     await opened.evaluate(() => {
-        Object.defineProperty(Storage.prototype, 'setItem', {
-            value: () => {
-                throw new Error('full');
-            },
-        });
+        Storage.prototype.setItem = () => {
+            throw new Error('full');
+        };
     });
     await choose(opened, 'dark');
     const other = await context.newPage();
