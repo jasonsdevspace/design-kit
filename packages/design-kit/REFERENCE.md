@@ -1369,7 +1369,10 @@ A panel sits on `--dk-surface` with an edge in the line color and large corners.
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
 padded by `--dk-card-inset`, which a tile's sides share: 1.5rem, and 1rem at 48rem wide or less. In
 an app's frame, on a page that ends in a tab bar and in a dialog on either, where the column is a
-phone's, it is padded 1rem at every width and no more than 16px at any text size. What it holds is
+phone's, it is padded 1rem at every width and no more than 16px at any text size. A tile inside a
+panel stands its words in 1rem from its sides at 48rem wide or less, held at 16px at any text size,
+so the panel's padding and its own together leave its words room on a phone at twice the text
+size. What it holds is
 spaced 0.75rem from the one before it, a step closer than an explainer's parts. Inside an explainer
 its title steps down to the body size, as a tile's title there does.
 

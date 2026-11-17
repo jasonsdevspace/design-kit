@@ -14,7 +14,7 @@ import {
     tabKey,
     writePage,
 } from './page.js';
-import { cutOff, SPACED } from './spacing.js';
+import { brokenWords, cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -819,6 +819,36 @@ test('keeps tiles in one column on the narrowest phone at twice the text size an
     expect(await sideways(page)).toBe(0);
     expect(new Set((await places(page)).map(({ x }) => x)).size).toBe(1);
     expect(await cutOff(page, '.dk-row-text')).toEqual([]);
+});
+
+test('keeps every word of a tile whole in a plain and a raised panel on the narrowest phone at twice the text size, and a lone panel and tile as they were', async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    const tiles = `<ul class="dk-rows dk-rows-tiles" role="list"><li><a class="dk-row" href="#raised"><span class="dk-row-text"><span class="dk-row-title">Raised panel</span><span class="dk-visually-hidden">, </span><span class="dk-row-detail">Places to go, each on its own ground</span></span><span class="dk-row-sign" aria-hidden="true">›</span></a></li></ul>`;
+    await writePage(page, {
+        width: 320,
+        title: 'Pieces',
+        body: `<main class="dk-page"><h1>Pieces</h1><div class="dk-panel">${tiles}</div><div class="dk-panel dk-panel-raised" id="lone"><p>Ana is next to score.</p></div><div class="dk-panel dk-panel-raised">${tiles}</div><div id="page-tiles">${tiles}</div></main>`,
+    });
+    expect(await brokenWords(page, '.dk-panel .dk-row-text')).toEqual([]);
+    expect(await cutOff(page, '.dk-panel .dk-row-text')).toEqual([]);
+    expect(await sideways(page)).toBe(0);
+    // Only a tile inside a panel holds its inset: a panel and a tile on the page keep the card's
+    // inset, which grows with the text.
+    const inset = await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('font-size')
+    );
+    const rem = parseFloat(inset);
+    expect((await style(page.locator('#lone'), 'padding-left'))['padding-left']).toBe(
+        `${String(rem)}px`
+    );
+    expect((await style(page.locator('#page-tiles .dk-row'), 'padding-left'))['padding-left']).toBe(
+        `${String(rem)}px`
+    );
+    expect(
+        (await style(page.locator('.dk-panel .dk-row').first(), 'padding-left'))['padding-left']
+    ).toBe('16px');
 });
 
 for (const theme of ['light', 'dark'] as const)
