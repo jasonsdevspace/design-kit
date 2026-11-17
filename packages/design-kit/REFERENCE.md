@@ -2535,9 +2535,10 @@ and the panel are found at each press, so a panel drawn again keeps working, and
 page serve every panel, taken off once every button is let go. Escape with focus in a panel or on
 its button closes the innermost such panel and marks the press handled, so a dialog around the panel
 stays open. It leaves alone an Escape the page has already handled, one that ends typing in a script
-such as Japanese, one in a dialog or a popover inside the panel, and one on a search with words in
-it or on a combobox or a button whose list or menu is open. A panel's id must be the only one on the
-page, so a page that shows markup its visitors wrote prefixes or strips the ids in it.
+such as Japanese, one on a panel's button that is off, one in a dialog or a popover inside the
+panel, and one on a search with words in it or on a combobox or a button whose list or menu is open.
+A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
+prefixes or strips the ids in it.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
 goes to the button that opened it where focus is in the panel, or where nothing has focus and the
@@ -2554,9 +2555,10 @@ Tab, else the app frame's body or the page's main content. Safari focuses a pres
 where it has a tabindex, so the kit writes `tabindex="0"` on an attached button and the corner
 Close, and `tabindex="-1"` on the panel, so a press anywhere in it leaves focus in it, and on the
 place a link sends focus to, each where the page set none, and keeps a tabindex the page set. A
-panel the page draws again while it is open takes them as a press in it begins. A panel no button
-opens is closed by the page's own script, which moves focus to what comes after the panel, or to the
-heading before it where nothing follows.
+panel the page draws again while it is open takes them as a press in it begins. A page closes a
+panel from a press's `click`, since a close from its `pointerdown` comes before the browser moves
+focus for the press. A panel no button opens is closed by the page's own script, which moves focus
+to what comes after the panel, or to the heading before it where nothing follows.
 
 ## Layers and palettes
 

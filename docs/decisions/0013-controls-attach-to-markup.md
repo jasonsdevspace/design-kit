@@ -137,11 +137,11 @@ the median a piece costs is now 165 bytes. A piece of the usual size would take 
 budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
 it, as the rule has it, so the piece that does says so with its figures.
 
-For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it.
-Every function sent together weighs 7,613 bytes, 67 bytes under the 7.5 KB they hold, and the
-median a function adds is now 656 bytes. A function of the usual size would take them past the
-budget, and the rule then sets them at 8 KB. The budget stays at 7.5 KB until a function outgrows
-it, as the rule has it.
+For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it,
+and a toast's buttons given their tabindex. Every function sent together weighs 7,669 bytes, 11
+bytes under the 7.5 KB they hold, and the median a function adds is now 653 bytes. A function of the
+usual size would take them past the budget, and the rule then sets them at 8 KB. The budget stays at
+7.5 KB until a function outgrows it, as the rule has it.
 
 ## How it is tested
 

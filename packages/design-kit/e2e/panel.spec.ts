@@ -888,6 +888,36 @@ test.describe('a link in the panel', () => {
 });
 
 test.describe('Escape', () => {
+    test('leaves the panel open on the Escape with which Safari ends typing in a script such as Japanese', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.locator('#deal').focus();
+        // Safari gives that keydown the key code 229 rather than saying it is composing.
+        await page.evaluate(() => {
+            const press = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+            Object.defineProperty(press, 'keyCode', { value: 229 });
+            document.activeElement?.dispatchEvent(press);
+        });
+        await twoFrames(page);
+        await expect(panel(page)).toBeVisible();
+    });
+
+    test('leaves the panel open on Escape at its button while the button is off', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            document.querySelector('#tips-button')?.setAttribute('aria-disabled', 'true');
+        });
+        await button(page).focus();
+        await page.keyboard.press('Escape');
+        await twoFrames(page);
+        await expect(panel(page)).toBeVisible();
+    });
+
     test('closes the panel from a disclosure inside it, which takes no Escape of its own', async ({
         page,
     }) => {
@@ -1355,4 +1385,32 @@ test.describe('attaching and letting go', () => {
         await twoFrames(page);
         await expect(page.locator('#after-panels')).toBeFocused();
     });
+});
+
+test('decides a close from what the visitor did after the panel last opened, not before', async ({
+    page,
+}) => {
+    await open(page);
+    // Every other panel closed, so this one is the only one open.
+    await page.evaluate(() => {
+        for (const other of [1, 3]) (window as unknown as Kit).panels[other]?.set(false);
+    });
+    await button(page).click();
+    // A press in the panel, then a close from the page's code, which records no place of its own,
+    // so the press is a place from before every panel closed.
+    await page.locator('#round-tips p').first().click();
+    await page.evaluate(() => {
+        (window as unknown as Kit).setTips(false);
+    });
+    await expect(panel(page)).toBeHidden();
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        (window as unknown as Kit).setTips(true);
+    });
+    await expect(panel(page)).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Kit).setTips(false);
+    });
+    await twoFrames(page);
+    await expect(button(page)).not.toBeFocused();
 });

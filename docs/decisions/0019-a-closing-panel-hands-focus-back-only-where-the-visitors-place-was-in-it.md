@@ -71,9 +71,9 @@ begins, and `tabindex="-1"` on the place a link sends focus to, each where it ha
 It never changes a tabindex a page set, so a toolbar that moves its own tabindex among its buttons
 keeps it. Escape with focus in a panel or on its button closes the innermost such panel and marks
 the press handled, so a dialog around the panel stays open. It leaves alone an Escape the page has
-already handled, one that ends typing in a script such as Japanese, one in a dialog or a popover
-inside the panel, and one on a search with words in it or on a combobox or a button whose list or
-menu is open, where Escape means something of its own.
+already handled, one that ends typing in a script such as Japanese, one on a panel's button that is
+off, one in a dialog or a popover inside the panel, and one on a search with words in it or on a
+combobox or a button whose list or menu is open, where Escape means something of its own.
 
 An option on `set` to hand focus back stays turned down, since every page would have to ask for
 it and the drop-in rule has the kit do it.

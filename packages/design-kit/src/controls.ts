@@ -1027,6 +1027,9 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
+    // A place from before every panel closed is forgotten, since focus moving is kept only while
+    // one is open, so the first to open decides from what the visitor does once it is.
+    if (open && !lastOpener.size) lastPath = [];
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
@@ -1085,8 +1088,12 @@ const onPanelDown = (event: Event): void => {
         if (lastOpener.has(place.id) && place instanceof HTMLElement) takeFocus(place);
 };
 
-/** A field where Escape means something of its own: a search with words, or a list that opens. */
+/**
+ * Where Escape is not the panel's: a search with words, a list that opens, or a panel's button
+ * that is off, which does nothing by Escape as by a press.
+ */
 const ownsEscape = (target: Element): boolean =>
+    (target instanceof HTMLButtonElement && attachedPanels.has(target) && isOff(target)) ||
     (target instanceof HTMLInputElement && target.type === 'search' && target.value !== '') ||
     target.matches(
         '[aria-expanded="true"]:is([role="combobox"], [aria-haspopup]:not([aria-haspopup="false"]))'
@@ -1100,7 +1107,9 @@ const ownsEscape = (target: Element): boolean =>
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
+    // Safari ends composing with an Escape whose keydown carries the key code 229 instead.
     if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
+    if (event.keyCode === 229) return;
     if (!(target instanceof Element) || ownsEscape(target)) return;
     const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
     for (let place: Element | null = target; place; place = place.parentElement) {
