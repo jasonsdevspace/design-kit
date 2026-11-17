@@ -96,6 +96,44 @@ export const CHROME: readonly Control[] = [
             },
         ],
     },
+    {
+        name: 'Bands',
+        pictured: true,
+        states: [
+            {
+                name: 'A landing page in bands, a group of sections in the second',
+                attribute: 'class="dk-band"',
+                // A div rather than main, and a picture, since the page it is shown on has its own
+                // main content and its own h1.
+                draw: () => (
+                    <div>
+                        <section className="dk-band">
+                            <div className="dk-stack">
+                                <p className="dk-eyebrow">For game night</p>
+                                <h1>Scorekeeper</h1>
+                                <p className="dk-lead">
+                                    Keep score for any card game on one phone.
+                                </p>
+                            </div>
+                        </section>
+                        <section className="dk-band site-ground-band">
+                            <h2>Install it</h2>
+                            <div className="dk-sections">
+                                <section>
+                                    <h3>On an iPhone</h3>
+                                    <p>Open it in Safari, then Add to Home Screen.</p>
+                                </section>
+                                <section>
+                                    <h3>On an Android phone</h3>
+                                    <p>Open it in Chrome, then Install app.</p>
+                                </section>
+                            </div>
+                        </section>
+                    </div>
+                ),
+            },
+        ],
+    },
 ];
 
 /** The steps of a flow, each a title and a note, with an arrow from the step before. */

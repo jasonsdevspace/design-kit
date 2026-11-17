@@ -6,6 +6,8 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
+import { CHROME } from '../../design-kit/examples/pieces.js';
+import { CONTROLS } from '../../design-kit/examples/states.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
 /**
@@ -2194,6 +2196,25 @@ test.describe('the code of each state', () => {
                         else value.removeAttribute('aria-describedby');
                     }
                 };
+                /**
+                 * The panels of a copy as the markup draws them, without the tabindex the site's
+                 * script gives a button with a panel, the panel it names and that panel's corner
+                 * Close as it attaches them, so Safari focuses a press and focus can go back. Only
+                 * where the code prints no tabindex of its own, which the script would have kept.
+                 */
+                const panelsAsWritten = (copy: HTMLElement, shown: string) => {
+                    if (/tabindex/i.test(shown)) return;
+                    for (const button of copy.querySelectorAll('button[aria-controls]')) {
+                        const id = button.getAttribute('aria-controls')?.trim().split(/\s+/)[0];
+                        const panel = id ? copy.querySelector(`[id="${CSS.escape(id)}"]`) : null;
+                        if (!panel) continue;
+                        button.removeAttribute('tabindex');
+                        panel.removeAttribute('tabindex');
+                        panel
+                            .querySelector(':scope > .dk-close button')
+                            ?.removeAttribute('tabindex');
+                    }
+                };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
                     // label, and with the ids the code names. A control the site's script attaches,
@@ -2210,6 +2231,7 @@ test.describe('the code of each state', () => {
                     for (const hidden of copy.querySelectorAll('[hidden]'))
                         hidden.removeAttribute('hidden');
                     steppersAsWritten(copy);
+                    panelsAsWritten(copy, shown);
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
@@ -2221,16 +2243,52 @@ test.describe('the code of each state', () => {
         }
     });
 
+    test('keeps the page chrome page to one top-level heading, the pictures out of it', async ({
+        page,
+        browserName,
+    }) => {
+        // Read from the browser's own accessibility tree, which leaves out what is inert, as a
+        // screen reader does, where Playwright's role queries count it.
+        test.skip(browserName !== 'chromium', 'the tree is read through Chromium');
+        await page.goto('/design-kit/page-chrome/');
+        const session = await page.context().newCDPSession(page);
+        const { nodes } = (await session.send('Accessibility.getFullAXTree')) as {
+            nodes: {
+                ignored: boolean;
+                role?: { value?: string };
+                name?: { value?: string };
+                properties?: { name: string; value: { value?: unknown } }[];
+            }[];
+        };
+        const titles = nodes
+            .filter(
+                ({ ignored, role, properties }) =>
+                    !ignored &&
+                    role?.value === 'heading' &&
+                    properties?.some(({ name, value }) => name === 'level' && value.value === 1)
+            )
+            .map(({ name }) => name?.value);
+        expect(titles).toEqual(['Page chrome']);
+    });
+
     test('shows React for each state a component draws, and markup alone for the rest', async ({
         page,
     }) => {
-        for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
+        // A state shows React where a component draws it, as its `react` says, and markup alone
+        // where it has none, as bands, which are classes a page writes.
+        for (const [path, controls] of [
+            ['/design-kit/controls/', CONTROLS],
+            ['/design-kit/page-chrome/', CHROME],
+        ] as const) {
             await page.goto(path);
-            const states = await page.locator('.site-state').count();
-            await expect(
-                page.locator('.site-code-name', { hasText: /^React, / }),
-                path
-            ).toHaveCount(states);
+            const drawn = controls
+                .flatMap(({ states }) => states)
+                .filter(({ react }) => react)
+                .map(({ name }) => `React, ${name}`);
+            const shown = await page
+                .locator('.site-code-name', { hasText: /^React, / })
+                .allTextContents();
+            expect(shown.map((name) => name.trim()).sort(), path).toEqual(drawn.sort());
         }
         await page.goto('/design-kit/explainer-pieces/');
         await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);

@@ -79,6 +79,13 @@ export const HELD = {
                 'the button takes neither a style nor accent and pressed together',
                 'the button draws a large button and a text button by a class each',
                 'the button draws a tall button by its class, with the large button or without',
+                'the button draws a button whose face is an icon alone by its class, a toggle among them',
+            ],
+        },
+        {
+            file: 'e2e/icon.spec.ts',
+            titles: [
+                "grows an icon-only button's icon with the text, to twice its size at twice the text size",
             ],
         },
         {
@@ -568,6 +575,24 @@ export const HELD = {
             ],
         },
         { file: 'e2e/explainer.spec.tsx', titles: STRIP_AND_FOOTER.explainer },
+    ],
+    Bands: [
+        {
+            file: 'e2e/bands.spec.ts',
+            titles: [
+                "sizes a band's title, its heading and its sections, and keeps a group under the heading that names it",
+                "lines a band's content up with the column and spaces it by the flow",
+                "spaces a grid's items in a band by its gap alone, and a stack's pieces by the flow",
+                "sets a group of sections 2 to a row at 1280 wide, each with a page section's heading and steps",
+                "sets a group of sections 1 to a row at 390 wide, each with a page section's heading and steps",
+                "holds a band's and a stack's own prose to the measure, as a content page's",
+                "keeps a content page's section a section's step under the page's own heading",
+                "reaches a row and a switch past a band's column by their ring, as on a content page",
+                'keeps every word whole and nothing sideways on a 320px phone at twice the text size',
+                "holds a band's sides at a phone's step on an app's page at twice the text size",
+                'has no audit findings',
+            ],
+        },
     ],
     'The layout': [
         {

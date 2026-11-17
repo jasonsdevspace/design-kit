@@ -518,9 +518,12 @@ body > .dk-strip {
  */
 .site-copy {
     min-width: 0;
-    padding: var(--dk-space-4-held);
+    --site-copy-pad: var(--dk-space-4-held);
+    --site-copy-radius: var(--dk-radius);
+
+    padding: var(--site-copy-pad);
     border: 1px solid var(--dk-line);
-    border-radius: var(--dk-radius);
+    border-radius: var(--site-copy-radius);
     background: var(--dk-bg);
     color: var(--dk-fg);
 }
@@ -1067,6 +1070,28 @@ body > .dk-strip {
 
 .site-ground-sky {
     --dk-tile-ground: light-dark(rgb(220 240 255), rgb(20 46 74));
+}
+
+/*
+ * A band a landing page sets apart, on the card's ground, with the ground a piece in it steps to,
+ * as a panel's are.
+ */
+.site-ground-band {
+    --dk-ground: var(--dk-surface);
+    --dk-ground-step: var(--dk-bg);
+    background: var(--dk-ground);
+}
+
+/*
+ * A landing page pictured in bands runs to the frame's edges and its foot, as a band runs the
+ * width of the screen, so a band on a ground of its own shows where it starts and ends.
+ */
+.site-copy > div:has(> .dk-band) {
+    margin-inline: calc(-1 * var(--site-copy-pad));
+    margin-block-end: calc(-1 * var(--site-copy-pad));
+    border-end-start-radius: calc(var(--site-copy-radius) - 1px);
+    border-end-end-radius: calc(var(--site-copy-radius) - 1px);
+    overflow: clip;
 }
 
 .site-ground-leaf {
