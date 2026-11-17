@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /*
  * The wider text spacing WCAG asks a page to survive, as a visitor's own style sheet sets it, and
@@ -48,3 +48,22 @@ export const brokenWords = (page: Page, selector: string): Promise<string[]> =>
         }
         return broken;
     }, selector);
+
+/**
+ * The tops of the lines of text the element the locator finds draws, each once, top first, read
+ * from where the browser breaks its text, so a test counts lines rather than guessing them from a
+ * height. Each line is told by its text alone, so a box inside it with padding of its own adds no
+ * line.
+ */
+export const lineTops = (locator: Locator): Promise<number[]> =>
+    locator.evaluate((element) => {
+        const tops = new Set<number>();
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        const range = document.createRange();
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            range.selectNodeContents(node);
+            for (const { top, height } of range.getClientRects())
+                if (height > 0) tops.add(Math.round(top));
+        }
+        return [...tops].sort((first, second) => first - second);
+    });

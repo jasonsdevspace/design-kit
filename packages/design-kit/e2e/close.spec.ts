@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { colorOf, forceColors, ringByKeyboard, tabKey, writePage } from './page.js';
+import { lineTops } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -32,8 +33,13 @@ const openDialog = (page: Page) =>
     page.locator('#end-game').evaluate((dialog: HTMLDialogElement) => dialog.showModal());
 
 /** Where the title, the Close and what holds them sit, and how many lines the title takes. */
-const corner = (page: Page, holder: string) =>
-    page.locator(holder).evaluate((element) => {
+const corner = async (page: Page, holder: string) => ({
+    lines: (
+        await lineTops(
+            page.locator(`${holder} > .dk-close`).locator('xpath=preceding-sibling::*[1]')
+        )
+    ).length,
+    ...(await page.locator(holder).evaluate((element) => {
         const title = element.querySelector(':scope > :has(+ .dk-close)');
         const close = element.querySelector(':scope > .dk-close button');
         if (!title || !close) throw new Error('no title or no Close');
@@ -46,11 +52,10 @@ const corner = (page: Page, holder: string) =>
         };
         const words = title.getBoundingClientRect();
         const button = close.getBoundingClientRect();
+        // The first line's box, which the Close stands beside.
         const range = document.createRange();
         range.selectNodeContents(title);
-        const rects = [...range.getClientRects()];
-        const lines = new Set(rects.map(({ top }) => Math.round(top))).size;
-        const first = rects[0] ?? words;
+        const first = range.getClientRects()[0] ?? words;
         return {
             inner,
             paddingRight: parseFloat(style.paddingRight),
@@ -62,11 +67,11 @@ const corner = (page: Page, holder: string) =>
                 width: button.width,
                 height: button.height,
             },
-            lines,
             firstLine: first.top + first.height / 2,
             closeMiddle: button.top + button.height / 2,
         };
-    });
+    })),
+});
 
 for (const [width, scale] of [
     [320, 1],

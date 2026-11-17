@@ -4,7 +4,9 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import {
     box,
     colorOf,
+    footRoom,
     forceColors,
+    lengthOf,
     settle,
     shadowOf,
     sheet,
@@ -206,9 +208,11 @@ test("scrolls the body's last line clear of everything below it, at a doubled te
     for (const below of ['.dk-app-toast', '.dk-app-dock', '.dk-app-tabs']) {
         expect(bottom(last), below).toBeLessThanOrEqual((await box(page.locator(below), below)).y);
     }
-    // The body keeps a few lines of its own, 8rem at twice the text size, however much the rows
-    // around it hold, and the page scrolls to whatever no longer fits.
-    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
+    // The body keeps a few lines of its own, its least height at twice the text size, however much
+    // the rows around it hold, and the page scrolls to whatever no longer fits.
+    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(
+        await lengthOf(page, 'var(--dk-app-body)')
+    );
     // The page scrolls to whatever the rows leave below the screen, the tab bar included.
     const tabs = await box(page.locator('.dk-app-tabs'), 'the tab bar');
     expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(tabs) - 844);
@@ -446,7 +450,9 @@ test('squeezes no row where the bar and the dock come to more than the screen, a
     expect(low.y).toBeGreaterThanOrEqual(bottom(top));
     expect(bottom(low)).toBeGreaterThan(900);
     expect(await pageScroll(page)).toBeGreaterThanOrEqual(bottom(low) - 900);
-    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(8 * 32);
+    expect((await box(body(page), 'the body')).height).toBeGreaterThanOrEqual(
+        await lengthOf(page, 'var(--dk-app-body)')
+    );
 });
 
 test('takes the keyboard through the bar, then the body, then the dock', async ({
@@ -1063,13 +1069,7 @@ test('gives a pictured frame drawn taller than what it holds the room in its bod
         css: '.dk-picture .dk-app { height: 40rem; }',
         body: contentPage(PICTURED_SCREEN),
     });
-    const foot = await page.locator('.dk-picture .dk-app').evaluate((frame) => {
-        const box = frame.getBoundingClientRect();
-        const last = frame.lastElementChild?.getBoundingClientRect();
-        if (!last) throw new Error('an empty frame');
-        return box.bottom - parseFloat(getComputedStyle(frame).borderBottomWidth) - last.bottom;
-    });
-    expect(Math.abs(foot)).toBeLessThanOrEqual(1);
+    expect(Math.abs(await footRoom(page.locator('.dk-picture .dk-app')))).toBeLessThanOrEqual(1);
 });
 
 for (const [width, height] of [
@@ -1099,20 +1099,6 @@ for (const [width, height] of [
                     .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
                 const last = picture.lastElementChild;
                 const bar = picture.querySelector(':scope > .dk-app-bar');
-                // What a frame's body holds ends one padding above its foot, with no room left over
-                // for lines a picture cannot scroll to. A tab bar's page spaces its own main.
-                let bodyRoom = 0;
-                if (picture.matches('.dk-app')) {
-                    const body = picture.querySelector(':scope > .dk-app-body');
-                    const words = body?.querySelector(
-                        ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
-                    );
-                    if (!body || !words) throw new Error('a pictured frame with no body to read');
-                    bodyRoom =
-                        body.getBoundingClientRect().bottom -
-                        parseFloat(getComputedStyle(body).paddingBottom) -
-                        words.getBoundingClientRect().bottom;
-                }
                 return {
                     kind: picture.className,
                     height: box.height,
@@ -1121,7 +1107,6 @@ for (const [width, height] of [
                     lastPosition: last === null ? '' : getComputedStyle(last).position,
                     lastPad: last === null ? 0 : parseFloat(getComputedStyle(last).paddingBottom),
                     barPad: bar === null ? 0 : parseFloat(getComputedStyle(bar).paddingTop),
-                    bodyRoom,
                 };
             })
         );
@@ -1138,6 +1123,11 @@ for (const [width, height] of [
             expect(picture.lastPosition, at).toBe('static');
             expect(picture.lastPad, at).toBeLessThan(SAFE.bottom);
             expect(picture.barPad, at).toBeLessThan(SAFE.top);
-            expect(Math.abs(picture.bodyRoom), at).toBeLessThanOrEqual(1);
         }
+        // What a frame's body holds ends one padding above its foot, with no room left over for
+        // lines a picture cannot scroll to. A tab bar's page spaces its own main.
+        expect(
+            Math.abs(await footRoom(page.locator('.dk-picture .dk-app > .dk-app-body'))),
+            `the body, ${String(width)} by ${String(height)}`
+        ).toBeLessThanOrEqual(1);
     });

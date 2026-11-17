@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { expect, type Locator, type Page } from '@playwright/test';
+import { type BrowserContext, expect, type Locator, type Page } from '@playwright/test';
 import ts from 'typescript';
 
 import { contrast as ratio } from '../examples/palette.js';
@@ -54,6 +54,56 @@ export const writePage = async (
         `<!doctype html><html lang="en" data-theme="${theme}"><head><title>${title}</title>` +
             `<style>${KIT}${css}</style></head><body>${body}</body></html>`
     );
+};
+
+/**
+ * A page that loads the kit's controls, served on the test origin from memory, so a module script
+ * runs and the page has storage of its own: the kit's sheets and any rules of the page's own after
+ * them, the controls as a module, and the page's own script, if it has one, after the body. Given a
+ * page, it goes to it, so the viewport and any stand-in clock are set first. Given a browser
+ * context, it serves every tab the context opens, each going to the origin itself.
+ */
+export const servePage = async (
+    target: Page | BrowserContext,
+    {
+        title,
+        body,
+        script,
+        head = '',
+        css = '',
+        theme,
+        dir,
+        headers,
+    }: {
+        readonly title: string;
+        readonly body: string;
+        readonly script?: string | undefined;
+        readonly head?: string;
+        readonly css?: string;
+        readonly theme?: 'light' | 'dark';
+        readonly dir?: 'ltr' | 'rtl';
+        readonly headers?: Readonly<Record<string, string>>;
+    }
+): Promise<void> => {
+    const files: Readonly<Record<string, readonly [string, string]>> = {
+        '/kit.css': [`${KIT}${css}`, 'text/css'],
+        '/controls.js': [js('controls.ts'), 'text/javascript'],
+        // The controls import the theme's names from it.
+        '/theme.js': [js('theme.ts'), 'text/javascript'],
+        ...(script === undefined ? {} : { '/page.js': [script, 'text/javascript'] as const }),
+    };
+    const html =
+        `<!doctype html><html lang="en"${dir ? ` dir="${dir}"` : ''}` +
+        `${theme ? ` data-theme="${theme}"` : ''}><head><title>${title}</title>${head}` +
+        `<link rel="stylesheet" href="/kit.css"></head><body>${body}` +
+        (script === undefined ? '' : '<script type="module" src="/page.js"></script>') +
+        '</body></html>';
+    await target.route(`${ORIGIN}/**`, (route) => {
+        const path = new URL(route.request().url()).pathname;
+        const [served, contentType] = files[path] ?? [html, 'text/html'];
+        return route.fulfill({ body: served, contentType, ...(headers ? { headers } : {}) });
+    });
+    if ('goto' in target) await target.goto(`${ORIGIN}/`);
 };
 
 /** The computed values of the properties named, on the element the locator finds. */
@@ -182,6 +232,47 @@ export const shadowOf = (page: Page, value: string): Promise<string> =>
         probe.remove();
         return resolved;
     }, value);
+
+/**
+ * A length as the page resolves it, a token's or a sum of them, in pixels, from an element asked to
+ * stand that far in, so a test compares with what a token draws rather than a figure copied from
+ * it. A token the page does not declare fails rather than resolving to nothing.
+ */
+export const lengthOf = (page: Page, value: string): Promise<number> =>
+    page.evaluate((length) => {
+        const root = getComputedStyle(document.documentElement);
+        for (const [, name = ''] of length.matchAll(/var\((--[\w-]+)/g))
+            if (!root.getPropertyValue(name).trim()) throw new Error(`expected ${name} declared`);
+        const probe = document.createElement('div');
+        probe.style.marginLeft = length;
+        if (!probe.style.marginLeft) throw new Error(`expected a length, got ${length}`);
+        document.body.append(probe);
+        const resolved = Number.parseFloat(getComputedStyle(probe).marginLeft);
+        probe.remove();
+        return resolved;
+    }, value);
+
+/**
+ * The room left between the last drawn child of the element the locator finds and its padding edge
+ * at its foot, which is none where what it holds ends at its padding. The child's own margin counts
+ * as room rather than being taken off, since the kit sets a last child's margin to nothing, so a
+ * margin left under it shows. The one the kit keeps there on purpose, for a toast floating over an
+ * app's body, is room a test names.
+ */
+export const footRoom = (locator: Locator): Promise<number> =>
+    locator.evaluate((container) => {
+        const last = container.querySelector(
+            ':scope > :nth-last-child(1 of :not(.dk-visually-hidden, [hidden]))'
+        );
+        if (!last) throw new Error('expected a drawn child to measure the foot from');
+        const style = getComputedStyle(container);
+        return (
+            container.getBoundingClientRect().bottom -
+            Number.parseFloat(style.borderBottomWidth) -
+            Number.parseFloat(style.paddingBottom) -
+            last.getBoundingClientRect().bottom
+        );
+    });
 
 /**
  * Turns forced colors on for the page, or off again, and fails where the page does not then match

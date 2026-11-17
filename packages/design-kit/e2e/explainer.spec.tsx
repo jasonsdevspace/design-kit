@@ -15,7 +15,7 @@ import {
     style,
     writePage,
 } from './page.js';
-import { SPACED } from './spacing.js';
+import { lineTops, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -244,18 +244,19 @@ test('keeps code in a table cell whole, so the frame scrolls rather than the cod
     const inCell = page
         .getByRole('rowheader', { name: 'Hot product, FOR_UPDATE_SKIP_LOCKED' })
         .locator('code');
-    // One box on one line, rather than the name broken into pieces.
-    expect(await inCell.evaluate((element) => element.getClientRects().length)).toBe(1);
+    // One line, rather than the name broken into pieces.
+    expect(await lineTops(inCell)).toHaveLength(1);
     // A name with hyphens, wider than the frame, stays whole too, rather than breaking after one.
-    const hyphened = await inCell.evaluate((element) => {
+    const wider = await inCell.evaluate((element) => {
         element.textContent = '--dk-a-token-with-a-name-longer-than-its-cell';
         const frame = element.closest('.dk-table-scroll');
-        return {
-            lines: element.getClientRects().length,
-            wider: element.getBoundingClientRect().width > (frame?.clientWidth ?? 0),
-        };
+        return element.getBoundingClientRect().width > (frame?.clientWidth ?? 0);
     });
-    expect(hyphened).toEqual({ lines: 1, wider: true });
+    // Found again by its new name, since the cell's name it was found by changed with it.
+    const renamed = page.locator('code', {
+        hasText: '--dk-a-token-with-a-name-longer-than-its-cell',
+    });
+    expect({ lines: (await lineTops(renamed)).length, wider }).toEqual({ lines: 1, wider: true });
 });
 
 test('opens each section with its rule, its number, its heading and then its text', async ({

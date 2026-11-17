@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { js, KIT, ORIGIN, tabKey } from './page.js';
+import { servePage, tabKey } from './page.js';
 
 /*
  * A panel a button opens, attached by its button: the panel starting as the button says, the
@@ -59,24 +59,8 @@ try {
 window.ready = true;`;
 
 const open = async (page: Page): Promise<void> => {
-    const files: Readonly<Record<string, readonly [string, string]>> = {
-        '/kit.css': [KIT, 'text/css'],
-        '/controls.js': [js('controls.ts'), 'text/javascript'],
-        '/theme.js': [js('theme.ts'), 'text/javascript'],
-        '/page.js': [ATTACH, 'text/javascript'],
-    };
-    await page.route(`${ORIGIN}/**`, (route) => {
-        const path = new URL(route.request().url()).pathname;
-        const [body, contentType] = files[path] ?? [
-            '<!doctype html><html lang="en"><head><title>Round 3</title>' +
-                `<link rel="stylesheet" href="/kit.css"></head><body>${BODY}` +
-                '<script type="module" src="/page.js"></script></body></html>',
-            'text/html',
-        ];
-        return route.fulfill({ body, contentType });
-    });
     await page.setViewportSize({ width: 390, height: 700 });
-    await page.goto(`${ORIGIN}/`);
+    await servePage(page, { title: 'Round 3', body: BODY, script: ATTACH });
     await page.waitForFunction(() => 'ready' in window);
 };
 

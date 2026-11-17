@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StepperField } from '../src/react.js';
-import { box, js, KIT, ORIGIN, sideways, style, tabKey } from './page.js';
+import { box, servePage, sideways, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -84,25 +84,13 @@ const open = async (
         readonly attach?: boolean;
     } = {}
 ): Promise<void> => {
-    const files: Readonly<Record<string, readonly [string, string]>> = {
-        '/kit.css': [KIT, 'text/css'],
-        '/controls.js': [js('controls.ts'), 'text/javascript'],
-        '/theme.js': [js('theme.ts'), 'text/javascript'],
-        '/page.js': [ATTACH, 'text/javascript'],
-    };
-    await page.route(`${ORIGIN}/**`, (route) => {
-        const path = new URL(route.request().url()).pathname;
-        const [body, contentType] = files[path] ?? [
-            `<!doctype html><html lang="en" data-theme="${theme}"><head><title>Round 3</title>` +
-                `<link rel="stylesheet" href="/kit.css"></head><body>${FIELDS}` +
-                (attach ? '<script type="module" src="/page.js"></script>' : '') +
-                '</body></html>',
-            'text/html',
-        ];
-        return route.fulfill({ body, contentType });
-    });
     await page.setViewportSize({ width, height: 700 });
-    await page.goto(`${ORIGIN}/`);
+    await servePage(page, {
+        title: 'Round 3',
+        body: FIELDS,
+        script: attach ? ATTACH : undefined,
+        theme,
+    });
     if (attach) await page.waitForFunction(() => 'ready' in window);
 };
 

@@ -14,7 +14,7 @@ import {
     tabKey,
     writePage,
 } from './page.js';
-import { brokenWords, cutOff, SPACED } from './spacing.js';
+import { brokenWords, cutOff, lineTops, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -197,13 +197,14 @@ test("makes a button at a row's end its own stop, named for what it does and to 
 test('wraps a long title, and keeps the end beside its first line', async ({ page }) => {
     await open(page, { width: 320 });
     const title = page.locator('#g10');
-    const lines = await title.evaluate((element) => {
+    expect((await lineTops(title)).length).toBeGreaterThan(1);
+    // The first line's box, which the end stands beside.
+    const first = await title.evaluate((element) => {
         const range = document.createRange();
         range.selectNodeContents(element);
-        return [...range.getClientRects()].map((rect) => ({ y: rect.y, height: rect.height }));
+        const { y, height } = range.getClientRects()[0] ?? { y: 0, height: 0 };
+        return { y, height };
     });
-    expect(lines.length).toBeGreaterThan(1);
-    const first = lines[0] ?? { y: 0, height: 0 };
     const end = await box(page.locator('#g10-s'), 'the figure');
     const middle = end.y + end.height / 2;
     expect(middle).toBeGreaterThanOrEqual(first.y);
