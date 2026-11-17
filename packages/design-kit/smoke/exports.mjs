@@ -28,6 +28,7 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/controls': [
         'attachCopyButton',
         'attachDialog',
+        'attachPanel',
         'attachStatus',
         'attachStepper',
         'attachTable',
