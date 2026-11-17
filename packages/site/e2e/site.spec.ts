@@ -1144,7 +1144,7 @@ test.describe('the app pieces page', () => {
             await expect(screen).toHaveCSS('overflow', 'clip');
         }
         // Each picture of a screen is as tall as what it holds, by the kit, its bar at its foot.
-        for (const width of [390, 1280]) {
+        for (const width of [320, 390, 1280]) {
             await page.setViewportSize({ width, height: 900 });
             const pictures = await page
                 .locator('.site-copy[inert] > :is(.dk-app, .dk-tabbar-page)')

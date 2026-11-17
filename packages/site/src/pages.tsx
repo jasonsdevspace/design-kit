@@ -867,7 +867,11 @@ export const Together = ({ build }: { readonly build: Build }) => (
                     The grounds on this page
                 </h2>
                 <form className="dk-close" method="dialog">
-                    <button type="submit" className="dk-button dk-button-text dk-button-quiet">
+                    <button
+                        type="submit"
+                        className="dk-button dk-button-text dk-button-quiet"
+                        value="close"
+                    >
                         <span aria-hidden="true">×</span>
                         <span className="dk-visually-hidden">Close</span>
                     </button>

@@ -1000,8 +1000,8 @@ body > .dk-strip {
 
 /*
  * A dialog's preview is drawn open in its place under its button, since the inert copy cannot be
- * opened, rather than over the page as a dialog that is not modal would be. It holds what is placed
- * in it, so a Close in its corner stays in the copy.
+ * opened, rather than over the page as a dialog that is not modal would be. It holds what the kit
+ * places in it, so a dialog drawn with a Close in its corner keeps it in the copy.
  */
 .site-other .dk-dialog {
     display: block;
