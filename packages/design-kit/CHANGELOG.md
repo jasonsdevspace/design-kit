@@ -7,6 +7,24 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.8.5
+
+A panel's corner Close hands focus back to the button that opened the panel however a visitor
+presses it. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same.
+
+- **Controls.** A visitor's press of a panel's corner Close moves focus to the button that opened
+  the panel by key, pointer or touch. Safari, Firefox on macOS and iOS do not focus a button a
+  pointer or a tap presses, and Safari takes focus off what had it, so a Close pressed that way
+  left focus on the page's body, and with VoiceOver on iOS the cursor on what was just hidden. A
+  close from `set`, and a click the page's own script gives the Close, still move focus only where
+  it was in the panel, since the page's code may close it while the visitor is elsewhere.
+- **Docs.** The reference's corner Close says the Close hands focus back however a visitor presses
+  it, and that a close from `set` moves focus only where it was in the panel.
+- **Tests.** The panel's browser tests run in WebKit as well. A test keeps a press from focusing
+  the Close, as Safari does, and finds focus handed back in every engine, and tests close a panel
+  from `set` and by a script's click with focus outside it and find focus left where it was.
+
 ## 0.8.4
 
 A landing page draws its bands, a column of pieces in a grid and a group of sections from the kit,
