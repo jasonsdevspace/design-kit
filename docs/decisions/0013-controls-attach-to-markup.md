@@ -137,6 +137,12 @@ the median a piece costs is now 165 bytes. A piece of the usual size would take 
 budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
 it, as the rule has it, so the piece that does says so with its figures.
 
+For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it,
+and a toast's buttons given their tabindex. Every function sent together weighs 7,661 bytes, 19
+bytes under the 7.5 KB they hold, and the median a function adds is now 657 bytes. A function of the
+usual size would take them past the budget, and the rule then sets them at 8 KB. The budget stays at
+7.5 KB until a function outgrows it, as the rule has it.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
@@ -172,7 +178,11 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   again alone, focus back on the button whose `set` opened the panel, the listener taken off only
   once every button is let go, a button the page points at another panel followed, an off button's
   press ignored and focus kept off it, a button attached later or drawn again following the panel as
-  it is, and no accessibility violation with the panel open or closed.
+  it is, and no accessibility violation with the panel open or closed, and in WebKit as well, a Done
+  of the page's own pressed as Safari presses it, one that waits, one drawn away and one that moves
+  focus first, an outer and an inner panel closed by one press, and a WebKit pointer press leaving
+  the button unfocused, a link in the panel that closes it keeping the focus it moves or handing
+  focus back where it moves none, and the Close tapped on a touch screen in WebKit.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

@@ -62,3 +62,9 @@ costs, and the test behind it.
     `tokens.resolver.json` as one 2025.10 resolver document shipped as written, renaming or dropping
     a token in it or moving to a later edition a breaking change, and why generating it from the
     sheet or the sheet from it were turned down.
+19. [A closing panel hands focus to its button only where the visitor's place was in
+    it](0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md): focus
+    handed back where it is in the panel, or where nothing has focus and the visitor's last focus or
+    press was in it, a panel and its buttons given a tabindex for Safari, focus sent on to where a
+    link in the panel jumps, Escape, and why the path of the last click and a flag for interaction
+    outside were turned down.

@@ -1644,11 +1644,13 @@ of view.
             <div class="dk-toast-buttons">
                 <button
                     type="button"
+                    tabindex="0"
                     class="dk-button dk-button-text dk-toast-action"
                     hidden=""
                 ></button>
                 <button
                     type="button"
+                    tabindex="0"
                     class="dk-button dk-button-text dk-button-quiet dk-toast-close"
                     hidden=""
                 >
@@ -1966,9 +1968,15 @@ until a message is shown.
     <p class="dk-toast-message" aria-hidden="true"></p>
     <p class="dk-visually-hidden dk-toast-status" role="status"></p>
     <div class="dk-toast-buttons">
-        <button type="button" class="dk-button dk-button-text dk-toast-action" hidden=""></button>
         <button
             type="button"
+            tabindex="0"
+            class="dk-button dk-button-text dk-toast-action"
+            hidden=""
+        ></button>
+        <button
+            type="button"
+            tabindex="0"
             class="dk-button dk-button-text dk-button-quiet dk-toast-close"
             hidden=""
         >
@@ -2005,10 +2013,13 @@ while the pointer is over it or focus is in it. When a message arrives, what has
 view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
 it, focus goes back to the last control outside the toast that had focus when a message arrived, and
 where there was none, or it no longer takes focus, to the body of the app's frame, or on a page with
-no frame to its main content where that takes focus. An action runs after the toast has left, so
-where it takes away what focus came from, it moves focus itself. A message with no action replaces
-one with an action and its way back, so a page shows one another only when the first is done with.
-More than one action is a dialog's job.
+no frame to its main content where that takes focus. Its Close and its action carry `tabindex="0"`,
+which `Toast` draws and `attachToast` adds where a page's markup has none, so Safari, which focuses
+a pressed button only where it has a tabindex, leaves focus in the toast on a press and focus goes
+back as the toast leaves. An action runs after the toast has left, so where it takes away what focus
+came from, it moves focus itself. A message with no action replaces one with an action and its way
+back, so a page shows one another only when the first is done with. More than one action is a
+dialog's job.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -2511,24 +2522,43 @@ const tips = attachPanel(document.querySelector('[aria-controls="round-tips"]'))
 ```
 
 Then the button opens and closes the panel, every attached button that names it follows, and the
-Close closes it, marks the buttons collapsed and moves focus to the button that opened it where
-focus was in the panel, so the keyboard keeps its place, with no script of the page's own. A panel
-that starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
+Close closes it and marks the buttons collapsed, with no script of the page's own. A panel that
+starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
 returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes the
-panel from the page's own code, as `tips.set(false)`, and moves focus to the button that opened it
-the same way, and `detach`, which lets the button go, as a page does when it takes the button away,
-after which `set` does nothing. The first button attached for a panel starts it as its markup says,
-and a button attached for it later, one drawn again among them, marks itself as the panel is and
-leaves the panel alone. A press of a button that is off, with `aria-disabled="true"`, does nothing,
-and focus never goes back to one. A button attached again returns the same, and one with no
-`aria-controls` is refused with an error that says so. The button and the panel are found at each
-press, so a panel drawn again keeps working, and one listener on the page serves every panel, taken
-off once every button is let go. Where no attached button that names the panel takes focus, focus
-goes to the first thing after the panel that takes it, else to the app frame's body or the page's
-main content, as a toast's does. A panel's id must be the only one on the page, so a page that shows
-markup its visitors wrote prefixes or strips the ids in it. A panel no button opens is closed by the
-page's own script, which moves focus to what comes after the panel, or to the heading before it
-where nothing follows.
+panel from the page's own code, as `tips.set(false)`, and `detach`, which lets the button go, as a
+page does when it takes the button away, after which `set` does nothing. The first button attached
+for a panel starts it as its markup says, and a button attached for it later, one drawn again among
+them, marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
+`aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
+returns the same, and one with no `aria-controls` is refused with an error that says so. The button
+and the panel are found at each press, so a panel drawn again keeps working, and listeners on the
+page serve every panel, taken off once every button is let go. Escape with focus in a panel or on
+its button closes the innermost such panel and marks the press handled, so a dialog around the panel
+stays open. It leaves alone an Escape the page has already handled, one that ends typing in a script
+such as Japanese, one on a panel's button that is off, one in a dialog or a popover inside the
+panel, and one on a search with words in it or on a combobox or a button whose list or menu is open.
+A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
+prefixes or strips the ids in it.
+
+However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
+goes to the button that opened it where focus is in the panel, or where nothing has focus and the
+visitor's last place, the last focus that moved or their last press, was in it, as
+[decision 0019](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md)
+sets out. Focus anywhere else, where the visitor or the page put it, stays where it is, so a Done or
+a link that moves focus to what it shows keeps it there, before or after it closes the panel, and a
+close from the page's code after the visitor focused or pressed something outside the panel leaves
+them where they are. Where focus goes back and the visitor's last press was a link in the panel to a
+place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
+that place instead. Where the button that opened the panel takes no focus, focus goes to the first
+other attached button that names it, else the first thing after the panel the keyboard reaches by
+Tab, else the app frame's body or the page's main content. Safari focuses a pressed button only
+where it has a tabindex, so the kit writes `tabindex="0"` on an attached button and the corner
+Close, and `tabindex="-1"` on the panel, so a press anywhere in it leaves focus in it, and on the
+place a link sends focus to, each where the page set none, and keeps a tabindex the page set. A
+panel the page draws again while it is open takes them as a press in it begins. A page closes a
+panel from a press's `click`, since a close from its `pointerdown` comes before the browser moves
+focus for the press. A panel no button opens is closed by the page's own script, which moves focus
+to what comes after the panel, or to the heading before it where nothing follows.
 
 ## Layers and palettes
 

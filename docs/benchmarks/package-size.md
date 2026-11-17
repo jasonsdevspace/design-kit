@@ -6,9 +6,9 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-17 | `26dd384` | AMD EPYC 9V74 80-Core Processor, 4 cores | v24.22.2 |
+| 2026-11-17 | `eac14af` | AMD EPYC 9V74 80-Core Processor, 4 cores | v24.22.2 |
 
-`@jasonsdevspace/design-kit@0.8.4`, 76.6 KB packed. The sheets a page loads come to 10.7 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.8.3 on 2026-11-17 at `881cba2`, it packs 76.6 KB where it packed 73.2 KB, and the sheets together came to 10.4 KB.
+`@jasonsdevspace/design-kit@0.8.5`, 78.6 KB packed. The sheets a page loads come to 10.7 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.8.4 on 2026-11-17 at `26dd384`, it packs 78.6 KB where it packed 76.6 KB, and the sheets together came to 10.7 KB.
 
 The sheets a page loads:
 
@@ -22,7 +22,7 @@ The modules a page's build imports:
 
 | File             | Raw     | Gzipped |
 | ---------------- | ------- | ------- |
-| dist/controls.js | 46.6 KB | 13.3 KB |
+| dist/controls.js | 53.3 KB | 15.1 KB |
 | dist/react.js    | 20.1 KB | 6.0 KB  |
 | dist/theme.js    | 4.7 KB  | 1.7 KB  |
 | dist/vite.js     | 2.9 KB  | 1.3 KB  |
@@ -31,7 +31,7 @@ Every other file the package carries, which a page never loads:
 
 | File                      | Raw     | Gzipped |
 | ------------------------- | ------- | ------- |
-| dist/controls.d.ts        | 10.9 KB | 3.8 KB  |
+| dist/controls.d.ts        | 11.2 KB | 3.9 KB  |
 | dist/react.d.ts           | 20.8 KB | 5.9 KB  |
 | dist/theme.d.ts           | 2.5 KB  | 1.0 KB  |
 | dist/tokens.resolver.json | 30.9 KB | 1.9 KB  |
@@ -80,16 +80,16 @@ What each piece costs the three sheets, as what they save sent together without 
 | visually hidden         | 1     | 20 B   |
 | actions                 | 1     | 10 B   |
 
-What each function of the controls costs a page, as its bundler takes them without comments and gzipped: alone, on a page that imports only that one, and added, to a page that imports every other. The costliest added are `attachToast` and `attachStepper`.
+What each function of the controls costs a page, as its bundler takes them without comments and gzipped: alone, on a page that imports only that one, and added, to a page that imports every other. The costliest added are `attachPanel` and `attachToast`.
 
 | Function            | Alone  | Added  |
 | ------------------- | ------ | ------ |
-| `attachToast`       | 1691 B | 1027 B |
-| `attachStepper`     | 1485 B | 967 B  |
-| `attachDialog`      | 1252 B | 712 B  |
-| `attachPanel`       | 1245 B | 692 B  |
-| `attachThemeSwitch` | 1781 B | 668 B  |
-| `attachCopyButton`  | 1005 B | 597 B  |
+| `attachPanel`       | 2092 B | 1412 B |
+| `attachToast`       | 1739 B | 1053 B |
+| `attachStepper`     | 1485 B | 968 B  |
+| `attachDialog`      | 1267 B | 689 B  |
+| `attachThemeSwitch` | 1781 B | 657 B  |
+| `attachCopyButton`  | 1005 B | 602 B  |
 | `attachTable`       | 747 B  | 487 B  |
-| `attachStatus`      | 332 B  | 62 B   |
+| `attachStatus`      | 332 B  | 63 B   |
 | `chooseTheme`       | 865 B  | 4 B    |

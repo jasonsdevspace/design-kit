@@ -1,7 +1,7 @@
 {
     "recorded": {
         "date": "2026-11-17",
-        "commit": "26dd384",
+        "commit": "eac14af",
         "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
@@ -15,7 +15,7 @@
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.8,
+            "paint": 755.3,
             "shift": 0,
             "bytes": 23943,
             "requests": 4
@@ -24,16 +24,16 @@
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 958.3,
+            "paint": 757,
             "shift": 0,
-            "bytes": 27867,
+            "bytes": 27865,
             "requests": 4
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 904.3,
+            "paint": 906.6,
             "shift": 0,
             "bytes": 38487,
             "requests": 4
@@ -42,16 +42,16 @@
             "path": "/design-kit/app-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.4,
+            "paint": 754,
             "shift": 0,
-            "bytes": 30137,
+            "bytes": 30135,
             "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.4,
+            "paint": 755.5,
             "shift": 0,
             "bytes": 24944,
             "requests": 4
@@ -60,7 +60,7 @@
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.8,
+            "paint": 755.6,
             "shift": 0,
             "bytes": 25147,
             "requests": 4
@@ -69,16 +69,16 @@
             "path": "/design-kit/together/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.3,
+            "paint": 754.7,
             "shift": 0,
-            "bytes": 23365,
+            "bytes": 23368,
             "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 753.7,
+            "paint": 756.2,
             "shift": 0,
             "bytes": 24419,
             "requests": 4
@@ -86,8 +86,8 @@
     ],
     "since": {
         "date": "2026-11-17",
-        "commit": "881cba2",
-        "kit": "0.8.2",
-        "bytes": 217818
+        "commit": "26dd384",
+        "kit": "0.8.3",
+        "bytes": 218309
     }
 }
