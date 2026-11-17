@@ -1911,6 +1911,16 @@
     }
 
     /*
+     * A button whose face is an icon alone, marked dk-button-icon, draws its icon at 1.25rem, so it
+     * reads in a square the target wide rather than at the button's small text, and still grows
+     * when a reader raises the text size. Its stroke stays the one the button's text gives it.
+     */
+    :where(.dk-button-icon > .dk-icon) {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    /*
      * A copy button's words share one cell, so the button is as wide as its longest word whatever
      * the font, whichever word shows. A word marked aria-hidden is hidden from sight as well as
      * from the button's name.
@@ -2389,9 +2399,13 @@
         height: 1.5rem;
     }
 
-    /* A kit icon there keeps the stroke an icon of its size takes beside text of that size. */
+    /*
+     * A kit icon there is stroked at the weight of a line drawn two in twenty four, two pixels at
+     * the default size, so it weighs no more than its label and a resting tab stays light beside
+     * the current one.
+     */
     :where(.dk-tabbar .dk-icon) {
-        stroke-width: max(1.5px, 0.1875rem);
+        stroke-width: max(1.5px, 0.125rem);
     }
 
     @media (hover: hover) {

@@ -825,7 +825,7 @@ either, and the chosen tab's mark reaches the container's.
         </svg>
         Add a player
     </button>
-    <button type="button" class="dk-button" aria-pressed="false">
+    <button type="button" class="dk-button dk-button-icon" aria-pressed="false">
         <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
             <path
                 fill="currentColor"
@@ -845,8 +845,10 @@ system's text or link color. A mark drawn in fill, such as a brand's, writes `fi
 on its path, so it takes the text's color too, and the sheet leaves it with no outline. The sheet
 reaches only paths written inside the icon, so a page draws them there rather than through a `use`
 of a sprite, whose paths keep a stroke that scales. The kit ships no icons, so a page draws the few
-it needs in a helper of its own. A tab bar's icons keep their own larger size, at the stroke an icon
-of that size takes.
+it needs in a helper of its own. A button whose face is an icon alone, such as the star above, adds
+`dk-button-icon`, which draws its icon at 1.25rem rather than at the button's small text, so it reads
+in a square the target wide and still grows with the text. A tab bar's icons keep their own larger
+size, stroked at `max(1.5px, 0.125rem)`, so an icon weighs no more than its label.
 
 An icon says nothing to a screen reader. The markup carries `aria-hidden="true"`, which a sheet
 cannot set, and `focusable="false"`, and every icon sits beside words, in sight or out of it, so an
