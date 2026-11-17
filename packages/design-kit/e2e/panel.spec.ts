@@ -1387,7 +1387,7 @@ test.describe('attaching and letting go', () => {
     });
 });
 
-test('decides a close from what the visitor did after the panel last opened, not before', async ({
+test('decides a close from where focus last moved, not from a press before it', async ({
     page,
 }) => {
     await open(page);
@@ -1413,4 +1413,23 @@ test('decides a close from what the visitor did after the panel last opened, not
     });
     await twoFrames(page);
     await expect(button(page)).not.toBeFocused();
+});
+
+test("closes the panel around an off button with Escape, where the button's own panel is closed", async ({
+    page,
+}) => {
+    await open(page);
+    // An off button for a closed panel, inside an open one.
+    await page.evaluate(() => {
+        const kit = window as unknown as Kit;
+        const inner = kit.addButton('#round-tips', 'inner-button', 'More');
+        inner.setAttribute('aria-controls', 'notes');
+        kit.attach('#inner-button');
+        kit.panels[3]?.set(false);
+        inner.setAttribute('aria-disabled', 'true');
+    });
+    await button(page).click();
+    await page.locator('#inner-button').focus();
+    await page.keyboard.press('Escape');
+    await expect(panel(page)).toBeHidden();
 });

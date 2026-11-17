@@ -1027,9 +1027,6 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
     const openers = openersOf(id);
     for (const button of openers) button.setAttribute('aria-expanded', String(open));
-    // A place from before every panel closed is forgotten, since focus moving is kept only while
-    // one is open, so the first to open decides from what the visitor does once it is.
-    if (open && !lastOpener.size) lastPath = [];
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
@@ -1075,9 +1072,8 @@ const onPanelPress = (event: Event): void => {
     if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
 };
 
-/** Where focus moves, kept only while a panel is open, the only time it matters. */
+/** Where focus moves, kept always, so an older place never outlives what followed it. */
 const onPanelFocus = (event: Event): void => {
-    if (!lastOpener.size) return;
     lastPath = event.composedPath();
     lastWasPress = false;
 };
@@ -1088,12 +1084,8 @@ const onPanelDown = (event: Event): void => {
         if (lastOpener.has(place.id) && place instanceof HTMLElement) takeFocus(place);
 };
 
-/**
- * Where Escape is not the panel's: a search with words, a list that opens, or a panel's button
- * that is off, which does nothing by Escape as by a press.
- */
+/** A field where Escape means something of its own: a search with words, or a list that opens. */
 const ownsEscape = (target: Element): boolean =>
-    (target instanceof HTMLButtonElement && attachedPanels.has(target) && isOff(target)) ||
     (target instanceof HTMLInputElement && target.type === 'search' && target.value !== '') ||
     target.matches(
         '[aria-expanded="true"]:is([role="combobox"], [aria-haspopup]:not([aria-haspopup="false"]))'
@@ -1101,21 +1093,25 @@ const ownsEscape = (target: Element): boolean =>
 
 /**
  * Escape closes the innermost open panel that holds focus, or whose button has it, and marks the
- * press handled, so a dialog around the panel stays open. An Escape the page has already handled is
- * left alone, and so is one on a search with words in it or on anything else marked expanded, such
- * as a combobox with its list open, where Escape means something of its own.
+ * press handled, so a dialog around the panel stays open. It leaves alone an Escape the page has
+ * already handled, one that ends typing in a script such as Japanese, which Safari marks by the key
+ * code 229, one in a dialog or a popover inside the panel, and one on a search with words in it or
+ * on a combobox or a button whose list or menu is open, where Escape means something of its own. A
+ * panel's button that is off does not close its own panel, and Escape goes on to a panel around it.
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
     // Safari ends composing with an Escape whose keydown carries the key code 229 instead.
-    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
-    if (event.keyCode === 229) return;
+    const composing = event.isComposing || event.keyCode === 229;
+    if (event.key !== 'Escape' || event.defaultPrevented || composing) return;
     if (!(target instanceof Element) || ownsEscape(target)) return;
     const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
     for (let place: Element | null = target; place; place = place.parentElement) {
         // A dialog or a popover inside the panel takes its own Escape.
         if (place instanceof HTMLDialogElement || place.hasAttribute('popover')) return;
-        const id = place === target && own ? panelIdOf(place) : place.id;
+        // A panel's button that is off does nothing for its own panel, by Escape as by a press, and
+        // Escape goes on to a panel around it.
+        const id = place === target && own ? (isOff(target) ? '' : panelIdOf(place)) : place.id;
         if (!lastOpener.has(id)) continue;
         event.preventDefault();
         showPanel(id, false, lastOpener.get(id));
