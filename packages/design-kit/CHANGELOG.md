@@ -9,39 +9,42 @@ entry as the notes.
 
 ## 0.8.3
 
-A picture of an app's frame ends its body at what it holds, and a panel and the tiles in it hold
-their inset on a phone at any text size. `--dk-app-body` is added and no token is renamed, and the
-theme script is unchanged, so `themeScriptHash` is the same.
+A picture of an app's frame ends its body at what it holds, and a panel and every tile hold their
+inset on a phone at any text size. `--dk-app-body` is added and no token is renamed, and the theme
+script is unchanged, so `themeScriptHash` is the same.
 
-- **Upgrading.** A pictured frame whose body holds less than 8rem is drawn shorter, ending at what
-  it holds, so a page that wants it as tall as before sets `--dk-app-body: 8rem` on the picture. A
-  phone's panels and tiles are padded no more than 16px at any text size, since the card's inset on
-  a phone is now the held step. A page that set `--dk-space-4` above 16px to widen them, or that
-  wants their inset to grow with the text as it did, sets `--dk-card-inset` in a query of its own.
+- **Upgrading.** A pictured frame that is as tall as what it holds, with a body that holds less than
+  8rem, is drawn shorter, ending at its words, so a page that wants it as tall as before sets
+  `--dk-app-body: 8rem` through a class of its own on the frame. A pictured frame the page gives a
+  height of its own keeps it. On a phone a panel and a tile, in a panel or on the page, are padded
+  no more than 16px at any text size, since the card's inset there is now the held step. A page that
+  set `--dk-space-4` or its root font size above 16px, or that wants that inset to grow with the
+  text as it did, sets `--dk-card-inset` in a query of its own.
 - **Tokens.** `--dk-app-body` is the least height of an app's body, 8rem, a few lines it can scroll,
   and none on an element with `dk-picture` and inside it, since a picture cannot scroll.
   `--dk-card-inset` is `--dk-space-4-held` at 48rem wide or less, 1rem and no more than 16px at any
   text size, where it grew with the text, as a dialog's and an app column's insets already hold. On
   a page wider than 48rem it is `--dk-space-5` as before, and at the default text size nothing
-  moves.
+  moves. A panel's corner Close, placed from the card's inset, keeps its ring inside the panel where
+  the held inset leaves no room above it at a large text size, and sits a little below the title's
+  first line.
 - **Sheets.** A frame's body keeps `--dk-app-body`, so a pictured frame's body ends at what it
   holds, where it kept 8rem and left an empty band under a few words, and a pictured frame drawn
   taller than what it holds still gives the room to its body, its bars at its foot. The rule that
   held a tile's inset inside a panel on a phone is gone, since the card's inset now holds it for a
-  panel and every tile alike. A panel's corner Close keeps its ring inside the panel where the held
-  padding leaves no room above it at a large text size, and sits a little below the title's first
-  line.
+  panel and every tile alike.
 - **Docs.** The reference's tokens name `--dk-app-body` and say the card inset is held on a phone,
   its app frame says the body keeps `--dk-app-body`, and its panels say a panel and its tiles hold
   their inset on a phone. Its corner Close says it sits a little below the title's first line where
-  a held padding leaves no room above it, and that `attachDialog` moves focus to the first field or
-  answer after it.
+  a held padding leaves no room above it, and now says, as 0.8.2 already does, that `attachDialog`
+  moves focus to the first field or answer after it.
 - **Tests.** Browser tests find a pictured frame's body ending one padding below its last child at
   390 and 1280 wide, and a pictured frame drawn taller than what it holds keeping its bars at its
-  foot. A dialog that ends in a list or a paragraph stands the same room at its foot as at its top,
-  at 390 and 1280 wide. A browser test draws tiles in a plain and a raised panel and on the page at
-  320 wide and twice the text size, finds no word drawn across two lines or cut off, and holds a
-  panel, the tiles in each and a tile on the page to 16px.
+  foot. A new test holds what the kit already drew, a dialog that ends in a list or a paragraph
+  standing the same room at its foot as at its top, at 390 and 1280 wide. A browser test draws tiles
+  in a plain and a raised panel and on the page at 320 wide and twice the text size, finds no word
+  drawn across two lines or cut off, and holds a panel, the first tile in each panel and a tile on
+  the page to 16px.
 
 ## 0.8.2
 
