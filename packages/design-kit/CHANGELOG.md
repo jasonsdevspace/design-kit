@@ -39,12 +39,13 @@ unchanged, so `themeScriptHash` is the same.
   handled, so a dialog around it stays open, unless the page has handled it, it ends typing in a
   script such as Japanese, in Safari too, it is in a dialog or a popover inside the panel, or focus
   is on a search with words in it, on a combobox or a button whose list or menu is open, or on a
-  panel's button that is off. Where no button takes focus, the first thing after the panel that
-  focus goes to is one the keyboard reaches by Tab, so another open panel does not take it. A dialog
-  opened by a press inside an element with a tabindex of -1, a panel among them, no longer takes
-  that element for what opened it, so focus goes back to the nearest control around the press or to
-  the element whose listener heard it. A toast's Close and action carry a tabindex as a panel's do,
-  so a press of either in Safari leaves focus in the toast and it goes back as the toast leaves.
+  panel's button that is off, where Escape goes on to a panel around the button. Where no button
+  takes focus, the first thing after the panel that focus goes to is one the keyboard reaches by
+  Tab, so another open panel does not take it. A dialog opened by a press inside an element with a
+  tabindex of -1, a panel among them, no longer takes that element for what opened it, so focus goes
+  back to the nearest control around the press or to the element whose listener heard it. A toast's
+  Close and action carry a tabindex as a panel's do, so a press of either in Safari leaves focus in
+  the toast and it goes back as the toast leaves.
 - **React.** `Toast` draws its Close and its action with `tabIndex={0}`.
 - **Docs.** Record 19 states the panel's rule, the research into React Aria, Radix, Headless UI,
   Ariakit and WebKit behind it, and the options turned down, and record 13 measures the controls
@@ -52,12 +53,13 @@ unchanged, so `themeScriptHash` is the same.
   reference's corner Close and toast, and the accessibility statement, say what the kit writes and
   why.
 - **Tests.** The panel's browser tests run each case of the rule in Chromium and WebKit with real
-  presses, and a WebKit test holds that a pressed button with no tabindex stays unfocused there, so
-  the tests of Safari's way keep testing it. A toast's Close and action pressed by pointer, and its
-  Close tapped in WebKit, find focus back where it was, and the tests hold that the kit writes the
-  tabindexes on a panel's and a toast's buttons and keeps those a page set. The theme switch, the
-  copy button and the pieces are tested in WebKit too, where the switch's choices open by pointer
-  and close on a pick or a tap beside them, as in Chromium.
+  presses, Escape as Safari ends typing and on a button that is off among them, and a WebKit test
+  holds that a pressed button with no tabindex stays unfocused there, so the tests of Safari's way
+  keep testing it. A toast's Close and action pressed by pointer, and its Close tapped in WebKit,
+  find focus back where it was, and the tests hold that the kit writes the tabindexes on a panel's
+  and a toast's buttons and keeps those a page set. The theme switch, the copy button and the pieces
+  are tested in WebKit too, where the switch's choices open by pointer and close on a pick or a tap
+  beside them, as in Chromium.
 
 ## 0.8.4
 
