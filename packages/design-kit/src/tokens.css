@@ -171,7 +171,9 @@
         /*
          * The padding of a panel and a tile on a phone and in an app's frame, and of a dialog on a
          * phone, and a wide dialog's, each stopping at its usual size so a large text size leaves
-         * what they hold its room. A field's inline padding held the same way keeps a stepper's figures room.
+         * what they hold its room. The phone's step also pads an app frame's sides and a toast's,
+         * and steps a band in on an app's page. A field's inline padding held the same way keeps a
+         * stepper's figures room.
          */
         --dk-space-4-held: min(var(--dk-space-4), 16px);
         --dk-space-5-held: min(var(--dk-space-5), 24px);

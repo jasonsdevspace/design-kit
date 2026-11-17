@@ -847,10 +847,34 @@ test("pads the frame's bar, body, toast and dock by a phone's step on a 320px ph
 
 test("pads the frame's sides by a phone's step at the default text size", async ({ page }) => {
     await open(page, { width: 390, toast: true });
-    for (const part of ['.dk-app-bar', '.dk-app-body', '.dk-app-toast', '.dk-app-dock'])
-        expect((await style(page.locator(part), 'padding-left'))['padding-left'], part).toBe(
-            '16px'
-        );
+    for (const part of ['.dk-app-bar', '.dk-app-body', '.dk-app-toast', '.dk-app-dock']) {
+        const sides = await style(page.locator(part), 'padding-left', 'padding-right');
+        expect(sides, part).toEqual({ 'padding-left': '16px', 'padding-right': '16px' });
+    }
+});
+
+test("starts the skip link where the frame's words start, on a 320px phone at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await doubled(page, browserName);
+    await writePage(page, {
+        width: 320,
+        height: 900,
+        title: 'Round 3',
+        body: `<a class="dk-skip" href="#main-content">Skip to content</a>${screen()}`,
+    });
+    await page.locator('.dk-skip').focus();
+    const skip = await box(page.locator('.dk-skip'));
+    const words = await page
+        .locator('.dk-app-body > p')
+        .first()
+        .evaluate((line) => {
+            const range = document.createRange();
+            range.selectNodeContents(line);
+            return range.getBoundingClientRect().left;
+        });
+    expect(Math.round(skip.x)).toBe(Math.round(words));
 });
 
 test("keeps a panel in an app's frame to a phone's padding at twice the text size", async ({
