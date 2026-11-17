@@ -918,9 +918,16 @@ export const Toast = ({ className, ref }: ToastProps = {}) => (
         <p className="dk-toast-message" aria-hidden="true" />
         <p className="dk-visually-hidden dk-toast-status" role="status" />
         <div className="dk-toast-buttons">
-            <button type="button" className="dk-button dk-button-text dk-toast-action" hidden />
+            {/* A tabindex of their own lets Safari focus them on a press, so focus can go back. */}
             <button
                 type="button"
+                tabIndex={0}
+                className="dk-button dk-button-text dk-toast-action"
+                hidden
+            />
+            <button
+                type="button"
+                tabIndex={0}
                 className="dk-button dk-button-text dk-button-quiet dk-toast-close"
                 hidden
             >

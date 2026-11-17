@@ -511,7 +511,10 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
  * goes back to the last control outside the toast that had focus when a message arrived, and where
  * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
- * frame to its main content. Attaching a toast again returns the same function. Its listeners are
+ * frame to its main content. Its Close and its action take a tabindex of 0 where the page set none,
+ * so Safari, which focuses a pressed button only where it has one, leaves focus in the toast on a
+ * press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
+ * function. Its listeners are
  * on the toast's own elements, so a toast taken from the page takes them with it.
  */
 export const attachToast = (element: HTMLElement): ShowToast => {
@@ -526,6 +529,10 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
+    // Safari focuses a pressed button only where it has a tabindex, so a press of either button
+    // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
+    for (const button of [actionButton, close])
+        if (!button.hasAttribute('tabindex')) button.tabIndex = 0;
     // While a message is shown, the toast is measured again whenever its size or the screen's
     // changes, a turned phone or a new text size among them, so its room never goes stale.
     const remeasure = () => {
