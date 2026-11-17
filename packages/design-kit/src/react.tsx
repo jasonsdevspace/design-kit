@@ -215,8 +215,9 @@ type NativeButton = Omit<
 
 /**
  * A button's own props: the accent for the one action a view leads with, `large` for a bigger
- * target, `tall` for the larger target what a screen is for takes, `text` for a button drawn as
- * a link, `quiet` beside it for a Close, `pressed` for a toggle that stands alone, and `off`,
+ * target, `tall` for the larger target what a screen is for takes, `icon` for a face that is an
+ * icon alone, `text` for a button drawn as a link, `quiet` beside it for a Close, `pressed` for a
+ * toggle that stands alone, and `off`,
  * beside a `<button>`'s own, its `ref` among them, which holds the button drawn for a page that
  * moves focus to it. The accent is never a toggle and never a text button, a text button is never
  * a toggle, never large and never tall, and a quiet one is never off, so none of those go together.
@@ -241,6 +242,11 @@ export type ButtonProps = NativeButton & {
                * height, and the least width with it, so it goes with `large` or without.
                */
               readonly tall?: boolean | undefined;
+              /**
+               * A face that is an icon alone, its icon drawn at 1.25rem so it reads in the
+               * square, with the button's name in words out of sight beside it.
+               */
+              readonly icon?: boolean | undefined;
           }
         | {
               readonly accent?: false | undefined;
@@ -250,6 +256,7 @@ export type ButtonProps = NativeButton & {
               readonly quiet?: undefined;
               readonly large?: boolean | undefined;
               readonly tall?: boolean | undefined;
+              readonly icon?: boolean | undefined;
           }
         | {
               readonly accent?: false | undefined;
@@ -261,6 +268,7 @@ export type ButtonProps = NativeButton & {
               readonly quiet?: false | undefined;
               readonly large?: undefined;
               readonly tall?: undefined;
+              readonly icon?: undefined;
           }
         | {
               readonly accent?: false | undefined;
@@ -275,6 +283,7 @@ export type ButtonProps = NativeButton & {
               readonly off?: false | undefined;
               readonly large?: undefined;
               readonly tall?: undefined;
+              readonly icon?: undefined;
           }
     );
 
@@ -288,6 +297,7 @@ export const Button = ({
     accent,
     large,
     tall,
+    icon,
     text,
     quiet,
     pressed,
@@ -306,6 +316,7 @@ export const Button = ({
             accent === true && 'dk-button-accent',
             large === true && 'dk-button-large',
             tall === true && 'dk-button-tall',
+            icon === true && 'dk-button-icon',
             text === true && 'dk-button-text',
             quiet === true && 'dk-button-quiet',
             className

@@ -4,13 +4,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { icon } from '../examples/examples.js';
 import { channels, colorOf, forceColors, pixels, writePage } from './page.js';
+import { textSize } from './text-size.js';
 
 /*
  * An icon as each engine draws it: one em square in a line of text, a doubled line, a link and a
  * small caption, stroked in its line's color with no fill and a stroke that does not scale with
  * the drawing, measured in pixels on a doubled line, at least one and a half pixels, a tab bar's
- * icon at the bar's own size, the system's text and link colors in forced colors, and a toggle
- * whose face is an icon alone named by its words out of sight, with no audit findings.
+ * icon at the bar's own size and a lighter stroke, an icon-only button's icon larger than its
+ * text, both doubling at twice the text size, the system's text and link colors in forced
+ * colors, and a toggle whose face is an icon alone named by its words out of sight, with no audit
+ * findings.
  */
 /** An icon in a line of text, in a doubled line, in a link, in a small caption, and in a tab bar. */
 const ICONS = (() => {
@@ -117,8 +120,13 @@ for (const theme of ['light', 'dark'] as const)
             0
         );
         expect((await iconLook(page, 'small')).width).toBe('1.5px');
-        // A tab bar keeps its own larger icon, at the stroke an icon of that size takes.
-        expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 24, width: '3px' });
+        // A tab bar keeps its own larger icon, stroked no heavier than its label.
+        expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 24, width: '2px' });
+        // A button whose face is an icon alone draws it at 1.25rem, larger than its small text.
+        const alone = page.locator('button[aria-pressed] svg');
+        expect(await alone.evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(
+            20
+        );
         // A mark drawn in fill takes no outline.
         const star = page.locator('button[aria-pressed] path');
         expect(await star.evaluate((path) => getComputedStyle(path).stroke), theme).toBe('none');
@@ -130,6 +138,16 @@ for (const theme of ['light', 'dark'] as const)
             theme
         ).toEqual([]);
     });
+
+test("grows an icon-only button's icon with the text, to twice its size at twice the text size", async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    await writePage(page, { title: 'Icons', body: ICONS });
+    const alone = page.locator('button[aria-pressed] svg');
+    expect(await alone.evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(40);
+    expect(await iconLook(page, 'in-bar')).toMatchObject({ height: 48, width: '4px' });
+});
 
 test("redraws an icon in the system's text and link colors in forced colors", async ({
     page,
