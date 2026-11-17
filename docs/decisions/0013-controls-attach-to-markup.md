@@ -138,8 +138,8 @@ budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until
 it, as the rule has it, so the piece that does says so with its figures.
 
 For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it.
-Every function sent together weighs 7,390 bytes, 290 bytes under the 7.5 KB they hold, and the
-median a function adds is now 654 bytes. A function of the usual size would take them past the
+Every function sent together weighs 7,613 bytes, 67 bytes under the 7.5 KB they hold, and the
+median a function adds is now 656 bytes. A function of the usual size would take them past the
 budget, and the rule then sets them at 8 KB. The budget stays at 7.5 KB until a function outgrows
 it, as the rule has it.
 

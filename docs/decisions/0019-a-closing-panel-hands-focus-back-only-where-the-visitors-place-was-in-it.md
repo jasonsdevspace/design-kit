@@ -61,17 +61,19 @@ still counts as the panel's. A press by a page's script is not the visitor's and
 button focus goes to is the one pressed or the one that opened the panel, else the first attached
 button that names it and takes focus, else the first thing after the panel the keyboard reaches
 by Tab, else the app frame's body or the page's main content. Where focus goes back and the
-visitor's last press was a link in the panel to a place on the same page outside it, focus goes
-to that place instead, since following the link moved the keyboard's starting point there.
+visitor's last press was a link in the panel to a place on the same page outside it, one that
+opens no new tab and downloads nothing, focus goes to that place instead, since following the link
+moved the keyboard's starting point there.
 
-The kit writes `tabindex="0"` on an attached button as it is attached, `tabindex="0"` on a
-panel's corner Close and `tabindex="-1"` on the panel as the panel opens or closes, and
-`tabindex="-1"` on the place a link sends focus to, each where it has none of its own. It never
-changes a tabindex a page set, so a toolbar that moves its own tabindex among its buttons keeps
-it. Escape with focus in a panel or on its button closes the innermost such panel and marks the
-press handled, so a dialog around the panel stays open. It leaves alone an Escape the page has
-already handled, and one on a search with words in it or on anything else marked expanded, such
-as a combobox with its list open, where Escape means something of its own.
+The kit writes `tabindex="0"` on an attached button as it is attached, `tabindex="0"` on a panel's
+corner Close and `tabindex="-1"` on the panel as the panel opens or closes and as a press in it
+begins, and `tabindex="-1"` on the place a link sends focus to, each where it has none of its own.
+It never changes a tabindex a page set, so a toolbar that moves its own tabindex among its buttons
+keeps it. Escape with focus in a panel or on its button closes the innermost such panel and marks
+the press handled, so a dialog around the panel stays open. It leaves alone an Escape the page has
+already handled, one that ends typing in a script such as Japanese, one in a dialog or a popover
+inside the panel, and one on a search with words in it or on a combobox or a button whose list or
+menu is open, where Escape means something of its own.
 
 An option on `set` to hand focus back stays turned down, since every page would have to ask for
 it and the drop-in rule has the kit do it.
@@ -82,9 +84,8 @@ it and the drop-in rule has the kit do it.
   sheet draws none on an element with a tabindex of -1.
 - In Safari's default settings the attached buttons and Closes are stops for Tab where the page's
   other buttons are not, as with the libraries that give their buttons a tabindex.
-- A panel the page draws again while it is open keeps no tabindex, nor does its Close, until its
-  next opening or closing, so until then a Safari press on its Close or on a button in it leaves
-  focus on what holds the panel rather than handing it to the button.
+- A panel the page draws again while it is open takes its tabindexes as a press in it begins, before
+  Safari decides where the press puts focus.
 - Focus handed back scrolls the button into view, where React Aria, Radix, Ariakit and Headless
   UI's popover restore focus without scrolling, since a panel sits in the page's flow and its
   button may be off screen.

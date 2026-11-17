@@ -839,8 +839,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
         from instanceof Element
             ? from
             : from
-              ? ((from.target instanceof Element ? from.target.closest(FOCUSABLE) : null) ??
-                (from.currentTarget instanceof Element ? from.currentTarget : null))
+              ? ((from.target instanceof Element
+                    ? from.target.closest(`:is(${FOCUSABLE}):not([tabindex="-1"])`)
+                    : null) ?? (from.currentTarget instanceof Element ? from.currentTarget : null))
               : null;
     if (found && found !== document.body) return found;
     // The page's body, where nothing has focus, is no opener, so focus goes where returnTo says.
@@ -959,6 +960,18 @@ const startedPanels = new Set<string>();
 let attachedCount = 0;
 
 /**
+ * Gives a panel a tabindex of -1 and its corner Close one of 0, where the page set none, so a press
+ * in the panel leaves focus in it and Safari focuses a pressed Close. Done as the panel opens or
+ * closes, and as a press in it begins, so a panel the page draws again gets them before Safari
+ * decides where the press puts focus.
+ */
+const takeFocus = (panel: HTMLElement): void => {
+    if (!panel.hasAttribute('tabindex')) panel.tabIndex = -1;
+    const close = panel.querySelector<HTMLElement>(':scope > .dk-close button');
+    if (close && !close.hasAttribute('tabindex')) close.tabIndex = 0;
+};
+
+/**
  * The place on this page outside the panel that a link in it sends the visitor to, where that link
  * was their last press, since following it moved the keyboard's start there. It is given a
  * tabindex of -1 where it takes no focus, so focus can follow.
@@ -967,12 +980,24 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | null => {
     const link = lastWasPress
         ? lastPath.find(
               (node): node is HTMLAnchorElement =>
-                  node instanceof HTMLAnchorElement && panel.contains(node) && node.hash !== ''
+                  node instanceof HTMLAnchorElement &&
+                  panel.contains(node) &&
+                  node.hash !== '' &&
+                  !node.target &&
+                  !node.hasAttribute('download')
           )
         : undefined;
+    let id = link?.hash.slice(1) ?? '';
+    try {
+        id = decodeURIComponent(id);
+    } catch {
+        // A fragment that is not encoded as a whole is looked for as written.
+    }
     const jump =
-        link?.origin === location.origin && link.pathname === location.pathname
-            ? document.getElementById(link.hash.slice(1))
+        link?.origin === location.origin &&
+        link.pathname === location.pathname &&
+        link.search === location.search
+            ? document.getElementById(id)
             : null;
     if (!jump || panel.contains(jump)) return null;
     if (jump.tabIndex < 0 && !jump.hasAttribute('tabindex')) jump.tabIndex = -1;
@@ -998,9 +1023,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    if (!panel.hasAttribute('tabindex')) panel.tabIndex = -1;
-    const close = panel.querySelector<HTMLElement>(':scope > .dk-close button');
-    if (close && !close.hasAttribute('tabindex')) close.tabIndex = 0;
+    takeFocus(panel);
     const active = focusedNow();
     const held = active ? panel.contains(active) : lastPath.includes(panel);
     panel.hidden = !open;
@@ -1026,9 +1049,8 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
 const onPanelPress = (event: Event): void => {
     if (event.isTrusted) {
         lastPath = event.composedPath();
-        lastWasPress = event.type === 'click';
+        lastWasPress = true;
     }
-    if (event.type !== 'click') return;
     const target = event.target instanceof Element ? event.target : null;
     const button = target?.closest('button');
     if (!button) return;
@@ -1043,6 +1065,26 @@ const onPanelPress = (event: Event): void => {
     if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
 };
 
+/** Where focus moves, kept only while a panel is open, the only time it matters. */
+const onPanelFocus = (event: Event): void => {
+    if (!lastOpener.size) return;
+    lastPath = event.composedPath();
+    lastWasPress = false;
+};
+
+/** As a press begins, each open panel it lands in takes focus, a panel drawn again among them. */
+const onPanelDown = (event: Event): void => {
+    for (let place = event.target as Element | null; place; place = place.parentElement)
+        if (lastOpener.has(place.id) && place instanceof HTMLElement) takeFocus(place);
+};
+
+/** A field where Escape means something of its own: a search with words, or a list that opens. */
+const ownsEscape = (target: Element): boolean =>
+    (target instanceof HTMLInputElement && target.type === 'search' && target.value !== '') ||
+    target.matches(
+        '[aria-expanded="true"]:is([role="combobox"], [aria-haspopup]:not([aria-haspopup="false"]))'
+    );
+
 /**
  * Escape closes the innermost open panel that holds focus, or whose button has it, and marks the
  * press handled, so a dialog around the panel stays open. An Escape the page has already handled is
@@ -1051,14 +1093,12 @@ const onPanelPress = (event: Event): void => {
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
-    if (event.key !== 'Escape' || event.defaultPrevented || !(target instanceof Element)) return;
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
+    if (!(target instanceof Element) || ownsEscape(target)) return;
     const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
-    if (
-        (target instanceof HTMLInputElement && target.type === 'search' && target.value) ||
-        (!own && target.matches('[aria-expanded="true"]'))
-    )
-        return;
     for (let place: Element | null = target; place; place = place.parentElement) {
+        // A dialog or a popover inside the panel takes its own Escape.
+        if (place instanceof HTMLDialogElement || place.hasAttribute('popover')) return;
         const id = place === target && own ? panelIdOf(place) : place.id;
         if (!lastOpener.has(id)) continue;
         event.preventDefault();
@@ -1097,16 +1137,18 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
             attachedPanels.delete(opener);
             for (const [id, button] of lastOpener) if (button === opener) lastOpener.delete(id);
             if (--attachedCount) return;
-            document.removeEventListener('focusin', onPanelPress, true);
+            document.removeEventListener('focusin', onPanelFocus, true);
             document.removeEventListener('click', onPanelPress, true);
+            document.removeEventListener('pointerdown', onPanelDown, true);
             document.removeEventListener('keydown', onPanelKey);
             startedPanels.clear();
         },
     };
     attachedPanels.set(opener, control);
     if (!attachedCount++) {
-        document.addEventListener('focusin', onPanelPress, true);
+        document.addEventListener('focusin', onPanelFocus, true);
         document.addEventListener('click', onPanelPress, true);
+        document.addEventListener('pointerdown', onPanelDown, true);
         document.addEventListener('keydown', onPanelKey);
     }
     // Safari focuses a pressed button only where it has a tabindex, so the kit gives one where the

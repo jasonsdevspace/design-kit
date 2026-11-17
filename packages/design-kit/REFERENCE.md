@@ -2523,29 +2523,29 @@ returns the same, and one with no `aria-controls` is refused with an error that 
 and the panel are found at each press, so a panel drawn again keeps working, and listeners on the
 page serve every panel, taken off once every button is let go. Escape with focus in a panel or on
 its button closes the innermost such panel and marks the press handled, so a dialog around the panel
-stays open. It leaves alone an Escape the page has already handled, and one on a search with words
-in it or on anything else marked `aria-expanded="true"`, such as a combobox with its list open. A
-panel's id must be the only one on the page, so a page that shows markup its visitors wrote prefixes
-or strips the ids in it.
+stays open. It leaves alone an Escape the page has already handled, one that ends typing in a script
+such as Japanese, one in a dialog or a popover inside the panel, and one on a search with words in
+it or on a combobox or a button whose list or menu is open. A panel's id must be the only one on the
+page, so a page that shows markup its visitors wrote prefixes or strips the ids in it.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
 goes to the button that opened it where focus is in the panel, or where nothing has focus and the
-visitor's last place, the last focus that moved or their last press, was in it, as [decision
-0019](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md)
+visitor's last place, the last focus that moved or their last press, was in it, as
+[decision 0019](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md)
 sets out. Focus anywhere else, where the visitor or the page put it, stays where it is, so a Done or
 a link that moves focus to what it shows keeps it there, before or after it closes the panel, and a
 close from the page's code after the visitor focused or pressed something outside the panel leaves
 them where they are. Where focus goes back and the visitor's last press was a link in the panel to a
-place on the same page outside it, focus goes to that place instead. Where the button that opened
-the panel takes no focus, focus goes to the first other attached button that names it, else the
-first thing after the panel the keyboard reaches by Tab, else the app frame's body or the page's
-main content. Safari focuses a pressed button only where it has a tabindex, so the kit writes
-`tabindex="0"` on an attached button and the corner Close, and `tabindex="-1"` on the panel, so a
-press anywhere in it leaves focus in it, and on the place a link sends focus to, each where the page
-set none, and keeps a tabindex the page set. A panel the page draws again while it is open has none
-until it next opens or closes, so until then a Safari press in it leaves focus on what holds it. A
-panel no button opens is closed by the page's own script, which moves focus to what comes after the
-panel, or to the heading before it where nothing follows.
+place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
+that place instead. Where the button that opened the panel takes no focus, focus goes to the first
+other attached button that names it, else the first thing after the panel the keyboard reaches by
+Tab, else the app frame's body or the page's main content. Safari focuses a pressed button only
+where it has a tabindex, so the kit writes `tabindex="0"` on an attached button and the corner
+Close, and `tabindex="-1"` on the panel, so a press anywhere in it leaves focus in it, and on the
+place a link sends focus to, each where the page set none, and keeps a tabindex the page set. A
+panel the page draws again while it is open takes them as a press in it begins. A panel no button
+opens is closed by the page's own script, which moves focus to what comes after the panel, or to the
+heading before it where nothing follows.
 
 ## Layers and palettes
 

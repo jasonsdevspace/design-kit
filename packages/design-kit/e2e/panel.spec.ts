@@ -698,6 +698,23 @@ test.describe("a button of the page's own in the panel", () => {
         await expect(panel(page)).toBeHidden();
         await expect(button(page)).toBeFocused();
     });
+
+    test('hands focus back from a panel drawn again from fresh markup while it is open', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        // The page draws the open panel again from its markup, which writes no tabindex.
+        await page.evaluate((markup) => {
+            const drawn = document.createElement('template');
+            drawn.innerHTML = markup;
+            drawn.content.firstElementChild?.removeAttribute('hidden');
+            document.querySelector('#round-tips')?.replaceWith(drawn.content);
+        }, TIPS);
+        await close(page).click();
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+    });
 });
 
 test.describe('a link in the panel', () => {
@@ -782,6 +799,50 @@ test.describe('a link in the panel', () => {
         await expect(page.locator('#outside')).toHaveAttribute('tabindex', '-1');
     });
 
+    test('sends focus to a place whose id is written encoded in the link', async ({ page }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            const place = document.createElement('p');
+            place.id = 'scores kept';
+            place.textContent = 'Scores are kept here.';
+            document.querySelector('footer')?.append(place);
+            const link = document.createElement('a');
+            link.href = '#scores%20kept';
+            link.id = 'to-kept';
+            link.textContent = 'Where scores are kept';
+            link.addEventListener('click', () => {
+                (window as unknown as Kit).setTips(false);
+            });
+            document.querySelector('#round-tips')?.append(link);
+        });
+        await page.locator('#to-kept').click();
+        await expect(panel(page)).toBeHidden();
+        await expect(page.locator('[id="scores kept"]')).toBeFocused();
+    });
+
+    test('hands focus to the button where the link opens a new tab rather than moving this page', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            const link = document.createElement('a');
+            link.href = '#outside';
+            link.target = '_blank';
+            link.id = 'to-tab';
+            link.textContent = 'Where scores are kept, in a new tab';
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                (window as unknown as Kit).setTips(false);
+            });
+            document.querySelector('#round-tips')?.append(link);
+        });
+        await page.locator('#to-tab').click();
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+    });
+
     test('hands focus to the button, not where a link goes, when the link only had focus', async ({
         page,
     }) => {
@@ -827,6 +888,54 @@ test.describe('a link in the panel', () => {
 });
 
 test.describe('Escape', () => {
+    test('closes the panel from a disclosure inside it, which takes no Escape of its own', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            const kit = window as unknown as Kit;
+            kit.addButton('#round-tips', 'section-head', 'Scoring').setAttribute(
+                'aria-expanded',
+                'true'
+            );
+        });
+        await page.locator('#section-head').focus();
+        await page.keyboard.press('Escape');
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+    });
+
+    test('leaves the panel open when Escape closes a dialog inside it', async ({ page }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            const dialog = document.createElement('dialog');
+            dialog.innerHTML = '<button type="button" id="in-dialog">Keep</button>';
+            document.querySelector('#round-tips')?.append(dialog);
+            dialog.showModal();
+        });
+        await expect(page.locator('#in-dialog')).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('dialog')).not.toHaveAttribute('open');
+        await expect(panel(page)).toBeVisible();
+    });
+
+    test('leaves the panel open on an Escape that ends typing in a script such as Japanese', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.locator('#deal').focus();
+        await page.evaluate(() => {
+            document.activeElement?.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', isComposing: true, bubbles: true })
+            );
+        });
+        await twoFrames(page);
+        await expect(panel(page)).toBeVisible();
+    });
+
     test('closes the panel with focus in it and hands focus to its button', async ({
         page,
         browserName,
