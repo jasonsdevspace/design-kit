@@ -137,17 +137,11 @@ the median a piece costs is now 165 bytes. A piece of the usual size would take 
 budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
 it, as the rule has it, so the piece that does says so with its figures.
 
-For 0.8.5 the panel's focus on closing is settled after three tries in one release. A press in
-Safari or on iOS neither focuses the pressed button nor leaves focus where it was, and puts it on
-what holds the button, the body or a main that takes focus. Moving focus only where it was in the
-panel left a pointer's Close on the body. Handing it back for a press of the Close alone left a
-Done button of the page's own on the body. Taking any focus on the body as lost pulled a visitor
-back to the panel when the page closed it on a timer. The rule kept is that a closing panel hands
-focus to its button where focus was in it, or where focus fell to what holds it after the
-visitor's last press was inside it, and leaves focus anywhere else where the visitor or the page
-put it. The kit keeps the path of the last press rather than a timer, so a Done whose handler
-waits or draws the button away still counts. An option on `set` to hand focus back was turned
-down, since every page would have to ask for it and the drop-in rule has the kit do it.
+For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it.
+Every function sent together weighs 7,613 bytes, 67 bytes under the 7.5 KB they hold, and the
+median a function adds is now 656 bytes. A function of the usual size would take them past the
+budget, and the rule then sets them at 8 KB. The budget stays at 7.5 KB until a function outgrows
+it, as the rule has it.
 
 ## How it is tested
 

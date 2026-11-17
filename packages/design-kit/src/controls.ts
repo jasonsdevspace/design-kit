@@ -839,8 +839,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
         from instanceof Element
             ? from
             : from
-              ? ((from.target instanceof Element ? from.target.closest(FOCUSABLE) : null) ??
-                (from.currentTarget instanceof Element ? from.currentTarget : null))
+              ? ((from.target instanceof Element
+                    ? from.target.closest(`:is(${FOCUSABLE}):not([tabindex="-1"])`)
+                    : null) ?? (from.currentTarget instanceof Element ? from.currentTarget : null))
               : null;
     if (found && found !== document.body) return found;
     // The page's body, where nothing has focus, is no opener, so focus goes where returnTo says.
@@ -941,10 +942,13 @@ const openersOf = (id: string): HTMLButtonElement[] =>
     );
 
 /**
- * What a visitor's last press passed through, from what it landed on up, kept until the next
- * press, so a panel it was in still counts after the page draws the pressed button away.
+ * Where the visitor's place last was, the path of the last focus that moved or of their last
+ * press, from what it reached up, so a panel it was in still counts after the page draws away or
+ * turns off the button pressed. A press by a page's script is not the visitor's and is not kept.
  */
-let pressedPath: readonly EventTarget[] = [];
+let lastPath: readonly EventTarget[] = [];
+/** Whether that last place was a press, as a link followed is, rather than focus that moved. */
+let lastWasPress = false;
 
 /** The button that opened each panel that is open, let go as the panel closes. */
 const lastOpener = new Map<string, HTMLButtonElement>();
@@ -956,15 +960,61 @@ const startedPanels = new Set<string>();
 let attachedCount = 0;
 
 /**
- * Shows or hides a panel and marks every attached button that names it to match. Where focus was in
- * the panel as it closes, or focus fell to what holds it, the body or a main that takes focus,
- * after a visitor's last press was inside it, as Safari leaves focus after a press of its Close or
- * of a button of the page's own, even one the page then draws away or one whose handler waits
- * before it closes, focus goes to the button given, the one that opened the panel, else to the
- * first attached button that names it and takes focus, else to the first thing after the panel that
- * takes it, and where nothing does, to the body of the app's frame or the page's main content, as
- * the toast's does, so the keyboard keeps its place rather than being left on what was just hidden.
- * Focus anywhere else, where the visitor or the page put it, stays where it is.
+ * Gives a panel a tabindex of -1 and its corner Close one of 0, where the page set none, so a press
+ * in the panel leaves focus in it and Safari focuses a pressed Close. Done as the panel opens or
+ * closes, and as a press in it begins, so a panel the page draws again gets them before Safari
+ * decides where the press puts focus.
+ */
+const takeFocus = (panel: HTMLElement): void => {
+    if (!panel.hasAttribute('tabindex')) panel.tabIndex = -1;
+    const close = panel.querySelector<HTMLElement>(':scope > .dk-close button');
+    if (close && !close.hasAttribute('tabindex')) close.tabIndex = 0;
+};
+
+/**
+ * The place on this page outside the panel that a link in it sends the visitor to, where that link
+ * was their last press, since following it moved the keyboard's start there. It is given a
+ * tabindex of -1 where it takes no focus, so focus can follow.
+ */
+const jumpFrom = (panel: HTMLElement): HTMLElement | null => {
+    const link = lastWasPress
+        ? lastPath.find(
+              (node): node is HTMLAnchorElement =>
+                  node instanceof HTMLAnchorElement &&
+                  panel.contains(node) &&
+                  node.hash !== '' &&
+                  !node.target &&
+                  !node.hasAttribute('download')
+          )
+        : undefined;
+    let id = link?.hash.slice(1) ?? '';
+    try {
+        id = decodeURIComponent(id);
+    } catch {
+        // A fragment that is not encoded as a whole is looked for as written.
+    }
+    const jump =
+        link?.origin === location.origin &&
+        link.pathname === location.pathname &&
+        link.search === location.search
+            ? document.getElementById(id)
+            : null;
+    if (!jump || panel.contains(jump)) return null;
+    if (jump.tabIndex < 0 && !jump.hasAttribute('tabindex')) jump.tabIndex = -1;
+    return jump;
+};
+
+/**
+ * Shows or hides a panel and marks every attached button that names it to match, as record 19 has
+ * it. The panel and its corner Close take a tabindex here where the page set none, as a button does
+ * as it is attached, so a press in the panel leaves focus in it and Safari focuses a pressed Close.
+ * As the panel closes, focus goes to its button where focus is in the panel, or where nothing has
+ * focus and the visitor's last place, the path of the last focus that moved or of their last press,
+ * was in it, and stays anywhere else. Where it goes back and that last press was a link in the
+ * panel to a place on this page outside it, it goes there instead. Otherwise it goes to the button
+ * given, the one pressed or the one that opened the panel, else the first attached button that
+ * names it and takes focus, else the first thing after the panel the keyboard reaches by Tab, else
+ * the body of the app's frame or the page's main content.
  */
 const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
@@ -973,31 +1023,35 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
-    // Focus that fell to what holds the panel after a press inside it, the body or a main that
-    // takes focus, as Safari leaves it, counts as the panel's, and focus anywhere else is where the
-    // visitor or the page put it.
-    const active = document.activeElement;
-    const held =
-        panel.contains(active) || (!!active?.contains(panel) && pressedPath.includes(panel));
+    takeFocus(panel);
+    const active = focusedNow();
+    const held = active ? panel.contains(active) : lastPath.includes(panel);
     panel.hidden = !open;
-    if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
+    if (open || !held) return;
+    if (focusFirst(jumpFrom(panel), ...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
-        ...[...document.querySelectorAll(FOCUSABLE)].filter(
-            (next) => panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
+        ...[...document.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+            (next) =>
+                next.tabIndex >= 0 &&
+                panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
         ),
         homeOf(panel)
     );
 };
 
 /**
- * One listener for every attached panel, early in the press, so a page's own handler that stops a
- * click inside the panel does not keep its Close from closing it. A Close closes a panel an
- * attached button opened or names, and only the panel its id finds, so content that reuses the id
- * after it cannot close or mark the real one.
+ * One listener for every attached panel keeps the path of each focus that moves and each press the
+ * visitor makes, passing over a press by a page's script. It hears a press early, so a page's own
+ * handler that stops a click inside the panel does not keep its Close from closing it. A Close
+ * closes a panel an attached button opened or names, and only the panel its id finds, so content
+ * that reuses the id after it cannot close or mark the real one.
  */
-const onPanelPress = (event: MouseEvent): void => {
+const onPanelPress = (event: Event): void => {
+    if (event.isTrusted) {
+        lastPath = event.composedPath();
+        lastWasPress = true;
+    }
     const target = event.target instanceof Element ? event.target : null;
-    if (event.isTrusted) pressedPath = event.composedPath();
     const button = target?.closest('button');
     if (!button) return;
     if (attachedPanels.has(button)) {
@@ -1011,6 +1065,48 @@ const onPanelPress = (event: MouseEvent): void => {
     if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
 };
 
+/** Where focus moves, kept only while a panel is open, the only time it matters. */
+const onPanelFocus = (event: Event): void => {
+    if (!lastOpener.size) return;
+    lastPath = event.composedPath();
+    lastWasPress = false;
+};
+
+/** As a press begins, each open panel it lands in takes focus, a panel drawn again among them. */
+const onPanelDown = (event: Event): void => {
+    for (let place = event.target as Element | null; place; place = place.parentElement)
+        if (lastOpener.has(place.id) && place instanceof HTMLElement) takeFocus(place);
+};
+
+/** A field where Escape means something of its own: a search with words, or a list that opens. */
+const ownsEscape = (target: Element): boolean =>
+    (target instanceof HTMLInputElement && target.type === 'search' && target.value !== '') ||
+    target.matches(
+        '[aria-expanded="true"]:is([role="combobox"], [aria-haspopup]:not([aria-haspopup="false"]))'
+    );
+
+/**
+ * Escape closes the innermost open panel that holds focus, or whose button has it, and marks the
+ * press handled, so a dialog around the panel stays open. An Escape the page has already handled is
+ * left alone, and so is one on a search with words in it or on anything else marked expanded, such
+ * as a combobox with its list open, where Escape means something of its own.
+ */
+const onPanelKey = (event: KeyboardEvent): void => {
+    const target = event.target;
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing) return;
+    if (!(target instanceof Element) || ownsEscape(target)) return;
+    const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
+    for (let place: Element | null = target; place; place = place.parentElement) {
+        // A dialog or a popover inside the panel takes its own Escape.
+        if (place instanceof HTMLDialogElement || place.hasAttribute('popover')) return;
+        const id = place === target && own ? panelIdOf(place) : place.id;
+        if (!lastOpener.has(id)) continue;
+        event.preventDefault();
+        showPanel(id, false, lastOpener.get(id));
+        return;
+    }
+};
+
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
@@ -1018,13 +1114,13 @@ const onPanelPress = (event: MouseEvent): void => {
  * button's aria-expanded says, and a button attached later follows the panel as it is. The markup
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
- * the panel follows. A visitor's press of the Close, by key, pointer or touch, moves focus to the
- * button that opened the panel, and so does a close from `set` where focus was in the panel, or
- * fell to what holds it after a visitor's last press was inside it. The panel is found at each
- * press, so one drawn again keeps working, and a button drawn again works once it is attached. One
- * listener on the document hears the buttons and the Closes of every panel, and it comes off once
- * every button is let go. A panel's id must be the only one on the page. Attached again, a button
- * returns what it returned first.
+ * the panel follows. However the panel closes, by its button, its Close, Escape or `set`, focus
+ * goes to the button that opened it where focus is in the panel, or where nothing has focus and the
+ * visitor's last place was in it, as record 19 has it. The panel is found at each press, so one
+ * drawn again keeps working, and a button drawn again works once it is attached. Listeners on the
+ * document hear the presses, the focus and the Escape of every panel, and come off once every
+ * button is let go. A panel's id must be the only one on the page. Attached again, a button returns
+ * what it returned first.
  */
 export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     const already = attachedPanels.get(opener);
@@ -1041,12 +1137,23 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
             attachedPanels.delete(opener);
             for (const [id, button] of lastOpener) if (button === opener) lastOpener.delete(id);
             if (--attachedCount) return;
+            document.removeEventListener('focusin', onPanelFocus, true);
             document.removeEventListener('click', onPanelPress, true);
+            document.removeEventListener('pointerdown', onPanelDown, true);
+            document.removeEventListener('keydown', onPanelKey);
             startedPanels.clear();
         },
     };
     attachedPanels.set(opener, control);
-    if (!attachedCount++) document.addEventListener('click', onPanelPress, true);
+    if (!attachedCount++) {
+        document.addEventListener('focusin', onPanelFocus, true);
+        document.addEventListener('click', onPanelPress, true);
+        document.addEventListener('pointerdown', onPanelDown, true);
+        document.addEventListener('keydown', onPanelKey);
+    }
+    // Safari focuses a pressed button only where it has a tabindex, so the kit gives one where the
+    // page set none, and keeps any the page set, such as a toolbar's that moves among its buttons.
+    if (!opener.hasAttribute('tabindex')) opener.tabIndex = 0;
     // The first button for a panel starts it as its markup says, and a later one, a button drawn
     // again among them, only marks itself as the panel is, so it neither moves the panel nor
     // takes the place of the button that opened it.
