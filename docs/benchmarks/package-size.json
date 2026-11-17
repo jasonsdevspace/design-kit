@@ -1,14 +1,14 @@
 {
     "recorded": {
         "date": "2026-11-17",
-        "commit": "8f1544d",
-        "machine": "Intel(R) Xeon(R) 6975P-C, 4 cores",
+        "commit": "881cba2",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.8.2",
-    "size": 74879,
-    "sheets": 10664,
+    "version": "0.8.3",
+    "size": 74933,
+    "sheets": 10642,
     "files": [
         {
             "path": "dist/base.css",
@@ -18,9 +18,9 @@
         },
         {
             "path": "dist/components.css",
-            "size": 131147,
-            "gzip": 29090,
-            "stripped": 8682
+            "size": 130820,
+            "gzip": 29020,
+            "stripped": 8659
         },
         {
             "path": "dist/controls.d.ts",
@@ -54,14 +54,14 @@
         },
         {
             "path": "dist/tokens.css",
-            "size": 16800,
-            "gzip": 5262,
-            "stripped": 1441
+            "size": 17232,
+            "gzip": 5364,
+            "stripped": 1444
         },
         {
             "path": "dist/tokens.resolver.json",
-            "size": 31333,
-            "gzip": 1983
+            "size": 31608,
+            "gzip": 1993
         },
         {
             "path": "dist/vite.d.ts",
@@ -93,67 +93,67 @@
         {
             "piece": "the page's own elements",
             "rules": 31,
-            "gzip": 1026
+            "gzip": 1020
         },
         {
             "piece": "tokens",
             "rules": 6,
-            "gzip": 963
+            "gzip": 960
         },
         {
             "piece": "app frame",
             "rules": 47,
-            "gzip": 928
+            "gzip": 923
         },
         {
             "piece": "button",
             "rules": 29,
-            "gzip": 638
+            "gzip": 635
         },
         {
             "piece": "strip",
             "rules": 20,
-            "gzip": 478
+            "gzip": 476
         },
         {
             "piece": "rows",
             "rules": 29,
-            "gzip": 469
+            "gzip": 462
         },
         {
             "piece": "field",
             "rules": 19,
-            "gzip": 437
+            "gzip": 434
         },
         {
             "piece": "explainer",
             "rules": 22,
-            "gzip": 416
+            "gzip": 419
         },
         {
             "piece": "table",
             "rules": 17,
-            "gzip": 374
+            "gzip": 370
         },
         {
             "piece": "button grid",
             "rules": 12,
-            "gzip": 332
+            "gzip": 325
         },
         {
             "piece": "panel",
-            "rules": 15,
-            "gzip": 321
+            "rules": 14,
+            "gzip": 297
         },
         {
             "piece": "stepper",
             "rules": 11,
-            "gzip": 272
+            "gzip": 271
         },
         {
             "piece": "tab bar",
             "rules": 16,
-            "gzip": 267
+            "gzip": 260
         },
         {
             "piece": "choice",
@@ -163,52 +163,57 @@
         {
             "piece": "theme switch",
             "rules": 14,
-            "gzip": 233
+            "gzip": 232
         },
         {
             "piece": "toast",
             "rules": 10,
-            "gzip": 212
+            "gzip": 214
         },
         {
             "piece": "dialog",
             "rules": 10,
-            "gzip": 209
+            "gzip": 211
         },
         {
             "piece": "pills",
             "rules": 12,
-            "gzip": 177
+            "gzip": 174
         },
         {
             "piece": "tabs",
             "rules": 9,
-            "gzip": 159
+            "gzip": 157
         },
         {
             "piece": "callout",
             "rules": 10,
-            "gzip": 134
+            "gzip": 136
         },
         {
             "piece": "footer",
             "rules": 6,
-            "gzip": 133
+            "gzip": 132
         },
         {
             "piece": "animations",
             "rules": 4,
-            "gzip": 121
+            "gzip": 120
         },
         {
             "piece": "site header",
             "rules": 5,
-            "gzip": 101
+            "gzip": 99
         },
         {
             "piece": "icon",
             "rules": 3,
-            "gzip": 100
+            "gzip": 96
+        },
+        {
+            "piece": "steps",
+            "rules": 5,
+            "gzip": 84
         },
         {
             "piece": "skip link",
@@ -216,44 +221,39 @@
             "gzip": 83
         },
         {
-            "piece": "steps",
-            "rules": 5,
-            "gzip": 81
-        },
-        {
             "piece": "code block",
             "rules": 5,
-            "gzip": 79
+            "gzip": 80
         },
         {
             "piece": "content page",
             "rules": 4,
-            "gzip": 74
+            "gzip": 66
         },
         {
             "piece": "eyebrow",
             "rules": 2,
-            "gzip": 62
+            "gzip": 61
         },
         {
             "piece": "copy button",
             "rules": 3,
-            "gzip": 50
+            "gzip": 51
         },
         {
             "piece": "picture",
             "rules": 1,
-            "gzip": 29
+            "gzip": 35
         },
         {
             "piece": "visually hidden",
             "rules": 1,
-            "gzip": 22
+            "gzip": 25
         },
         {
             "piece": "actions",
             "rules": 1,
-            "gzip": 14
+            "gzip": 17
         }
     ],
     "functions": [
@@ -299,10 +299,10 @@
         }
     ],
     "since": {
-        "date": "2026-11-16",
-        "commit": "d510aea",
-        "version": "0.8.1",
-        "size": 73609,
-        "sheets": 10376
+        "date": "2026-11-17",
+        "commit": "8f1544d",
+        "version": "0.8.2",
+        "size": 74879,
+        "sheets": 10664
     }
 }

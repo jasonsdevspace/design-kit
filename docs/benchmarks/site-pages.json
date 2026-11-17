@@ -1,32 +1,32 @@
 {
     "recorded": {
         "date": "2026-11-17",
-        "commit": "8f1544d",
-        "machine": "Intel(R) Xeon(R) 6975P-C, 4 cores",
+        "commit": "881cba2",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "tools": {
         "lighthouse": "13.6.0",
         "chrome": "158",
-        "kit": "0.8.1"
+        "kit": "0.8.2"
     },
     "pages": [
         {
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 753.3,
+            "paint": 755.9,
             "shift": 0,
-            "bytes": 23493,
+            "bytes": 23928,
             "requests": 4
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 965.9,
+            "paint": 756.4,
             "shift": 0,
-            "bytes": 27431,
+            "bytes": 27844,
             "requests": 4
         },
         {
@@ -35,7 +35,7 @@
             "performance": 100,
             "paint": 904.6,
             "shift": 0,
-            "bytes": 37678,
+            "bytes": 38113,
             "requests": 4
         },
         {
@@ -44,50 +44,50 @@
             "performance": 100,
             "paint": 754.8,
             "shift": 0,
-            "bytes": 29684,
+            "bytes": 30120,
             "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 755.2,
+            "paint": 755.1,
             "shift": 0,
-            "bytes": 24495,
+            "bytes": 24930,
             "requests": 4
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.1,
+            "paint": 755.6,
             "shift": 0,
-            "bytes": 24696,
+            "bytes": 25131,
             "requests": 4
         },
         {
             "path": "/design-kit/together/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754,
+            "paint": 754.4,
             "shift": 0,
-            "bytes": 22899,
+            "bytes": 23349,
             "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.1,
+            "paint": 942.1,
             "shift": 0,
-            "bytes": 23968,
+            "bytes": 24403,
             "requests": 4
         }
     ],
     "since": {
-        "date": "2026-11-16",
-        "commit": "d510aea",
-        "kit": "0.8.0",
-        "bytes": 190996
+        "date": "2026-11-17",
+        "commit": "8f1544d",
+        "kit": "0.8.1",
+        "bytes": 214344
     }
 }
