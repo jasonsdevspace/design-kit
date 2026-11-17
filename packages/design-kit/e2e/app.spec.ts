@@ -5,6 +5,7 @@ import {
     box,
     colorOf,
     forceColors,
+    settle,
     shadowOf,
     sheet,
     sideways,
@@ -121,7 +122,7 @@ const open = async (
     await writePage(page, { width, height, theme, css, title: 'Round 3', body: screen(parts) });
     // A shown toast rises into place, so a test reads it once it has arrived, wherever a browser
     // would otherwise catch it on the way.
-    if (parts.toast) await page.waitForFunction(() => document.getAnimations().length === 0);
+    if (parts.toast) await settle(page.locator('#toast'));
 };
 
 const bar = (page: Page) => page.locator('.dk-app-bar');
