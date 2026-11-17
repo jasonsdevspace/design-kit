@@ -501,6 +501,17 @@ test('keeps a tile at the larger target, its detail wrapping inside it at twice 
     expect(await sideways(page)).toBe(0);
 });
 
+test("wraps a tile's detail pretty, so its last line never holds one word alone", async ({
+    page,
+}) => {
+    await writePage(page, { width: 320, css: GROUNDS_CSS, title: 'Play', body: tiles() });
+    const detail = tileList(page).locator('.dk-row-detail').first();
+    // Where a browser cannot wrap pretty yet, the rule is dropped and the detail wraps as before.
+    const pretty = await page.evaluate(() => CSS.supports('text-wrap', 'pretty'));
+    test.skip(!pretty, 'This browser does not wrap pretty yet.');
+    expect((await style(detail, 'text-wrap-style'))['text-wrap-style']).toBe('pretty');
+});
+
 for (const theme of ['light', 'dark'] as const)
     test(`has no audit findings for a list of tiles in the ${theme} theme`, async ({ page }) => {
         await writePage(page, {

@@ -2864,9 +2864,14 @@
         font-weight: var(--dk-weight-medium);
     }
 
+    /*
+     * A row's detail wraps pretty, so a line of several never ends on one word alone, as a game's
+     * last word under its tile might on a phone.
+     */
     :where(.dk-row-detail) {
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
+        text-wrap: pretty;
     }
 
     /*
