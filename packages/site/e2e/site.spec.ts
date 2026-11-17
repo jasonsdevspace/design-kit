@@ -2196,6 +2196,19 @@ test.describe('the code of each state', () => {
                         else value.removeAttribute('aria-describedby');
                     }
                 };
+                /**
+                 * The panels of a copy as the markup draws them, without the tabindex the site's
+                 * script gives a panel, its corner Close and its button as it attaches them, so
+                 * Safari focuses a press and focus can go back.
+                 */
+                const panelsAsWritten = (copy: HTMLElement) => {
+                    for (const panel of copy.querySelectorAll('.dk-panel[tabindex="-1"]'))
+                        panel.removeAttribute('tabindex');
+                    for (const button of copy.querySelectorAll(
+                        ':is(button[aria-controls], .dk-panel > .dk-close button)[tabindex="0"]'
+                    ))
+                        button.removeAttribute('tabindex');
+                };
                 return [...document.querySelectorAll('.site-state')].flatMap((state) => {
                     // The live copy, or for a picture the copy in the visitor's theme, without its
                     // label, and with the ids the code names. A control the site's script attaches,
@@ -2212,6 +2225,7 @@ test.describe('the code of each state', () => {
                     for (const hidden of copy.querySelectorAll('[hidden]'))
                         hidden.removeAttribute('hidden');
                     steppersAsWritten(copy);
+                    panelsAsWritten(copy);
                     const drawn = copy.innerHTML.replaceAll('-yours"', '"');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
