@@ -48,7 +48,9 @@ const corner = (page: Page, holder: string) =>
         const button = close.getBoundingClientRect();
         const range = document.createRange();
         range.selectNodeContents(title);
-        const lines = new Set([...range.getClientRects()].map(({ top }) => Math.round(top))).size;
+        const rects = [...range.getClientRects()];
+        const lines = new Set(rects.map(({ top }) => Math.round(top))).size;
+        const first = rects[0] ?? words;
         return {
             inner,
             paddingRight: parseFloat(style.paddingRight),
@@ -61,6 +63,8 @@ const corner = (page: Page, holder: string) =>
                 height: button.height,
             },
             lines,
+            firstLine: first.top + first.height / 2,
+            closeMiddle: button.top + button.height / 2,
         };
     });
 
@@ -95,6 +99,12 @@ for (const [width, scale] of [
             );
             // The long title wraps beside the Close on a phone rather than run under it.
             if (width === 320) expect(drawn.lines, at).toBeGreaterThan(1);
+            // The Close stands on the title's first line, where the title follows nothing. At twice
+            // the text a dialog's held padding leaves no room above it, and the Close keeps its ring
+            // inside the dialog instead.
+            if (scale === 1) {
+                expect(Math.abs(drawn.closeMiddle - drawn.firstLine), at).toBeLessThanOrEqual(1);
+            }
             // Focused, the Close's ring clears what follows it.
             const button = page.locator(`${holder} > .dk-close button`);
             await ringByKeyboard(button, browserName);
@@ -151,6 +161,22 @@ for (const [width, scale] of [
         expect(ring.top, String(width)).toBeGreaterThanOrEqual(0);
         expect(ring.right, String(width)).toBeGreaterThanOrEqual(0);
     });
+
+test("pads a dialog on a page with an app by a phone's step at every width, its Close on its title's line", async ({
+    page,
+}) => {
+    await writePage(page, {
+        width: 1280,
+        title: 'Round 3',
+        body: `<div class="dk-app"></div>${BODY}`,
+    });
+    await openDialog(page);
+    expect(
+        await page.locator('#end-game').evaluate((dialog) => getComputedStyle(dialog).paddingTop)
+    ).toBe('16px');
+    const drawn = await corner(page, '#end-game');
+    expect(Math.abs(drawn.closeMiddle - drawn.firstLine)).toBeLessThanOrEqual(1);
+});
 
 test("opens a dialog on its first answer, meets the Close after the title's question, and closes by it with no script", async ({
     page,

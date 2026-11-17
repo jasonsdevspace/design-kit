@@ -241,11 +241,18 @@
          * phone's on a phone, and in an app's column a phone's held at its size at every width.
          */
         --dk-card-inset: var(--dk-space-5);
+        /*
+         * How far a dialog's content stands in from its edge, which its corner Close is placed from:
+         * the larger step held at its size on a wide page, and a phone's held at its size on a phone
+         * and on a page with an app's column.
+         */
+        --dk-dialog-inset: var(--dk-space-5-held);
     }
 
     @media (width <= 48rem) {
         :where(:root) {
             --dk-card-inset: var(--dk-space-4);
+            --dk-dialog-inset: var(--dk-space-4-held);
         }
     }
 
@@ -257,6 +264,7 @@
         )
     ) {
         --dk-card-inset: var(--dk-space-4-held);
+        --dk-dialog-inset: var(--dk-space-4-held);
     }
 
     /*
