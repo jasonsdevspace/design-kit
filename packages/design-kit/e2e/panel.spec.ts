@@ -704,3 +704,34 @@ test('leaves a button a pointer presses unfocused in WebKit, as Safari does, so 
     await button(page).click();
     await expect(button(page)).not.toBeFocused();
 });
+
+test('leaves focus to a link in the panel that closes it, so it goes where the link goes', async ({
+    page,
+}) => {
+    await open(page);
+    await button(page).click();
+    // A router's link, which takes the page's own way and moves focus where it goes itself.
+    await page.evaluate(() => {
+        document.querySelector('#deal')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            (window as unknown as { setTips: (open: boolean) => void }).setTips(false);
+        });
+    });
+    await page.locator('#deal').click();
+    await expect(panel(page)).toBeHidden();
+    await expect(button(page)).not.toBeFocused();
+});
+
+test.describe('on a touch screen', () => {
+    test.use({ hasTouch: true });
+
+    test('hands focus back when the Close is tapped', async ({ page, browserName }) => {
+        test.skip(browserName !== 'webkit', "a tap is tested where Safari's way is, in WebKit");
+        await open(page);
+        await button(page).tap();
+        await expect(panel(page)).toBeVisible();
+        await close(page).tap();
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+    });
+});

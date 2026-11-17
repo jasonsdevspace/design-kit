@@ -187,7 +187,8 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
   it is, and no accessibility violation with the panel open or closed, and in WebKit as well, a Done
   of the page's own pressed as Safari presses it, one that waits, one drawn away and one that moves
   focus first, an outer and an inner panel closed by one press, and a WebKit pointer press leaving
-  the button unfocused.
+  the button unfocused, a link in the panel that closes it leaving focus to the link, and the Close
+  tapped on a touch screen in WebKit.
 - `e2e/pieces.spec.ts` holds how the switch, the pill and the copy button's words are drawn, that
   none cuts a word off under the wider text spacing a visitor may set, on a phone, and that the
   switch collapses to its name and one button in a demo's strip on a screen narrower than 20rem

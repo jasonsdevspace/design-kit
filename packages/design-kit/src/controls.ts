@@ -975,10 +975,14 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (!panel) return;
     // Focus that fell to what holds the panel after a press inside it, the body or a main that
     // takes focus, as Safari leaves it, counts as the panel's, and focus anywhere else is where the
-    // visitor or the page put it.
+    // visitor or the page put it. A link pressed in the panel moves focus of its own, to where it
+    // goes, so the panel leaves it to the link.
     const active = document.activeElement;
     const held =
-        panel.contains(active) || (!!active?.contains(panel) && pressedPath.includes(panel));
+        !pressedPath.some(
+            (node) => node instanceof HTMLAnchorElement && node.href && panel.contains(node)
+        ) &&
+        (panel.contains(active) || (!!active?.contains(panel) && pressedPath.includes(panel)));
     panel.hidden = !open;
     if (open || !held || focusFirst(...[by, ...openers].filter((button) => !isOff(button)))) return;
     focusFirst(
