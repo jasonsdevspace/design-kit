@@ -2226,11 +2226,16 @@ test.describe('the code of each state', () => {
     }) => {
         for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
             await page.goto(path);
-            const states = await page.locator('.site-state').count();
+            // Bands are classes a page writes, with no component to draw them.
+            const bands = page.locator('section:has(> h2#bands)');
+            const states =
+                (await page.locator('.site-state').count()) -
+                (await bands.locator('.site-state').count());
             await expect(
                 page.locator('.site-code-name', { hasText: /^React, / }),
                 path
             ).toHaveCount(states);
+            await expect(bands.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);
         }
         await page.goto('/design-kit/explainer-pieces/');
         await expect(page.locator('.site-code-name', { hasText: /^React, / })).toHaveCount(0);

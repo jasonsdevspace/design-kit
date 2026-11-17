@@ -905,7 +905,7 @@ export const Together = ({ build }: { readonly build: Build }) => (
  */
 const SKIP_LINK = 'Skip link';
 
-/** The skip link, and each state of the strip and the footer, as pictures. */
+/** The skip link, and each state of the strip, the footer and the bands, as pictures. */
 export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
@@ -920,10 +920,12 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         }
         intro={
             <p>
-                The frame around this page is the kit&rsquo;s own. Each state of the strip and the
-                footer is shown as a picture in both themes, since a second working strip would give
-                this page two portfolio menus. To try the real ones in the other theme, choose Light
-                or Dark next to Theme, at the top of the page.
+                The frame around this page is the kit&rsquo;s own, and a landing page inside such a
+                frame runs in bands, each the width of the screen. Each state of the strip, the
+                footer and the bands is shown as a picture in both themes, since a second working
+                strip would give this page two portfolio menus, and a second page in bands a second
+                title. To try the real ones in the other theme, choose Light or Dark next to Theme,
+                at the top of the page.
             </p>
         }
         sections={listed([SKIP_LINK, ...CHROME.map(({ name }) => name)])}

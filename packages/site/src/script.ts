@@ -1,6 +1,7 @@
 import {
     attachCopyButton,
     attachDialog,
+    attachPanel,
     attachStepper,
     attachThemeSwitch,
     attachToast,
@@ -278,26 +279,11 @@ for (const toggle of document.querySelectorAll<HTMLButtonElement>(
     });
 }
 
+// Each panel a live button opens is the kit's to open and close, its corner Close among them.
 for (const opener of document.querySelectorAll<HTMLButtonElement>(
     'main .site-copy:not([inert]) button[aria-expanded][aria-controls]:not(.dk-theme-switch-button)'
-)) {
-    const panel = document.getElementById(opener.getAttribute('aria-controls') ?? '');
-    if (!panel) continue;
-    // The panel starts as the button says it is, open or closed.
-    panel.hidden = opener.getAttribute('aria-expanded') !== 'true';
-    opener.addEventListener('click', () => {
-        const open = opener.getAttribute('aria-expanded') !== 'true';
-        opener.setAttribute('aria-expanded', String(open));
-        panel.hidden = !open;
-    });
-    // A Close in the panel's corner closes it as its button would, and hands focus back to the
-    // button, so the keyboard is not left on what was just hidden.
-    panel.querySelector(':scope > .dk-close button')?.addEventListener('click', () => {
-        opener.setAttribute('aria-expanded', 'false');
-        panel.hidden = true;
-        opener.focus();
-    });
-}
+))
+    attachPanel(opener);
 
 /*
  * Every stepper, the previews among them, since the kit hides a stepper's buttons until it is
