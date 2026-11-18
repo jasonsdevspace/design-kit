@@ -84,14 +84,15 @@ const markupOf = async (): Promise<Build['markup']> => {
     return Object.fromEntries(entries);
 };
 
-/**
- * The version of the kit the site installed from npm, its tokens sheet, the commit the site is
- * built at, and each state's markup, read once, when the first page is built.
- */
 /** A sheet of the version the site pins, as the package ships it. */
 const released = (name: string): string =>
     readFileSync(createRequire(import.meta.url).resolve(`design-kit-release/${name}`), 'utf8');
 
+/**
+ * The version of the kit the site installed from npm, its tokens sheet and its three sheets
+ * together, the commit the site is built at, and each state's markup, read once, when the first
+ * page is built.
+ */
 let built: Promise<Build> | undefined;
 const build = (): Promise<Build> =>
     (built ??= markupOf().then((markup) => ({

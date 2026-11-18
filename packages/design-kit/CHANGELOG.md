@@ -7,6 +7,34 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.8.7
+
+The properties the kit works out for itself are named with `--_dk-`, so a page and the site's
+tokens page can tell them from tokens, and the site's tokens page reads the tokens as the root sets
+them, without the properties a page sets. No token is added or renamed and the theme script is
+unchanged, so `themeScriptHash` is the same, and nothing asks anything of a page.
+
+- **Sheets.** The widths a grid of buttons works its columns out with are renamed from
+  `--dk-button-grid-*` to `--_dk-button-grid-*`. They came in 0.8.6 as the grid's own working
+  values and were never in the reference, so a page has nothing to change, and the columns a grid
+  draws are unchanged. `--dk-button-grid-columns` and `--dk-button-grid-least`, which a page sets,
+  keep their names.
+- **Docs.** The reference says a `--_dk-` property is the kit's own and never for a page, record 16
+  names the convention, and record 2 and the package README give the prefix beside `--dk-`. The
+  site, which the package does not ship, changed with this version and deploys from main whatever
+  version it pins: its explainer gives the prefix too, and its tokens page reads the three sheets of
+  the version it pins. That page shows each token's value from the root rule, where a piece's or a
+  picture's value for it showed before, such as `0px` for the safe area, and a token only pieces
+  set, such as a container's ground, with every value they give it. It leaves out the `--_dk-`
+  properties and every property a page sets, such as `--dk-button-grid-least`, which it listed since
+  0.6.0 because a tall grid of buttons sets its own default in the tokens sheet.
+- **Tests.** A rule for a piece in the tokens sheet declares only a property the reference names or
+  one whose name starts with `--_dk-`, and the reference names no `--_dk-` property. The reader of
+  the tokens takes a token's value from the root before any piece's and leaves out the kit's
+  working values and the properties a page sets, every name the sheets read with a fallback but the
+  containers' grounds, on a sheet of the test's own and on the kit's three, and the scope test and
+  the reader share the containers' grounds as one list.
+
 ## 0.8.6
 
 A row can hold a group of buttons at its end, which moves under its text where the row has no room
