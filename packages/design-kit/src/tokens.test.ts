@@ -7,6 +7,7 @@ import {
     contrast,
     declaredIn,
     luminance,
+    PAGE_PROPERTIES,
     PAIRS,
     ROLES,
     THEMES,
@@ -50,6 +51,14 @@ describe('the tokens', () => {
     it("reads the tokens without the kit's own working properties, which the sheet also declares", () => {
         expect(withoutComments(sheet)).toMatch(/--_dk-[\w-]+\s*:/);
         expect([...declared.keys()].filter((name) => name.startsWith('--_'))).toEqual([]);
+    });
+
+    it('reads the tokens without the properties a page sets, which the sheet sets on some pieces', () => {
+        const sets = [...withoutComments(sheet).matchAll(/(--[\w-]+)\s*:/g)].map(
+            ([, name = '']) => name
+        );
+        expect(sets.filter((name) => PAGE_PROPERTIES.includes(name))).not.toEqual([]);
+        expect([...declared.keys()].filter((name) => PAGE_PROPERTIES.includes(name))).toEqual([]);
     });
 
     it('declares every color role with a light and a dark value', () => {

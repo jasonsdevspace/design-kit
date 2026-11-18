@@ -11,6 +11,30 @@ export type Theme = (typeof THEMES)[number];
 /** A sheet without its comments, so a name a comment mentions is not read as declared. */
 export const withoutComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
+/**
+ * The properties a page sets to change how a piece draws, as record 16 has them: the kit leaves
+ * each unset on the root and reads it with a fallback, so none is a token, even where the kit sets
+ * one on a piece of its own whose default differs, as a tall grid of buttons sets its cell's least
+ * width. The reference's table of properties a page sets and the sheets' fallbacks are held to this
+ * list, and the tokens read from a sheet leave each out.
+ */
+export const PAGE_PROPERTIES: readonly string[] = [
+    '--dk-focus',
+    '--dk-button-shadow',
+    '--dk-button-press',
+    '--dk-panel-shadow',
+    '--dk-tile-ground',
+    '--dk-tile-shadow',
+    '--dk-row-picture-size',
+    '--dk-tile-least',
+    '--dk-button-grid-columns',
+    '--dk-button-grid-least',
+    '--dk-table-ground',
+    '--dk-table-pinned-size',
+    '--dk-stepper-digits',
+    '--dk-band-room',
+];
+
 /** Whether a rule's selector is the root's, where the sheet declares its tokens. */
 const isRoot = (selector: string): boolean =>
     /^(?::where\(\s*:root\s*\)|:root)$/.test(selector.trim());
@@ -20,8 +44,8 @@ const isRoot = (selector: string): boolean =>
  * root rule declares first, so a piece that sets a token again for itself, as a picture sets the
  * safe area to nothing, or a rule for a narrow screen, never stands in for it. A token only a piece
  * sets, such as the step between what a column holds, takes the first value a piece gives it. A
- * property whose name starts with `--_dk-` is the kit's own working value, never a token, so it is
- * left out.
+ * property whose name starts with `--_dk-` is the kit's own working value, and one a page sets is
+ * the page's choice, so neither is a token and both are left out.
  */
 export const declaredIn = (sheet: string): ReadonlyMap<string, string> => {
     const rules = [...withoutComments(sheet).matchAll(/([^{}]*)\{([^{}]*)\}/g)].map(
@@ -33,7 +57,11 @@ export const declaredIn = (sheet: string): ReadonlyMap<string, string> => {
             for (const [, name = '', value = ''] of rule.body.matchAll(
                 /(--[\w-]+)\s*:\s*([^;]+);/g
             ))
-                if (!name.startsWith('--_dk-') && !declared.has(name))
+                if (
+                    !name.startsWith('--_dk-') &&
+                    !PAGE_PROPERTIES.includes(name) &&
+                    !declared.has(name)
+                )
                     declared.set(name, value.trim());
     return declared;
 };

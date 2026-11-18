@@ -71,7 +71,10 @@ The path is in `packages/design-kit`.
 - `src/scope.test.ts` reads every property the sheets read with a fallback and fails when one is
   missing from the reference's table of properties a page sets, when the table lists one the sheets
   no longer read, when a row leaves its default or what it sets empty, or when a default written as
-  a number is not the sheets' fallback, so the table cannot fall behind the sheets.
+  a number is not the sheets' fallback, so the table cannot fall behind the sheets. It also holds
+  the table to `PAGE_PROPERTIES` in `examples/palette.ts`, the kit's one list of these properties,
+  and `src/tokens.test.ts` finds the tokens read from the sheet, which the site's tokens page lists,
+  leave each out, though the sheet sets some of them on a piece, so none reads as a token.
 - It also fails when a rule in the tokens sheet outside a `:where(:root)` rule declares a property
   the reference does not name and whose name does not start with `--_dk-`, or when the reference
   names a `--_dk-` property. `src/tokens.test.ts` fails when the sheet declares a property whose

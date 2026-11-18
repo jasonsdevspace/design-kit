@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { withoutComments } from '../examples/palette.js';
+import { PAGE_PROPERTIES, withoutComments } from '../examples/palette.js';
 
 /*
  * The kit loads beside a demo's own styles, so what it styles is held to what it means to. Every
@@ -281,6 +281,8 @@ describe('what the sheets style', () => {
         expect(start).toBeGreaterThan(-1);
         expect([...fallbacks.keys()].filter((name) => !rows.has(name)).sort()).toEqual([]);
         expect([...rows.keys()].filter((name) => !fallbacks.has(name)).sort()).toEqual([]);
+        // The kit's one list of them, which the tokens read from the sheet leave out, is the table.
+        expect([...rows.keys()].sort()).toEqual([...PAGE_PROPERTIES].sort());
         for (const [name, row] of rows) {
             expect(row.fallback, name).not.toBe('');
             expect(row.duty, name).not.toBe('');
