@@ -1,6 +1,6 @@
 # 16. A page changes how a piece draws only through the properties it names
 
-**Status:** accepted, amended in 0.8.7 to name the properties the kit declares only for its own sums with `--_dk-`, once a grid of buttons put its working values in the tokens sheet beside the tokens
+**Status:** accepted, amended in 0.8.7 to start with `--_dk-` the name of a property the kit declares only for its own sums, once a grid of buttons put its working values in the tokens sheet, where the tokens page listed them as tokens
 
 ## Context
 
@@ -45,10 +45,10 @@ holds in both themes.
 Since 0.8.7 a property the kit declares only for its own sums, such as the widths a grid of buttons
 works its columns out with, has a name that starts with `--_dk-`. A leading underscore is the common
 sign in CSS that a custom property is private to what declares it, and the `dk-` after it keeps the
-kit's names from meeting a page's. Such a property is never in the reference, never for a page to
-read or set, and may change in any release, and the site's tokens page leaves it out. It beat
-filtering the grid's names on the tokens page alone, which would leave the next piece's working
-values to look like tokens the same way.
+kit's names from meeting a page's. Such a property is never in the reference and never for a page to
+read or set, so any release, a patch included, may rename or drop it, and the site's tokens page
+leaves it out. It beat filtering the grid's names on the tokens page alone, which would leave the
+next piece's working values to look like tokens the same way.
 
 ## Consequences
 
@@ -57,8 +57,8 @@ values to look like tokens the same way.
 - A property that sets a ground hands the page the duty to keep the piece's text and signs to their
   contrast on it, which the kit's palette test cannot check, so the reference states each duty and a
   page's own audit holds it.
-- Renaming or dropping a property is a change a page must act on, so it goes under Upgrading in the
-  changelog, as a token's would.
+- Renaming or dropping a property a page sets is a change a page must act on, so it goes under
+  Upgrading in the changelog, as a token's would.
 - A new piece that needs a page's choice adds a property of this kind, named for the piece and the
   choice, rather than a token or a class a page writes over.
 - A new piece that works a value out for itself names it with `--_dk-`, so renaming or dropping it
@@ -72,7 +72,9 @@ The path is in `packages/design-kit`.
   missing from the reference's table of properties a page sets, when the table lists one the sheets
   no longer read, when a row leaves its default or what it sets empty, or when a default written as
   a number is not the sheets' fallback, so the table cannot fall behind the sheets.
-- It also fails when the tokens sheet declares a property in a rule other than the root's that
+- It also fails when a rule in the tokens sheet outside a `:where(:root)` rule declares a property
   the reference does not name and whose name does not start with `--_dk-`, or when the reference
-  names a `--_dk-` property, and `src/tokens.test.ts` finds that the tokens read from the sheet
-  leave out every `--_dk-` property it declares.
+  names a `--_dk-` property. `src/tokens.test.ts` fails when the sheet declares a property whose
+  name starts with neither `--dk-` nor `--_dk-`, or when the tokens read from it, which the site's
+  tokens page lists, hold a `--_dk-` property, and it checks that the sheet declares one, so the
+  second check cannot pass on a sheet with none.

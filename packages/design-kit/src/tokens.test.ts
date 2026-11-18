@@ -10,6 +10,7 @@ import {
     PAIRS,
     ROLES,
     THEMES,
+    withoutComments,
 } from '../examples/palette.js';
 
 /*
@@ -21,9 +22,6 @@ import {
 
 const sheet = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 const declared = declaredIn(sheet);
-
-/** A sheet without its comments, so a name a comment mentions is not read as declared. */
-const withoutComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
 /** A sheet read flat, with no space just inside a bracket, so how it is wrapped does not count. */
 const flatten = (css: string): string =>
@@ -50,7 +48,7 @@ describe('the tokens', () => {
     });
 
     it("reads the tokens without the kit's own working properties, which the sheet also declares", () => {
-        expect(sheet).toMatch(/--_dk-[\w-]+\s*:/);
+        expect(withoutComments(sheet)).toMatch(/--_dk-[\w-]+\s*:/);
         expect([...declared.keys()].filter((name) => name.startsWith('--_'))).toEqual([]);
     });
 

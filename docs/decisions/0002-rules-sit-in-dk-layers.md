@@ -2,7 +2,8 @@
 
 **Status:** accepted, amended in 0.6.0 to hide a kit element a page marks `hidden` with
 `!important`, and to let a component follow its `:where()` with a number field's spin buttons or a
-dialog's `::backdrop`
+dialog's `::backdrop`, and in 0.8.7 to let a value the kit works out for itself start with `--_dk-`,
+as record 16 has it
 
 ## Context
 
@@ -33,7 +34,8 @@ buttons or a dialog's `::backdrop`.
 
 Option C. The tokens open with `@layer dk.tokens, dk.base, dk.components;`, which fixes the order of
 the kit's layers inside one `dk` layer, and each sheet fills only the layer it is named for. Every
-custom property starts with `--dk-` and every class with `.dk-`. Inside the layers, every selector
+custom property starts with `--dk-`, or with `--_dk-` where it is a value the kit works out for
+itself and no page reads, and every class with `.dk-`. Inside the layers, every selector
 is one of the kit's own classes or one `:where()`, followed at most by a focus pseudo-class. A rule
 in the base that has to reach every part of a page follows its `:where()` with each pseudo-element
 it means instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element inside a
@@ -86,7 +88,8 @@ The paths are in `packages/design-kit`.
   kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
   pseudo-element, or in the components by a number field's spin buttons or a dialog's `::backdrop`,
   with no pseudo-element inside a `:where()`, and custom properties to the tokens.
-- `src/tokens.test.ts` holds every custom property to the `--dk-` prefix.
+- `src/tokens.test.ts` holds every custom property to the `--dk-` prefix, or `--_dk-` for the kit's
+  own working values.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its
   sheets, and finds a plain rule and a weightless one of the page's winning, a page's layer winning
   when the kit loads first or when the page names `dk` first, the kit winning when the page names

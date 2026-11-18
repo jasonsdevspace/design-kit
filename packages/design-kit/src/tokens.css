@@ -368,8 +368,9 @@
      * count, such as thirteen, draws as many as fit. A count is matched by a cell at that place
      * and none past it, which Safari counts again as cells come and go, where a last cell at that
      * place it does not. The widths are the grid's own properties, so they are worked out here
-     * and the components sheet reads them. Each is named with `--_dk-`, as the kit's own working
-     * values, which no page reads or sets and the tokens page leaves out, as record 16 has it.
+     * and the components sheet reads them. Each name starts with `--_dk-`, which marks a working
+     * value of the kit's own that no page reads or sets and the tokens page leaves out, as record 16
+     * sets out.
      */
     :where(.dk-button-grid) {
         --_dk-button-grid-at: var(--dk-button-grid-least, var(--dk-target));
