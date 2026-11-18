@@ -13,12 +13,14 @@ import { Colors, Contrast, Scale, Spaces } from './tokens.js';
 const { DemoFooter, PortfolioStrip, SkipLink, Toast } = kit;
 
 /**
- * The version of the kit the site pins, its tokens sheet as the package ships it, and the commit
- * the site was built at.
+ * The version of the kit the site pins, its tokens sheet as the package ships it, its three sheets
+ * together, and the commit the site was built at.
  */
 export interface Build {
     readonly version: string;
     readonly tokens: string;
+    /** The tokens, base and components sheets joined, which the tokens page reads its tokens from. */
+    readonly sheets: string;
     readonly commit: string;
     /** Each state's markup as the site draws it, laid out, by `codeKey`. */
     readonly markup: Readonly<Record<string, string>>;
@@ -991,7 +993,7 @@ const TokenHeading = ({ id }: { readonly id: (typeof TOKEN_SECTIONS)[number]['id
 
 /** The color roles in both themes, the contrast of every pairing, the scale, and the theme. */
 export const Tokens = ({ build }: { readonly build: Build }) => {
-    const declared = declaredIn(build.tokens);
+    const declared = declaredIn(build.sheets);
     return (
         <Page
             build={build}

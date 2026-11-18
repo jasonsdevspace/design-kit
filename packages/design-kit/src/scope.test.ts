@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { PAGE_PROPERTIES, withoutComments } from '../examples/palette.js';
+import { CONTAINER_GROUNDS, withoutComments } from '../examples/palette.js';
 
 /*
  * The kit loads beside a demo's own styles, so what it styles is held to what it means to. Every
@@ -258,14 +258,13 @@ describe('what the sheets style', () => {
         // A property the sheets read with a fallback is one a page sets, so the table names each,
         // but for the grounds the kit's containers set, which a piece falls back from where none
         // holds it.
-        const containers = new Set(['--dk-ground', '--dk-ground-step']);
         const fallbacks = new Map<string, string[]>();
         for (const name of sheets) {
             const css = withoutComments(readFileSync(new URL(name, folder), 'utf8'));
             for (const [, property = '', fallback = ''] of css.matchAll(
                 /var\(\s*(--dk-[\w-]+)\s*,\s*([^)]*)\)/g
             )) {
-                if (containers.has(property)) continue;
+                if (CONTAINER_GROUNDS.has(property)) continue;
                 fallbacks.set(property, [...(fallbacks.get(property) ?? []), fallback.trim()]);
             }
         }
@@ -281,8 +280,6 @@ describe('what the sheets style', () => {
         expect(start).toBeGreaterThan(-1);
         expect([...fallbacks.keys()].filter((name) => !rows.has(name)).sort()).toEqual([]);
         expect([...rows.keys()].filter((name) => !fallbacks.has(name)).sort()).toEqual([]);
-        // The kit's one list of them, which the tokens read from the sheet leave out, is the table.
-        expect([...rows.keys()].sort()).toEqual([...PAGE_PROPERTIES].sort());
         for (const [name, row] of rows) {
             expect(row.fallback, name).not.toBe('');
             expect(row.duty, name).not.toBe('');

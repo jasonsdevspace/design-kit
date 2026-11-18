@@ -7,7 +7,7 @@ import {
     contrast,
     declaredIn,
     luminance,
-    PAGE_PROPERTIES,
+    pagePropertiesIn,
     PAIRS,
     ROLES,
     THEMES,
@@ -53,12 +53,28 @@ describe('the tokens', () => {
         expect([...declared.keys()].filter((name) => name.startsWith('--_'))).toEqual([]);
     });
 
-    it('reads the tokens without the properties a page sets, which the sheet sets on some pieces', () => {
-        const sets = [...withoutComments(sheet).matchAll(/(--[\w-]+)\s*:/g)].map(
-            ([, name = '']) => name
-        );
-        expect(sets.filter((name) => PAGE_PROPERTIES.includes(name))).not.toEqual([]);
-        expect([...declared.keys()].filter((name) => PAGE_PROPERTIES.includes(name))).toEqual([]);
+    it('reads a token from the root before any piece, and leaves out what a page sets and the kit works out', () => {
+        const read = declaredIn(`
+            :where(:root) { --dk-a: 1px; --dk-b: 2px; }
+            @media (width <= 1px) { :where(:root) { --dk-a: 9px; } }
+            :where(.p) { --dk-b: 5px; --dk-c: 3px; --_dk-w: 1; --dk-set: 4px; }
+            :where(.q) { --dk-c: 6px; --dk-c: 3px; }
+            :where(.r) { width: var(--dk-set, 1px); height: var(--_dk-w); }
+        `);
+        expect([...read]).toEqual([
+            ['--dk-a', '1px'],
+            ['--dk-b', '2px'],
+            ['--dk-c', '3px or 6px'],
+        ]);
+    });
+
+    it('reads the tokens of the three sheets without a property a page sets', () => {
+        const all = ['tokens.css', 'base.css', 'components.css']
+            .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8'))
+            .join('\n');
+        const page = pagePropertiesIn(all);
+        expect(page.has('--dk-button-grid-least')).toBe(true);
+        expect([...declaredIn(all).keys()].filter((name) => page.has(name))).toEqual([]);
     });
 
     it('declares every color role with a light and a dark value', () => {

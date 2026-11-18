@@ -678,7 +678,8 @@ export const HELD = {
             titles: [
                 "the tokens names every custom property with the kit prefix, a token's or the kit's own",
                 "the tokens reads the tokens without the kit's own working properties, which the sheet also declares",
-                'the tokens reads the tokens without the properties a page sets, which the sheet sets on some pieces',
+                'the tokens reads a token from the root before any piece, and leaves out what a page sets and the kit works out',
+                'the tokens reads the tokens of the three sheets without a property a page sets',
                 'the tokens declares the scale a component is built from',
             ],
         },
