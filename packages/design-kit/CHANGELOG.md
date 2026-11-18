@@ -10,7 +10,7 @@ entry as the notes.
 ## 0.8.7
 
 The properties the kit works out for itself are named with `--_dk-`, so a page and the site's
-tokens page can tell them from tokens, and the tokens the sheets declare are read as the root sets
+tokens page can tell them from tokens, and the site's tokens page reads the tokens as the root sets
 them, without the properties a page sets. No token is added or renamed and the theme script is
 unchanged, so `themeScriptHash` is the same, and nothing asks anything of a page.
 
@@ -20,13 +20,14 @@ unchanged, so `themeScriptHash` is the same, and nothing asks anything of a page
   draws are unchanged. `--dk-button-grid-columns` and `--dk-button-grid-least`, which a page sets,
   keep their names.
 - **Docs.** The reference says a `--_dk-` property is the kit's own and never for a page, record 16
-  names the convention, and record 2, the package README and the site's explainer give the prefix
-  beside `--dk-`. The site's tokens page reads the three sheets of the version the site pins. It
-  shows each token's value from the root rule, where a piece's or a picture's value for it showed
-  before, such as `0px` for the safe area, and a token only pieces set, such as a container's
-  ground, with every value they give it. It leaves out the `--_dk-` properties and every property
-  a page sets, such as `--dk-button-grid-least`, which it listed since 0.6.0 because a tall grid of
-  buttons sets its own default in the tokens sheet.
+  names the convention, and record 2 and the package README give the prefix beside `--dk-`. The
+  site, which the package does not ship, changed with this version and deploys from main whatever
+  version it pins: its explainer gives the prefix too, and its tokens page reads the three sheets of
+  the version it pins. That page shows each token's value from the root rule, where a piece's or a
+  picture's value for it showed before, such as `0px` for the safe area, and a token only pieces
+  set, such as a container's ground, with every value they give it. It leaves out the `--_dk-`
+  properties and every property a page sets, such as `--dk-button-grid-least`, which it listed since
+  0.6.0 because a tall grid of buttons sets its own default in the tokens sheet.
 - **Tests.** A rule for a piece in the tokens sheet declares only a property the reference names or
   one whose name starts with `--_dk-`, and the reference names no `--_dk-` property. The reader of
   the tokens takes a token's value from the root before any piece's and leaves out the kit's
