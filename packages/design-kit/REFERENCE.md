@@ -2107,8 +2107,14 @@ unless it does:
 <details>
 <summary>How the grid is drawn</summary>
 
-Where the columns asked for would make a cell narrower than `--dk-target`, the grid draws as many as
-fit, so six asked for in an app's frame on a phone 320px wide, inside its 1rem gutters, draws five.
+Where the columns asked for would make a cell narrower than `--dk-target`, the grid draws fewer.
+A grid of four, six, eight, nine, ten or twelve cells draws the most columns that fit and divide its
+cells evenly, so six cells asked for in six columns, in an app's frame on a phone 320px wide inside
+its 1rem gutters, draw as two rows of three, never five and one. Where none larger fits, the grid
+draws two columns, and where not even two fit, one. A grid of fewer cells than the columns asked
+for keeps them in one row wherever they all fit. A grid of any other count, such as thirteen, draws
+as many as fit, five on that phone. Where the columns asked for fit, the grid draws them, whatever
+count of cells it holds, and the grid counts its cells again as a page adds or takes one away.
 Each cell is at least the target tall. In a `dk-button-grid-tall` grid each is at least
 `--dk-target-large` both ways, for keys pressed at arm's length, and a `dk-button-tall` cell is that
 tall in any grid. The cells are spaced by 0.5rem, and a label wraps within its cell at a large text
