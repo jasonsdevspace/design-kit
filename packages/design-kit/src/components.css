@@ -2842,10 +2842,13 @@
 
     /*
      * A row whose end holds several buttons, such as a seat's move and remove, groups them in
-     * `dk-row-actions`, so they stay together and in order. The text keeps room for about twelve
-     * characters of its own size beside the group, and where the row has less, the group moves
-     * under the text to the row's end, so a name never squeezes to a letter wide at a large text
-     * size. Measured in the text's own size, the point it moves at grows as the text does.
+     * `dk-row-actions`, so they stay together and in order, a step apart as the kit's other groups
+     * of buttons are. The text keeps room for about twelve characters of its own size beside the
+     * group, and where the row has less, the group moves under the text to the row's end, so a
+     * name never squeezes to a letter wide at a large text size. Measured in the text's own size,
+     * the point it moves at grows as the text does. A group wider than the row, at twice the text
+     * size on the narrowest phone, wraps inside itself rather than push the page sideways. A row
+     * with a picture keeps it beside the text, the text giving up room before the picture does.
      */
     :where(.dk-row:has(> .dk-row-actions)) {
         display: flex;
@@ -2857,11 +2860,19 @@
         flex: 999 1 12ch;
     }
 
+    :where(.dk-row:has(> .dk-row-actions):has(> .dk-row-picture) > .dk-row-text) {
+        flex-basis: min(
+            12ch,
+            100% - min(var(--dk-row-picture-size, var(--dk-target)), 25vw) - var(--dk-space-3)
+        );
+    }
+
     :where(.dk-row-actions) {
         display: flex;
-        flex: 1 0 auto;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
-        gap: var(--dk-space-3);
+        gap: var(--dk-space-2);
     }
 
     /*

@@ -2222,17 +2222,23 @@ with figures of one width, so a column of them lines up.
                 <span class="dk-row-detail">Seat 1</span>
             </span>
             <span class="dk-row-actions">
-                <button type="button" class="dk-button dk-button-text">
-                    Up
-                    <span class="dk-visually-hidden"> Ana</span>
+                <button type="button" class="dk-button dk-button-icon" aria-disabled="true">
+                    <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                        <path d="M12 19V5M6 11l6-6 6 6"></path>
+                    </svg>
+                    <span class="dk-visually-hidden">Move Ana up</span>
                 </button>
-                <button type="button" class="dk-button dk-button-text">
-                    Down
-                    <span class="dk-visually-hidden"> Ana</span>
+                <button type="button" class="dk-button dk-button-icon">
+                    <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                        <path d="M12 5v14M6 13l6 6 6-6"></path>
+                    </svg>
+                    <span class="dk-visually-hidden">Move Ana down</span>
                 </button>
-                <button type="button" class="dk-button dk-button-text">
-                    Remove
-                    <span class="dk-visually-hidden"> Ana</span>
+                <button type="button" class="dk-button dk-button-icon">
+                    <svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                    <span class="dk-visually-hidden">Remove Ana</span>
                 </button>
             </span>
         </div>
@@ -2242,12 +2248,19 @@ with figures of one width, so a column of them lines up.
 ```
 
 A row whose end holds more than one button, such as a seat's move up, move down and remove, puts
-them in a `dk-row-actions` group after its text. The text keeps room for about twelve characters of
-its own size beside the group, and where the row has less, at a large text size or on a narrow
-phone, the group moves under the text to the row's end, so a name reads across rather than down the
-screen a letter at a time. The buttons keep their order, and the keyboard reaches them after the
-row's text, as it does one button. A row with one button at its end needs no group. Each button is
-named for what it does and to which row, as a single one is.
+them in a `dk-row-actions` group after its text, a step apart. The text keeps room for about twelve
+characters of its own size beside the group, and where the row has less, at a large text size or on
+a narrow phone, the group moves under the text to the row's end, so a name reads across rather than
+down the screen a letter at a time. Every row in a list moves its group at the same size, so the
+buttons stay in one column down the list. A group wider than the row, at twice the text size on the
+narrowest phone, wraps inside itself, and a row with a picture keeps it beside the text. The buttons
+keep their order, and the keyboard reaches them after the row's text, as it does one button. A row
+with one button at its end needs no group.
+
+Each button is named for what it does and to which row, as a single one is, with the name out of
+sight where the button shows only an icon. A button that cannot act for this row, such as the first
+seat's Move up, is off with `aria-disabled="true"` rather than taken away, so the buttons keep their
+places down the list, and a press of it that moved the seat to the top keeps focus on it.
 
 ### A row with a picture
 

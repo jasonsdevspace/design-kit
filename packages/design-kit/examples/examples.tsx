@@ -849,7 +849,7 @@ export const rowTiles: ReactElement = (
     </ul>
 );
 
-/** A list of seats, each row with a group of buttons at its end. */
+/** A list of seats, each row with a group of buttons at its end, the first seat's Up off. */
 export const rowActions: ReactElement = (
     <ul className="dk-rows" role="list">
         <li>
@@ -860,15 +860,39 @@ export const rowActions: ReactElement = (
                     <span className="dk-row-detail">Seat 1</span>
                 </span>
                 <span className="dk-row-actions">
-                    <Button text>
-                        Up<span className="dk-visually-hidden"> Ana</span>
-                    </Button>
-                    <Button text>
-                        Down<span className="dk-visually-hidden"> Ana</span>
-                    </Button>
-                    <Button text>
-                        Remove<span className="dk-visually-hidden"> Ana</span>
-                    </Button>
+                    <button type="button" className="dk-button dk-button-icon" aria-disabled="true">
+                        <svg
+                            className="dk-icon"
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M12 19V5M6 11l6-6 6 6" />
+                        </svg>
+                        <span className="dk-visually-hidden">Move Ana up</span>
+                    </button>
+                    <button type="button" className="dk-button dk-button-icon">
+                        <svg
+                            className="dk-icon"
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M12 5v14M6 13l6 6 6-6" />
+                        </svg>
+                        <span className="dk-visually-hidden">Move Ana down</span>
+                    </button>
+                    <button type="button" className="dk-button dk-button-icon">
+                        <svg
+                            className="dk-icon"
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                        <span className="dk-visually-hidden">Remove Ana</span>
+                    </button>
                 </span>
             </div>
         </li>

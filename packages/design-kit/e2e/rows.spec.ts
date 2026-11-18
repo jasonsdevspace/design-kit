@@ -66,23 +66,6 @@ const playerRows = ['Ana', 'Ben']
     )
     .join('');
 
-/** A list of seats, each row with its three buttons in a group at its end. */
-const seatRows = ['Ana', 'Ben']
-    .map(
-        (name, at) =>
-            `<li><div class="dk-row"><span class="dk-row-text"><span class="dk-row-title">${name}</span>` +
-            `<span class="dk-visually-hidden">, </span><span class="dk-row-detail">Seat ${String(at + 1)}</span></span>` +
-            '<span class="dk-row-actions">' +
-            ['Up', 'Down', 'Remove']
-                .map(
-                    (action) =>
-                        `<button type="button" class="dk-button dk-button-text">${action}<span class="dk-visually-hidden"> ${name}</span></button>`
-                )
-                .join('') +
-            '</span></div></li>'
-    )
-    .join('');
-
 const open = async (
     page: Page,
     {
@@ -98,7 +81,6 @@ const open = async (
         body:
             `<main><h1>History</h1><ul class="dk-rows${tall ? ' dk-rows-tall' : ''}" role="list" aria-label="Games">${gameRows}</ul>` +
             `<h2>Players</h2><ul class="dk-rows" role="list" aria-label="Players">${playerRows}</ul>` +
-            `<h2>Seats</h2><ul class="dk-rows" role="list" aria-label="Seats">${seatRows}</ul>` +
             '<ul class="dk-rows" role="list" aria-label="Places"><li><a class="dk-row" href="#home" id="one-line">' +
             '<span class="dk-row-text"><span class="dk-row-title">Home</span></span></a></li></ul>' +
             '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty">\n    \n</ul></main>',
@@ -273,72 +255,165 @@ test('keeps a row with a button as tall as one without, the button in the middle
     expect(parseFloat(ring['padding-left'] ?? '')).toBeGreaterThanOrEqual(4);
 });
 
+/** A seat's three buttons as icons, named for what each does and to which seat. */
+const ICONS = [
+    ['up', 'M12 19V5M6 11l6-6 6 6'],
+    ['down', 'M12 5v14M6 13l6 6 6-6'],
+    ['remove', 'M6 6l12 12M18 6L6 18'],
+] as const;
+
+const seatButtons = (name: string, first: boolean): string =>
+    ICONS.map(
+        ([action, path]) =>
+            `<button type="button" class="dk-button dk-button-icon"${first && action === 'up' ? ' aria-disabled="true"' : ''}>` +
+            `<svg class="dk-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="${path}"/></svg>` +
+            `<span class="dk-visually-hidden">${action === 'remove' ? `Remove ${name}` : `Move ${name} ${action}`}</span></button>`
+    ).join('');
+
+/** A list of seats in a page that pads its column, each row's buttons in a group at its end. */
+const openSeats = async (
+    page: Page,
+    {
+        width = 390,
+        theme = 'light',
+        names = ['Ana', 'Ben'],
+        picture = false,
+        css = '',
+    }: {
+        readonly width?: number;
+        readonly theme?: 'light' | 'dark';
+        readonly names?: readonly string[];
+        readonly picture?: boolean;
+        readonly css?: string;
+    } = {}
+): Promise<void> => {
+    const rows = names
+        .map(
+            (name, at) =>
+                `<li><div class="dk-row">` +
+                (picture ? '<span class="dk-row-picture" style="background: gray"></span>' : '') +
+                `<span class="dk-row-text"><span class="dk-row-title">${name}</span>` +
+                `<span class="dk-visually-hidden">, </span><span class="dk-row-detail">Seat ${String(at + 1)}</span></span>` +
+                `<span class="dk-row-actions">${seatButtons(name, at === 0)}</span></div></li>`
+        )
+        .join('');
+    await writePage(page, {
+        width,
+        theme,
+        css,
+        title: 'New game',
+        body: `<main class="dk-page"><h1>New game</h1><a href="#seats" id="before">Seats</a><ul class="dk-rows" role="list" aria-label="Seats" id="seats">${rows}</ul></main>`,
+    });
+};
+
 const seat = (page: Page): Locator =>
     page.getByRole('list', { name: 'Seats' }).locator('.dk-row').first();
+
+/** How wide twelve characters of a row's text are, as the row measures its room. */
+const twelve = (text: Locator): Promise<number> =>
+    text.evaluate((element) => {
+        const probe = document.createElement('span');
+        probe.style.cssText = 'display: inline-block; width: 12ch';
+        element.append(probe);
+        const { width } = probe.getBoundingClientRect();
+        probe.remove();
+        return width;
+    });
+
+/** Every button of a row inside it, and nothing pushing the page sideways. */
+const heldInside = async (page: Page, row: Locator): Promise<void> => {
+    const held = await box(row, 'the row');
+    for (const button of await row.getByRole('button').all()) {
+        const at = await box(button, 'a button');
+        expect(at.x).toBeGreaterThanOrEqual(held.x - 0.5);
+        expect(at.x + at.width).toBeLessThanOrEqual(held.x + held.width + 0.5);
+        expect(bottom(at)).toBeLessThanOrEqual(bottom(held) + 0.5);
+    }
+    expect(await sideways(page)).toBe(0);
+};
 
 for (const width of [320, 390]) {
     test(`moves a row's group of buttons under its text on a ${String(width)}px phone at twice the text size, the title on one line`, async ({
         page,
     }) => {
-        await open(page, { width });
+        await openSeats(page, { width });
         await textSize(page, 2);
         const row = seat(page);
         expect(await lineTops(row.locator('.dk-row-title'))).toHaveLength(1);
         const text = await box(row.locator('.dk-row-text'), "the row's text");
         const group = await box(row.locator('.dk-row-actions'), 'the group');
-        const held = await box(row, 'the row');
         expect(group.y).toBeGreaterThanOrEqual(bottom(text));
-        // The group keeps to the row's end, and every button stays inside the row.
+        // The group keeps to the row's end.
         expect(Math.abs(group.x + group.width - (text.x + text.width))).toBeLessThanOrEqual(1);
-        for (const button of await row.getByRole('button').all()) {
-            const at = await box(button, 'a button');
-            expect(at.x).toBeGreaterThanOrEqual(held.x - 0.5);
-            expect(at.x + at.width).toBeLessThanOrEqual(held.x + held.width + 0.5);
-            expect(bottom(at)).toBeLessThanOrEqual(bottom(held) + 0.5);
-        }
-        expect(await sideways(page)).toBe(0);
+        await heldInside(page, row);
+    });
+
+    test(`keeps a row's group of buttons beside twelve characters of text on a ${String(width)}px phone at the default size`, async ({
+        page,
+    }) => {
+        await openSeats(page, { width, names: ['Christabella', 'Ben'] });
+        const row = seat(page);
+        const words = row.locator('.dk-row-text');
+        const text = await box(words, "the row's text");
+        const group = await box(row.locator('.dk-row-actions'), 'the group');
+        const held = await box(row, 'the row');
+        expect(group.x).toBeGreaterThanOrEqual(text.x + text.width);
+        expect(text.width).toBeGreaterThanOrEqual((await twelve(words)) - 0.5);
+        expect(Math.abs(group.y - held.y - (bottom(held) - bottom(group)))).toBeLessThanOrEqual(1);
+        expect(await lineTops(row.locator('.dk-row-title'))).toHaveLength(1);
     });
 }
 
-test("keeps a row's group of buttons beside its text at the default size, in the middle of the row", async ({
+test("keeps a row's group inside the narrowest phone at twice the text size and the wider spacing", async ({
     page,
 }) => {
-    await open(page);
-    const row = seat(page);
-    const text = await box(row.locator('.dk-row-text'), "the row's text");
-    const group = await box(row.locator('.dk-row-actions'), 'the group');
-    const held = await box(row, 'the row');
-    expect(group.x).toBeGreaterThanOrEqual(text.x + text.width);
-    expect(Math.abs(group.y - held.y - (bottom(held) - bottom(group)))).toBeLessThanOrEqual(1);
-    // A row with a group is as tall as one with a single button.
-    const player = page.getByRole('list', { name: 'Players' }).locator('.dk-row').first();
-    expect(Math.abs(held.height - (await box(player, 'a player')).height)).toBeLessThanOrEqual(1);
+    await openSeats(page, { width: 320, css: SPACED });
+    await textSize(page, 2);
+    for (const row of await page.locator('#seats .dk-row').all()) await heldInside(page, row);
+    expect(await brokenWords(page, '#seats .dk-row-title')).toEqual([]);
 });
 
-test("reaches a row's group of buttons in order by the keyboard, each named for its row", async ({
+test("keeps a row's picture beside its title with a group at twice the text size", async ({
     page,
-    browserName,
 }) => {
-    await open(page);
-    // From the last player's button, the stop before the seats.
-    await page
-        .getByRole('list', { name: 'Players' })
-        .getByRole('button', { name: 'Remove Ben' })
-        .focus();
-    const reached: string[] = [];
-    for (let stop = 0; stop < 6; stop += 1) {
-        await page.keyboard.press(tabKey(browserName));
-        reached.push(await page.evaluate(() => document.activeElement?.textContent ?? ''));
-    }
-    expect(reached).toEqual([
-        'Up Ana',
-        'Down Ana',
-        'Remove Ana',
-        'Up Ben',
-        'Down Ben',
-        'Remove Ben',
-    ]);
+    await openSeats(page, { picture: true });
+    await textSize(page, 2);
+    const row = seat(page);
+    const picture = await box(row.locator('.dk-row-picture'), 'the picture');
+    const title = await box(row.locator('.dk-row-title'), 'the title');
+    const group = await box(row.locator('.dk-row-actions'), 'the group');
+    expect(title.x).toBeGreaterThanOrEqual(picture.x + picture.width);
+    expect(title.y).toBeLessThan(bottom(picture));
+    expect(group.y).toBeGreaterThanOrEqual(Math.min(bottom(picture), bottom(title)) - 0.5);
+    await heldInside(page, row);
 });
+
+for (const scale of [1, 2])
+    test(`reaches a row's group of buttons in order by the keyboard at ${String(scale)}x the text size, each named for its seat`, async ({
+        page,
+        browserName,
+    }) => {
+        await openSeats(page);
+        if (scale > 1) await textSize(page, scale);
+        await page.locator('#before').focus();
+        for (const name of [
+            'Move Ana up',
+            'Move Ana down',
+            'Remove Ana',
+            'Move Ben up',
+            'Move Ben down',
+            'Remove Ben',
+        ]) {
+            await page.keyboard.press(tabKey(browserName));
+            await expect(page.getByRole('button', { name, exact: true })).toBeFocused();
+        }
+    });
+
+for (const theme of ['light', 'dark'] as const)
+    test(`has no audit findings for a list of seats in the ${theme} theme`, async ({ page }) => {
+        await openSeats(page, { theme });
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
 
 for (const theme of ['light', 'dark'] as const) {
     test(`has no audit findings in the ${theme} theme`, async ({ page }) => {
