@@ -148,6 +148,35 @@ divides its cells, which works out a column's width at each count from two to si
 no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they held,
 and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
 
+## The sheets beside other systems
+
+When the sheets' budget was raised to 11.5 KB in November 2026, other systems' stylesheets were
+measured, each minified file from jsDelivr gzipped at level 9, to judge whether the kit's weight
+still fits what it covers. The kit's sheets were measured the same way, minified together by
+Lightning CSS, and weigh 9,579 bytes so, against the 11,394 the budget holds them to, since the
+budget's measure leaves the sheets unminified and gzips at the default level. The figures are a
+snapshot of the versions named, kept here so the next raise starts from them rather than measuring
+again.
+
+| System                | What it covers                                     | Sent gzipped |
+| --------------------- | -------------------------------------------------- | ------------ |
+| Simple.css 2.3.7      | Plain HTML only, light and dark                    | 2,775 bytes  |
+| Open Props 1.7.23     | Tokens only, no pieces                             | 7,667 bytes  |
+| The kit at 0.8.6      | Tokens, plain HTML and every piece, light and dark | 9,579 bytes  |
+| Pico 2.1.1, classless | Plain HTML, forms, light and dark                  | 10,315 bytes |
+| Pico 2.1.1            | The classless sheet plus a grid and a few pieces   | 11,640 bytes |
+| Web Awesome 3.15.0    | Native elements, utilities and a theme             | 14,162 bytes |
+| GOV.UK Frontend 6.6.0 | Its pieces                                         | 16,052 bytes |
+| Bootstrap 5.3.9       | Its pieces, a grid and utilities                   | 30,895 bytes |
+| Bulma 1.0.4           | Its pieces, a grid and helpers                     | 64,842 bytes |
+
+The kit weighs less than Pico, which draws plain pages and forms, while the kit also draws an app's
+frame, its tab bar and toast, the dialog, the stepper, the rows and a grid of buttons. Every system
+that covers as much weighs more. The figures leave out the script behind the pieces on every side,
+the kit's controls included, which are held to 7.5 KB of their own, and Web Awesome's pieces,
+GOV.UK's tabs and accordion and Bootstrap's dialog and toast draw from script in the same way. The
+comparison is context for a raise and sets no ceiling, since the rule above sets the budget.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
