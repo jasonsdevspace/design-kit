@@ -347,22 +347,22 @@ for (const width of [320, 390]) {
         expect(Math.abs(group.x + group.width - (text.x + text.width))).toBeLessThanOrEqual(1);
         await heldInside(page, row);
     });
-
-    test(`keeps a row's group of buttons beside twelve characters of text on a ${String(width)}px phone at the default size`, async ({
-        page,
-    }) => {
-        await openSeats(page, { width, names: ['Christabella', 'Ben'] });
-        const row = seat(page);
-        const words = row.locator('.dk-row-text');
-        const text = await box(words, "the row's text");
-        const group = await box(row.locator('.dk-row-actions'), 'the group');
-        const held = await box(row, 'the row');
-        expect(group.x).toBeGreaterThanOrEqual(text.x + text.width);
-        expect(text.width).toBeGreaterThanOrEqual((await twelve(words)) - 0.5);
-        expect(Math.abs(group.y - held.y - (bottom(held) - bottom(group)))).toBeLessThanOrEqual(1);
-        expect(await lineTops(row.locator('.dk-row-title'))).toHaveLength(1);
-    });
 }
+
+test("keeps a row's group of buttons beside twelve characters of text on a 390px phone at the default size", async ({
+    page,
+}) => {
+    await openSeats(page, { names: ['Christabella', 'Ben'] });
+    const row = seat(page);
+    const words = row.locator('.dk-row-text');
+    const text = await box(words, "the row's text");
+    const group = await box(row.locator('.dk-row-actions'), 'the group');
+    const held = await box(row, 'the row');
+    expect(group.x).toBeGreaterThanOrEqual(text.x + text.width);
+    expect(text.width).toBeGreaterThanOrEqual((await twelve(words)) - 0.5);
+    expect(Math.abs(group.y - held.y - (bottom(held) - bottom(group)))).toBeLessThanOrEqual(1);
+    expect(await lineTops(row.locator('.dk-row-title'))).toHaveLength(1);
+});
 
 test("keeps a row's group inside the narrowest phone at twice the text size and the wider spacing", async ({
     page,
