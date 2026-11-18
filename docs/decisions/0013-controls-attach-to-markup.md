@@ -150,32 +150,37 @@ and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11
 
 ## The sheets beside other systems
 
-When the sheets' budget was raised to 11.5 KB in November 2026, other systems' stylesheets were
-measured, each minified file from jsDelivr gzipped at level 9, to judge whether the kit's weight
-still fits what it covers. The kit's sheets were measured the same way, minified together by
-Lightning CSS, and weigh 9,579 bytes so, against the 11,394 the budget holds them to, since the
-budget's measure leaves the sheets unminified and gzips at the default level. The figures are a
-snapshot of the versions named, kept here so the next raise starts from them rather than measuring
-again.
+When the sheets' budget was raised to 11.5 KB, other systems' stylesheets were measured beside them
+on 2026-11-18, to judge whether the kit's weight still fits what it covers. Each file in the table
+was fetched from jsDelivr at the path named, minified by Lightning CSS 1.33.0 and gzipped at level
+9 by Node's zlib, with Web Awesome's sheet first bundled with the sheets it imports. The kit's three
+sheets were joined in the order a page loads them, as a bundler sends them, and measured the same
+way. The budget measures them another way, stripping only comments and blank lines and gzipping at
+the default level, so the 9,579 bytes here and the 11,394 bytes of the 0.8.6 paragraph are the same
+sheets measured two ways. Sent as three files and each measured alone, the kit's sheets come to
+10,201 bytes. The figures are a snapshot of the versions named, kept so the next raise starts from
+them, and a row is checked again by fetching its file.
 
-| System                | What it covers                                     | Sent gzipped |
-| --------------------- | -------------------------------------------------- | ------------ |
-| Simple.css 2.3.7      | Plain HTML only, light and dark                    | 2,775 bytes  |
-| Open Props 1.7.23     | Tokens only, no pieces                             | 7,667 bytes  |
-| The kit at 0.8.6      | Tokens, plain HTML and every piece, light and dark | 9,579 bytes  |
-| Pico 2.1.1, classless | Plain HTML, forms, light and dark                  | 10,315 bytes |
-| Pico 2.1.1            | The classless sheet plus a grid and a few pieces   | 11,640 bytes |
-| Web Awesome 3.15.0    | Native elements, utilities and a theme             | 14,162 bytes |
-| GOV.UK Frontend 6.6.0 | Its pieces                                         | 16,052 bytes |
-| Bootstrap 5.3.9       | Its pieces, a grid and utilities                   | 30,895 bytes |
-| Bulma 1.0.4           | Its pieces, a grid and helpers                     | 64,842 bytes |
+| System and file measured                                                    | What it covers                                     | Sent gzipped |
+| --------------------------------------------------------------------------- | -------------------------------------------------- | ------------ |
+| Simple.css, `simpledotcss@2.3.7/simple.min.css`                             | Plain HTML only, light and dark                    | 2,763 bytes  |
+| Open Props, `open-props@1.7.23/open-props.min.css`                          | Tokens only, no pieces                             | 7,595 bytes  |
+| The kit at 0.8.6, its three sheets joined                                   | Tokens, plain HTML and every piece, light and dark | 9,579 bytes  |
+| Pico, `@picocss/pico@2.1.1/css/pico.classless.min.css`                      | Plain HTML, forms, light and dark                  | 9,984 bytes  |
+| Pico, `@picocss/pico@2.1.1/css/pico.min.css`                                | The classless sheet plus a grid and a few pieces   | 11,293 bytes |
+| Web Awesome, `@awesome.me/webawesome@3.15.0/dist-cdn/styles/webawesome.css` | Native elements, utilities and a theme             | 14,160 bytes |
+| GOV.UK Frontend, `govuk-frontend@6.6.0/dist/govuk/govuk-frontend.min.css`   | Its pieces                                         | 15,814 bytes |
+| Bootstrap, `bootstrap@5.3.9/dist/css/bootstrap.min.css`                     | Its pieces, a grid and utilities                   | 30,357 bytes |
+| Bulma, `bulma@1.0.4/css/bulma.min.css`                                      | Its pieces, a grid and helpers                     | 64,651 bytes |
 
-The kit weighs less than Pico, which draws plain pages and forms, while the kit also draws an app's
-frame, its tab bar and toast, the dialog, the stepper, the rows and a grid of buttons. Every system
-that covers as much weighs more. The figures leave out the script behind the pieces on every side,
-the kit's controls included, which are held to 7.5 KB of their own, and Web Awesome's pieces,
-GOV.UK's tabs and accordion and Bootstrap's dialog and toast draw from script in the same way. The
-comparison is context for a raise and sets no ceiling, since the rule above sets the budget.
+The kit's sheets weigh about what Pico's do, a few hundred bytes either way by how they are sent,
+while Pico draws plain pages, forms and a few pieces, and the kit also draws an app's frame, its tab
+bar and toast, the dialog, the stepper, the rows and a grid of buttons. The larger systems weigh
+more, though the figures compare sheets alone. Script is left out on every side, the kit's controls
+included, which are held to 7.5 KB of their own. Web Awesome keeps its pieces' styles in the script
+that draws each one, so its sheet holds little of them, and GOV.UK's tabs and accordion and
+Bootstrap's dialog and toast need script to work. The comparison is context for a raise and sets no
+ceiling, since the rule above sets the budget.
 
 ## How it is tested
 

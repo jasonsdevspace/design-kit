@@ -6,10 +6,12 @@ import { describe, expect, it } from 'vitest';
 import { SHEET_ORDER, withoutComments } from './summary.mjs';
 
 /*
- * The kit's three sheets without their comments and blank lines, gzipped at the default level:
- * small enough to send to every visitor of every demo, held to a budget beside the controls', so
- * the components sheet cannot grow unseen as pieces are added. The package record measures each
- * sheet the same way, through the same function, so the figure it shows is the one held here.
+ * The kit's three sheets without their comments and blank lines, gzipped at the default level: small
+ * enough to send to every visitor of every demo, held to a budget beside the controls', so the
+ * components sheet cannot grow unseen as pieces are added. A page's minifier sends somewhat less
+ * than this, as record 13 measures, so the budget errs on the side of the larger figure. The
+ * package record measures each sheet the same way, through the same function, so the figure it
+ * shows is the one held here.
  */
 
 /*
