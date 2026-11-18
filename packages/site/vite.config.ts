@@ -32,11 +32,11 @@ const THEME_COLORS = '<!-- theme-colors -->';
  * than a copy of their values, which would go stale when the pin moves. They come before the theme
  * script, since it reads them as it runs and points both at the theme it draws.
  *
- * @param tokens the pinned version's tokens sheet
+ * @param sheets the pinned version's three sheets, which the reader of its tokens is given whole
  */
 let metas: string | undefined;
-const themeColorMetas = (tokens: string) => {
-    const declared = declaredIn(tokens);
+const themeColorMetas = (sheets: string) => {
+    const declared = declaredIn(sheets);
     return (['light', 'dark'] as const)
         .map(
             (theme) =>
@@ -162,7 +162,7 @@ const pagesPlugin = (): Plugin => ({
                 .replace(TITLE, () => escaped(route.title))
                 .replace(DESCRIPTION, () => escaped(route.description))
                 .replace(ICONS, () => ICON_LINKS)
-                .replace(THEME_COLORS, () => (metas ??= themeColorMetas(made.tokens)))
+                .replace(THEME_COLORS, () => (metas ??= themeColorMetas(made.sheets)))
                 .replace(PAGE, () => body);
         },
     },
