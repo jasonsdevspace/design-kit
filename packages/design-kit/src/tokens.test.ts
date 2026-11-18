@@ -22,6 +22,9 @@ import {
 const sheet = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 const declared = declaredIn(sheet);
 
+/** A sheet without its comments, so a name a comment mentions is not read as declared. */
+const withoutComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
+
 /** A sheet read flat, with no space just inside a bracket, so how it is wrapped does not count. */
 const flatten = (css: string): string =>
     css.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')');
@@ -39,8 +42,16 @@ const holdersOf = (css: string, declaration: string): string[] => {
 };
 
 describe('the tokens', () => {
-    it('names every custom property with the kit prefix', () => {
-        expect([...declared.keys()].filter((name) => !name.startsWith('--dk-'))).toEqual([]);
+    it("names every custom property with the kit prefix, a token's or the kit's own", () => {
+        const names = [...withoutComments(sheet).matchAll(/(--[\w-]+)\s*:/g)].map(
+            ([, name = '']) => name
+        );
+        expect(names.filter((name) => !/^--_?dk-/.test(name))).toEqual([]);
+    });
+
+    it("reads the tokens without the kit's own working properties, which the sheet also declares", () => {
+        expect(sheet).toMatch(/--_dk-[\w-]+\s*:/);
+        expect([...declared.keys()].filter((name) => name.startsWith('--_'))).toEqual([]);
     });
 
     it('declares every color role with a light and a dark value', () => {

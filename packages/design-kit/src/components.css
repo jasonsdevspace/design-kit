@@ -2687,10 +2687,10 @@
             auto-fill,
             minmax(
                 max(
-                    var(--dk-button-grid-at),
-                    (100% - (var(--dk-button-grid-of) - 1) * var(--dk-space-2)) /
-                        var(--dk-button-grid-of) - 1px,
-                    min(var(--dk-button-grid-even), 100%)
+                    var(--_dk-button-grid-at),
+                    (100% - (var(--_dk-button-grid-of) - 1) * var(--dk-space-2)) /
+                        var(--_dk-button-grid-of) - 1px,
+                    min(var(--_dk-button-grid-even), 100%)
                 ),
                 1fr
             )

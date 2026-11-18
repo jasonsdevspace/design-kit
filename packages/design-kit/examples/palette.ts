@@ -8,12 +8,15 @@
 export const THEMES = ['light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
 
-/** Every custom property a sheet declares, by name, with its value as written. */
+/**
+ * Every token a sheet declares, by name, with its value as written. A property whose name starts
+ * with `--_dk-` is the kit's own working value, never a token, so it is left out.
+ */
 export const declaredIn = (sheet: string): ReadonlyMap<string, string> =>
     new Map(
-        [...sheet.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(
-            ([, name = '', value = '']) => [name, value.trim()]
-        )
+        [...sheet.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)]
+            .filter(([, name = '']) => !name.startsWith('--_dk-'))
+            .map(([, name = '', value = '']) => [name, value.trim()])
     );
 
 /** The roles the sheets read with a fallback, unset unless a page sets them, and that fallback. */

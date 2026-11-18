@@ -386,6 +386,21 @@ describe('what the sheets style', () => {
         }
     });
 
+    it("names a property declared for a piece as the reference lists it for a page, or as the kit's own", () => {
+        // The root rule holds the tokens. A rule for a piece declares either a property the
+        // reference names for a page, or a working value of the kit's own, whose name starts
+        // with --_dk- so a page and the tokens page can tell it from a token, as record 16 has it.
+        const tokens = withoutComments(readFileSync(new URL('tokens.css', folder), 'utf8'));
+        const reference = readFileSync(new URL('../REFERENCE.md', folder), 'utf8');
+        const unnamed = [...tokens.matchAll(/([^{};]*)\{([^{}]*)\}/g)]
+            .filter(([, selector = '']) => !/^:where\(\s*:root\s*\)$/.test(selector.trim()))
+            .flatMap(([, , body = '']) => [...body.matchAll(/(--[\w-]+)\s*:/g)])
+            .map(([, name = '']) => name)
+            .filter((name) => !name.startsWith('--_dk-') && !reference.includes(`\`${name}\``));
+        expect([...new Set(unnamed)]).toEqual([]);
+        expect(reference.match(/--_dk-[\w-]+/g) ?? []).toEqual([]);
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

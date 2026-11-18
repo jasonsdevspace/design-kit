@@ -101,6 +101,10 @@ draws, and a page writes no rule over a kit class for it, as [decision
 sets out. Where a property sets a ground, the page chooses a value that keeps what sits on it to its
 contrast, in both themes, which `light-dark()` writes in one value.
 
+A property whose name starts with `--_dk-` is the kit's own working value, such as a width a grid of
+buttons works its columns out with. It is not one of these, a page never reads or sets it, and it
+may change in any release.
+
 | Property                   | Default                                                            | What it sets, and what it must hold                                                                                                            |
 | -------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--dk-focus`               | the accent                                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                   |

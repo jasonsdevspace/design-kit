@@ -1,6 +1,6 @@
 # 16. A page changes how a piece draws only through the properties it names
 
-**Status:** accepted
+**Status:** accepted, amended in 0.8.7 to name the properties the kit declares only for its own sums with `--_dk-`, once a grid of buttons put its working values in the tokens sheet beside the tokens
 
 ## Context
 
@@ -42,6 +42,14 @@ table of properties a page sets, with its default and, where it sets a ground, t
 sits on it must hold. A page sets a ground's light and dark values in one `light-dark()`, so it
 holds in both themes.
 
+Since 0.8.7 a property the kit declares only for its own sums, such as the widths a grid of buttons
+works its columns out with, has a name that starts with `--_dk-`. A leading underscore is the common
+sign in CSS that a custom property is private to what declares it, and the `dk-` after it keeps the
+kit's names from meeting a page's. Such a property is never in the reference, never for a page to
+read or set, and may change in any release, and the site's tokens page leaves it out. It beat
+filtering the grid's names on the tokens page alone, which would leave the next piece's working
+values to look like tokens the same way.
+
 ## Consequences
 
 - A page reaches a piece without a rule over a kit class, so a page's look survives the kit's
@@ -53,6 +61,8 @@ holds in both themes.
   changelog, as a token's would.
 - A new piece that needs a page's choice adds a property of this kind, named for the piece and the
   choice, rather than a token or a class a page writes over.
+- A new piece that works a value out for itself names it with `--_dk-`, so renaming or dropping it
+  later asks nothing of a page.
 
 ## How it is tested
 
@@ -62,3 +72,7 @@ The path is in `packages/design-kit`.
   missing from the reference's table of properties a page sets, when the table lists one the sheets
   no longer read, when a row leaves its default or what it sets empty, or when a default written as
   a number is not the sheets' fallback, so the table cannot fall behind the sheets.
+- It also fails when the tokens sheet declares a property in a rule other than the root's that
+  the reference does not name and whose name does not start with `--_dk-`, or when the reference
+  names a `--_dk-` property, and `src/tokens.test.ts` finds that the tokens read from the sheet
+  leave out every `--_dk-` property it declares.
