@@ -2678,7 +2678,8 @@
      * column. Each cell is at least the target tall, or the larger target in a tall grid or on a
      * tall button, and its label has room to wrap at a large text size. The grid takes the width of
      * what holds it, which needs a width of its own. Where the columns asked for do not fit, the
-     * widths the tokens sheet works out for the grid say how many fewer it draws.
+     * widths the tokens sheet works out for the grid say how many fewer it draws, held to the
+     * grid's width so a cell never reaches past it.
      */
     :where(.dk-button-grid) {
         display: grid;
@@ -2689,7 +2690,7 @@
                     var(--dk-button-grid-at),
                     (100% - (var(--dk-button-grid-of) - 1) * var(--dk-space-2)) /
                         var(--dk-button-grid-of) - 1px,
-                    var(--dk-button-grid-even)
+                    min(var(--dk-button-grid-even), 100%)
                 ),
                 1fr
             )

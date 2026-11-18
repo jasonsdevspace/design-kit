@@ -145,7 +145,7 @@ usual size would take them past the budget, and the rule then sets them at 8 KB.
 
 For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
 divides its cells, which works out a column's width at each count from two to six in the sheet, since
-no page media query may do it. They weigh 11,354 bytes sent together, past the 10.75 KB they held,
+no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they held,
 and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
 
 ## How it is tested

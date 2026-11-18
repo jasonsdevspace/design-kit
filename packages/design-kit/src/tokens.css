@@ -359,11 +359,16 @@
      * never five and one. The grid works out a column's least width at the even share of each
      * count from two to six, made far wider than any page where that count would make a cell under
      * its least width or is more than the columns asked for. A clamp from nothing to a pixel, of
-     * how far a share falls under the least width, is the switch. Each count of cells takes the
-     * narrowest width among its divisors and two, which is the most columns that fit, and where the
-     * columns asked for fit, that width is made far narrower, so the grid draws them. Any other
-     * count, such as thirteen, draws as many as fit. The widths are the grid's own properties, so
-     * they are worked out here and the components sheet reads them.
+     * how far a share falls under the least width, steep enough to step within a rounding of a
+     * pixel, is the switch. Each count of cells takes the narrowest width among its divisors and
+     * two, which is the most columns that fit, and where all its cells fit in a row, the least
+     * width itself, so they lie in the tracks that fit as before. Where the columns asked for fit,
+     * that width is made far narrower, so the grid draws them, and where nothing fits, the
+     * components sheet holds it to the grid's width, so the grid draws one column. Any other
+     * count, such as thirteen, draws as many as fit. A count is matched by a cell at that place
+     * and none past it, which Safari counts again as cells come and go, where a last cell at that
+     * place it does not. The widths are the grid's own properties, so they are worked out here
+     * and the components sheet reads them.
      */
     :where(.dk-button-grid) {
         --dk-button-grid-at: var(--dk-button-grid-least, var(--dk-target));
@@ -372,7 +377,7 @@
             (100% - var(--dk-space-2)) / 2 - 1px +
                 clamp(
                     0px,
-                    (var(--dk-button-grid-at) - (100% - var(--dk-space-2)) / 2) * 1000,
+                    (var(--dk-button-grid-at) - (100% - var(--dk-space-2)) / 2) * 100000,
                     1px
                 ) *
                 9999 + clamp(0, 2 - var(--dk-button-grid-of), 1) * 9999px
@@ -381,7 +386,7 @@
             (100% - 2 * var(--dk-space-2)) / 3 - 1px +
                 clamp(
                     0px,
-                    (var(--dk-button-grid-at) - (100% - 2 * var(--dk-space-2)) / 3) * 1000,
+                    (var(--dk-button-grid-at) - (100% - 2 * var(--dk-space-2)) / 3) * 100000,
                     1px
                 ) *
                 9999 + clamp(0, 3 - var(--dk-button-grid-of), 1) * 9999px
@@ -390,7 +395,7 @@
             (100% - 3 * var(--dk-space-2)) / 4 - 1px +
                 clamp(
                     0px,
-                    (var(--dk-button-grid-at) - (100% - 3 * var(--dk-space-2)) / 4) * 1000,
+                    (var(--dk-button-grid-at) - (100% - 3 * var(--dk-space-2)) / 4) * 100000,
                     1px
                 ) *
                 9999 + clamp(0, 4 - var(--dk-button-grid-of), 1) * 9999px
@@ -399,7 +404,7 @@
             (100% - 4 * var(--dk-space-2)) / 5 - 1px +
                 clamp(
                     0px,
-                    (var(--dk-button-grid-at) - (100% - 4 * var(--dk-space-2)) / 5) * 1000,
+                    (var(--dk-button-grid-at) - (100% - 4 * var(--dk-space-2)) / 5) * 100000,
                     1px
                 ) *
                 9999 + clamp(0, 5 - var(--dk-button-grid-of), 1) * 9999px
@@ -408,7 +413,7 @@
             (100% - 5 * var(--dk-space-2)) / 6 - 1px +
                 clamp(
                     0px,
-                    (var(--dk-button-grid-at) - (100% - 5 * var(--dk-space-2)) / 6) * 1000,
+                    (var(--dk-button-grid-at) - (100% - 5 * var(--dk-space-2)) / 6) * 100000,
                     1px
                 ) *
                 9999 + clamp(0, 6 - var(--dk-button-grid-of), 1) * 9999px
@@ -421,7 +426,7 @@
                                 (100% - (var(--dk-button-grid-of) - 1) * var(--dk-space-2)) /
                                 var(--dk-button-grid-of)
                         ) *
-                        1000,
+                        100000,
                     1px
                 ) *
                 9999 - 9999px
@@ -429,38 +434,48 @@
         --dk-button-grid-even: 0px;
     }
 
-    :where(.dk-button-grid:has(> :nth-child(4):last-child)) {
+    :where(.dk-button-grid:has(> :nth-child(4)):not(:has(> :nth-child(5)))) {
         --dk-button-grid-even: calc(
-            min(var(--dk-button-grid-4), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
-        );
-    }
-
-    :where(.dk-button-grid:has(> :nth-child(6):last-child)) {
-        --dk-button-grid-even: calc(
-            min(var(--dk-button-grid-6), var(--dk-button-grid-3), var(--dk-button-grid-2)) +
+            min(
+                    var(--dk-button-grid-4) - (100% - 3 * var(--dk-space-2)) / 4 + 1px +
+                        var(--dk-button-grid-at),
+                    var(--dk-button-grid-2)
+                ) +
                 var(--dk-button-grid-asked)
         );
     }
 
-    :where(.dk-button-grid:has(> :nth-child(8):last-child)) {
+    :where(.dk-button-grid:has(> :nth-child(6)):not(:has(> :nth-child(7)))) {
+        --dk-button-grid-even: calc(
+            min(
+                    var(--dk-button-grid-6) - (100% - 5 * var(--dk-space-2)) / 6 + 1px +
+                        var(--dk-button-grid-at),
+                    var(--dk-button-grid-3),
+                    var(--dk-button-grid-2)
+                ) +
+                var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(8)):not(:has(> :nth-child(9)))) {
         --dk-button-grid-even: calc(
             min(var(--dk-button-grid-4), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
         );
     }
 
-    :where(.dk-button-grid:has(> :nth-child(9):last-child)) {
+    :where(.dk-button-grid:has(> :nth-child(9)):not(:has(> :nth-child(10)))) {
         --dk-button-grid-even: calc(
             min(var(--dk-button-grid-3), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
         );
     }
 
-    :where(.dk-button-grid:has(> :nth-child(10):last-child)) {
+    :where(.dk-button-grid:has(> :nth-child(10)):not(:has(> :nth-child(11)))) {
         --dk-button-grid-even: calc(
             min(var(--dk-button-grid-5), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
         );
     }
 
-    :where(.dk-button-grid:has(> :nth-child(12):last-child)) {
+    :where(.dk-button-grid:has(> :nth-child(12)):not(:has(> :nth-child(13)))) {
         --dk-button-grid-even: calc(
             min(
                     var(--dk-button-grid-6),
