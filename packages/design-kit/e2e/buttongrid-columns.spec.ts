@@ -75,6 +75,38 @@ const measures = (grid: Locator, tall = false) =>
         tall ? '--dk-target-large' : '--dk-target'
     );
 
+/**
+ * The grid drawn at each width given, set on the grid itself in one call to the page, since a
+ * call for each width is too slow in Firefox: what the grid measures at that width, and how many
+ * columns it draws, from where its first row's cells start.
+ */
+const sweep = (grid: Locator, widths: readonly number[], tall: boolean) =>
+    grid.evaluate(
+        (element, { all, target }) => {
+            if (!(element instanceof HTMLElement)) throw new Error('The grid is not an element.');
+            const probe = document.createElement('div');
+            probe.style.width = `var(${target})`;
+            element.after(probe);
+            const found = all.map((width) => {
+                element.style.width = `${String(width)}px`;
+                const cells = [...element.children].map((cell) => cell.getBoundingClientRect());
+                const top = Math.round(cells[0]?.y ?? 0);
+                return {
+                    width: element.clientWidth,
+                    gap: Number.parseFloat(getComputedStyle(element).columnGap),
+                    least: probe.getBoundingClientRect().width,
+                    widest: Math.max(...cells.map((cell) => cell.width)),
+                    narrowest: Math.min(...cells.map((cell) => cell.width)),
+                    past: element.scrollWidth - element.clientWidth,
+                    drawn: cells.filter((cell) => Math.round(cell.y) === top).length,
+                };
+            });
+            probe.remove();
+            return found;
+        },
+        { all: widths, target: tall ? '--dk-target-large' : '--dk-target' }
+    );
+
 /** Each count of cells the grid evens out, and the counts it draws, most first. */
 const EVEN: Readonly<Partial<Record<number, readonly number[]>>> = {
     4: [4, 2],
@@ -116,11 +148,10 @@ for (const [name, tall, twice] of [
         for (const count of [4, 6, 8, 9, 10, 12, 13]) {
             const grid = await keys(page, { count, columns: 6, width: 1280, tall });
             if (twice) await doubled(page, browserName);
-            for (let width = 120; width <= 640; width += 7) {
-                await widen(grid, width);
-                const drawn = await columnsOf(grid);
-                const { least, widest, narrowest, past, ...rest } = await measures(grid, tall);
-                const label = `${String(count)} cells in ${String(width)}px`;
+            const widths = Array.from({ length: 75 }, (_, step) => 120 + step * 7);
+            for (const [at, measured] of (await sweep(grid, widths, tall)).entries()) {
+                const { least, widest, narrowest, past, drawn, ...rest } = measured;
+                const label = `${String(count)} cells in ${String(widths[at])}px`;
                 // No cell is ever wider than the grid, at any width.
                 expect(past, label).toBeLessThanOrEqual(0);
                 // Where a share lands on the target, each engine rounds it its own way, so either
