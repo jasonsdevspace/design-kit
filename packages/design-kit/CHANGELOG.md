@@ -7,6 +7,25 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.8.6
+
+A row can hold a group of buttons at its end, which moves under its text where the row has no room
+for both. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same, and a page that draws no group sees no change.
+
+- **Sheets.** `dk-row-actions` groups a row's buttons at its end, in order and a step apart. The
+  text keeps room for about twelve characters of its own size beside the group, and where the row
+  has less, the group moves under the text to the row's end, so a name reads across at twice the
+  text size on a phone. A group wider than the row wraps inside itself, and a row with a picture
+  keeps it beside the text.
+- **Docs.** The reference shows a list of seats with icon buttons in a group, the first seat's Move
+  up off, says when to use a group and how to name its buttons, and the README lists it.
+- **Tests.** Browser tests in a padded page keep a row's title on one line with its group under it
+  on a 320px and a 390px phone at twice the text size, the group beside twelve characters of text
+  at the default size, every button inside the row with the wider text spacing on the narrowest
+  phone, a picture beside its title with a group, and the buttons reached in order by name at both
+  sizes, with the audit in both themes.
+
 ## 0.8.5
 
 A panel hands focus back to its button by one rule, decided by where focus is as it closes, in
