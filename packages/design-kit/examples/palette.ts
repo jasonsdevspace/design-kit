@@ -8,13 +8,35 @@
 export const THEMES = ['light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
 
-/** Every custom property a sheet declares, by name, with its value as written. */
-export const declaredIn = (sheet: string): ReadonlyMap<string, string> =>
-    new Map(
-        [...sheet.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(
-            ([, name = '', value = '']) => [name, value.trim()]
-        )
+/** A sheet without its comments, so a name a comment mentions is not read as declared. */
+export const withoutComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** Whether a rule's selector is the root's, where the sheet declares its tokens. */
+const isRoot = (selector: string): boolean =>
+    /^(?::where\(\s*:root\s*\)|:root)$/.test(selector.trim());
+
+/**
+ * Every token a sheet declares, by name, with its value as written. A token's value is the one the
+ * root rule declares first, so a piece that sets a token again for itself, as a picture sets the
+ * safe area to nothing, or a rule for a narrow screen, never stands in for it. A token only a piece
+ * sets, such as the step between what a column holds, takes the first value a piece gives it. A
+ * property whose name starts with `--_dk-` is the kit's own working value, never a token, so it is
+ * left out.
+ */
+export const declaredIn = (sheet: string): ReadonlyMap<string, string> => {
+    const rules = [...withoutComments(sheet).matchAll(/([^{}]*)\{([^{}]*)\}/g)].map(
+        ([, selector = '', body = '']) => ({ root: isRoot(selector), body })
     );
+    const declared = new Map<string, string>();
+    for (const root of [true, false])
+        for (const rule of rules.filter((each) => each.root === root))
+            for (const [, name = '', value = ''] of rule.body.matchAll(
+                /(--[\w-]+)\s*:\s*([^;]+);/g
+            ))
+                if (!name.startsWith('--_dk-') && !declared.has(name))
+                    declared.set(name, value.trim());
+    return declared;
+};
 
 /** The roles the sheets read with a fallback, unset unless a page sets them, and that fallback. */
 const FALLBACKS: Readonly<Record<string, string>> = { focus: 'accent' };

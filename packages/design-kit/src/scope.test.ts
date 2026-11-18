@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import { withoutComments } from '../examples/palette.js';
+
 /*
  * The kit loads beside a demo's own styles, so what it styles is held to what it means to. Every
  * rule sits in one of the kit's layers, so a page's own rule outside a layer wins over the kit's,
@@ -19,8 +21,6 @@ import { describe, expect, it } from 'vitest';
 const LAYERS = ['dk.tokens', 'dk.base', 'dk.components'];
 const layerOf = (sheet: string) => `dk.${sheet.replace(/\.css$/, '')}`;
 const ORDER = `@layer ${LAYERS.join(', ')};`;
-
-const withoutComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
 /**
  * What a sheet holds at its top level: each statement, and each block's header. A quoted string is
@@ -384,6 +384,33 @@ describe('what the sheets style', () => {
                 name
             ).toBeNull();
         }
+    });
+
+    it("names a property declared for a piece as the reference names it, or as the kit's own", () => {
+        // The root rule holds the tokens. A rule for a piece declares a property the reference
+        // names, a token it sets again or one a page sets, or a working value of the kit's own,
+        // whose name starts with --_dk- so a page and the tokens page can tell it from a token.
+        const tokens = withoutComments(readFileSync(new URL('tokens.css', folder), 'utf8'));
+        const reference = readFileSync(new URL('../REFERENCE.md', folder), 'utf8');
+        /** The names a part of the reference gives in code, from its heading to the end given. */
+        const namedIn = (from: string, to: string): string[] => {
+            const start = reference.indexOf(from);
+            expect(start, from).toBeGreaterThan(-1);
+            const part = reference.slice(start, reference.indexOf(to, start + from.length));
+            return [...part.matchAll(/`(--dk-[\w-]+)`/g)].map(([, name = '']) => name);
+        };
+        // The reference's table of every token and its table of properties a page sets.
+        const named = new Set([
+            ...namedIn('<summary>Every token', '</details>'),
+            ...namedIn('### Properties a page sets', '\n#'),
+        ]);
+        const unnamed = [...tokens.matchAll(/([^{};]*)\{([^{}]*)\}/g)]
+            .filter(([, selector = '']) => !/^:where\(\s*:root\s*\)$/.test(selector.trim()))
+            .flatMap(([, , body = '']) => [...body.matchAll(/(--[\w-]+)\s*:/g)])
+            .map(([, name = '']) => name)
+            .filter((name) => !name.startsWith('--_dk-') && !named.has(name));
+        expect([...new Set(unnamed)]).toEqual([]);
+        expect(reference.match(/--_dk-[\w-]+/g) ?? []).toEqual([]);
     });
 
     it('declares custom properties only in the tokens', () => {

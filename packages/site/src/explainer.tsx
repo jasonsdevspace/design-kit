@@ -115,12 +115,13 @@ export const HowItWorks = ({
             <p>
                 A style library usually wins by the weight of its selectors, so a demo has to
                 outweigh it to change anything. Here every value the kit names starts with{' '}
-                <code>--dk-</code> and every class with <code>dk-</code>, so a demo keeps its own
-                names. Every rule sits in a layer of the kit&rsquo;s, so a demo&rsquo;s own styles
-                outside a layer win whatever their selectors. A demo with layers of its own chooses
-                where the kit&rsquo;s layer sits among them. The one exception is the kit&rsquo;s
-                rule for a visitor who asks for less motion, which holds over a demo&rsquo;s
-                ordinary styles. A test fails if a rule slips out of its layer.
+                <code>--dk-</code>, every value it works out for itself with <code>--_dk-</code>,
+                and every class with <code>dk-</code>, so a demo keeps its own names. Every rule
+                sits in a layer of the kit&rsquo;s, so a demo&rsquo;s own styles outside a layer win
+                whatever their selectors. A demo with layers of its own chooses where the
+                kit&rsquo;s layer sits among them. The one exception is the kit&rsquo;s rule for a
+                visitor who asks for less motion, which holds over a demo&rsquo;s ordinary styles. A
+                test fails if a rule slips out of its layer.
             </p>
 
             <h3>A state you can see but not hear</h3>

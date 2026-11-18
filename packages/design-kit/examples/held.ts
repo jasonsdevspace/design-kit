@@ -649,7 +649,7 @@ export const HELD = {
         {
             file: 'src/tokens.test.ts',
             titles: [
-                'the tokens names every custom property with the kit prefix',
+                "the tokens names every custom property with the kit prefix, a token's or the kit's own",
                 'the tokens declares every color role with a light and a dark value',
             ],
         },
@@ -676,7 +676,8 @@ export const HELD = {
         {
             file: 'src/tokens.test.ts',
             titles: [
-                'the tokens names every custom property with the kit prefix',
+                "the tokens names every custom property with the kit prefix, a token's or the kit's own",
+                "the tokens reads the tokens without the kit's own working properties, which the sheet also declares",
                 'the tokens declares the scale a component is built from',
             ],
         },

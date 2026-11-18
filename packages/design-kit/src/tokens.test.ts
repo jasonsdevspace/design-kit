@@ -10,6 +10,7 @@ import {
     PAIRS,
     ROLES,
     THEMES,
+    withoutComments,
 } from '../examples/palette.js';
 
 /*
@@ -39,8 +40,16 @@ const holdersOf = (css: string, declaration: string): string[] => {
 };
 
 describe('the tokens', () => {
-    it('names every custom property with the kit prefix', () => {
-        expect([...declared.keys()].filter((name) => !name.startsWith('--dk-'))).toEqual([]);
+    it("names every custom property with the kit prefix, a token's or the kit's own", () => {
+        const names = [...withoutComments(sheet).matchAll(/(--[\w-]+)\s*:/g)].map(
+            ([, name = '']) => name
+        );
+        expect(names.filter((name) => !/^--_?dk-/.test(name))).toEqual([]);
+    });
+
+    it("reads the tokens without the kit's own working properties, which the sheet also declares", () => {
+        expect(withoutComments(sheet)).toMatch(/--_dk-[\w-]+\s*:/);
+        expect([...declared.keys()].filter((name) => name.startsWith('--_'))).toEqual([]);
     });
 
     it('declares every color role with a light and a dark value', () => {
