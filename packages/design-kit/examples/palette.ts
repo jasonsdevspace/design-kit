@@ -11,31 +11,63 @@ export type Theme = (typeof THEMES)[number];
 /** A sheet without its comments, so a name a comment mentions is not read as declared. */
 export const withoutComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
+/**
+ * The grounds the kit's containers set, a panel's or a dialog's, which a piece reads with a fallback
+ * to the page's own where no container holds it. They are tokens, though the sheets read them as
+ * they read a property a page sets.
+ */
+export const CONTAINER_GROUNDS: ReadonlySet<string> = new Set(['--dk-ground', '--dk-ground-step']);
+
+/**
+ * The properties a page sets to change how a piece draws, as record 16 has them: every name the
+ * sheets read with a fallback, which the kit leaves unset on the root, but for the containers'
+ * grounds. They are read from the sheets themselves, so the list follows the version a reader is
+ * given.
+ */
+export const pagePropertiesIn = (sheets: string): ReadonlySet<string> =>
+    new Set(
+        [...withoutComments(sheets).matchAll(/var\(\s*(--dk-[\w-]+)\s*,/g)]
+            .map(([, name = '']) => name)
+            .filter((name) => !CONTAINER_GROUNDS.has(name))
+    );
+
 /** Whether a rule's selector is the root's, where the sheet declares its tokens. */
 const isRoot = (selector: string): boolean =>
     /^(?::where\(\s*:root\s*\)|:root)$/.test(selector.trim());
 
 /**
- * Every token a sheet declares, by name, with its value as written. A token's value is the one the
- * root rule declares first, so a piece that sets a token again for itself, as a picture sets the
- * safe area to nothing, or a rule for a narrow screen, never stands in for it. A token only a piece
- * sets, such as the step between what a column holds, takes the first value a piece gives it. A
- * property whose name starts with `--_dk-` is the kit's own working value, never a token, so it is
- * left out.
+ * Every token the sheets given declare, by name, with its value as written. A token's value is the
+ * one the root rule declares first, so a piece that sets a token again for itself, as a picture
+ * sets the safe area to nothing, or a rule for a narrow screen, never stands in for it. A token
+ * only pieces set, such as the step between what a column holds, takes every value they give it,
+ * joined by "or". A property whose name starts with `--_dk-` is the kit's own working value, and a
+ * property a page sets is the page's to choose even where a piece of the kit's sets its own
+ * default, as a tall grid of buttons does, so neither is a token and both are left out. Give it
+ * every sheet, so it finds every property a page sets.
  */
-export const declaredIn = (sheet: string): ReadonlyMap<string, string> => {
-    const rules = [...withoutComments(sheet).matchAll(/([^{}]*)\{([^{}]*)\}/g)].map(
-        ([, selector = '', body = '']) => ({ root: isRoot(selector), body })
+export const declaredIn = (sheets: string): ReadonlyMap<string, string> => {
+    const page = pagePropertiesIn(sheets);
+    const all = [...withoutComments(sheets).matchAll(/([^{}]*)\{([^{}]*)\}/g)].flatMap(
+        ([, selector = '', body = '']) =>
+            [...body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(([, name = '', value = '']) => ({
+                root: isRoot(selector),
+                name,
+                value: value.trim(),
+            }))
     );
-    const declared = new Map<string, string>();
-    for (const root of [true, false])
-        for (const rule of rules.filter((each) => each.root === root))
-            for (const [, name = '', value = ''] of rule.body.matchAll(
-                /(--[\w-]+)\s*:\s*([^;]+);/g
-            ))
-                if (!name.startsWith('--_dk-') && !declared.has(name))
-                    declared.set(name, value.trim());
-    return declared;
+    const tokens = all.filter(({ name }) => !name.startsWith('--_dk-') && !page.has(name));
+    /** The values the rules given declare for a name, each once, in the order written. */
+    const valuesOf = (name: string, root: boolean): string[] => [
+        ...new Set(
+            tokens.filter((one) => one.name === name && one.root === root).map((one) => one.value)
+        ),
+    ];
+    return new Map(
+        [...new Set(tokens.map(({ name }) => name))].map((name) => [
+            name,
+            valuesOf(name, true)[0] ?? valuesOf(name, false).join(' or '),
+        ])
+    );
 };
 
 /** The roles the sheets read with a fallback, unset unless a page sets them, and that fallback. */

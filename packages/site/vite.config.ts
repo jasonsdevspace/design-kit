@@ -88,15 +88,17 @@ const markupOf = async (): Promise<Build['markup']> => {
  * The version of the kit the site installed from npm, its tokens sheet, the commit the site is
  * built at, and each state's markup, read once, when the first page is built.
  */
+/** A sheet of the version the site pins, as the package ships it. */
+const released = (name: string): string =>
+    readFileSync(createRequire(import.meta.url).resolve(`design-kit-release/${name}`), 'utf8');
+
 let built: Promise<Build> | undefined;
 const build = (): Promise<Build> =>
     (built ??= markupOf().then((markup) => ({
         markup,
         version: kit.version,
-        tokens: readFileSync(
-            createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
-            'utf8'
-        ),
+        tokens: released('tokens.css'),
+        sheets: ['tokens.css', 'base.css', 'components.css'].map(released).join('\n'),
         commit:
             process.env['GITHUB_SHA'] ??
             execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
