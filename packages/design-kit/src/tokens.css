@@ -354,6 +354,125 @@
     }
 
     /*
+     * Where the columns asked for do not fit, a grid of four, six, eight, nine, ten or twelve cells
+     * draws the most columns that fit and divide its cells evenly, so six asked in six draw three,
+     * never five and one. The grid works out a column's least width at the even share of each
+     * count from two to six, made far wider than any page where that count would make a cell under
+     * its least width or is more than the columns asked for. A clamp from nothing to a pixel, of
+     * how far a share falls under the least width, is the switch. Each count of cells takes the
+     * narrowest width among its divisors and two, which is the most columns that fit, and where the
+     * columns asked for fit, that width is made far narrower, so the grid draws them. Any other
+     * count, such as thirteen, draws as many as fit. The widths are the grid's own properties, so
+     * they are worked out here and the components sheet reads them.
+     */
+    :where(.dk-button-grid) {
+        --dk-button-grid-at: var(--dk-button-grid-least, var(--dk-target));
+        --dk-button-grid-of: var(--dk-button-grid-columns, 3);
+        --dk-button-grid-2: calc(
+            (100% - var(--dk-space-2)) / 2 - 1px +
+                clamp(
+                    0px,
+                    (var(--dk-button-grid-at) - (100% - var(--dk-space-2)) / 2) * 1000,
+                    1px
+                ) *
+                9999 + clamp(0, 2 - var(--dk-button-grid-of), 1) * 9999px
+        );
+        --dk-button-grid-3: calc(
+            (100% - 2 * var(--dk-space-2)) / 3 - 1px +
+                clamp(
+                    0px,
+                    (var(--dk-button-grid-at) - (100% - 2 * var(--dk-space-2)) / 3) * 1000,
+                    1px
+                ) *
+                9999 + clamp(0, 3 - var(--dk-button-grid-of), 1) * 9999px
+        );
+        --dk-button-grid-4: calc(
+            (100% - 3 * var(--dk-space-2)) / 4 - 1px +
+                clamp(
+                    0px,
+                    (var(--dk-button-grid-at) - (100% - 3 * var(--dk-space-2)) / 4) * 1000,
+                    1px
+                ) *
+                9999 + clamp(0, 4 - var(--dk-button-grid-of), 1) * 9999px
+        );
+        --dk-button-grid-5: calc(
+            (100% - 4 * var(--dk-space-2)) / 5 - 1px +
+                clamp(
+                    0px,
+                    (var(--dk-button-grid-at) - (100% - 4 * var(--dk-space-2)) / 5) * 1000,
+                    1px
+                ) *
+                9999 + clamp(0, 5 - var(--dk-button-grid-of), 1) * 9999px
+        );
+        --dk-button-grid-6: calc(
+            (100% - 5 * var(--dk-space-2)) / 6 - 1px +
+                clamp(
+                    0px,
+                    (var(--dk-button-grid-at) - (100% - 5 * var(--dk-space-2)) / 6) * 1000,
+                    1px
+                ) *
+                9999 + clamp(0, 6 - var(--dk-button-grid-of), 1) * 9999px
+        );
+        --dk-button-grid-asked: calc(
+            clamp(
+                    0px,
+                    (
+                            var(--dk-button-grid-at) -
+                                (100% - (var(--dk-button-grid-of) - 1) * var(--dk-space-2)) /
+                                var(--dk-button-grid-of)
+                        ) *
+                        1000,
+                    1px
+                ) *
+                9999 - 9999px
+        );
+        --dk-button-grid-even: 0px;
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(4):last-child)) {
+        --dk-button-grid-even: calc(
+            min(var(--dk-button-grid-4), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(6):last-child)) {
+        --dk-button-grid-even: calc(
+            min(var(--dk-button-grid-6), var(--dk-button-grid-3), var(--dk-button-grid-2)) +
+                var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(8):last-child)) {
+        --dk-button-grid-even: calc(
+            min(var(--dk-button-grid-4), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(9):last-child)) {
+        --dk-button-grid-even: calc(
+            min(var(--dk-button-grid-3), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(10):last-child)) {
+        --dk-button-grid-even: calc(
+            min(var(--dk-button-grid-5), var(--dk-button-grid-2)) + var(--dk-button-grid-asked)
+        );
+    }
+
+    :where(.dk-button-grid:has(> :nth-child(12):last-child)) {
+        --dk-button-grid-even: calc(
+            min(
+                    var(--dk-button-grid-6),
+                    var(--dk-button-grid-4),
+                    var(--dk-button-grid-3),
+                    var(--dk-button-grid-2)
+                ) +
+                var(--dk-button-grid-asked)
+        );
+    }
+
+    /*
      * The step between the pieces in what holds a column of them, set on the pieces themselves so
      * a container inside another stands its parent's step from what is around it and gives its own
      * to what it holds: a whole step in an explainer, a content page, a band, each of their

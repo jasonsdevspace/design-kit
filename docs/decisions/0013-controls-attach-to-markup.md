@@ -143,6 +143,11 @@ bytes under the 7.5 KB they hold, and the median a function adds is now 657 byte
 usual size would take them past the budget, and the rule then sets them at 8 KB. The budget stays at
 7.5 KB until a function outgrows it, as the rule has it.
 
+For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
+divides its cells, which works out a column's width at each count from two to six in the sheet, since
+no page media query may do it. They weigh 11,354 bytes sent together, past the 10.75 KB they held,
+and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
