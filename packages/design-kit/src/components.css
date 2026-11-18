@@ -2782,10 +2782,10 @@
 
     /*
      * A list of rows: the games played, the players, the steps to install. Each row has a title, a
-     * muted line of detail under it, and room at its end for a figure, a tag or one button. A rule
-     * runs between rows and none after the last, in the line color, and a row takes no ground of
-     * its own, so a list sits on a page or a panel alike. A list with no rows is not drawn, even
-     * one a template has left a line break in.
+     * muted line of detail under it, and room at its end for a figure, a tag, one button or a group
+     * of buttons. A rule runs between rows and none after the last, in the line color, and a row
+     * takes no ground of its own, so a list sits on a page or a panel alike. A list with no rows is
+     * not drawn, even one a template has left a line break in.
      */
     :where(.dk-rows) {
         padding: 0;
@@ -2838,6 +2838,30 @@
 
     :where(.dk-row > .dk-button) {
         align-self: center;
+    }
+
+    /*
+     * A row whose end holds several buttons, such as a seat's move and remove, groups them in
+     * `dk-row-actions`, so they stay together and in order. The text keeps room for about twelve
+     * characters of its own size beside the group, and where the row has less, the group moves
+     * under the text to the row's end, so a name never squeezes to a letter wide at a large text
+     * size. Measured in the text's own size, the point it moves at grows as the text does.
+     */
+    :where(.dk-row:has(> .dk-row-actions)) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    :where(.dk-row:has(> .dk-row-actions) > .dk-row-text) {
+        flex: 999 1 12ch;
+    }
+
+    :where(.dk-row-actions) {
+        display: flex;
+        flex: 1 0 auto;
+        justify-content: flex-end;
+        gap: var(--dk-space-3);
     }
 
     /*

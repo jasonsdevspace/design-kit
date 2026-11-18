@@ -23,14 +23,16 @@ import { textSize } from './text-size.js';
  * a link row one stop named by its words, title first, with its ring around the whole row, its
  * words on the column's line under an eyebrow, a button at a row's end its own stop named for what
  * it does and to which row, a long title wrapping with the end beside its first line, the end
- * inside the row on a 320px phone at twice the text size, the list saying how many rows it holds
- * and an empty one not drawn, the keyboard's order, and no audit findings in either theme. A list
- * of tiles draws each link on the ground its page sets, or the surface with none, a gap and an edge
- * apart and inside the column of an app's body, with the row's sign, press and ring, a page's shadow
- * only where it sets one, the larger target with its detail inside it at twice the text size, its
- * edge in forced colors, an empty list not at all, a long detail wrapped pretty, its last line
- * holding more than one word, and no audit findings in either theme with its grounds set, and its
- * words at 4.5 to 1 and its sign and ring at 3 to 1 on each of them and on the surface.
+ * inside the row on a 320px phone at twice the text size, a group of buttons at a row's end beside
+ * its text and under it at twice the text size with the title on one line, reached in order by the
+ * keyboard, the list saying how many rows it holds and an empty one not drawn, the keyboard's
+ * order, and no audit findings in either theme. A list of tiles draws each link on the ground its
+ * page sets, or the surface with none, a gap and an edge apart and inside the column of an app's
+ * body, with the row's sign, press and ring, a page's shadow only where it sets one, the larger
+ * target with its detail inside it at twice the text size, its edge in forced colors, an empty list
+ * not at all, a long detail wrapped pretty, its last line holding more than one word, and no audit
+ * findings in either theme with its grounds set, and its words at 4.5 to 1 and its sign and ring at
+ * 3 to 1 on each of them and on the surface.
  */
 
 const GAMES = [
@@ -64,6 +66,23 @@ const playerRows = ['Ana', 'Ben']
     )
     .join('');
 
+/** A list of seats, each row with its three buttons in a group at its end. */
+const seatRows = ['Ana', 'Ben']
+    .map(
+        (name, at) =>
+            `<li><div class="dk-row"><span class="dk-row-text"><span class="dk-row-title">${name}</span>` +
+            `<span class="dk-visually-hidden">, </span><span class="dk-row-detail">Seat ${String(at + 1)}</span></span>` +
+            '<span class="dk-row-actions">' +
+            ['Up', 'Down', 'Remove']
+                .map(
+                    (action) =>
+                        `<button type="button" class="dk-button dk-button-text">${action}<span class="dk-visually-hidden"> ${name}</span></button>`
+                )
+                .join('') +
+            '</span></div></li>'
+    )
+    .join('');
+
 const open = async (
     page: Page,
     {
@@ -79,6 +98,7 @@ const open = async (
         body:
             `<main><h1>History</h1><ul class="dk-rows${tall ? ' dk-rows-tall' : ''}" role="list" aria-label="Games">${gameRows}</ul>` +
             `<h2>Players</h2><ul class="dk-rows" role="list" aria-label="Players">${playerRows}</ul>` +
+            `<h2>Seats</h2><ul class="dk-rows" role="list" aria-label="Seats">${seatRows}</ul>` +
             '<ul class="dk-rows" role="list" aria-label="Places"><li><a class="dk-row" href="#home" id="one-line">' +
             '<span class="dk-row-text"><span class="dk-row-title">Home</span></span></a></li></ul>' +
             '<ul class="dk-rows" role="list" aria-label="Nothing yet" id="empty">\n    \n</ul></main>',
@@ -251,6 +271,73 @@ test('keeps a row with a button as tall as one without, the button in the middle
     // The row's words start past the room a ring drawn inside it takes.
     const ring = await style(game, 'outline-width', 'outline-offset', 'padding-left');
     expect(parseFloat(ring['padding-left'] ?? '')).toBeGreaterThanOrEqual(4);
+});
+
+const seat = (page: Page): Locator =>
+    page.getByRole('list', { name: 'Seats' }).locator('.dk-row').first();
+
+for (const width of [320, 390]) {
+    test(`moves a row's group of buttons under its text on a ${String(width)}px phone at twice the text size, the title on one line`, async ({
+        page,
+    }) => {
+        await open(page, { width });
+        await textSize(page, 2);
+        const row = seat(page);
+        expect(await lineTops(row.locator('.dk-row-title'))).toHaveLength(1);
+        const text = await box(row.locator('.dk-row-text'), "the row's text");
+        const group = await box(row.locator('.dk-row-actions'), 'the group');
+        const held = await box(row, 'the row');
+        expect(group.y).toBeGreaterThanOrEqual(bottom(text));
+        // The group keeps to the row's end, and every button stays inside the row.
+        expect(Math.abs(group.x + group.width - (text.x + text.width))).toBeLessThanOrEqual(1);
+        for (const button of await row.getByRole('button').all()) {
+            const at = await box(button, 'a button');
+            expect(at.x).toBeGreaterThanOrEqual(held.x - 0.5);
+            expect(at.x + at.width).toBeLessThanOrEqual(held.x + held.width + 0.5);
+            expect(bottom(at)).toBeLessThanOrEqual(bottom(held) + 0.5);
+        }
+        expect(await sideways(page)).toBe(0);
+    });
+}
+
+test("keeps a row's group of buttons beside its text at the default size, in the middle of the row", async ({
+    page,
+}) => {
+    await open(page);
+    const row = seat(page);
+    const text = await box(row.locator('.dk-row-text'), "the row's text");
+    const group = await box(row.locator('.dk-row-actions'), 'the group');
+    const held = await box(row, 'the row');
+    expect(group.x).toBeGreaterThanOrEqual(text.x + text.width);
+    expect(Math.abs(group.y - held.y - (bottom(held) - bottom(group)))).toBeLessThanOrEqual(1);
+    // A row with a group is as tall as one with a single button.
+    const player = page.getByRole('list', { name: 'Players' }).locator('.dk-row').first();
+    expect(Math.abs(held.height - (await box(player, 'a player')).height)).toBeLessThanOrEqual(1);
+});
+
+test("reaches a row's group of buttons in order by the keyboard, each named for its row", async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    // From the last player's button, the stop before the seats.
+    await page
+        .getByRole('list', { name: 'Players' })
+        .getByRole('button', { name: 'Remove Ben' })
+        .focus();
+    const reached: string[] = [];
+    for (let stop = 0; stop < 6; stop += 1) {
+        await page.keyboard.press(tabKey(browserName));
+        reached.push(await page.evaluate(() => document.activeElement?.textContent ?? ''));
+    }
+    expect(reached).toEqual([
+        'Up Ana',
+        'Down Ana',
+        'Remove Ana',
+        'Up Ben',
+        'Down Ben',
+        'Remove Ben',
+    ]);
 });
 
 for (const theme of ['light', 'dark'] as const) {

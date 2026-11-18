@@ -38,6 +38,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'buttonGrid',
     'icon',
     'rows',
+    'rowActions',
     'rowPicture',
     'rowTiles',
     'tileColumns',

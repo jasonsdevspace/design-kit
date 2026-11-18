@@ -2132,8 +2132,8 @@ that is on rests where a held one lands.
 ## Rows
 
 A list of rows holds the games played, the players or the steps to install: each row a title, a
-muted line of detail under it, and room at its end for a figure, a tag or one button, with a rule
-between rows. It is classes alone, since a row holds no state of its own.
+muted line of detail under it, and room at its end for a figure, a tag, one button or a group of
+buttons, with a rule between rows. It is classes alone, since a row holds no state of its own.
 
 <!-- example: rows -->
 
@@ -2207,6 +2207,47 @@ and a pointer over it, or a thumb pressing it, underlines the title. A figure is
 with figures of one width, so a column of them lines up.
 
 </details>
+
+### A row with several buttons
+
+<!-- example: rowActions -->
+
+```html
+<ul class="dk-rows" role="list">
+    <li>
+        <div class="dk-row">
+            <span class="dk-row-text">
+                <span class="dk-row-title">Ana</span>
+                <span class="dk-visually-hidden">, </span>
+                <span class="dk-row-detail">Seat 1</span>
+            </span>
+            <span class="dk-row-actions">
+                <button type="button" class="dk-button dk-button-text">
+                    Up
+                    <span class="dk-visually-hidden"> Ana</span>
+                </button>
+                <button type="button" class="dk-button dk-button-text">
+                    Down
+                    <span class="dk-visually-hidden"> Ana</span>
+                </button>
+                <button type="button" class="dk-button dk-button-text">
+                    Remove
+                    <span class="dk-visually-hidden"> Ana</span>
+                </button>
+            </span>
+        </div>
+    </li>
+    <li>...</li>
+</ul>
+```
+
+A row whose end holds more than one button, such as a seat's move up, move down and remove, puts
+them in a `dk-row-actions` group after its text. The text keeps room for about twelve characters of
+its own size beside the group, and where the row has less, at a large text size or on a narrow
+phone, the group moves under the text to the row's end, so a name reads across rather than down the
+screen a letter at a time. The buttons keep their order, and the keyboard reaches them after the
+row's text, as it does one button. A row with one button at its end needs no group. Each button is
+named for what it does and to which row, as a single one is.
 
 ### A row with a picture
 

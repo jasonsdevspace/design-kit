@@ -849,6 +849,33 @@ export const rowTiles: ReactElement = (
     </ul>
 );
 
+/** A list of seats, each row with a group of buttons at its end. */
+export const rowActions: ReactElement = (
+    <ul className="dk-rows" role="list">
+        <li>
+            <div className="dk-row">
+                <span className="dk-row-text">
+                    <span className="dk-row-title">Ana</span>
+                    <span className="dk-visually-hidden">, </span>
+                    <span className="dk-row-detail">Seat 1</span>
+                </span>
+                <span className="dk-row-actions">
+                    <Button text>
+                        Up<span className="dk-visually-hidden"> Ana</span>
+                    </Button>
+                    <Button text>
+                        Down<span className="dk-visually-hidden"> Ana</span>
+                    </Button>
+                    <Button text>
+                        Remove<span className="dk-visually-hidden"> Ana</span>
+                    </Button>
+                </span>
+            </div>
+        </li>
+        <li>...</li>
+    </ul>
+);
+
 /** A list of players, each row a link with the player's picture at its start. */
 export const rowPicture: ReactElement = (
     <ul className="dk-rows" role="list">
@@ -966,6 +993,7 @@ export const EXAMPLES = {
     buttonGrid,
     icon,
     rows,
+    rowActions,
     rowPicture,
     rowTiles,
     tileColumns,
