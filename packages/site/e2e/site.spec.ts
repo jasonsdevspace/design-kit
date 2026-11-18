@@ -1798,13 +1798,20 @@ test.describe("the site's header", () => {
     });
 });
 
-/** The page's ground in each theme, from the tokens of the version the site pins. */
+/**
+ * The page's ground in each theme, from the tokens of the version the site pins, read from its
+ * three sheets as the site's build reads them.
+ */
 const GROUNDS = (() => {
     const declared = declaredIn(
-        readFileSync(
-            createRequire(import.meta.url).resolve('design-kit-release/tokens.css'),
-            'utf8'
-        )
+        ['tokens.css', 'base.css', 'components.css']
+            .map((name) =>
+                readFileSync(
+                    createRequire(import.meta.url).resolve(`design-kit-release/${name}`),
+                    'utf8'
+                )
+            )
+            .join('\n')
     );
     return { light: colorOf(declared, 'bg', 'light'), dark: colorOf(declared, 'bg', 'dark') };
 })();
