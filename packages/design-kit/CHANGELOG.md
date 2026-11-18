@@ -7,6 +7,40 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.8.6
+
+A row can hold a group of buttons at its end, which moves under its text where the row has no room
+for both, and a grid of buttons whose columns asked for do not fit draws the most that fit and
+divide its cells evenly, so six cells asked for in six columns draw as two rows of three on a
+phone, never five and one. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same. The grid's rules take the sheets' budget from 10.75 KB to 11.5 KB,
+set again by the size audit's rule.
+
+- **Sheets.** `dk-row-actions` groups a row's buttons at its end, in order and a step apart. The
+  text keeps room for about twelve characters of its own size beside the group, and where the row
+  has less, the group moves under the text to the row's end, so a name reads across at twice the
+  text size on a phone. A group wider than the row wraps inside itself, and a row with a picture
+  keeps it beside the text. Where the columns a grid of buttons asks for do not fit, a grid of
+  four, six, eight, nine, ten or twelve cells draws the most columns that fit and divide its cells,
+  two where none larger does, and one where not even two do, and a grid of fewer cells than the
+  columns asked for stays in one row wherever they all fit. The grid counts its cells again as a
+  page adds or takes one away. A grid of any other count draws as many as fit, as before, and
+  where the columns asked for fit, the grid draws them. These rules take the sheets past
+  10.75 KB, so their budget rises to 11.5 KB.
+- **Docs.** The reference shows a list of seats with icon buttons in a group, the first seat's Move
+  up off, says when to use a group and how to name its buttons, and the README lists it. The
+  reference also says which counts of cells a grid of buttons evens out and how.
+- **Tests.** Browser tests in a padded page keep a row's title on one line with its group under it
+  on a 320px and a 390px phone at twice the text size, the group beside twelve characters of text
+  at the default size, every button inside the row with the wider text spacing on the narrowest
+  phone, a picture beside its title with a group, and the buttons reached in order by name at both
+  sizes, with the audit in both themes. Browser tests in Chromium, WebKit and Firefox check the
+  columns a grid of buttons of each count draws from 120px to 640px against the rule, in a grid, a
+  tall grid and at twice the text size, with each cell at its track's share and none wider than the
+  grid, one column where one is asked for, the count taken again as a cell is taken away and added,
+  six asked for in six drawn as three on a 320px phone and at twice the text size on a 390px phone,
+  and four cells in one row.
+
 ## 0.8.5
 
 A panel hands focus back to its button by one rule, decided by where focus is as it closes, in
