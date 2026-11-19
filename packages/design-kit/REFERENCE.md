@@ -987,6 +987,15 @@ prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except
 the `title` attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes
 its role from `live` alone.
 
+**Hooks**
+
+Where `./react` gives a hook for a control, it attaches that control's function from `./controls`
+to the element its ref lands on, and returns what the function returns, the same across renders, as
+[decision 0020](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0020-react-hooks-wrap-the-attach-functions.md)
+has it. It sets its options again only when one changes, and takes the function away when the
+element leaves, where the function returns what does so. A page without React calls the same
+function on the same markup and gets the same behavior.
+
 ## Theme switch and copy button
 
 Two of the kit's controls that do something in the browser: a switch for the theme a visitor saves,
