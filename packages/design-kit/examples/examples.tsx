@@ -156,6 +156,18 @@ export const fieldMarks: ReactElement = (
     </>
 );
 
+/** Values a visitor reads but cannot change: a text field, a select and a stepper, read only. */
+export const readOnlyFields: ReactElement = (
+    <>
+        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
+            <option value="flip-7">Flip 7</option>
+            <option value="wizard">Wizard</option>
+        </SelectField>
+        <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
+    </>
+);
+
 /** A text field with a hint and an error, a select with neither, and a textarea with a hint. */
 export const fields: ReactElement = (
     <>
@@ -1016,6 +1028,7 @@ export const EXAMPLES = {
     busyButton,
     fields,
     fieldMarks,
+    readOnlyFields,
     fieldAction,
     choiceField,
     callout,

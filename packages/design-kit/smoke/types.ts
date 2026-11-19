@@ -258,3 +258,12 @@ export const markedField = InputField({ label: 'Rule name', mark: 'required', re
 
 // @ts-expect-error A field's mark is required or optional.
 export const wrongMark = InputField({ label: 'Rule name', mark: 'needed' });
+
+// A select can be read only, drawn as a field with the chosen option's words.
+export const fixedGame = SelectField({
+    label: 'Game',
+    name: 'game',
+    defaultValue: 'wizard',
+    readOnly: true,
+    children: 'Wizard',
+});

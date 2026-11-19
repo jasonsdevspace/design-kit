@@ -3,6 +3,7 @@ import {
     type ComponentPropsWithRef,
     Fragment,
     isValidElement,
+    type ReactElement,
     type ReactNode,
     type Ref,
     useId,
@@ -584,7 +585,66 @@ export const InputField = (props: InputFieldProps) => {
 
 export type SelectFieldProps = FieldParts &
     FieldAction &
-    Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'>;
+    Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'> & {
+        /**
+         * Read only, a value to read but not change: drawn as a read-only field with the chosen
+         * option's words, and sent by a hidden field, since a select has no read-only state. With
+         * no select drawn, its `disabled`, `form`, `title` and `autoFocus` go to the field, and its
+         * other props and its `ref` are left unused. It is read only for the page, rather than for
+         * a moment, since turning it on or off draws a new control in place of the last.
+         */
+        readonly readOnly?: boolean | undefined;
+    };
+
+/** The options a select holds, inside groups and fragments as well as at its top. */
+const optionsIn = (
+    children: ReactNode
+): ReactElement<{ value?: unknown; children?: ReactNode }>[] =>
+    Children.toArray(children).flatMap((child) => {
+        if (!isValidElement<{ value?: unknown; children?: ReactNode }>(child)) return [];
+        if (child.type === 'option') return [child];
+        return child.type === 'optgroup' || child.type === Fragment
+            ? optionsIn(child.props.children)
+            : [];
+    });
+
+/** The text a node draws, for an option's words. */
+const textOf = (node: ReactNode): string =>
+    Children.toArray(node)
+        .map((part) =>
+            typeof part === 'string' || typeof part === 'number'
+                ? String(part)
+                : isValidElement<{ children?: ReactNode }>(part)
+                  ? textOf(part.props.children)
+                  : ''
+        )
+        .join('');
+
+/**
+ * The words and the values of the options a select has chosen, every one a multiple select has, or
+ * its first where none is.
+ */
+const chosenOf = (
+    children: ReactNode,
+    value: unknown
+): { readonly words: string; readonly values: readonly string[] } => {
+    const options = optionsIn(children);
+    const valueOf = (option: (typeof options)[number]) => {
+        const own = option.props.value;
+        return typeof own === 'string' || typeof own === 'number'
+            ? String(own)
+            : textOf(option.props.children);
+    };
+    const wanted = (Array.isArray(value) ? value : [value])
+        .filter((one) => typeof one === 'string' || typeof one === 'number')
+        .map(String);
+    const picked = options.filter((option) => wanted.includes(valueOf(option)));
+    const chosen = picked.length > 0 ? picked : options.slice(0, 1);
+    return {
+        words: chosen.map((option) => textOf(option.props.children)).join(', '),
+        values: chosen.map(valueOf),
+    };
+};
 
 /**
  * A native select with its label, hint and error, its children the options, and the select taking
@@ -593,11 +653,52 @@ export type SelectFieldProps = FieldParts &
  */
 export const SelectField = (props: SelectFieldProps) => {
     const { native, field } = useControl(props);
-    const { className, children, action, ...rest } = native;
+    const { className, children, action, readOnly, name, value, defaultValue, ...rest } = native;
+    if (readOnly === true) {
+        // A select has no read-only state, so its chosen option is drawn as a read-only field, and
+        // a hidden field carries each value, so the form still sends them, or none where disabled.
+        const chosen = chosenOf(children, value ?? defaultValue);
+        const { disabled, form, title, autoFocus } = rest;
+        return (
+            <Field parts={props} field={field}>
+                <WithAction action={action}>
+                    <input
+                        className={spaced('dk-input', className)}
+                        readOnly
+                        value={chosen.words}
+                        disabled={disabled}
+                        form={form}
+                        title={title}
+                        autoFocus={autoFocus}
+                        {...field.wired}
+                    />
+                </WithAction>
+                {name === undefined
+                    ? null
+                    : chosen.values.map((one) => (
+                          <input
+                              key={one}
+                              type="hidden"
+                              name={name}
+                              value={one}
+                              disabled={disabled}
+                              form={form}
+                          />
+                      ))}
+            </Field>
+        );
+    }
     return (
         <Field parts={props} field={field}>
             <WithAction action={action}>
-                <select className={spaced('dk-select', className)} {...rest} {...field.wired}>
+                <select
+                    className={spaced('dk-select', className)}
+                    name={name}
+                    value={value}
+                    defaultValue={defaultValue}
+                    {...rest}
+                    {...field.wired}
+                >
                     {children}
                 </select>
             </WithAction>

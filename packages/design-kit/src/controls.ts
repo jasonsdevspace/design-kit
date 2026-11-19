@@ -817,6 +817,22 @@ const rangeWords = (least: number, most: number): string => {
 };
 
 /**
+ * A stepper's value and its two buttons, or nothing for a read-only stepper drawn with no buttons.
+ * A part a working stepper cannot do without is an error that names it.
+ */
+const stepperParts = (
+    field: HTMLElement
+): { input: HTMLInputElement; down: HTMLButtonElement; up: HTMLButtonElement } | null => {
+    const input = field.querySelector<HTMLInputElement>('.dk-stepper-value');
+    const down = field.querySelector<HTMLButtonElement>('.dk-stepper-down');
+    const up = field.querySelector<HTMLButtonElement>('.dk-stepper-up');
+    if (!input) throw new Error('a stepper needs its value');
+    if (down && up) return { input, down, up };
+    if (input.readOnly) return null;
+    throw new Error('a stepper needs its two buttons, or a read-only value');
+};
+
+/**
  * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
  * script meets the number field alone, and steps the value by the field's step when one is
  * pressed. A press that changes the value fires the input and change events a typed value fires,
@@ -847,10 +863,10 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         return already.detach;
     }
     let chosen: StepperOptions = options ?? {};
-    const input = field.querySelector<HTMLInputElement>('.dk-stepper-value');
-    const down = field.querySelector<HTMLButtonElement>('.dk-stepper-down');
-    const up = field.querySelector<HTMLButtonElement>('.dk-stepper-up');
-    if (!input || !down || !up) throw new Error('a stepper needs its value and its two buttons');
+    const parts = stepperParts(field);
+    // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
+    if (!parts) return () => undefined;
+    const { input, down, up } = parts;
     const range = field.querySelector<HTMLElement>('.dk-stepper-range');
     const status = field.querySelector<HTMLElement>('.dk-stepper-status');
     const limits = field.querySelector<HTMLElement>('.dk-stepper-limits');
@@ -862,6 +878,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     /** Where a press is said: the page's line when it gave one, or the stepper's own. */
     const line = () => chosen.status ?? status;
     const locked = () => input.disabled || input.readOnly;
+    let attached = true;
     const off = (button: HTMLButtonElement, stop: boolean) => {
         if (stop) button.setAttribute('aria-disabled', 'true');
         else button.removeAttribute('aria-disabled');
@@ -871,9 +888,13 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         const known = !Number.isNaN(value);
         off(down, locked() || (known && value <= least()));
         off(up, locked() || (known && value >= most()));
+        // A read-only value is shown alone, with no buttons to change it, but a button that has
+        // focus stays, marked off, until focus leaves it, so focus is never dropped.
+        const fixed = input.readOnly && !input.disabled;
+        for (const button of [down, up])
+            button.hidden = attached && fixed ? document.activeElement !== button : !attached;
     };
     let setInvalid = false;
-    let attached = true;
     /**
      * Puts the range in words in the field's description, after the page's own, or the error in its
      * place while the error shows, whoever showed it. Each is written only when it changes, so the
@@ -974,19 +995,23 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // cleared where a script has since made the value right, and the range in words is put back
     // after the page's description. New limits are followed in the words and the buttons.
     const kept = new MutationObserver((records) => {
-        if (records.some(({ attributeName }) => attributeName === 'min' || attributeName === 'max'))
-            mark();
+        // New limits, or a field that turns read only or disabled, are followed in the buttons.
+        if (records.some(({ attributeName }) => attributeName !== 'aria-describedby')) mark();
         if (range && !range.hidden) report(wrong());
         else describe();
     });
-    if (range || limits)
-        kept.observe(input, {
-            attributeFilter: ['aria-describedby', 'aria-invalid', 'min', 'max'],
-        });
+    kept.observe(input, {
+        attributeFilter: ['aria-describedby', 'aria-invalid', 'min', 'max', 'readonly', 'disabled'],
+    });
+    stepper.addEventListener(
+        'focusout',
+        () => {
+            window.setTimeout(mark);
+        },
+        { signal }
+    );
     mark();
     describe();
-    down.hidden = false;
-    up.hidden = false;
     const detach = () => {
         listening.abort();
         kept.disconnect();
