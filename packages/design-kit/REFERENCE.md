@@ -1700,8 +1700,7 @@ and its `h2` at the heading size, and a section it holds spaces as a content pag
 prose and a stack's are held to the measure. A grid the band holds is one piece of its flow, so the
 grid's items stand apart by its gap alone, and a column of pieces in a grid's cell, such as a hero's
 words beside its picture, is a `dk-stack`, the flow with no room of its own, at the step of what
-holds it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more,
-20rem until a page sets it, one to a row on
+holds it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more, 20rem until a page sets it, one to a row on
 a phone, `--dk-space-7` apart, each with its heading, an `h2` under a page's `h1` or an `h3` under a
 band's `h2`, at the title size and `--dk-space-3` over its text, and its prose held to the measure.
 A group stands a section's step from what comes before it, or the flow's step under the heading that
@@ -1763,20 +1762,26 @@ such as a score, is a `dk-numeral`:
         <p class="dk-note">Round 4 of 10</p>
     </div>
     <p class="dk-numeral">212<span class="dk-visually-hidden"> points</span></p>
-    <p class="dk-note">The first to 200 points wins.</p>
+    <p class="dk-note">The first to 300 points wins.</p>
 </div>
 ```
 
 `dk-split` sets what it holds on one line, the first at the start and the last at the end, lined up
 on their first line's baseline, and puts the end under the start, `--dk-space-1` apart, where the
 two do not fit, with `--dk-space-3` between them on one line. What it holds keeps no room of its
-own, and its first piece breaks a word too long for the line, so a long name holds on a 320px phone
+own, and each piece breaks a word too long for the line, so a long name holds on a 320px phone
 rather than push the page sideways. `dk-note` is the muted text at the small size, which holds 4.5
 to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
 `--dk-text-numeral` in the mono face with tabular figures, so a score that changes keeps its width,
-at the strong weight on a line no taller than the figure. Give a numeral its unit, out of sight
-where the screen shows it elsewhere, so a screen reader says what it counts. A number in a row is a
-`dk-row-figure`, which lines up digits the same way, rather than a numeral.
+at the strong weight on a line no taller than the figure. A numeral never breaks, since a score
+split over two lines reads as two numbers, so on a phone at a large text size it stops at a size
+five figures fit in, such as `-1234`. Give a numeral its unit, out of sight where the screen shows it
+elsewhere, so a screen reader says what it counts. A numeral that changes is not a live region,
+which would read every score on every change, so say the change on the screen's
+[status line](#status-line), with whose score it is, as `say('Ana, 212 points.')`. A number in a
+row is a `dk-row-figure`, which lines up digits the same way, rather than a numeral. A split row on
+a page, a band or a stack holds to the measure with the prose around it, so its end stays near its
+start.
 
 ## Explainer pages
 

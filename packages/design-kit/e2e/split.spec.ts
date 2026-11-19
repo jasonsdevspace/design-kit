@@ -20,7 +20,7 @@ import { doubled } from './text-size.js';
 const EXAMPLE = renderToStaticMarkup(splitRow);
 
 /** The example with a name too long for a phone's line, written with no place to break it. */
-const LONG = EXAMPLE.replace('<h2>Ana</h2>', '<h2>Bartholomew-Featherstonehaugh-Smythe</h2>');
+const LONG = EXAMPLE.replace('<h2>Ana</h2>', '<h2>Bartholomewfeatherstonehaughsmythe</h2>');
 
 /**
  * How far the numeral's text stands clear of the line above it and the line under it, each at
@@ -29,15 +29,27 @@ const LONG = EXAMPLE.replace('<h2>Ana</h2>', '<h2>Bartholomew-Featherstonehaugh-
 const clearOfNeighbors = (page: Page) =>
     page.evaluate(() => {
         const figure = document.querySelector('.dk-numeral');
-        const range = document.createRange();
-        if (figure?.firstChild) range.selectNodeContents(figure.firstChild);
-        const text = range.getBoundingClientRect();
         const above = figure?.previousElementSibling?.getBoundingClientRect();
         const below = figure?.nextElementSibling?.getBoundingClientRect();
+        if (!figure?.firstChild || !above || !below)
+            throw new Error('expected a numeral between two lines');
+        const range = document.createRange();
+        range.selectNodeContents(figure.firstChild);
+        const text = range.getBoundingClientRect();
         return {
-            above: Math.round(text.top - (above?.bottom ?? text.top)),
-            below: Math.round((below?.top ?? text.bottom) - text.bottom),
+            above: Math.round(text.top - above.bottom),
+            below: Math.round(below.top - text.bottom),
         };
+    });
+
+/** The lines the numeral's figure is drawn on. */
+const figureLines = (page: Page) =>
+    page.evaluate(() => {
+        const figure = document.querySelector('.dk-numeral')?.firstChild;
+        if (!figure) throw new Error('expected a numeral');
+        const range = document.createRange();
+        range.selectNodeContents(figure);
+        return new Set([...range.getClientRects()].map(({ top }) => Math.round(top))).size;
     });
 
 const draw = (
@@ -157,6 +169,38 @@ test('keeps the numeral and the row whole under wider text spacing', async ({ pa
     expect(glyphs.bottom).toBeLessThanOrEqual(numeral.y + numeral.height + 1);
 });
 
+test('reads the numeral with its unit', async ({ page }) => {
+    await draw(page, EXAMPLE);
+    await expect(page.locator('.dk-numeral')).toHaveText('212 points');
+});
+
+for (const score of ['-1234', '12345'])
+    test(`keeps a score of ${score} on one line on a 320px phone at twice the text size`, async ({
+        page,
+        browserName,
+    }) => {
+        await draw(page, EXAMPLE.replace('212<', `${score}<`), { width: 320 });
+        await doubled(page, browserName);
+        expect(await figureLines(page)).toBe(1);
+        expect(await sideways(page)).toBe(0);
+    });
+
+test('breaks a long word at the end of the row too', async ({ page, browserName }) => {
+    await draw(
+        page,
+        '<div class="dk-split"><h2>Ana</h2><button type="button" class="dk-button">Reshuffleeverythingnow</button></div>',
+        { width: 320 }
+    );
+    await doubled(page, browserName);
+    expect(await sideways(page)).toBe(0);
+});
+
+test('holds a split row to the measure on a wide page', async ({ page }) => {
+    await draw(page, EXAMPLE);
+    const row = await box(page.locator('.dk-split'));
+    expect(Math.round(row.width)).toBe(await lengthOf(page, 'var(--dk-measure)'));
+});
+
 const GROUP =
     '<div class="dk-sections" id="group">' +
     ['One', 'Two', 'Three', 'Four']
@@ -170,15 +214,16 @@ test('sets a group of sections at --dk-sections-least, 20rem until a page sets i
     const columns = () =>
         page.evaluate(
             () =>
-                getComputedStyle(
-                    document.querySelector('#group') as Element
-                ).gridTemplateColumns.split(' ').length
+                getComputedStyle(document.querySelector('#group') as Element)
+                    .gridTemplateColumns.split(' ')
+                    .filter((track) => track !== '0px').length
         );
     await draw(page, GROUP, { width: 1000 });
     const usual = await columns();
     await draw(page, GROUP, { width: 1000, css: '#group { --dk-sections-least: 10rem; }' });
     expect(await columns()).toBeGreaterThan(usual);
-    await draw(page, GROUP, { width: 320, css: '#group { --dk-sections-least: 10rem; }' });
+    await draw(page, GROUP, { width: 320, css: '#group { --dk-sections-least: 30rem; }' });
+    expect(await columns()).toBe(1);
     expect(await sideways(page)).toBe(0);
 });
 

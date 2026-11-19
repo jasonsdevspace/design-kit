@@ -431,7 +431,7 @@ export const splitRow: ReactElement = (
         <p className="dk-numeral">
             212<span className="dk-visually-hidden"> points</span>
         </p>
-        <p className="dk-note">The first to 200 points wins.</p>
+        <p className="dk-note">The first to 300 points wins.</p>
     </div>
 );
 
