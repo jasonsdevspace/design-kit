@@ -398,6 +398,26 @@ export const bands: ReactElement = (
     </main>
 );
 
+/**
+ * A round's scores, a heading a heading's step over the list it heads, and each player's name a
+ * pair's step over their points, the list drawn as a stack with its role kept.
+ */
+export const stacks: ReactElement = (
+    <section className="dk-stack dk-stack-heading" aria-labelledby="round">
+        <h2 id="round">Round 3</h2>
+        <ul className="dk-stack" role="list">
+            <li className="dk-stack dk-stack-pair">
+                <p>Ann</p>
+                <p>42 points</p>
+            </li>
+            <li className="dk-stack dk-stack-pair">
+                <p>Ben</p>
+                <p>37 points</p>
+            </li>
+        </ul>
+    </section>
+);
+
 /** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
@@ -1058,6 +1078,7 @@ export const EXAMPLES = {
     codeHead,
     contentPage,
     bands,
+    stacks,
     explainerPage,
     steps,
     panel,

@@ -1127,6 +1127,16 @@
     }
 
     /*
+     * A stack drawn on a list is a column of pieces, so the list's markers, its indent and its own
+     * room go. It comes before the flow, which sets the room above it where a container holds it.
+     */
+    :where(:is(ul, ol).dk-stack) {
+        margin-block: 0;
+        padding-inline-start: 0;
+        list-style: none;
+    }
+
+    /*
      * Nothing in what holds a column of pieces keeps room under itself, so the step above the next
      * one is the whole space between them. It comes before the rules that keep an app's last line
      * clear of a toast, which set the room under that one.

@@ -30,6 +30,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'copyButton',
     'statusLine',
     'loading',
+    'stacks',
     'codeHead',
     'steps',
     'panel',
