@@ -669,7 +669,9 @@
 
     /*
      * Progress with a known amount, the native bar: a short track in the line color with the fill
-     * in the accent, which stands 4.5 to 1 and more against it in both themes, both on pill corners.
+     * in the accent, which stands 4.5 to 1 and more against it in both themes. The bar's own pill
+     * corners round the track's ends, and the fill ends square, so its edge marks the amount exactly
+     * in every engine.
      * Each engine draws the bar through parts of its own, so each part is a rule of its own, since a
      * selector one engine does not know drops the whole rule. A bar with no value draws an empty
      * track rather than the browser's looping motion, since a wait with no amount to measure is a
@@ -694,12 +696,12 @@
     }
 
     :where(.dk-progress)::-webkit-progress-value {
-        border-radius: inherit;
+        border-radius: 0;
         background: var(--dk-accent);
     }
 
     :where(.dk-progress)::-moz-progress-bar {
-        border-radius: inherit;
+        border-radius: 0;
         background: var(--dk-accent);
     }
 

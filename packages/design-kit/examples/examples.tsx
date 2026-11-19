@@ -1075,13 +1075,7 @@ export const loading: ReactElement = (
 
 /** An import working through a file, its label, its bar and the words that say how far it has come. */
 export const progress: ReactElement = (
-    <Progress
-        id="import"
-        label="Importing products"
-        value={12}
-        max={40}
-        words="12 of 40 products"
-    />
+    <Progress id="import" label="Importing products" value={12} max={40} words="12 of 40" />
 );
 
 /** A copy button and the page's status line, before a page attaches the button. */

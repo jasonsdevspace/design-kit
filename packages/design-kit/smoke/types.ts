@@ -261,14 +261,17 @@ export const importing = Progress({
     label: 'Importing products',
     value: 12,
     max: 40,
-    words: '12 of 40 products',
+    words: '12 of 40',
 });
 export const waiting = Progress({ label: 'Importing products' });
-const quarters: ProgressOptions = { steps: 4, status: null };
+const quarters: ProgressOptions = { steps: 4, done: 'Imported 40 products.', status: null };
 export const progressOf = (bar: HTMLProgressElement): (() => void) => attachProgress(bar, quarters);
 
 // @ts-expect-error Progress is named by its label.
-export const unnamed = Progress({ value: 1 });
+export const unnamed = Progress({ value: 1, words: '1 of 1' });
+
+// @ts-expect-error A bar with an amount carries the words that say it.
+export const unsaid = Progress({ label: 'Importing products', value: 12, max: 40 });
 
 // A field is marked required or optional in words, apart from the native required.
 export const markedField = InputField({ label: 'Rule name', mark: 'required', required: true });

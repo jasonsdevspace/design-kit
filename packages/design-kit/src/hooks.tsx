@@ -311,13 +311,14 @@ export const useBusy = <Busy extends HTMLElement>(
 
 /**
  * A ref for a `progress` element, which `attachProgress` says at the steps given, each quarter until
- * a page gives others, and once at the end, on the status line of the nearest `StatusProvider` or
- * through the `say` given. New steps are passed to the attach only when they change. A bar swapped
- * for another is let go and the new one attached, and with no provider above it and no `say`, it
- * throws, since its words would reach no one.
+ * a page gives others, and once at the end, or the `done` words in its place, on the status line of
+ * the nearest `StatusProvider` or through the `say` given, giving way to any other words there. New
+ * steps or `done` words are passed to the attach only when they change. A bar swapped for another
+ * is let go and the new one attached, and with no provider above it and no `say`, it throws, since
+ * its words would reach no one.
  */
 export const useProgress = (
-    options: Pick<ProgressOptions, 'say' | 'steps'> = {}
+    options: Pick<ProgressOptions, 'say' | 'steps' | 'done'> = {}
 ): RefCallback<HTMLProgressElement> => {
     const speaker = useContext(Speaker);
     if (!speaker && !options.say)
@@ -328,28 +329,29 @@ export const useProgress = (
     });
     const bar = useRef<HTMLProgressElement | null>(null);
     const detach = useRef<(() => void) | null>(null);
-    const attachOptions = useCallback(
-        (steps: number | undefined): ProgressOptions => ({
-            steps,
-            say: (words, settle) => {
+    const { steps, done } = options;
+    const given = useRef({ steps, done });
+    const optionsFor = useCallback(
+        (next: { steps: number | undefined; done: string | undefined }): ProgressOptions => ({
+            ...next,
+            say: (words, how) => {
                 const { options: now, speaker: line } = latest.current;
-                (now.say ?? line)?.(words, settle);
+                (now.say ?? line)?.(words, how);
             },
         }),
         []
     );
-    const { steps } = options;
     useEffect(() => {
-        if (bar.current) attachProgress(bar.current, attachOptions(steps));
-    }, [steps, attachOptions]);
+        if (given.current.steps === steps && given.current.done === done) return;
+        given.current = { steps, done };
+        if (bar.current) attachProgress(bar.current, optionsFor(given.current));
+    }, [steps, done, optionsFor]);
     return useCallback(
         (progress: HTMLProgressElement | null) => {
             detach.current?.();
             bar.current = progress;
-            detach.current = progress
-                ? attachProgress(progress, attachOptions(latest.current.options.steps))
-                : null;
+            detach.current = progress ? attachProgress(progress, optionsFor(given.current)) : null;
         },
-        [attachOptions]
+        [optionsFor]
     );
 };

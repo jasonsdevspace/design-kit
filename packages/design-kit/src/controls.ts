@@ -378,31 +378,49 @@ const SAID_FOR = 2000;
 const statusTimers = new WeakMap<HTMLElement, number>();
 /** Each status line's words waiting to settle, apart from the timer of words already said. */
 const settleTimers = new WeakMap<HTMLElement, number>();
+/**
+ * The lines holding or about to hold words that were not said politely, which polite words, such
+ * as progress, give way to.
+ */
+const firmLines = new WeakSet<HTMLElement>();
 /** Empties a status line, and drops what it was about to say, words waiting to settle among them. */
 const hush = (status: HTMLElement) => {
     window.clearTimeout(statusTimers.get(status));
     window.clearTimeout(settleTimers.get(status));
+    firmLines.delete(status);
     status.textContent = '';
 };
 
 /**
  * Says a message on a status line. A message given as a function is read as it is put in, after the
  * moment's wait, so words a page draws from its own state follow the change that prompted them, and
- * one that gives nothing by then is not said.
+ * one that gives nothing by then is not said. Polite words are left unsaid where the line holds or
+ * is about to hold words that are not, so a page's own result is never put out by them.
  */
-const say = (status: HTMLElement, message: string | (() => string | null), keep = false) => {
+const say = (
+    status: HTMLElement,
+    message: string | (() => string | null),
+    keep = false,
+    polite = false
+) => {
+    if (polite && firmLines.has(status)) return;
     hush(status);
+    if (!polite) firmLines.add(status);
     statusTimers.set(
         status,
         window.setTimeout(() => {
             const words = typeof message === 'string' ? message : message();
             // A message that is no longer wanted by the time it would be said is left unsaid.
-            if (words === null) return;
+            if (words === null) {
+                firmLines.delete(status);
+                return;
+            }
             status.textContent = words;
             if (keep) return;
             statusTimers.set(
                 status,
                 window.setTimeout(() => {
+                    firmLines.delete(status);
                     status.textContent = '';
                 }, SAID_FOR)
             );
@@ -418,6 +436,11 @@ export type SayOptions = {
      * the place of those not yet said, and only the last is said.
      */
     readonly settle?: number | undefined;
+    /**
+     * Said only where the line holds no words, or only polite ones, and none are waiting, for words
+     * that should give way to any other, such as progress beside a page's own result.
+     */
+    readonly polite?: boolean | undefined;
 };
 
 /**
@@ -444,18 +467,19 @@ const attachedLines = new WeakMap<HTMLElement, Say>();
 export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);
     if (already) return already;
-    const speak: Say = (message, { settle = 0 } = {}) => {
+    const speak: Say = (message, { settle = 0, polite = false } = {}) => {
         if (settle <= 0) {
-            say(line, message);
+            say(line, message, false, polite);
             return;
         }
         // Waits on a timer of its own, so words already said are still put in and leave as ever,
         // and any message said in the meantime drops these.
         window.clearTimeout(settleTimers.get(line));
+        if (!polite) firmLines.add(line);
         settleTimers.set(
             line,
             window.setTimeout(() => {
-                say(line, message);
+                say(line, message, false, polite);
             }, settle)
         );
     };
@@ -1550,17 +1574,26 @@ const focusIn = (field: Element): HTMLElement | null => {
     return [...field.querySelectorAll('input, select, textarea, button')].find(focusable) ?? null;
 };
 
-/** The words of the errors a field is described by, as a screen reader reads them. */
-const errorWords = (field: Element): string => {
-    const ids = (field.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
-    return ids
+/**
+ * The words of the shown elements an element's attribute names by id, in order, as a screen reader
+ * reads them, such as its description, or only those of the parts a check keeps.
+ */
+const namedText = (
+    element: Element,
+    attribute: string,
+    wanted: (part: HTMLElement) => boolean = () => true
+): string =>
+    (element.getAttribute(attribute) ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
         .map((id) => document.getElementById(id))
-        .filter(
-            (part): part is HTMLElement => part?.matches('.dk-field-error') === true && !part.hidden
-        )
+        .filter((part): part is HTMLElement => part !== null && !part.hidden && wanted(part))
         .map((part) => part.textContent.trim())
         .join(' ');
-};
+
+/** The words of the errors a field is described by, as a screen reader reads them. */
+const errorWords = (field: Element): string =>
+    namedText(field, 'aria-describedby', (part) => part.matches('.dk-field-error'));
 
 /** How many fields a refused form has in error. */
 const countWords = (count: number): string =>
@@ -2009,42 +2042,49 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     return detach;
 };
 
-/** How progress is said, for the steps it is said at and where. */
+/** How progress is said, for the steps it is said at, where, and what is said at the end. */
 export type ProgressOptions = {
     /**
      * How many equal steps the amount is said at, 4 for each quarter until a page sets it. The end
      * is said once whatever the steps.
      */
     readonly steps?: number | undefined;
+    /** What is said at the end in place of the label and the words, such as "Imported 40 products." */
+    readonly done?: string | undefined;
     /** The status line progress is said on, such as the screen's own. */
     readonly status?: HTMLElement | null | undefined;
     /** What says progress, for a page that has one already, such as React's `useStatus`. */
     readonly say?: Say | undefined;
 };
 
+/** The least time between two steps said, in milliseconds, so one is heard before the next. */
+const STEP_GAP = 3000;
+
 const attachedProgress = new WeakMap<
     HTMLProgressElement,
     { readonly detach: () => void; readonly set: (next: ProgressOptions) => void }
 >();
 
-/** The text of the elements an element's `aria-describedby` names, in order. */
-const describedText = (element: Element) =>
-    (element.getAttribute('aria-describedby') ?? '')
-        .split(/\s+/)
-        .map((id) => (id ? (document.getElementById(id)?.textContent ?? '') : ''))
-        .join(' ')
-        .trim();
+/** An element's name as a screen reader reads it: its label, the words it names, or its own. */
+const nameOf = (element: HTMLProgressElement) =>
+    [
+        element.labels[0]?.textContent.trim() ?? '',
+        namedText(element, 'aria-labelledby'),
+        (element.getAttribute('aria-label') ?? '').trim(),
+    ].find((name) => name !== '') ?? '';
 
 /**
- * Says how far a `progress` element has come on a status line, at the steps the page sets, each
- * quarter until it sets others, and once at the end, and returns what takes it away. Each is said
- * at once, with no wait for the amount to stop changing, since a steady import never stops. What is
- * said is the bar's label and the words it is described by, such as "Importing products, 12 of 40
- * products.", read as the words are put on the line, so they follow the page's own, or how far it
- * has come in hundredths where it has no words. Once the end is said nothing replaces it, until the
- * amount goes back for another run. A bar with no amount, with nothing to measure, says nothing.
- * Attached again, a bar returns what it returned first and takes options given in place of the
- * last.
+ * Says how far a `progress` element has come on the status line given, at the steps the page sets,
+ * each quarter until it sets others, and once at the end, and returns what takes it away. What is
+ * said is the bar's name and the words that describe it, such as "Importing products, 12 of 40.",
+ * read as the step is crossed, or how far it has come in hundredths where it has no words. Each is
+ * said at once, with no wait for the amount to stop changing, since a steady import never stops, at
+ * least three seconds after the last step so one is heard before the next, while the end never
+ * waits. Every word it says gives way to any other on the line, so a page's own result or failure
+ * is never put out by it. The end, or the `done` words in its place, is said once, until the amount
+ * goes back for another run. The amount a bar first shows, as it is attached or once it is known,
+ * is not said unless it is the end, and a bar with no amount says nothing. Attached again, a bar returns what it
+ * returned first and takes options given in place of the last.
  */
 export const attachProgress = (
     progress: HTMLProgressElement,
@@ -2056,22 +2096,26 @@ export const attachProgress = (
         return already.detach;
     }
     let chosen: ProgressOptions = options ?? {};
+    const known = () => progress.hasAttribute('value');
     const stepOf = () => {
         const steps = Math.max(1, Math.floor(chosen.steps ?? 4));
-        return Math.floor(Math.min(1, progress.position) * steps);
+        // A hair over, so a boundary a fraction lands just under, as 57 hundredths does, counts.
+        return Math.floor(Math.min(1, progress.position) * steps + 1e-9);
     };
-    const known = () => progress.hasAttribute('value');
     let reached = known() ? stepOf() : -1;
     let ended = known() && progress.position >= 1;
+    let lastSaid = -Infinity;
     const words = () => {
-        const label = progress.labels[0]?.textContent.trim() ?? '';
-        const amount = describedText(progress) || `${String(Math.round(progress.position * 100))}%`;
-        const said = label ? `${label}, ${amount}` : amount;
+        const name = nameOf(progress);
+        const amount =
+            namedText(progress, 'aria-describedby') ||
+            `${String(Math.round(progress.position * 100))}%`;
+        const said = name ? `${name}, ${amount}` : amount;
         return /[.!?]$/.test(said) ? said : `${said}.`;
     };
-    const speak = () => {
-        if (chosen.say) chosen.say(words);
-        else if (chosen.status) say(chosen.status, words);
+    const speak = (message: string) => {
+        if (chosen.say) chosen.say(message, { polite: true });
+        else if (chosen.status) say(chosen.status, message, false, true);
     };
     const check = () => {
         if (!known()) {
@@ -2080,21 +2124,25 @@ export const attachProgress = (
             return;
         }
         const now = stepOf();
+        const first = reached < 0;
         if (progress.position >= 1) {
-            if (!ended) speak();
+            if (!ended) speak(chosen.done ?? words());
             ended = true;
             reached = now;
             return;
         }
-        if (now < reached || ended) {
-            // The amount went back, so a new run starts and is said from where it is.
+        if (first || now < reached || ended) {
+            // The amount first known, or gone back for a new run, is where saying starts from.
             ended = false;
             reached = now;
             return;
         }
         if (now > reached) {
             reached = now;
-            speak();
+            const at = performance.now();
+            if (at - lastSaid < STEP_GAP) return;
+            lastSaid = at;
+            speak(words());
         }
     };
     const kept = new MutationObserver(check);
@@ -2107,6 +2155,8 @@ export const attachProgress = (
         detach,
         set: (next) => {
             chosen = next;
+            // Counted again in the new steps, so the next step is one of them.
+            if (known()) reached = stepOf();
         },
     });
     return detach;

@@ -1505,7 +1505,10 @@ of those not yet said, any message said on the line drops words still waiting, s
 are the ones heard, and the same words said twice are heard twice. Words that must be heard, such
 as a save's result or the end of a progress, never wait, and words that settle never drop words
 already said. A stepper's press words are put in a tenth of a second after each press, so a quick
-run of presses is heard once, at its end.
+run of presses is heard once, at its end. Words that should give way to any other, such as a
+progress's steps and its end beside a page's own result, ask to be polite, as
+`say(words, { polite: true })`, and are left unsaid where the line holds or is about to hold words
+that are not.
 
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
@@ -1621,7 +1624,7 @@ progress.
 
 Something that works through a known amount, such as an import through a file or an upload, shows
 how far it has come with `dk-progress` on the native `progress` element, labeled by what is
-progressing, with words beside it that say the amount:
+progressing, with words under it that say the amount:
 
 <!-- example: progress -->
 
@@ -1635,25 +1638,31 @@ progressing, with words beside it that say the amount:
         max="40"
         aria-describedby="import-words"
     ></progress>
-    <p class="dk-field-hint" id="import-words">12 of 40 products</p>
+    <p class="dk-field-hint" id="import-words">12 of 40</p>
 </div>
 ```
 
 The bar is a short track in the line color with the fill in the accent, which stands 4.5 to 1 and
-more against it in both themes, and in forced colors the fill takes the highlight on an edged track.
-The browser gives the bar its role, its value and its range, so a screen reader reads the label,
-how far it has come in hundredths and then the words, which describe it. A bar with no `value`
-draws an empty track, not the browser's looping motion, since a wait with no amount to measure is
-[a loading line's](#a-part-of-the-page-that-is-loading). `Progress` in React draws the label, the
-bar and the words, from its `label`, `value`, `max` and `words`.
+more against it in both themes, its leading edge square so it marks the amount exactly, and in
+forced colors the fill takes the highlight on an edged track. The track is too faint to tell how
+much is left by color alone, so a bar with an amount always carries its words, which `Progress`
+asks for. The browser gives the bar its role, its value and its range, so a screen reader reads the
+label, how far it has come in hundredths and then the words, which describe it. A bar with no
+`value` draws an empty track, not the browser's looping motion, since a wait with no amount to
+measure is [a loading line's](#a-part-of-the-page-that-is-loading). `Progress` in React draws the
+label, the bar and the words, from its `label`, `value`, `max` and `words`.
 
 Progress is said on the screen's [status line](#status-line) by `attachProgress(bar, { status })`
 from `./controls`, or `useProgress()` in React, which speaks on the line of the nearest
-`StatusProvider`. It says the label and the words, such as "Importing products, 12 of 40
-products.", at steps the page sets with `steps`, each quarter until it sets others, and once at the
-end. Each is said at once, with no wait for the amount to stop changing, since a steady import never
-stops, and nothing replaces the end once it is said, until the amount goes back for another run. A
-bar with no amount says nothing:
+`StatusProvider`. It says the bar's name, from its label or the words it is labeled by, and its
+words, such as "Importing products, 12 of 40.", at steps the page sets with `steps`, each quarter
+until it sets others, and once at the end, or the `done` words in its place, such as "Imported 40
+products.". Each is said at once, with no wait for the amount to stop changing, since a steady
+import never stops, and at least three seconds after the last step, so one is heard before the
+next, while the end never waits. Nothing replaces the end until the amount goes back for another
+run. The amount a bar first shows is not said, and a bar with no amount says nothing. What it says
+is polite, `say(words, { polite: true })`, so it gives way to any other words on the line, and a
+page's own result is heard over it:
 
 <!-- source: importing -->
 
@@ -1662,21 +1671,25 @@ import { Progress, useProgress } from '@jasonsdevspace/design-kit/react';
 
 /**
  * An import working through a file, under a `StatusProvider`, said each quarter and once at the
- * end on the screen's status line.
+ * end on the screen's status line, where the page's own words win over it.
  */
 export const Importing = ({ done, total }: { readonly done: number; readonly total: number }) => {
-    const bar = useProgress();
+    const bar = useProgress({ done: `Imported ${String(total)} products.` });
     return (
         <Progress
             ref={bar}
             label="Importing products"
             value={done}
             max={total}
-            words={`${String(done)} of ${String(total)} products`}
+            words={`${String(done)} of ${String(total)}`}
         />
     );
 };
 ```
+
+A run that fails partway takes the bar's `value` away, so it says no more, puts a danger callout
+with a way forward beside it, as a failed load does, and says the failure on the status line. A run
+that works says its result, in `done` or in words of the page's own, which the end gives way to.
 
 ## Content pages
 

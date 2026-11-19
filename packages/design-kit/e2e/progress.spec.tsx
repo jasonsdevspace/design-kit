@@ -29,7 +29,7 @@ const BODY = renderToStaticMarkup(
     </main>
 );
 
-const SCRIPT = `import { attachProgress } from './controls.js';
+const SCRIPT = `import { attachProgress, attachStatus } from './controls.js';
 const bar = document.querySelector('#import');
 const words = document.querySelector('#import-words');
 const line = document.querySelector('.screen-status');
@@ -39,22 +39,28 @@ new MutationObserver(() => {
 }).observe(line, { childList: true, characterData: true, subtree: true });
 window.move = (done) => {
     bar.value = done;
-    words.textContent = done + ' of 40 products';
+    words.textContent = done + ' of 40';
 };
+window.say = attachStatus(line);
 window.attachProgress = attachProgress;
 window.detach = attachProgress(bar, { status: line });
 window.ready = true;`;
 
 type Moving = {
     heard: string[];
+    say: (words: string) => void;
     move: (done: number) => void;
     detach: () => void;
     attachProgress: (bar: Element, options: object) => () => void;
 };
 
 const open = async (page: Page) => {
+    await page.clock.install();
     await servePage(page, { title: 'Import', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
+    // The run starts from nothing done, which is not said.
+    await move(page, 0);
+    await page.clock.runFor(3100);
 };
 
 const heard = (page: Page) => page.evaluate(() => (window as unknown as Moving).heard);
@@ -62,7 +68,24 @@ const move = (page: Page, done: number) =>
     page.evaluate((to) => {
         (window as unknown as Moving).move(to);
     }, done);
-const said = (done: number) => `Importing products, ${String(done)} of 40 products.`;
+const said = (done: number) => `Importing products, ${String(done)} of 40.`;
+
+/** Moves the bar, then lets the time given pass, a step's gap and more by default. */
+const step = async (page: Page, done: number, wait = 3100) => {
+    await move(page, done);
+    await page.clock.runFor(wait);
+};
+
+/** Takes the bar's attach away and attaches it again with the options given. */
+const reattach = (page: Page, options: { steps?: number; done?: string }) =>
+    page.evaluate((given) => {
+        const moving = window as unknown as Moving;
+        moving.detach();
+        moving.detach = moving.attachProgress(document.querySelector('#import') as Element, {
+            status: document.querySelector('.screen-status'),
+            ...given,
+        });
+    }, options);
 
 /**
  * The colors the bar is drawn in at the fractions of its width given, along its middle row, read
@@ -165,19 +188,26 @@ test('reads the label, the amount and the words', async ({ page }) => {
     const bar = page.getByRole('progressbar', { name: 'Importing products' });
     await expect(bar).toHaveAttribute('value', '12');
     await expect(bar).toHaveAttribute('max', '40');
-    await expect(bar).toHaveAccessibleDescription('12 of 40 products');
+    await expect(bar).toHaveAccessibleDescription('12 of 40');
 });
 
 test('says each quarter once, and the end once', async ({ page }) => {
     await open(page);
-    for (const done of [5, 10, 15, 20, 25, 30, 35, 40]) {
-        await move(page, done);
-        await page.waitForTimeout(150);
-    }
+    for (const done of [5, 10, 15, 20, 25, 30, 35, 40]) await step(page, done);
     expect(await heard(page)).toEqual([said(10), said(20), said(30), said(40)]);
-    await move(page, 40);
-    await page.waitForTimeout(150);
+    await step(page, 40);
     expect(await heard(page)).toEqual([said(10), said(20), said(30), said(40)]);
+});
+
+test('waits three seconds between steps, and never before the end', async ({ page }) => {
+    await open(page);
+    await step(page, 10, 500);
+    await step(page, 20, 500);
+    expect(await heard(page)).toEqual([said(10)]);
+    await page.clock.runFor(3000);
+    await step(page, 30, 200);
+    await step(page, 40, 200);
+    expect(await heard(page)).toEqual([said(10), said(30), said(40)]);
 });
 
 test('says the end of a run that never pauses, and nothing after it', async ({ page }) => {
@@ -186,52 +216,99 @@ test('says the end of a run that never pauses, and nothing after it', async ({ p
         const { move: to } = window as unknown as Moving;
         for (let done = 1; done <= 40; done += 1) to(done);
     });
-    await expect.poll(() => heard(page)).toEqual([said(40)]);
-    await page.waitForTimeout(300);
+    await page.clock.runFor(3100);
     expect(await heard(page)).toEqual([said(40)]);
 });
 
 test('says a jump across several quarters once', async ({ page }) => {
     await open(page);
-    await move(page, 35);
-    await expect.poll(() => heard(page)).toEqual([said(35)]);
+    await step(page, 35);
+    expect(await heard(page)).toEqual([said(35)]);
 });
 
-test('says a run that starts again, and nothing for a bar with no amount', async ({ page }) => {
+test("gives way to a page's own words said just before it", async ({ page }) => {
     await open(page);
-    await move(page, 40);
-    await expect.poll(() => heard(page)).toEqual([said(40)]);
+    for (const done of [10, 40]) {
+        await page.evaluate((to) => {
+            const moving = window as unknown as Moving;
+            moving.say(`Import failed. ${String(to)} of 40 saved.`);
+            moving.move(to);
+        }, done);
+        await page.clock.runFor(3100);
+    }
+    expect(await heard(page)).toEqual([
+        'Import failed. 10 of 40 saved.',
+        'Import failed. 40 of 40 saved.',
+    ]);
+});
+
+test('says the done words in place of the end', async ({ page }) => {
+    await open(page);
+    await reattach(page, { done: 'Imported 40 products.' });
+    await step(page, 40);
+    expect(await heard(page)).toEqual(['Imported 40 products.']);
+});
+
+test('says a run that starts again, and not the amount a bar first shows once known', async ({
+    page,
+}) => {
+    await open(page);
+    await step(page, 40);
     await move(page, 0);
-    await move(page, 10);
-    await expect.poll(() => heard(page)).toEqual([said(40), said(10)]);
+    await step(page, 10);
+    expect(await heard(page)).toEqual([said(40), said(10)]);
     await page.evaluate(() => {
         document.querySelector('#import')?.removeAttribute('value');
     });
-    await page.waitForTimeout(300);
+    await step(page, 0);
     expect(await heard(page)).toEqual([said(40), said(10)]);
+    await step(page, 20);
+    expect(await heard(page)).toEqual([said(40), said(10), said(20)]);
 });
 
-test('says at the steps a page sets, and nothing once taken away', async ({ page }) => {
+test('counts its steps again when the page sets new ones, and says nothing once taken away', async ({
+    page,
+}) => {
     await open(page);
-    await page.evaluate(() => {
-        const moving = window as unknown as Moving;
-        moving.detach();
-        moving.detach = moving.attachProgress(document.querySelector('#import') as Element, {
-            status: document.querySelector('.screen-status'),
-            steps: 2,
-        });
-    });
-    for (const done of [10, 20, 30]) {
-        await move(page, done);
-        await page.waitForTimeout(150);
-    }
+    await reattach(page, { steps: 10 });
+    await step(page, 20);
     expect(await heard(page)).toEqual([said(20)]);
+    await reattach(page, { steps: 4 });
+    await step(page, 25);
+    expect(await heard(page)).toEqual([said(20)]);
+    await step(page, 30);
+    expect(await heard(page)).toEqual([said(20), said(30)]);
     await page.evaluate(() => {
         (window as unknown as Moving).detach();
     });
-    await move(page, 40);
-    await page.waitForTimeout(300);
-    expect(await heard(page)).toEqual([said(20)]);
+    await step(page, 40);
+    expect(await heard(page)).toEqual([said(20), said(30)]);
+});
+
+test('names a bar by its own label, and says hundredths where it has no words', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await servePage(page, {
+        title: 'Upload',
+        body:
+            '<main><h1>Upload</h1><progress class="dk-progress" aria-label="Uploading" max="40" value="0"></progress>' +
+            '<p class="screen-status" role="status"></p></main>',
+        script: `import { attachProgress } from './controls.js';
+const line = document.querySelector('.screen-status');
+window.heard = [];
+new MutationObserver(() => {
+    if (line.textContent) window.heard.push(line.textContent);
+}).observe(line, { childList: true, characterData: true, subtree: true });
+attachProgress(document.querySelector('progress'), { status: line });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.evaluate(() => {
+        document.querySelector('progress')?.setAttribute('value', '10');
+    });
+    await page.clock.runFor(300);
+    expect(await heard(page)).toEqual(['Uploading, 25%.']);
 });
 
 test.describe('in React', () => {
@@ -242,20 +319,21 @@ test.describe('in React', () => {
         app = await bundle('progress-page.tsx');
     });
 
-    test('says each quarter and the end through useProgress', async ({ page }) => {
+    test('says each quarter and the done words through useProgress', async ({ page }) => {
+        await page.clock.install();
         await servePage(page, { title: 'Import', body: '<div id="root"></div>', script: app });
         await expect(page.getByRole('progressbar', { name: 'Importing products' })).toBeVisible();
         for (const done of [10, 20, 30, 40]) {
             await page.evaluate((to) => {
                 (window as unknown as { setDone: (done: number) => void }).setDone(to);
             }, done);
-            await page.waitForTimeout(150);
+            await page.clock.runFor(3100);
         }
         expect(await page.evaluate(() => (window as unknown as Moving).heard)).toEqual([
             said(10),
             said(20),
             said(30),
-            said(40),
+            'Imported 40 products.',
         ]);
     });
 });
