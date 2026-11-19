@@ -10,6 +10,7 @@ import {
     DemoFooter,
     InputField,
     PortfolioStrip,
+    Progress,
     SelectField,
     SkipLink,
     StatusLine,
@@ -1072,6 +1073,17 @@ export const loading: ReactElement = (
     </article>
 );
 
+/** An import working through a file, its label, its bar and the words that say how far it has come. */
+export const progress: ReactElement = (
+    <Progress
+        id="import"
+        label="Importing products"
+        value={12}
+        max={40}
+        words="12 of 40 products"
+    />
+);
+
 /** A copy button and the page's status line, before a page attaches the button. */
 export const copyButton: ReactElement = (
     <>
@@ -1103,6 +1115,7 @@ export const EXAMPLES = {
     copyButton,
     statusLine,
     loading,
+    progress,
     codeHead,
     contentPage,
     bands,

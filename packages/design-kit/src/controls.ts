@@ -2008,3 +2008,106 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     });
     return detach;
 };
+
+/** How progress is said, for the steps it is said at and where. */
+export type ProgressOptions = {
+    /**
+     * How many equal steps the amount is said at, 4 for each quarter until a page sets it. The end
+     * is said once whatever the steps.
+     */
+    readonly steps?: number | undefined;
+    /** The status line progress is said on, such as the screen's own. */
+    readonly status?: HTMLElement | null | undefined;
+    /** What says progress, for a page that has one already, such as React's `useStatus`. */
+    readonly say?: Say | undefined;
+};
+
+const attachedProgress = new WeakMap<
+    HTMLProgressElement,
+    { readonly detach: () => void; readonly set: (next: ProgressOptions) => void }
+>();
+
+/** The text of the elements an element's `aria-describedby` names, in order. */
+const describedText = (element: Element) =>
+    (element.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .map((id) => (id ? (document.getElementById(id)?.textContent ?? '') : ''))
+        .join(' ')
+        .trim();
+
+/**
+ * Says how far a `progress` element has come on a status line, at the steps the page sets, each
+ * quarter until it sets others, and once at the end, and returns what takes it away. Each is said
+ * at once, with no wait for the amount to stop changing, since a steady import never stops. What is
+ * said is the bar's label and the words it is described by, such as "Importing products, 12 of 40
+ * products.", read as the words are put on the line, so they follow the page's own, or how far it
+ * has come in hundredths where it has no words. Once the end is said nothing replaces it, until the
+ * amount goes back for another run. A bar with no amount, with nothing to measure, says nothing.
+ * Attached again, a bar returns what it returned first and takes options given in place of the
+ * last.
+ */
+export const attachProgress = (
+    progress: HTMLProgressElement,
+    options?: ProgressOptions
+): (() => void) => {
+    const already = attachedProgress.get(progress);
+    if (already) {
+        if (options) already.set(options);
+        return already.detach;
+    }
+    let chosen: ProgressOptions = options ?? {};
+    const stepOf = () => {
+        const steps = Math.max(1, Math.floor(chosen.steps ?? 4));
+        return Math.floor(Math.min(1, progress.position) * steps);
+    };
+    const known = () => progress.hasAttribute('value');
+    let reached = known() ? stepOf() : -1;
+    let ended = known() && progress.position >= 1;
+    const words = () => {
+        const label = progress.labels[0]?.textContent.trim() ?? '';
+        const amount = describedText(progress) || `${String(Math.round(progress.position * 100))}%`;
+        const said = label ? `${label}, ${amount}` : amount;
+        return /[.!?]$/.test(said) ? said : `${said}.`;
+    };
+    const speak = () => {
+        if (chosen.say) chosen.say(words);
+        else if (chosen.status) say(chosen.status, words);
+    };
+    const check = () => {
+        if (!known()) {
+            reached = -1;
+            ended = false;
+            return;
+        }
+        const now = stepOf();
+        if (progress.position >= 1) {
+            if (!ended) speak();
+            ended = true;
+            reached = now;
+            return;
+        }
+        if (now < reached || ended) {
+            // The amount went back, so a new run starts and is said from where it is.
+            ended = false;
+            reached = now;
+            return;
+        }
+        if (now > reached) {
+            reached = now;
+            speak();
+        }
+    };
+    const kept = new MutationObserver(check);
+    kept.observe(progress, { attributeFilter: ['value', 'max'] });
+    const detach = () => {
+        kept.disconnect();
+        attachedProgress.delete(progress);
+    };
+    attachedProgress.set(progress, {
+        detach,
+        set: (next) => {
+            chosen = next;
+        },
+    });
+    return detach;
+};

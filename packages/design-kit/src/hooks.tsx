@@ -13,6 +13,7 @@ import {
 import {
     attachBusy,
     attachForm,
+    attachProgress,
     attachRoving,
     attachStatus,
     type BusyOptions,
@@ -20,6 +21,7 @@ import {
     type FormOptions,
     moveFocus,
     type MoveFocusOptions,
+    type ProgressOptions,
     type Refuse,
     type RovingOptions,
     type Say,
@@ -305,4 +307,49 @@ export const useBusy = <Busy extends HTMLElement>(
               })
             : null;
     }, []);
+};
+
+/**
+ * A ref for a `progress` element, which `attachProgress` says at the steps given, each quarter until
+ * a page gives others, and once at the end, on the status line of the nearest `StatusProvider` or
+ * through the `say` given. New steps are passed to the attach only when they change. A bar swapped
+ * for another is let go and the new one attached, and with no provider above it and no `say`, it
+ * throws, since its words would reach no one.
+ */
+export const useProgress = (
+    options: Pick<ProgressOptions, 'say' | 'steps'> = {}
+): RefCallback<HTMLProgressElement> => {
+    const speaker = useContext(Speaker);
+    if (!speaker && !options.say)
+        throw new Error('useProgress needs a StatusProvider above it, or a say of its own');
+    const latest = useRef({ options, speaker });
+    useEffect(() => {
+        latest.current = { options, speaker };
+    });
+    const bar = useRef<HTMLProgressElement | null>(null);
+    const detach = useRef<(() => void) | null>(null);
+    const attachOptions = useCallback(
+        (steps: number | undefined): ProgressOptions => ({
+            steps,
+            say: (words, settle) => {
+                const { options: now, speaker: line } = latest.current;
+                (now.say ?? line)?.(words, settle);
+            },
+        }),
+        []
+    );
+    const { steps } = options;
+    useEffect(() => {
+        if (bar.current) attachProgress(bar.current, attachOptions(steps));
+    }, [steps, attachOptions]);
+    return useCallback(
+        (progress: HTMLProgressElement | null) => {
+            detach.current?.();
+            bar.current = progress;
+            detach.current = progress
+                ? attachProgress(progress, attachOptions(latest.current.options.steps))
+                : null;
+        },
+        [attachOptions]
+    );
 };

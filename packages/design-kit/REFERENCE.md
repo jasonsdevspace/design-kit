@@ -1617,6 +1617,67 @@ result. A region that loads as the page opens says nothing, since a visitor arri
 they read. A button that starts the wait is busy, not loading, and a wait with a known amount is
 progress.
 
+### Progress
+
+Something that works through a known amount, such as an import through a file or an upload, shows
+how far it has come with `dk-progress` on the native `progress` element, labeled by what is
+progressing, with words beside it that say the amount:
+
+<!-- example: progress -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="import">Importing products</label>
+    <progress
+        id="import"
+        class="dk-progress"
+        value="12"
+        max="40"
+        aria-describedby="import-words"
+    ></progress>
+    <p class="dk-field-hint" id="import-words">12 of 40 products</p>
+</div>
+```
+
+The bar is a short track in the line color with the fill in the accent, which stands 4.5 to 1 and
+more against it in both themes, and in forced colors the fill takes the highlight on an edged track.
+The browser gives the bar its role, its value and its range, so a screen reader reads the label,
+how far it has come in hundredths and then the words, which describe it. A bar with no `value`
+draws an empty track, not the browser's looping motion, since a wait with no amount to measure is
+[a loading line's](#a-part-of-the-page-that-is-loading). `Progress` in React draws the label, the
+bar and the words, from its `label`, `value`, `max` and `words`.
+
+Progress is said on the screen's [status line](#status-line) by `attachProgress(bar, { status })`
+from `./controls`, or `useProgress()` in React, which speaks on the line of the nearest
+`StatusProvider`. It says the label and the words, such as "Importing products, 12 of 40
+products.", at steps the page sets with `steps`, each quarter until it sets others, and once at the
+end. Each is said at once, with no wait for the amount to stop changing, since a steady import never
+stops, and nothing replaces the end once it is said, until the amount goes back for another run. A
+bar with no amount says nothing:
+
+<!-- source: importing -->
+
+```tsx
+import { Progress, useProgress } from '@jasonsdevspace/design-kit/react';
+
+/**
+ * An import working through a file, under a `StatusProvider`, said each quarter and once at the
+ * end on the screen's status line.
+ */
+export const Importing = ({ done, total }: { readonly done: number; readonly total: number }) => {
+    const bar = useProgress();
+    return (
+        <Progress
+            ref={bar}
+            label="Importing products"
+            value={done}
+            max={total}
+            words={`${String(done)} of ${String(total)} products`}
+        />
+    );
+};
+```
+
 ## Content pages
 
 A content page, such as a landing page or an about page, is a `dk-page` on its main content: its

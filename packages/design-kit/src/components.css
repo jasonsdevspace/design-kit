@@ -668,6 +668,70 @@
     }
 
     /*
+     * Progress with a known amount, the native bar: a short track in the line color with the fill
+     * in the accent, which stands 4.5 to 1 and more against it in both themes, both on pill corners.
+     * Each engine draws the bar through parts of its own, so each part is a rule of its own, since a
+     * selector one engine does not know drops the whole rule. A bar with no value draws an empty
+     * track rather than the browser's looping motion, since a wait with no amount to measure is a
+     * loading line's. In forced colors the track takes the canvas with an edge and the fill takes
+     * the highlight.
+     */
+    :where(.dk-progress) {
+        appearance: none;
+        display: block;
+        width: 100%;
+        height: var(--dk-space-2);
+        overflow: hidden;
+        border: 0;
+        border-radius: var(--dk-radius-pill);
+        background: var(--dk-line);
+        color: var(--dk-accent);
+    }
+
+    :where(.dk-progress)::-webkit-progress-bar {
+        border-radius: inherit;
+        background: var(--dk-line);
+    }
+
+    :where(.dk-progress)::-webkit-progress-value {
+        border-radius: inherit;
+        background: var(--dk-accent);
+    }
+
+    :where(.dk-progress)::-moz-progress-bar {
+        border-radius: inherit;
+        background: var(--dk-accent);
+    }
+
+    :where(.dk-progress:indeterminate)::-webkit-progress-value {
+        background: none;
+    }
+
+    :where(.dk-progress:indeterminate)::-moz-progress-bar {
+        background: none;
+    }
+
+    @media (forced-colors: active) {
+        :where(.dk-progress) {
+            forced-color-adjust: none;
+            border: 1px solid CanvasText;
+            background: Canvas;
+        }
+
+        :where(.dk-progress)::-webkit-progress-bar {
+            background: Canvas;
+        }
+
+        :where(.dk-progress:not(:indeterminate))::-webkit-progress-value {
+            background: Highlight;
+        }
+
+        :where(.dk-progress:not(:indeterminate))::-moz-progress-bar {
+            background: Highlight;
+        }
+    }
+
+    /*
      * A field's control with a button beside it, such as a search with the button that runs it: the
      * control takes the room the button leaves, and both stand one height, the taller of the two,
      * at every width and text size. Where the button would leave the control too narrow to type in,

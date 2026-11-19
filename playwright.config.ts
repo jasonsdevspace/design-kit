@@ -25,7 +25,7 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * does its own way, and a grid's columns rest on each engine's sums of a share and its clamps.
  */
 const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero}.spec.{ts,tsx}';
+    '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
@@ -35,7 +35,8 @@ const WEBKIT =
  * rather than the kit's floor, an icon, whose stroke each engine draws its own way, and a grid's
  * columns, which rest on each engine's sums of a share and its clamps.
  */
-const FIREFOX = '*/e2e/{stepper,controls,pieces,table,icon,buttongrid-columns}.spec.{ts,tsx}';
+const FIREFOX =
+    '*/e2e/{stepper,controls,pieces,table,icon,buttongrid-columns,progress}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
