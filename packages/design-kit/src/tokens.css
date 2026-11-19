@@ -202,6 +202,12 @@
         --dk-duration-medium: 250ms;
 
         /*
+         * How long a wait goes unremarked before it is shown, as a loading line is, so a fast answer
+         * shows nothing. It is a delay, not a motion, so reduced motion keeps it.
+         */
+        --dk-wait: 400ms;
+
+        /*
          * What a phone keeps for itself at each edge of the screen: a notch, a rounded corner, the
          * bar a thumb swipes home on. Each is zero where the browser reports none, and stays zero
          * on a phone unless the page's viewport meta says viewport-fit=cover. A rule reads the one

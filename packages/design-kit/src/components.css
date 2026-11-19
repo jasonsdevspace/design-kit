@@ -7,7 +7,7 @@
  * pseudo-element reaches. So only the classes, the focus rules and those parts carry weight.
  *
  * The page chrome comes first, then the buttons and a row of them, the fields, a field with a
- * button beside it, the sets of choices and the callouts, then the explainer page and the
+ * button beside it, the sets of choices, the callouts and a loading line, then the explainer page and the
  * steps, panel, table and code block it holds, then the theme switch, the eyebrow, the pills,
  * the tabs and the copy button's words, and then the pieces an app is made of: its frame, the
  * tab bar, the toast, the grid of buttons, the rows, the stepper and the dialog with its sheet.
@@ -1048,11 +1048,33 @@
     }
 
     /*
+     * A line that says a part of the page is loading, inside a region marked aria-busy while it
+     * waits. It shows only once the wait outlasts --dk-wait, so a fast answer shows nothing: an
+     * animation with no length, delayed by the wait, holds it out of sight until then, and the
+     * delay stands under reduced motion, which cuts lengths and not delays, and in forced colors.
+     * It is in the muted text at the body size, a line of words and no spinner, and it is timed from
+     * when it first matches, so a page puts it in with the mark.
+     */
+    :where([aria-busy='true'] .dk-loading) {
+        animation: dk-wait 0s var(--dk-wait) backwards;
+    }
+
+    :where(.dk-loading) {
+        color: var(--dk-muted);
+    }
+
+    @keyframes dk-wait {
+        from {
+            visibility: hidden;
+        }
+    }
+
+    /*
      * The pieces that carry no margin of their own. The containers' flow, near the end of the
      * sheet, sets the step above each, so a reset here never cancels it. The pills pull back only
      * at their sides, keeping their text on the column's line.
      */
-    :where(.dk-eyebrow, .dk-tabs, .dk-rows) {
+    :where(.dk-eyebrow, .dk-tabs, .dk-rows, .dk-loading) {
         margin: 0;
     }
 
