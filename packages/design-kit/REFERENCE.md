@@ -123,6 +123,7 @@ may change in any release.
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
+| `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words, from 48rem wide                                                                                |
 
 ## Page chrome
 
@@ -1667,8 +1668,8 @@ band with `dk-band` rather than a content page, and a group of sections side by 
 
 ```html
 <main id="main-content" tabindex="-1">
-    <section class="dk-band hero" aria-labelledby="title">
-        <div class="hero-grid">
+    <section class="dk-band" aria-labelledby="title">
+        <div class="dk-band-hero">
             <div class="dk-stack">
                 <p class="dk-eyebrow">For game night</p>
                 <h1 id="title">Scorekeeper</h1>
@@ -1700,7 +1701,13 @@ and its `h2` at the heading size, and a section it holds spaces as a content pag
 prose and a stack's are held to the measure. A grid the band holds is one piece of its flow, so the
 grid's items stand apart by its gap alone, and a column of pieces in a grid's cell, such as a hero's
 words beside its picture, is a `dk-stack`, the flow with no room of its own, at the step of what
-holds it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more, 20rem until a page sets it, one to a row on
+holds it. A hero, the words that open a page beside its picture, is a `dk-band-hero` holding
+the words' stack and then the picture, so a reader hears what the page is before the picture. On a
+phone the two stand one over the other, `--dk-space-6` apart. From 48rem they stand side by side,
+centered on each other, with the picture at `--dk-band-hero-picture`, 28rem until a page sets it,
+and never past 45% of the row, so the words keep room for a display heading. An `img`, a `picture`
+or a `video` fills its cell and keeps its proportions, cropped rather than stretched, so give the
+picture the width and height it was made at to hold its room while it loads. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more, 20rem until a page sets it, one to a row on
 a phone, `--dk-space-7` apart, each with its heading, an `h2` under a page's `h1` or an `h3` under a
 band's `h2`, at the title size and `--dk-space-3` over its text, and its prose held to the measure.
 A group stands a section's step from what comes before it, or the flow's step under the heading that
