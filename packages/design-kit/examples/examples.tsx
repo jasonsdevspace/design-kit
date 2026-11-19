@@ -909,6 +909,14 @@ export const rows: ReactElement = (
     </>
 );
 
+/** An empty list of players, saying what is missing, with the first step. */
+export const empty: ReactElement = (
+    <div className="dk-empty">
+        <p>No players yet.</p>
+        <Button>Add a player</Button>
+    </div>
+);
+
 /** A list of tiles, each link on a ground its page sets. */
 export const rowTiles: ReactElement = (
     <ul className="dk-rows dk-rows-tiles" role="list">
@@ -1112,6 +1120,7 @@ export const EXAMPLES = {
     buttonGrid,
     icon,
     rows,
+    empty,
     rowActions,
     rowPicture,
     rowTiles,
