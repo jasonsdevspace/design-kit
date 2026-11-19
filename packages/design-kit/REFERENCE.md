@@ -2761,14 +2761,17 @@ missing, in words, and the next step as a button under it, with no picture neede
 ```
 
 The words are the muted text at the body size, and the empty state has no ground and no edge, so it
-never reads as a callout, and no room at its sides, so its words start where a row's title would,
-with `--dk-space-3` above and below. Its button is a plain `dk-button`, never the accent one, since
-the accent action is the dock's. It is not live: it is read where it is, as the list would be.
+never reads as a callout. Its sides are a row's, so its words start where a row's title would, on
+the column's line in a page, a panel, a dialog or an app's body and inside a bare edge, with
+`--dk-space-3` above and below. Its button is a plain `dk-button`, never the accent one, since the
+accent action is the dock's, and a screen whose add control is already in view leaves it out and
+says in the words where that control is. It is not live: it is read where it is, as the list would be.
 
 A list a visitor empties, as a search that matches nothing does, says so on the screen's
-[status line](#status-line) once they stop typing, and its empty state offers to clear the search.
-Clearing it takes away the button that had focus, so focus goes back to the search field, with the
-whole list under it again:
+[status line](#status-line) once they stop typing, naming what they searched for so a typo is
+heard, and its empty state offers to clear the search. Clearing it takes away the button just
+pressed, which a keyboard or a screen reader was on, so focus goes back to the search field, with
+the whole list under it again:
 
 <!-- source: games -->
 
@@ -2783,11 +2786,15 @@ const GAMES = ['Flip 7', 'Skyjo', 'Wizard'] as const;
 const matching = (search: string) =>
     GAMES.filter((game) => game.toLowerCase().includes(search.trim().toLowerCase()));
 
+/** What the empty state and the status line say when the search matches nothing. */
+const noMatch = (search: string) => `No games match “${search.trim()}”.`;
+
 /** What the status line says once a visitor stops typing. */
-const counted = (found: number) =>
-    found === 0
-        ? 'No games match the search.'
-        : `${String(found)} ${found === 1 ? 'game matches' : 'games match'}.`;
+const counted = (search: string) => {
+    const found = matching(search).length;
+    if (found === 0) return noMatch(search);
+    return `${String(found)} ${found === 1 ? 'game matches' : 'games match'}.`;
+};
 
 /**
  * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts the
@@ -2801,8 +2808,8 @@ export const Games = () => {
     const shown = matching(search);
     const clear = () => {
         setSearch('');
-        say(counted(GAMES.length));
-        // The empty state and its button go, so focus goes back to the search.
+        say(`Search cleared, ${String(GAMES.length)} games.`);
+        // The empty state and the button pressed go, so focus goes back to the search.
         focusNext(field);
     };
     return (
@@ -2815,14 +2822,17 @@ export const Games = () => {
                 value={search}
                 onChange={(event) => {
                     setSearch(event.target.value);
-                    say(counted(matching(event.target.value).length), { settle: 700 });
+                    say(counted(event.target.value), { settle: 700 });
                 }}
             />
             {shown.length > 0 ? (
                 <ul className="dk-rows" role="list">
                     {shown.map((game) => (
                         <li key={game}>
-                            <a className="dk-row" href={`#${game.toLowerCase().replace(' ', '-')}`}>
+                            <a
+                                className="dk-row"
+                                href={`/games/${game.toLowerCase().replaceAll(/\s+/g, '-')}/`}
+                            >
                                 <span className="dk-row-text">
                                     <span className="dk-row-title">{game}</span>
                                 </span>
@@ -2835,7 +2845,7 @@ export const Games = () => {
                 </ul>
             ) : (
                 <div className="dk-empty">
-                    <p>No games match the search.</p>
+                    <p>{noMatch(search)}</p>
                     <Button onClick={clear}>Clear the search</Button>
                 </div>
             )}

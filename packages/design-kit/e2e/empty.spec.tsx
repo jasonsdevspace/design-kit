@@ -46,7 +46,7 @@ const draw = (
         width,
     });
 
-test('draws no ground, no edge and no room at its sides, its words where a row title starts', async ({
+test('draws no ground and no edge, its words where a row title starts in a page', async ({
     page,
 }) => {
     await draw(page, `${EMPTY}${ROWS}`);
@@ -54,8 +54,6 @@ test('draws no ground, no edge and no room at its sides, its words where a row t
         page.locator('.dk-empty'),
         'background-color',
         'border-top-width',
-        'padding-left',
-        'padding-right',
         'padding-top',
         'padding-bottom'
     );
@@ -63,14 +61,32 @@ test('draws no ground, no edge and no room at its sides, its words where a row t
     expect(look).toEqual({
         'background-color': 'rgba(0, 0, 0, 0)',
         'border-top-width': '0px',
-        'padding-left': '0px',
-        'padding-right': '0px',
         'padding-top': step,
         'padding-bottom': step,
     });
+    const words = (await box(page.locator('.dk-empty > p'))).x;
+    expect(words).toBe((await box(page.locator('.dk-row-title').first())).x);
+    expect(words).toBe((await box(page.locator('main > h1'))).x);
+});
+
+test('starts its words where a row title does at a bare edge too', async ({ page }) => {
+    await writePage(page, { title: 'Empty', body: `<div>${EMPTY}${ROWS}</div>` });
     expect((await box(page.locator('.dk-empty > p'))).x).toBe(
         (await box(page.locator('.dk-row-title').first())).x
     );
+    expect(await sideways(page)).toBe(0);
+});
+
+test('is not live, so it is read where it is', async ({ page }) => {
+    await draw(page, EMPTY);
+    expect(
+        await page.evaluate(
+            () =>
+                [...document.querySelectorAll('.dk-empty, .dk-empty *')].filter(
+                    (element) => element.hasAttribute('role') || element.hasAttribute('aria-live')
+                ).length
+        )
+    ).toBe(0);
 });
 
 test('draws its words muted at the body size and a plain button under them', async ({ page }) => {
@@ -134,25 +150,48 @@ test.describe('the saved games', () => {
     const heard = (page: Page) =>
         page.evaluate(() => (window as unknown as { heard: string[] }).heard);
 
-    test('draws the empty state for a search that matches nothing, and says so', async ({
+    test('waits for typing to stop, then says the search matches nothing and names it', async ({
         page,
     }) => {
         await open(page);
-        await page.getByLabel('Search the games').fill('Chess');
+        await page.getByLabel('Search the games').pressSequentially('Chss', { delay: 50 });
         await expect(page.getByRole('list')).toHaveCount(0);
-        await expect(page.locator('.dk-empty')).toContainText('No games match the search.');
-        await expect.poll(() => heard(page)).toEqual(['No games match the search.']);
+        await expect(page.locator('.dk-empty > p')).toHaveText('No games match “Chss”.');
+        await expect.poll(() => heard(page)).toEqual(['No games match “Chss”.']);
     });
 
-    test('brings the list back with focus on the search when the search is cleared', async ({
+    test('says how many games match a search that finds some', async ({ page }) => {
+        await open(page);
+        await page.getByLabel('Search the games').pressSequentially('sky', { delay: 50 });
+        await expect(page.getByRole('listitem')).toHaveCount(1);
+        await expect.poll(() => heard(page)).toEqual(['1 game matches.']);
+    });
+
+    for (const how of ['Enter', 'click'] as const)
+        test(`brings the list back with focus on the search when Clear is pressed by ${how === 'click' ? 'a pointer' : 'Enter'}`, async ({
+            page,
+        }) => {
+            await open(page);
+            const search = page.getByLabel('Search the games');
+            await search.fill('Chess');
+            const clear = page.getByRole('button', { name: 'Clear the search' });
+            if (how === 'click') await clear.click();
+            else await clear.press('Enter');
+            await expect(search).toBeFocused();
+            await expect(search).toHaveValue('');
+            await expect(page.getByRole('listitem')).toHaveCount(3);
+            await expect.poll(() => heard(page)).toContain('Search cleared, 3 games.');
+        });
+
+    test('brings the list back when the search is emptied in the field itself', async ({
         page,
     }) => {
         await open(page);
         const search = page.getByLabel('Search the games');
         await search.fill('Chess');
-        await page.getByRole('button', { name: 'Clear the search' }).press('Enter');
+        await search.press('ControlOrMeta+a');
+        await search.press('Backspace');
         await expect(search).toBeFocused();
-        await expect(search).toHaveValue('');
         await expect(page.getByRole('listitem')).toHaveCount(3);
         await expect.poll(() => heard(page)).toContain('3 games match.');
     });
