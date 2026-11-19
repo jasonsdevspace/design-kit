@@ -1127,6 +1127,16 @@
     }
 
     /*
+     * A stack drawn on a list is a column of pieces, so the list's markers, its indent and its own
+     * room go. It comes before the flow, which sets the room above it where a container holds it.
+     */
+    :where(:is(ul, ol).dk-stack) {
+        margin-block: 0;
+        padding-inline-start: 0;
+        list-style: none;
+    }
+
+    /*
      * Nothing in what holds a column of pieces keeps room under itself, so the step above the next
      * one is the whole space between them. It comes before the rules that keep an app's last line
      * clear of a toast, which set the room under that one.
@@ -3450,6 +3460,19 @@
 
     :where(.dk-explainer > section > h3) {
         margin-block-start: var(--dk-space-5);
+    }
+
+    /*
+     * A stack that names its step keeps it between everything it holds, over the short step under
+     * a title and a section heading's own, so a pair or a heading's stack drawn as a page's section
+     * still spaces at its step.
+     */
+    :where(
+        :is(.dk-stack.dk-stack-pair, .dk-stack.dk-stack-heading)
+            > :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
+            ~ :not(dialog)
+    ) {
+        margin-block-start: var(--dk-flow-step);
     }
 
     :where(.dk-dialog-actions) {

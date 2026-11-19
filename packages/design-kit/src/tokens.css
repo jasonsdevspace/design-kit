@@ -514,6 +514,19 @@
         --dk-flow-step: var(--dk-space-3);
     }
 
+    /*
+     * A stack's own steps, for what it holds rather than the step of what holds it: a pair's, such
+     * as a label over its value or a header's lines, and a heading's, over what it heads. Each is
+     * written beside dk-stack, and does nothing without it.
+     */
+    :where(.dk-stack.dk-stack-pair > *) {
+        --dk-flow-step: var(--dk-space-2);
+    }
+
+    :where(.dk-stack.dk-stack-heading > *) {
+        --dk-flow-step: var(--dk-space-3);
+    }
+
     /* A theme set on the root wins over the system's. */
     :where(:root[data-theme='light']) {
         color-scheme: light;
