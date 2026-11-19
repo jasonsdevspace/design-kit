@@ -19,10 +19,12 @@ export const VALUE_EXPORTS = {
         'SelectField',
         'SkipLink',
         'StatusLine',
+        'StatusProvider',
         'StepperField',
         'TextareaField',
         'ThemeSwitch',
         'Toast',
+        'useStatus',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/controls': [

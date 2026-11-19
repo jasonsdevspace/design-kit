@@ -9,6 +9,9 @@ import {
 } from 'react';
 
 import { THEME_CHOICES, type ThemeChoice } from './theme.js';
+
+export { StatusProvider, type StatusProviderProps, useStatus } from './hooks.js';
+
 /*
  * The page chrome a demo draws around its page, a skip link, a strip above the page that says whose
  * demo it is and a footer below it, and the pieces on the page itself: the button, the input,

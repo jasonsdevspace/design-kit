@@ -1,8 +1,6 @@
-import { fileURLToPath } from 'node:url';
-
 import { expect, test } from '@playwright/test';
-import { build } from 'vite';
 
+import { bundle } from './bundle.js';
 import { KIT, style } from './page.js';
 
 /*
@@ -13,30 +11,12 @@ import { KIT, style } from './page.js';
  * as its one script.
  */
 
-const ENTRY = fileURLToPath(new URL('ref-page.tsx', import.meta.url));
-
-/** The page and React as one module, since the page is written into a blank document. */
-const bundle = async (): Promise<string> => {
-    const output = await build({
-        configFile: false,
-        logLevel: 'silent',
-        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
-        build: { write: false, lib: { entry: ENTRY, formats: ['es'], fileName: 'ref-page' } },
-    });
-    const chunks = (Array.isArray(output) ? output : [output])
-        .flatMap((result) => ('output' in result ? result.output : []))
-        .filter((file) => file.type === 'chunk');
-    const [only] = chunks;
-    if (chunks.length !== 1 || !only) throw new Error('the page should build into one script');
-    return only.code;
-};
-
 let script = '';
 
 // Building React into the page takes a while on a slow runner, so it is done once, on its own clock.
 test.beforeAll(async () => {
     test.setTimeout(120_000);
-    script = await bundle();
+    script = await bundle('ref-page.tsx');
 });
 
 test('attaches the switch and the copy button through the refs they hand out', async ({ page }) => {

@@ -18,8 +18,10 @@ import {
     SelectField,
     SkipLink,
     StatusLine,
+    StatusProvider,
     TextareaField,
     ThemeSwitch,
+    useStatus,
 } from './react.js';
 
 /*
@@ -1071,6 +1073,31 @@ describe('an empty slot', () => {
             )
         ).toBe(
             renderToStaticMarkup(<DemoFooter name="Example" about="./about/" source={SOURCE} />)
+        );
+    });
+});
+
+describe('the status provider', () => {
+    it("draws a status line out of sight before what it holds, as StatusLine's markup", () => {
+        expect(
+            renderToStaticMarkup(
+                <StatusProvider>
+                    <p>Seats</p>
+                </StatusProvider>
+            )
+        ).toBe('<p class="dk-visually-hidden" role="status"></p><p>Seats</p>');
+        expect(renderToStaticMarkup(<StatusLine />)).toBe(
+            '<p class="dk-visually-hidden" role="status"></p>'
+        );
+    });
+
+    it('throws for a part with no provider above it, since its words would reach no one', () => {
+        const Alone = () => {
+            useStatus();
+            return null;
+        };
+        expect(() => renderToStaticMarkup(<Alone />)).toThrow(
+            'useStatus needs a StatusProvider above it'
         );
     });
 });
