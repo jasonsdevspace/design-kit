@@ -515,14 +515,15 @@
     }
 
     /*
-     * A stack's closer steps, for what it holds rather than the step of what holds it: a pair's,
-     * such as a label over its value or a header's lines, and a heading's, over what it heads.
+     * A stack's own steps, for what it holds rather than the step of what holds it: a pair's, such
+     * as a label over its value or a header's lines, and a heading's, over what it heads. Each is
+     * written beside dk-stack, and does nothing without it.
      */
-    :where(.dk-stack-pair > *) {
+    :where(.dk-stack.dk-stack-pair > *) {
         --dk-flow-step: var(--dk-space-2);
     }
 
-    :where(.dk-stack-heading > *) {
+    :where(.dk-stack.dk-stack-heading > *) {
         --dk-flow-step: var(--dk-space-3);
     }
 

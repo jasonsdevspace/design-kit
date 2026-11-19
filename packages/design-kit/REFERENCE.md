@@ -1707,38 +1707,44 @@ names it, so a group and a section under it read as one page.
 
 ### Stacks
 
-A column of pieces inside another piece, such as a hero's words, a player's name over their points
-or a heading over a list, is a `dk-stack`, the flow with no room of its own. A plain stack spaces
-what it holds at the step of what holds it. `dk-stack-pair` spaces it at `--dk-space-2`, for a label
-over its value or a header's lines, and `dk-stack-heading` at `--dk-space-3`, for a heading over
-what it heads:
+A column of pieces inside another piece, such as a hero's words, a label over its value or a heading
+over a list, is a `dk-stack`, the flow with no room of its own. A plain stack spaces what it holds
+at the step of what holds it, a page, a band, a panel, a dialog or an app's body, and one outside
+them names its own step. Written beside
+`dk-stack`, `dk-stack-pair` spaces what it holds at `--dk-space-2`, for a label over its value or a
+header's lines, and `dk-stack-heading` at `--dk-space-3`, for a heading over what it heads:
 
 <!-- example: stacks -->
 
 ```html
-<section class="dk-stack dk-stack-heading" aria-labelledby="round">
-    <h2 id="round">Round 3</h2>
+<div class="dk-stack dk-stack-pair">
+    <p>Next to play</p>
+    <p>Ann</p>
+</div>
+<div class="dk-stack dk-stack-heading">
+    <h2>Round 3</h2>
     <ul class="dk-stack" role="list">
-        <li class="dk-stack dk-stack-pair">
-            <p>Ann</p>
-            <p>42 points</p>
-        </li>
-        <li class="dk-stack dk-stack-pair">
-            <p>Ben</p>
-            <p>37 points</p>
-        </li>
+        <li>Ann, 42 points</li>
+        <li>Ben, 37 points</li>
     </ul>
-</section>
+</div>
 ```
 
-Each step sets `--dk-flow-step` on what the stack holds, so a stack inside it takes that step for
-its own pieces unless it names its own. A piece out of sight, hidden or visually hidden, adds no
-step, and the spacing is set between the pieces, never on a paragraph's own margin, so a reader's
-own sheet that adds room under a paragraph adds the room it asks for. A stack on a `ul` or an `ol`
-drops the list's markers, its indent and its own room. Give it `role="list"`, since Safari stops
-calling a list a list once its markers are gone, and a screen reader then no longer says how many
-items it holds. The step between a page's sections stays the page's, since that is the page's
-rhythm rather than a piece's.
+Each step sets `--dk-flow-step` on what the stack holds, and holds between all of it, under a title
+or a section's heading too, so a pair drawn as a page's section still spaces as a pair. A stack
+inside one takes its step for its own pieces unless it names its own. A piece out of sight, hidden
+or visually hidden, adds no step, and the spacing is set between the pieces, never on a paragraph's
+own margin, so a reader's own sheet that adds room under a paragraph adds the room it asks for. A
+group with a heading needs no `section` of its own, since a named section is a landmark, and one
+for every round fills a screen reader's list of landmarks.
+
+A stack on a `ul` or an `ol` drops the list's markers, its indent and its own room. Give it
+`role="list"`, since VoiceOver in Safari, on an iPhone most of all, stops calling a list a list once
+its markers are gone, and then no longer says how many items it holds. On an `ol` whose numbers
+matter, such as a ranking, put the number in each item's words, since the numbers drawn go too. A
+list nested in one keeps its own markers. Scores compared across players and rounds are a table
+rather than a stack of lists. The step between a page's sections stays the page's, since that is
+the page's rhythm rather than a piece's.
 
 ## Explainer pages
 

@@ -3462,6 +3462,19 @@
         margin-block-start: var(--dk-space-5);
     }
 
+    /*
+     * A stack that names its step keeps it between everything it holds, over the short step under
+     * a title and a section heading's own, so a pair or a heading's stack drawn as a page's section
+     * still spaces at its step.
+     */
+    :where(
+        :is(.dk-stack.dk-stack-pair, .dk-stack.dk-stack-heading)
+            > :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
+            ~ :not(dialog)
+    ) {
+        margin-block-start: var(--dk-flow-step);
+    }
+
     :where(.dk-dialog-actions) {
         margin-block-start: var(--dk-space-5);
     }

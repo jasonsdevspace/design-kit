@@ -5,15 +5,17 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { stacks } from '../examples/examples.js';
 import { box, forceColors, lengthOf, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
-import { textSize } from './text-size.js';
+import { doubled } from './text-size.js';
 
 /*
- * A stack's steps, as the reference draws them on a content page: a heading a heading's step over
- * the list it heads, the list's items at that step, each name a pair's step over its points, a
- * plain stack at the step of what holds it, a stack inside a pair taking the pair's step, no step
- * for a piece hidden or visually hidden, a stack on a list with no marker, indent or room of its
- * own and its role kept, and the example whole on a 320px phone at twice the text size and under
- * wider spacing, with no audit findings in either theme or in forced colors.
+ * A stack's steps, as the reference draws them on a content page: a label a pair's step over its
+ * value, a heading a heading's step over the list it heads and the list's items at that step, a
+ * plain stack at the step of what holds it or a whole step where nothing does, a stack in a pair at
+ * the pair's step, a named step kept under a title and a section's heading, a step class with no
+ * stack doing nothing, no step for a piece hidden or visually hidden, a stack on a list with no
+ * marker, indent or room of its own, the example's role kept and a list nested in an item keeping
+ * its markers, and the example with a long name whole on a 320px phone at twice the text size and
+ * under wider spacing, with no audit findings in either theme or in forced colors.
  */
 
 const EXAMPLE = renderToStaticMarkup(stacks);
@@ -42,17 +44,14 @@ const between = async (first: Locator, second: Locator) => {
     return Math.round(below.y - (above.y + above.height));
 };
 
-test("spaces a heading's stack, its list and each pair at their steps", async ({ page }) => {
+test("spaces a pair, a heading's stack and its list at their steps", async ({ page }) => {
     await draw(page, EXAMPLE);
     const heading = await lengthOf(page, 'var(--dk-space-3)');
-    const pair = await lengthOf(page, 'var(--dk-space-2)');
-    expect(await between(page.locator('#round'), page.locator('ul'))).toBe(heading);
+    const pair = page.locator('.dk-stack-pair > p');
+    expect(await between(pair.nth(0), pair.nth(1))).toBe(await lengthOf(page, 'var(--dk-space-2)'));
+    expect(await between(page.locator('h2'), page.locator('ul'))).toBe(heading);
     const items = page.locator('li');
     expect(await between(items.nth(0), items.nth(1))).toBe(heading);
-    for (const at of [0, 1]) {
-        const lines = items.nth(at).locator('p');
-        expect(await between(lines.nth(0), lines.nth(1))).toBe(pair);
-    }
 });
 
 test('spaces a plain stack at the step of what holds it, and a stack in a pair at the pair step', async ({
@@ -72,6 +71,38 @@ test('spaces a plain stack at the step of what holds it, and a stack in a pair a
     expect(await between(page.locator('#d'), page.locator('#e'))).toBe(pair);
 });
 
+test('keeps a named step under a title and under a page section heading', async ({ page }) => {
+    await draw(
+        page,
+        '<div class="dk-stack dk-stack-heading"><h1 id="title">Round 3</h1><p id="a">Ann</p></div>' +
+            '<section class="dk-stack dk-stack-pair"><h2 id="name">Next to play</h2><p id="b">Ann</p></section>'
+    );
+    expect(await between(page.locator('#title'), page.locator('#a'))).toBe(
+        await lengthOf(page, 'var(--dk-space-3)')
+    );
+    expect(await between(page.locator('#name'), page.locator('#b'))).toBe(
+        await lengthOf(page, 'var(--dk-space-2)')
+    );
+});
+
+test('gives a step class alone nothing, and a stack outside any container only its named step', async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Stacks',
+        body:
+            '<div class="dk-stack dk-stack-pair"><p id="a">Next to play</p><p id="b">Ann</p></div>' +
+            '<main class="dk-page"><div class="dk-stack-pair"><div class="dk-stack">' +
+            '<p id="c">One</p><p id="d">Two</p></div></div></main>',
+    });
+    expect(await between(page.locator('#a'), page.locator('#b'))).toBe(
+        await lengthOf(page, 'var(--dk-space-2)')
+    );
+    expect(await between(page.locator('#c'), page.locator('#d'))).toBe(
+        await lengthOf(page, 'var(--dk-space-4)')
+    );
+});
+
 for (const step of ['', 'dk-stack-pair', 'dk-stack-heading'])
     test(`adds no step for a hidden piece in a ${step || 'plain'} stack`, async ({ page }) => {
         await draw(
@@ -86,12 +117,12 @@ for (const step of ['', 'dk-stack-pair', 'dk-stack-heading'])
         expect((await box(page.locator('#c'))).y).toBe((await box(page.locator('#hiding'))).y);
     });
 
-test('draws a stack on a list with no marker, indent or room of its own, and keeps its role', async ({
-    page,
-}) => {
+test('draws a stack on a list with no marker, indent or room of its own', async ({ page }) => {
     await writePage(page, {
         title: 'Stacks',
-        body: '<ol class="dk-stack" role="list" id="alone"><li>Ann</li><li>Ben</li></ol>',
+        body:
+            '<ol class="dk-stack" role="list" id="alone"><li>Ann</li>' +
+            '<li>Ben<ul id="nested"><li>Ten points</li></ul></li></ol>',
     });
     const list = page.locator('#alone');
     expect(
@@ -103,24 +134,41 @@ test('draws a stack on a list with no marker, indent or room of its own, and kee
         'margin-bottom': '0px',
     });
     expect((await box(list.locator('li').first())).x).toBe((await box(list)).x);
-    await expect(page.getByRole('list')).toHaveCount(1);
-    await expect(page.getByRole('listitem')).toHaveCount(2);
+    // A list nested in an item keeps its own markers and indent.
+    const nested = await style(page.locator('#nested'), 'list-style-type', 'padding-inline-start');
+    expect(nested['list-style-type']).not.toBe('none');
+    expect(nested['padding-inline-start']).not.toBe('0px');
 });
 
-test('stays whole on a 320px phone at twice the text size', async ({ page }) => {
-    await draw(page, EXAMPLE, { width: 320 });
-    await textSize(page, 2);
+test("writes the list's role in the example, which Safari drops with the markers", async ({
+    page,
+}) => {
+    await draw(page, EXAMPLE);
+    await expect(page.locator('ul.dk-stack')).toHaveAttribute('role', 'list');
+});
+
+/** The example with a name too long for a phone's line, so its pair wraps. */
+const LONG = EXAMPLE.replace('<p>Ann</p>', '<p id="long">Bartholomew-Featherstonehaugh Smythe</p>');
+
+test('stays whole on a 320px phone at twice the text size, a wrapped pair at its step', async ({
+    page,
+    browserName,
+}) => {
+    await draw(page, LONG, { width: 320 });
+    await doubled(page, browserName);
     expect(await sideways(page)).toBe(0);
-    expect(await cutOff(page, 'section, ul, li, p, h2')).toEqual([]);
+    expect(await cutOff(page, 'div, ul, li, p, h2')).toEqual([]);
+    const pair = page.locator('.dk-stack-pair > p');
+    expect(await between(pair.nth(0), pair.nth(1))).toBe(await lengthOf(page, 'var(--dk-space-2)'));
 });
 
 test('keeps its steps between the pieces under wider text spacing', async ({ page }) => {
-    await draw(page, EXAMPLE, { css: SPACED, width: 320 });
+    await draw(page, LONG, { css: SPACED, width: 320 });
     expect(await sideways(page)).toBe(0);
-    expect(await cutOff(page, 'section, ul, li, p, h2')).toEqual([]);
-    const lines = page.locator('li').first().locator('p');
+    expect(await cutOff(page, 'div, ul, li, p, h2')).toEqual([]);
+    const pair = page.locator('.dk-stack-pair > p');
     // The reader's own room under a paragraph is added to the step, never taken away.
-    expect(await between(lines.nth(0), lines.nth(1))).toBeGreaterThanOrEqual(
+    expect(await between(pair.nth(0), pair.nth(1))).toBeGreaterThanOrEqual(
         await lengthOf(page, 'var(--dk-space-2)')
     );
 });
