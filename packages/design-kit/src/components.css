@@ -1237,14 +1237,59 @@
 
     /*
      * A group of sections side by side, such as two ways to do one thing, as many to a row as fit
-     * at 20rem or more and one to a row on a phone. Each section keeps a page section's heading and
+     * at --dk-sections-least or more, 20rem until a page sets it, and one to a row on a phone. Each section keeps a page section's heading and
      * steps, so a page with a group and a section under it reads as one page, and the group stands
      * a section's step from what comes before it.
      */
     :where(.dk-sections) {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(100%, var(--dk-sections-least, 20rem)), 1fr)
+        );
         gap: var(--dk-space-7);
+    }
+
+    /*
+     * A split row: a title at the start and a figure or a control at the end, on one line where
+     * they fit and the end under the start where they do not, lined up on their first line's
+     * baseline. What it holds keeps no room of its own, so the row's gaps are the only space in it,
+     * and the title breaks a word too long for the line rather than push the page sideways.
+     */
+    :where(.dk-split) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--dk-space-1) var(--dk-space-3);
+    }
+
+    :where(.dk-split > *) {
+        margin: 0;
+    }
+
+    :where(.dk-split > :first-child) {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* A note that belongs to no field: the muted text at the small size. */
+    :where(.dk-note) {
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    /*
+     * A figure read from across a room, such as a score: the numeral size, in the mono face with
+     * tabular figures, so a number that changes keeps its width, at the strong weight and on a line
+     * no taller than the figure.
+     */
+    :where(.dk-numeral) {
+        font-family: var(--dk-font-mono);
+        font-size: var(--dk-text-numeral);
+        font-variant-numeric: tabular-nums;
+        font-weight: var(--dk-weight-strong);
+        line-height: 1;
     }
 
     /* Prose a page, a band, a stack or a section of theirs holds keeps to the measure. */

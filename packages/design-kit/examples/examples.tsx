@@ -418,6 +418,23 @@ export const stacks: ReactElement = (
     </>
 );
 
+/**
+ * A player's score: their name and the round in a split row, the score as a large numeral with its
+ * unit out of sight, and a note under it.
+ */
+export const splitRow: ReactElement = (
+    <div className="dk-stack dk-stack-pair">
+        <div className="dk-split">
+            <h2>Ana</h2>
+            <p className="dk-note">Round 4 of 10</p>
+        </div>
+        <p className="dk-numeral">
+            212<span className="dk-visually-hidden"> points</span>
+        </p>
+        <p className="dk-note">The first to 200 points wins.</p>
+    </div>
+);
+
 /** An explainer page, with the parts a demo fills in left as an ellipsis. */
 export const explainerPage: ReactElement = (
     <>
@@ -1079,6 +1096,7 @@ export const EXAMPLES = {
     contentPage,
     bands,
     stacks,
+    splitRow,
     explainerPage,
     steps,
     panel,
