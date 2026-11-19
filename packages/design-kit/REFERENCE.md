@@ -599,8 +599,70 @@ refuse();
 
 The kit does no validation, so the page decides when to show an error, best after a submit is tried rather than while someone is typing.
 
-A field a visitor cannot change uses `disabled`, unlike a button, and its hint says why, which a
-screen reader reads wherever it announces the field.
+#### Read only, off, busy and disabled
+
+<!-- example: readOnlyFields -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="round">Round</label>
+    <input class="dk-input" readonly="" id="round" value="Round 3 of 10" />
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="game">Game</label>
+    <input class="dk-input" readonly="" id="game" value="Wizard" />
+    <input type="hidden" name="game" value="wizard" />
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="cards">Cards each</label>
+    <p class="dk-field-error dk-stepper-range" id="cards-range" hidden="">
+        <span class="dk-visually-hidden">Error: </span>
+        Enter a whole number from 1 to 10.
+    </p>
+    <div class="dk-stepper">
+        <button type="button" class="dk-button dk-stepper-down" aria-controls="cards" hidden="">
+            <span aria-hidden="true">−</span>
+            <span class="dk-visually-hidden">Lower Cards each</span>
+        </button>
+        <input
+            class="dk-input dk-stepper-value"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="10"
+            step="1"
+            readonly=""
+            id="cards"
+            value="3"
+        />
+        <button type="button" class="dk-button dk-stepper-up" aria-controls="cards" hidden="">
+            <span aria-hidden="true">+</span>
+            <span class="dk-visually-hidden">Raise Cards each</span>
+        </button>
+        <span class="dk-visually-hidden dk-stepper-limits" id="cards-limits"></span>
+        <span class="dk-visually-hidden dk-stepper-status" role="status"></span>
+    </div>
+</div>
+```
+
+A value a visitor should read but not change, such as a saved round's total or a setting fixed for
+this game, is read only, `readOnly` on the field. It stays in the tab order, so a keyboard reaches
+it and a screen reader reads it, and its words can be copied. It keeps its edge's width, drawn
+clear on a clear ground with its text in the page's color, so it lines up with the fields beside it
+and reads as a value, while a field that can be changed keeps its edge and its well. In forced
+colors its edge takes the ground's color. A select has no read-only state, so a read-only
+`SelectField` draws a read-only field with the chosen option's words, and a hidden field carries
+its value, so the form still sends it, and it is read only for the page rather than for a moment,
+since turning it on or off draws a new control. A read-only stepper shows its value alone, its
+buttons hidden while the field is read only.
+
+A button that can do nothing for now is off, `aria-disabled`, kept in the tab order with the reason
+beside it. `aria-disabled` does not stop typing in a field, so a field held for a moment is read
+only, or the button that saves it is busy. A button whose press is still being carried out is busy.
+A field is `disabled` only where the form must not send it, since Tab passes over a disabled field
+and a screen reader reads it only while browsing, as unavailable, and its hint says why. A stepper
+whose field turns read only while a button has focus keeps that button, marked off, until focus
+leaves it, so focus is never dropped, and a stepper in the middle of a save is busy, not read only.
 
 <details>
 <summary>How a field is drawn</summary>

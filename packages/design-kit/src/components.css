@@ -758,6 +758,19 @@
         cursor: pointer;
     }
 
+    /*
+     * A value a visitor reads but cannot change, such as a saved total. Its edge keeps its width,
+     * so it lines up with the fields beside it, but is drawn clear on a clear ground, with its text
+     * in the page's own color, so it reads as a value rather than as a control that is off. It stays
+     * in the tab order, and its words can be read and copied. It comes before the error's edge,
+     * so a read-only field with an error still shows it, and a disabled one is drawn disabled.
+     */
+    :where(.dk-input[readonly]:not(:disabled), .dk-textarea[readonly]:not(:disabled)) {
+        border-color: transparent;
+        background-color: transparent;
+        color: var(--dk-fg);
+    }
+
     /* A control with an error shown, its edge in the danger color, beside the error's words. */
     :where(
         .dk-input[aria-invalid='true'],
@@ -799,6 +812,14 @@
      * a keyboard sees where it landed.
      */
     @media (forced-colors: active) {
+        /* A clear edge shows in forced colors, so a read-only field's takes the ground's color. */
+        :where(
+            .dk-input[readonly]:not(:disabled, [aria-invalid='true']),
+            .dk-textarea[readonly]:not(:disabled, [aria-invalid='true'])
+        ) {
+            border-color: Canvas;
+        }
+
         :where(.dk-select) {
             appearance: auto;
             padding-inline-end: var(--dk-field-inline);
