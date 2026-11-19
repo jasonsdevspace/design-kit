@@ -11,6 +11,7 @@ import {
 import { THEME_CHOICES, type ThemeChoice } from './theme.js';
 
 export {
+    type ArrivalKey,
     type FocusAfterDraw,
     StatusProvider,
     type StatusProviderProps,

@@ -1,6 +1,6 @@
 # 20. The kit's React hooks wrap its attach functions
 
-**Status:** accepted
+**Status:** accepted, amended for hooks over a function that acts once, such as `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which keeps the key it last acted on
 
 ## Context
 
@@ -53,6 +53,11 @@ Option C. A hook is named for its attach, as `useStatus` would be for `attachSta
   dependencies without running that effect again.
 - **It keeps no state of its own beyond the attach's handle,** so what a page sees is what the
   attach does, and a page without React gets the same behavior from the same function.
+
+Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
+returns the function, the same across renders, and keeps only what calls off a request not yet
+done, so a component that unmounts leaves nothing behind. A hook that acts when a view arrives, as
+`useArrivalFocus` does, keeps the key it last acted on, so it acts once for each arrival.
 
 Where a piece needs one line for a whole page, as the status line does, a provider draws it and a
 hook finds it through context. The line is attached as it lands, before the effects of the parts

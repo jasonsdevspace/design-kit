@@ -103,30 +103,64 @@ test('focuses a control asked for twice, each time', async ({ page }) => {
     }
 });
 
-let app = '';
-test.beforeAll(async () => {
-    test.setTimeout(120_000);
-    app = await bundle('focus-page.tsx');
-});
-
-test('moves focus to the next control as one removes itself, and to a heading once none is left', async ({
+test('passes over a control marked off, and falls to the main content with no fallback left', async ({
     page,
 }) => {
-    await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-    await page.locator('#remove-Ann').click();
-    await expect(page.locator('#remove-Ben')).toBeFocused();
-    await page.locator('#remove-Ben').click();
-    await expect(page.locator('#players')).toBeFocused();
+    await open(page);
+    await page.evaluate(() => {
+        document.querySelector('#other')?.setAttribute('aria-disabled', 'true');
+        document.querySelector('main')?.setAttribute('tabindex', '-1');
+        (window as unknown as Mover).moveFocus('other', { fallbacks: ['gone'] });
+    });
+    await expect(page.locator('main')).toBeFocused();
 });
 
-test("focuses a view's heading when its key changes, but never as the page first draws", async ({
-    page,
-}) => {
-    await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-    await expect(page.locator('#round')).toHaveAttribute('tabindex', '-1');
-    await page.waitForTimeout(100);
-    await expect(page.locator('#round')).not.toBeFocused();
-    await page.locator('#next').click();
-    await expect(page.locator('#round')).toHaveText('Round 2');
-    await expect(page.locator('#round')).toBeFocused();
+test.describe('in React', () => {
+    let app = '';
+    test.beforeAll(async () => {
+        test.setTimeout(120_000);
+        app = await bundle('focus-page.tsx');
+    });
+
+    test('moves focus to the next control as one removes itself, and to a heading once none is left', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#remove-Ann').click();
+        await expect(page.locator('#remove-Ben')).toBeFocused();
+        await page.locator('#remove-Ben').click();
+        await expect(page.locator('#players')).toBeFocused();
+    });
+
+    test("focuses a view's heading when its key changes, but never as the page first draws", async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await expect(page.locator('#round')).toHaveAttribute('tabindex', '-1');
+        await page.waitForTimeout(100);
+        await expect(page.locator('#round')).not.toBeFocused();
+        await page.locator('#next').click();
+        await expect(page.locator('#round')).toHaveText('Round 2');
+        await expect(page.locator('#round')).toBeFocused();
+    });
+
+    test('focuses the last of two requests made in one frame', async ({ page }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#remove-Ann').focus();
+        await page.evaluate(() => {
+            (window as unknown as { focusTwice: () => void }).focusTwice();
+        });
+        await expect(page.locator('#next')).toBeFocused();
+    });
+
+    test("focuses a view's heading as a press draws it, but not over a field the view focuses itself", async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#show-scores').click();
+        await expect(page.locator('#scores')).toBeFocused();
+        await page.locator('#show-search').click();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#query')).toBeFocused();
+    });
 });

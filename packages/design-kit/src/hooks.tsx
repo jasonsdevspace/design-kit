@@ -20,9 +20,10 @@ import {
 } from './controls.js';
 
 /*
- * The kit's React hooks, each a thin wrapper over an attach function from `./controls`, as decision
- * 20 has it: it attaches through a ref, keeps only the attach's handle, and returns what the attach
- * returns, the same across renders. `./react` exports them beside the markup, whose components run
+ * The kit's React hooks, each a thin wrapper over a function from `./controls`, as decision 20 has
+ * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
+ * function that acts once keeps only what calls it off, and each returns what the function returns,
+ * the same across renders. `./react` exports them beside the markup, whose components run
  * no effect.
  */
 
@@ -86,13 +87,15 @@ export const useStatus = (): Say => {
 };
 
 /** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */
-export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => void;
+export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => () => void;
 
 /**
  * The function that moves focus to a control once the change asking for it is drawn, the same
  * across renders, by `moveFocus`: to an element or an id, with fallbacks where it is gone, and
- * never from where a visitor has moved focus. Each call is a new request, so the same control asked
- * for twice is focused twice. A request still waiting when the component unmounts is called off.
+ * never from where a visitor has moved focus. It is called in the press or key handler that makes
+ * the change, or in an effect once a change React draws later is drawn. Each call is a new request
+ * that takes the place of one not yet landed, so the last asked for wins, and returns what calls it
+ * off. A request not yet landed when the component unmounts is called off.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const waiting = useRef<(() => void) | null>(null);
@@ -103,25 +106,65 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
         []
     );
     return useCallback<FocusAfterDraw>((target, options) => {
-        waiting.current = moveFocus(target, options);
+        waiting.current?.();
+        const cancel = moveFocus(target, options);
+        waiting.current = cancel;
+        return cancel;
     }, []);
 };
 
+/** What a view's arrival is told apart by, compared by value, such as a round's number. */
+export type ArrivalKey = string | number | boolean | null | undefined;
+
+/** Whether a visitor has pressed or typed on the page yet, so a first draw can be told apart. */
+let acted = false;
+const listenForAction = () => {
+    if (acted || typeof document === 'undefined') return;
+    const heard = (event: Event) => {
+        if (!event.isTrusted) return;
+        acted = true;
+        for (const type of ['pointerdown', 'keydown'] as const)
+            document.removeEventListener(type, heard, true);
+    };
+    for (const type of ['pointerdown', 'keydown'] as const)
+        document.addEventListener(type, heard, true);
+};
+
 /**
- * A ref for a view's heading, which takes focus when the key given changes, such as the round on
- * screen, so a screen reader says where a visitor's action brought them. It never moves focus as
- * the page first draws, only when the key changes after, and leaves focus a visitor has moved
- * since. The heading takes a tabindex of -1 where it has none, so it can take focus at all.
+ * A ref for a view's heading, which takes focus when a visitor's action brings the view, so a
+ * screen reader says where they are: when the key given changes, such as the round on screen, and
+ * when a view is drawn after the visitor has pressed or typed, as a tab's view is. It never moves
+ * focus as the page first draws, nor from focus the view placed itself as it drew, as a field with
+ * autofocus does, nor from where a visitor has moved it. The key is a string, a number or a
+ * boolean, compared by value, so a key drawn again with the same value moves nothing. The heading
+ * takes a tabindex of -1 where it has none, so it can take focus at all. The key changes on a
+ * visitor's press or submit, never as they choose in a list or a set of radios, which would move
+ * them as they choose.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
-    key: unknown
+    key: ArrivalKey
 ): RefCallback<Heading> => {
+    listenForAction();
     const heading = useRef<Heading | null>(null);
-    const seen = useRef(key);
+    const seen = useRef<{ readonly key: ArrivalKey } | null>(null);
+    // Where focus was as the change began, read as the view draws, before anything in it can take
+    // focus, so a field the view focuses itself is not taken for the visitor's own place.
+    const from = useRef<Element | null>(null);
+    if (
+        (seen.current === null || !Object.is(seen.current.key, key)) &&
+        typeof document !== 'undefined'
+    )
+        from.current = document.activeElement;
+    // The page's first draw is told by whether the visitor had acted when the view was first drawn.
+    const arrivedByAction = useRef(acted);
     useEffect(() => {
-        if (Object.is(seen.current, key)) return undefined;
-        seen.current = key;
-        return moveFocus(heading.current);
+        const first = seen.current === null;
+        if (!first && Object.is(seen.current?.key, key)) return;
+        seen.current = { key };
+        if (first && !arrivedByAction.current) return;
+        // Not called off as the effect is cleaned up, so React's second run of a new effect in
+        // development, which finds the key already seen, leaves the request to land.
+        moveFocus(heading.current, { from: from.current });
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;

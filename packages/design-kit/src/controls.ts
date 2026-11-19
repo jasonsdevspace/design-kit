@@ -43,40 +43,61 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
 /** Where focus is asked to go: an element, an element's id, or nothing. */
 export type FocusTarget = Element | string | null | undefined;
 
+/** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
+const homeOf = (element: Element): Element | null =>
+    element.closest('.dk-app')?.querySelector('.dk-app-body') ?? document.querySelector('main');
+
 /** How focus is moved after a change. */
 export type MoveFocusOptions = {
-    /** Where focus goes, in order, when the target is gone, hidden, inert or off. */
+    /** Where focus goes, in order, when the target is gone, hidden, inert, disabled or off. */
     readonly fallbacks?: readonly FocusTarget[] | undefined;
+    /**
+     * Where focus was when the change was asked for, for a request made after the change began,
+     * such as from an effect, so focus a view placed as it drew is not taken for the visitor's.
+     */
+    readonly from?: Element | null | undefined;
 };
 
-const placeOf = (target: FocusTarget): Element | null =>
-    typeof target === 'string' ? document.getElementById(target) : (target ?? null);
+/** A place to focus, or nothing where it is an id with no element yet or a control marked off. */
+const placeOf = (target: FocusTarget): Element | null => {
+    const place = typeof target === 'string' ? document.getElementById(target) : (target ?? null);
+    return place && !isOff(place) ? place : null;
+};
+
+/** How long a request may wait before it is dropped, as in a tab out of sight, in milliseconds. */
+const STALE = 1000;
 
 /**
  * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
  * next player's entry, and returns what calls it off before it lands. It waits for the next frame,
- * so a page that draws the control in answer to the same change has drawn it, and finds an id
- * then. Where the target is gone from the page, hidden, inert or disabled, focus goes to the first
- * fallback that takes it, by the same walk a closing panel hands focus back by, so it never falls
- * to the page. Focus a visitor has moved since the request is left where they put it: focus is
- * free only while it is where it was when asked, or on the page's body. Each request is new, so a
- * control asked for twice is focused twice.
+ * so a page that draws the control in answer to the same press or key has drawn it, and finds an
+ * id then. A change React draws later, in a transition or behind a suspense, asks from an effect
+ * once it is drawn. Where the target is gone from the page, hidden, inert, disabled or off, focus
+ * goes to the first fallback that takes it, and then to the app frame's body or the page's main
+ * content, by the walk a closing panel hands focus back by, so it does not fall to the page. Focus
+ * a visitor has moved since the request is left where they put it: focus is free only while it is
+ * where it was when asked, or on the page's body. A request still waiting a second later, as in a
+ * tab out of sight, is dropped, so focus does not jump when the visitor comes back. Each request is
+ * new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
-    const from = document.activeElement;
+    const from = options.from === undefined ? document.activeElement : options.from;
+    const asked = performance.now();
     const frame = window.requestAnimationFrame(() => {
+        if (performance.now() - asked > STALE) return;
         const now = document.activeElement;
         if (now !== from && now !== null && now !== document.body) return;
-        focusFirst(placeOf(target), ...(options.fallbacks ?? []).map(placeOf));
+        const place = placeOf(target);
+        focusFirst(
+            place,
+            ...(options.fallbacks ?? []).map(placeOf),
+            homeOf(place ?? document.body)
+        );
     });
     return () => {
         window.cancelAnimationFrame(frame);
     };
 };
-
-/** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
-const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ?? document.querySelector('main');
 
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */
 let media: MediaQueryList | null | undefined;
