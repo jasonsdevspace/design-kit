@@ -23,7 +23,6 @@ import {
     type Refuse,
     type RovingOptions,
     type Say,
-    type SayOptions,
 } from './controls.js';
 
 /*
@@ -55,7 +54,7 @@ export type StatusProviderProps = {
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
-    const held = useRef<readonly [string, SayOptions | undefined] | null>(null);
+    const held = useRef<Parameters<Say> | null>(null);
     const gone = useRef(false);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {

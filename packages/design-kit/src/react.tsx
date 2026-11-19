@@ -307,16 +307,17 @@ export type ButtonProps = NativeButton & {
           }
     );
 
+/** The words a busy button is said with, empty for the default, or nothing where it is not busy. */
+const busyWords = (busy: ButtonProps['busy']): string | null =>
+    busy === true ? '' : typeof busy === 'string' ? busy : null;
+
 /**
  * A button, of type button unless a page gives another, so it never submits a form by surprise.
  * Off, it is marked aria-disabled rather than disabled, since a disabled button that has focus
  * drops it, and a press of it runs no click handler of the page's and stops the form it would
  * submit. The page's other handlers, for keys or a pointer, still run, and check `off` themselves.
+ * Busy, it is off in the same way, and marked `data-busy` with the words `attachBusy` says.
  */
-/** The words a busy button is said with, empty for the default, or nothing where it is not busy. */
-const busyWords = (busy: ButtonProps['busy']): string | null =>
-    busy === true ? '' : typeof busy === 'string' ? busy : null;
-
 export const Button = ({
     accent,
     large,

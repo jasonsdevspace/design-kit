@@ -457,11 +457,18 @@ A button whose press has started something still running, such as a save, is bus
 `data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes
 them with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
 `--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
-wait at once. `attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which
-speaks on the screen's `StatusProvider`, stops a press before any handler of the page's hears it,
-and once the wait outlasts the token says the button's words, or "Saving.", once on the status line.
-Words not yet said when the button stops being busy are dropped, so a result a toast says is never
-followed by a late "Saving." There is no spinner, since words say what is happening.
+wait at once. A screen reader hears the off state at once, as it must for the press to be stopped.
+
+`attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which speaks on the
+screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes away
+only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a field of
+the form it submits, is stopped before the button's own handlers and React's `onClick` hear it,
+though a capture listener further up still does. Once the wait the sheet holds the look back by
+has passed, the button's words are said once on the status line. `busy` set to true says "Saving.",
+which fits a save alone, so any other action, such as a delete or a send, gives its own words.
+Words not yet said when the work is done are dropped, so a result a toast says is never followed by
+a late "Saving." There is no spinner, since words say what is happening. A page that sets a
+transition of its own on a busy button replaces the wait, and the button is drawn off at once.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried

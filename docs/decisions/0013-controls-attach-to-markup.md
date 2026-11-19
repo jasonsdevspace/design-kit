@@ -154,8 +154,7 @@ The controls were measured again with `moveFocus`, which moves focus once a chan
 gives them with its other behaviors. Every function sent together weighs 10,372 bytes, past the 8.75 KB they held, and the median a function adds is now 650 bytes, so the rule sets the controls at 11 KB.
 
 The controls were measured again with `attachForm`, which refuses a form, and `attachBusy`, which
-says a busy button's wait, in place. Every function sent together weighs 11,457 bytes, past the 11
-KB they held, and the median a function adds is now 673 bytes, so the rule sets the controls at 12
+says a busy button's wait, in place. Every function sent together weighs 11,524 bytes, past the 11 KB they held, and the median a function adds is now 672 bytes, so the rule sets the controls at 12
 KB.
 
 For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that

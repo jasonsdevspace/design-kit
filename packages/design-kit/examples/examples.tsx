@@ -101,11 +101,6 @@ export const siteHeader: ReactElement = (
     </header>
 );
 
-/**
- * An action, the one action a view leads with, a large button, a tall one, a text button, a toggle
- * that is on, and a button that is off, in a row of actions, with the text after it that says why
- * the last is off.
- */
 /** A save that is running, its button busy and saying so in its own words. */
 export const busyButton: ReactElement = (
     <Button accent busy="Saving the rule.">
@@ -113,6 +108,11 @@ export const busyButton: ReactElement = (
     </Button>
 );
 
+/**
+ * An action, the one action a view leads with, a large button, a tall one, a text button, a toggle
+ * that is on, and a button that is off, in a row of actions, with the text after it that says why
+ * the last is off.
+ */
 export const buttons: ReactElement = (
     <>
         <div className="dk-actions">
