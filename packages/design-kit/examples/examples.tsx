@@ -225,13 +225,8 @@ export const callout: ReactElement = (
     </Callout>
 );
 
-/**
- * A failure's callout as the page mounts it: live, read at once, and empty until the failure comes,
- * with an id and a tabindex so focus can come back to it after Try again fails again.
- */
-export const tryAgain: ReactElement = (
-    <Callout id="products-failed" tabIndex={-1} tone="danger" live="alert" />
-);
+/** A failure's callout as the page mounts it: live, read at once, and empty until the failure comes. */
+export const tryAgain: ReactElement = <Callout tone="danger" live="alert" />;
 
 /** Every state of each control, and a button and a field inside each callout tone. */
 export const controlStates: ReactElement = (
