@@ -1,0 +1,179 @@
+name: Site pages
+
+# Records how the site's pages score whenever the version of the kit the site pins moves on main,
+# since the pin is what changes what the pages draw. A release records the package alone, from the
+# tagged commit, and the site moves its pin only after that version is promoted, in a pull request
+# of its own, so a record taken at the tag would describe a site that was never deployed. This one
+# names the version the site pins on main, and is taken again each time that pin moves.
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - packages/site/package.json
+
+permissions:
+    contents: read
+
+# A later push to main stands in for one still recording, since only the last pin is deployed.
+concurrency:
+    group: site-pages
+    cancel-in-progress: true
+
+jobs:
+    # The site's package.json changes for more than its pin, so the record is taken only where the
+    # version it pins differs from the one before the push.
+    pin:
+        name: Find the site's pin
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+        outputs:
+            moved: ${{ steps.pin.outputs.moved }}
+            version: ${{ steps.pin.outputs.version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 2
+
+            - name: Compare the pin with the one before
+              id: pin
+              env:
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  pinned() {
+                      node -e "const site = JSON.parse(require('fs').readFileSync(0, 'utf8')); console.log((site.dependencies?.['design-kit-release'] ?? '').split('@').pop())"
+                  }
+                  now="$(pinned < packages/site/package.json)"
+                  before=""
+                  if git cat-file -e "$BEFORE^{commit}" 2>/dev/null || git fetch --depth=1 origin "$BEFORE" 2>/dev/null; then
+                      before="$(git show "$BEFORE:packages/site/package.json" 2>/dev/null | pinned || true)"
+                  fi
+                  echo "version=$now" >> "$GITHUB_OUTPUT"
+                  if [ -n "$now" ] && [ "$now" != "$before" ]; then
+                      echo "moved=true" >> "$GITHUB_OUTPUT"
+                      echo "The site's pin moved from ${before:-nothing} to $now, so its pages are recorded." >> "$GITHUB_STEP_SUMMARY"
+                  else
+                      echo "moved=false" >> "$GITHUB_OUTPUT"
+                      echo "The site still pins $now, so its pages are not recorded again." >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
+    # The pages recorded from the commit on main that moved the pin. This job runs the build and the
+    # audit and holds no token that can write, and the record leaves it as an artifact. A slow trace
+    # on a shared runner can fail it, and the next pin move records the pages again.
+    record:
+        name: Record the site's pages
+        needs: pin
+        if: needs.pin.outputs.moved == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        permissions:
+            contents: read
+        outputs:
+            ready: ${{ steps.app.outputs.ready }}
+        steps:
+            - name: Say whether the records app is set up
+              id: app
+              env:
+                  READY: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
+              run: |
+                  echo "ready=$READY" >> "$GITHUB_OUTPUT"
+                  if [ "$READY" != "true" ]; then
+                      echo "The record was not opened as a pull request, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            # The page audit drives Playwright's Chromium, installed as the browser tests install it.
+            - name: Install Chromium
+              timeout-minutes: 3
+              run: |
+                  npx playwright install chromium
+                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
+
+            - name: Record the pages
+              run: npm run bench:pages
+
+            - name: Keep the record
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: site-pages
+                  path: |
+                      docs/benchmarks/site-pages.json
+                      docs/benchmarks/site-pages.md
+                  retention-days: 7
+
+    # The record as a pull request, opened with a token from the records app rather than the run's
+    # own, since a pull request opened with the run's token starts no workflow, so its required
+    # checks would never run. This job installs and runs nothing of the repository's, so the token
+    # never meets a dependency's code. A run again moves the branch to the new record and leaves a
+    # pull request already open for it as it is.
+    record-pull-request:
+        name: Open the record
+        needs: [pin, record]
+        if: needs.record.result == 'success' && needs.record.outputs.ready == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+        env:
+            VERSION: ${{ needs.pin.outputs.version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Take the record
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+              with:
+                  name: site-pages
+                  path: docs/benchmarks
+
+            - name: Get the records app's token
+              id: token
+              uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+              with:
+                  client-id: ${{ secrets.RECORDS_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.RECORDS_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            - name: Open a pull request with the record
+              env:
+                  GH_TOKEN: ${{ steps.token.outputs.token }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  branch="records-site-$VERSION"
+                  git config user.name 'jasonsdevspace-records[bot]'
+                  git config user.email 'jasonsdevspace-records[bot]@users.noreply.github.com'
+                  git switch -c "$branch"
+                  git add docs/benchmarks/site-pages.json docs/benchmarks/site-pages.md
+                  git commit -m "Record the site's pages with the site pinned to $VERSION"
+                  git push --force "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git" "HEAD:refs/heads/$branch"
+                  open="$(gh pr list --repo "$REPOSITORY" --head "$branch" --state open --json url -q '.[0].url')"
+                  if [ -n "$open" ]; then
+                      echo "The record moved to $open." >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
+                  echo "The site's pages are recorded again from the commit on main that moved the site's pin to $VERSION, so the record names the version the site draws from." > body.md
+                  url="$(gh pr create --repo "$REPOSITORY" --base main --head "$branch" \
+                      --title "Record the site's pages with the site pinned to $VERSION" \
+                      --body-file body.md --label documentation --assignee jasonsdevspace)"
+                  echo "The record is in $url." >> "$GITHUB_STEP_SUMMARY"
