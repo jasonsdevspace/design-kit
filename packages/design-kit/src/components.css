@@ -1237,20 +1237,67 @@
 
     /*
      * A group of sections side by side, such as two ways to do one thing, as many to a row as fit
-     * at 20rem or more and one to a row on a phone. Each section keeps a page section's heading and
-     * steps, so a page with a group and a section under it reads as one page, and the group stands
-     * a section's step from what comes before it.
+     * at --dk-sections-least or more, 20rem until a page sets it, and one to a row on a phone. Each
+     * section keeps a page section's heading and steps, so a page with a group and a section under
+     * it reads as one page, and the group stands a section's step from what comes before it.
      */
     :where(.dk-sections) {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(100%, var(--dk-sections-least, 20rem)), 1fr)
+        );
         gap: var(--dk-space-7);
     }
 
-    /* Prose a page, a band, a stack or a section of theirs holds keeps to the measure. */
+    /*
+     * A split row: a title at the start and a figure or a control at the end, on one line where
+     * they fit and the end under the start where they do not, lined up on their first line's
+     * baseline. What it holds keeps no room of its own, so the row's gaps are the only space in it,
+     * and each piece breaks a word too long for the line rather than push the page sideways.
+     */
+    :where(.dk-split) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--dk-space-1) var(--dk-space-3);
+    }
+
+    :where(.dk-split > *) {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* A note that belongs to no field: the muted text at the small size. */
+    :where(.dk-note) {
+        color: var(--dk-muted);
+        font-size: var(--dk-text-small);
+    }
+
+    /*
+     * A figure read from across a room, such as a score: the numeral size, in the mono face with
+     * tabular figures, so a number that changes keeps its width, at the strong weight and on a line
+     * no taller than the figure. It never breaks, since a score split over two lines reads as two
+     * numbers, so on a phone at a large text size it stops at a width five figures fit in.
+     */
+    :where(.dk-numeral) {
+        font-family: var(--dk-font-mono);
+        font-size: min(var(--dk-text-numeral), 26vw);
+        overflow-wrap: normal;
+        font-variant-numeric: tabular-nums;
+        font-weight: var(--dk-weight-strong);
+        line-height: 1;
+    }
+
+    /*
+     * Prose a page, a band, a stack or a section of theirs holds keeps to the measure, and a split
+     * row with it, so its end stays near its start.
+     */
     :where(
         :is(.dk-page, .dk-band, .dk-stack, :is(.dk-page, .dk-band, .dk-sections) > section)
-            > :is(p, ul:not([class]), ol:not([class]), blockquote)
+            > :is(p, ul:not([class]), ol:not([class]), blockquote, .dk-split)
     ) {
         max-width: var(--dk-measure);
     }

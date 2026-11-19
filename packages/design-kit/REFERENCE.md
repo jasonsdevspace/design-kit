@@ -122,6 +122,7 @@ may change in any release.
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
+| `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
 
 ## Page chrome
 
@@ -1699,7 +1700,7 @@ and its `h2` at the heading size, and a section it holds spaces as a content pag
 prose and a stack's are held to the measure. A grid the band holds is one piece of its flow, so the
 grid's items stand apart by its gap alone, and a column of pieces in a grid's cell, such as a hero's
 words beside its picture, is a `dk-stack`, the flow with no room of its own, at the step of what
-holds it. `dk-sections` sets its sections as many to a row as fit at 20rem or more, one to a row on
+holds it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more, 20rem until a page sets it, one to a row on
 a phone, `--dk-space-7` apart, each with its heading, an `h2` under a page's `h1` or an `h3` under a
 band's `h2`, at the title size and `--dk-space-3` over its text, and its prose held to the measure.
 A group stands a section's step from what comes before it, or the flow's step under the heading that
@@ -1745,6 +1746,42 @@ matter, such as a ranking, put the number in each item's words, since the number
 list nested in one keeps its own markers. Scores compared across players and rounds are a table
 rather than a stack of lists. The step between a page's sections stays the page's, since that is
 the page's rhythm rather than a piece's.
+
+### Split rows, notes and numerals
+
+A title with a figure or a control at its end, such as a player's name and the round, is a
+`dk-split`. A note that belongs to no field is a `dk-note`, and a figure read from across a room,
+such as a score, is a `dk-numeral`:
+
+<!-- example: splitRow -->
+
+```html
+<div class="dk-stack dk-stack-pair">
+    <div class="dk-split">
+        <h2>Ana</h2>
+        <p class="dk-note">Round 4 of 10</p>
+    </div>
+    <p class="dk-numeral">212<span class="dk-visually-hidden"> points</span></p>
+    <p class="dk-note">The first to 300 points wins.</p>
+</div>
+```
+
+`dk-split` sets what it holds on one line, the first at the start and the last at the end, lined up
+on their first line's baseline, and puts the end under the start, `--dk-space-1` apart, where the
+two do not fit, with `--dk-space-3` between them on one line. What it holds keeps no room of its
+own, and each piece breaks a word too long for the line, so a long name holds on a 320px phone
+rather than push the page sideways. `dk-note` is the muted text at the small size, which holds 4.5
+to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
+`--dk-text-numeral` in the mono face with tabular figures, so a score that changes keeps its width,
+at the strong weight on a line no taller than the figure. A numeral never breaks, since a score
+split over two lines reads as two numbers, so on a phone at a large text size it stops at a size
+five figures fit in, such as `-1234`. Give a numeral its unit, out of sight where the screen shows it
+elsewhere, so a screen reader says what it counts. A numeral that changes is not a live region,
+which would read every score on every change, so say the change on the screen's
+[status line](#status-line), with whose score it is, as `say('Ana, 212 points.')`. A number in a
+row is a `dk-row-figure`, which lines up digits the same way, rather than a numeral. A split row on
+a page, a band or a stack holds to the measure with the prose around it, so its end stays near its
+start.
 
 ## Explainer pages
 
