@@ -1237,10 +1237,11 @@
 
     /*
      * A hero: a band's words in a stack beside its picture, the words first so a reader hears what
-     * the page is before the picture. On a phone they stand one over the other, and from 48rem side
-     * by side, centered on each other, with the picture at --dk-band-hero-picture, 28rem until a
-     * page sets it, and never past 45% of the row, so the words keep room for a display heading. A
-     * picture fills its cell and keeps its proportions, cropped rather than stretched.
+     * the page is before the picture. On a phone they stand one over the other, the picture no
+     * taller than --dk-band-hero-picture, and from 48rem side by side, centered on each other, with
+     * the picture that wide, 28rem until a page sets it, and never past 45% of the row, so the words
+     * keep room for a display heading. An image, a video or a picture fills its cell and keeps its
+     * proportions, cropped rather than stretched, and one in a figure keeps its caption under it.
      */
     :where(.dk-band-hero) {
         display: grid;
@@ -1249,25 +1250,33 @@
         gap: var(--dk-space-6);
     }
 
-    :where(.dk-band-hero > :is(img, picture, video, svg)) {
+    :where(.dk-band-hero > * + *) {
+        min-width: 0;
+        margin: 0;
+    }
+
+    :where(.dk-band-hero > :is(img, video, picture), .dk-band-hero > picture > img) {
         display: block;
         align-self: stretch;
         width: 100%;
         height: 100%;
-        margin: 0;
+        max-block-size: var(--dk-band-hero-picture, 28rem);
         object-fit: cover;
     }
 
-    :where(.dk-band-hero > picture > img) {
+    :where(.dk-band-hero > figure :is(img, video)) {
         display: block;
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        height: auto;
     }
 
     @media (width >= 48rem) {
         :where(.dk-band-hero) {
             grid-template-columns: minmax(0, 1fr) min(var(--dk-band-hero-picture, 28rem), 45%);
+        }
+
+        :where(.dk-band-hero > :is(img, video, picture), .dk-band-hero > picture > img) {
+            max-block-size: none;
         }
     }
 

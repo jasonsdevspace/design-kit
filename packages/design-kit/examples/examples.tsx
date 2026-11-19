@@ -382,7 +382,7 @@ export const bands: ReactElement = (
                     <h1 id="title">Scorekeeper</h1>
                     <p className="dk-lead">Keep score for any card game on one phone.</p>
                 </div>
-                <img src="table.jpg" alt="Cards laid out on a table" />
+                <img src="table.jpg" width="880" height="1008" alt="" />
             </div>
         </section>
         <section className="dk-band" aria-labelledby="install">
