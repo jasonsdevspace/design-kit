@@ -1,8 +1,7 @@
 # 5. The components carry no stylesheet of their own
 
 **Status:** accepted, amended in 0.6.0 to let a selector in the components sheet follow its
-`:where()` with a number field's spin buttons or a dialog's `::backdrop`, and by record 20, whose
-hooks attach the controls from `./react` while its components still draw markup alone
+`:where()` with a number field's spin buttons or a dialog's `::backdrop`, and by record 20, whose hooks in `./react` attach the controls while the components still draw markup alone
 
 ## Context
 

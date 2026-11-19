@@ -989,11 +989,12 @@ its role from `live` alone.
 
 **Hooks**
 
-Where a control has behavior, `./react` gives a hook that attaches it, as
+Where `./react` gives a hook for a control, it attaches that control's function from `./controls`
+to the element its ref lands on, and returns what the function returns, the same across renders, as
 [decision 0020](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0020-react-hooks-wrap-the-attach-functions.md)
-has it. A hook attaches its function from `./controls` when the component mounts, takes it away
-when the component unmounts, and returns what the function returns, the same across renders. A
-page without React calls the same function on the same markup and gets the same behavior.
+has it. It sets its options again only when one changes, and takes the function away when the
+element leaves, where the function returns what does so. A page without React calls the same
+function on the same markup and gets the same behavior.
 
 ## Theme switch and copy button
 
