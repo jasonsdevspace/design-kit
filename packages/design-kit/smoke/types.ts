@@ -252,3 +252,12 @@ export const busyNamed = Button({ busy: 'Saving the rule.', children: 'Save rule
 export const busyPlain = Button({ busy: true, children: 'Save rule' });
 const quiet: BusyOptions = { status: null };
 export const busyOf = (button: HTMLElement): (() => void) => attachBusy(button, quiet);
+
+// A select can be read only, drawn as a field with the chosen option's words.
+export const fixedGame = SelectField({
+    label: 'Game',
+    name: 'game',
+    defaultValue: 'wizard',
+    readOnly: true,
+    children: 'Wizard',
+});

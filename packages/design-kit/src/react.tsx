@@ -3,6 +3,7 @@ import {
     type ComponentPropsWithRef,
     Fragment,
     isValidElement,
+    type ReactElement,
     type ReactNode,
     type Ref,
     useId,
@@ -536,20 +537,88 @@ export const InputField = (props: InputFieldProps) => {
 
 export type SelectFieldProps = FieldParts &
     FieldAction &
-    Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'>;
+    Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'> & {
+        /**
+         * Read only, a value to read but not change: drawn as a read-only field with the chosen
+         * option's words, and sent by a hidden field, since a select has no read-only state. With
+         * no select drawn, the select's own props and its `ref` are left unused.
+         */
+        readonly readOnly?: boolean | undefined;
+    };
 
 /**
  * A native select with its label, hint and error, its children the options, and the select taking
  * every other prop given, its `ref` among them, which holds the select drawn for a page that moves
  * focus to it.
  */
+/** The words and the value of the option a select has chosen, or its first where none is. */
+const chosenOf = (
+    children: ReactNode,
+    value: unknown
+): { readonly words: string; readonly value: string } => {
+    const options = Children.toArray(children).filter(
+        (child): child is ReactElement<{ value?: unknown; children?: ReactNode }> =>
+            isValidElement(child) && child.type === 'option'
+    );
+    const valueOf = (option: (typeof options)[number]) => {
+        const own = option.props.value;
+        return typeof own === 'string' || typeof own === 'number'
+            ? String(own)
+            : textOf(option.props.children);
+    };
+    const wanted = typeof value === 'string' || typeof value === 'number' ? String(value) : null;
+    const chosen = options.find((option) => valueOf(option) === wanted) ?? options[0];
+    return chosen
+        ? { words: textOf(chosen.props.children), value: valueOf(chosen) }
+        : { words: '', value: '' };
+};
+
+/** The text a node draws, for an option's words. */
+const textOf = (node: ReactNode): string =>
+    Children.toArray(node)
+        .map((part) =>
+            typeof part === 'string' || typeof part === 'number'
+                ? String(part)
+                : isValidElement<{ children?: ReactNode }>(part)
+                  ? textOf(part.props.children)
+                  : ''
+        )
+        .join('');
+
 export const SelectField = (props: SelectFieldProps) => {
     const { native, field } = useControl(props);
-    const { className, children, action, ...rest } = native;
+    const { className, children, action, readOnly, name, value, defaultValue, ...rest } = native;
+    if (readOnly === true) {
+        // A select has no read-only state, so its chosen option is drawn as a read-only field,
+        // and a hidden field carries its value, so the form still sends it.
+        const chosen = chosenOf(children, value ?? defaultValue);
+        return (
+            <Field parts={props} field={field}>
+                <WithAction action={action}>
+                    <input
+                        className={spaced('dk-input', className)}
+                        readOnly
+                        value={chosen.words}
+                        {...field.wired}
+                    />
+                </WithAction>
+                {name === undefined ? null : (
+                    <input type="hidden" name={name} value={chosen.value} />
+                )}
+            </Field>
+        );
+    }
     return (
         <Field parts={props} field={field}>
             <WithAction action={action}>
-                <select className={spaced('dk-select', className)} {...rest} {...field.wired}>
+                <select
+                    className={spaced('dk-select', className)}
+                    name={name}
+                    value={value}
+                    defaultValue={defaultValue}
+                    {...rest}
+                    {...field.wired}
+                >
                     {children}
                 </select>
             </WithAction>
@@ -1034,6 +1103,8 @@ export const StepperField = (props: StepperFieldProps) => {
     const { native, field } = useControl(forField);
     const { className, ...rest } = native;
     const named = subject ?? (typeof props.label === 'string' ? props.label : '');
+    // A read-only stepper shows its value alone, with no buttons to change it.
+    const fixed = props.readOnly === true;
     return (
         <Field
             parts={props}
@@ -1048,15 +1119,17 @@ export const StepperField = (props: StepperFieldProps) => {
                         : `Enter a number from ${String(min)} to ${String(max)} in steps of ${String(step)}.`)}
             </p>
             <div className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}>
-                <button
-                    type="button"
-                    className="dk-button dk-stepper-down"
-                    aria-controls={field.id}
-                    hidden
-                >
-                    <span aria-hidden="true">−</span>
-                    <span className="dk-visually-hidden">Lower {named}</span>
-                </button>
+                {fixed ? null : (
+                    <button
+                        type="button"
+                        className="dk-button dk-stepper-down"
+                        aria-controls={field.id}
+                        hidden
+                    >
+                        <span aria-hidden="true">−</span>
+                        <span className="dk-visually-hidden">Lower {named}</span>
+                    </button>
+                )}
                 <input
                     className={spaced('dk-input', 'dk-stepper-value', className)}
                     type="number"
@@ -1067,15 +1140,17 @@ export const StepperField = (props: StepperFieldProps) => {
                     {...rest}
                     {...field.wired}
                 />
-                <button
-                    type="button"
-                    className="dk-button dk-stepper-up"
-                    aria-controls={field.id}
-                    hidden
-                >
-                    <span aria-hidden="true">+</span>
-                    <span className="dk-visually-hidden">Raise {named}</span>
-                </button>
+                {fixed ? null : (
+                    <button
+                        type="button"
+                        className="dk-button dk-stepper-up"
+                        aria-controls={field.id}
+                        hidden
+                    >
+                        <span aria-hidden="true">+</span>
+                        <span className="dk-visually-hidden">Raise {named}</span>
+                    </button>
+                )}
                 {/* Its range in words, which the attach writes and adds to the field's description. */}
                 <span className="dk-visually-hidden dk-stepper-limits" id={`${field.id}-limits`} />
                 <span className="dk-visually-hidden dk-stepper-status" role="status" />

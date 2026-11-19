@@ -774,6 +774,18 @@
         cursor: default;
     }
 
+    /*
+     * A value a visitor reads but cannot change, such as a saved total. Its edge keeps its width,
+     * so it lines up with the fields beside it, but is drawn clear on a clear ground, with its text
+     * in the page's own color, so it reads as a value rather than as a control that is off. It stays
+     * in the tab order, and its words can be read and copied.
+     */
+    :where(.dk-input[readonly], .dk-textarea[readonly]) {
+        border-color: transparent;
+        background-color: transparent;
+        color: var(--dk-fg);
+    }
+
     @media (width <= 48rem) {
         :where(.dk-input, .dk-select, .dk-textarea) {
             min-height: var(--dk-target);
@@ -799,6 +811,11 @@
      * a keyboard sees where it landed.
      */
     @media (forced-colors: active) {
+        /* A clear edge shows in forced colors, so a read-only field's takes the ground's color. */
+        :where(.dk-input[readonly], .dk-textarea[readonly]) {
+            border-color: Canvas;
+        }
+
         :where(.dk-select) {
             appearance: auto;
             padding-inline-end: var(--dk-field-inline);

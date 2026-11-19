@@ -324,7 +324,8 @@ test('fits a phone at twice the text size, its buttons and its value whole', asy
         await textSize(page, 2);
         expect(await sideways(page), String(width)).toBe(0);
         expect(await cutOff(page, '.dk-stepper-value'), String(width)).toEqual([]);
-        for (const stepper of await page.locator('.dk-stepper').all()) {
+        // A read-only stepper has no buttons to fit.
+        for (const stepper of await page.locator('.dk-stepper:has(.dk-stepper-up)').all()) {
             const field = await box(stepper.locator('xpath=..'), 'the field');
             const last = await box(stepper.locator('.dk-stepper-up'), 'the raise button');
             expect(last.x + last.width, String(width)).toBeLessThanOrEqual(
@@ -570,20 +571,32 @@ test('hides its buttons when taken away, and steps once a press when attached ag
     }
 });
 
-test('marks both buttons off on a read-only field, and a press changes nothing', async ({
+test('draws a read-only stepper with no buttons, its value read as a field drawn read only', async ({
+    page,
+}) => {
+    await open(page);
+    const read = page.getByRole('spinbutton', { name: 'Rounds played' });
+    await expect(read).toHaveValue('5');
+    await expect(read).toHaveAttribute('readonly', '');
+    await expect(page.getByRole('button', { name: /Rounds played/ })).toHaveCount(0);
+});
+
+test('keeps a focused button, marked off, when its field turns read only, and a press changes nothing', async ({
     page,
     browserName,
 }) => {
     await open(page);
-    const read = page.getByRole('spinbutton', { name: 'Rounds played' });
-    for (const name of ['Lower Rounds played', 'Raise Rounds played']) {
-        const button = page.getByRole('button', { name });
-        await expect(button, name).toHaveAttribute('aria-disabled', 'true');
-        // Pressed as a tap would, since Playwright waits for a button marked off to come on.
-        if (browserName === 'webkit') await press(button, browserName);
-        else await button.click({ force: true });
-        await expect(read, name).toHaveValue('5');
-    }
+    const lowerBid = lower(page);
+    await lowerBid.focus();
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await lowerBid.dispatchEvent('focusin');
+    await expect(lowerBid).toHaveAttribute('aria-disabled', 'true');
+    await expect(lowerBid).toBeFocused();
+    if (browserName === 'webkit') await press(lowerBid, browserName);
+    else await lowerBid.click({ force: true });
+    await expect(bid(page)).toHaveValue('9');
 });
 
 test("sets an inline stepper's error above it and its hint below it", async ({ page }) => {
