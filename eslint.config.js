@@ -85,6 +85,25 @@ export default tseslint.config(
         },
     },
     {
+        // The markup components draw markup alone, as record 20 has it, so they render the same on
+        // a server and by hand. The hooks that attach the controls live in hooks.tsx.
+        files: ['packages/design-kit/src/react.tsx'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'react',
+                            importNames: ['useEffect', 'useLayoutEffect', 'useInsertionEffect'],
+                            message: 'A markup component runs no effect. Put a hook in hooks.tsx.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
         // Rules that need the types, read from each file's own tsconfig.
         files: ['**/*.{ts,tsx}'],
         extends: [...tseslint.configs.recommendedTypeChecked],
