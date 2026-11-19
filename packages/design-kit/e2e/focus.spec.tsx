@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { bundle, HOOKS } from './bundle.js';
+import { bundle } from './bundle.js';
 import { servePage } from './page.js';
 
 /*
@@ -103,40 +103,10 @@ test('focuses a control asked for twice, each time', async ({ page }) => {
     }
 });
 
-const APP = `import { createElement as h, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { useArrivalFocus, useFocusAfterDraw } from ${JSON.stringify(HOOKS)};
-
-// Each player removed by a button that goes with them, focus going to the next, or the list's heading.
-const Players = () => {
-    const [players, setPlayers] = useState(['Ann', 'Ben']);
-    const focusNext = useFocusAfterDraw();
-    return h('section', null,
-        h('h2', { id: 'players', tabIndex: -1 }, 'Players'),
-        ...players.map((name, at) =>
-            h('button', {
-                key: name,
-                id: 'remove-' + name,
-                onClick: () => {
-                    const next = players[at + 1] ?? players[at - 1];
-                    setPlayers(players.filter((one) => one !== name));
-                    focusNext(next ? 'remove-' + next : null, { fallbacks: ['players'] });
-                },
-            }, 'Remove ' + name)));
-};
-// A round's heading, focused when the round changes, never as the page first draws.
-const Round = () => {
-    const [round, setRound] = useState(1);
-    const heading = useArrivalFocus(round);
-    return h('section', null,
-        h('h2', { id: 'round', ref: heading }, 'Round ' + String(round)),
-        h('button', { id: 'next', onClick: () => setRound(round + 1) }, 'Next round'));
-};
-createRoot(document.getElementById('root')).render(h('main', null, h(Players), h(Round)));`;
-
 let app = '';
 test.beforeAll(async () => {
-    app = await bundle(APP);
+    test.setTimeout(120_000);
+    app = await bundle('focus-page.tsx');
 });
 
 test('moves focus to the next control as one removes itself, and to a heading once none is left', async ({

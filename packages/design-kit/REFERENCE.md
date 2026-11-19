@@ -1228,7 +1228,10 @@ wait that long for their words to stop changing, so a screen reader hears the co
 presses stop rather than every step of it or none. Words said again in the meantime take the place
 of those not yet said, any message said on the line drops words still waiting, so the last words said
 are the ones heard, and the same words said twice are heard twice. Words that must be heard, such
-as a save's result or the end of a progress, never wait.
+as a save's result or the end of a progress, never wait, and words that settle never drop words
+already said. A stepper's press words are put in a tenth of a second after each press, so a quick
+run of presses is heard once, at its end.
+
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
 its own rather than by its role, which those share.
@@ -1244,9 +1247,12 @@ React's `StatusLine` draws the line, taking `className` and `ref`, its ref the l
 
 In React, `StatusProvider` draws a screen's line and attaches it, and `useStatus()` returns the
 function that says a message on it from any part of the screen under the provider, the same across
-renders. Words said before the line is attached, as a child's own first effect can, are held and
-said once it is. A provider inside a dialog takes the calls of the parts inside it on a line of its
-own, so they are heard while the page behind is inert. A part with no provider above it throws.
+renders. The line is attached before the effects of the parts under it run, so a part's first
+effect is heard, and words said before the line is in the page are held and said once it is. A
+provider inside the dialog element itself takes the calls of the parts inside it on a line of its
+own, so they are heard while the page behind is inert. Words said as a dialog closes, such as a
+save's result, go through the page's own `say`, since the dialog's line leaves with it. A part with
+no provider above it throws.
 
 ```tsx
 import { StatusProvider, useStatus } from '@jasonsdevspace/design-kit/react';

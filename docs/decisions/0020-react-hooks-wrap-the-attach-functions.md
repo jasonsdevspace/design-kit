@@ -55,8 +55,8 @@ Option C. A hook is named for its attach, as `useStatus` would be for `attachSta
   attach does, and a page without React gets the same behavior from the same function.
 
 Where a piece needs one line for a whole page, as the status line does, a provider draws it and a
-hook finds it through context. A provider's effect runs after its children's, so words said before
-the line is attached are held and said once it is.
+hook finds it through context. The line is attached as it lands, before the effects of the parts
+under the provider run, and words said before it is in the page are held and said once it is.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.

@@ -1,3 +1,5 @@
+'use client';
+
 import {
     createContext,
     type ReactNode,
@@ -36,20 +38,25 @@ export type StatusProviderProps = {
 /**
  * Draws a page's status line, out of sight and on the page from the first draw, and hands every
  * part of the page under it the function that says a message on it, through `useStatus`. The line
- * is the markup `StatusLine` draws, attached by `attachStatus` as it lands. Words said before it is
- * attached, as a child's own effect can, since a provider's effects run after its children's, are
- * held and said once it is, the last of them alone, as a later message replaces an earlier one. A
- * provider inside another, as in a dialog, takes the calls of the parts under it on a line of its
- * own.
+ * is the markup `StatusLine` draws, attached by `attachStatus` as it lands, before the effects of
+ * the parts under it run, so their first effects are heard. Words said before the line is in the
+ * page are held and said once it is, the last of them alone, as a later message replaces an earlier
+ * one, and words said once it has gone are dropped. A provider inside another, as inside a dialog,
+ * takes the calls of the parts under it on a line of its own, so the provider sits inside the
+ * dialog element itself.
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
     const held = useRef<readonly [string, SayOptions | undefined] | null>(null);
+    const gone = useRef(false);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
             handle.current = null;
+            held.current = null;
+            gone.current = true;
             return;
         }
+        gone.current = false;
         handle.current = attachStatus(element);
         const waiting = held.current;
         held.current = null;
@@ -57,7 +64,7 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
-        else held.current = [message, options];
+        else if (!gone.current) held.current = [message, options];
     }, []);
     return (
         <Speaker.Provider value={speak}>
