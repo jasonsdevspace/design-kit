@@ -2344,6 +2344,27 @@
         min-width: 0;
     }
 
+    /*
+     * A compact action beside the dock's main one, on one row: the compact action at its own width,
+     * the main one taking the rest, its words wrapping inside it where they must, and the two
+     * stretched to one height, so the pair never takes a second row from the body above it. The
+     * main action is last, nearest the thumb and last in the keyboard's order. Each keeps the
+     * target as its least width, rather than the larger target a tall button keeps, with a step
+     * less padding at its sides, so a long compact word at twice the text size on a 320px phone
+     * still leaves the main action a target's width.
+     */
+    :where(.dk-app-dock-inline) {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: stretch;
+        gap: var(--dk-space-2);
+    }
+
+    :where(.dk-app-dock-inline > *) {
+        min-width: var(--dk-target);
+        padding-inline: var(--dk-space-2);
+    }
+
     /* A tab bar's place, last, at the bottom edge. */
     :where(.dk-app-tabs) {
         grid-area: tabs;

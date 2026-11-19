@@ -1981,6 +1981,27 @@ named for what it holds, so a screen reader moving by landmark finds the screen'
 the body. It holds that button at the larger target, and a second one below it where a screen has
 two.
 
+<!-- example: dockInline -->
+
+```html
+<section class="dk-app-dock" aria-label="Actions">
+    <div class="dk-app-dock-inline">
+        <button type="button" class="dk-button dk-button-tall">Scoreboard</button>
+        <button type="button" class="dk-button dk-button-accent dk-button-tall">
+            Save the round
+        </button>
+    </div>
+</section>
+```
+
+Where a screen has a compact action beside its main one, such as Scoreboard beside the button that
+moves a round on, `dk-app-dock-inline` holds the two on one row: the compact action at its own width
+and the main one taking the rest, its words wrapping inside it where they must, and the two
+stretched to one height. Each keeps the target as its least width, with a step less padding at its
+sides, so the pair stays on one row at twice the text size on a 320px phone, and never takes a row
+of height from the body every screen scrolls. The main action is last, so it
+sits nearest the thumb and comes last in the keyboard's order, after the one used now and then.
+
 `dk-app-toast` is a toast's place, above the dock, and `dk-app-tabs` is a tab bar's, at the bottom
 edge. A screen leaves out any part it does not have, the dock included, and its row closes to
 nothing. Each part names its row, so the order they are written in is the order the keyboard and a

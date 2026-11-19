@@ -148,6 +148,18 @@ export const fieldAction: ReactElement = (
     </form>
 );
 
+/** A dock with a compact action beside its main one, on one row. */
+export const dockInline: ReactElement = (
+    <section className="dk-app-dock" aria-label="Actions">
+        <div className="dk-app-dock-inline">
+            <Button tall>Scoreboard</Button>
+            <Button accent tall>
+                Save the round
+            </Button>
+        </div>
+    </section>
+);
+
 /** A form where one field is required and one optional, each marked in words in its label. */
 export const fieldMarks: ReactElement = (
     <>
@@ -1028,6 +1040,7 @@ export const EXAMPLES = {
     busyButton,
     fields,
     fieldMarks,
+    dockInline,
     readOnlyFields,
     fieldAction,
     choiceField,
