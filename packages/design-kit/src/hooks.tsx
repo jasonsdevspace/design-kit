@@ -11,10 +11,12 @@ import {
 } from 'react';
 
 import {
+    attachRoving,
     attachStatus,
     type FocusTarget,
     moveFocus,
     type MoveFocusOptions,
+    type RovingOptions,
     type Say,
     type SayOptions,
 } from './controls.js';
@@ -170,4 +172,56 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         heading.current = element;
         if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
     }, []);
+};
+
+/**
+ * A ref for a group of cells, such as a grid of buttons or a row of tabs, which `attachRoving`
+ * gives one stop for the Tab key and the arrow keys, Home and End. The page's `current` and
+ * `onMove` are read as the keys land, so functions written inline on every render are never set
+ * again, and the group is attached again only when its orientation, or whether it names a current
+ * cell, changes. A group swapped for another is let go and the new one attached, and the group is
+ * let go when the component unmounts.
+ */
+export const useRoving = <Group extends HTMLElement>(
+    options: RovingOptions = {}
+): RefCallback<Group> => {
+    const latest = useRef(options);
+    useEffect(() => {
+        latest.current = options;
+    });
+    const group = useRef<Group | null>(null);
+    const detach = useRef<(() => void) | null>(null);
+    const wired = useCallback(
+        (): RovingOptions => ({
+            orientation: latest.current.orientation,
+            current: latest.current.current ? () => latest.current.current?.() ?? null : undefined,
+            onMove: (cell) => {
+                latest.current.onMove?.(cell);
+            },
+        }),
+        []
+    );
+    const { orientation } = options;
+    const names = options.current !== undefined;
+    // What the group was last attached with, so it is attached again only when that changes.
+    const shape = useRef<string | null>(null);
+    useEffect(() => {
+        const now = `${orientation ?? ''}|${String(names)}`;
+        if (!group.current || shape.current === now) return;
+        shape.current = now;
+        attachRoving(group.current, wired());
+    }, [orientation, names, wired]);
+    return useCallback(
+        (element: Group | null) => {
+            if (element === group.current) return;
+            detach.current?.();
+            detach.current = null;
+            group.current = element;
+            if (!element) return;
+            const now = latest.current;
+            shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
+            detach.current = attachRoving(element, wired());
+        },
+        [wired]
+    );
 };
