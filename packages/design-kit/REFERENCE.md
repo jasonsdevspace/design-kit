@@ -683,6 +683,37 @@ would push its column.
 
 </details>
 
+#### A required or an optional field
+
+<!-- example: fieldMarks -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-name"
+        >Rule name <span class="dk-field-mark" aria-hidden="true">(required)</span></label
+    ><input class="dk-input" required="" id="rule-name" aria-required="true" />
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-note"
+        >Note <span class="dk-field-mark">(optional)</span></label
+    ><input class="dk-input" id="rule-note" />
+</div>
+```
+
+A field is marked required or optional in words in its label, `mark="required"` or
+`mark="optional"`, never by an asterisk alone, which needs a key to explain it. The words are in the
+muted text at the normal weight, so they do not compete with the label. Required is said by the
+control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say it
+twice, and optional is said in the label's name, since nothing else says it. A form where most
+fields are required marks the optional ones instead, and a form uses one kind of mark, never both,
+as the example shows each kind only to draw it. A set of choices keeps "(required)" in its
+legend's name, since not every screen reader says a group is required, and a set of radios is
+marked `aria-required` as well. A required set of checkboxes says in its hint how many to choose,
+such as "Choose at least one." The words are the kit's unless a page gives its own as
+`markWords`, as a page in another language does. The mark
+does no checking: `required` is still the native attribute, which a page keeps for the browser's
+own check, and the field, select, textarea, stepper and set of choices all take `mark`.
+
 #### A field with a button
 
 <!-- example: fieldAction -->

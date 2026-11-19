@@ -148,6 +148,14 @@ export const fieldAction: ReactElement = (
     </form>
 );
 
+/** A form where one field is required and one optional, each marked in words in its label. */
+export const fieldMarks: ReactElement = (
+    <>
+        <InputField id="rule-name" label="Rule name" mark="required" required />
+        <InputField id="rule-note" label="Note" mark="optional" />
+    </>
+);
+
 /** Values a visitor reads but cannot change: a text field, a select and a stepper, read only. */
 export const readOnlyFields: ReactElement = (
     <>
@@ -1019,6 +1027,7 @@ export const EXAMPLES = {
     buttons,
     busyButton,
     fields,
+    fieldMarks,
     readOnlyFields,
     fieldAction,
     choiceField,

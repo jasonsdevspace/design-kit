@@ -702,6 +702,12 @@
         color: var(--dk-muted);
     }
 
+    /* A field's mark, required or optional, in its label at the muted text and the normal weight. */
+    :where(.dk-field-mark) {
+        color: var(--dk-muted);
+        font-weight: var(--dk-weight-normal);
+    }
+
     :where(.dk-field-error) {
         color: var(--dk-danger);
         font-weight: var(--dk-weight-medium);
