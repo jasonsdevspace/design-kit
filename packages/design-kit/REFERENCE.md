@@ -874,6 +874,60 @@ explains. A message that arrives after the page has loaded is made live in three
    message again, with no actions, marks it again. For success, warning or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
+A failure that loading or saving meets is a live callout of the danger tone, mounted empty with
+`role="alert"` and an id, and filled with what happened and a way forward. Try again goes in the
+actions, so the alert reads the failure and never the button's words, and is named Try again unless
+the page words it otherwise.
+
+<!-- example: tryAgain -->
+
+```html
+<div data-empty="" id="products-failed" tabindex="-1" class="dk-callout dk-callout-danger">
+    <div class="dk-callout-body" role="alert"></div>
+</div>
+```
+
+Try again empties the callout as the load starts again, so a second failure fills it again and is
+read again, though its words are the same. Its button goes with the message, so focus goes to what
+was retried, such as the part's heading, by `moveFocus`, and back to the callout when the load fails
+again, which the callout's tabindex of -1 lets it take. A failure the visitor did not ask for, such
+as the first load's, is read where it is and moves no focus.
+
+```tsx
+import { useState } from 'react';
+import { Button, Callout, useFocusAfterDraw } from '@jasonsdevspace/design-kit/react';
+
+export const Products = ({ load }: { readonly load: () => Promise<void> }) => {
+    const [failed, setFailed] = useState(false);
+    const focusNext = useFocusAfterDraw();
+    const tryAgain = () => {
+        setFailed(false);
+        focusNext('products');
+        load().catch(() => {
+            setFailed(true);
+            focusNext('products-failed');
+        });
+    };
+    return (
+        <section aria-labelledby="products">
+            <h2 id="products" tabIndex={-1}>
+                Products
+            </h2>
+            <Callout
+                id="products-failed"
+                tabIndex={-1}
+                tone="danger"
+                live="alert"
+                title={failed ? 'The products could not be loaded' : undefined}
+                actions={failed ? <Button onClick={tryAgain}>Try again</Button> : undefined}
+            >
+                {failed ? <p>Check your connection.</p> : null}
+            </Callout>
+        </section>
+    );
+};
+```
+
 A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is
 dropped and the edge marks where the callout starts and ends.
 

@@ -20,6 +20,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'fieldAction',
     'choiceField',
     'callout',
+    'tryAgain',
     'pills',
     'tabs',
     'eyebrow',
