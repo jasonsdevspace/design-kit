@@ -420,8 +420,12 @@ export type SayOptions = {
     readonly settle?: number | undefined;
 };
 
-/** Says a message on a status line, at once or once its words stop changing. */
-export type Say = (message: string, options?: SayOptions) => void;
+/**
+ * Says a message on a status line, at once or once its words stop changing. A message given as a
+ * function is read as it is put on the line, and one that gives nothing by then is not said, for
+ * words that may no longer be true, such as a busy button's once its work is done.
+ */
+export type Say = (message: string | (() => string | null), options?: SayOptions) => void;
 
 const attachedLines = new WeakMap<HTMLElement, Say>();
 
@@ -1876,6 +1880,105 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         set: (next) => {
             chosen = next;
             place();
+        },
+    });
+    return detach;
+};
+
+/** How a busy button is attached, for the words it says once a wait is long enough to notice. */
+export type BusyOptions = {
+    /** The status line the busy words are said on, such as the screen's own. */
+    readonly status?: HTMLElement | null | undefined;
+    /** What says the busy words, for a page that has one already, such as React's `useStatus`. */
+    readonly say?: Say | undefined;
+};
+
+/**
+ * The wait before a busy button says it is busy, the delay the sheet holds its look back by, read
+ * as the button is drawn busy, so the words and the look keep one clock whatever --dk-wait is set
+ * to, and a page that takes the delay away has the words said at once with the look.
+ */
+const waitOf = (button: Element): number => {
+    const first = getComputedStyle(button).transitionDelay.split(',')[0]?.trim() ?? '';
+    const amount = Number.parseFloat(first);
+    if (Number.isNaN(amount)) return 0;
+    return first.endsWith('ms') ? amount : amount * 1000;
+};
+
+const attachedBusy = new WeakMap<
+    HTMLElement,
+    { readonly detach: () => void; readonly set: (next: BusyOptions) => void }
+>();
+
+/**
+ * Makes a busy button work, one marked `data-busy` while what its press started runs, and returns
+ * what takes it away. While it is busy the attach marks it `aria-disabled` too, where the page has
+ * not, and takes away only the mark it set when the work is done. A press of a busy button, by a
+ * pointer or by Enter or Space, is stopped before the button's own handlers and React's `onClick`
+ * hear it, so a submit button submits nothing, though a capture listener further up still hears
+ * it. Once the button has been busy for the wait the sheet holds its look back by, --dk-wait, its
+ * words are said once on the status line, the `data-busy` value, or "Saving." where it is empty,
+ * so a fast save says nothing. Words not yet on the line when the work is done are dropped, so a
+ * result a toast says is never followed by a late "Saving.", and a button made busy again before
+ * the last wait ended starts a wait of its own. Attached again, a button returns what it returned
+ * first and takes options given in place of the last.
+ */
+export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => void) => {
+    const already = attachedBusy.get(button);
+    if (already) {
+        if (options) already.set(options);
+        return already.detach;
+    }
+    let chosen: BusyOptions = options ?? {};
+    let timer = 0;
+    let marked = false;
+    const busy = () => button.hasAttribute('data-busy');
+    const speak = () => {
+        if (!busy()) return;
+        const given = button.getAttribute('data-busy') ?? '';
+        const words = given === '' ? 'Saving.' : given;
+        const still = () => (busy() ? words : null);
+        if (chosen.say) chosen.say(still);
+        else if (chosen.status) say(chosen.status, still);
+    };
+    const start = () => {
+        window.clearTimeout(timer);
+        if (button.getAttribute('aria-disabled') !== 'true') {
+            button.setAttribute('aria-disabled', 'true');
+            marked = true;
+        }
+        timer = window.setTimeout(speak, waitOf(button));
+    };
+    const end = () => {
+        window.clearTimeout(timer);
+        if (marked) button.removeAttribute('aria-disabled');
+        marked = false;
+    };
+    // A record whose old value is null is the mark arriving, so a busy that ends and starts again
+    // within one task still starts a wait of its own.
+    const kept = new MutationObserver((records) => {
+        if (!busy()) end();
+        else if (records.some(({ oldValue }) => oldValue === null)) start();
+    });
+    kept.observe(button, { attributeFilter: ['data-busy'], attributeOldValue: true });
+    const stop = (event: Event) => {
+        if (!busy()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    };
+    const listening = new AbortController();
+    button.addEventListener('click', stop, { capture: true, signal: listening.signal });
+    if (busy()) start();
+    const detach = () => {
+        listening.abort();
+        kept.disconnect();
+        end();
+        attachedBusy.delete(button);
+    };
+    attachedBusy.set(button, {
+        detach,
+        set: (next) => {
+            chosen = next;
         },
     });
     return detach;

@@ -11,9 +11,11 @@ import {
 } from 'react';
 
 import {
+    attachBusy,
     attachForm,
     attachRoving,
     attachStatus,
+    type BusyOptions,
     type FocusTarget,
     type FormOptions,
     moveFocus,
@@ -21,7 +23,6 @@ import {
     type Refuse,
     type RovingOptions,
     type Say,
-    type SayOptions,
 } from './controls.js';
 
 /*
@@ -53,7 +54,7 @@ export type StatusProviderProps = {
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
-    const held = useRef<readonly [string, SayOptions | undefined] | null>(null);
+    const held = useRef<Parameters<Say> | null>(null);
     const gone = useRef(false);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
@@ -273,4 +274,35 @@ export const useRoving = <Group extends HTMLElement>(
         },
         [wired]
     );
+};
+
+/**
+ * A ref for a button that can be busy, which `attachBusy` makes ignore presses while busy and say
+ * its busy words once the wait outlasts --dk-wait, on the status line of the nearest
+ * `StatusProvider`, or through the `say` given. The `Button` drawn with `busy` marks it. A button
+ * swapped for another is let go and the new one attached, and with no provider above it and no
+ * `say`, it throws, since its words would reach no one.
+ */
+export const useBusy = <Busy extends HTMLElement>(
+    options: Pick<BusyOptions, 'say'> = {}
+): RefCallback<Busy> => {
+    const speaker = useContext(Speaker);
+    if (!speaker && !options.say)
+        throw new Error('useBusy needs a StatusProvider above it, or a say of its own');
+    const latest = useRef({ options, speaker });
+    useEffect(() => {
+        latest.current = { options, speaker };
+    });
+    const detach = useRef<(() => void) | null>(null);
+    return useCallback((button: Busy | null) => {
+        detach.current?.();
+        detach.current = button
+            ? attachBusy(button, {
+                  say: (words, settle) => {
+                      const { options: now, speaker: line } = latest.current;
+                      (now.say ?? line)?.(words, settle);
+                  },
+              })
+            : null;
+    }, []);
 };

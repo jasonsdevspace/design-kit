@@ -16,6 +16,7 @@ export {
     StatusProvider,
     type StatusProviderProps,
     useArrivalFocus,
+    useBusy,
     useFocusAfterDraw,
     useFormRefusal,
     useRoving,
@@ -238,6 +239,12 @@ type NativeButton = Omit<
 export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
     readonly off?: boolean | undefined;
+    /**
+     * Busy while what its press started runs, such as a save: off at once, drawn off only once the
+     * wait outlasts --dk-wait, and said by `attachBusy` or `useBusy` in the words given, or
+     * "Saving." where it is just true.
+     */
+    readonly busy?: boolean | string | undefined;
 } & (
         | {
               /** The one action a view leads with, filled in the accent. */
@@ -300,11 +307,16 @@ export type ButtonProps = NativeButton & {
           }
     );
 
+/** The words a busy button is said with, empty for the default, or nothing where it is not busy. */
+const busyWords = (busy: ButtonProps['busy']): string | null =>
+    busy === true ? '' : typeof busy === 'string' ? busy : null;
+
 /**
  * A button, of type button unless a page gives another, so it never submits a form by surprise.
  * Off, it is marked aria-disabled rather than disabled, since a disabled button that has focus
  * drops it, and a press of it runs no click handler of the page's and stops the form it would
  * submit. The page's other handlers, for keys or a pointer, still run, and check `off` themselves.
+ * Busy, it is off in the same way, and marked `data-busy` with the words `attachBusy` says.
  */
 export const Button = ({
     accent,
@@ -315,44 +327,51 @@ export const Button = ({
     quiet,
     pressed,
     off = false,
+    busy,
     type = 'button',
     className,
     onClick,
     children,
     ...native
-}: ButtonProps) => (
-    <button
-        {...native}
-        type={type}
-        className={spaced(
-            'dk-button',
-            accent === true && 'dk-button-accent',
-            large === true && 'dk-button-large',
-            tall === true && 'dk-button-tall',
-            icon === true && 'dk-button-icon',
-            text === true && 'dk-button-text',
-            quiet === true && 'dk-button-quiet',
-            className
-        )}
-        aria-pressed={pressed}
-        aria-disabled={off ? true : undefined}
-        onClick={
-            off
-                ? (event) => {
-                      event.preventDefault();
-                  }
-                : onClick
-        }
-    >
-        {children ??
-            (quiet === true ? (
-                <>
-                    <span aria-hidden="true">×</span>
-                    <span className="dk-visually-hidden">Close</span>
-                </>
-            ) : null)}
-    </button>
-);
+}: ButtonProps) => {
+    const words = busyWords(busy);
+    // Off or busy, a press does nothing.
+    const stopped = off || words !== null;
+    return (
+        <button
+            {...native}
+            type={type}
+            className={spaced(
+                'dk-button',
+                accent === true && 'dk-button-accent',
+                large === true && 'dk-button-large',
+                tall === true && 'dk-button-tall',
+                icon === true && 'dk-button-icon',
+                text === true && 'dk-button-text',
+                quiet === true && 'dk-button-quiet',
+                className
+            )}
+            aria-pressed={pressed}
+            aria-disabled={stopped ? true : undefined}
+            data-busy={words ?? undefined}
+            onClick={
+                stopped
+                    ? (event) => {
+                          event.preventDefault();
+                      }
+                    : onClick
+            }
+        >
+            {children ??
+                (quiet === true ? (
+                    <>
+                        <span aria-hidden="true">×</span>
+                        <span className="dk-visually-hidden">Close</span>
+                    </>
+                ) : null)}
+        </button>
+    );
+};
 
 /** What a field draws around its control. */
 type FieldParts = {

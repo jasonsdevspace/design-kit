@@ -476,6 +476,22 @@
     }
 
     /*
+     * Busy, a button whose press has started something still running, such as a save. It is off at
+     * once, so a second press does nothing, but its look holds for --dk-wait before it changes, so a
+     * fast save does not flash the button grey, and the pointer shows the wait at once. The wait is
+     * a delay, which reduced motion keeps, and it holds in forced colors too.
+     */
+    :where(.dk-button[data-busy]) {
+        transition-property:
+            border-color, background-color, box-shadow, translate, color, font-weight,
+            text-decoration-line, text-decoration-thickness;
+        transition-duration: 0s;
+        transition-delay: var(--dk-wait);
+        transition-behavior: allow-discrete;
+        cursor: progress;
+    }
+
+    /*
      * An off text button keeps its underline, which is what tells it from the words around it, at
      * its resting thickness under a pointer, since off takes no hover.
      */
