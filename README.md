@@ -426,7 +426,8 @@ Node it ran on, and a recording run refuses a working tree with uncommitted chan
 it names is the code it measured. The release workflow records the package from each stable
 version's tagged commit, which is on main. The site pages workflow records the pages from the commit
 on main that moves the site's pin, since the pin is what changes what the pages draw, and at the tag
-the site still draws from the version before. Each opens a pull request with its record, with a
+the site still draws from the version before, and again wherever the record names another version
+than the site pins. Each opens a pull request with its record, with a
 token from the records app, since a pull request opened with the run's own token runs no other
 workflow. To measure a change before it ships, run `npm run lighthouse`, which audits the same pages
 and writes no record.

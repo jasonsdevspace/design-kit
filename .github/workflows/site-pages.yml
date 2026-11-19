@@ -4,25 +4,33 @@ name: Site pages
 # since the pin is what changes what the pages draw. A release records the package alone, from the
 # tagged commit, and the site moves its pin only after that version is promoted, in a pull request
 # of its own, so a record taken at the tag would describe a site that was never deployed. This one
-# names the version the site pins on main, and is taken again each time that pin moves.
+# names the version the site pins on main, and is taken again each time that pin moves. A change to
+# this workflow runs it too, as a run by hand does, and either records the pages where the record
+# on main names another version than the site pins.
 on:
     push:
         branches:
             - main
         paths:
             - packages/site/package.json
+            - .github/workflows/site-pages.yml
+    workflow_dispatch:
 
 permissions:
     contents: read
 
-# A later push to main stands in for one still recording, since only the last pin is deployed.
+# One run at a time, and a run that has started finishes, so a push that leaves the pin as it is
+# never cancels the record of one that moved it, and no branch is pushed without its pull request.
 concurrency:
     group: site-pages
-    cancel-in-progress: true
+    cancel-in-progress: false
 
 jobs:
     # The site's package.json changes for more than its pin, so the record is taken only where the
-    # version it pins differs from the one before the push.
+    # version the site pins differs from the one the record on main names. Comparing with the record
+    # rather than the commit before means a run that failed or was stopped is made up by the next.
+    # The site pins an exact version, so the record names what the pages drew from, and anything
+    # else fails here, before the audit, rather than in a branch name after it.
     pin:
         name: Find the site's pin
         runs-on: ubuntu-26.04
@@ -37,33 +45,28 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   persist-credentials: false
-                  fetch-depth: 2
 
-            - name: Compare the pin with the one before
+            - name: Compare the pin with the record
               id: pin
-              env:
-                  BEFORE: ${{ github.event.before }}
               run: |
-                  pinned() {
-                      node -e "const site = JSON.parse(require('fs').readFileSync(0, 'utf8')); console.log((site.dependencies?.['design-kit-release'] ?? '').split('@').pop())"
-                  }
-                  now="$(pinned < packages/site/package.json)"
-                  before=""
-                  if git cat-file -e "$BEFORE^{commit}" 2>/dev/null || git fetch --depth=1 origin "$BEFORE" 2>/dev/null; then
-                      before="$(git show "$BEFORE:packages/site/package.json" 2>/dev/null | pinned || true)"
+                  now="$(node -p "(require('./packages/site/package.json').dependencies?.['design-kit-release'] ?? '').split('@').pop()")"
+                  recorded="$(node -p "require('./docs/benchmarks/site-pages.json').tools?.kit ?? ''")"
+                  if ! [[ "$now" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+                      echo "The site pins '$now', which is not an exact version, so its pages cannot be named by it." >> "$GITHUB_STEP_SUMMARY"
+                      exit 1
                   fi
                   echo "version=$now" >> "$GITHUB_OUTPUT"
-                  if [ -n "$now" ] && [ "$now" != "$before" ]; then
+                  if [ "$now" != "$recorded" ]; then
                       echo "moved=true" >> "$GITHUB_OUTPUT"
-                      echo "The site's pin moved from ${before:-nothing} to $now, so its pages are recorded." >> "$GITHUB_STEP_SUMMARY"
+                      echo "The site pins $now and the record names ${recorded:-nothing}, so its pages are recorded." >> "$GITHUB_STEP_SUMMARY"
                   else
                       echo "moved=false" >> "$GITHUB_OUTPUT"
-                      echo "The site still pins $now, so its pages are not recorded again." >> "$GITHUB_STEP_SUMMARY"
+                      echo "The record already names $now, the version the site pins, so its pages are not recorded again." >> "$GITHUB_STEP_SUMMARY"
                   fi
 
     # The pages recorded from the commit on main that moved the pin. This job runs the build and the
     # audit and holds no token that can write, and the record leaves it as an artifact. A slow trace
-    # on a shared runner can fail it, and the next pin move records the pages again.
+    # on a shared runner can fail it, and a run again, by hand, records the pages then.
     record:
         name: Record the site's pages
         needs: pin

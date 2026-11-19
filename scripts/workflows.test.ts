@@ -405,6 +405,29 @@ describe('the workflows', () => {
         expect(holding).toEqual(['deploy']);
     });
 
+    it("run nothing of the repository's in a job that holds a token that can write", () => {
+        // A token from an app can push and open pull requests, so the job that takes one installs
+        // and runs no package, which a dependency's code could reach it through.
+        const runsCode = (body: string) =>
+            /^\s*(?:-\s+)?run:/m.test(body) &&
+            body
+                .split('\n')
+                .some((line) => /(?:^|[\s;&|(`])(?:npm|npx|node|yarn|pnpm)(?:\s|$)/.test(line));
+        const holding = [...workflows].flatMap(([path, text]) =>
+            jobsOf(text)
+                .filter(({ body }) => /actions\/create-github-app-token@/.test(body))
+                .map(({ id, body }) => ({ job: `${path} ${id}`, runs: runsCode(body) }))
+        );
+        expect(holding.map(({ job }) => job)).toEqual(
+            expect.arrayContaining([
+                '.github/workflows/release.yml records-pull-request',
+                '.github/workflows/site-pages.yml record-pull-request',
+            ])
+        );
+        expect(holding.filter(({ runs }) => runs).map(({ job }) => job)).toEqual([]);
+        expect(runsCode('\n        steps:\n            - run: npx something\n')).toBe(true);
+    });
+
     // Ubuntu, but for CI's jobs that draw in WebKit and Firefox, on a Mac, where neither needs
     // system packages.
     it('run every job on a named image, with a name and a time limit of its own', () => {
