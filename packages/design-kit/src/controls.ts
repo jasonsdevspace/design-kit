@@ -40,6 +40,40 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
     return false;
 };
 
+/** Where focus is asked to go: an element, an element's id, or nothing. */
+export type FocusTarget = Element | string | null | undefined;
+
+/** How focus is moved after a change. */
+export type MoveFocusOptions = {
+    /** Where focus goes, in order, when the target is gone, hidden, inert or off. */
+    readonly fallbacks?: readonly FocusTarget[] | undefined;
+};
+
+const placeOf = (target: FocusTarget): Element | null =>
+    typeof target === 'string' ? document.getElementById(target) : (target ?? null);
+
+/**
+ * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
+ * next player's entry, and returns what calls it off before it lands. It waits for the next frame,
+ * so a page that draws the control in answer to the same change has drawn it, and finds an id
+ * then. Where the target is gone from the page, hidden, inert or disabled, focus goes to the first
+ * fallback that takes it, by the same walk a closing panel hands focus back by, so it never falls
+ * to the page. Focus a visitor has moved since the request is left where they put it: focus is
+ * free only while it is where it was when asked, or on the page's body. Each request is new, so a
+ * control asked for twice is focused twice.
+ */
+export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
+    const from = document.activeElement;
+    const frame = window.requestAnimationFrame(() => {
+        const now = document.activeElement;
+        if (now !== from && now !== null && now !== document.body) return;
+        focusFirst(placeOf(target), ...(options.fallbacks ?? []).map(placeOf));
+    });
+    return () => {
+        window.cancelAnimationFrame(frame);
+    };
+};
+
 /** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
 const homeOf = (element: Element): Element | null =>
     element.closest('.dk-app')?.querySelector('.dk-app-body') ?? document.querySelector('main');

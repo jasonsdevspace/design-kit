@@ -1263,6 +1263,41 @@ export const Screen = () => (
 );
 ```
 
+### Moving focus after a change
+
+When a change takes away the control that had focus or brings a visitor somewhere new, focus goes
+where they can carry on, so a keyboard and a screen reader never fall back to the top of the page,
+as WCAG 2.4.3 asks. `moveFocus(target, { fallbacks })` from `./controls` moves focus to a control,
+given as an element or an id, once the change is drawn, a frame later, so a control the page draws
+in answer to the same change is there. Where the target is gone, hidden, inert or disabled, focus
+goes to the first of the fallbacks that takes it, by the same walk a closing panel hands focus
+back by. Focus a visitor has moved since the request is left where they put it: focus is free only
+while it is where it was when asked, or on the page's body, as it is once the control that had it
+is removed. Each request is new, so the same control asked for twice is focused twice, and the
+function `moveFocus` returns calls a request off before it lands.
+
+```js
+import { moveFocus } from '@jasonsdevspace/design-kit/controls';
+
+// Ann's row and its Remove button go, so focus goes to the next player's, or the list's heading.
+moveFocus('remove-ben', { fallbacks: ['players-heading'] });
+```
+
+In React, `useFocusAfterDraw()` returns the same function, the same across renders, and calls off
+a request still waiting when the component unmounts. `useArrivalFocus(key)` returns a ref for a
+view's heading, gives the heading a tabindex of -1 where it has none, and focuses it when the key
+changes, such as the round on screen, so a screen reader says where a visitor's action brought
+them. It never moves focus as the page first draws.
+
+```tsx
+import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
+
+export const Round = ({ round }: { readonly round: number }) => {
+    const heading = useArrivalFocus<HTMLHeadingElement>(round);
+    return <h2 ref={heading}>Round {round}</h2>;
+};
+```
+
 ## Content pages
 
 A content page, such as a landing page or an about page, is a `dk-page` on its main content: its

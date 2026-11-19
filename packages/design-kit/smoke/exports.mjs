@@ -24,6 +24,8 @@ export const VALUE_EXPORTS = {
         'TextareaField',
         'ThemeSwitch',
         'Toast',
+        'useArrivalFocus',
+        'useFocusAfterDraw',
         'useStatus',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
@@ -37,6 +39,7 @@ export const VALUE_EXPORTS = {
         'attachThemeSwitch',
         'attachToast',
         'chooseTheme',
+        'moveFocus',
     ],
     '@jasonsdevspace/design-kit/vite': [
         'browserFloor',

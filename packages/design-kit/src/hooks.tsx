@@ -1,6 +1,21 @@
-import { createContext, type ReactNode, useCallback, useContext, useRef } from 'react';
+import {
+    createContext,
+    type ReactNode,
+    type RefCallback,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+} from 'react';
 
-import { attachStatus, type Say, type SayOptions } from './controls.js';
+import {
+    attachStatus,
+    type FocusTarget,
+    moveFocus,
+    type MoveFocusOptions,
+    type Say,
+    type SayOptions,
+} from './controls.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over an attach function from `./controls`, as decision
@@ -61,4 +76,48 @@ export const useStatus = (): Say => {
     const speak = useContext(Speaker);
     if (!speak) throw new Error('useStatus needs a StatusProvider above it');
     return speak;
+};
+
+/** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */
+export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => void;
+
+/**
+ * The function that moves focus to a control once the change asking for it is drawn, the same
+ * across renders, by `moveFocus`: to an element or an id, with fallbacks where it is gone, and
+ * never from where a visitor has moved focus. Each call is a new request, so the same control asked
+ * for twice is focused twice. A request still waiting when the component unmounts is called off.
+ */
+export const useFocusAfterDraw = (): FocusAfterDraw => {
+    const waiting = useRef<(() => void) | null>(null);
+    useEffect(
+        () => () => {
+            waiting.current?.();
+        },
+        []
+    );
+    return useCallback<FocusAfterDraw>((target, options) => {
+        waiting.current = moveFocus(target, options);
+    }, []);
+};
+
+/**
+ * A ref for a view's heading, which takes focus when the key given changes, such as the round on
+ * screen, so a screen reader says where a visitor's action brought them. It never moves focus as
+ * the page first draws, only when the key changes after, and leaves focus a visitor has moved
+ * since. The heading takes a tabindex of -1 where it has none, so it can take focus at all.
+ */
+export const useArrivalFocus = <Heading extends HTMLElement>(
+    key: unknown
+): RefCallback<Heading> => {
+    const heading = useRef<Heading | null>(null);
+    const seen = useRef(key);
+    useEffect(() => {
+        if (Object.is(seen.current, key)) return undefined;
+        seen.current = key;
+        return moveFocus(heading.current);
+    }, [key]);
+    return useCallback((element: Heading | null) => {
+        heading.current = element;
+        if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
+    }, []);
 };
