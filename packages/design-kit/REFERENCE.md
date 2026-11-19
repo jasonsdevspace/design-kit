@@ -1978,8 +1978,32 @@ it holds `--dk-space-4` apart, as an explainer does, and its padding puts the fi
 under the bar. It has `tabindex="0"` on every screen, so the keyboard reaches it and the arrow keys
 scroll it whatever it holds, as a frame that scrolls always does in the kit. The dock is a `section`
 named for what it holds, so a screen reader moving by landmark finds the screen's main button after
-the body. It holds that button at the larger target, and a second one below it where a screen has
-two.
+the body. It holds that button at the larger target, and a second one below it, or a compact one
+beside it in a row, where a screen has two.
+
+<!-- example: dockInline -->
+
+```html
+<section class="dk-app-dock" aria-label="Actions">
+    <div class="dk-app-dock-inline">
+        <button type="button" class="dk-button dk-button-tall">Scores</button>
+        <button type="button" class="dk-button dk-button-accent dk-button-tall">
+            Save the round
+        </button>
+    </div>
+</section>
+```
+
+Where a screen has a compact action beside its main one, such as Scores beside the button that moves
+a round on, `dk-app-dock-inline` holds the two on one row: the compact action at its own width and
+the main one taking the rest, never under the target's width or its own longest word, its words
+wrapping inside it where they must, and the two stretched to one height. Each keeps the target as its least width, with a step less padding at its
+sides, so at twice the text size on a 320px phone a compact word such as Scores still shares the
+row, and the main action can be narrower than it is tall, though never under the target. Where the
+two cannot share it, as a compact word as long as Scoreboard or a compact action of several words
+cannot at that size, they take two rows rather than scroll the page sideways or cut a word. Keep the
+compact action to a short word. The main action is last, so it
+sits nearest the thumb and comes last in the keyboard's order, after the one used now and then.
 
 `dk-app-toast` is a toast's place, above the dock, and `dk-app-tabs` is a tab bar's, at the bottom
 edge. A screen leaves out any part it does not have, the dock included, and its row closes to

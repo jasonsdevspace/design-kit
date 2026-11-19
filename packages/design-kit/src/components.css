@@ -587,7 +587,8 @@
      * text or without. It comes after the rules for a narrow screen and for an app, which would
      * otherwise win by their order and bring a tall button back down to the target. A text button
      * is never tall, and is left out here, so the pair written by hand does not give a link a box
-     * around it.
+     * around it. The dock's row for a compact action is the one place that brings a tall button's
+     * least width down to the target, which it does by its own order.
      */
     :where(.dk-button-tall:not(.dk-button-text)) {
         min-height: var(--dk-target-large);
@@ -2342,6 +2343,39 @@
     /* What the dock holds is no wider than the dock, so a stepper narrows rather than spill. */
     :where(.dk-app-dock > *) {
         min-width: 0;
+    }
+
+    /*
+     * A compact action beside the dock's main one, on one row: the compact action at its own
+     * width, the main one taking the rest, never under the target's width or its own longest word,
+     * its words wrapping inside it where they must, and the two stretched to one height, so the
+     * pair keeps the body its row of height. The main action is last, nearest the thumb and last
+     * in the keyboard's order. Each button keeps the target as its least width, rather than the
+     * larger target a tall button keeps, with a step less padding at its sides, so a short compact
+     * word at twice the text size on a 320px phone still leaves the main action room. Where the
+     * two cannot share a row, they take two rather than scroll the page sideways or cut a word. A text button keeps its own look, and a link drawn as a button centers its words.
+     */
+    :where(.dk-app-dock-inline) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: var(--dk-space-2);
+    }
+
+    :where(.dk-app-dock-inline > .dk-button:not(.dk-button-text)) {
+        min-width: var(--dk-target);
+        padding-inline: var(--dk-space-2);
+        text-align: center;
+    }
+
+    :where(.dk-app-dock-inline > :first-child) {
+        flex: none;
+    }
+
+    /* At least the target and its own longest word, so the pair takes two rows before a word is cut. */
+    :where(.dk-app-dock-inline > :last-child) {
+        flex: 1 0 var(--dk-target);
+        min-width: min-content;
     }
 
     /* A tab bar's place, last, at the bottom edge. */

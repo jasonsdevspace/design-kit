@@ -632,6 +632,18 @@ export const appFrame: ReactElement = (
     </div>
 );
 
+/** A dock with a compact action beside its main one, on one row. */
+export const dockInline: ReactElement = (
+    <section className="dk-app-dock" aria-label="Actions">
+        <div className="dk-app-dock-inline">
+            <Button tall>Scores</Button>
+            <Button accent tall>
+                Save the round
+            </Button>
+        </div>
+    </section>
+);
+
 /** A tab bar of three places, the first the one the visitor is in. */
 export const tabBar: ReactElement = (
     <nav className="dk-tabbar" aria-label="Sections">
@@ -1050,6 +1062,7 @@ export const EXAMPLES = {
     pinnedTable,
     code,
     appFrame,
+    dockInline,
     tabBar,
     stepper,
     toast,

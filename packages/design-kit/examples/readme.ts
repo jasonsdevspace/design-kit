@@ -35,6 +35,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'pinnedTable',
     'code',
     'appFrame',
+    'dockInline',
     'tabBar',
     'stepper',
     'toast',

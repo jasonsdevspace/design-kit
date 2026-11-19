@@ -25,7 +25,7 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * does its own way, and a grid's columns rest on each engine's sums of a share and its clamps.
  */
 const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving}.spec.{ts,tsx}';
+    '*/e2e/{app,tabbar,toast,dialog,close,stepper,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
