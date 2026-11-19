@@ -20,6 +20,7 @@ export {
     useBusy,
     useFocusAfterDraw,
     useFormRefusal,
+    useProgress,
     useRoving,
     useStatus,
 } from './hooks.js';
@@ -1096,6 +1097,67 @@ export type CopyStatusProps = StatusLineProps;
 
 /** The status line, under the name a copy button's line was given first, so no page breaks. */
 export const CopyStatus = StatusLine;
+
+/**
+ * A progress bar's own props: what it measures, how far it has come and the words that say so. A
+ * bar with an amount carries its words, since its track is too faint to tell how much is left by
+ * color alone, and the words say it.
+ */
+export type ProgressProps = {
+    /** What is progressing, such as "Importing products", which names the bar. */
+    readonly label: ReactNode;
+    /** The whole amount, 1 until a page gives another. */
+    readonly max?: number | undefined;
+    /** The bar's id, made with useId unless a page gives one, and what the words' id starts with. */
+    readonly id?: string | undefined;
+    /** A page's class, after the kit's, on the field that holds the bar. */
+    readonly className?: string | undefined;
+    /** The bar drawn, for a page that hands it to `useProgress` or `attachProgress`. */
+    readonly ref?: Ref<HTMLProgressElement> | undefined;
+} & (
+    | {
+          /** How far it has come, out of `max`. */
+          readonly value: number;
+          /** Words that say the amount, such as "12 of 40", drawn under the bar. */
+          readonly words: ReactNode;
+      }
+    | {
+          /** Left out while the amount is not yet known, which draws an empty track. */
+          readonly value?: undefined;
+          readonly words?: ReactNode;
+      }
+);
+
+/**
+ * Progress with a known amount: its label, the native bar and the words that say the amount, which
+ * describe the bar, so a screen reader reads the label, the amount in hundredths and then the
+ * words. A bar with no value draws an empty track, for an amount not yet known.
+ */
+export const Progress = ({ label, value, max, words, id, className, ref }: ProgressProps) => {
+    const made = useId();
+    const bar = id ?? made;
+    const said = filled(words);
+    return (
+        <div className={spaced('dk-field', className)}>
+            <label className="dk-field-label" htmlFor={bar}>
+                {label}
+            </label>
+            <progress
+                ref={ref}
+                id={bar}
+                className="dk-progress"
+                value={value}
+                max={max}
+                aria-describedby={said ? `${bar}-words` : undefined}
+            />
+            {said ? (
+                <p className="dk-field-hint" id={`${bar}-words`}>
+                    {words}
+                </p>
+            ) : null}
+        </div>
+    );
+};
 
 /**
  * A toast's markup: the place its message is drawn, hidden from a screen reader, and the status

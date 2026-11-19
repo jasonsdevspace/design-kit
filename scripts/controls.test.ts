@@ -21,10 +21,10 @@ import { sentOf } from './parts.mjs';
  * quarter of a kilobyte. Set again by the same rule for 0.8.4, with attachPanel and its fixes in
  * place, after 0.8.7 once a stepper's range in words, its limits said and a page's own words and
  * line took them past 7.5 KB, and again once moving focus after a change and among a group's cells
- * took them past 8.75 KB, and again once
- * refusing a form and a busy button took them past 11 KB.
+ * took them past 8.75 KB, and again once refusing a form and a busy button took them past 11 KB,
+ * and again once saying progress at its steps took them past 12 KB.
  */
-const BUDGET = 12 * 1024;
+const BUDGET = 12.75 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

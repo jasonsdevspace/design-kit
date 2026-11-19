@@ -11,10 +11,11 @@ import { CONTAINER_GROUNDS, withoutComments } from '../examples/palette.js';
  * styles the kit's own classes, and otherwise only inside one :where() followed at most by a focus
  * pseudo-class. The base alone may follow its :where() with a pseudo-element instead, since a
  * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
- * it too. The components may follow theirs with a number field's own spin buttons or a dialog's
- * backdrop, the parts of a browser's own element a component has to draw or take away and only a
- * pseudo-element reaches. So only those classes, the focus rules and those pseudo-elements carry
- * any weight, and none of it counts against a page's own rule outside a layer.
+ * it too. The components may follow theirs with a number field's own spin buttons, a dialog's
+ * backdrop or a progress bar's track and fill, the parts of a browser's own element a component has
+ * to draw or take away and only a pseudo-element reaches. So only those classes, the focus rules
+ * and those pseudo-elements carry any weight, and none of it counts against a page's own rule
+ * outside a layer.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -83,10 +84,17 @@ const closing = (text: string, open: number): number => {
 };
 
 /**
- * The parts of a browser's own element a component may reach, a number field's spin buttons and a
- * dialog's backdrop.
+ * The parts of a browser's own element a component may reach, a number field's spin buttons, a
+ * dialog's backdrop and a progress bar's track and fill.
  */
-const CONTROL_PARTS = ['::-webkit-inner-spin-button', '::-webkit-outer-spin-button', '::backdrop'];
+const CONTROL_PARTS = [
+    '::-webkit-inner-spin-button',
+    '::-webkit-outer-spin-button',
+    '::backdrop',
+    '::-webkit-progress-bar',
+    '::-webkit-progress-value',
+    '::-moz-progress-bar',
+];
 
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
@@ -214,8 +222,8 @@ describe('what the sheets style', () => {
             ':where(:root)::view-transition-group(*)',
         ]);
         // A component styles no pseudo-element, so its arrows and marks are elements of their own,
-        // but a number field's spin buttons and a dialog's backdrop, which only a pseudo-element
-        // reaches.
+        // but a number field's spin buttons, a dialog's backdrop and a progress bar's track and
+        // fill, which only a pseudo-element reaches.
         expect(candidates.filter((selector) => scoped(selector))).toEqual([]);
         expect(
             [
@@ -223,10 +231,18 @@ describe('what the sheets style', () => {
                 ':where(.dk-stepper-value)::-webkit-outer-spin-button',
                 ':where(.dk-stepper-value)::before',
                 ':where(.dk-stepper-value)::-webkit-inner-spin-button:hover',
+                ':where(.dk-progress)::-webkit-progress-bar',
+                ':where(.dk-progress)::-webkit-progress-value',
+                ':where(.dk-progress)::-moz-progress-bar',
+                ':where(.dk-progress)::-webkit-progress-inner-element',
+                ':where(.dk-progress)::-moz-range-track',
             ].filter((selector) => scoped(selector, { parts: CONTROL_PARTS }))
         ).toEqual([
             ':where(.dk-stepper-value)::-webkit-inner-spin-button',
             ':where(.dk-stepper-value)::-webkit-outer-spin-button',
+            ':where(.dk-progress)::-webkit-progress-bar',
+            ':where(.dk-progress)::-webkit-progress-value',
+            ':where(.dk-progress)::-moz-progress-bar',
         ]);
         // A :: inside a quoted value is text, not a pseudo-element.
         expect(scoped(':where([data-sep="::"])')).toBe(true);

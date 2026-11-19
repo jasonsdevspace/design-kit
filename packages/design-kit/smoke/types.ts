@@ -6,6 +6,7 @@ import {
     CopyStatus,
     InputField,
     PortfolioStrip,
+    Progress,
     SelectField,
     StatusLine,
     StepperField,
@@ -17,12 +18,14 @@ import {
     attachBusy,
     attachForm,
     attachPanel,
+    attachProgress,
     attachRoving,
     attachStatus,
     attachStepper,
     moveFocus,
     type BusyOptions,
     type PanelControl,
+    type ProgressOptions,
     type Refuse,
     type RovingOptions,
     type Say,
@@ -252,6 +255,23 @@ export const busyNamed = Button({ busy: 'Saving the rule.', children: 'Save rule
 export const busyPlain = Button({ busy: true, children: 'Save rule' });
 const quiet: BusyOptions = { status: null };
 export const busyOf = (button: HTMLElement): (() => void) => attachBusy(button, quiet);
+
+// Progress has a label, an amount out of a whole and words, and its attach says it at steps.
+export const importing = Progress({
+    label: 'Importing products',
+    value: 12,
+    max: 40,
+    words: '12 of 40',
+});
+export const waiting = Progress({ label: 'Importing products' });
+const quarters: ProgressOptions = { steps: 4, done: 'Imported 40 products.', status: null };
+export const progressOf = (bar: HTMLProgressElement): (() => void) => attachProgress(bar, quarters);
+
+// @ts-expect-error Progress is named by its label.
+export const unnamed = Progress({ value: 1, words: '1 of 1' });
+
+// @ts-expect-error A bar with an amount carries the words that say it.
+export const unsaid = Progress({ label: 'Importing products', value: 12, max: 40 });
 
 // A field is marked required or optional in words, apart from the native required.
 export const markedField = InputField({ label: 'Rule name', mark: 'required', required: true });
