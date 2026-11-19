@@ -23,7 +23,7 @@ import { sentOf } from './parts.mjs';
  * line took them past 7.5 KB, and again once moving focus after a change and among a group's cells
  * took them past 8.75 KB.
  */
-const BUDGET = 10.5 * 1024;
+const BUDGET = 11 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

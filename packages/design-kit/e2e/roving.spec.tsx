@@ -14,7 +14,7 @@ import { servePage } from './page.js';
  */
 
 const GRID =
-    '<div class="dk-button-grid" id="grid" style="display:grid;grid-template-columns:repeat(3,4rem)">' +
+    '<div class="dk-button-grid" id="grid" role="group" aria-label="Cards" style="display:grid;grid-template-columns:repeat(3,4rem)">' +
     [1, 2, 3, 4, 5, 6, 7]
         .map((n) => `<button type="button" id="n${String(n)}">${String(n)}</button>`)
         .join('') +
@@ -25,10 +25,16 @@ const TABS =
     '<button type="button" class="dk-tab" role="tab" id="t1" aria-selected="false">Number</button>' +
     '<button type="button" class="dk-tab" role="tab" id="t2" aria-selected="true">Cards</button>' +
     '<button type="button" class="dk-tab" role="tab" id="t3" aria-selected="false" aria-disabled="true">Sum</button>' +
-    '</div>';
+    '</div>' +
+    '<div class="dk-button-grid" id="row" aria-label="Choices">' +
+    '<button type="button" id="r1" tabindex="0">One</button>' +
+    '<button type="button" id="r2" disabled>Two</button>' +
+    '<button type="button" id="r3" style="display:none">Three</button>' +
+    '<button type="button" id="r4">Four</button></div>';
 
 const SCRIPT = `import { attachRoving } from './controls.js';
 window.detachGrid = attachRoving(document.querySelector('#grid'));
+window.detachRow = attachRoving(document.querySelector('#row'), { orientation: 'horizontal' });
 window.moved = [];
 attachRoving(document.querySelector('#tabs'), {
     onMove: (cell) => {
@@ -56,6 +62,7 @@ test('gives a grid of buttons one stop and the toolbar role, and moves by the ar
     page,
 }) => {
     await open(page);
+    // A grid written with the group's role, as the reference draws one, takes the toolbar's.
     await expect(page.locator('#grid')).toHaveAttribute('role', 'toolbar');
     await expect(stops(page, 'grid')).toHaveCount(1);
     await expect(stops(page, 'grid')).toHaveId('n1');
@@ -106,12 +113,16 @@ test("puts a row of tabs' stop on the chosen tab, ignores up and down, and lets 
     await expect(page.locator('#t1')).toBeFocused();
     await expect(page.locator('#t1')).toHaveAttribute('aria-selected', 'true');
     await expect(stops(page, 'tabs')).toHaveId('t1');
-    // A tab marked off keeps its place and is reached.
+    // A tab marked off keeps its place and is reached, but is never chosen.
     await page.keyboard.press('End');
     await expect(page.locator('#t3')).toBeFocused();
+    await expect(page.locator('#t3')).toHaveAttribute('aria-selected', 'false');
+    // A row of tabs wraps from its last to its first.
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#t1')).toBeFocused();
     expect(await page.evaluate(() => (window as unknown as { moved: string[] }).moved)).toEqual([
         't1',
-        't3',
+        't1',
     ]);
 });
 
@@ -126,8 +137,50 @@ test('hands focus to the cell in the place of one taken out, and lets the group 
     await page.evaluate(() => {
         (window as unknown as { detachGrid: () => void }).detachGrid();
     });
-    await expect(page.locator('#grid')).not.toHaveAttribute('role');
+    await expect(page.locator('#grid')).toHaveAttribute('role', 'group');
     await expect(page.locator('#grid > [tabindex]')).toHaveCount(0);
+    // A cell's own tabindex comes back as its group is let go.
+    await page.evaluate(() => {
+        (window as unknown as { detachRow: () => void }).detachRow();
+    });
+    await expect(page.locator('#r1')).toHaveAttribute('tabindex', '0');
+    await expect(page.locator('#r4')).not.toHaveAttribute('tabindex');
+});
+
+test('passes over a cell disabled or out of sight, which is never the stop', async ({ page }) => {
+    await open(page);
+    await page.locator('#r1').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#r4')).toBeFocused();
+    await page.evaluate(() => {
+        const first = document.querySelector<HTMLButtonElement>('#r1');
+        if (first) first.disabled = true;
+    });
+    await expect(page.locator('#row > [tabindex="0"]')).toHaveId('r4');
+});
+
+test('leaves focus where the visitor moved it when a cell they left is taken out', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#n3').focus();
+    await page.locator('#t2').focus();
+    await page.evaluate(() => document.querySelector('#n3')?.remove());
+    await expect(page.locator('#t2')).toBeFocused(); // A press on the page's background leaves focus nowhere, and a cell taken out after does not
+    // pull it back.
+    await page.locator('#n5').focus();
+    await page.mouse.click(600, 600);
+    await page.evaluate(() => document.querySelector('#n5')?.remove());
+    await page.waitForTimeout(100);
+    await expect(page.locator('#grid button:focus')).toHaveCount(0);
+});
+
+test('places the stop on a cell a press lands on, where Safari gives the press no focus', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#n5').click();
+    await expect(page.locator('#n5')).toHaveAttribute('tabindex', '0');
 });
 
 test.describe('in React', () => {

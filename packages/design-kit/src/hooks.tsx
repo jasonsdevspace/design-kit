@@ -203,8 +203,13 @@ export const useRoving = <Group extends HTMLElement>(
     );
     const { orientation } = options;
     const names = options.current !== undefined;
+    // What the group was last attached with, so it is attached again only when that changes.
+    const shape = useRef<string | null>(null);
     useEffect(() => {
-        if (group.current) attachRoving(group.current, wired());
+        const now = `${orientation ?? ''}|${String(names)}`;
+        if (!group.current || shape.current === now) return;
+        shape.current = now;
+        attachRoving(group.current, wired());
     }, [orientation, names, wired]);
     return useCallback(
         (element: Group | null) => {
@@ -212,7 +217,10 @@ export const useRoving = <Group extends HTMLElement>(
             detach.current?.();
             detach.current = null;
             group.current = element;
-            if (element) detach.current = attachRoving(element, wired());
+            if (!element) return;
+            const now = latest.current;
+            shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
+            detach.current = attachRoving(element, wired());
         },
         [wired]
     );
