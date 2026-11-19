@@ -16,11 +16,13 @@ import {
 import {
     attachForm,
     attachPanel,
+    attachRoving,
     attachStatus,
     attachStepper,
     moveFocus,
     type PanelControl,
     type Refuse,
+    type RovingOptions,
     type Say,
     type SetPanel,
     type StepperOptions,
@@ -231,3 +233,14 @@ export const cancelOf = (heading: HTMLElement): (() => void) =>
 // A form refused once its errors are drawn, said on a line or through a page's own say.
 export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>
     attachForm(form, { status: line, summary: () => null });
+
+// A group of cells takes its orientation, its current cell and what to do as focus moves.
+const tabs: RovingOptions = {
+    orientation: 'horizontal',
+    current: () => null,
+    onMove: () => undefined,
+};
+export const rovingOf = (group: HTMLElement): (() => void) => attachRoving(group, tabs);
+
+// @ts-expect-error A group is laid out as a grid, a row or a column.
+export const diagonal: RovingOptions = { orientation: 'diagonal' };

@@ -18,6 +18,7 @@ export {
     useArrivalFocus,
     useFocusAfterDraw,
     useFormRefusal,
+    useRoving,
     useStatus,
 } from './hooks.js';
 

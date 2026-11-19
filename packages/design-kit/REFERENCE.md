@@ -811,10 +811,22 @@ A tab is the strip's height, and a thumb wide and tall on a phone, and its first
 the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as the pills
 do, and each link fills its item down to the rule.
 
-A row with `role="tablist"` takes the tabs pattern's keys from the page: one tab in the tab order,
-the arrow keys moving the choice along the row, and `aria-controls` naming each tab's panel. The
-base sheet keeps the focus ring on a tab the row has given a tabindex of -1, so the ring follows the
-arrow keys.
+A row with `role="tablist"` takes the tabs pattern's keys from `attachRoving(row, { onMove })` in
+`./controls`, or `useRoving()` in React: one tab in the tab order, the chosen one, and the left and
+right arrows, Home and End moving focus along the row, wrapping from one end to the other, with up
+and down left alone. A tab marked off is reached, to hear why, but never handed to `onMove`. The kit moves
+focus and the page chooses, as it owns the panels: a page that chooses a tab as focus reaches it
+does so in `onMove`, and one whose panel is slow to draw leaves the choice to Enter or Space.
+`aria-controls` names each tab's panel. The base sheet keeps the focus ring on a tab given a
+tabindex of -1, so the ring follows the arrow keys.
+
+```js
+import { attachRoving } from '@jasonsdevspace/design-kit/controls';
+
+attachRoving(document.querySelector('[role="tablist"]'), {
+    onMove: (tab) => choose(tab),
+});
+```
 
 #### A tab row on its container's rule
 
@@ -2227,9 +2239,16 @@ grid where only one can be on is a choice field.
 
 A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
 page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
-Tab key. A page with many cells may give the group one stop instead, with a roving tabindex, so the
-arrow keys move between cells and Home and End reach the ends. That is the page's to write, as a
-tab list's keys are.
+Tab key. A page with many cells gives the group one stop instead with `attachRoving(grid)` in
+`./controls`, or `useRoving()` in React, so the arrow keys move between cells and Home and End reach
+the ends. Up and down move to the nearest cell in the row above or below as the grid is drawn, so it
+holds at any count of columns, left and right follow the page's reading direction, and an arrow held
+with Alt, Control or Command is left to the browser. A cell marked off keeps its place, a cell that
+is disabled or out of sight is passed over and never the stop, and where the cell that had focus is
+taken out, focus goes to the next cell still there, or the one before. A grid with the group's role,
+as above, or none takes the toolbar's while attached, so a screen reader says the arrows move
+within it, and keeps its `aria-label`, which a toolbar needs. Let go, each cell takes back its own
+tabindex and the grid its own role.
 
 The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
 unless it does:
