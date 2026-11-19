@@ -1900,14 +1900,15 @@ It is the kit's field, so its label, hint and error work as every field's do, ar
 `input type="number"` that says its value to a screen reader. Most screen readers do not say a
 number field's limits, so once attached the field is described by its range in words, such as "From
 2 to 8.", after any description the page gives it, from a span out of sight with
-`dk-stepper-limits`, which the attach function fills and follows as the limits change. While the
-stepper's error shows, the error, which names the range, describes the field in its place. The
-buttons are hidden until
+`dk-stepper-limits`, which the attach function fills and follows as the limits change, or "Only 3."
+where the least and the greatest are one value. A page no longer states the range in its hint,
+which would read it twice. While the stepper's error shows, the error, which names the range,
+describes the field in its place. The buttons are hidden until
 `attachStepper(element)` shows them, so without script it is a number field alone, and they are
 named for what they do and to which field, "Lower the number of players" and "Raise the number of
 players". A status line out of sight says the value a press sets, since focus stays on the button,
-and that it is the least or the most where a press lands on a limit, as "8, the most", so a press
-that does nothing next is expected. The line is emptied once the value is typed over, its form is
+and that it is the least or the most where a press lands on a limit, as "8, the most", or on the
+last value a step reaches short of the greatest, so a press that does nothing next is expected. The line is emptied once the value is typed over, its form is
 reset or the stepper is taken away.
 
 A page that says something of its own after each press, such as how many tricks are still to
@@ -1915,13 +1916,16 @@ enter, gives `attachStepper` its words as `words`, a function of the value read 
 put on the line, a moment after the press, so the page's own state has caught up with it. One
 message then says the value and the page's words, "2, the most. Every trick is in.", rather than
 two lines changing at once, which can drop one. A page with a status line of its own gives it as
-`status`, and the stepper says each press there in place of its own line. Options given when the
-stepper is attached again take the place of the last.
+`status`, and the stepper says each press there in place of its own line, keeps it there as it
+keeps its own, since focus stays on the button, and clears only what it said there when the value
+is typed over, the form is reset or the stepper is taken away, so the page's own words stay. A
+message still waiting then is not said. Options given when the stepper is attached again take the
+place of the last.
 
 ```js
-attachStepper(document.querySelector('#tricks-ann').closest('.dk-stepper'), {
+attachStepper(document.querySelector('.dk-stepper'), {
     status: document.querySelector('#page-status'),
-    words: () => tricksLeft(),
+    words: (players) => `${players} seats at the table.`,
 });
 ```
 

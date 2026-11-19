@@ -41,6 +41,8 @@ const FIELDS = renderToStaticMarkup(
         </form>
         <StepperField id="locked" label="Locked" min={0} max={10} defaultValue={5} disabled />
         <StepperField id="read" label="Rounds played" min={0} max={10} defaultValue={5} readOnly />
+        <StepperField id="odd" label="Odd" min={1} max={10} step={2} defaultValue={7} />
+        <StepperField id="one" label="Seats" min={3} max={3} defaultValue={3} />
         <StepperField
             id="hand"
             label="Cards in hand"
@@ -658,4 +660,100 @@ test("says a page's words after the value in one message, on the page's own line
     await press(lower(page), browserName);
     await expect(page.locator('#page-status')).toHaveText('7. Changed 2 times.');
     await expect(line(page, 'bid')).toHaveText('');
+});
+
+test('says the most at the last value a step reaches short of the greatest, and marks it', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    const odd = page.getByRole('spinbutton', { name: 'Odd' });
+    const up = page.getByRole('button', { name: 'Raise Odd' });
+    await press(up, browserName);
+    await expect(odd).toHaveValue('9');
+    await expect(line(page, 'odd')).toHaveText('9, the most');
+    await expect(up).toHaveAttribute('aria-disabled', 'true');
+    // One value alone is described as that value.
+    await expect(page.getByRole('spinbutton', { name: 'Seats' })).toHaveAccessibleDescription(
+        'Only 3.'
+    );
+});
+
+test('keeps an error the page shows after attaching, and one shown before it', async ({ page }) => {
+    await open(page);
+    // Shown by the page after attaching, as the site's live copy does for a value past its limit.
+    await page.evaluate(() => {
+        const input = document.querySelector<HTMLInputElement>('#bid');
+        const range = document.querySelector<HTMLElement>('#bid-range');
+        if (!input || !range) throw new Error('no stepper');
+        input.value = '14';
+        range.hidden = false;
+        input.setAttribute('aria-describedby', 'bid-range');
+    });
+    await expect(page.locator('#bid-range')).toBeVisible();
+    await expect(bid(page)).toHaveAttribute('aria-describedby', 'bid-range');
+    // Shown before attaching, as a server that refused the value draws it.
+    await page.evaluate(() => {
+        const { attachStepper } = window as unknown as {
+            attachStepper: typeof import('../src/controls.js').attachStepper;
+        };
+        const input = document.querySelector<HTMLInputElement>('#players');
+        const range = document.querySelector<HTMLElement>('#players-range');
+        const stepper = input?.closest<HTMLElement>('.dk-stepper');
+        if (!input || !range || !stepper) throw new Error('no stepper');
+        attachStepper(stepper)();
+        input.value = '1';
+        range.hidden = false;
+        input.setAttribute('aria-describedby', 'players-hint players-range');
+        attachStepper(stepper);
+    });
+    await expect(page.locator('#players-range')).toBeVisible();
+    await expect(page.getByRole('spinbutton', { name: 'Players' })).toHaveAttribute(
+        'aria-describedby',
+        'players-hint players-range'
+    );
+});
+
+test("clears only its own words from a page's line, and says nothing once typed over or taken away", async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const { attachStepper } = window as unknown as {
+            attachStepper: typeof import('../src/controls.js').attachStepper;
+        };
+        const own = document.createElement('p');
+        own.id = 'page-status';
+        own.setAttribute('role', 'status');
+        document.body.append(own);
+        const stepper = document.querySelector('#bid')?.closest<HTMLElement>('.dk-stepper');
+        if (!stepper) throw new Error('no stepper');
+        attachStepper(stepper, { status: own });
+    });
+    const own = page.locator('#page-status');
+    await press(lower(page), browserName);
+    await expect(own).toHaveText('8');
+    // Typed over, the stepper's words go from the page's line.
+    await bid(page).fill('5');
+    await expect(own).toHaveText('');
+    // The page's own words stay when the value is typed over.
+    await own.evaluate((line) => {
+        line.textContent = 'Ann leads.';
+    });
+    await bid(page).fill('6');
+    await expect(own).toHaveText('Ann leads.');
+    // A press taken away before its words are said leaves them unsaid.
+    await page.evaluate(() => {
+        document
+            .querySelector<HTMLButtonElement>('#bid')
+            ?.closest('.dk-stepper')
+            ?.querySelector<HTMLButtonElement>('.dk-stepper-down')
+            ?.click();
+        (window as unknown as { detach: (id: string) => void }).detach('bid');
+    });
+    // The press empties the line at once, as every line is emptied before its next words, and the
+    // words it would have said are never put in.
+    await page.waitForTimeout(300);
+    await expect(own).toHaveText('');
 });
