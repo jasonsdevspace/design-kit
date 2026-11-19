@@ -293,6 +293,13 @@
                                 "unit": "ms"
                             }
                         },
+                        "wait": {
+                            "$type": "duration",
+                            "$value": {
+                                "value": 400,
+                                "unit": "ms"
+                            }
+                        },
                         "stack-pinned": {
                             "$type": "number",
                             "$value": 1

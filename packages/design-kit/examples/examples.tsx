@@ -974,6 +974,14 @@ export const codeHead: ReactElement = (
 /** A screen's own status line, out of sight, on the page from the start. */
 export const statusLine: ReactElement = <StatusLine className="screen-status" />;
 
+/** A part of the page waiting for its content, with the line that shows once the wait is long. */
+export const loading: ReactElement = (
+    <article aria-labelledby="product" aria-busy="true">
+        <h2 id="product">Product</h2>
+        <p className="dk-loading">Loading the product.</p>
+    </article>
+);
+
 /** A copy button and the page's status line, before a page attaches the button. */
 export const copyButton: ReactElement = (
     <>
@@ -1000,6 +1008,7 @@ export const EXAMPLES = {
     themeSwitch,
     copyButton,
     statusLine,
+    loading,
     codeHead,
     contentPage,
     bands,

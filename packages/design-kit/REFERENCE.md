@@ -78,6 +78,7 @@ page.
 | `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link                                                                                                                                                                                             |
 | `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                                                                                                                                                                                                |
 | `--dk-shadow-resting`                                                                             | `0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4))`, the lift of a raised panel                                                                                                                                                                                                                                     |
+| `--dk-wait`                                                                                       | 400ms, how long a wait goes unremarked before a loading line or a busy look shows                                                                                                                                                                                                                                           |
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                                                                                                                                                                                                   |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                                                                                                                                                    |
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                                                                                                                                                      |
@@ -1323,6 +1324,27 @@ export const Round = ({ round }: { readonly round: number }) => {
     return <h2 ref={heading}>Round {round}</h2>;
 };
 ```
+
+### A part of the page that is loading
+
+<!-- example: loading -->
+
+```html
+<article aria-labelledby="product" aria-busy="true">
+    <h2 id="product">Product</h2>
+    <p class="dk-loading">Loading the product.</p>
+</article>
+```
+
+A part of the page waiting for its content, such as a product on its way, carries
+`aria-busy="true"` while it waits, so a screen reader holds off reading it half drawn, and holds a
+`.dk-loading` line that says what is coming. The line shows only once the wait outlasts `--dk-wait`,
+400ms, so a fast answer shows nothing, and a page takes the line out and the mark away once the
+content is drawn. The wait is a delay rather than a motion, so it stands under reduced motion. The
+line is words in the muted text, with no spinner, since words say what is happening and a spinner
+is a motion reduced motion would stop. A wait a screen reader should hear is said on the screen's
+status line, once, by the page, as words that never wait. A button that starts the wait is busy,
+not loading, and a wait with a known amount is progress.
 
 ## Content pages
 

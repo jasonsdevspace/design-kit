@@ -24,6 +24,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'themeSwitch',
     'copyButton',
     'statusLine',
+    'loading',
     'codeHead',
     'steps',
     'panel',
