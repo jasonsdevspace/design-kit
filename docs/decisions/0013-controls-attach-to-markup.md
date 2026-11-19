@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, and in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, and in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, and after 0.8.7 to set it at 12.25 KB for the usability defaults, measured from a prototype of their rules
 
 ## Context
 
@@ -148,6 +148,17 @@ divides its cells, which works out a column's width at each count from two to si
 no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they held,
 and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
 
+After 0.8.7 the sheets were measured for the usability defaults planned for the next release, a
+dock row for a compact action, a busy button, a region that is loading, a mark for a required or
+optional field, the stack's steps, a split row, a note, a large numeral, progress, a read-only
+field, an empty state and a hero beside its picture. Their rules were written as a prototype and
+formatted as the sheets are, since the pieces land one at a time and the budget is raised once for
+all of them. The sheets weigh 11,398 bytes sent together at 0.8.7 and 12,112 with the prototype in
+place, and with the 169 bytes a piece costs at the median that comes to 12,281 bytes, seven bytes
+under 12 KB. The rule rounds that to 12 KB, which would leave a piece no room to land a few bytes
+heavier than its prototype and would raise the budget a second time in the same release, so the
+budget is set at the next quarter, 12.25 KB.
+
 ## The sheets beside other systems
 
 When the sheets' budget was raised to 11.5 KB, other systems' stylesheets were measured beside them
@@ -160,6 +171,10 @@ the default level, so the 9,579 bytes here and the 11,394 bytes of the 0.8.6 par
 sheets measured two ways. Sent as three files and each measured alone, the kit's sheets come to
 10,201 bytes. The figures are a snapshot of the versions named, kept so the next raise starts from
 them, and a row is checked again by fetching its file.
+
+Measured the table's way when the budget was raised to 12.25 KB, the kit's sheets come to 9,587
+bytes at 0.8.7 and 10,126 bytes with the prototype of the usability defaults in place, so with
+every piece planned the kit stays between Pico's classless sheet and its full one.
 
 | System and file measured                                                    | What it covers                                     | Sent gzipped |
 | --------------------------------------------------------------------------- | -------------------------------------------------- | ------------ |
