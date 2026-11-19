@@ -15,10 +15,12 @@ import {
 } from '@jasonsdevspace/design-kit/react';
 import {
     attachPanel,
+    attachRoving,
     attachStatus,
     attachStepper,
     moveFocus,
     type PanelControl,
+    type RovingOptions,
     type Say,
     type SetPanel,
     type StepperOptions,
@@ -225,3 +227,14 @@ export const settledByWord = (say: Say) => say('Saved.', { settle: 'soon' });
 // Focus moves to an element or an id, with fallbacks, and the request can be called off.
 export const cancelOf = (heading: HTMLElement): (() => void) =>
     moveFocus('remove-ben', { fallbacks: [heading, null] });
+
+// A group of cells takes its orientation, its current cell and what to do as focus moves.
+const tabs: RovingOptions = {
+    orientation: 'horizontal',
+    current: () => null,
+    onMove: () => undefined,
+};
+export const rovingOf = (group: HTMLElement): (() => void) => attachRoving(group, tabs);
+
+// @ts-expect-error A group is laid out as a grid, a row or a column.
+export const diagonal: RovingOptions = { orientation: 'diagonal' };

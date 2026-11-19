@@ -1462,3 +1462,203 @@ export const attachTable = (element: HTMLElement): (() => void) => {
     attachedTables.set(frame, detach);
     return detach;
 };
+
+/** How a group's cells are laid out, which sets the arrow keys that move among them. */
+export type RovingOrientation = 'grid' | 'horizontal' | 'vertical';
+
+/** How a group of cells is attached. */
+export type RovingOptions = {
+    /**
+     * Grid moves by the arrows each way as the cells are drawn, horizontal by left and right alone,
+     * vertical by up and down alone. A tablist takes its aria-orientation, else horizontal, and any
+     * other group a grid.
+     */
+    readonly orientation?: RovingOrientation | undefined;
+    /** The cell the Tab key lands on, such as the chosen tab, read as the stop is placed. */
+    readonly current?: (() => Element | null) | undefined;
+    /** Called with the cell the arrows, Home or End moved focus to, for a page that chooses on it. */
+    readonly onMove?: ((cell: HTMLElement) => void) | undefined;
+};
+
+/** Where a cell is drawn. */
+type Cell = {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+    readonly height: number;
+};
+
+const ROVING_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+
+/** The cell nearest across in the row above or below one, by where the cells are drawn. */
+const acrossFrom = (at: number, boxes: readonly Cell[], down: boolean): number => {
+    const here = boxes[at];
+    if (!here) return at;
+    const rows = boxes
+        .map((box, index) => ({ box, index }))
+        .filter(({ box }) =>
+            down ? box.top >= here.top + here.height / 2 : box.top + box.height / 2 <= here.top
+        );
+    const first = rows.reduce<Cell | null>(
+        (near, { box }) => (!near || (down ? box.top < near.top : box.top > near.top) ? box : near),
+        null
+    );
+    if (!first) return at;
+    // A cell is in that row when its middle falls within the row's height, so a cell drawn a
+    // fraction of a pixel lower is not left out of it.
+    const middle = here.left + here.width / 2;
+    const row = rows.filter(({ box }) => {
+        const centre = box.top + box.height / 2;
+        return centre >= first.top && centre <= first.top + first.height;
+    });
+    const distance = (box: Cell) => Math.abs(box.left + box.width / 2 - middle);
+    return row.reduce((best, one) => (distance(one.box) < distance(best.box) ? one : best)).index;
+};
+
+/** The cell a key moves to from a cell, or the cell itself where the key does not move this way. */
+const rovedTo = (
+    key: string,
+    at: number,
+    boxes: readonly Cell[],
+    {
+        orientation,
+        rightToLeft,
+    }: { readonly orientation: RovingOrientation; readonly rightToLeft: boolean }
+): number => {
+    const last = boxes.length - 1;
+    if (key === 'Home') return 0;
+    if (key === 'End') return last;
+    const vertical = key === 'ArrowUp' || key === 'ArrowDown';
+    if (vertical && orientation === 'horizontal') return at;
+    if (!vertical && orientation === 'vertical') return at;
+    if (vertical && orientation === 'grid') return acrossFrom(at, boxes, key === 'ArrowDown');
+    const back = vertical ? 'ArrowUp' : rightToLeft ? 'ArrowRight' : 'ArrowLeft';
+    return key === back ? Math.max(0, at - 1) : Math.min(last, at + 1);
+};
+
+const attachedGroups = new WeakMap<
+    HTMLElement,
+    { readonly detach: () => void; readonly set: (next: RovingOptions) => void }
+>();
+
+/** The cells of a group: its buttons, links and tabs, in order. */
+const cellsIn = (group: HTMLElement): HTMLElement[] =>
+    [...group.querySelectorAll<HTMLElement>(':scope > :is(button, a[href], [role="tab"])')].filter(
+        (cell) => !cell.hidden
+    );
+
+/**
+ * Gives a group of cells, such as a grid of buttons or a row of tabs, one stop for the Tab key and
+ * moves focus among its cells with the arrow keys, Home and End, and returns what takes it away. A
+ * grid moves up and down to the nearest cell in the row above or below as the cells are drawn, so
+ * it holds at any count of columns, and left and right follow the page's reading direction. A
+ * horizontal row ignores up and down. An arrow held with Alt, Control or Command is left to the
+ * browser. The stop is the cell the page names as current, else the one focus last reached, else
+ * the first, and a cell marked off keeps its place, as it does in the tab order. The kit moves focus
+ * and the page chooses: a page that chooses a tab as focus reaches it does so in `onMove`. A grid
+ * of buttons with no role of its own takes the toolbar's, so a screen reader says the arrows move
+ * within it. Where the cell that had focus is taken out, focus goes to the cell now in its place,
+ * or the one before. Attached again, a group returns what it returned first and takes options
+ * given in place of the last.
+ */
+export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
+    const already = attachedGroups.get(group);
+    if (already) {
+        if (options) already.set(options);
+        return already.detach;
+    }
+    let chosen: RovingOptions = options ?? {};
+    let last: HTMLElement | null = null;
+    const tablist = group.getAttribute('role') === 'tablist';
+    const orientation = (): RovingOrientation =>
+        chosen.orientation ??
+        (tablist
+            ? group.getAttribute('aria-orientation') === 'vertical'
+                ? 'vertical'
+                : 'horizontal'
+            : 'grid');
+    const stopOf = (cells: readonly HTMLElement[]): HTMLElement | undefined => {
+        const named =
+            chosen.current?.() ?? (tablist ? group.querySelector('[aria-selected="true"]') : null);
+        return (
+            cells.find((cell) => cell === named) ?? cells.find((cell) => cell === last) ?? cells[0]
+        );
+    };
+    const place = () => {
+        const cells = cellsIn(group);
+        const stop = stopOf(cells);
+        for (const cell of cells) {
+            const wanted = cell === stop ? 0 : -1;
+            if (cell.tabIndex !== wanted || !cell.hasAttribute('tabindex')) cell.tabIndex = wanted;
+        }
+    };
+    const onKey = (event: KeyboardEvent) => {
+        if (event.altKey || event.ctrlKey || event.metaKey || !ROVING_KEYS.includes(event.key))
+            return;
+        const cells = cellsIn(group);
+        const from = cells.findIndex((cell) => cell === event.target);
+        if (from < 0) return;
+        const boxes = cells.map((cell) => cell.getBoundingClientRect());
+        const rightToLeft = getComputedStyle(group).direction === 'rtl';
+        const to = rovedTo(event.key, from, boxes, { orientation: orientation(), rightToLeft });
+        const cell = cells[to];
+        if (to === from || !cell) return;
+        event.preventDefault();
+        last = cell;
+        cell.focus();
+        place();
+        chosen.onMove?.(cell);
+    };
+    const onReach = (event: Event) => {
+        const cell = cellsIn(group).find(
+            (one) => event.target instanceof Node && one.contains(event.target)
+        );
+        if (!cell) return;
+        last = cell;
+        place();
+    };
+    // Cells drawn again, added, taken out or chosen are followed, and where the cell that had focus
+    // went, focus goes to the cell now in its place, or the one before.
+    let before = cellsIn(group);
+    const kept = new MutationObserver(() => {
+        const cells = cellsIn(group);
+        if (last && !cells.includes(last)) {
+            const at = before.indexOf(last);
+            const hadFocus =
+                document.activeElement === document.body || document.activeElement === null;
+            last = cells[Math.min(Math.max(at, 0), cells.length - 1)] ?? null;
+            if (hadFocus && last) moveFocus(last);
+        }
+        before = cells;
+        place();
+    });
+    kept.observe(group, {
+        childList: true,
+        subtree: true,
+        attributeFilter: ['aria-selected', 'hidden'],
+    });
+    const listening = new AbortController();
+    const { signal } = listening;
+    group.addEventListener('keydown', onKey, { signal });
+    group.addEventListener('focusin', onReach, { signal });
+    // Safari leaves a tapped button without focus, so a press places the stop too.
+    group.addEventListener('click', onReach, { signal });
+    const toolbar = group.matches('.dk-button-grid') && !group.hasAttribute('role');
+    if (toolbar) group.setAttribute('role', 'toolbar');
+    place();
+    const detach = () => {
+        listening.abort();
+        kept.disconnect();
+        for (const cell of cellsIn(group)) cell.removeAttribute('tabindex');
+        if (toolbar) group.removeAttribute('role');
+        attachedGroups.delete(group);
+    };
+    attachedGroups.set(group, {
+        detach,
+        set: (next) => {
+            chosen = next;
+            place();
+        },
+    });
+    return detach;
+};

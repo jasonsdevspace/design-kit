@@ -17,6 +17,7 @@ export {
     type StatusProviderProps,
     useArrivalFocus,
     useFocusAfterDraw,
+    useRoving,
     useStatus,
 } from './hooks.js';
 
