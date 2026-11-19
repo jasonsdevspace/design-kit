@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { fieldMarks } from '../examples/examples.js';
-import { ChoiceField, SelectField, StepperField, TextareaField } from '../src/react.js';
+import { ChoiceField, InputField, SelectField, StepperField, TextareaField } from '../src/react.js';
 import { forceColors, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
@@ -23,6 +23,10 @@ const BODY = `<main><h1>Rule</h1><form>${renderToStaticMarkup(
             <option>Newest</option>
         </SelectField>
         <TextareaField id="why" label="Why" mark="optional" />
+        <SelectField id="price" label="Price" aria-required>
+            <option>Any</option>
+        </SelectField>
+        <InputField id="nota" label="Nota" mark="optional" markWords="(opcional)" />
         <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} mark="required" />
         <ChoiceField
             id="match"
@@ -63,12 +67,23 @@ test('names a required field without its words, which its aria-required says, an
         'aria-required',
         'true'
     );
-    await expect(page.getByRole('radiogroup', { name: 'Match', exact: true })).toHaveAttribute(
+    // A set of choices keeps its words in its name, since not every screen reader says a group is
+    // required, and a set of radios is marked required too, which a set of checkboxes cannot be.
+    await expect(
+        page.getByRole('radiogroup', { name: 'Match (required)', exact: true })
+    ).toHaveAttribute('aria-required', 'true');
+    const tags = page.getByRole('group', { name: 'Tags (required)', exact: true });
+    await expect(tags).toBeVisible();
+    await expect(tags).not.toHaveAttribute('aria-required');
+    // A page's own aria-required on a field with no mark is kept, and a page's own words are used.
+    await expect(page.getByRole('combobox', { name: 'Price', exact: true })).toHaveAttribute(
         'aria-required',
         'true'
     );
-    // A set of checkboxes cannot be marked required, so its legend says it in words.
-    await expect(page.getByRole('group', { name: 'Tags (required)', exact: true })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Nota (opcional)', exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('textbox', { name: 'Why (optional)', exact: true })
+    ).not.toHaveAttribute('aria-required');
     await expect(page.getByRole('textbox', { name: 'Why (optional)', exact: true })).toBeVisible();
 });
 
@@ -94,11 +109,14 @@ test('shows the mark in forced colors, and keeps it whole at 320px with twice th
 }) => {
     await forceColors(page);
     await draw(page);
-    await expect(page.locator('.dk-field-mark').first()).toBeVisible();
+    const mark = page.locator('.dk-field-mark').first();
+    const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect((await style(mark, 'color'))['color']).not.toBe(ground);
     await forceColors(page, false);
     await draw(page, 'light', SPACED);
     expect(await cutOff(page, '.dk-field-label')).toEqual([]);
     await textSize(page, 2);
     await writePage(page, { title: 'Marks', body: BODY, width: 320, height: 640 });
     expect(await sideways(page)).toBe(0);
+    expect(await cutOff(page, '.dk-field-label')).toEqual([]);
 });

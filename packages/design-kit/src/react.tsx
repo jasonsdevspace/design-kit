@@ -393,6 +393,8 @@ type FieldParts = {
      * twice, and optional is said in the label's name.
      */
     readonly mark?: 'required' | 'optional' | undefined;
+    /** The mark's words in place of the kit's, "(required)" or "(optional)", as in another language. */
+    readonly markWords?: string | undefined;
 };
 
 /**
@@ -416,7 +418,7 @@ const Labeled = ({
                     className="dk-field-mark"
                     aria-hidden={parts.mark === 'required' && said ? true : undefined}
                 >
-                    ({parts.mark})
+                    {parts.markWords ?? `(${parts.mark})`}
                 </span>
             </>
         )}
@@ -438,7 +440,7 @@ const useField = (
         readonly id: string;
         readonly 'aria-describedby': string | undefined;
         readonly 'aria-invalid': true | undefined;
-        readonly 'aria-required': true | undefined;
+        readonly 'aria-required'?: true;
     };
 } => {
     const made = useId();
@@ -455,7 +457,8 @@ const useField = (
             id: control,
             'aria-describedby': describedBy === '' ? undefined : describedBy,
             'aria-invalid': wrong ? true : undefined,
-            'aria-required': mark === 'required' ? true : undefined,
+            // Only where marked, so an aria-required the page gives a field of its own is kept.
+            ...(mark === 'required' ? { 'aria-required': true as const } : {}),
         },
     };
 };
@@ -537,7 +540,15 @@ const Field = ({
 const useControl = <P extends FieldParts & { readonly 'aria-describedby'?: string | undefined }>(
     props: P
 ) => {
-    const { label: _label, hint: _hint, error: _error, id: _id, mark: _mark, ...rest } = props;
+    const {
+        label: _label,
+        hint: _hint,
+        error: _error,
+        id: _id,
+        mark: _mark,
+        markWords: _words,
+        ...rest
+    } = props;
     const { 'aria-describedby': own, ...native } = rest;
     return { native, field: useField(props, own) };
 };
@@ -689,12 +700,15 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
             role={type === 'radio' ? 'radiogroup' : undefined}
             aria-describedby={field.wired['aria-describedby']}
             aria-invalid={type === 'radio' && field.error ? true : undefined}
-            // A radio group can be marked required, and a set of checkboxes cannot, so a required
-            // set of checkboxes says it in its legend's words instead.
-            aria-required={type === 'radio' ? field.wired['aria-required'] : undefined}
+            // A radio group is marked required too, which a set of checkboxes cannot be, and only
+            // where marked, so the page's own is kept. Not every screen reader says a group is
+            // required, so the legend keeps its words in the name for both.
+            {...(type === 'radio' && props.mark === 'required'
+                ? { 'aria-required': true as const }
+                : {})}
         >
             <legend className="dk-field-label">
-                <Labeled parts={props} said={type === 'radio'} />
+                <Labeled parts={props} said={false} />
             </legend>
             <FieldText parts={props} field={field} />
             <div className={spaced('dk-choices', row && 'dk-choices-row')}>

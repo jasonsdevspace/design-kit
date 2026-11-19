@@ -1116,3 +1116,42 @@ describe('the status provider', () => {
         ).toBe('<p class="dk-visually-hidden" role="status"></p>');
     });
 });
+
+describe('a field marked required or optional', () => {
+    it('hides a required mark from a screen reader, with its space outside it, and marks the control', () => {
+        expect(renderToStaticMarkup(<InputField id="n" label="Name" mark="required" />)).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="n">Name ' +
+                '<span class="dk-field-mark" aria-hidden="true">(required)</span></label>' +
+                '<input class="dk-input" id="n" aria-required="true"/></div>'
+        );
+    });
+
+    it("keeps an optional mark in the name, and a page's own aria-required where there is no mark", () => {
+        expect(renderToStaticMarkup(<InputField id="n" label="Note" mark="optional" />)).toContain(
+            'Note <span class="dk-field-mark">(optional)</span>'
+        );
+        expect(renderToStaticMarkup(<InputField id="n" label="Note" aria-required />)).toContain(
+            'aria-required="true"'
+        );
+    });
+
+    it("keeps a set of choices' words in its name, and marks only a set of radios required", () => {
+        const choices = [{ value: 'a', label: 'A' }];
+        const radios = renderToStaticMarkup(
+            <ChoiceField id="r" label="Pick" name="r" mark="required" choices={choices} />
+        );
+        expect(radios).toContain('<span class="dk-field-mark">(required)</span>');
+        expect(radios).toContain('aria-required="true"');
+        const boxes = renderToStaticMarkup(
+            <ChoiceField
+                id="c"
+                label="Pick"
+                name="c"
+                type="checkbox"
+                mark="required"
+                choices={choices}
+            />
+        );
+        expect(boxes).not.toContain('aria-required');
+    });
+});
