@@ -322,12 +322,20 @@ const hush = (status: HTMLElement) => {
     status.textContent = '';
 };
 
-const say = (status: HTMLElement, message: string, keep = false) => {
+/**
+ * Says a message on a status line. A message given as a function is read as it is put in, after the
+ * moment's wait, so words a page draws from its own state follow the change that prompted them, and
+ * one that gives nothing by then is not said.
+ */
+const say = (status: HTMLElement, message: string | (() => string | null), keep = false) => {
     hush(status);
     statusTimers.set(
         status,
         window.setTimeout(() => {
-            status.textContent = message;
+            const words = typeof message === 'string' ? message : message();
+            // A message that is no longer wanted by the time it would be said is left unsaid.
+            if (words === null) return;
+            status.textContent = words;
             if (keep) return;
             statusTimers.set(
                 status,
@@ -637,7 +645,82 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     return show;
 };
 
-const attachedSteppers = new WeakMap<HTMLElement, () => void>();
+/** How a stepper is attached. */
+export type StepperOptions = {
+    /**
+     * A status line to say each press on, such as the page's own, in place of the stepper's line,
+     * so a page that says something after a press has one line and not two.
+     */
+    readonly status?: HTMLElement | null;
+    /**
+     * Words to say after the value, read as the message is put on the line, a moment after the
+     * press, so a page's own state has caught up with it.
+     */
+    readonly words?: ((value: string) => string) | null;
+};
+
+const attachedSteppers = new WeakMap<
+    HTMLElement,
+    { readonly detach: () => void; readonly set: (next: StepperOptions) => void }
+>();
+
+/**
+ * A field's description with a stepper's own parts in their place: the error while it shows, which
+ * names the range itself, or else the range in words when there are some, after the page's own.
+ */
+const describedBy = (
+    before: string,
+    range: HTMLElement | null,
+    limits: HTMLElement | null,
+    shown: boolean
+): string => {
+    const ids = before
+        .split(/\s+/)
+        .filter((id) => id !== '' && id !== range?.id && id !== limits?.id);
+    if (shown && range) ids.push(range.id);
+    else if (limits?.id && limits.textContent !== '') ids.push(limits.id);
+    return ids.join(' ');
+};
+
+/** What a press says: the value, that it is a limit where it is one, and a page's words after it. */
+const pressWords = (
+    input: HTMLInputElement,
+    least: number,
+    most: number,
+    words: StepperOptions['words']
+): string => {
+    const { value } = input;
+    const at = input.valueAsNumber;
+    const low = at <= least;
+    const high = at >= most;
+    const said = low && !high ? `${value}, the least` : high && !low ? `${value}, the most` : value;
+    const more = words?.(value) ?? '';
+    return more === '' ? said : `${said}. ${more}`;
+};
+
+/**
+ * The greatest value a press can reach: the greatest value itself, or the last step under it where
+ * the step does not land on it, such as 9 from 1 by 2 under 10.
+ */
+const topOf = (least: number, most: number, step: string): number => {
+    const by = step === '' ? 1 : Number(step);
+    if (!Number.isFinite(most) || !(by > 0)) return most;
+    const base = Number.isFinite(least) ? least : 0;
+    return base + Math.floor((most - base) / by) * by;
+};
+
+/** The words a stepper's range is described by, or nothing when it has no limit. */
+const rangeWords = (least: number, most: number): string => {
+    const low = Number.isFinite(least);
+    const high = Number.isFinite(most);
+    if (low && high)
+        return least === most
+            ? `Only ${String(least)}.`
+            : `From ${String(least)} to ${String(most)}.`;
+    if (low) return `${String(least)} or more.`;
+    if (high) return `Up to ${String(most)}.`;
+    return '';
+};
 
 /**
  * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
@@ -651,24 +734,39 @@ const attachedSteppers = new WeakMap<HTMLElement, () => void>();
  * value is changed and says it on the status line, and the error is cleared as soon as the value is
  * right again. Only the error's own id and the invalid state it set are added and taken away, so a
  * hint or an error the page draws keeps its place, and a shown error is put back whenever a page
- * that draws the field again, as React does, rewrites its description or its invalid mark. It
- * takes the stepper's field or the stepper, attaches each stepper once whichever it is given, and
- * returns what takes it away again.
+ * that draws the field again, as React does, rewrites its description or its invalid mark. The
+ * field is described by its range in words, after the page's own description, and while the error
+ * is shown by the error alone, which names the range itself. A press that lands on a limit says so
+ * with the value, and a page's words, given as an option, are said after it in the same message,
+ * on the page's status line when one is given. It takes the stepper's field or the stepper,
+ * attaches each stepper once whichever it is given, takes options given again in place of the
+ * last, and returns what takes it away again.
  */
-export const attachStepper = (element: HTMLElement): (() => void) => {
+export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
     const stepper = element.matches('.dk-stepper')
         ? element
         : (field.querySelector<HTMLElement>('.dk-stepper') ?? element);
     const already = attachedSteppers.get(stepper);
-    if (already) return already;
+    if (already) {
+        if (options) already.set(options);
+        return already.detach;
+    }
+    let chosen: StepperOptions = options ?? {};
     const input = field.querySelector<HTMLInputElement>('.dk-stepper-value');
     const down = field.querySelector<HTMLButtonElement>('.dk-stepper-down');
     const up = field.querySelector<HTMLButtonElement>('.dk-stepper-up');
     if (!input || !down || !up) throw new Error('a stepper needs its value and its two buttons');
     const range = field.querySelector<HTMLElement>('.dk-stepper-range');
     const status = field.querySelector<HTMLElement>('.dk-stepper-status');
+    const limits = field.querySelector<HTMLElement>('.dk-stepper-limits');
     const limit = (value: string, fallback: number) => (value === '' ? fallback : Number(value));
+    const least = () => limit(input.min, -Infinity);
+    const greatest = () => limit(input.max, Infinity);
+    /** The greatest value a press reaches, which a step that skips the greatest stops short of. */
+    const most = () => topOf(least(), greatest(), input.step);
+    /** Where a press is said: the page's line when it gave one, or the stepper's own. */
+    const line = () => chosen.status ?? status;
     const locked = () => input.disabled || input.readOnly;
     const off = (button: HTMLButtonElement, stop: boolean) => {
         if (stop) button.setAttribute('aria-disabled', 'true');
@@ -677,23 +775,31 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     const mark = () => {
         const value = input.valueAsNumber;
         const known = !Number.isNaN(value);
-        off(down, locked() || (known && value <= limit(input.min, -Infinity)));
-        off(up, locked() || (known && value >= limit(input.max, Infinity)));
+        off(down, locked() || (known && value <= least()));
+        off(up, locked() || (known && value >= most()));
     };
     let setInvalid = false;
-    const report = (wrong: boolean) => {
-        if (!range) return;
-        range.hidden = !wrong;
-        const before = input.getAttribute('aria-describedby') ?? '';
-        const ids = before.split(/\s+/).filter((id) => id !== '' && id !== range.id);
-        if (wrong) ids.push(range.id);
-        // Written only when it changes, so the watch below, woken by this writing, finds nothing
-        // left to write and stops.
-        const after = ids.join(' ');
-        if (after !== before) {
-            if (after) input.setAttribute('aria-describedby', after);
-            else input.removeAttribute('aria-describedby');
+    let attached = true;
+    /**
+     * Puts the range in words in the field's description, after the page's own, or the error in its
+     * place while the error shows, whoever showed it. Each is written only when it changes, so the
+     * watch below, woken by this writing, finds nothing left to write and stops.
+     */
+    const describe = () => {
+        if (limits) {
+            const words = attached ? rangeWords(least(), greatest()) : '';
+            if (limits.textContent !== words) limits.textContent = words;
         }
+        const before = input.getAttribute('aria-describedby') ?? '';
+        const after = describedBy(before, range, limits, range !== null && !range.hidden);
+        if (after === before) return;
+        if (after) input.setAttribute('aria-describedby', after);
+        else input.removeAttribute('aria-describedby');
+    };
+    const report = (wrong: boolean) => {
+        if (range) range.hidden = !wrong;
+        describe();
+        if (!range) return;
         const pageError = [...field.querySelectorAll<HTMLElement>('.dk-field-error')].some(
             (error) => error !== range && !error.hidden
         );
@@ -706,6 +812,23 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         }
     };
     const wrong = () => input.value === '' || !input.validity.valid;
+    // Each press counts, so a message still waiting when the value is typed over, the form is reset
+    // or the stepper is taken away is left unsaid, and what a press last said on a page's line is
+    // known, so only that is cleared there and the page's own words are left alone.
+    let presses = 0;
+    let lastSaid = '';
+    const quiet = () => {
+        presses += 1;
+        if (status) hush(status);
+        const page = chosen.status;
+        if (page && lastSaid !== '' && page.textContent === lastSaid) page.textContent = '';
+    };
+    /** What a press says: the value, that it is a limit where it is one, and the page's words. */
+    const spoken = (pressed: number) => () => {
+        if (pressed !== presses || !attached) return null;
+        lastSaid = pressWords(input, least(), most(), chosen.words);
+        return lastSaid;
+    };
     const press = (raise: boolean) => () => {
         mark();
         const button = raise ? up : down;
@@ -721,21 +844,24 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
         if (input.value === before) return;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
-        if (status) say(status, input.value, true);
+        const to = line();
+        // Kept, on the stepper's line or the page's, since focus stays on the button.
+        if (to) say(to, spoken(presses), true);
     };
     const onInput = () => {
-        if (status) hush(status);
+        quiet();
         mark();
         if (!wrong()) report(false);
     };
     const onChange = () => {
         const bad = wrong();
         report(bad);
-        if (bad && status && range) say(status, range.textContent, true);
+        const to = line();
+        if (bad && to && range) say(to, range.textContent, true);
     };
     const onReset = () => {
         window.setTimeout(() => {
-            if (status) hush(status);
+            quiet();
             mark();
             report(false);
         });
@@ -751,24 +877,40 @@ export const attachStepper = (element: HTMLElement): (() => void) => {
     input.form?.addEventListener('reset', onReset, { signal });
     // A page that draws the field again, as React does, writes its description and its invalid
     // mark from what it last drew, so a shown error is put back each time they are rewritten, or
-    // cleared where a script has since made the value right.
-    const kept = new MutationObserver(() => {
+    // cleared where a script has since made the value right, and the range in words is put back
+    // after the page's description. New limits are followed in the words and the buttons.
+    const kept = new MutationObserver((records) => {
+        if (records.some(({ attributeName }) => attributeName === 'min' || attributeName === 'max'))
+            mark();
         if (range && !range.hidden) report(wrong());
+        else describe();
     });
-    if (range) kept.observe(input, { attributeFilter: ['aria-describedby', 'aria-invalid'] });
+    if (range || limits)
+        kept.observe(input, {
+            attributeFilter: ['aria-describedby', 'aria-invalid', 'min', 'max'],
+        });
     mark();
+    describe();
     down.hidden = false;
     up.hidden = false;
     const detach = () => {
         listening.abort();
         kept.disconnect();
+        quiet();
+        attached = false;
         report(false);
-        if (status) hush(status);
         down.hidden = true;
         up.hidden = true;
         attachedSteppers.delete(stepper);
     };
-    attachedSteppers.set(stepper, detach);
+    attachedSteppers.set(stepper, {
+        detach,
+        set: (next) => {
+            // A page that takes the stepper's words to its own line leaves none on the stepper's.
+            if (next.status && status) hush(status);
+            chosen = next;
+        },
+    });
     return detach;
 };
 

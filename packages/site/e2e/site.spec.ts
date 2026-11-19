@@ -2192,13 +2192,22 @@ test.describe('the code of each state', () => {
                     // A stepper's error, which the script shows on the live copy past its limit,
                     // describes the field and marks it invalid only once shown, so the field is
                     // read as the markup draws it.
+                    // The range in words, which the script writes as it attaches the stepper and
+                    // adds to the field's description, is read as the markup draws it, empty.
+                    for (const limits of copy.querySelectorAll('.dk-stepper-limits'))
+                        limits.textContent = '';
                     for (const value of copy.querySelectorAll('.dk-stepper-value')) {
                         const range = value
                             .closest('.dk-field')
                             ?.querySelector('.dk-stepper-range');
+                        const limits = value
+                            .closest('.dk-field')
+                            ?.querySelector('.dk-stepper-limits');
                         const all = (value.getAttribute('aria-describedby') ?? '').split(/\s+/);
                         if (range && all.includes(range.id)) value.removeAttribute('aria-invalid');
-                        const ids = all.filter((id) => id !== '' && id !== range?.id);
+                        const ids = all.filter(
+                            (id) => id !== '' && id !== range?.id && id !== limits?.id
+                        );
                         if (ids.length > 0) value.setAttribute('aria-describedby', ids.join(' '));
                         else value.removeAttribute('aria-describedby');
                     }

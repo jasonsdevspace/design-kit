@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, and after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB
 
 ## Context
 
@@ -142,6 +142,12 @@ and a toast's buttons given their tabindex. Every function sent together weighs 
 bytes under the 7.5 KB they hold, and the median a function adds is now 657 bytes. A function of the
 usual size would take them past the budget, and the rule then sets them at 8 KB. The budget stays at
 7.5 KB until a function outgrows it, as the rule has it.
+
+After 0.8.7 the controls were measured with a stepper that describes its field by its range in
+words, says when a press lands on a limit, and takes a page's own words to say after the value and
+a page's own status line to say them on. Every function sent together weighs 8,112 bytes, past the
+7.5 KB they held, and the median a function adds is now 655 bytes, so the rule sets the controls at
+8.75 KB.
 
 For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
 divides its cells, which works out a column's width at each count from two to six in the sheet, since
