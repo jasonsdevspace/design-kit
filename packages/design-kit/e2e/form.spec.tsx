@@ -25,6 +25,17 @@ const FORM = renderToStaticMarkup(
                     { value: 'any', label: 'Any', defaultChecked: true },
                 ]}
             />
+            <ChoiceField
+                id="tags"
+                label="Tags"
+                name="tags"
+                type="checkbox"
+                choices={[
+                    { value: 'new', label: 'New' },
+                    { value: 'sale', label: 'Sale' },
+                ]}
+            />
+            <InputField id="code" label="Code" disabled />
             <button type="submit">Save rule</button>
         </form>
         <div id="summary" tabIndex={-1} hidden>
@@ -105,6 +116,44 @@ test("says the error's own words where the field already had focus, and again on
     await expect(page.locator('#name')).toBeFocused();
 });
 
+test('says the error and how many more need attention where the field already had focus', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#name').focus();
+    await refuse(page, [
+        ['name', 'Give the rule a name.'],
+        ['match', 'Choose how rules match.'],
+    ]);
+    await expect(page.locator('.screen-status')).toHaveText(
+        'Error: Give the rule a name. 2 fields need attention.'
+    );
+});
+
+test('passes over a field that cannot take focus, and counts a set of checkboxes once', async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        // The kit marks each checkbox of a set invalid, and a disabled field can be marked too.
+        for (const box of document.querySelectorAll('#tags input'))
+            box.setAttribute('aria-invalid', 'true');
+    });
+    await refuse(page, [['code', 'Enter the code.']]);
+    await expect(page.getByRole('checkbox', { name: 'New' })).toBeFocused();
+    await expect(page.locator('.screen-status')).toHaveText('2 fields need attention.');
+});
+
+test('leaves focus where it is when nothing is wrong', async ({ page }) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await refuse(page, []);
+    await page.waitForTimeout(100);
+    await expect(page.getByRole('button', { name: 'Save rule' })).toBeFocused();
+    await expect(page.locator('.screen-status')).toHaveText('');
+});
+
 test("focuses a radio set's checked radio, and a summary the page names", async ({ page }) => {
     await open(page);
     await page.getByRole('button', { name: 'Save rule' }).focus();
@@ -119,6 +168,14 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
     });
     await refuse(page, []);
     await expect(page.locator('#summary')).toBeFocused();
+    // Moving focus reads the summary, so the line says nothing over it, and refused again from
+    // the summary, the line says the summary's words, since focus that stays reads nothing.
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
+        '1 field needs attention.',
+    ]);
+    await refuse(page, []);
+    await expect(page.locator('.screen-status')).toHaveText('Two fields need attention.');
 });
 
 test.describe('in React', () => {

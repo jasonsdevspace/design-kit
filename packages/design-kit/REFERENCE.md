@@ -526,13 +526,18 @@ The error is not live, since a form that fails in several fields at once would s
 On a submit that fails, the page draws its errors and calls the function `attachForm(form, {
 status, summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which
 speaks on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an
-error summary where the page names one, else the first field marked invalid, or a radio set's
-checked radio or its first, since the set's fieldset takes no focus. One message is said, chosen so
-nothing is said twice: how many fields need attention, since moving focus reads the field and its
-error, or the error's own words where the field already had focus, since focus that does not move
-reads nothing. A second refusal moves focus and speaks again, as WCAG 3.3.1 asks.
+error summary where the page names one, else the first field in error that can take focus, passing
+over one that is disabled or out of sight, or in a set its checked radio or its first control, since
+the set's fieldset takes no focus. A set counts once, however many of its choices are marked. One
+message is said, chosen so nothing is said twice: nothing where focus moves to the summary, which
+reads its own words, how many fields need attention where focus moves to a field, since moving focus
+reads the field and its error, and where the field already had focus, which then reads nothing, the
+error's own words, with the count where more fields are wrong. A second refusal calls off one not
+yet landed, moves focus and speaks again, as WCAG 3.3.1 asks. Refused with nothing wrong and no
+summary, focus stays where it is. In React, a form with no `StatusProvider` above it and no `say`
+throws, since its refusal would reach no one.
 
-````js
+```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
 
 const refuse = attachForm(document.querySelector('#rule'), {
@@ -540,8 +545,9 @@ const refuse = attachForm(document.querySelector('#rule'), {
 });
 // Once the page has drawn its errors:
 refuse();
-``` The kit does no validation, so the page decides when to show an
-error, best after a submit is tried rather than while someone is typing.
+```
+
+The kit does no validation, so the page decides when to show an error, best after a submit is tried rather than while someone is typing.
 
 A field a visitor cannot change uses `disabled`, unlike a button, and its hint says why, which a
 screen reader reads wherever it announces the field.
@@ -577,7 +583,7 @@ would push its column.
         <button type="submit" class="dk-button">Search</button>
     </div>
 </form>
-````
+```
 
 A control with a button beside it, such as a search with the button that runs it, sits in a
 `dk-field-action` under the field's label. The control takes the room the button leaves, and both

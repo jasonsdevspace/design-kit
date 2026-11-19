@@ -182,12 +182,16 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * errors, it moves focus to the summary or the first field in error and says the refusal once, on
  * the status line of the nearest `StatusProvider`, or through the `say` given. The summary is read
  * as the refusal lands, so a function written inline on every render is never set again. What
- * refuses stays the same across renders, and does nothing until the form is drawn.
+ * refuses stays the same across renders, does nothing until the form is drawn, and returns what
+ * calls the refusal off, which unmounting does too. A form with no provider above it and no `say`
+ * throws, since its refusal would reach no one.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
     options: Pick<FormOptions, 'say' | 'summary'> = {}
 ): readonly [RefCallback<Form>, Refuse] => {
     const speaker = useContext(Speaker);
+    if (!speaker && !options.say)
+        throw new Error('useFormRefusal needs a StatusProvider above it, or a say of its own');
     const latest = useRef({ options, speaker });
     useEffect(() => {
         latest.current = { options, speaker };
@@ -204,8 +208,17 @@ export const useFormRefusal = <Form extends HTMLElement>(
               })
             : null;
     }, []);
+    const waiting = useRef<(() => void) | null>(null);
+    useEffect(
+        () => () => {
+            waiting.current?.();
+        },
+        []
+    );
     const refuse = useCallback<Refuse>(() => {
-        refuser.current?.();
+        const cancel = refuser.current?.() ?? (() => undefined);
+        waiting.current = cancel;
+        return cancel;
     }, []);
     return [ref, refuse] as const;
 };

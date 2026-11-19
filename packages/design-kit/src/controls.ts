@@ -40,8 +40,8 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
     return false;
 };
 
-/** Where focus is asked to go: an element, an element's id, or nothing. */
-export type FocusTarget = Element | string | null | undefined;
+/** Where focus is asked to go: an element, an element's id, one found as focus moves, or nothing. */
+export type FocusTarget = Element | string | (() => Element | null) | null | undefined;
 
 /** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
 const homeOf = (element: Element): Element | null =>
@@ -60,7 +60,12 @@ export type MoveFocusOptions = {
 
 /** A place to focus, or nothing where it is an id with no element yet or a control marked off. */
 const placeOf = (target: FocusTarget): Element | null => {
-    const place = typeof target === 'string' ? document.getElementById(target) : (target ?? null);
+    const place =
+        typeof target === 'string'
+            ? document.getElementById(target)
+            : typeof target === 'function'
+              ? target()
+              : (target ?? null);
     return place && !isOff(place) ? place : null;
 };
 
@@ -1473,29 +1478,52 @@ export type FormOptions = {
     readonly summary?: (() => Element | null) | undefined;
 };
 
-/** Refuses a submit, once the page has drawn its errors: focus moves and the refusal is said. */
-export type Refuse = () => void;
+/**
+ * Refuses a submit, once the page has drawn its errors: focus moves and the refusal is said. It
+ * returns what calls the refusal off before it lands.
+ */
+export type Refuse = () => () => void;
 
 const attachedForms = new WeakMap<
     HTMLElement,
     { readonly refuse: Refuse; readonly set: (next: FormOptions) => void }
 >();
 
-/** The control a refused form's first error points at: a field, or a radio set's chosen radio. */
-const firstWrong = (form: HTMLElement): HTMLElement | null => {
-    const wrong = form.querySelector<HTMLElement>('[aria-invalid="true"]');
-    if (!wrong?.matches('fieldset')) return wrong;
-    // A radio set's fieldset takes no focus, so its checked radio does, or its first.
-    return (
-        wrong.querySelector<HTMLElement>('input:checked') ??
-        wrong.querySelector<HTMLElement>('input')
-    );
+/** Whether a control can take focus: enabled, not inert, and in sight. */
+const focusable = (control: Element): control is HTMLElement =>
+    control instanceof HTMLElement &&
+    !control.matches(':disabled') &&
+    !control.closest('[inert]') &&
+    control.checkVisibility();
+
+/**
+ * The field each mark of invalid stands for: a set's fieldset where a choice in it is marked, as
+ * the kit marks each checkbox of a set, else the control itself, so a set counts once.
+ */
+const fieldOf = (marked: Element): Element =>
+    marked.matches('input[type="checkbox"], input[type="radio"]')
+        ? (marked.closest('fieldset') ?? marked)
+        : marked;
+
+/** The fields of a refused form in error, each once, in order. */
+const wrongFields = (form: HTMLElement): Element[] => [
+    ...new Set([...form.querySelectorAll('[aria-invalid="true"]')].map(fieldOf)),
+];
+
+/**
+ * Where focus goes in a field in error: the field itself, or in a set, its checked radio, else the
+ * first of its controls that can take focus. Nothing where none can.
+ */
+const focusIn = (field: Element): HTMLElement | null => {
+    if (!field.matches('fieldset')) return focusable(field) ? field : null;
+    const checked = field.querySelector('input[type="radio"]:checked');
+    if (checked && focusable(checked)) return checked;
+    return [...field.querySelectorAll('input, select, textarea, button')].find(focusable) ?? null;
 };
 
-/** The words of the errors a control is described by, as a screen reader reads them. */
-const errorWords = (control: HTMLElement): string => {
-    const holder = control.closest('fieldset[aria-invalid="true"]') ?? control;
-    const ids = (holder.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+/** The words of the errors a field is described by, as a screen reader reads them. */
+const errorWords = (field: Element): string => {
+    const ids = (field.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
     return ids
         .map((id) => document.getElementById(id))
         .filter(
@@ -1505,20 +1533,41 @@ const errorWords = (control: HTMLElement): string => {
         .join(' ');
 };
 
-/** How many fields a refused form has in error, said where focus moving reads the first already. */
+/** How many fields a refused form has in error. */
 const countWords = (count: number): string =>
     count === 1 ? '1 field needs attention.' : `${String(count)} fields need attention.`;
+
+/**
+ * What a refusal says, chosen so nothing is said twice. Where focus moves to a summary, which reads
+ * its own words, it says nothing, and where the summary already had focus, its words. Where focus
+ * moves to a field, which reads the field and its error, it says the count. Where the field already
+ * had focus, which then reads nothing, it says the error, with the count where more are wrong.
+ */
+const refusalWords = (
+    to: { readonly summary: Element | null; readonly field: Element | null },
+    focused: boolean,
+    count: number
+): string => {
+    if (to.summary) return focused ? to.summary.textContent.trim() : '';
+    if (!to.field || count === 0) return '';
+    if (!focused) return countWords(count);
+    const words = errorWords(to.field);
+    return count > 1 || words === '' ? `${words} ${countWords(count)}`.trim() : words;
+};
 
 /**
  * Makes the step after a refused submit work for a form, and returns what refuses it, which a page
  * calls once it has drawn the errors, as the reference's form guidance asks. A frame later, so the
  * errors are drawn, focus moves to an error summary where the page names one, else the first field
- * marked invalid, or a radio set's checked radio or its first, and one message is said on the
- * status line, chosen so nothing is said twice: how many fields need attention, since moving focus
- * reads the field and its error, or the error's own words where the field already had focus, since
- * focus that does not move reads nothing. The field's error stays not live. A second refusal moves
- * focus and speaks again. Attached again, a form returns what it returned first and takes options
- * given in place of the last.
+ * in error that can take focus, or in a set its checked radio or its first control that can, and
+ * one message is said on the status line, chosen so nothing is said twice: nothing where focus
+ * moves to a summary, whose words it reads, how many fields need attention where focus moves to a
+ * field, since moving focus reads the field and its error, or the error's own words, with the
+ * count where more are wrong, where the field already had focus, since focus that does not move
+ * reads nothing. A set counts once however many of its choices are marked. The field's error stays
+ * not live. A second refusal calls off one not yet landed, moves focus and speaks again, and each
+ * refusal returns what calls it off. Attached again, a form returns what it returned first and
+ * takes options given in place of the last.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
     const already = attachedForms.get(form);
@@ -1527,22 +1576,36 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         return already.refuse;
     }
     let chosen: FormOptions = options ?? {};
+    let pending: (() => void) | null = null;
     const speak = (words: string) => {
         if (words === '') return;
         if (chosen.say) chosen.say(words);
         else if (chosen.status) attachStatus(chosen.status)(words);
     };
     const refuse: Refuse = () => {
-        window.requestAnimationFrame(() => {
+        pending?.();
+        // Read in the same frame as focus moves, before it moves, so what a refusal says follows
+        // where focus was.
+        let target: HTMLElement | null = null;
+        const frame = window.requestAnimationFrame(() => {
             const summary = chosen.summary?.() ?? null;
-            const field = firstWrong(form);
-            const target = summary ?? field;
-            if (!target) return;
-            const count = form.querySelectorAll('[aria-invalid="true"]').length;
+            const fields = wrongFields(form);
+            const field = fields.map(focusIn).find((one) => one !== null) ?? null;
+            target = summary instanceof HTMLElement ? summary : field;
+            // Nothing in error and no summary leaves focus where it is.
+            if (!target) {
+                moving();
+                return;
+            }
             const focused = document.activeElement === target;
-            moveFocus(target, { fallbacks: [field] });
-            speak(focused && field ? errorWords(field) || countWords(count) : countWords(count));
+            speak(refusalWords({ summary, field }, focused, fields.length));
         });
+        const moving = moveFocus(() => target);
+        pending = () => {
+            window.cancelAnimationFrame(frame);
+            moving();
+        };
+        return pending;
     };
     attachedForms.set(form, {
         refuse,
