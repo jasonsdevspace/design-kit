@@ -252,3 +252,9 @@ export const busyNamed = Button({ busy: 'Saving the rule.', children: 'Save rule
 export const busyPlain = Button({ busy: true, children: 'Save rule' });
 const quiet: BusyOptions = { status: null };
 export const busyOf = (button: HTMLElement): (() => void) => attachBusy(button, quiet);
+
+// A field is marked required or optional in words, apart from the native required.
+export const markedField = InputField({ label: 'Rule name', mark: 'required', required: true });
+
+// @ts-expect-error A field's mark is required or optional.
+export const wrongMark = InputField({ label: 'Rule name', mark: 'needed' });

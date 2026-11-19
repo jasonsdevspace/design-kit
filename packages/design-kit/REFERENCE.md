@@ -572,6 +572,33 @@ error, followed by any description of the page's own, and is left off when there
 `aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
+#### A required or an optional field
+
+<!-- example: fieldMarks -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-name"
+        >Rule name <span class="dk-field-mark" aria-hidden="true">(required)</span></label
+    ><input class="dk-input" required="" id="rule-name" aria-required="true" />
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-note"
+        >Note <span class="dk-field-mark">(optional)</span></label
+    ><input class="dk-input" id="rule-note" />
+</div>
+```
+
+A field is marked required or optional in words in its label, `mark="required"` or
+`mark="optional"`, never by an asterisk alone, which needs a key to explain it. The words are in the
+muted text at the normal weight, so they do not compete with the label. Required is said by the
+control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say it
+twice, and optional is said in the label's name, since nothing else says it. A form where most
+fields are required marks the optional ones instead. A set of radios is marked required as a
+group, and a set of checkboxes, which cannot be, says required in its legend's words. The mark
+does no checking: `required` is still the native attribute, which a page keeps for the browser's
+own check, and the field, select, textarea, stepper and set of choices all take `mark`.
+
 The error is not live, since a form that fails in several fields at once would speak over itself.
 On a submit that fails, the page draws its errors and calls the function `attachForm(form, {
 status, summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which
