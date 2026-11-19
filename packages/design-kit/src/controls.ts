@@ -1880,3 +1880,81 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
     });
     return detach;
 };
+
+/** How a busy button is attached, for the words it says once a wait is long enough to notice. */
+export type BusyOptions = {
+    /** The status line the busy words are said on, such as the screen's own. */
+    readonly status?: HTMLElement | null | undefined;
+    /** What says the busy words, for a page that has one already, such as React's `useStatus`. */
+    readonly say?: Say | undefined;
+};
+
+/** The wait before a busy button shows and says it is busy: --dk-wait, or 400ms without it. */
+const waitOf = (element: Element): number => {
+    const value = getComputedStyle(element).getPropertyValue('--dk-wait').trim();
+    const amount = Number.parseFloat(value);
+    if (Number.isNaN(amount)) return 400;
+    return value.endsWith('ms') ? amount : value.endsWith('s') ? amount * 1000 : amount;
+};
+
+const attachedBusy = new WeakMap<
+    HTMLElement,
+    { readonly detach: () => void; readonly set: (next: BusyOptions) => void }
+>();
+
+/**
+ * Makes a busy button work, one marked `data-busy` while what its press started runs, and returns
+ * what takes it away. A press of a busy button does nothing, stopped before any handler of the
+ * page's hears it. Once the button has been busy for --dk-wait, its words are said once on the
+ * status line, the `data-busy` value, or "Saving." where it is empty, so a fast save says nothing.
+ * Words not yet put on the line when the button stops being busy are dropped, so a result a toast
+ * says is never followed by a late "Saving." Attached again, a button returns what it returned
+ * first and takes options given in place of the last.
+ */
+export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => void) => {
+    const already = attachedBusy.get(button);
+    if (already) {
+        if (options) already.set(options);
+        return already.detach;
+    }
+    let chosen: BusyOptions = options ?? {};
+    let timer = 0;
+    let was = false;
+    const busy = () => button.hasAttribute('data-busy');
+    const speak = () => {
+        const given = button.getAttribute('data-busy') ?? '';
+        const words = given === '' ? 'Saving.' : given;
+        if (chosen.say) chosen.say(words);
+        else if (chosen.status) say(chosen.status, () => (busy() ? words : null));
+    };
+    const follow = () => {
+        const now = busy();
+        if (now === was) return;
+        was = now;
+        window.clearTimeout(timer);
+        if (now) timer = window.setTimeout(speak, waitOf(button));
+    };
+    const stop = (event: Event) => {
+        if (!busy()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    };
+    const listening = new AbortController();
+    button.addEventListener('click', stop, { capture: true, signal: listening.signal });
+    const kept = new MutationObserver(follow);
+    kept.observe(button, { attributeFilter: ['data-busy'] });
+    follow();
+    const detach = () => {
+        listening.abort();
+        kept.disconnect();
+        window.clearTimeout(timer);
+        attachedBusy.delete(button);
+    };
+    attachedBusy.set(button, {
+        detach,
+        set: (next) => {
+            chosen = next;
+        },
+    });
+    return detach;
+};

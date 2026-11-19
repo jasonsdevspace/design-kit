@@ -438,6 +438,48 @@ Say why a button is off in text beside it, such as a `.dk-field-hint` paragraph 
 `aria-describedby` names. A form's submit button is better left on while the form is incomplete, so
 a press shows the errors rather than doing nothing.
 
+#### A busy button
+
+<!-- example: busyButton -->
+
+```html
+<button
+    type="button"
+    class="dk-button dk-button-accent"
+    aria-disabled="true"
+    data-busy="Saving the rule."
+>
+    Save rule
+</button>
+```
+
+A button whose press has started something still running, such as a save, is busy: marked
+`data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes
+them with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
+`--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
+wait at once. `attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which
+speaks on the screen's `StatusProvider`, stops a press before any handler of the page's hears it,
+and once the wait outlasts the token says the button's words, or "Saving.", once on the status line.
+Words not yet said when the button stops being busy are dropped, so a result a toast says is never
+followed by a late "Saving." There is no spinner, since words say what is happening.
+
+Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
+can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
+out, and it goes back to resting on its own once the work is done.
+
+```tsx
+import { Button, useBusy } from '@jasonsdevspace/design-kit/react';
+
+export const SaveRound = ({ saving, save }: { saving: boolean; save: () => void }) => {
+    const busy = useBusy<HTMLButtonElement>();
+    return (
+        <Button ref={busy} accent busy={saving ? 'Saving the round.' : false} onClick={save}>
+            Save the round
+        </Button>
+    );
+};
+```
+
 <details>
 <summary>How a button is drawn</summary>
 
@@ -972,6 +1014,7 @@ passes on a prop it might not have been given compiles under `exactOptionalPrope
 | `quiet`   | `false`    | Adds `dk-button-quiet`, and with no children draws a hidden × beside Close out of sight. TypeScript asks for `text` with it and refuses `off` |
 | `pressed` | none       | Writes `aria-pressed`, even when `false`. Leave it out for an action                                                                          |
 | `off`     | `false`    | Writes `aria-disabled="true"`, and a click runs no `onClick`                                                                                  |
+| `busy`    | `false`    | Writes `aria-disabled="true"` and `data-busy`, its value the words to say where it is a string, and a click runs no `onClick`                 |
 | `type`    | `'button'` | The button's type                                                                                                                             |
 
 Every other prop goes to the `<button>`, `ref` and `className` included, except `style`, `disabled`,

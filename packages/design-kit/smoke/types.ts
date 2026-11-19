@@ -14,12 +14,14 @@ import {
     Toast,
 } from '@jasonsdevspace/design-kit/react';
 import {
+    attachBusy,
     attachForm,
     attachPanel,
     attachRoving,
     attachStatus,
     attachStepper,
     moveFocus,
+    type BusyOptions,
     type PanelControl,
     type Refuse,
     type RovingOptions,
@@ -244,3 +246,9 @@ export const rovingOf = (group: HTMLElement): (() => void) => attachRoving(group
 
 // @ts-expect-error A group is laid out as a grid, a row or a column.
 export const diagonal: RovingOptions = { orientation: 'diagonal' };
+
+// A button is busy with words of its own or with the default, and its attach says them.
+export const busyNamed = Button({ busy: 'Saving the rule.', children: 'Save rule' });
+export const busyPlain = Button({ busy: true, children: 'Save rule' });
+const quiet: BusyOptions = { status: null };
+export const busyOf = (button: HTMLElement): (() => void) => attachBusy(button, quiet);

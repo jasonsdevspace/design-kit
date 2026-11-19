@@ -14,6 +14,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'strip',
     'stripWaiting',
     'buttons',
+    'busyButton',
     'fields',
     'fieldAction',
     'choiceField',

@@ -106,6 +106,13 @@ export const siteHeader: ReactElement = (
  * that is on, and a button that is off, in a row of actions, with the text after it that says why
  * the last is off.
  */
+/** A save that is running, its button busy and saying so in its own words. */
+export const busyButton: ReactElement = (
+    <Button accent busy="Saving the rule.">
+        Save rule
+    </Button>
+);
+
 export const buttons: ReactElement = (
     <>
         <div className="dk-actions">
@@ -998,6 +1005,7 @@ export const EXAMPLES = {
     footer,
     siteHeader,
     buttons,
+    busyButton,
     fields,
     fieldAction,
     choiceField,

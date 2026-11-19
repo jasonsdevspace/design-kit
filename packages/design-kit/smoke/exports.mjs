@@ -25,6 +25,7 @@ export const VALUE_EXPORTS = {
         'ThemeSwitch',
         'Toast',
         'useArrivalFocus',
+        'useBusy',
         'useFocusAfterDraw',
         'useFormRefusal',
         'useRoving',
@@ -32,6 +33,7 @@ export const VALUE_EXPORTS = {
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/controls': [
+        'attachBusy',
         'attachCopyButton',
         'attachDialog',
         'attachForm',
