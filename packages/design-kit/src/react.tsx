@@ -701,6 +701,10 @@ export type CalloutProps = Omit<
     readonly children?: ReactNode;
 };
 
+/** Whether a callout is live with nothing to say yet: no title, no message and no actions. */
+const waitingFor = (live: CalloutProps['live'], holds: readonly boolean[]): boolean =>
+    live !== undefined && !holds.includes(true);
+
 /**
  * A message set apart from the page, with an optional title before it and actions after it. It has
  * no role unless the page gives `live`, whatever its tone, since a message on the page when it
@@ -709,10 +713,6 @@ export type CalloutProps = Omit<
  * which holds the title and the tone's word too, so they are read with it, and the actions are
  * not.
  */
-/** Whether a callout is live with nothing to say yet: no title, no message and no actions. */
-const waitingFor = (live: CalloutProps['live'], parts: readonly ReactNode[]): boolean =>
-    live !== undefined && !parts.some(filled);
-
 export const Callout = ({
     tone = 'info',
     title,
@@ -730,12 +730,17 @@ export const Callout = ({
     const titled = filled(title);
     const said = filled(children);
     const word = spoken === '' ? null : <span className="dk-visually-hidden">{spoken}</span>;
-    const waiting = waitingFor(live, [title, children, actions]);
+    const acting = filled(actions);
+    const waiting = waitingFor(live, [titled, said, acting]);
     return (
         // The page's own props first and the kit's after, as a button's are, so a role, a style,
         // inner HTML or a live region plain JavaScript passes never lands on the callout, whose
         // message takes its role from `live` alone.
         <div
+            // A live callout with nothing to say yet is marked, so it is out of sight and out of
+            // the flow in every browser the kit supports, and the mark goes once it has words. It
+            // comes before the page's own props, so a page that marks it itself is left to.
+            data-empty={waiting ? '' : undefined}
             {...native}
             role={undefined}
             style={undefined}
@@ -744,9 +749,6 @@ export const Callout = ({
             aria-atomic={undefined}
             aria-relevant={undefined}
             className={spaced('dk-callout', kind !== 'info' && `dk-callout-${kind}`, className)}
-            // A live callout with nothing to say yet is marked, so it is out of sight and out of
-            // the flow in every browser the kit supports, and the mark goes once it has words.
-            data-empty={waiting ? '' : undefined}
         >
             {titled || said || live !== undefined ? (
                 <div className="dk-callout-body" role={live}>
@@ -760,7 +762,7 @@ export const Callout = ({
                     {said ? children : null}
                 </div>
             ) : null}
-            {filled(actions) ? <div className="dk-callout-actions">{actions}</div> : null}
+            {acting ? <div className="dk-callout-actions">{actions}</div> : null}
         </div>
     );
 };

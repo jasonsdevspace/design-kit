@@ -744,15 +744,44 @@ test('passes over an empty live callout in the flow and the room kept for a toas
             `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
                 `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body">` +
                 (callout ? renderToStaticMarkup(<Callout tone="danger" live="alert" />) : '') +
-                '<ul id="list"><li>Ann</li></ul></main></div></body></html>'
+                '<ul id="list"><li>Ann</li></ul></main>' +
+                '<div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
         );
-        return (await page.locator('#list').boundingBox())?.y ?? 0;
+        // Every rule that asks for :has() taken out, as a browser without it drops them.
+        await page.evaluate(() => {
+            const drop = (rules: CSSRuleList) => {
+                for (let at = rules.length - 1; at >= 0; at -= 1) {
+                    const rule = rules[at];
+                    if (rule instanceof CSSStyleRule && rule.selectorText.includes(':has(')) {
+                        const holder = rule.parentRule;
+                        if (holder instanceof CSSGroupingRule) holder.deleteRule(at);
+                        else rule.parentStyleSheet?.deleteRule(at);
+                    } else if (rule instanceof CSSGroupingRule) drop(rule.cssRules);
+                }
+            };
+            for (const sheet of document.styleSheets) drop(sheet.cssRules);
+        });
+        return page.locator('#list').boundingBox();
     };
-    // The list starts where it starts with no callout before it, with no flow step of its own.
-    expect(await listAt(true)).toBe(await listAt(false));
-    expect((await style(page.locator('#list'), 'margin-top'))['margin-top']).toBe('0px');
-    // The rule that takes it out of sight asks for no :has(), which the kit's oldest browsers lack.
-    expect(KIT).toMatch(/:where\(\.dk-callout\[data-empty\]\)\s*\{/);
+    const without = await listAt(false);
+    const marked = await listAt(true);
+    // Out of sight, with no ground drawn, and the list where it starts with none before it.
+    expect(await height(page.locator('.dk-callout'))).toBeLessThanOrEqual(1);
+    expect(marked?.y).toBe(without?.y);
+    await expect(page.getByRole('alert')).toBeAttached();
+    // Last in the body, with a toast shown, the room for the toast goes under the list instead.
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+            `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body">` +
+            '<ul id="list"><li>Ann</li></ul>' +
+            renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
+            '</main><div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
+    );
+    expect(
+        Number.parseFloat(
+            (await style(page.locator('#list'), 'margin-bottom'))['margin-bottom'] ?? '0'
+        )
+    ).toBeGreaterThan(0);
 });
 
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({

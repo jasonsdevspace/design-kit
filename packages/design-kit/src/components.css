@@ -995,7 +995,8 @@
      * takes no room and opens no gap in a grid or a column, and the flow's step and the room kept
      * for a toast pass over it as they pass over hidden text. It stays in the page so a screen
      * reader reads what fills it. The mark is an attribute rather than :has(), which the oldest
-     * browsers the kit supports lack, so none of them draws an empty box. A callout written by hand
+     * browsers the kit supports lack, so none of them draws an empty box, and it has a rule of its
+     * own, so a browser that drops the :has() rule below keeps this one. A callout written by hand
      * without the mark is still taken out of sight where :has() works. It comes after the tones, so
      * it wins over each of them by its order, and once the mark goes the tone's rules draw it.
      */
@@ -3312,6 +3313,7 @@
 
     :where(
         :is(.dk-explainer, .dk-page, .dk-band, .dk-stack) > h1 + *,
+        :is(.dk-explainer, .dk-page, .dk-band, .dk-stack) > h1 + .dk-callout[data-empty] + *,
         .dk-table-title + *,
         :not(.dk-code-head) > .dk-code-title + *,
         .dk-code-head + *

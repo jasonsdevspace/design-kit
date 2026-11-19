@@ -705,7 +705,8 @@ explains. A message that arrives after the page has loaded is made live in three
    message and no actions is also taken out of sight where `:has()` works, so one written without
    the mark is never drawn empty in a current browser.
 3. Fill the message when there is something to say, which is when a screen reader reads it, and
-   take the mark away. For success, warning or danger, put the hidden word in with it, as
+   take the mark away, as a page does when it gives the callout actions. A page that empties the
+   message again, with no actions, marks it again. For success, warning or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
 A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is

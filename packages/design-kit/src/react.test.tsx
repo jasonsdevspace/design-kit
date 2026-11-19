@@ -785,11 +785,11 @@ describe('the callout', () => {
     it('draws a live message empty, so the page can fill it once it is on the page', () => {
         for (const nothing of [null, false, undefined]) {
             expect(renderToStaticMarkup(<Callout live="status">{nothing}</Callout>)).toBe(
-                '<div class="dk-callout" data-empty=""><div class="dk-callout-body" role="status"></div></div>'
+                '<div data-empty="" class="dk-callout"><div class="dk-callout-body" role="status"></div></div>'
             );
         }
         expect(renderToStaticMarkup(<Callout tone="danger" live="alert" />)).toBe(
-            '<div class="dk-callout dk-callout-danger" data-empty="">' +
+            '<div data-empty="" class="dk-callout dk-callout-danger">' +
                 '<div class="dk-callout-body" role="alert"></div></div>'
         );
     });
