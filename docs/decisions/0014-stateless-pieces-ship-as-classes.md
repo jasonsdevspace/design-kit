@@ -1,6 +1,6 @@
 # 14. A piece with no state of its own ships as classes alone
 
-**Status:** accepted
+**Status:** accepted, amended by record 20, for hooks that move focus or speak for these pieces while the state a page owns stays the page's
 
 ## Context
 

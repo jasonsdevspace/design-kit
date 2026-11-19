@@ -68,3 +68,7 @@ costs, and the test behind it.
     press was in it, a panel and its buttons given a tabindex for Safari, focus sent on to where a
     link in the panel jumps, Escape, and why the path of the last click and a flag for interaction
     outside were turned down.
+20. [The kit's React hooks wrap its attach functions](0020-react-hooks-wrap-the-attach-functions.md):
+    a hook for each attach that keeps only its handle and passes changed options by attaching again,
+    the markup components kept free of effects, and why leaving pages to attach in an effect and
+    behavior written in React were turned down.
