@@ -1,41 +1,33 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { build } from 'vite';
+
 /*
- * A page's script for the browser tests of the kit's React hooks, bundled with React itself, since
- * a hook needs React to run in the page. The entry is written in plain JavaScript with
- * createElement, and imports the hooks from the source by the path `HOOKS` names.
+ * A page drawn by React in a browser, from an entry in this folder such as ref-page.tsx, bundled
+ * with React into one module, since only a browser attaches a ref, moves focus or runs a hook's
+ * effect. Building React into a page takes a while on a slow runner, so a spec builds it once, in
+ * a beforeAll on its own clock.
  */
 
-/** The hooks' source, for an entry to import. */
-export const HOOKS = fileURLToPath(new URL('../src/hooks.tsx', import.meta.url));
-
-/** Bundles an entry's code, with React and the kit's source it imports, into one module. */
-export const bundle = async (entryCode: string): Promise<string> => {
-    const { build } = await import('vite');
-    // In the repository's own cache, so the entry finds React where the repository installed it.
-    const cache = fileURLToPath(new URL('../../../node_modules/.cache/', import.meta.url));
-    mkdirSync(cache, { recursive: true });
-    const folder = mkdtempSync(join(cache, 'design-kit-hooks-'));
-    try {
-        const entry = join(folder, 'entry.js');
-        writeFileSync(entry, entryCode);
-        const output = await build({
-            configFile: false,
-            logLevel: 'silent',
-            define: { 'process.env.NODE_ENV': JSON.stringify('development') },
-            build: {
-                write: false,
-                minify: false,
-                lib: { entry, formats: ['es'], fileName: 'page' },
+/** An entry in this folder and React as one module, for a page written into the browser. */
+export const bundle = async (entry: string): Promise<string> => {
+    const output = await build({
+        configFile: false,
+        logLevel: 'silent',
+        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+        build: {
+            write: false,
+            lib: {
+                entry: fileURLToPath(new URL(entry, import.meta.url)),
+                formats: ['es'],
+                fileName: 'page',
             },
-        });
-        return (Array.isArray(output) ? output : [output])
-            .flatMap((result) => ('output' in result ? result.output : []))
-            .map((file) => (file.type === 'chunk' ? file.code : ''))
-            .join('\n');
-    } finally {
-        rmSync(folder, { recursive: true, force: true });
-    }
+        },
+    });
+    const chunks = (Array.isArray(output) ? output : [output])
+        .flatMap((result) => ('output' in result ? result.output : []))
+        .filter((file) => file.type === 'chunk');
+    const [only] = chunks;
+    if (chunks.length !== 1 || !only) throw new Error('the page should build into one script');
+    return only.code;
 };

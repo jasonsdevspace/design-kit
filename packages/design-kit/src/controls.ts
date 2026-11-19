@@ -316,9 +316,12 @@ const SAID_FOR = 2000;
  * and leaves after a while unless it is kept, as a toast keeps its own until the toast leaves.
  */
 const statusTimers = new WeakMap<HTMLElement, number>();
-/** Empties a status line, and drops what it was about to say. */
+/** Each status line's words waiting to settle, apart from the timer of words already said. */
+const settleTimers = new WeakMap<HTMLElement, number>();
+/** Empties a status line, and drops what it was about to say, words waiting to settle among them. */
 const hush = (status: HTMLElement) => {
     window.clearTimeout(statusTimers.get(status));
+    window.clearTimeout(settleTimers.get(status));
     status.textContent = '';
 };
 
@@ -382,9 +385,10 @@ export const attachStatus = (line: HTMLElement): Say => {
             say(line, message);
             return;
         }
-        // Waits on the line's own timer, so any message said in the meantime drops this one.
-        window.clearTimeout(statusTimers.get(line));
-        statusTimers.set(
+        // Waits on a timer of its own, so words already said are still put in and leave as ever,
+        // and any message said in the meantime drops these.
+        window.clearTimeout(settleTimers.get(line));
+        settleTimers.set(
             line,
             window.setTimeout(() => {
                 say(line, message);
