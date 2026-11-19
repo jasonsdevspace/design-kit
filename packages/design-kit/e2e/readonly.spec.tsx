@@ -58,6 +58,21 @@ for (const theme of ['light', 'dark'] as const) {
     });
 }
 
+test('keeps the error edge on a read-only field with an error, and draws a disabled one disabled', async ({
+    page,
+}) => {
+    await draw(page);
+    await page.locator('#round').evaluate((input) => {
+        input.setAttribute('aria-invalid', 'true');
+    });
+    expect((await look(page, 'round'))['border-top-color']).not.toBe('rgba(0, 0, 0, 0)');
+    await page.locator('#round').evaluate((input: HTMLInputElement) => {
+        input.removeAttribute('aria-invalid');
+        input.disabled = true;
+    });
+    expect((await look(page, 'round'))['color']).toBe((await look(page, 'gone'))['color']);
+});
+
 test('draws a read-only edge in the ground color in forced colors', async ({ page }) => {
     await forceColors(page);
     await draw(page);
@@ -84,8 +99,10 @@ test('draws a read-only stepper with its value alone, which a keyboard still rea
     page,
 }) => {
     await draw(page);
-    await expect(page.locator('.dk-stepper button')).toHaveCount(0);
+    // Drawn hidden, as every stepper's buttons are until attached, and a read-only one keeps them so.
+    await expect(page.locator('.dk-stepper button:visible')).toHaveCount(0);
     const cards = page.getByRole('spinbutton', { name: 'Cards each' });
+    await expect(cards).toHaveAttribute('readonly', '');
     await cards.focus();
     await expect(cards).toBeFocused();
 });

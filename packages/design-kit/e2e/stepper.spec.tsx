@@ -324,8 +324,10 @@ test('fits a phone at twice the text size, its buttons and its value whole', asy
         await textSize(page, 2);
         expect(await sideways(page), String(width)).toBe(0);
         expect(await cutOff(page, '.dk-stepper-value'), String(width)).toEqual([]);
-        // A read-only stepper has no buttons to fit.
-        for (const stepper of await page.locator('.dk-stepper:has(.dk-stepper-up)').all()) {
+        // A read-only stepper shows no buttons to fit.
+        for (const stepper of await page
+            .locator('.dk-stepper:has(.dk-stepper-up:not([hidden]))')
+            .all()) {
             const field = await box(stepper.locator('xpath=..'), 'the field');
             const last = await box(stepper.locator('.dk-stepper-up'), 'the raise button');
             expect(last.x + last.width, String(width)).toBeLessThanOrEqual(
@@ -581,7 +583,7 @@ test('draws a read-only stepper with no buttons, its value read as a field drawn
     await expect(page.getByRole('button', { name: /Rounds played/ })).toHaveCount(0);
 });
 
-test('keeps a focused button, marked off, when its field turns read only, and a press changes nothing', async ({
+test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({
     page,
     browserName,
 }) => {
@@ -591,12 +593,23 @@ test('keeps a focused button, marked off, when its field turns read only, and a 
     await bid(page).evaluate((input: HTMLInputElement) => {
         input.readOnly = true;
     });
-    await lowerBid.dispatchEvent('focusin');
+    // Followed as the field changes, with no focus moving, and the focused button kept.
     await expect(lowerBid).toHaveAttribute('aria-disabled', 'true');
     await expect(lowerBid).toBeFocused();
+    await expect(raise(page)).toBeHidden();
     if (browserName === 'webkit') await press(lowerBid, browserName);
     else await lowerBid.click({ force: true });
     await expect(bid(page)).toHaveValue('9');
+    // Once focus leaves it, the button goes too, and both come back as the field can change again.
+    await bid(page).focus();
+    await expect(lowerBid).toBeHidden();
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.readOnly = false;
+    });
+    await expect(lowerBid).toBeVisible();
+    await expect(raise(page)).toBeVisible();
+    await press(lowerBid, browserName);
+    await expect(bid(page)).toHaveValue('8');
 });
 
 test("sets an inline stepper's error above it and its hint below it", async ({ page }) => {
