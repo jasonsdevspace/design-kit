@@ -78,8 +78,8 @@ page.
 | `--dk-stack-pinned`, `--dk-stack-raised`, `--dk-stack-bar`, `--dk-stack-toast`, `--dk-stack-skip` | the order things sit over one another, lowest first: a pinned cell, a list that opens, a bar at an edge, a toast, the skip link                                                                                                                                                                                             |
 | `--dk-shadow-raised`                                                                              | `0 6px 24px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5))`                                                                                                                                                                                                                                                                |
 | `--dk-shadow-resting`                                                                             | `0 1px 3px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.4))`, the lift of a raised panel                                                                                                                                                                                                                                     |
-| `--dk-wait`                                                                                       | 400ms, how long a wait goes unremarked before a loading line or a busy look shows                                                                                                                                                                                                                                           |
 | `--dk-duration-short`, `--dk-duration-medium`                                                     | 150ms and 250ms, a change of state and a surface arriving                                                                                                                                                                                                                                                                   |
+| `--dk-wait`                                                                                       | 400ms, how long a wait goes unremarked before a loading line shows                                                                                                                                                                                                                                                          |
 | `--dk-safe-top`, `--dk-safe-right`, `--dk-safe-bottom`, `--dk-safe-left`                          | what a phone keeps at each edge, zero unless the viewport meta says `viewport-fit=cover`                                                                                                                                                                                                                                    |
 | `--dk-column-inset`                                                                               | how far the column stands in from each side of a band the width of the page, `max(0px, (100% - var(--dk-column)) / 2)`                                                                                                                                                                                                      |
 | `--dk-app-inset`                                                                                  | how far an app's column stands in from each side of the screen, `max(0px, (100vw - var(--dk-app-column)) / 2)`                                                                                                                                                                                                              |
@@ -1338,13 +1338,22 @@ export const Round = ({ round }: { readonly round: number }) => {
 
 A part of the page waiting for its content, such as a product on its way, carries
 `aria-busy="true"` while it waits, so a screen reader holds off reading it half drawn, and holds a
-`.dk-loading` line that says what is coming. The line shows only once the wait outlasts `--dk-wait`,
-400ms, so a fast answer shows nothing, and a page takes the line out and the mark away once the
-content is drawn. The wait is a delay rather than a motion, so it stands under reduced motion. The
-line is words in the muted text, with no spinner, since words say what is happening and a spinner
-is a motion reduced motion would stop. A wait a screen reader should hear is said on the screen's
-status line, once, by the page, as words that never wait. A button that starts the wait is busy,
-not loading, and a wait with a known amount is progress.
+`.dk-loading` line that says what is coming. The page puts the line in with the mark, since the
+line's wait is timed from when it first matches. The line shows only once the wait outlasts
+`--dk-wait`, 400ms, so a fast answer shows nothing. The wait is a delay rather than a motion, so it
+stands under reduced motion and in forced colors. The line is words in the muted text, with no
+spinner, since words say what is happening and a spinner is a motion reduced motion would stop.
+
+Once the content is drawn, the page takes the line out and the mark away in one change, since the
+line shows at once the moment the mark goes. Where the wait fails, the page puts a danger callout
+with a way forward in the line's place and takes the mark away, so the line never stays up.
+
+The line is out of the tree a screen reader reads while it waits, and is not live, so nothing is
+heard of it. Where the wait follows a visitor's own action and focus stays where it was, the page
+says the line's words on the screen's status line once the wait outlasts `--dk-wait`, then says the
+result. A region that loads as the page opens says nothing, since a visitor arriving finds it as
+they read. A button that starts the wait is busy, not loading, and a wait with a known amount is
+progress.
 
 ## Content pages
 

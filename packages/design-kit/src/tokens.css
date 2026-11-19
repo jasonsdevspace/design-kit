@@ -202,8 +202,8 @@
         --dk-duration-medium: 250ms;
 
         /*
-         * How long a wait goes unremarked before it is shown: a loading line, or a busy button's
-         * look. A fast answer shows nothing. It is a delay, not a motion, so reduced motion keeps it.
+         * How long a wait goes unremarked before it is shown, as a loading line is, so a fast answer
+         * shows nothing. It is a delay, not a motion, so reduced motion keeps it.
          */
         --dk-wait: 400ms;
 

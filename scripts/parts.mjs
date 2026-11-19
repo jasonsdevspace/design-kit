@@ -33,6 +33,7 @@ export const PIECES = [
     ['dialog', 'dialog'],
     ['actions', 'actions'],
     ['callout', 'callout'],
+    ['loading', 'loading line'],
     ['choices', 'choice'],
     ['choice', 'choice'],
     ['eyebrow', 'eyebrow'],
