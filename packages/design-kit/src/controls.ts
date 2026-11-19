@@ -347,23 +347,49 @@ const say = (status: HTMLElement, message: string | (() => string | null), keep 
     );
 };
 
-const attachedLines = new WeakMap<HTMLElement, (message: string) => void>();
+/** How a message is said on a status line. */
+export type SayOptions = {
+    /**
+     * How long, in milliseconds, the words wait to stop changing before they are said, for words
+     * that change with each press, such as a count still to enter. Words said again within it take
+     * the place of those not yet said, and only the last is said.
+     */
+    readonly settle?: number | undefined;
+};
+
+/** Says a message on a status line, at once or once its words stop changing. */
+export type Say = (message: string, options?: SayOptions) => void;
+
+const attachedLines = new WeakMap<HTMLElement, Say>();
 
 /**
  * Returns the function that says a message on a status line, which a page draws out of sight and
  * puts on the page from the start, so a screen reader hears each message without focus moving. A
  * message is put in a moment after the line is emptied, so the same words said twice are heard
- * twice, and leaves after a while, so reading by line finds no old words. A screen keeps a line of
- * its own for this, as a toast and a stepper keep theirs. It speaks through the same function as
- * the copy button and the stepper, so a line handed to a copy button too keeps one timer, and a
- * later message replaces an earlier one. Attached again, a line returns the function it returned
- * first.
+ * twice, and leaves after a while, so reading by line finds no old words. A message is said at once
+ * unless it asks to settle, when it waits that long for its words to stop changing, and words said
+ * again in the meantime take its place. Any message said on the line drops one still waiting, so
+ * the last words said are the ones heard. A screen keeps a line of its own for this, as a toast and
+ * a stepper keep theirs. It speaks through the same function as the copy button and the stepper, so
+ * a line handed to a copy button too keeps one timer, and a later message replaces an earlier one.
+ * Attached again, a line returns the function it returned first.
  */
-export const attachStatus = (line: HTMLElement): ((message: string) => void) => {
+export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);
     if (already) return already;
-    const speak = (message: string) => {
-        say(line, message);
+    const speak: Say = (message, { settle = 0 } = {}) => {
+        if (settle <= 0) {
+            say(line, message);
+            return;
+        }
+        // Waits on the line's own timer, so any message said in the meantime drops this one.
+        window.clearTimeout(statusTimers.get(line));
+        statusTimers.set(
+            line,
+            window.setTimeout(() => {
+                say(line, message);
+            }, settle)
+        );
     };
     attachedLines.set(line, speak);
     return speak;

@@ -1221,6 +1221,14 @@ puts the message in a tenth of a second later, so the same words said twice are 
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
 copy button does, through the same function, so a line a page hands to both keeps one timer.
+
+Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
+each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
+wait that long for their words to stop changing, so a screen reader hears the count once the
+presses stop rather than every step of it or none. Words said again in the meantime take the place
+of those not yet said, any message said on the line drops words still waiting, so the last words said
+are the ones heard, and the same words said twice are heard twice. Words that must be heard, such
+as a save's result or the end of a progress, never wait.
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
 its own rather than by its role, which those share.
@@ -1231,9 +1239,29 @@ on the line, since a form that fails in several fields at once would speak over 
 dialog is open the page behind it is inert, and a line there is not heard, so a screen that speaks
 while a dialog is open puts a line inside the dialog and says its messages there.
 
-React's `StatusLine` draws the line, taking `className` and `ref`, its ref the line drawn, for a page
-that hands it to `attachStatus` from an effect. `CopyStatus` is the same component under the name a
-copy button's line was given first.
+React's `StatusLine` draws the line, taking `className` and `ref`, its ref the line drawn.
+`CopyStatus` is the same component under the name a copy button's line was given first.
+
+In React, `StatusProvider` draws a screen's line and attaches it, and `useStatus()` returns the
+function that says a message on it from any part of the screen under the provider, the same across
+renders. Words said before the line is attached, as a child's own first effect can, are held and
+said once it is. A provider inside a dialog takes the calls of the parts inside it on a line of its
+own, so they are heard while the page behind is inert. A part with no provider above it throws.
+
+```tsx
+import { StatusProvider, useStatus } from '@jasonsdevspace/design-kit/react';
+
+const Seats = () => {
+    const say = useStatus();
+    return <button onClick={() => say('Ann moves to seat 2.')}>Move Ann</button>;
+};
+
+export const Screen = () => (
+    <StatusProvider>
+        <Seats />
+    </StatusProvider>
+);
+```
 
 ## Content pages
 

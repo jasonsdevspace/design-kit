@@ -15,8 +15,10 @@ import {
 } from '@jasonsdevspace/design-kit/react';
 import {
     attachPanel,
+    attachStatus,
     attachStepper,
     type PanelControl,
+    type Say,
     type SetPanel,
     type StepperOptions,
 } from '@jasonsdevspace/design-kit/controls';
@@ -209,3 +211,12 @@ export const setByWord = (set: SetPanel) => set('open');
 // A stepper takes a page's own line and its words after the value, and returns what takes it away.
 const tricks: StepperOptions = { status: null, words: (value: string) => `${value} in all.` };
 export const stepperOf = (stepper: HTMLElement): (() => void) => attachStepper(stepper, tricks);
+
+// A status line says at once, or waits for its words to settle, and says nothing back.
+export const sayOf = (line: HTMLElement): Say => attachStatus(line);
+export const settled = (say: Say): void => {
+    say('3 tricks still to enter.', { settle: 700 });
+};
+
+// @ts-expect-error A settle is a number of milliseconds.
+export const settledByWord = (say: Say) => say('Saved.', { settle: 'soon' });

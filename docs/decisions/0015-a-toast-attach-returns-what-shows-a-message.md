@@ -1,6 +1,6 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
+**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
 
 ## Context
 
