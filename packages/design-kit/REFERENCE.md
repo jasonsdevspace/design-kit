@@ -1269,6 +1269,49 @@ export const Screen = () => (
 );
 ```
 
+### Moving focus after a change
+
+When a change takes away the control that had focus or brings a visitor somewhere new, focus goes
+where they can carry on, so a keyboard and a screen reader never fall back to the top of the page,
+as WCAG 2.4.3 asks. `moveFocus(target, { fallbacks })` from `./controls` moves focus to a control,
+given as an element or an id, once the change is drawn, a frame later, so a control the page draws
+in answer to the same press or key is there. Ask in the handler of the press or key that makes the
+change, or, for a change React draws later, in a transition or behind a suspense, in an effect
+once it is drawn. Where the target is gone, hidden, inert, disabled or marked off, focus goes to
+the first of the fallbacks that takes it, and then to the app frame's body or the page's main
+content, by the walk a closing panel hands focus back by. Focus a visitor has moved since the
+request is left where they put it: focus is free only while it is where it was when asked, or on
+the page's body, as it is once the control that had it is removed. A request still waiting a
+second later, as in a tab out of sight, is dropped, so focus does not jump when the visitor comes
+back. Each request is new, so the same control asked for twice is focused twice, and the function
+`moveFocus` returns calls a request off before it lands.
+
+```js
+import { moveFocus } from '@jasonsdevspace/design-kit/controls';
+
+// Ann's row and its Remove button go, so focus goes to the next player's, or the list's heading.
+moveFocus('remove-ben', { fallbacks: ['players-heading'] });
+```
+
+In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request
+takes the place of one not yet landed, so the last asked for wins, and one not yet landed when the
+component unmounts is called off. `useArrivalFocus(key)` returns a ref for a view's heading, gives
+the heading a tabindex of -1 where it has none, and focuses it when a visitor's action brings the
+view: when the key changes, such as the round on screen, and when the view is drawn after the
+visitor has pressed or typed, as a tab's view is. It never moves focus as the page first draws, nor
+from a field the view focuses itself as it draws. The key is a string, a number or a boolean,
+compared by value, and changes on a press or a submit, never as a visitor chooses in a list or a set
+of radios, which would move them as they choose, as WCAG 3.2.2 has it.
+
+```tsx
+import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
+
+export const Round = ({ round }: { readonly round: number }) => {
+    const heading = useArrivalFocus<HTMLHeadingElement>(round);
+    return <h2 ref={heading}>Round {round}</h2>;
+};
+```
+
 ## Content pages
 
 A content page, such as a landing page or an about page, is a `dk-page` on its main content: its

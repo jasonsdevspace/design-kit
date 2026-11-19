@@ -1,6 +1,6 @@
 # 19. A closing panel hands focus to its button only where the visitor's place was in it
 
-**Status:** accepted
+**Status:** accepted, amended for `moveFocus`, which moves focus once a change is drawn by the same walk through a target and its fallbacks that a closing panel hands focus back by, so a panel and a page fall back alike
 
 ## Context
 

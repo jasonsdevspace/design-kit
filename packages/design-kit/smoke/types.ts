@@ -17,6 +17,7 @@ import {
     attachPanel,
     attachStatus,
     attachStepper,
+    moveFocus,
     type PanelControl,
     type Say,
     type SetPanel,
@@ -220,3 +221,7 @@ export const settled = (say: Say): void => {
 
 // @ts-expect-error A settle is a number of milliseconds.
 export const settledByWord = (say: Say) => say('Saved.', { settle: 'soon' });
+
+// Focus moves to an element or an id, with fallbacks, and the request can be called off.
+export const cancelOf = (heading: HTMLElement): (() => void) =>
+    moveFocus('remove-ben', { fallbacks: [heading, null] });
