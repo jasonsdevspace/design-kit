@@ -1034,6 +1034,8 @@ export const StepperField = (props: StepperFieldProps) => {
                     <span aria-hidden="true">+</span>
                     <span className="dk-visually-hidden">Raise {named}</span>
                 </button>
+                {/* Its range in words, which the attach writes and adds to the field's description. */}
+                <span className="dk-visually-hidden dk-stepper-limits" id={`${field.id}-limits`} />
                 <span className="dk-visually-hidden dk-stepper-status" role="status" />
             </div>
         </Field>

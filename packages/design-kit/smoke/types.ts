@@ -13,7 +13,13 @@ import {
     ThemeSwitch,
     Toast,
 } from '@jasonsdevspace/design-kit/react';
-import { attachPanel, type PanelControl, type SetPanel } from '@jasonsdevspace/design-kit/controls';
+import {
+    attachPanel,
+    attachStepper,
+    type PanelControl,
+    type SetPanel,
+    type StepperOptions,
+} from '@jasonsdevspace/design-kit/controls';
 import { type Theme, THEME_KEY, themeScript, THEMES } from '@jasonsdevspace/design-kit/theme';
 import {
     browserFloor,
@@ -199,3 +205,7 @@ export const setOf = (button: HTMLButtonElement): SetPanel => attachPanel(button
 
 // @ts-expect-error A panel opens or closes by a boolean.
 export const setByWord = (set: SetPanel) => set('open');
+
+// A stepper takes a page's own line and its words after the value, and returns what takes it away.
+const tricks: StepperOptions = { status: null, words: (value: string) => `${value} in all.` };
+export const stepperOf = (stepper: HTMLElement): (() => void) => attachStepper(stepper, tricks);
