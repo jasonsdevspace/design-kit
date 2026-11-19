@@ -14,12 +14,14 @@ import {
     Toast,
 } from '@jasonsdevspace/design-kit/react';
 import {
+    attachForm,
     attachPanel,
     attachRoving,
     attachStatus,
     attachStepper,
     moveFocus,
     type PanelControl,
+    type Refuse,
     type RovingOptions,
     type Say,
     type SetPanel,
@@ -227,6 +229,10 @@ export const settledByWord = (say: Say) => say('Saved.', { settle: 'soon' });
 // Focus moves to an element or an id, with fallbacks, and the request can be called off.
 export const cancelOf = (heading: HTMLElement): (() => void) =>
     moveFocus('remove-ben', { fallbacks: [heading, null] });
+
+// A form refused once its errors are drawn, said on a line or through a page's own say.
+export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>
+    attachForm(form, { status: line, summary: () => null });
 
 // A group of cells takes its orientation, its current cell and what to do as focus moves.
 const tabs: RovingOptions = {

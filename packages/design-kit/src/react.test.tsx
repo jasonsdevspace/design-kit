@@ -21,6 +21,7 @@ import {
     StatusProvider,
     TextareaField,
     ThemeSwitch,
+    useFormRefusal,
     useStatus,
 } from './react.js';
 
@@ -1099,5 +1100,19 @@ describe('the status provider', () => {
         expect(() => renderToStaticMarkup(<Alone />)).toThrow(
             'useStatus needs a StatusProvider above it'
         );
+        const Refused = () => {
+            useFormRefusal();
+            return null;
+        };
+        expect(() => renderToStaticMarkup(<Refused />)).toThrow(
+            'useFormRefusal needs a StatusProvider above it'
+        );
+        expect(
+            renderToStaticMarkup(
+                <StatusProvider>
+                    <Refused />
+                </StatusProvider>
+            )
+        ).toBe('<p class="dk-visually-hidden" role="status"></p>');
     });
 });

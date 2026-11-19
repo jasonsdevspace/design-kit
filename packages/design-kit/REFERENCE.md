@@ -523,9 +523,31 @@ error, followed by any description of the page's own, and is left off when there
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
 The error is not live, since a form that fails in several fields at once would speak over itself.
-The page says when errors appear, and on a submit that fails it moves focus to the first invalid
-control or to an error summary. The kit does no validation, so the page decides when to show an
-error, best after a submit is tried rather than while someone is typing.
+On a submit that fails, the page draws its errors and calls the function `attachForm(form, {
+status, summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which
+speaks on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an
+error summary where the page names one, else the first field in error that can take focus, passing
+over one that is disabled or out of sight, or in a set its checked radio or its first control, since
+the set's fieldset takes no focus. A set counts once, however many of its choices are marked. One
+message is said, chosen so nothing is said twice: nothing where focus moves to the summary, which
+reads its own words, how many fields need attention where focus moves to a field, since moving focus
+reads the field and its error, and where the field already had focus, which then reads nothing, the
+error's own words, with the count where more fields are wrong. A second refusal calls off one not
+yet landed, moves focus and speaks again, as WCAG 3.3.1 asks. Refused with nothing wrong and no
+summary, focus stays where it is. In React, a form with no `StatusProvider` above it and no `say`
+throws, since its refusal would reach no one.
+
+```js
+import { attachForm } from '@jasonsdevspace/design-kit/controls';
+
+const refuse = attachForm(document.querySelector('#rule'), {
+    status: document.querySelector('.screen-status'),
+});
+// Once the page has drawn its errors:
+refuse();
+```
+
+The kit does no validation, so the page decides when to show an error, best after a submit is tried rather than while someone is typing.
 
 A field a visitor cannot change uses `disabled`, unlike a button, and its hint says why, which a
 screen reader reads wherever it announces the field.

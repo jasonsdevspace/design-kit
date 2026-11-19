@@ -11,11 +11,14 @@ import {
 } from 'react';
 
 import {
+    attachForm,
     attachRoving,
     attachStatus,
     type FocusTarget,
+    type FormOptions,
     moveFocus,
     type MoveFocusOptions,
+    type Refuse,
     type RovingOptions,
     type Say,
     type SayOptions,
@@ -172,6 +175,52 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         heading.current = element;
         if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
     }, []);
+};
+
+/**
+ * A ref for a form and what refuses its submit, by `attachForm`: called once the page has drawn the
+ * errors, it moves focus to the summary or the first field in error and says the refusal once, on
+ * the status line of the nearest `StatusProvider`, or through the `say` given. The summary is read
+ * as the refusal lands, so a function written inline on every render is never set again. What
+ * refuses stays the same across renders, does nothing until the form is drawn, and returns what
+ * calls the refusal off, which unmounting does too. A form with no provider above it and no `say`
+ * throws, since its refusal would reach no one.
+ */
+export const useFormRefusal = <Form extends HTMLElement>(
+    options: Pick<FormOptions, 'say' | 'summary'> = {}
+): readonly [RefCallback<Form>, Refuse] => {
+    const speaker = useContext(Speaker);
+    if (!speaker && !options.say)
+        throw new Error('useFormRefusal needs a StatusProvider above it, or a say of its own');
+    const latest = useRef({ options, speaker });
+    useEffect(() => {
+        latest.current = { options, speaker };
+    });
+    const refuser = useRef<Refuse | null>(null);
+    const ref = useCallback((form: Form | null) => {
+        refuser.current = form
+            ? attachForm(form, {
+                  say: (words, settle) => {
+                      const { options: now, speaker: line } = latest.current;
+                      (now.say ?? line)?.(words, settle);
+                  },
+                  summary: () => latest.current.options.summary?.() ?? null,
+              })
+            : null;
+    }, []);
+    const waiting = useRef<(() => void) | null>(null);
+    useEffect(
+        () => () => {
+            waiting.current?.();
+        },
+        []
+    );
+    const refuse = useCallback<Refuse>(() => {
+        const cancel = refuser.current?.() ?? (() => undefined);
+        waiting.current = cancel;
+        return cancel;
+    }, []);
+    return [ref, refuse] as const;
 };
 
 /**

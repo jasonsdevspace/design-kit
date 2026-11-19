@@ -26,6 +26,7 @@ export const VALUE_EXPORTS = {
         'Toast',
         'useArrivalFocus',
         'useFocusAfterDraw',
+        'useFormRefusal',
         'useRoving',
         'useStatus',
     ],
@@ -33,6 +34,7 @@ export const VALUE_EXPORTS = {
     '@jasonsdevspace/design-kit/controls': [
         'attachCopyButton',
         'attachDialog',
+        'attachForm',
         'attachPanel',
         'attachRoving',
         'attachStatus',
