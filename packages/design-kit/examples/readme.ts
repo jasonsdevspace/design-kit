@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { type ExampleName, EXAMPLES } from './examples.js';
@@ -20,6 +22,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'fieldAction',
     'choiceField',
     'callout',
+    'tryAgain',
     'pills',
     'tabs',
     'eyebrow',
@@ -72,6 +75,18 @@ export const htmlOf = async (name: ExampleName): Promise<string> => {
  */
 const BLOCK = /(<!-- example: (\w+) -->(?:\r?\n)+```html\r?\n)[\s\S]*?(^```)/gm;
 
+/**
+ * A marker in the reference, then the block of TSX it names, written from the examples file of that
+ * name, so the code a page copies is the code the type check and the browser tests run.
+ */
+const SOURCE = /(<!-- source: (\w+) -->(?:\r?\n)+```tsx\r?\n)[\s\S]*?(^```)/gm;
+
+/** An examples file as a page writes it, importing the kit by its published name. */
+const sourceOf = (name: string): string =>
+    readFileSync(new URL(`./${name}.tsx`, import.meta.url), 'utf8')
+        .replaceAll("'../src/react.js'", "'@jasonsdevspace/design-kit/react'")
+        .trimEnd();
+
 /** The examples the reference's blocks are marked with, in the order they appear. */
 export const markedIn = (readme: string): string[] =>
     [...readme.matchAll(BLOCK)].map((match) => match[2] ?? '');
@@ -94,8 +109,13 @@ export const writtenReadme = async (readme: string): Promise<string> => {
         )
     );
     const newline = readme.includes('\r\n') ? '\r\n' : '\n';
-    return readme.replace(BLOCK, (_block, open: string, name: string, close: string) => {
-        const block = (html.get(name as ExampleName) ?? '').replaceAll('\n', newline);
-        return `${open}${block}${newline}${close}`;
-    });
+    return readme
+        .replace(BLOCK, (_block, open: string, name: string, close: string) => {
+            const block = (html.get(name as ExampleName) ?? '').replaceAll('\n', newline);
+            return `${open}${block}${newline}${close}`;
+        })
+        .replace(SOURCE, (_block, open: string, name: string, close: string) => {
+            const block = sourceOf(name).replaceAll('\n', newline);
+            return `${open}${block}${newline}${close}`;
+        });
 };

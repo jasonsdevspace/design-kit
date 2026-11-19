@@ -225,6 +225,9 @@ export const callout: ReactElement = (
     </Callout>
 );
 
+/** A failure's callout as the page mounts it: live, read at once, and empty until the failure comes. */
+export const tryAgain: ReactElement = <Callout tone="danger" live="alert" />;
+
 /** Every state of each control, and a button and a field inside each callout tone. */
 export const controlStates: ReactElement = (
     <>
@@ -1044,6 +1047,7 @@ export const EXAMPLES = {
     fieldAction,
     choiceField,
     callout,
+    tryAgain,
     pills,
     tabs,
     eyebrow,
