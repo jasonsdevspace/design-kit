@@ -2713,7 +2713,7 @@ buttons, with a rule between rows. It is classes alone, since a row holds no sta
 
 The list is a `ul` with `role="list"`, since Safari drops a list's role from one drawn with no
 bullets, and with it the number of rows a screen reader says. A list with no rows is not drawn, so
-a page puts a sentence in its place that says what is missing and how to add one.
+a page puts an empty state in its place, as below.
 
 A row is a link or holds a button, never both, so a tap never does two things. A row that leads
 somewhere is one `a.dk-row` across its width, one stop for the keyboard, ending in a chevron, a
@@ -2745,6 +2745,104 @@ and a pointer over it, or a thumb pressing it, underlines the title. A figure is
 with figures of one width, so a column of them lines up.
 
 </details>
+
+### An empty list
+
+A list, a table or a set of rows with nothing in it yet draws a `dk-empty` in its place: what is
+missing, in words, and the next step as a button under it, with no picture needed:
+
+<!-- example: empty -->
+
+```html
+<div class="dk-empty">
+    <p>No players yet.</p>
+    <button type="button" class="dk-button">Add a player</button>
+</div>
+```
+
+The words are the muted text at the body size, and the empty state has no ground and no edge, so it
+never reads as a callout, and no room at its sides, so its words start where a row's title would,
+with `--dk-space-3` above and below. Its button is a plain `dk-button`, never the accent one, since
+the accent action is the dock's. It is not live: it is read where it is, as the list would be.
+
+A list a visitor empties, as a search that matches nothing does, says so on the screen's
+[status line](#status-line) once they stop typing, and its empty state offers to clear the search.
+Clearing it takes away the button that had focus, so focus goes back to the search field, with the
+whole list under it again:
+
+<!-- source: games -->
+
+```tsx
+import { useId, useState } from 'react';
+
+import { Button, InputField, useFocusAfterDraw, useStatus } from '@jasonsdevspace/design-kit/react';
+
+const GAMES = ['Flip 7', 'Skyjo', 'Wizard'] as const;
+
+/** The games whose names hold the search, matched whatever the case. */
+const matching = (search: string) =>
+    GAMES.filter((game) => game.toLowerCase().includes(search.trim().toLowerCase()));
+
+/** What the status line says once a visitor stops typing. */
+const counted = (found: number) =>
+    found === 0
+        ? 'No games match the search.'
+        : `${String(found)} ${found === 1 ? 'game matches' : 'games match'}.`;
+
+/**
+ * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts the
+ * empty state in the list's place, with a way to clear the search.
+ */
+export const Games = () => {
+    const [search, setSearch] = useState('');
+    const field = useId();
+    const say = useStatus();
+    const focusNext = useFocusAfterDraw();
+    const shown = matching(search);
+    const clear = () => {
+        setSearch('');
+        say(counted(GAMES.length));
+        // The empty state and its button go, so focus goes back to the search.
+        focusNext(field);
+    };
+    return (
+        <section className="dk-stack dk-stack-heading" aria-labelledby={`${field}-heading`}>
+            <h2 id={`${field}-heading`}>Saved games</h2>
+            <InputField
+                id={field}
+                label="Search the games"
+                type="search"
+                value={search}
+                onChange={(event) => {
+                    setSearch(event.target.value);
+                    say(counted(matching(event.target.value).length), { settle: 700 });
+                }}
+            />
+            {shown.length > 0 ? (
+                <ul className="dk-rows" role="list">
+                    {shown.map((game) => (
+                        <li key={game}>
+                            <a className="dk-row" href={`#${game.toLowerCase().replace(' ', '-')}`}>
+                                <span className="dk-row-text">
+                                    <span className="dk-row-title">{game}</span>
+                                </span>
+                                <span className="dk-row-sign" aria-hidden="true">
+                                    ›
+                                </span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="dk-empty">
+                    <p>No games match the search.</p>
+                    <Button onClick={clear}>Clear the search</Button>
+                </div>
+            )}
+        </section>
+    );
+};
+```
 
 ### A row with several buttons
 

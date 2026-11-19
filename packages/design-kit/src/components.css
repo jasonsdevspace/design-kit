@@ -2957,11 +2957,31 @@
     }
 
     /*
+     * What a list, a table or a set of rows draws in its place while it holds nothing: what is
+     * missing in the muted text, and the next step as a button under it. It has no ground and no
+     * edge, so it never reads as a callout, and no room at its sides, so its words start where a
+     * row's title would.
+     */
+    :where(.dk-empty) {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--dk-space-3);
+        padding-block: var(--dk-space-3);
+        color: var(--dk-muted);
+    }
+
+    :where(.dk-empty > *) {
+        margin: 0;
+    }
+
+    /*
      * A list of rows: the games played, the players, the steps to install. Each row has a title, a
      * muted line of detail under it, and room at its end for a figure, a tag, one button or a group
      * of buttons. A rule runs between rows and none after the last, in the line color, and a row
      * takes no ground of its own, so a list sits on a page or a panel alike. A list with no rows is
-     * not drawn, even one a template has left a line break in.
+     * not drawn, even one a template has left a line break in, and a page draws an empty state in
+     * its place.
      */
     :where(.dk-rows) {
         padding: 0;
