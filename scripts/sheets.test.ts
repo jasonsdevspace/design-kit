@@ -21,10 +21,11 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * table's shade left too little room for another piece, again in 0.8.0, whose planned pieces took
  * the sheets past 9.25 KB, again in 0.8.2, whose corner Close took them past 10.25 KB, and again
  * in 0.8.6, whose grid of buttons dropping to a count that divides its cells took them past
- * 10.75 KB. The app's pieces stay in the components sheet, so a page loads one sheet whatever it
+ * 10.75 KB, and again after 0.8.7, measured with a prototype of the pieces planned for the next release, as
+ * 0.8.0's were. The app's pieces stay in the components sheet, so a page loads one sheet whatever it
  * draws.
  */
-const BUDGET = 11.5 * 1024;
+const BUDGET = 12 * 1024;
 
 describe('the sheets', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped together, without their comments and blank lines`, () => {
