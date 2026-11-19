@@ -728,9 +728,60 @@ test('opens no gap around an empty live callout in a grid, and keeps it for a sc
     await page.evaluate(() => {
         const body = document.querySelector('.dk-callout-body');
         if (body) body.innerHTML = '<span class="dk-visually-hidden">Error: </span>Saved.';
+        // As the reference's third step says, the mark goes as the words come.
+        body?.parentElement?.removeAttribute('data-empty');
     });
     expect(await apart()).toBeGreaterThan(32);
     await expect(page.getByRole('alert')).toBeVisible();
+});
+
+test('passes over an empty live callout in the flow and the room kept for a toast, with no :has()', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const listAt = async (callout: boolean) => {
+        await page.setContent(
+            `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+                `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body">` +
+                (callout ? renderToStaticMarkup(<Callout tone="danger" live="alert" />) : '') +
+                '<ul id="list"><li>Ann</li></ul></main>' +
+                '<div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
+        );
+        // Every rule that asks for :has() taken out, as a browser without it drops them.
+        await page.evaluate(() => {
+            const drop = (rules: CSSRuleList) => {
+                for (let at = rules.length - 1; at >= 0; at -= 1) {
+                    const rule = rules[at];
+                    if (rule instanceof CSSStyleRule && rule.selectorText.includes(':has(')) {
+                        const holder = rule.parentRule;
+                        if (holder instanceof CSSGroupingRule) holder.deleteRule(at);
+                        else rule.parentStyleSheet?.deleteRule(at);
+                    } else if (rule instanceof CSSGroupingRule) drop(rule.cssRules);
+                }
+            };
+            for (const sheet of document.styleSheets) drop(sheet.cssRules);
+        });
+        return page.locator('#list').boundingBox();
+    };
+    const without = await listAt(false);
+    const marked = await listAt(true);
+    // Out of sight, with no ground drawn, and the list where it starts with none before it.
+    expect(await height(page.locator('.dk-callout'))).toBeLessThanOrEqual(1);
+    expect(marked?.y).toBe(without?.y);
+    await expect(page.getByRole('alert')).toBeAttached();
+    // Last in the body, with a toast shown, the room for the toast goes under the list instead.
+    await page.setContent(
+        `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
+            `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body">` +
+            '<ul id="list"><li>Ann</li></ul>' +
+            renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
+            '</main><div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
+    );
+    expect(
+        Number.parseFloat(
+            (await style(page.locator('#list'), 'margin-bottom'))['margin-bottom'] ?? '0'
+        )
+    ).toBeGreaterThan(0);
 });
 
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
@@ -784,6 +835,7 @@ test("draws nothing for an empty live callout, and the callout's look once it is
             body.innerHTML = word
                 ? `<span class="dk-visually-hidden">${word}</span>Saved.`
                 : 'Saved.';
+            callout?.removeAttribute('data-empty');
         }
     });
     for (const callout of await callouts.all()) {
