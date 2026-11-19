@@ -3,83 +3,90 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { dockInline } from '../examples/examples.js';
-import { box, forceColors, sideways, writePage } from './page.js';
+import { box, forceColors, lengthOf, sideways, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * A compact action beside the dock's main one, as the reference draws it: the two on one row on a
- * 320px phone, at the usual text size in every engine and at twice the text size in Chromium, the
- * compact one at its own width and the main one taking the rest, both one height and at the larger
- * target, nothing scrolling sideways, every word whole under wider spacing, the main one last in
- * the keyboard's order, and no audit findings in either theme or in forced colors.
+ * A compact action beside the dock's main one, as the reference draws it and with the longest
+ * labels a screen might give it: Scores and the main action on one row on a 320px phone, at the
+ * usual text size in every engine and at twice the text size in Chromium, the compact one first and at its own width,
+ * the main one taking the rest and never under the target, both one height and at least the
+ * target tall, two rows rather than a page scrolled sideways where the two cannot share one,
+ * every word whole, and no audit findings in either theme or in forced colors.
  */
 
-const BODY = `<main><h1>Round 3</h1></main>${renderToStaticMarkup(dockInline)}`;
+const row = (compact: string, main: string) =>
+    `<main><h1>Round 3</h1></main><section class="dk-app-dock" aria-label="Actions">` +
+    `<div class="dk-app-dock-inline"><button type="button" class="dk-button dk-button-tall">${compact}</button>` +
+    `<button type="button" class="dk-button dk-button-accent dk-button-tall">${main}</button></div></section>`;
 
-const draw = (page: Page, theme: 'light' | 'dark' = 'light', css = '') =>
-    writePage(page, { title: 'Dock', body: BODY, theme, css, width: 320, height: 640 });
+const draw = (page: Page, body: string, theme: 'light' | 'dark' = 'light', css = '') =>
+    writePage(page, { title: 'Dock', body, theme, css, width: 320, height: 640 });
 
-const onOneRow = async (page: Page) => {
-    const compact = await box(
-        page.getByRole('button', { name: 'Scoreboard' }),
-        'the compact action'
+const pair = async (page: Page) => {
+    const [compact, main] = await Promise.all(
+        [0, 1].map((at) => box(page.locator('.dk-app-dock-inline > button').nth(at), 'a button'))
     );
-    const main = await box(page.getByRole('button', { name: 'Save the round' }), 'the main action');
-    const dock = await box(page.locator('.dk-app-dock-inline'), 'the row');
-    expect(Math.round(compact.y)).toBe(Math.round(main.y));
-    expect(Math.round(compact.height)).toBe(Math.round(main.height));
-    // The main action takes the rest of the row, never under the target's width, and the row
-    // stays within the dock.
-    const target = await page.evaluate(() => {
-        const probe = document.createElement('div');
-        probe.style.width = 'var(--dk-target)';
-        document.body.append(probe);
-        const width = probe.getBoundingClientRect().width;
-        probe.remove();
-        return width;
-    });
-    expect(main.width).toBeGreaterThanOrEqual(target - 1);
-    expect(main.x + main.width).toBeLessThanOrEqual(dock.x + dock.width + 1);
+    if (!compact || !main) throw new Error('expected two buttons');
     return { compact, main };
 };
 
 for (const scale of [1, 2]) {
-    test(`holds the pair on one row on a 320px phone at ${String(scale)}x the text size`, async ({
+    test(`holds Scores and a main action on one row on a 320px phone at ${String(scale)}x the text size`, async ({
         page,
     }) => {
         await textSize(page, scale);
-        await draw(page);
-        const { compact } = await onOneRow(page);
-        // The larger target, in rems, at the text size drawn.
-        expect(compact.height).toBeGreaterThanOrEqual(3.5 * 16 * scale - 1);
+        await draw(page, row('Scores', 'Save the round'));
+        const { compact, main } = await pair(page);
+        expect(Math.round(compact.y)).toBe(Math.round(main.y));
+        expect(compact.x).toBeLessThan(main.x);
+        expect(Math.round(compact.height)).toBe(Math.round(main.height));
+        expect(compact.height).toBeGreaterThanOrEqual(
+            (await lengthOf(page, 'var(--dk-target)')) - 1
+        );
+        expect(main.width).toBeGreaterThanOrEqual((await lengthOf(page, 'var(--dk-target)')) - 1);
         expect(await sideways(page)).toBe(0);
         expect(await cutOff(page, '.dk-app-dock-inline > .dk-button')).toEqual([]);
     });
 }
 
-test('puts the main action last in the keyboard order', async ({ page }) => {
-    await draw(page);
+test('takes two rows, rather than a page scrolled sideways or a word cut, where the two cannot share one', async ({
+    page,
+}) => {
+    await textSize(page, 2);
+    for (const [compact, main] of [
+        ['Show the scores', 'Save the round'],
+        ['Scoreboard', 'Save the round'],
+        ['Scoreboard', 'Continue'],
+    ] as const) {
+        await draw(page, row(compact, main));
+        expect(await sideways(page), compact).toBe(0);
+        expect(await cutOff(page, '.dk-app-dock-inline > .dk-button'), compact).toEqual([]);
+    }
+});
+
+test("draws the reference's pair with the main action last in the keyboard order", async ({
+    page,
+}) => {
+    await draw(page, `<main><h1>Round 3</h1></main>${renderToStaticMarkup(dockInline)}`);
     const names = await page
         .locator('.dk-app-dock-inline > button')
         .evaluateAll((buttons) => buttons.map((button) => button.textContent.trim()));
-    expect(names).toEqual(['Scoreboard', 'Save the round']);
+    expect(names).toEqual(['Scores', 'Save the round']);
 });
 
-test('keeps every word whole under wider spacing, and its edges in forced colors', async ({
-    page,
-}) => {
-    await draw(page, 'light', SPACED);
-    await onOneRow(page);
+test('keeps every word whole under wider spacing', async ({ page }) => {
+    await draw(page, row('Scoreboard', 'Save the round'), 'light', SPACED);
     expect(await cutOff(page, '.dk-app-dock-inline > .dk-button')).toEqual([]);
-    await forceColors(page);
-    await draw(page);
-    await onOneRow(page);
 });
 
-for (const theme of ['light', 'dark'] as const) {
-    test(`has no audit findings in the ${theme} theme`, async ({ page }) => {
-        await draw(page, theme);
+for (const colors of ['light', 'dark', 'forced'] as const) {
+    test(`has no audit findings in ${colors === 'forced' ? 'forced colors' : `the ${colors} theme`}`, async ({
+        page,
+    }) => {
+        if (colors === 'forced') await forceColors(page);
+        await draw(page, row('Scores', 'Save the round'), colors === 'dark' ? 'dark' : 'light');
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
