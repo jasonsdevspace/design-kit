@@ -11,10 +11,13 @@ import {
 } from 'react';
 
 import {
+    attachForm,
     attachStatus,
     type FocusTarget,
+    type FormOptions,
     moveFocus,
     type MoveFocusOptions,
+    type Refuse,
     type Say,
     type SayOptions,
 } from './controls.js';
@@ -170,4 +173,37 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         heading.current = element;
         if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
     }, []);
+};
+
+/**
+ * A ref for a form and what refuses its submit, by `attachForm`: called once the page has drawn the
+ * errors, it moves focus to the summary or the first field in error and says the refusal once, on
+ * the status line of the nearest `StatusProvider`, or through the `say` given. The summary is read
+ * as the refusal lands, so a function written inline on every render is never set again. What
+ * refuses stays the same across renders, and does nothing until the form is drawn.
+ */
+export const useFormRefusal = <Form extends HTMLElement>(
+    options: Pick<FormOptions, 'say' | 'summary'> = {}
+): readonly [RefCallback<Form>, Refuse] => {
+    const speaker = useContext(Speaker);
+    const latest = useRef({ options, speaker });
+    useEffect(() => {
+        latest.current = { options, speaker };
+    });
+    const refuser = useRef<Refuse | null>(null);
+    const ref = useCallback((form: Form | null) => {
+        refuser.current = form
+            ? attachForm(form, {
+                  say: (words, settle) => {
+                      const { options: now, speaker: line } = latest.current;
+                      (now.say ?? line)?.(words, settle);
+                  },
+                  summary: () => latest.current.options.summary?.() ?? null,
+              })
+            : null;
+    }, []);
+    const refuse = useCallback<Refuse>(() => {
+        refuser.current?.();
+    }, []);
+    return [ref, refuse] as const;
 };

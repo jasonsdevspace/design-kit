@@ -523,8 +523,24 @@ error, followed by any description of the page's own, and is left off when there
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
 The error is not live, since a form that fails in several fields at once would speak over itself.
-The page says when errors appear, and on a submit that fails it moves focus to the first invalid
-control or to an error summary. The kit does no validation, so the page decides when to show an
+On a submit that fails, the page draws its errors and calls the function `attachForm(form, {
+status, summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which
+speaks on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an
+error summary where the page names one, else the first field marked invalid, or a radio set's
+checked radio or its first, since the set's fieldset takes no focus. One message is said, chosen so
+nothing is said twice: how many fields need attention, since moving focus reads the field and its
+error, or the error's own words where the field already had focus, since focus that does not move
+reads nothing. A second refusal moves focus and speaks again, as WCAG 3.3.1 asks.
+
+````js
+import { attachForm } from '@jasonsdevspace/design-kit/controls';
+
+const refuse = attachForm(document.querySelector('#rule'), {
+    status: document.querySelector('.screen-status'),
+});
+// Once the page has drawn its errors:
+refuse();
+``` The kit does no validation, so the page decides when to show an
 error, best after a submit is tried rather than while someone is typing.
 
 A field a visitor cannot change uses `disabled`, unlike a button, and its hint says why, which a
@@ -561,7 +577,7 @@ would push its column.
         <button type="submit" class="dk-button">Search</button>
     </div>
 </form>
-```
+````
 
 A control with a button beside it, such as a search with the button that runs it, sits in a
 `dk-field-action` under the field's label. The control takes the room the button leaves, and both

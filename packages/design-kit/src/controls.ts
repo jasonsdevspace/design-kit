@@ -1462,3 +1462,93 @@ export const attachTable = (element: HTMLElement): (() => void) => {
     attachedTables.set(frame, detach);
     return detach;
 };
+
+/** How a form is attached, for the step after a submit it refuses. */
+export type FormOptions = {
+    /** The status line the refusal is said on, such as the screen's own. */
+    readonly status?: HTMLElement | null | undefined;
+    /** What says the refusal, for a page that has one already, such as React's `useStatus`. */
+    readonly say?: Say | undefined;
+    /** An error summary the page draws over the form, focused in place of the first field. */
+    readonly summary?: (() => Element | null) | undefined;
+};
+
+/** Refuses a submit, once the page has drawn its errors: focus moves and the refusal is said. */
+export type Refuse = () => void;
+
+const attachedForms = new WeakMap<
+    HTMLElement,
+    { readonly refuse: Refuse; readonly set: (next: FormOptions) => void }
+>();
+
+/** The control a refused form's first error points at: a field, or a radio set's chosen radio. */
+const firstWrong = (form: HTMLElement): HTMLElement | null => {
+    const wrong = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (!wrong?.matches('fieldset')) return wrong;
+    // A radio set's fieldset takes no focus, so its checked radio does, or its first.
+    return (
+        wrong.querySelector<HTMLElement>('input:checked') ??
+        wrong.querySelector<HTMLElement>('input')
+    );
+};
+
+/** The words of the errors a control is described by, as a screen reader reads them. */
+const errorWords = (control: HTMLElement): string => {
+    const holder = control.closest('fieldset[aria-invalid="true"]') ?? control;
+    const ids = (holder.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+    return ids
+        .map((id) => document.getElementById(id))
+        .filter(
+            (part): part is HTMLElement => part?.matches('.dk-field-error') === true && !part.hidden
+        )
+        .map((part) => part.textContent.trim())
+        .join(' ');
+};
+
+/** How many fields a refused form has in error, said where focus moving reads the first already. */
+const countWords = (count: number): string =>
+    count === 1 ? '1 field needs attention.' : `${String(count)} fields need attention.`;
+
+/**
+ * Makes the step after a refused submit work for a form, and returns what refuses it, which a page
+ * calls once it has drawn the errors, as the reference's form guidance asks. A frame later, so the
+ * errors are drawn, focus moves to an error summary where the page names one, else the first field
+ * marked invalid, or a radio set's checked radio or its first, and one message is said on the
+ * status line, chosen so nothing is said twice: how many fields need attention, since moving focus
+ * reads the field and its error, or the error's own words where the field already had focus, since
+ * focus that does not move reads nothing. The field's error stays not live. A second refusal moves
+ * focus and speaks again. Attached again, a form returns what it returned first and takes options
+ * given in place of the last.
+ */
+export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
+    const already = attachedForms.get(form);
+    if (already) {
+        if (options) already.set(options);
+        return already.refuse;
+    }
+    let chosen: FormOptions = options ?? {};
+    const speak = (words: string) => {
+        if (words === '') return;
+        if (chosen.say) chosen.say(words);
+        else if (chosen.status) attachStatus(chosen.status)(words);
+    };
+    const refuse: Refuse = () => {
+        window.requestAnimationFrame(() => {
+            const summary = chosen.summary?.() ?? null;
+            const field = firstWrong(form);
+            const target = summary ?? field;
+            if (!target) return;
+            const count = form.querySelectorAll('[aria-invalid="true"]').length;
+            const focused = document.activeElement === target;
+            moveFocus(target, { fallbacks: [field] });
+            speak(focused && field ? errorWords(field) || countWords(count) : countWords(count));
+        });
+    };
+    attachedForms.set(form, {
+        refuse,
+        set: (next) => {
+            chosen = next;
+        },
+    });
+    return refuse;
+};
