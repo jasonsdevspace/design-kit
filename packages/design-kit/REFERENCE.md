@@ -697,12 +697,15 @@ explains. A message that arrives after the page has loaded is made live in three
 1. Put the callout on the page with `role="status"` on `.dk-callout-body`, read when the screen
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
-2. Leave the message empty at first. A live callout whose message holds nothing at all, not even a
-   space, a line break or the tone's word, and that has no actions leaves the flow, drawn as
-   visually hidden text is, so it takes no room and opens no gap, and stays in the tree a screen
-   reader reads.
-3. Fill the message when there is something to say, which is when a screen reader reads it. For
-   success, warning or danger, put the hidden word in with it, as
+2. Leave the message empty at first, and mark the callout `data-empty`, as `Callout` does for a
+   live callout with no title, message or actions. A marked callout leaves the flow, drawn as
+   visually hidden text is, so it takes no room and opens no gap, the flow's step and the room kept
+   for a toast pass over it, and it stays in the tree a screen reader reads. The mark needs no
+   `:has()`, so the oldest browsers the kit supports draw no empty box. A callout with an empty
+   message and no actions is also taken out of sight where `:has()` works, so one written without
+   the mark is never drawn empty in a current browser.
+3. Fill the message when there is something to say, which is when a screen reader reads it, and
+   take the mark away. For success, warning or danger, put the hidden word in with it, as
    `<span class="dk-visually-hidden">Success: </span>Saved.`
 
 A callout's edge is transparent, and shows only in forced colors and on paper, where the ground is
