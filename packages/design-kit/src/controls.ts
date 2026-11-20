@@ -555,7 +555,12 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     // Drawn as the switch shows it, so the two agree when a choice was held while no switch was.
     draw(current());
     group.hidden = false;
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         // Closing takes the page's listener away with it.
         close(false);
@@ -860,7 +865,12 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     };
     button.addEventListener('click', onClick);
     button.hidden = false;
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         live = false;
         button.removeEventListener('click', onClick);
         window.clearTimeout(timer);
@@ -1365,7 +1375,12 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     );
     mark();
     describe();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         window.clearTimeout(settling);
@@ -1846,7 +1861,12 @@ export const attachTable = (element: HTMLElement): (() => void) => {
         else if (end > to) frame.scrollLeft += (end - to) * way;
     };
     frame.addEventListener('focusin', onFocusIn);
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         frame.removeEventListener('focusin', onFocusIn);
         attachedTables.delete(frame);
     };
@@ -2705,7 +2725,12 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
     const toolbar = group.matches('.dk-button-grid') && (ownRole === null || ownRole === 'group');
     if (toolbar) group.setAttribute('role', 'toolbar');
     place();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         for (const cell of group.querySelectorAll<HTMLElement>(CELLS)) {
@@ -2821,7 +2846,12 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     const listening = new AbortController();
     button.addEventListener('click', stop, { capture: true, signal: listening.signal });
     if (busy()) start();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         end();
@@ -2942,7 +2972,12 @@ export const attachProgress = (
     };
     const kept = new MutationObserver(check);
     kept.observe(progress, { attributeFilter: ['value', 'max'] });
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         kept.disconnect();
         attachedProgress.delete(progress);
     };
