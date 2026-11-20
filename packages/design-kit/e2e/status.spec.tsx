@@ -57,14 +57,15 @@ test('says words at once, and words that settle only once they stop changing', a
 });
 
 /** A page that attaches its line, records what is put in it however the line is placed, and lets go. */
-const RELEASING = `import { attachStatus, releaseStatus } from './controls.js';
+const RELEASING = `import { attachStatus } from './controls.js';
+import { releaseLine } from './line.js';
 const line = document.querySelector('#line');
 window.heard = [];
 new MutationObserver(() => {
     if (line.textContent) window.heard.push(line.textContent);
 }).observe(line, { childList: true, characterData: true, subtree: true });
 window.say = attachStatus(line);
-window.letGo = () => releaseStatus(line);
+window.letGo = () => releaseLine(line);
 window.attachAgain = () => attachStatus(line);
 window.ready = true;`;
 
@@ -134,7 +135,8 @@ test('keeps a line let go of silent for a piece given it, until the page attache
     await servePage(page, {
         title: 'Status',
         body: `<main><button id="save" class="dk-button" type="button">Save</button>${LINE}</main>`,
-        script: `import { attachBusy, attachStatus, releaseStatus } from './controls.js';
+        script: `import { attachBusy, attachStatus } from './controls.js';
+import { releaseLine } from './line.js';
 const line = document.querySelector('#line');
 const button = document.querySelector('#save');
 window.heard = [];
@@ -145,7 +147,7 @@ attachStatus(line);
 attachBusy(button, { status: line });
 window.busy = () => button.setAttribute('data-busy', 'Saving the round.');
 window.done = () => button.removeAttribute('data-busy');
-window.letGo = () => releaseStatus(line);
+window.letGo = () => releaseLine(line);
 window.attachAgain = () => attachStatus(line);
 window.ready = true;`,
     });

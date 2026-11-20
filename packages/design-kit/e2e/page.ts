@@ -90,6 +90,8 @@ export const servePage = async (
         '/controls.js': [js('controls.ts'), 'text/javascript'],
         // The controls import the theme's names from it.
         '/theme.js': [js('theme.ts'), 'text/javascript'],
+        // The controls keep each status line's state in it.
+        '/line.js': [js('line.ts'), 'text/javascript'],
         ...(script === undefined ? {} : { '/page.js': [script, 'text/javascript'] as const }),
     };
     const html =
