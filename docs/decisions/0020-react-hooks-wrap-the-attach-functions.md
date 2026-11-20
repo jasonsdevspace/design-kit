@@ -3,7 +3,7 @@
 **Status:** accepted, amended in 0.9.0 for hooks over a function that acts once, such as
 `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which
 keeps the key it last drew and whether that was its first draw, while whether a visitor's press
-brought the view is decided by `focusOnArrival` in `./controls`, and amended after 0.9.0 for the
+brought the view is decided by `focusOnArrival` in `./controls`, and amended in 0.9.1 for the
 hooks whose request reads what the page draws, `useFocusAfterDraw` and the refusal `useFormRefusal`
 returns, which keep a request owed until their own next commit and a count of requests that renders
 them, so the request lands once the page's change is drawn. That holds for a change set in the same

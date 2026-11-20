@@ -1,6 +1,6 @@
 # 21. A refused form checks the browser's constraints itself
 
-**Status:** accepted, amended after 0.9.0 for what a refusal says, the name and error of the field
+**Status:** accepted, amended in 0.9.1 for what a refusal says, the name and error of the field
 focus is on, with how many fields need attention where more are wrong, since a device check with
 VoiceOver on an iPhone heard no error where the kit left it to the field's description, which iOS
 reads only as a hint. A screen reader that reads the error as focus lands hears it twice. A reset

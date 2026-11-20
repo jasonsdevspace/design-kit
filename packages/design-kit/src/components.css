@@ -1307,12 +1307,12 @@
     /*
      * A hero: a band's words in a stack beside its picture, the words first so a reader hears what
      * the page is before the picture, inside a band or written on one or on a content page, whose
-     * flow it takes no step from, as the rule after the flow has it. On a phone they stand one over the other, the picture no
-     * taller than --dk-band-hero-picture, and from 48rem side by side, centered on each other, with
-     * the picture that wide, 28rem until a page sets it, and never past 45% of the row, so the
-     * words keep room for a display heading. An image, a video or a picture fills its cell and
-     * keeps its proportions, cropped rather than stretched, and one in a figure keeps its caption
-     * under it.
+     * flow it takes no step from, as the rule after the flow has it. On a phone they stand one over
+     * the other, the picture no taller than --dk-band-hero-picture, and from 48rem side by side,
+     * centered on each other, with the picture that wide, 28rem until a page sets it, and never
+     * past 45% of the row, so the words keep room for a display heading. An image, a video or a
+     * picture fills its cell and keeps its proportions, cropped rather than stretched, and one in a
+     * figure keeps its caption under it.
      */
     :where(.dk-band-hero) {
         display: grid;
