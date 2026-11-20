@@ -43,8 +43,9 @@ costs, and the test behind it.
     markup from a component and a function a page calls on it, from `./controls`, and why a stateful
     component and a script that builds the DOM were turned down.
 14. [A piece with no state of its own ships as classes alone](0014-stateless-pieces-ship-as-classes.md):
-    tabs, pills and the eyebrow as classes a page writes by hand, with the roles and keys the page
-    owns, and why a component for each was turned down.
+    tabs, pills and the eyebrow as classes a page writes by hand, with the roles the page writes,
+    the keys `attachRoving` runs and the chosen tab the page owns, and why a component for each was
+    turned down.
 15. [A toast's attach function returns what shows a message](0015-a-toast-attach-returns-what-shows-a-message.md):
     a toast as markup on the page from the start and a function that shows each message in it, said
     with its action's name, and why a separate export to show a message and a toast built by script

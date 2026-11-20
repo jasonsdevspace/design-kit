@@ -202,8 +202,8 @@
         --dk-duration-medium: 250ms;
 
         /*
-         * How long a wait goes unremarked before it is shown, as a loading line is, so a fast answer
-         * shows nothing. It is a delay, not a motion, so reduced motion keeps it.
+         * How long a wait goes unremarked before it is shown, as a loading line is, so a fast
+         * answer shows nothing. It is a delay, not a motion, so reduced motion keeps it.
          */
         --dk-wait: 400ms;
 
@@ -362,21 +362,20 @@
     /*
      * Where the columns asked for do not fit, a grid of four, six, eight, nine, ten or twelve cells
      * draws the most columns that fit and divide its cells evenly, so six asked in six draw three,
-     * never five and one. The grid works out a column's least width at the even share of each
-     * count from two to six, made far wider than any page where that count would make a cell under
-     * its least width or is more than the columns asked for. A clamp from nothing to a pixel, of
-     * how far a share falls under the least width, steep enough to step within a rounding of a
-     * pixel, is the switch. Each count of cells takes the narrowest width among its divisors and
-     * two, which is the most columns that fit, and where all its cells fit in a row, the least
-     * width itself, so they lie in the tracks that fit as before. Where the columns asked for fit,
-     * that width is made far narrower, so the grid draws them, and where nothing fits, the
-     * components sheet holds it to the grid's width, so the grid draws one column. Any other
-     * count, such as thirteen, draws as many as fit. A count is matched by a cell at that place
-     * and none past it, which Safari counts again as cells come and go, where a last cell at that
-     * place it does not. The widths are the grid's own properties, so they are worked out here
-     * and the components sheet reads them. Each name starts with `--_dk-`, which marks a working
-     * value of the kit's own that no page reads or sets and the tokens page leaves out, as record 16
-     * sets out.
+     * never five and one. The grid works out a column's least width at the even share of each count
+     * from two to six, made far wider than any page where that count would make a cell under its
+     * least width or is more than the columns asked for. A clamp from nothing to a pixel, of how
+     * far a share falls under the least width, steep enough to step within a rounding of a pixel,
+     * is the switch. Each count of cells takes the narrowest width among its divisors and two,
+     * which is the most columns that fit, and where all its cells fit in a row, the least width
+     * itself, so they lie in the tracks that fit as before. Where the columns asked for fit, that
+     * width is made far narrower, so the grid draws them, and where nothing fits, the components
+     * sheet holds it to the grid's width, so the grid draws one column. Any other count, such as
+     * thirteen, draws as many as fit. A count is matched by a cell at that place and none past it,
+     * which Safari counts again as cells come and go, where a last cell at that place it does not.
+     * The widths are the grid's own properties, so they are worked out here and the components
+     * sheet reads them. Each name starts with `--_dk-`, which marks a working value of the kit's
+     * own that no page reads or sets and the tokens page leaves out, as record 16 sets out.
      */
     :where(.dk-button-grid) {
         --_dk-button-grid-at: var(--dk-button-grid-least, var(--dk-target));

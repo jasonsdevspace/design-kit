@@ -11,8 +11,20 @@ import {
     StatusLine,
     StepperField,
     TextareaField,
+    type ArrivalKey,
+    type FocusAfterDraw,
+    type ProgressProps,
+    StatusProvider,
+    type StatusProviderProps as ProviderProps,
     ThemeSwitch,
     Toast,
+    useArrivalFocus,
+    useBusy,
+    useFocusAfterDraw,
+    useFormRefusal,
+    useProgress,
+    useRoving,
+    useStatus,
 } from '@jasonsdevspace/design-kit/react';
 import {
     attachBusy,
@@ -27,12 +39,18 @@ import {
     attachStepper,
     focusOnArrival,
     moveFocus,
+    type ArrivalOptions,
     type BusyOptions,
+    type FocusTarget,
+    type FormOptions,
+    type MoveFocusOptions,
     type PanelControl,
     type ProgressOptions,
     type Refuse,
     type RovingOptions,
+    type RovingOrientation,
     type Say,
+    type SayOptions,
     type SetPanel,
     type StepperOptions,
 } from '@jasonsdevspace/design-kit/controls';
@@ -43,7 +61,7 @@ import {
     themeScriptHash,
     themeScriptPlugin,
 } from '@jasonsdevspace/design-kit/vite';
-import { createElement, createRef } from 'react';
+import { createElement, createRef, type RefCallback } from 'react';
 import type { UserConfig } from 'vite';
 
 /*
@@ -321,3 +339,50 @@ export const fixedGame = SelectField({
     readOnly: true,
     children: 'Wizard',
 });
+
+// Each hook as a component calls it, typed as the packed types give it, so a missing or broken
+// hooks module fails here rather than reading as any.
+export const HookTypes = (children: ProviderProps['children']): readonly unknown[] => {
+    const say: Say = useStatus();
+    say('Saved.', { settle: 400, polite: true });
+    const focusNext: FocusAfterDraw = useFocusAfterDraw();
+    const moveOptions: MoveFocusOptions = { fallbacks: ['players', null], from: null };
+    const target: FocusTarget = 'next';
+    const cancel: () => void = focusNext(target, moveOptions);
+    const key: ArrivalKey = 3;
+    const heading: RefCallback<HTMLHeadingElement> = useArrivalFocus<HTMLHeadingElement>(key);
+    const formOptions: FormOptions = { summary: () => null };
+    const [form, refuse]: readonly [RefCallback<HTMLFormElement>, Refuse] =
+        useFormRefusal<HTMLFormElement>({
+            invalid: (failures: readonly FieldFailure[]) => failures.map(({ field }) => field.id),
+            errorWords: { valueMissing: 'Enter your name.' },
+        });
+    const orientation: RovingOrientation = 'grid';
+    const group: RefCallback<HTMLDivElement> = useRoving<HTMLDivElement>({ orientation });
+    const busy: RefCallback<HTMLButtonElement> = useBusy<HTMLButtonElement>();
+    const bar: RefCallback<HTMLProgressElement> = useProgress({ steps: 4, done: 'Done.' });
+    const provided = StatusProvider({ children });
+    const sayOptions: SayOptions = { polite: true };
+    const arrival: ArrivalOptions = { changed: true };
+    const progressed: ProgressProps = { label: 'Importing', value: 1, max: 4, words: '1 of 4' };
+    return [
+        cancel,
+        heading,
+        formOptions,
+        form,
+        refuse,
+        group,
+        busy,
+        bar,
+        provided,
+        sayOptions,
+        arrival,
+        progressed,
+    ];
+};
+
+// @ts-expect-error The form's refusal asks for invalid, since the page draws the errors in React.
+export const refusalWithout = () => useFormRefusal<HTMLFormElement>({});
+
+// @ts-expect-error A group of cells is laid out as a grid, a row or a column, and nothing else.
+export const rovingDiagonal = () => useRoving({ orientation: 'diagonal' });

@@ -1695,9 +1695,22 @@ with a way forward in the line's place and takes the mark away, so the line neve
 The line is out of the tree a screen reader reads while it waits, and is not live, so nothing is
 heard of it. Where the wait follows a visitor's own action and focus stays where it was, the page
 says the line's words on the screen's status line once the wait outlasts `--dk-wait`, then says the
-result. A region that loads as the page opens says nothing, since a visitor arriving finds it as
-they read. A button that starts the wait is busy, not loading, and a wait with a known amount is
-progress.
+result. Said as a function with a settle of the same wait, the words are dropped where the load
+finished first, as a busy button's are, and the result said after them takes their place:
+
+```tsx
+const say = useStatus();
+const loading = useRef(false);
+
+// On the press that starts the load, settled for --dk-wait, 400ms.
+const load = () => {
+    loading.current = true;
+    say(() => (loading.current ? 'Loading the products.' : null), { settle: 400 });
+};
+```
+
+A region that loads as the page opens says nothing, since a visitor arriving finds it as they read.
+A button that starts the wait is busy, not loading, and a wait with a known amount is progress.
 
 ### Progress
 
@@ -1767,9 +1780,10 @@ export const Importing = ({ done, total }: { readonly done: number; readonly tot
 };
 ```
 
-A run that fails partway takes the bar's `value` away, so it says no more, puts a danger callout
-with a way forward beside it, as a failed load does, and says the failure on the status line. A run
-that works says its result, in `done` or in words of the page's own, which the end gives way to.
+A run that fails partway takes the bar's `value` away, so it says no more, and puts a live danger
+callout with a way forward beside it, as a failed load does. The callout reads the failure, so the
+status line says nothing of it and the failure is heard once. A run that works says its result, in
+`done` or in words of the page's own, which the end gives way to.
 
 ## Content pages
 

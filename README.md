@@ -258,8 +258,8 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
-  test to 12 KB, and the theme script goes inline in the page's head. A page that attaches a
-  control loads the controls too, which a test holds, as a bundler sends every function, to 17
+  test to 12.25 KB, and the theme script goes inline in the page's head. A page that attaches a
+  control loads the controls too, which a test holds, as a bundler sends every function, to 17.25
   KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm publishes
   is 80 KB packed, the sheets and modules a page loads together with the README, the types and the
   tokens in the design tokens format, which it never does. [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each
@@ -324,8 +324,8 @@ options rejected, what the choice costs, and the test behind it.
     with React and one without, from one copy of their behavior, at the cost of a second script in
     the browser, held to a budget.
 14. [A piece with no state of its own ships as classes alone](docs/decisions/0014-stateless-pieces-ship-as-classes.md).
-    Tabs, pills and the eyebrow look the same on every site from classes a page writes, at the cost
-    of each page running its own tabs' keys.
+    Tabs, pills and the eyebrow look the same on every site from classes a page writes, with their
+    keys from `attachRoving` and the chosen tab the page's own.
 15. [A toast's attach function returns what shows a message](docs/decisions/0015-a-toast-attach-returns-what-shows-a-message.md).
     A page attaches a toast once and calls one function for every message, which a screen reader
     hears with its way back, at the cost of the one control whose attach function takes nothing
