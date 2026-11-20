@@ -4,8 +4,8 @@
 which returns what says a message, in 0.8.4 for the panel's, `attachPanel`, which returns what opens
 or closes it and what lets its button go, and in 0.9.0 for words that settle and polite words, which
 give way to firm words said in the same moment or still settling and wait for firm words being said,
-and in 0.9.2 for `releaseStatus`, which lets a line go as a page takes it away, so nothing more is
-said on it by any piece until it is attached again
+and in 0.9.2 for a line let go of as `StatusProvider` unmounts, so nothing more is said on it by any
+piece until it is attached again
 
 ## Context
 

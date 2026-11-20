@@ -1,3 +1,4 @@
+import { type Line, lineOf, lines } from './line.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
@@ -554,7 +555,12 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     // Drawn as the switch shows it, so the two agree when a choice was held while no switch was.
     draw(current());
     group.hidden = false;
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         // Closing takes the page's listener away with it.
         close(false);
@@ -571,55 +577,6 @@ const SAID_FOR = 2000;
 
 /** A message a status line says: words, or a function that gives them as they are put in. */
 type Spoken = Parameters<Say>[0];
-
-/**
- * What a status line is saying. A message is put in a moment after the line is emptied, so the
- * same words twice are heard twice, and leaves after a while unless it is kept, as a toast keeps
- * its own until the toast leaves. Words waiting to settle keep a timer of their own, so words
- * already said still leave as ever. The line knows the message it is saying and whether it was said
- * in this moment, whether firm words were said in this moment or still settle, and the polite words
- * and the polite notice, given as a function, waiting for it to be free.
- */
-type Line = {
-    timer: number;
-    settle: number;
-    current: {
-        readonly message: Spoken;
-        readonly polite: boolean;
-        put: boolean;
-        now: boolean;
-    } | null;
-    firmNow: boolean;
-    /** How many firm messages the line has been given, so only the last clears the moment's mark. */
-    firms: number;
-    settling: boolean;
-    words: string | null;
-    notice: (() => string | null) | null;
-    /** Let go of by `releaseStatus`, so nothing is said on it until it is attached again. */
-    released: boolean;
-    /** The timers that end the moments words were said in, each taken off as it comes. */
-    moments: Set<number>;
-};
-const lines = new WeakMap<HTMLElement, Line>();
-const lineOf = (status: HTMLElement): Line => {
-    let line = lines.get(status);
-    if (!line) {
-        line = {
-            timer: 0,
-            settle: 0,
-            current: null,
-            firmNow: false,
-            firms: 0,
-            settling: false,
-            words: null,
-            notice: null,
-            released: false,
-            moments: new Set(),
-        };
-        lines.set(status, line);
-    }
-    return line;
-};
 
 /** Empties a status line, and drops what it was about to say, waiting words among them. */
 const hush = (status: HTMLElement) => {
@@ -766,6 +723,7 @@ export type SayOptions = {
  */
 export type Say = (message: string | (() => string | null), options?: SayOptions) => void;
 
+/** The function each attached line says by, kept so attaching it again returns the same one. */
 const attachedLines = new WeakMap<HTMLElement, Say>();
 
 /**
@@ -779,11 +737,13 @@ const attachedLines = new WeakMap<HTMLElement, Say>();
  * being said, so the last words said are the ones heard. A screen keeps a line of its own for this,
  * as a toast and a stepper keep theirs. It speaks through the same function as the copy button and
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
- * an earlier one. Attached again, a line returns the function it returned first.
+ * an earlier one. Attached again, a line returns the function it returned first, unless the line
+ * was let go of, as `StatusProvider` does when it unmounts, when it returns one afresh.
  */
 export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);
-    if (already) return already;
+    // A line let go of, as `StatusProvider` does when it unmounts, is attached afresh.
+    if (already && !lineOf(line).released) return already;
     lineOf(line).released = false;
     const speak: Say = (message, { settle = 0, polite = false } = {}) => {
         if (settle <= 0) {
@@ -808,31 +768,6 @@ export const attachStatus = (line: HTMLElement): Say => {
     };
     attachedLines.set(line, speak);
     return speak;
-};
-
-/**
- * Lets a status line go, as a page takes it away: the line's timers are cleared, the words said or
- * held for it are dropped and it is emptied. Nothing more is said on it, by the function
- * `attachStatus` returned or by any piece given it, such as a busy button, a copy button or a
- * form, until the page attaches it again with `attachStatus`. A piece's own timers, such as a busy
- * button's wait, are the piece's, and come due saying nothing. A line nothing has spoken on is left
- * as it is.
- */
-export const releaseStatus = (line: HTMLElement): void => {
-    attachedLines.delete(line);
-    const state = lines.get(line);
-    if (!state) return;
-    window.clearTimeout(state.timer);
-    window.clearTimeout(state.settle);
-    for (const moment of state.moments) window.clearTimeout(moment);
-    state.moments.clear();
-    state.current = null;
-    state.firmNow = false;
-    state.words = null;
-    state.notice = null;
-    state.settling = false;
-    state.released = true;
-    line.textContent = '';
 };
 
 /** Where a piece's words are said: the page's own function, or a status line the page names. */
@@ -930,7 +865,12 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     };
     button.addEventListener('click', onClick);
     button.hidden = false;
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         live = false;
         button.removeEventListener('click', onClick);
         window.clearTimeout(timer);
@@ -1435,7 +1375,12 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     );
     mark();
     describe();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         window.clearTimeout(settling);
@@ -1916,7 +1861,12 @@ export const attachTable = (element: HTMLElement): (() => void) => {
         else if (end > to) frame.scrollLeft += (end - to) * way;
     };
     frame.addEventListener('focusin', onFocusIn);
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         frame.removeEventListener('focusin', onFocusIn);
         attachedTables.delete(frame);
     };
@@ -2775,7 +2725,12 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
     const toolbar = group.matches('.dk-button-grid') && (ownRole === null || ownRole === 'group');
     if (toolbar) group.setAttribute('role', 'toolbar');
     place();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         for (const cell of group.querySelectorAll<HTMLElement>(CELLS)) {
@@ -2891,7 +2846,12 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     const listening = new AbortController();
     button.addEventListener('click', stop, { capture: true, signal: listening.signal });
     if (busy()) start();
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         listening.abort();
         kept.disconnect();
         end();
@@ -3012,7 +2972,12 @@ export const attachProgress = (
     };
     const kept = new MutationObserver(check);
     kept.observe(progress, { attributeFilter: ['value', 'max'] });
+    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // that newer attach alone.
+    let detached = false;
     const detach = () => {
+        if (detached) return;
+        detached = true;
         kept.disconnect();
         attachedProgress.delete(progress);
     };

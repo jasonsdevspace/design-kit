@@ -9,57 +9,67 @@ entry as the notes.
 
 ## 0.9.2
 
-A button or a link given the arrival focus ref keeps its place in the Tab order, `CopyOptions` is
-exported, and the new `releaseStatus` lets a status line go, as `StatusProvider` now does when it
-unmounts, so nothing set for it keeps running and no piece speaks on it until the page attaches it
-again. The package README, which npm shows, is a short front door that sends deeper questions to the
-site and the reference, whose new "What the package exports" section names everything each entry
-holds. No token is added or renamed and the theme script is unchanged, so
-`themeScriptHash` is the same, and the sheets and the controls stay within their budgets.
+A screen's status line is let go of as `StatusProvider` unmounts, so nothing set for it keeps
+running and no piece speaks on it until it is attached again, a detach called again no longer undoes
+a newer attach of the same element, a button or a link given the arrival focus ref keeps its place
+in the Tab order, and `CopyOptions` is exported. The package README, which npm shows, is a short
+front door that sends deeper questions to the site and the reference, whose new "What the package
+exports" section names everything each entry holds. No token is added or renamed and the theme
+script is unchanged, so `themeScriptHash` is the same, and the sheets and the controls stay within
+their budgets.
 
-- **Controls.** `releaseStatus(line)` lets a status line go: it clears the line's timers, drops the
-  words said or held for it and empties it, and the function `attachStatus` returned says nothing
-  there and sets no timer until the line is attached again. A line attached before it is put on the
-  page still speaks there, as before. A busy button, a form's refusal and progress given a line that
-  `releaseStatus` let go of do not attach it again on their next words, so the line stays silent for
-  every piece, a copy button and a toast among them, until the page attaches it again with
-  `attachStatus`, and letting a line go also clears the timers that end the moments words were said
-  in and forgets that firm words were said in it, so a line attached again at once takes polite
-  words. `CopyOptions`, what `attachCopyButton` takes, is exported from `./controls`, so a
-  TypeScript page can build a copy button's options apart from the call, as it can a stepper's or a
-  form's.
+- **Controls.** A status line let go of, as `StatusProvider` does when it unmounts, has its timers
+  cleared, the timers that end each moment words were said in among them, and the words said or held
+  for it dropped, and is emptied. The function `attachStatus` returned, a busy button, a form's
+  refusal, progress, a copy button and a toast given the line then say nothing there and set no
+  timer until the line is attached again, and attaching it again gives a fresh function that takes
+  polite words at once. A line attached before it is put on the page still speaks there, as before.
+  The state of each status line and the release `StatusProvider` uses live in a module of the kit's
+  own, which the package's exports do not name, so a page lets a line go only through
+  `StatusProvider`. The detaches of the theme switch, the copy button, the stepper, the table, a
+  group the arrow keys move through, a busy button and progress do their work once and nothing when
+  called again. Called late, after the page attached the same element again, one of them used to
+  take the newer attach's entry and, for the switch, the copy button and the stepper, hide the
+  controls it had shown, so the next attach built a second instance with every listener twice. The
+  panel's detach already kept to its own attach. `CopyOptions`, what `attachCopyButton` takes, is
+  exported from `./controls`, so a TypeScript page can build a copy button's options apart from the
+  call, as it can a stepper's or a form's.
 - **React.** The ref `useArrivalFocus` returns gives `tabindex="-1"` only to an element that cannot
   take focus by itself, such as a heading or a link with no address, so a button, a link or a field
   given it, as a scores screen's "Change round" button is, stays in the order the Tab key moves in,
-  where before it left it for as long as the view was drawn. `StatusProvider` lets its line go as it
-  unmounts, so a screen taken away a moment after its parts spoke leaves no timer of the kit's
-  running. It lets the line go once its commit is done, unless the same line comes straight back, as
-  React's second run in development brings it, which keeps its words, and it calls off the moments
-  it set to say words held before its line landed if the line goes for good before they come.
+  where before it left it for as long as the view was drawn. `StatusProvider` lets its line go once
+  its commit is done, unless the same line comes straight back, as React's second run in development
+  brings it, which keeps its words, and it calls off the moments it set to say words held before its
+  line landed if the line goes for good before they come. A screen taken away a moment after its
+  parts spoke leaves no timer of the kit's running.
 - **Docs.** The comment on `useArrivalFocus` says which elements take the tabindex. The reference's
-  status line section names `releaseStatus`, and its list of what `./controls` exports names it and
-  `CopyOptions`. The reference and `releaseStatus`'s comment say a piece's own timers, such as a
-  busy button's wait, come due saying nothing, and record 15 is amended for `releaseStatus`. The
-  package README opens with what the kit is, a line of contents and why to pick it, lists what is in
-  it in a line for each group with the site page that shows it, and keeps the setup, one example,
-  the foundations, the theme script's hash under a strict policy and the browser floor. "What it
-  exports" is a table of a line for each entry, and the reference's new "What the package exports"
-  section names every function, hook, component and type each entry holds. The paragraph on a
-  release's changes, the other examples and the sections the reference holds word for word give way
-  to links.
+  status line section says `StatusProvider` lets its line go as it unmounts and that a piece's own
+  timers, such as a busy button's wait, come due saying nothing, and record 15 is amended for it.
+  The reference's list of what `./controls` exports names `CopyOptions`. The package README opens
+  with what the kit is, a line of contents and why to pick it, lists what is in it in a line for
+  each group with the site page that shows it, and keeps the setup, one example, the foundations,
+  the theme script's hash under a strict policy and the browser floor. "What it exports" is a table
+  of a line for each entry, and the reference's new "What the package exports" section names every
+  function, hook, component and type each entry holds. The paragraph on a release's changes, the
+  other examples and the sections the reference holds word for word give way to links.
 - **Tests.** A browser test gives the arrival focus ref to a button, finds it with no tabindex,
   focuses it as its key changes from another button, and tabs away from it and back, and finds a
   link with no address given the ref a tabindex as a heading is. Browser tests say words at once,
   words that settle and words after the line is let go of, and hear nothing with no timer left to
   run, let a line go while words are on it with polite words waiting and hear nothing more until it
-  is attached again, and hear a line built before it is on the page. Another lets a line go under a
-  busy button, finds its wait saying nothing, then attaches the line again and hears the busy words.
-  Another says words on a `StatusProvider`'s line and unmounts it before they are put in, and finds
-  the line never given them. The type smoke test, compiled against the packed package, imports
-  `CopyOptions` and types a copy button's options with it. A test points every link within the
-  README at one of its own headings, so the contents line keeps up with them. The smoke test that
-  every value a module exports is named reads it from the module's heading in the reference, the
-  components' module among them, where it read the README's row and passed the components over.
+  is attached again, and hear a line attached before it is on the page. Another lets a line go under
+  a busy button, finds its wait saying nothing, then attaches the line again and hears the busy
+  words. Another says words on a `StatusProvider`'s line and unmounts it before they are put in, and
+  finds the line never given them. The browser tests' pages serve the kit's own status line module
+  beside the controls. A browser test attaches the theme switch, the copy button, the stepper, the
+  table, a group the arrow keys move through, a busy button and progress, detaches each, attaches it
+  again and calls the first detach again, and finds the newer attach still in place, its switch and
+  copy button shown, its stepper stepping and its busy button marked off as it goes busy. The type
+  smoke test, compiled against the packed package, imports `CopyOptions` and types a copy button's
+  options with it. A test points every link within the README at one of its own headings, so the
+  contents line keeps up with them. The smoke test that every value a module exports is named reads
+  it from the module's heading in the reference, the components' module among them, where it read
+  the README's row and passed the components over.
 
 ## 0.9.1
 

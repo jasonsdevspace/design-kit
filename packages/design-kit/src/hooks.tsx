@@ -28,10 +28,10 @@ import {
     type MoveFocusOptions,
     type ProgressOptions,
     type Refuse,
-    releaseStatus,
     type RovingOptions,
     type Say,
 } from './controls.js';
+import { releaseLine } from './line.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over a function from `./controls`, as decision 20 has
@@ -81,7 +81,7 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
                         for (const timer of later.current) window.clearTimeout(timer);
                         later.current = [];
                     }
-                    releaseStatus(left);
+                    releaseLine(left);
                 });
             handle.current = null;
             held.current = [];
