@@ -2197,7 +2197,7 @@ const checkers = new WeakMap<
     HTMLFormElement,
     {
         readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
-        readonly clear: () => void;
+        readonly clear: () => boolean;
         readonly cleared: () => void;
     }
 >();
@@ -2316,12 +2316,13 @@ const unreachedWords = (field: Element, words: string, count: number): string =>
  * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
  * page names one, else the first field in error that can take focus, or in a set its checked radio
  * or its first control that can, and says one message on the status line: nothing where focus moves
- * to a summary, whose words it reads, and otherwise the first field's name and error, with how many
- * fields need attention where more are wrong, since VoiceOver on iOS reads a field's error only as
- * a hint and focus moved by script may not land. A set counts once however many of its choices are
- * marked. The field's error stays not live. A second refusal calls off one not yet landed, and each
- * refusal returns what calls it off. A reset that goes through clears the errors and, where any
- * field was in error, says the form is cleared. Attached again, a form returns what it returned
+ * to a summary, whose words it reads, its words where the summary already had focus, and where it
+ * moves to a field or is already on one, that field's name and error, with how many fields need
+ * attention where more are wrong, since VoiceOver on iOS reads a field's error only as a hint and
+ * focus moved by script may not land. A set counts once however many of its choices are marked. The
+ * field's error stays not live. A second refusal calls off one not yet landed, and each refusal
+ * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
+ * where there were any, says the form is cleared. Attached again, a form returns what it returned
  * first and takes options given in place of the last.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
@@ -2461,8 +2462,11 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const failure of failures) draw(failure);
         refuseIn(whole, false);
     };
+    // Takes away the errors the kit drew, and says whether there were any.
     const clear = () => {
+        const had = drawn.size > 0;
         for (const field of [...drawn.keys()]) undraw(field);
+        return had;
     };
     if (own && (own === form || !checkers.has(own)))
         checkers.set(own, { check, clear, cleared: () => speak('Form cleared.') });
@@ -2476,15 +2480,14 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             { capture: true }
         );
         // A reset a page calls off leaves the errors, since the values that failed stay. One that
-        // goes through clears them, and where any field was in error says so, since the errors go
-        // out of a screen reader's hearing and focus stays on the button. A reset of a form with
-        // nothing wrong, as after a save, says nothing.
+        // goes through takes away the errors the kit drew, and where there were any says so, since
+        // they go out of a screen reader's hearing and focus stays on the button. A reset with none
+        // the kit drew, as after a save, says nothing, and errors a page drew are the page's to clear.
         own.addEventListener('reset', (event) => {
-            const wrong = own.querySelector('[aria-invalid="true"]') !== null;
             window.setTimeout(() => {
                 if (event.defaultPrevented) return;
-                checkers.get(own)?.clear();
-                if (wrong) checkers.get(own)?.cleared();
+                const checker = checkers.get(own);
+                if (checker?.clear()) checker.cleared();
             });
         });
     }

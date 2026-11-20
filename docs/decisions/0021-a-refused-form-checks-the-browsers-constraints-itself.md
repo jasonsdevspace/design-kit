@@ -1,9 +1,10 @@
 # 21. A refused form checks the browser's constraints itself
 
-**Status:** accepted, amended in 0.9.1 for what a refusal says: the first field's name and error,
-with how many fields need attention where more are wrong, and nothing over a summary, since a device
-check with VoiceOver on an iPhone heard no error when the kit left it to the field's description,
-which iOS reads only as a hint, and for a reset that clears errors, which says "Form cleared.".
+**Status:** accepted, amended after 0.9.0 for what a refusal says, the name and error of the field
+focus is on, with how many fields need attention where more are wrong, since a device check with
+VoiceOver on an iPhone heard no error where the kit left it to the field's description, which iOS
+reads only as a hint. A screen reader that reads the error as focus lands hears it twice. A reset
+that takes away the errors the kit drew says "Form cleared."
 
 ## Context
 
@@ -143,7 +144,10 @@ The paths are in `packages/design-kit`.
   failures, a set's among them, to the page, which draws them, and refuses once they are drawn. It
   runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
-  marked off, and names a set none of whose controls can take focus.
+  marked off, names a set none of whose controls can take focus, says the name and error of a field
+  focus moves to or was already on, a set's where its choice does not read the error, and a field's
+  name with the count where it is marked in error with none drawn, and says "Form cleared." after a
+  reset that takes away the kit's errors and nothing after one with none to take away.
 - `smoke/types.ts` types the failures, the words and the options, and refuses a failure misnamed.
 - `scripts/controls.test.ts` holds the controls to the budget record 13 sets.
 

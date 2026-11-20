@@ -8,9 +8,9 @@ import { servePage } from './page.js';
 /*
  * A refused submit by `attachForm` and React's `useFormRefusal`: focus on the first field in error,
  * a radio set's checked radio, or a summary the page names, and one message on the status line,
- * nothing over a summary and otherwise the first field's name and error with how many need attention
- * where more are wrong, with a second refusal heard again, and "Form cleared." where a reset clears
- * errors.
+ * nothing where focus moves to a summary, its words where the summary already had focus, and
+ * otherwise that field's name and error with how many need attention where more are wrong, with a
+ * second refusal heard again, and "Form cleared." where a reset takes away the kit's errors.
  */
 
 const FORM = renderToStaticMarkup(
@@ -254,32 +254,49 @@ test("says a set's name and error where focus moves to a choice its error does n
         .toEqual(['Match: Error: Choose how rules match.']);
 });
 
-test('says the form is cleared where a reset clears its errors, and nothing where none showed', async ({
-    page,
-}) => {
-    await open(page);
-    await page.evaluate(() => {
+/** Puts a Start over button in the form, and attaches it with nothing wrong, which says nothing. */
+const withReset = (page: Page) =>
+    page.evaluate(() => {
         const form = document.querySelector('#rule');
         const reset = document.createElement('button');
         reset.type = 'reset';
         reset.textContent = 'Start over';
         form?.append(reset);
+        (window as unknown as Form).refuse();
     });
-    // A reset of a form with nothing wrong, as after a save, says nothing.
-    await page.getByRole('button', { name: 'Start over' }).click();
-    await page.waitForTimeout(300);
-    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([]);
-    await page.getByRole('button', { name: 'Save rule' }).focus();
-    await refuse(page, [['name', 'Give the rule a name.']]);
+
+test("says the form is cleared where a reset takes away the kit's errors", async ({ page }) => {
+    await open(page);
+    await withReset(page);
+    await page.locator('#name').evaluate((name) => name.setAttribute('required', ''));
+    await page.getByRole('button', { name: 'Save rule' }).click();
     await expect(page.locator('#name')).toBeFocused();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Rule name: Error: Enter a value.']);
+    await page.getByRole('button', { name: 'Start over' }).click();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Rule name: Error: Enter a value.', 'Form cleared.']);
+    await expect(page.locator('#name')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByRole('button', { name: 'Start over' })).toBeFocused();
+});
+
+test("says nothing on a reset with none of the kit's errors to take away", async ({ page }) => {
+    await open(page);
+    await withReset(page);
+    // A reset with nothing wrong, as after a save, says nothing.
+    await page.getByRole('button', { name: 'Start over' }).click();
+    // An error the page drew is the page's to clear, so the kit does not say the form is cleared.
+    await refuse(page, [['name', 'Give the rule a name.']]);
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
         .toEqual(['Rule name: Error: Give the rule a name.']);
     await page.getByRole('button', { name: 'Start over' }).click();
-    await expect
-        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['Rule name: Error: Give the rule a name.', 'Form cleared.']);
-    await expect(page.getByRole('button', { name: 'Start over' })).toBeFocused();
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
+        'Rule name: Error: Give the rule a name.',
+    ]);
 });
 
 test('leaves focus where it is when nothing is wrong', async ({ page }) => {

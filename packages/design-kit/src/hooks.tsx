@@ -246,7 +246,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * A ref for a form and what refuses its submit, by `attachForm`: called once the page has set the
  * errors, it waits for the render that draws them, then moves focus to the summary or the first
  * field in error and says once, on the status line of the nearest `StatusProvider` or through the
- * `say` given, the first field's name and error, or nothing over a summary, as `attachForm` has it.
+ * `say` given, that field's name and error, or nothing over a summary, as `attachForm` has it.
  * It is called in the submit handler, after an await in it too, or in an effect with dependencies,
  * never as the component renders nor in an effect that runs on every render, since refusing renders
  * the component again. Errors set in a transition are refused inside the same `startTransition`, so

@@ -743,10 +743,11 @@ first does, focus moves to an error summary where the page names one, else the f
 that can take focus, passing over one that is disabled, inert, marked off, itself or by its set, or
 out of sight, or in a set its checked radio or its first control that can take focus, since the
 set's fieldset takes none. A set counts once, however many of its choices are marked. One message is
-said. Where focus moves to a summary, which reads its own words, nothing is said. Otherwise the
-first field's name and error are said, with how many fields need attention where more are wrong,
-whether focus moves to the field or was already on it. VoiceOver on iOS reads a field's error only
-as a hint, after a pause, which other speech cuts off and which a visitor who turns hints off never
+said. Where focus moves to a summary, which reads its own words, nothing is said, and where the
+summary already had focus, its words are said. Where focus moves to a field or was already on it,
+that field's name and error are said, with how many fields need attention where more are wrong, or
+its name and the count where it shows no error. VoiceOver on iOS reads a field's error only as a
+hint, after a pause, which other speech cuts off and which a visitor who turns hints off never
 hears, and focus moved by script may not land, so the error is always said. A screen reader that
 reads the error as focus lands hears it twice, which slows a visitor less than an error never heard.
 A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
@@ -778,12 +779,13 @@ ever, for the checks the constraints cannot express, such as two fields that mus
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
 the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
-page calls the reset off, and a reset that clears errors says "Form cleared." on the status line,
-since focus stays on the button and the errors go out of hearing. A form's own attach checks it
-where a part of it was attached first, so its options are the ones the check takes, and a refusal
-the page calls looks only in the part it attached. Fields not in error are marked
-`aria-invalid="false"` as the form is attached, so a browser does not read an empty required field
-as invalid before anything is submitted.
+page calls the reset off, and a reset that goes through where the kit drew errors says "Form
+cleared." on the status line, since focus stays on the button and the errors go out of hearing.
+Errors a page drew are its own to clear on a reset. A form's own attach checks it where a part of it
+was attached first, so its options are the ones the check takes, and a refusal the page calls looks
+only in the part it attached. Fields not in error are marked `aria-invalid="false"` as the form is
+attached, so a browser does not read an empty required field as invalid before anything is
+submitted.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
