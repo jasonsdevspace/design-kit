@@ -65,6 +65,24 @@ window.redrawPanel = () => {
     panel.replaceWith(drawn);
 };
 window.sameTips = attachPanel(document.querySelector('#tips-button')) === tips;
+// Every press and focus the page hears, first of all, with what it landed on and whether the
+// panel was shown, so a test whose press misses says where it went. It reads no layout, since a
+// layout forced in the middle of a press could settle the very race it is there to catch.
+window.presses = [];
+const nameOf = (node) => node.id || node.localName || node.nodeName;
+for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'focusin'])
+    window.addEventListener(
+        type,
+        (event) => {
+            const panel = document.querySelector('#round-tips');
+            window.presses.push(
+                type + ' on ' + nameOf(event.target) + (event.isTrusted ? '' : ' (script)') +
+                    ('clientX' in event ? ' at ' + Math.round(event.clientX) + ',' + Math.round(event.clientY) : '') +
+                    ', panel ' + (panel ? (panel.hidden ? 'hidden' : 'shown') : 'gone')
+            );
+        },
+        true
+    );
 window.attach = (selector) => attachPanel(document.querySelector(selector));
 // A button of the page's own, with no tabindex, as a page writes one.
 window.addButton = (where, id, text) => {
@@ -89,7 +107,26 @@ type Kit = {
     attach: (selector: string) => { set: (open: boolean) => void; detach: () => void };
     addButton: (where: string, id: string, text: string) => HTMLButtonElement;
     openerFocus: number;
+    presses?: string[];
 };
+
+// The first press of the tips' button once missed in WebKit under the load of every test at once,
+// so a test that fails keeps the presses its page heard, and where the button sits by then, in its
+// report.
+test.afterEach(async ({ page }, testInfo) => {
+    if (testInfo.status === testInfo.expectedStatus) return;
+    const heard = await page
+        .evaluate(() => {
+            const presses = (window as unknown as Kit).presses ?? [];
+            const box = document.querySelector('#tips-button')?.getBoundingClientRect();
+            const where = box
+                ? `the tips' button at ${Math.round(box.x)},${Math.round(box.y)}, ${Math.round(box.width)} by ${Math.round(box.height)}`
+                : "no tips' button";
+            return [...(presses.length > 0 ? presses : ['no presses heard']), where].join('\n');
+        })
+        .catch(() => 'the page was gone');
+    await testInfo.attach('presses', { body: heard, contentType: 'text/plain' });
+});
 
 const open = async (page: Page): Promise<void> => {
     await page.setViewportSize({ width: 390, height: 700 });
