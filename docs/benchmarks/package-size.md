@@ -6,9 +6,9 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-20 | `d54ff06` | AMD EPYC 9V45 96-Core Processor, 4 cores | v24.22.3 |
+| 2026-11-20 | `1401468` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.3 |
 
-`@jasonsdevspace/design-kit@0.9.1`, 116.5 KB packed. The sheets a page loads come to 12.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.9.0 on 2026-11-20 at `abf0d60`, it packs 116.5 KB where it packed 114.7 KB, and the sheets together came to 11.9 KB.
+`@jasonsdevspace/design-kit@0.9.2`, 115.9 KB packed. The sheets a page loads come to 12.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.9.1 on 2026-11-20 at `d54ff06`, it packs 115.9 KB where it packed 116.5 KB, and the sheets together came to 12.0 KB.
 
 The sheets a page loads:
 
@@ -22,8 +22,9 @@ The modules a page's build imports:
 
 | File             | Raw      | Gzipped |
 | ---------------- | -------- | ------- |
-| dist/controls.js | 117.4 KB | 33.1 KB |
-| dist/hooks.js    | 17.7 KB  | 5.1 KB  |
+| dist/controls.js | 119.2 KB | 33.4 KB |
+| dist/hooks.js    | 19.3 KB  | 5.5 KB  |
+| dist/line.js     | 1.4 KB   | 0.6 KB  |
 | dist/react.js    | 25.4 KB  | 7.5 KB  |
 | dist/theme.js    | 4.7 KB   | 1.7 KB  |
 | dist/vite.js     | 2.9 KB   | 1.3 KB  |
@@ -32,15 +33,16 @@ Every other file the package carries, which a page never loads:
 
 | File                      | Raw     | Gzipped |
 | ------------------------- | ------- | ------- |
-| dist/controls.d.ts        | 27.5 KB | 8.6 KB  |
-| dist/hooks.d.ts           | 7.8 KB  | 2.7 KB  |
+| dist/controls.d.ts        | 27.6 KB | 8.6 KB  |
+| dist/hooks.d.ts           | 8.0 KB  | 2.8 KB  |
+| dist/line.d.ts            | 2.0 KB  | 0.9 KB  |
 | dist/react.d.ts           | 24.2 KB | 6.9 KB  |
 | dist/theme.d.ts           | 2.5 KB  | 1.0 KB  |
 | dist/tokens.resolver.json | 31.1 KB | 2.0 KB  |
 | dist/vite.d.ts            | 2.2 KB  | 1.0 KB  |
 | LICENSE                   | 1.0 KB  | 0.6 KB  |
 | package.json              | 2.4 KB  | 0.8 KB  |
-| README.md                 | 28.3 KB | 7.4 KB  |
+| README.md                 | 14.2 KB | 4.7 KB  |
 
 What each piece costs the three sheets, as what they save sent together without their comments and gzipped once its rules are taken out, the costliest first. A rule belongs to the piece it draws. The costs add up to less than the whole, since a piece that repeats another saves little once taken out. The costliest are app frame, the page's own elements and tokens.
 
@@ -94,19 +96,19 @@ What each function of the controls costs a page, as its bundler takes them witho
 
 | Function            | Alone  | Added  |
 | ------------------- | ------ | ------ |
-| `attachForm`        | 6047 B | 3652 B |
-| `attachStepper`     | 3615 B | 1943 B |
-| `attachRoving`      | 2712 B | 1701 B |
-| `attachPanel`       | 2595 B | 1456 B |
-| `attachToast`       | 2868 B | 1089 B |
-| `attachDialog`      | 1813 B | 722 B  |
-| `attachThemeSwitch` | 2333 B | 690 B  |
-| `attachCopyButton`  | 2019 B | 618 B  |
-| `attachProgress`    | 2412 B | 547 B  |
-| `attachTable`       | 1279 B | 484 B  |
-| `attachBusy`        | 2189 B | 463 B  |
-| `focusOnArrival`    | 1722 B | 449 B  |
-| `attachStatus`      | 1476 B | 5 B    |
+| `attachForm`        | 6138 B | 3668 B |
+| `attachStepper`     | 3683 B | 1954 B |
+| `attachRoving`      | 2733 B | 1711 B |
+| `attachPanel`       | 2595 B | 1478 B |
+| `attachToast`       | 2920 B | 1099 B |
+| `attachDialog`      | 1813 B | 746 B  |
+| `attachThemeSwitch` | 2346 B | 700 B  |
+| `attachCopyButton`  | 2091 B | 621 B  |
+| `attachProgress`    | 2512 B | 547 B  |
+| `attachTable`       | 1299 B | 510 B  |
+| `attachBusy`        | 2287 B | 461 B  |
+| `focusOnArrival`    | 1722 B | 456 B  |
+| `attachStatus`      | 1555 B | 5 B    |
 | `chooseTheme`       | 1403 B | 5 B    |
+| `activeOf`          | 727 B  | 2 B    |
 | `moveFocus`         | 1276 B | 2 B    |
-| `activeOf`          | 727 B  | 0 B    |
