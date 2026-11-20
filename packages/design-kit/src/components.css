@@ -1306,7 +1306,8 @@
 
     /*
      * A hero: a band's words in a stack beside its picture, the words first so a reader hears what
-     * the page is before the picture. On a phone they stand one over the other, the picture no
+     * the page is before the picture, inside a band or written on one or on a content page, whose
+     * flow it takes no step from, as the rule after the flow has it. On a phone they stand one over the other, the picture no
      * taller than --dk-band-hero-picture, and from 48rem side by side, centered on each other, with
      * the picture that wide, 28rem until a page sets it, and never past 45% of the row, so the
      * words keep room for a display heading. An image, a video or a picture fills its cell and
@@ -3568,7 +3569,8 @@
      * it, and the room under each is set further up. The steps that differ follow it: the short
      * step under a title, a heading's own, the further step above a dialog's actions, an
      * explainer's sections and a content page's, and the smallest step under an eyebrow, a
-     * section's number and a section's subheading.
+     * section's number and a section's subheading. The pieces that space by their own gaps, a hero,
+     * a group of sections and a split row, then take no step, wherever they are written.
      */
     :where(
         :is(
@@ -3659,11 +3661,12 @@
     }
 
     /*
-     * A hero lays its words and picture out by its own gap, so written on a band or a content page,
-     * as well as inside one, the flow's step never stands its picture lower than its words.
+     * A hero, a group of sections and a split row space what they hold by their own gaps, so
+     * written on a band, a content page or a stack, as well as inside one, the flow's step never
+     * stands one of their pieces lower than the others. This comes after the flow so it wins.
      */
-    :where(.dk-band-hero > *) {
-        margin-block-start: 0;
+    :where(:is(.dk-band-hero, .dk-sections, .dk-split) > *) {
+        margin-block: 0;
     }
 
     :where(.dk-dialog-actions) {

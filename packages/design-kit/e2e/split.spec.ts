@@ -14,7 +14,8 @@ import { doubled } from './text-size.js';
  * word broken rather than the page pushed sideways at 320px and twice the text size, the note muted
  * at the small size and the normal weight beside a label's words, the numeral at its size in the
  * mono face with tabular figures and whole under wider spacing, the group's least width set by
- * --dk-sections-least, and no audit findings in either theme or in forced colors.
+ * --dk-sections-least, a group written on a band and a row written on a stack keeping their own
+ * spacing, and no audit findings in either theme or in forced colors.
  */
 
 const EXAMPLE = renderToStaticMarkup(splitRow);
@@ -238,6 +239,26 @@ const GROUP =
         .map((name) => `<section><h2>${name}</h2><p>Short.</p></section>`)
         .join('') +
     '</div>';
+
+test('lines up the sections of a group written on a band, and a split row written on a stack', async ({
+    page,
+}) => {
+    const band = GROUP.replace('class="dk-sections"', 'class="dk-band dk-sections"');
+    expect(band).toContain('class="dk-band dk-sections"');
+    await draw(page, band, { width: 1280 });
+    const tops = await page
+        .locator('#group > section')
+        .evaluateAll((sections) =>
+            sections.map((one) => Math.round(one.getBoundingClientRect().top))
+        );
+    expect(new Set(tops.slice(0, 2)).size).toBe(1);
+    const stacked = EXAMPLE.replace('class="dk-split"', 'class="dk-stack dk-split"');
+    expect(stacked).toContain('class="dk-stack dk-split"');
+    await draw(page, stacked);
+    expect(await style(page.locator('.dk-split > .dk-note'), 'margin-top')).toEqual({
+        'margin-top': '0px',
+    });
+});
 
 test('sets a group of sections at --dk-sections-least, 20rem until a page sets it', async ({
     page,

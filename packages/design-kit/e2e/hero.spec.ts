@@ -11,9 +11,9 @@ import { doubled } from './text-size.js';
  * A hero, a band's words beside its picture: the words first and the picture after, one over the
  * other a step apart on a phone, side by side and centered on each other from 48rem, the picture at
  * --dk-band-hero-picture and never past 45% of the row, a display heading at 48rem broken between
- * words only, a picture filling its cell in its own proportions, nothing pushed sideways on a 320px
- * phone at twice the text size or under wider spacing, and no audit findings in either theme or in
- * forced colors.
+ * words only, a picture filling its cell in its own proportions, the same spacing written on a band
+ * or a content page as inside one, nothing pushed sideways on a 320px phone at twice the text size
+ * or under wider spacing, and no audit findings in either theme or in forced colors.
  */
 
 /** A picture made at 800 by 600, drawn in a flat color. */
@@ -109,11 +109,21 @@ for (const holder of ['dk-band', 'dk-page'] as const) {
                 `<section class="${holder} dk-band-hero" aria-labelledby="title">`
             )
             .replace('</div></section></main>', '</section></main>');
+        // Fails loudly if the fixture changes and the hero is no longer written on its holder.
+        expect(on).toContain(`class="${holder} dk-band-hero"`);
         for (const width of [400, 1280]) {
             await draw(page, width, { body: on });
             expect(await style(page.locator('#picture'), 'margin-block-start')).toEqual({
                 'margin-block-start': '0px',
             });
+            if (holder === 'dk-band')
+                expect(
+                    Number.parseFloat(
+                        (await style(page.locator('.dk-band-hero'), 'padding-top'))[
+                            'padding-top'
+                        ] ?? ''
+                    )
+                ).toBe(await lengthOf(page, 'var(--dk-space-7)'));
             const words = await box(page.locator('#words'));
             const picture = await box(page.locator('#picture'));
             if (width === 400)
@@ -195,6 +205,25 @@ test('pushes nothing sideways on a 320px phone at twice the text size', async ({
     await doubled(page, browserName);
     expect(await sideways(page)).toBe(0);
     expect(await cutOff(page, '#words, #words > *')).toEqual([]);
+});
+
+test('pushes nothing sideways written on a content page at 320px and twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    const on = hero()
+        .replace(
+            '<section class="dk-band" aria-labelledby="title"><div class="dk-band-hero">',
+            '<section class="dk-page dk-band-hero" aria-labelledby="title">'
+        )
+        .replace('</div></section></main>', '</section></main>');
+    expect(on).toContain('class="dk-page dk-band-hero"');
+    await draw(page, 320, { body: on });
+    await doubled(page, browserName);
+    expect(await sideways(page)).toBe(0);
+    expect(await cutOff(page, '#words, #words > *')).toEqual([]);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.map(({ id }) => id)).toEqual([]);
 });
 
 test('pushes nothing sideways under wider text spacing at 48rem', async ({ page }) => {
