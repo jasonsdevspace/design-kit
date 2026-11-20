@@ -9,153 +9,159 @@ entry as the notes.
 
 ## 0.9.0
 
-The controls take on what each app wrote for itself. The pieces of a screen share one status line
-and take turns on it, so words a visitor must hear are not lost. Focus moves to a control once a
-change is drawn, and to a view's heading when a visitor's press brings it. A grid of buttons and a
-row of tabs move by the arrow keys with one stop for the Tab key. A refused form checks the
-browser's constraints itself, draws the kit's errors and moves focus to the first. A button can be
-busy, progress is said at a pace a screen reader can follow, and a stepper says its range and its
-limits. Each but the stepper has a React hook that wraps its attach function, the stepper speaks on
-a React screen's line through its `say`, and `StatusProvider` draws that line. The sheets add a
-compact action beside the dock's main one, a field's required or optional mark, read-only fields, a
-busy button's look, a loading line, a progress bar, an empty state, a hero band, stacks with a
-pair's or a heading's step, a split row, a note and a large numeral, and an empty live callout stays
-out of the flow in every supported browser. The controls also work inside a shadow root, though a
-panel and its button are still found from the page's document. `--dk-wait` is added and no token is
-renamed, and the theme script is unchanged, so `themeScriptHash` is the same. The sheets' budget
-rises from 11.5 KB to 12.25 KB and the controls' from 7.5 KB to 17.25 KB, set again by the size
-audit's rule.
+The controls take on work each app wrote for itself. The pieces of a screen share one status line
+and take turns on it, so words a visitor must hear are not lost. A page can move focus to a control
+once a change is drawn, and to a view's heading when a visitor's press brings it. A grid of buttons
+and a row of tabs move by the arrow keys with one stop for the Tab key. A form checks the browser's
+constraints itself and, where a field fails, refuses the submit, draws the kit's errors and moves
+focus to the first. A button can be busy, progress is said at a pace a screen reader can follow, and
+a stepper says its range and its limits. Every control here but the stepper has a React hook that
+wraps its attach function. The stepper speaks on a React screen's status line through its `say`, and
+`StatusProvider` draws that line. The sheets add a compact action beside the dock's main one, a
+field's required or optional mark, read-only fields, a busy button's look, a loading line, a
+progress bar, an empty state, a hero band, stack steps for a label over its value and a heading over
+what it heads, a split row, a note and a large numeral. In every supported browser, an empty live
+callout now takes no room. The controls also work inside a shadow root, though a panel and its
+button are still found from the page's document. Importing `./controls` now notes keys, clicks and
+submits on the document, so the package marks it as having side effects. `--dk-wait` is added and no
+token is renamed, and the theme script is unchanged, so `themeScriptHash` is the same. A page that
+states a stepper's range, puts `dk-stack` on a list or writes a live callout by hand has a change to
+make, under Upgrading. The sheets' budget rises from 11.5 KB to 12.25 KB and the controls' from 7.5
+KB to 17.25 KB, set again by record 13's rule.
 
 - **Upgrading.** A page that states a stepper's range in its hint or a description of its own takes
   it out, since the attached stepper says its range in words and would have it read twice. A stepper
-  written by hand gains the `dk-stepper-limits` span, out of sight and with an id, for the words to
-  go in, as the reference draws it, and `StepperField` draws it itself. A `ul` or an `ol` marked
-  `dk-stack` loses its markers, its indent and its own room, so a page that keeps them puts the
-  stack around the list rather than on it, and one that leaves them off adds `role="list"`, since
-  VoiceOver in Safari drops the list's role with its markers. A page that writes a live callout by
-  hand marks it `data-empty` while it is empty and has no actions, and takes the mark away as its
-  words or actions come, so the flow passes over it. `Callout` does this itself.
+  written by hand gains the `dk-stepper-limits` span, out of sight and with an id, for the range
+  words to go in, as the reference draws it, and `StepperField` draws it itself. A `ul` or an `ol`
+  marked `dk-stack` loses its markers, its indent and the space above and below it, so a page that
+  keeps them puts the stack around the list rather than on it, and one that leaves them off adds
+  `role="list"`, since VoiceOver in Safari drops the list's role with its markers. A page that
+  writes a live callout by hand marks it `data-empty` while it is empty and has no actions, and
+  takes the mark away as its words or actions come, so it takes no space while empty. `Callout` does
+  this itself.
 - **Tokens.** `--dk-wait`, 400ms, in `tokens.css` and, as a duration, in `tokens.resolver.json`, is
   how long a wait goes unremarked before a loading line shows.
-- **Sheets.** A `.dk-button[data-busy]` is drawn off only once the wait outlasts `--dk-wait`, by a
-  transition delay that reduced motion and forced colors keep, and shows `cursor: progress` at once.
-  `dk-progress` draws the native `progress` element as a short track in the line color with its fill
-  in the accent, the bar's pill corners rounding the track's ends and the fill's leading edge square
-  in every engine, through each engine's own parts of the bar, and a bar with no value as an empty
-  track rather than the browser's looping motion. In forced colors the fill takes the highlight on
-  an edged canvas track. `.dk-input[readonly]` and `.dk-textarea[readonly]` keep their edge's width,
-  drawn clear on a clear ground with the text in the page's color, before the error's edge, so a
-  read-only field with an error still shows it, and a disabled one is drawn disabled. The edge takes
-  the ground's color in forced colors. A `.dk-loading` line inside a region marked
-  `aria-busy="true"` stays out of sight until the wait outlasts `--dk-wait`, by a delay that stands
-  under reduced motion and in forced colors, then shows in the muted text. `dk-app-dock-inline` lays
-  out a compact action at its own width and the main action taking the rest of the row, never under
-  the target or its own longest word, the two stretched to one height. Each button keeps the target
-  as its least width with a step less side padding, a text button keeps its own look, a link drawn
-  as a button centers its words, and two that cannot share a row take two rather than scroll the
-  page sideways, with no page CSS. The tall button's comment names the row as the one place that
-  brings its least width down. `.dk-field-mark` draws the mark in the muted text at the normal
-  weight. Written beside `dk-stack`, `dk-stack-pair` spaces what the stack holds at `--dk-space-2`,
-  for a label over its value or a header's lines, and `dk-stack-heading` at `--dk-space-3`, for a
-  heading over what it heads, each by setting `--dk-flow-step` on what the stack holds, in
-  `tokens.css`. A named step holds between everything the stack holds, under a title and a page
-  section's heading too, a stack inside one takes its step unless it names its own, and a hidden
-  piece adds no step. A stack on a `ul` or an `ol` drops the markers, the indent and the list's own
-  room, and a list nested in it keeps its own. `dk-split` sets a title at the start and a figure or
-  a control at the end on one line, on their baseline, and the end under the start a small step
-  apart where they do not fit, with no room of their own, each piece breaking a word too long for
-  the line, and holds to the measure with the prose around it. `dk-note` is the muted text at the
-  small size. `dk-numeral` is `--dk-text-numeral` in the mono face with tabular figures, at the
-  strong weight on a line no taller than the figure, never broken, and no wider on a phone at a
-  large text size than five figures fit. `--dk-sections-least` sets the least width of a section in
-  `dk-sections`, 20rem until a page sets it. `dk-band-hero` holds the words' stack and then the
-  picture, one over the other `--dk-space-6` apart on a phone, the picture no taller than
-  `--dk-band-hero-picture`, and side by side, centered on each other, from 48rem, the picture that
-  wide, 28rem until a page sets it, and never past 45% of the row, so the words keep room for a
-  display heading. An `img`, a `video` or a `picture` in it fills its cell and keeps its
-  proportions, cropped rather than stretched, and one in a `figure` keeps its own shape with its
-  caption under it. `dk-empty` draws a message in the muted text at the body size and an action
-  under it, `--dk-space-3` apart and with `--dk-space-3` above and below, with no ground and no
-  edge, so it never reads as a callout, and a row's sides, so its words start where a row's title
-  would, on the column's line in what pads its content and inside a bare edge. A callout marked
-  `data-empty` is drawn as visually hidden text is by a rule with no `:has()`, which Firefox 120
-  lacks, and the flow's step, the short step under a heading and the room kept for a toast pass over
-  it, so a list after one starts where it would with none.
-- **Controls.** The function `attachStatus` returns takes `{ settle }`, a wait in milliseconds for
-  words to stop changing before they are said, and `{ polite }`, for words such as a progress's
-  steps that must not put out a page's own result. Words said without it are firm, and firm words
-  said on the line drop words still settling. Polite words said while firm words are being said wait
-  for them to leave and are said then, the last of them alone, however many firm words follow, and
-  polite words not yet put in when firm words come wait for those in turn. Polite words are left
-  unsaid only where firm words are said in the same moment or still settle, so a result said with
-  them is heard in their place. Polite words given as a function wait for any words on the line and
-  are read as they are put in. Waiting polite words and a waiting notice, polite words given as a
-  function such as a busy button's, are held apart, so neither puts out the other, and the words are
+- **Sheets.** A `.dk-button[data-busy]` takes the look of an off button, one marked `aria-disabled`,
+  only once the wait outlasts `--dk-wait`, by a transition delay that reduced motion and forced
+  colors keep, and shows `cursor: progress` at once. `dk-progress` draws the native `progress`
+  element as a short track in the line color, filled in the accent. The track's ends are rounded
+  like a pill and the fill's leading edge is square in every engine, styled through each engine's
+  own parts of the bar. A bar with no value draws as an empty track rather than the browser's
+  looping motion. In forced colors the fill takes the highlight on an edged canvas track.
+  `.dk-input[readonly]` and `.dk-textarea[readonly]` keep their edge's width, drawn clear on a clear
+  ground with the text in the page's color. A read-only field with an error still shows the error's
+  edge, and a disabled one is drawn disabled. The edge takes the ground's color in forced colors. A
+  `.dk-loading` line inside a region marked `aria-busy="true"` stays out of sight until the wait
+  outlasts `--dk-wait`, by a delay that stands under reduced motion and in forced colors, then shows
+  in the muted text. `dk-app-dock-inline` lays out a compact action at its own width and the main
+  action taking the rest of the row, never under the target or its own longest word, the two
+  stretched to one height. Each button keeps the target as its least width with a step less side
+  padding, a text button keeps its own look, a link drawn as a button centers its words, and two
+  that cannot share a row take two rather than scroll the page sideways, with no page CSS. The tall
+  button's comment names the row as the one place that brings its least width down. `.dk-field-mark`
+  draws the mark in the muted text at the normal weight. Written beside `dk-stack`, `dk-stack-pair`
+  spaces what the stack holds at `--dk-space-2`, for a label over its value or a header's lines, and
+  `dk-stack-heading` at `--dk-space-3`, for a heading over what it heads, each by a rule in
+  `tokens.css` that sets `--dk-flow-step` on what the stack holds. A named step holds between
+  everything the stack holds, under a title and a page section's heading too, a stack inside one
+  takes its step unless it names its own, and a hidden piece adds no step. A stack on a `ul` or an
+  `ol` drops the markers, the indent and the space above and below the list, and a list nested in it
+  keeps its own. `dk-split` sets a title at the start and a figure or a control at the end on one
+  line, on their baseline, and the end under the start a small step apart where they do not fit,
+  with no room of their own, each piece breaking a word too long for the line, and holds to the
+  measure with the prose around it. `dk-note` is the muted text at the small size. `dk-numeral` is
+  `--dk-text-numeral` in the mono face with tabular figures, at the strong weight on a line no
+  taller than the figure, never broken, and no wider on a phone at a large text size than five
+  figures fit. `--dk-sections-least` sets the least width of a section in `dk-sections`, 20rem until
+  a page sets it. `dk-band-hero` holds the words' stack and then the picture, one over the other
+  `--dk-space-6` apart on a phone, the picture no taller than `--dk-band-hero-picture`, and side by
+  side, centered on each other, from 48rem, the picture that wide, 28rem until a page sets it, and
+  never past 45% of the row, so the words keep room for a display heading. An `img`, a `video` or a
+  `picture` in it fills its cell and keeps its proportions, cropped rather than stretched, and one
+  in a `figure` keeps its own shape with its caption under it. `dk-empty` draws a message in the
+  muted text at the body size and an action under it, `--dk-space-3` apart and with `--dk-space-3`
+  above and below, with no ground and no edge, so it never reads as a callout. It takes a row's
+  sides, so its words start where a row's title would, on the column's line in what pads its content
+  and inside a bare edge. A callout marked `data-empty` is hidden as visually hidden text is, by a
+  rule that needs no `:has()`, which Firefox 120 lacks. The flow's step, the short step under a
+  heading and the room kept for a toast pass over it, so a list after one starts where it would with
+  none.
+- **Controls.** The `Say` function that `attachStatus` returns takes `{ settle }`, a wait in
+  milliseconds for words to stop changing before they are said, and `{ polite }`, for words such as
+  a progress's steps that must not cut off a page's own result. Words said without `polite` are
+  firm, and firm words said on the line drop words still settling. Polite words said while firm
+  words are being said wait for them to leave and are said then, the last of them alone, however
+  many firm words follow, and polite words not yet on the line when firm words come wait for those
+  in turn. Polite words are left unsaid only where firm words are said in the same moment or still
+  settle, so a result said with them is heard in their place. Polite words given as a function,
+  called a notice here, wait for any words on the line and are read as they are put on it. Waiting
+  polite words and a waiting notice are held apart, so neither cuts off the other, and the words are
   said before the notice. A busy button's notice is said that way, so it waits out a failure still
-  on the line, is dropped where the work ended or another run began while it waited, and never puts
-  out the end of a progress, which takes its place. A stepper's press words and its range error on a
+  on the line, is dropped where the work ended or another run began while it waited, and never cuts
+  off the end of a progress, which takes its place. A stepper's press words and its range error on a
   page's line leave after a while as any message there does, and typing in its field frees the line
   at once, clearing only the message the stepper gave it. Words still settling count as firm
   whatever leaves the line meanwhile, and the form, the busy button, progress and the stepper say
   their words through one path. `moveFocus(target, { fallbacks })` focuses an element or an id a
-  frame after the request, passes over a target that is gone, hidden, inert, disabled or off for the
-  first fallback that takes focus and then the app frame's body or the page's main content, by the
-  walk a closing panel hands focus back by, leaves focus a visitor has moved since the request,
-  drops a request a second old, and returns what calls it off. `focusOnArrival(heading, { from })`
-  moves focus to a view's heading as it is first drawn, as `moveFocus` does, only where the
-  visitor's last input was a press on a button or a link, or a submit, in the last five seconds that
-  no view has taken focus for. A page's first draw, a key that moves or types, such as Tab or an
-  arrow along a row of tabs, a press on nothing, on a control that is off or in a row of tabs take
-  nothing, and Enter on a page's own control that is a button or a link by its role counts, as Space
-  does but for a link. A script's click counts as a press. A view already drawn that changed on a
-  press asks with `changed`, so it takes focus whatever the last input was, lands with views first
-  drawn for that press and spends the press. Views first drawn for one press land together and the
-  first in the page takes focus, and where none has a heading to take it, the first goes by its
-  fallbacks. As it loads in a page, the module notes keys, clicks and submits on the document, where
-  it did nothing on import before, so the press that brings a page's first view is heard, and a
-  request called off before it lands hands its press back. The package marks `./controls` as having
-  side effects, so a bundler keeps a page's import of it for that listener alone.
-  `attachRoving(group, { orientation, current, onMove })` gives a group of cells one stop, the
+  frame after the request. Where the target is gone, hidden, inert, disabled or off, focus goes to
+  the first fallback that takes it, then to the app frame's body or the page's main content, by the
+  same walk a closing panel hands focus back by. It leaves focus a visitor has moved since the
+  request, drops a request a second old, and returns what calls it off.
+  `focusOnArrival(heading, { from })` moves focus to a view's heading as it is first drawn, as
+  `moveFocus` does, only where the visitor's last input was a press on a button or a link, or a
+  submit, in the last five seconds that no view has taken focus for. Nothing takes focus on a page's
+  first draw, after a key that moves or types, such as Tab or an arrow along a row of tabs, or after
+  a press on nothing, on a control that is off or in a row of tabs. Enter on a page's own control
+  that is a button or a link by its role counts as a press, and so does Space, except on a link. A
+  script's click counts as a press. A view already drawn that changed on a press asks with
+  `changed`, so it takes focus whatever the last input was, lands with views first drawn for that
+  press and spends the press. Views first drawn for one press land together and the first in the
+  page takes focus, and where none has a heading to take it, the first goes by its fallbacks. As it
+  loads in a page, the module notes keys, clicks and submits on the document, where it did nothing
+  on import before, so the press that brings a page's first view is heard, and a request called off
+  before it lands hands its press back. The package marks `./controls` as having side effects, so a
+  bundler keeps a page's import of it for that listener alone.
+  `attachRoving(group, { orientation, current, onMove })` gives a group of cells one Tab stop, the
   page's current cell, a tablist's chosen tab or the cell focus last reached, and moves focus by the
   arrows, Home and End: up and down to the nearest cell as drawn in a grid, left and right in
   reading order, a horizontal row ignoring up and down, and an arrow held with a modifier left to
   the browser. A cell marked off keeps its place, focus taken out with a cell goes to the cell in
-  its place, a grid of buttons with no role takes the toolbar's, and the page chooses in `onMove`.
-  `attachForm(form, { status, say, summary })` returns what refuses a submit once the page has drawn
-  its errors: a frame later focus moves to the summary, the first field in error that can take
-  focus, or in a set its checked radio or first control, and one message is said, nothing where
-  focus moves to the summary, how many fields need attention where focus moves to a field, and the
-  error's own words, with the count where more are wrong, where the field already had focus. A set
-  counts once, a refusal with nothing wrong leaves focus where it is, and each refusal returns what
-  calls it off. A focus target can be a function, read as focus moves. `attachForm` sets
-  `noValidate` on a form it attaches, or on the form around an attached part of one, so a page
-  without script keeps the browser's check. On a submit it reads the `validity` of each of the
-  form's fields, the whole form even where a part is attached and fields tied to it by `form` among
-  them, passing over a field marked off, counting a set once and a group of radios with no set once
-  too. Where any fails it stops the submit, draws each error as the kit's field draws one, after its
-  hint and marked as its set of choices marks one, and refuses, or hands the failures to `invalid`.
-  An error the page already drew for a field takes the kit's words until the field passes, and a
-  stepper's range error is left as the one error. Errors the kit drew go once their fields pass on a
-  later checked submit, or the form is reset, with what they changed put back. A button marked
-  `formnovalidate` submits unchecked and clears the kit's errors, and a reset the page calls off
-  keeps them. A form's own attach takes over the check from a part attached first. Each failure
-  takes the field's own words, as `data-error-value-missing` on the control or its set, else the
-  page's `errorWords`, else the kit's, which say what to do. Fields not in error are marked
-  `aria-invalid="false"` as the form is attached. A refusal passes over a control marked off, itself
-  or by its set, and where no field in error can take focus it leaves focus where it is and names
-  the first field with its error. New types `Failure`, `FailureWords` and `FieldFailure` describe
-  the failures. `attachBusy(button, { status, say })` marks a busy button `aria-disabled` where the
-  page has not, stops a press by pointer, Enter, Space or a form's Enter before the button's own
-  handlers, says the button's `data-busy` words, or "Saving.", once on the status line after the
-  wait the sheet holds its look back by, drops words not yet said when the work is done, and starts
-  a wait of its own for a busy that starts again at once. A `Say` takes words as a function, read as
-  they are put on the line, so words no longer true are not said.
+  its place, a grid of buttons with no role or a `group` role takes the `toolbar` role, and the page
+  chooses in `onMove`. `attachForm(form, { status, say, summary })` returns a function that refuses
+  a submit once the page has drawn its errors. A frame later, focus moves to the summary, else to
+  the first field in error that can take focus, or in a set to its checked radio or first control.
+  One message is said: nothing where focus moves to the summary, how many fields need attention
+  where focus moves to a field, and the error's own words, with the count where more are wrong,
+  where the field already had focus. A set counts once, a refusal with nothing wrong leaves focus
+  where it is, and each refusal returns what calls it off. A focus target can be a function, read as
+  focus moves. `attachForm` sets `noValidate` on a form it attaches, or on the form around an
+  attached part of one, so a page without script keeps the browser's check. On a submit it reads the
+  `validity` of each of the form's fields, the whole form even where a part is attached and fields
+  tied to it by `form` among them, passing over a field marked off, counting a set once and a group
+  of radios with no set once too. Where any fails it stops the submit, draws each error as the kit's
+  field draws one, after its hint and marked as its set of choices marks one, and refuses, or hands
+  the failures to `invalid`. An error the page already drew for a field takes the kit's words until
+  the field passes, and a stepper's range error is left as the one error. Errors the kit drew go
+  once their fields pass on a later checked submit, or the form is reset, with what they changed put
+  back. A button marked `formnovalidate` submits unchecked and clears the kit's errors, and a reset
+  the page calls off keeps them. A form's own attach takes over the check from a part attached
+  first. Each failure takes the field's own words, as `data-error-value-missing` on the control or
+  its set, else the page's `errorWords`, else the kit's, which say what to do. Fields not in error
+  are marked `aria-invalid="false"` as the form is attached. A refusal passes over a control marked
+  off, itself or by its set, and where no field in error can take focus it leaves focus where it is
+  and names the first field with its error. New types `Failure`, `FailureWords` and `FieldFailure`
+  describe the failures. `attachBusy(button, { status, say })` marks a busy button `aria-disabled`
+  where the page has not, stops a press by pointer, Enter, Space or a form's Enter before the
+  button's own handlers, says the button's `data-busy` words, or "Saving.", once on the status line
+  after `--dk-wait`, the wait the sheet holds its look back by, drops words not yet said when the
+  work is done, and starts a wait of its own for a busy that starts again at once. A `Say` takes
+  words as a function, read as they are put on the line, so words no longer true are not said.
   `attachProgress(bar, { status, say, steps, done })` says the bar's name and the words that
   describe it on a status line, read as each step is crossed, at the steps a page sets, each quarter
   until it sets others, at least three seconds apart, and once at the end, or the `done` words in
   its place, which never waits out the three seconds. The amount a bar first shows is not said, new
   steps are counted afresh, and the end is said once, until the amount goes back for another run.
-  Progress is said politely, so a page's own result or failure is never put out by it. Once
+  Progress is said politely, so a page's own result or failure is never cut off by it. Once
   attached, a stepper describes its field by its range in words, such as "From 0 to 10." or "Only
   3.", after the page's own description and from a `dk-stepper-limits` span it fills, and follows
   the limits as they change, with the error in their place while it shows, whoever showed it. A
@@ -167,62 +173,62 @@ audit's rule.
   unsaid. `attachStepper` takes `say`, as the form, the busy button and progress do, so a React page
   puts a stepper's words on the screen's line through `useStatus`. `status` and `words` accept
   undefined, as every other attach's options do. A stepper detached and attached again from a page's
-  own focusout handler keeps its buttons, since the timers its focusout and a reset set are cleared
-  as it is let go and do nothing once it is. A stepper moved from a page's line to `say` takes its
-  words back from the line, and `say` is the one used where both are given. Words said through `say`
-  leave in their time, since the stepper cannot take them back from a function, and a press's words
-  not yet said are dropped once the value is typed over. `attachStepper` hides a stepper's buttons
-  while its field is read only, keeping a focused button, marked off, until focus leaves it, follows
-  a field that turns read only or disabled as it changes, and brings the buttons back when it can
-  change again. A stepper drawn by hand with no buttons and a read-only value is left as it is.
-  `moveFocus` and `focusOnArrival` given an id look for it in the root where focus was when they
-  were asked, and fall back to the main content of that root before the page's. The form's refusal,
-  its errors and hints, a stepper's range and progress's label look for the ids they read in their
-  own element's root, so a widget never reaches an element of the page around it that shares an id.
-  What has focus is followed into a shadow root that holds it wherever the controls read it, so a
-  dialog, a toast, the theme switch and a group of rows inside one hand focus back and on as in a
-  page, and a press inside a shadow root counts toward an arrival. A panel and its button are still
-  found from the page's document, which the panel listens on.
+  own focusout handler keeps its buttons, since the timers its own focusout and a reset start are
+  cleared as it is detached, and do nothing after that. A stepper moved from a page's line to `say`
+  takes its words back from the line, and `say` is the one used where both are given. Words said
+  through `say` leave in their time, since the stepper cannot take them back from a function, and a
+  press's words not yet said are dropped once the value is typed over. `attachStepper` hides a
+  stepper's buttons while its field is read only, keeping a focused button, marked off, until focus
+  leaves it, follows a field that turns read only or disabled as it changes, and brings the buttons
+  back when it can change again. A stepper drawn by hand with no buttons and a read-only value is
+  left as it is. `moveFocus` and `focusOnArrival` given an id look for it in the root where focus
+  was when they were asked, and fall back to the main content of that root before the page's. The
+  form's refusal, its errors and hints, a stepper's range and progress's label look for the ids they
+  read in their own element's root, so a widget never reaches an element of the page around it that
+  shares an id. What has focus is followed into a shadow root that holds it wherever the controls
+  read it, so a dialog, a toast, the theme switch and a group of rows inside one hand focus back and
+  on as in a page, and a press inside a shadow root counts toward an arrival. A panel and its button
+  are still found from the page's document, which the panel listens on.
 - **React.** `StatusProvider` draws a screen's status line and attaches it, and `useStatus()`
   returns the function that says a message on it from any part under the provider, the same across
   renders, holding words said before the line is attached. A provider inside another takes the calls
   under it on a line of its own. `StatusProvider` holds the last firm and the last polite words said
-  before its line lands and says them in order once it does, each after the first in a moment of its
-  own, as each was said apart, so polite words wait behind firm words rather than being left unsaid.
-  `useFocusAfterDraw()` returns a function that moves focus as `moveFocus` does, the same across
-  renders, the last request taking the place of one not yet landed and a request not yet landed
-  called off when the component unmounts. `useArrivalFocus(key)` returns a ref for a view's heading,
-  which takes focus as its key changes, whatever the visitor's last input was, and as the view is
-  first drawn only where a recent press brought it, as `focusOnArrival` decides. `useArrivalFocus`
-  decides a first draw through `focusOnArrival`, so it takes no focus from a row of tabs, after the
-  visitor only tabbed or typed, or long after a press, and adds no listener as it draws again. A key
-  that changes still takes focus, through `changed`, so the view's own heading wins over a section
-  first drawn for the same press. It calls its request off as its view leaves, and React's second
-  run in development still counts as a first draw. `useRoving()` returns a ref that attaches a
-  group, reading the page's `current` and `onMove` as the keys land. `useFormRefusal(options)`
-  returns a ref for the form and what refuses it, speaking on the screen's `StatusProvider`, calling
-  a refusal off on unmount, and throwing with no provider or `say`. `useFormRefusal` asks for
-  `invalid`, which sets the page's errors from the failures it is handed, and the page's own submit
-  handler clears them, and takes `errorWords`, read as each failure is put in words, and refuses
-  after the render that draws the failures it handed the page. `Button` takes `busy`, true or the
-  words to say, which writes `aria-disabled` and `data-busy` and runs no `onClick`, and `useBusy()`
-  attaches a busy button, speaking on the screen's `StatusProvider`. `Progress` draws the label, the
-  bar and the words under it from `label`, `value`, `max` and `words`, and asks for the words
-  whenever it has a value, since the track is too faint to tell how much is left by color alone.
-  `useProgress()` attaches the bar to the nearest `StatusProvider`'s line, passing new steps or
-  `done` words only when they change. `StepperField` draws the `dk-stepper-limits` span.
-  `SelectField` takes `readOnly`, drawing a read-only field with the chosen option's words, found
-  inside groups too, and a hidden field for each value, passing its `disabled`, `form`, `title` and
-  `autoFocus` on. The field, select, textarea, stepper and set of choices take `mark`, `'required'`
-  or `'optional'`, apart from the native `required`, and `markWords` for a page's own words. A
-  required field's mark is hidden from a screen reader and the control carries `aria-required`, an
-  optional mark stays in the label's name, a set of choices keeps its words in its legend's name,
-  and a set of radios carries `aria-required` as well. An `aria-required` the page gives a field
-  with no mark is kept. `Callout` marks itself `data-empty` while it is live with no title, message
-  or actions, unless the page marks it.
+  before its line is attached and says them in order once it is, each after the first in a moment of
+  its own, as each was said apart, so polite words wait behind firm words rather than being left
+  unsaid. `useFocusAfterDraw()` returns a function that moves focus as `moveFocus` does, the same
+  across renders, the last request taking the place of one not yet landed and a request not yet
+  landed called off when the component unmounts. `useArrivalFocus(key)` returns a ref for a view's
+  heading, which takes focus as its key changes, whatever the visitor's last input was, and as the
+  view is first drawn only where a recent press brought it, as `focusOnArrival` decides.
+  `useArrivalFocus` decides a first draw through `focusOnArrival`, so it takes no focus after a
+  press in a row of tabs, after the visitor only tabbed or typed, or long after a press, and adds no
+  listener as it draws again. A key that changes still takes focus, through `changed`, so the view's
+  own heading wins over a section first drawn for the same press. It calls its request off as its
+  view leaves, and React's second run in development still counts as a first draw. `useRoving()`
+  returns a ref that attaches a group, reading the page's `current` and `onMove` as the keys land.
+  `useFormRefusal(options)` returns a ref for the form and what refuses it, speaking on the screen's
+  `StatusProvider`, calling a refusal off on unmount, and throwing with no provider or `say`.
+  `useFormRefusal` requires `invalid`, which sets the page's errors from the failures it is handed,
+  while the page's own submit handler clears them. It also takes `errorWords`, read as each failure
+  is put in words, and refuses after the render that draws the failures it handed the page. `Button`
+  takes `busy`, true or the words to say, which writes `aria-disabled` and `data-busy` and runs no
+  `onClick`, and `useBusy()` attaches a busy button, speaking on the screen's `StatusProvider`.
+  `Progress` draws the label, the bar and the words under it from `label`, `value`, `max` and
+  `words`, and asks for the words whenever it has a value, since the track is too faint to tell how
+  much is left by color alone. `useProgress()` attaches the bar to the nearest `StatusProvider`'s
+  line, passing new steps or `done` words only when they change. `StepperField` draws the
+  `dk-stepper-limits` span. `SelectField` takes `readOnly`, drawing a read-only field with the
+  chosen option's words, found inside groups too, and a hidden field for each value, passing its
+  `disabled`, `form`, `title` and `autoFocus` on. The field, select, textarea, stepper and set of
+  choices take `mark`, `'required'` or `'optional'`, apart from the native `required`, and
+  `markWords` for a page's own words. A required field's mark is hidden from a screen reader and the
+  control carries `aria-required`, an optional mark stays in the label's name, a set of choices
+  keeps its words in its legend's name, and a set of radios carries `aria-required` as well. An
+  `aria-required` the page gives a field with no mark is kept. `Callout` marks itself `data-empty`
+  while it is live with no title, message or actions, unless the page marks it.
 - **Docs.** The reference's Status line section states the policy every speaking piece follows and
-  shows the provider and the hook, and record 15 notes the settle. The status line's policy says
-  when polite words are left unsaid, wait and go, the busy button and progress sections say the
+  shows the provider and the hook, and record 15 notes the `settle` option. The status line's policy
+  says when polite words are left unsaid, wait and go, the busy button and progress sections say the
   same, and record 15 is amended for polite words. The reference has a section on moving focus after
   a change, record 19 notes the walk the panels and `moveFocus` share, record 20 covers hooks over a
   function that acts once, and the README names the hooks. The reference says a first draw takes
@@ -236,11 +242,11 @@ audit's rule.
   words and how a field, a set or a page replaces them, keys a React page's errors by each failure's
   field, and says a form is attached as it is drawn and why `required` stays. The reference's
   Buttons section shows the busy button, drawn from a new example, and says when a button is
-  pressed, off or busy. The reference has a Progress section, drawn from a new example of an import
-  and a React part written from a file in the examples module, which says how a run that fails
-  partway is shown and said. The README names the new exports. Records 2, 5 and 6 are amended for a
-  progress bar's track and fill. The reference's Stepper section describes the range words, the
-  limit words and both options, and says a page no longer states the range in its hint. The
+  pressed, off or busy. The reference has a Progress section, drawn from a new example of an import,
+  with a React part written from a file in the examples module. The section says how a run that
+  fails partway is shown and said. The README names the new exports. Records 2, 5 and 6 are amended
+  for a progress bar's track and fill. The reference's Stepper section describes the range words,
+  the limit words and both options, and says a page no longer states the range in its hint. The
   reference names `say`, shows it from React, and says a stepper's words on a page's line leave as
   any message there does. The reference's Fields section shows read-only fields, drawn from a new
   example, and says when a field is read only, off, busy or disabled, in place of telling a field a
@@ -248,16 +254,16 @@ audit's rule.
   focus was, and that a panel is found from the document. The reference has a section on a part of
   the page that is loading, drawn from a new example: the page puts the line in with the mark, takes
   both away in one change, puts a danger callout in the line's place where the wait fails, and says
-  the wait on the status line where it follows a visitor's own action. It names the token. The
-  reference's App frame section shows the dock row, drawn from a new example, says the main action
-  goes last, nearest the thumb, and says how narrow the main action can be at twice the text size
-  and when the pair takes two rows. The reference's Fields section shows a required and an optional
-  field, drawn from a new example. The reference has a Stacks section, drawn from a new example of a
-  label over its value and a round's heading over its scores. It says a stack on a list carries
-  `role="list"`, since VoiceOver in Safari drops the role with the markers, an `ol` whose numbers
-  matter puts them in its words, a group with a heading needs no named section, scores compared
-  across rounds are a table, and the step between a page's sections stays the page's. The token
-  table names the two steps. The reference has a section for the split row, the note and the
+  the wait on the status line where it follows a visitor's own action. The section names
+  `--dk-wait`. The reference's App frame section shows the dock row, drawn from a new example, says
+  the main action goes last, nearest the thumb, and says how narrow the main action can be at twice
+  the text size and when the pair takes two rows. The reference's Fields section shows a required
+  and an optional field, drawn from a new example. The reference has a Stacks section, drawn from a
+  new example of a label over its value and a round's heading over its scores. It says a stack on a
+  list carries `role="list"`, since VoiceOver in Safari drops the role with the markers, an `ol`
+  whose numbers matter puts them in its words, a group with a heading needs no named section, scores
+  compared across rounds are a table, and the step between a page's sections stays the page's. The
+  token table names the two steps. The reference has a section for the split row, the note and the
   numeral, drawn from a new example of a player's score. It says a numeral carries its unit for a
   screen reader, a numeral that changes is said on the status line rather than made live, and a
   number in a row stays a `dk-row-figure`. The properties table names `--dk-sections-least`, and the
@@ -270,30 +276,30 @@ audit's rule.
   React part of saved games, written from a file in the examples module, whose search that matches
   nothing draws the empty state and says so, naming the search, on the status line once the visitor
   stops typing, and sends focus back to the search when it is cleared. The action is a plain button,
-  since the accent action is the dock's, left out where the screen's add control is already in view,
-  and the empty state is not live. The reference's live callout steps mark the empty callout, take
-  the mark away as words or actions come, and mark it again once emptied. The reference's Callouts
-  section shows the danger callout a page mounts empty with `role="alert"`, drawn from a new
-  example, and a React part that loads its products and fills the callout when the load fails. Try
-  again sits in the actions, so the alert reads the failure and never the button. It empties the
-  callout and puts the loading line back, outside the callout, while the load runs again, and
-  `useFocusAfterDraw` sends focus to the part's heading. A failure is put in a moment after the
-  callout empties, so one that comes back at once is still heard, and it moves no focus, since focus
-  moved as an alert is read would cut it short or read it twice. A block of TSX in the reference can
-  be written from a file in the examples module, marked by `<!-- source: name -->`, so the React
-  part a page copies is the one the type check and the browser tests run. Record 20 says each hook
-  attaches a function from `./controls` through a callback ref, keeps only its handle, sets its
-  options again only when one changes and returns what the function returns, amending records 5, 13
-  and 14, and the reference's React section names the rule. Record 13 gives the measures behind the
-  new budget, 12 KB from a prototype of the pieces and then 12.25 KB once they landed at 12,225
-  bytes with a median piece of 144, and the kit beside other systems, measured the comparison
-  table's way. The README's tables name the pieces the release adds and the types `./react` exports,
-  and the npm description says what the kit is and that it works by keyboard, screen reader and
-  forced colors. The header comments of the controls and of `react.tsx` name the behaviors and
-  `Progress`. The reference says a failed import's live callout reads the failure, so the status
-  line says nothing of it, and shows a loading line's words said as a function once the wait has
-  passed. Record 13 sets the controls' budget at 17.25 KB, from 7.5 KB at 0.8.7, with the measure
-  behind each raise.
+  since the accent action is the dock's, and is left out where the screen's add control is already
+  in view, and the empty state is not live. The reference's live callout steps mark the empty
+  callout, take the mark away as words or actions come, and mark it again once emptied. The
+  reference's Callouts section shows the danger callout a page mounts empty with `role="alert"`,
+  drawn from a new example, and a React part that loads its products and fills the callout when the
+  load fails. Try again sits in the actions, so the alert reads the failure and never the button.
+  Pressing Try again empties the callout and puts the loading line back, outside the callout, while
+  the load runs again, and `useFocusAfterDraw` sends focus to the part's heading. A failure is put
+  in a moment after the callout empties, so one that comes back at once is still heard, and it moves
+  no focus, since focus moved as an alert is read would cut it short or read it twice. A block of
+  TSX in the reference can be written from a file in the examples module, marked by
+  `<!-- source: name -->`, so the React part a page copies is the one the type check and the browser
+  tests run. Record 20 says each hook attaches a function from `./controls` through a callback ref,
+  keeps only its handle, sets its options again only when one changes and returns what the function
+  returns, amending records 5, 13 and 14, and the reference's React section names the rule. Record
+  13 gives the measures behind the new budget, 12 KB from a prototype of the pieces and then 12.25
+  KB once they landed at 12,225 bytes with a median piece of 144 bytes, and the kit beside other
+  systems, measured the comparison table's way. The README's tables name the pieces the release adds
+  and the types `./react` exports, and the npm description says what the kit is and that it works by
+  keyboard, screen reader and forced colors. The header comments of the controls and of `react.tsx`
+  name the behaviors and `Progress`. The reference says a failed import's live callout reads the
+  failure, so the status line says nothing of it, and shows a loading line's words said as a
+  function once the wait has passed. Record 13 sets the controls' budget at 17.25 KB, from 7.5 KB at
+  0.8.7, with the measure behind each raise.
 - **Tests.** Browser tests find words that settle said once they stop changing, words still settling
   dropped by firm words said after them, the same words twice heard twice, words said before a
   provider's line is attached held and said, the hook's function the same across renders, and a
@@ -410,7 +416,7 @@ audit's rule.
   attaches to and find the new one attached, draw again with the same options and find nothing set
   again, drop an option and find it cleared, and take the hooks away with nothing left that throws,
   as record 20 promises. The type smoke test types every hook, `StatusProvider` and the types the
-  release exports, and refuses a form's refusal with no `invalid` and a group laid out on a
+  release exports, and rejects `useFormRefusal` with no `invalid` and a group laid out on a
   diagonal. The controls are held to 17.25 KB. The panel tests' page logs each pointerdown,
   mousedown, pointerup, mouseup, click and focusin it hears, with the element each landed on, and
   any panel test that fails attaches that log, with where the tips' button sits, to its report.

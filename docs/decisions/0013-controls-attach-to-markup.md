@@ -19,9 +19,9 @@ form against the browser's constraints took them past 12.75 KB, and then at 17 K
 press that brings a view from a key that moves took them past 15.5 KB, and in 0.9.0 to set the
 controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, measured whole, left
 less room under each than a function or a piece of the usual size, and for the listener the module
-adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, and
-which the package marks as a side effect so a bundler keeps the module where a page imports it for
-that alone
+adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, a
+listener the package marks as a side effect, so a bundler keeps the module where a page imports it
+only for that listener
 
 ## Context
 

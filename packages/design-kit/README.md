@@ -7,7 +7,7 @@
 Colors, type, light and dark themes and the pieces a page is built from, with the behavior that
 makes them work by keyboard and screen reader. It is the design system the demos on
 [jasonsdevspace.com](https://jasonsdevspace.com) are built from, and any page or small app can use
-it. Three stylesheets draw the pieces, and plain script or React hooks make them work.
+it. Three stylesheets draw the pieces, and plain JavaScript functions or React hooks make them work.
 
 - **Pages.** A strip above the page, a site header, a footer, a content page with its lead, bands
   with a hero beside its picture and groups of sections, and the "How it works" page beside each
@@ -332,8 +332,8 @@ A strict `style-src` refuses a `style` attribute, so a page sets a property the 
 ## Browser support
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
-and Safari 17.5. What falls short at the floor, such as a label that holds a checkbox showing no
-pointer in Firefox 120, is listed under [known
+and Safari 17.5. What falls short at the floor, such as the missing pointer over a checkbox's label
+in Firefox 120, is listed under [known
 limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.0/ACCESSIBILITY.md#known-limitations).
 
 A Vite build that takes `browserFloor()` as its target, as Setup shows, keeps each `light-dark()` as

@@ -21,10 +21,10 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * table's shade left too little room for another piece, again in 0.8.0, whose planned pieces took
  * the sheets past 9.25 KB, again in 0.8.2, whose corner Close took them past 10.25 KB, and again
  * in 0.8.6, whose grid of buttons dropping to a count that divides its cells took them past
- * 10.75 KB, again for 0.9.0, measured with a prototype of the pieces planned for it, as
- * 0.8.0's were, and again once those pieces landed heavier than the prototype and left
- * too little room for another. The app's pieces stay in the components sheet, so a page loads one
- * sheet whatever it draws.
+ * 10.75 KB, again for 0.9.0, measured with a prototype of the pieces planned for it, as 0.8.0's
+ * were, and again once those pieces landed heavier than the prototype and left too little room for
+ * another. The app's pieces stay in the components sheet, so a page loads one sheet whatever it
+ * draws.
  */
 const BUDGET = 12.25 * 1024;
 
