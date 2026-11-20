@@ -99,6 +99,35 @@ test('stands the words over the picture a step apart on a phone, in their own pr
     expect(picture.height / picture.width).toBeCloseTo(600 / 800, 2);
 });
 
+for (const holder of ['dk-band', 'dk-page'] as const) {
+    test(`keeps its own spacing written on a ${holder === 'dk-band' ? 'band' : 'content page'}`, async ({
+        page,
+    }) => {
+        const on = hero()
+            .replace(
+                '<section class="dk-band" aria-labelledby="title"><div class="dk-band-hero">',
+                `<section class="${holder} dk-band-hero" aria-labelledby="title">`
+            )
+            .replace('</div></section></main>', '</section></main>');
+        for (const width of [400, 1280]) {
+            await draw(page, width, { body: on });
+            expect(await style(page.locator('#picture'), 'margin-block-start')).toEqual({
+                'margin-block-start': '0px',
+            });
+            const words = await box(page.locator('#words'));
+            const picture = await box(page.locator('#picture'));
+            if (width === 400)
+                expect(Math.round(picture.y - (words.y + words.height))).toBe(
+                    await lengthOf(page, 'var(--dk-space-6)')
+                );
+            else
+                expect(
+                    Math.abs(words.y + words.height / 2 - (picture.y + picture.height / 2))
+                ).toBeLessThanOrEqual(1);
+        }
+    });
+}
+
 test('holds the picture to its named height on a wider phone, cropped', async ({ page }) => {
     await draw(page, 767);
     const picture = await box(page.locator('#picture'));

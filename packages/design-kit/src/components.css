@@ -3658,6 +3658,14 @@
         margin-block-start: var(--dk-flow-step);
     }
 
+    /*
+     * A hero lays its words and picture out by its own gap, so written on a band or a content page,
+     * as well as inside one, the flow's step never stands its picture lower than its words.
+     */
+    :where(.dk-band-hero > *) {
+        margin-block-start: 0;
+    }
+
     :where(.dk-dialog-actions) {
         margin-block-start: var(--dk-space-5);
     }

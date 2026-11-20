@@ -1943,18 +1943,19 @@ one page.
 #### A hero
 
 A hero, the words that open a page beside its picture, is a `dk-band-hero` holding the words' stack
-and then the picture, so a reader hears what the page is before the picture. On a phone the two
-stand one over the other, `--dk-space-6` apart, the picture no taller than `--dk-band-hero-picture`.
-From 48rem they stand side by side, centered on each other, with the picture that wide, 28rem until
-a page sets it, and never past 45% of the row, so the words keep room for a display heading. An
-`img`, a `video` or a `picture` fills its cell and keeps its proportions, cropped rather than
-stretched, and one in a `figure` keeps its own shape with its caption under it. Give a picture the
-width and height it was made at, so it holds its room while it loads. A picture that only sets a
-mood, beside words that already say what the page is, takes `alt=""`. One that shows what the words
-do not, such as the app's screen, says so in its `alt` and keeps its subject in frame, with an
-`object-position` of the page's own or `object-fit: contain`, since the crop grows as a visitor's
-text does, and a picture with words in it goes in a `figure`, uncropped. A hero video does not play
-by itself, or carries `controls` so a visitor can stop it.
+and then the picture, so a reader hears what the page is before the picture, inside a band or
+written on one or on a content page, keeping its own spacing either way. On a phone the two stand
+one over the other, `--dk-space-6` apart, the picture no taller than `--dk-band-hero-picture`. From
+48rem they stand side by side, centered on each other, with the picture that wide, 28rem until a
+page sets it, and never past 45% of the row, so the words keep room for a display heading. An `img`,
+a `video` or a `picture` fills its cell and keeps its proportions, cropped rather than stretched,
+and one in a `figure` keeps its own shape with its caption under it. Give a picture the width and
+height it was made at, so it holds its room while it loads. A picture that only sets a mood, beside
+words that already say what the page is, takes `alt=""`. One that shows what the words do not, such
+as the app's screen, says so in its `alt` and keeps its subject in frame, with an `object-position`
+of the page's own or `object-fit: contain`, since the crop grows as a visitor's text does, and a
+picture with words in it goes in a `figure`, uncropped. A hero video does not play by itself, or
+carries `controls` so a visitor can stop it.
 
 ### Stacks
 
