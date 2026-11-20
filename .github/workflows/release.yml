@@ -226,11 +226,12 @@ jobs:
                   scripts/github-release.sh "$TAG" "$VERSION" packages/design-kit/CHANGELOG.md \
                       "design-kit $VERSION" "${flags[@]}"
 
-    # What the release weighs and how the site's pages score, recorded from the tagged commit, which
-    # is on main, so the commit each record names is one main keeps. A prerelease records nothing,
-    # since main's records describe what a demo installs. This job runs the build and the audit and
-    # holds no token that can write, and the records leave it as an artifact. A slow trace on a
-    # shared runner can fail it without failing the release, which is already staged.
+    # What the release weighs, recorded from the tagged commit, which is on main, so the commit the
+    # record names is one main keeps. A prerelease records nothing, since main's records describe
+    # what a demo installs. The site's pages are recorded by the site pages workflow when the site's
+    # pin moves, since at the tag the site still draws from the version before. This job runs the
+    # build and holds no token that can write, and the record leaves it as an artifact. A failure here
+    # does not fail the release, which is already staged.
     records:
         name: Record the release
         needs: [agree, publish]
@@ -268,19 +269,11 @@ jobs:
             - name: Install dependencies
               run: npm ci --ignore-scripts
 
-            # The page audit drives Playwright's Chromium, installed as the browser tests install it.
-            - name: Install Chromium
-              timeout-minutes: 3
-              run: |
-                  npx playwright install chromium
-                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
-
             # The README states the packed size the package record holds, which a test holds it to,
             # so the figure moves with the record.
-            - name: Record the package and the pages
+            - name: Record the package
               run: |
                   npm run bench:package
-                  npm run bench:pages
                   kb="$(node -p "Math.round(require('./docs/benchmarks/package-size.json').size / 1024)")"
                   sed -i -E "s/[0-9]+ KB packed/$kb KB packed/" README.md
 
@@ -289,7 +282,8 @@ jobs:
               with:
                   name: records
                   path: |
-                      docs/benchmarks/
+                      docs/benchmarks/package-size.json
+                      docs/benchmarks/package-size.md
                       README.md
                   retention-days: 7
 
@@ -339,15 +333,15 @@ jobs:
                   git config user.email 'jasonsdevspace-records[bot]@users.noreply.github.com'
                   git switch -c "$branch"
                   git add docs/benchmarks README.md
-                  git commit -m "Record the package and the site's pages at $VERSION"
+                  git commit -m "Record the package at $VERSION"
                   git push --force "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git" "HEAD:refs/heads/$branch"
                   open="$(gh pr list --repo "$REPOSITORY" --head "$branch" --state open --json url -q '.[0].url')"
                   if [ -n "$open" ]; then
                       echo "The records moved to $open." >> "$GITHUB_STEP_SUMMARY"
                       exit 0
                   fi
-                  echo "The package and the site's pages are recorded again from the commit tagged for $VERSION, which is on main, so the commit each record names is one main keeps. The site's pages draw from the version of the kit the site pinned at that commit." > body.md
+                  echo "The package is recorded again from the commit tagged for $VERSION, which is on main, so the commit the record names is one main keeps. The site's pages are recorded when the site's pin moves." > body.md
                   url="$(gh pr create --repo "$REPOSITORY" --base main --head "$branch" \
-                      --title "Record the package and the site's pages at $VERSION" \
+                      --title "Record the package at $VERSION" \
                       --body-file body.md --label documentation --assignee jasonsdevspace)"
                   echo "The records are in $url." >> "$GITHUB_STEP_SUMMARY"

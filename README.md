@@ -423,10 +423,14 @@ The steps a maintainer takes around a release are in [CONTRIBUTING.md](CONTRIBUT
 page scores through the same audit `npm run lighthouse` runs, writing only when every page passes.
 Each record sits in `docs/benchmarks` beside its raw results, with the date, commit, machine and
 Node it ran on, and a recording run refuses a working tree with uncommitted changes, so the commit
-it names is the code it measured. The release workflow records both from each stable version's
-tagged commit, which is on main, and opens one pull request with them, with a token from the records
-app, since a pull request opened with the run's own token runs no other workflow. To measure a
-change before it ships, run `npm run lighthouse`, which audits the same pages and writes no record.
+it names is the code it measured. The release workflow records the package from each stable
+version's tagged commit, which is on main. The site pages workflow records the pages from the commit
+on main that moves the site's pin, since the pin is what changes what the pages draw, and at the tag
+the site still draws from the version before. A run by hand records them where the record names
+another version than the site pins, as after a run that failed. Each opens a pull request with its record, with a
+token from the records app, since a pull request opened with the run's own token runs no other
+workflow. To measure a change before it ships, run `npm run lighthouse`, which audits the same pages
+and writes no record.
 
 ```bash
 npm run bench:package
