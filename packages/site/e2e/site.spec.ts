@@ -2994,8 +2994,9 @@ test.describe('how each state is shown', () => {
         await page.goto('/design-kit/controls/');
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await page.clock.runFor(150);
         await expect(page.locator(STATUS)).toHaveText('Copied.');
+        // From here the clock stands still between steps, so a slow machine moves no timer itself.
+        await page.clock.pauseAt(await page.evaluate(() => Date.now() + 50));
         // A tap on a preview while the copy's words are still on the line.
         const preview = page
             .locator('.site-state')
