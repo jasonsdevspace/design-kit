@@ -183,6 +183,15 @@ const heard = (event: Event) => {
 if (typeof document !== 'undefined')
     for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
 
+/** How a view asks to take focus as it arrives. */
+export type ArrivalOptions = MoveFocusOptions & {
+    /**
+     * Whether the view was drawn before and changed on a press of the page's, as a round that moves
+     * on, so it takes focus whatever the visitor's last input was, and spends the press.
+     */
+    readonly changed?: boolean | undefined;
+};
+
 /** A view asking to take focus for a press. */
 type Arrival = {
     readonly heading: FocusTarget;
@@ -194,7 +203,7 @@ let arriving: {
     readonly views: Set<Arrival>;
     readonly frame: number;
     readonly at: number;
-    readonly press: number;
+    readonly press: number | null;
 } | null = null;
 
 /**
@@ -206,16 +215,17 @@ let arriving: {
  * press, as one a poll brings. Views first drawn for the same press land together in one frame, and
  * the one first in the page takes focus, so a view's title is heard before a section of it. A
  * request called off before it lands hands its press back where no input has come since, so a view
- * asked for again, as React asks again in development, takes focus. A view already drawn whose
- * content changes on a press moves focus with `moveFocus` itself.
+ * asked for again, as React asks again in development, takes focus. A view already drawn that
+ * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
+ * with the views first drawn for the same press, and spends the press.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
-    options: MoveFocusOptions = {}
+    options: ArrivalOptions = {}
 ): (() => void) => {
     if (!arriving) {
-        if (pressedAt === null || performance.now() - pressedAt > PRESS_LIVES)
-            return () => undefined;
+        const fresh = pressedAt !== null && performance.now() - pressedAt <= PRESS_LIVES;
+        if (!fresh && !options.changed) return () => undefined;
         const press = pressedAt;
         pressedAt = null;
         const views = new Set<Arrival>();

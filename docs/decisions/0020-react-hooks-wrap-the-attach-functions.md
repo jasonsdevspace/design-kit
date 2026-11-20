@@ -55,12 +55,13 @@ Option C. A hook is named for its attach, as `useStatus` would be for `attachSta
   attach does, and a page without React gets the same behavior from the same function.
 
 Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
-returns the function, the same across renders, and keeps only what calls off a request not yet
-done, so a component that unmounts leaves nothing behind. A hook that acts when a view arrives, as
-`useArrivalFocus` does, keeps the key it last drew and whether that was its first draw, so it
-reads where focus was as each arrival begins and asks once for each key, since its effect runs
-again only when the key changes. A key that changes moves focus at once, as the page changes it on
-a press. Whether a press brought a view's first draw, rather than a key that moves or typing, is
+returns the function, the same across renders, and keeps only what calls off a request not yet done,
+so a component that unmounts leaves nothing behind. A hook that acts when a view arrives, as
+`useArrivalFocus` does, keeps the key it last drew and whether that was its first draw, so it reads
+where focus was as each arrival begins and asks once for each key, since its effect runs again only
+when the key changes. A key that changes asks through `focusOnArrival` with `changed`, so it takes
+focus whatever the last input was, lands with any view first drawn for the same press and spends the
+press. Whether a press brought a view's first draw, rather than a key that moves or typing, is
 decided by `focusOnArrival` in `./controls`, which notes on the document whether the visitor's last
 input was a recent press, so a page without React gets the same arrival from the same function. A
 request the effect calls off as it is cleaned up hands its press back, so React's second run in

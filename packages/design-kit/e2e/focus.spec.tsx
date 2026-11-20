@@ -254,6 +254,21 @@ test.describe('in React', () => {
         await expect(page.locator('#show-brief')).toBeFocused();
     });
 
+    test("focuses a view's own heading as its key changes over a section first drawn for the same press, and spends the press", async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#next').click();
+        await expect(page.locator('#round')).toHaveText('Round 2');
+        await expect(page.locator('#round')).toBeFocused();
+        await page.evaluate(() => {
+            (window as unknown as { showLate: () => void }).showLate();
+        });
+        await expect(page.locator('#late')).toBeVisible();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#round')).toBeFocused();
+    });
+
     test("focuses a view's heading when a script's click changes its key", async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#next').focus();

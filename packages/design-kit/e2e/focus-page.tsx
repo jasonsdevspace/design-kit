@@ -47,6 +47,16 @@ const Players = () => {
     );
 };
 
+// A section of the round, drawn afresh for each, which asks to take focus as it arrives too.
+const RoundScores = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('round-scores');
+    return (
+        <h3 id="round-scores" ref={heading}>
+            Scores this round
+        </h3>
+    );
+};
+
 const Round = () => {
     const [round, setRound] = useState(1);
     const heading = useArrivalFocus<HTMLHeadingElement>(round);
@@ -55,6 +65,7 @@ const Round = () => {
             <h2 id="round" ref={heading}>
                 Round {round}
             </h2>
+            <RoundScores key={round} />
             <button id="next" type="button" onClick={() => setRound(round + 1)}>
                 Next round
             </button>

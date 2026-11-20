@@ -151,19 +151,19 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     )
         from.current = document.activeElement;
     // Asks once for each key, since the effect runs again only when the key changes: as the view
-    // first draws, by whether a press brought it, and as its key changes, at once, since the page
-    // changes it on a press. The request is called off as the effect is cleaned up, so React's
-    // second run in development asks again and a view gone before its frame moves nothing.
+    // first draws, by whether a press brought it, and as its key changes, whatever the last input,
+    // since the page changes it on a press. The request is called off as the effect is cleaned up,
+    // so React's second run in development asks again and a view gone before its frame moves
+    // nothing.
     useEffect(() => {
         // Run again with the same key, as React runs a new effect twice in development, a first
         // draw is still one.
         const first =
             seen.current === null || (seen.current.first && Object.is(seen.current.key, key));
         seen.current = { key, first };
-        const target = () => heading.current;
-        return first
-            ? focusOnArrival(target, { from: from.current })
-            : moveFocus(target, { from: from.current });
+        // A key that changes joins the views a press draws, so the first in the page still takes
+        // focus, and spends the press, so no view drawn later takes it again.
+        return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;

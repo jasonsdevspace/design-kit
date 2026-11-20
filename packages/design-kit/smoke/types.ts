@@ -240,6 +240,10 @@ export const cancelOf = (heading: HTMLElement): (() => void) =>
 export const arrivalOf = (heading: HTMLElement, from: Element | null): (() => void) =>
     focusOnArrival(() => heading, { from });
 
+// A view drawn before that changed on a press takes focus whatever the last input was.
+export const changedOf = (heading: HTMLElement): (() => void) =>
+    focusOnArrival(heading, { changed: true, fallbacks: [null] });
+
 // A form refused once its errors are drawn, said on a line or through a page's own say.
 export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>
     attachForm(form, { status: line, summary: () => null });

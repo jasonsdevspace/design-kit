@@ -1583,9 +1583,11 @@ tabs' panels take no focus on arrival, since a tab keeps focus as its panel chan
 the hook out. Views first drawn by one press land together, and the first in the page takes focus,
 so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
 with autofocus does, is never taken. What decides a first draw is `focusOnArrival(heading, { from
-})` from `./controls`, which a page without React calls as each view draws. The key is a string, a
-number or a boolean, compared by value, and changes on a press or a submit, never as a visitor
-chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2 has it.
+})` from `./controls`, which a page without React calls as each view draws, and with `changed` as a
+view already drawn changes on a press, which then lands with any view first drawn for that press, so
+the first in the page still takes focus. The key is a string, a number or a boolean, compared by
+value, and changes on a press or a submit, never as a visitor chooses in a list or a set of radios,
+which would move them as they choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
