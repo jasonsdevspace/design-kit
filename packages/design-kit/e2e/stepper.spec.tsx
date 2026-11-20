@@ -14,8 +14,9 @@ import { textSize } from './text-size.js';
  * and saying the value on its status line, the buttons off at the limits with focus kept and on a
  * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
  * limits or none reported as a field's error once changed and said, and cleared once right while a
- * page's own error keeps its place, a phone's keyboard with a minus only where it is needed, the
- * value in figures of one width so the field keeps its width, every figure shown under the wider
+ * page's own error keeps its place, a value drawn past the limits shown as an error once attached
+ * with nothing said, a phone's keyboard with a minus only where it is needed, the value in figures
+ * of one width so the field keeps its width, every figure shown under the wider
  * spacing a reader may set, the label beside it on one line at a phone's narrowest width, a stepper
  * that fits a phone at twice the text size, the larger target when asked, an inline stepper's error
  * above it and its hint below it, the keyboard, and no audit findings in either theme.
@@ -738,6 +739,62 @@ test('keeps an error the page shows after attaching, and one shown before it', a
         'aria-describedby',
         'players-hint players-range'
     );
+});
+
+test('shows its error at once, with nothing said, when attached past its limit, and clears it after', async ({
+    page,
+}) => {
+    await open(page);
+    // Each stepper taken away, given its value, and attached again, as a page draws it.
+    const attachWith = (id: string, value: string) =>
+        page.evaluate(
+            ({ to, at }) => {
+                const { attachStepper } = window as unknown as {
+                    attachStepper: typeof import('../src/controls.js').attachStepper;
+                };
+                const input = document.querySelector<HTMLInputElement>(`#${to}`);
+                const stepper = input?.closest<HTMLElement>('.dk-stepper');
+                if (!input || !stepper) throw new Error('no stepper');
+                attachStepper(stepper)();
+                input.value = at;
+                attachStepper(stepper);
+            },
+            { to: id, at: value }
+        );
+    const said = 'Error: Enter a whole number from 0 to 10.';
+    const error = page.locator('#bid-range');
+    await attachWith('bid', '14');
+    await expect(error).toBeVisible();
+    await expect(bid(page)).toHaveAccessibleDescription(said);
+    await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');
+    await expect(line(page, 'bid')).toHaveText('');
+    // A value made right clears it.
+    await bid(page).fill('6');
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+    await expect(bid(page)).toHaveAccessibleDescription('From 0 to 10.');
+    // Taking the stepper away clears it.
+    await attachWith('bid', '-1');
+    await expect(error).toBeVisible();
+    await page.evaluate(() =>
+        (window as unknown as { detach: (id: string) => void }).detach('bid')
+    );
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+    // A form's reset clears it.
+    const score = page.getByRole('spinbutton', { name: 'Score' });
+    await attachWith('score', '15');
+    await expect(page.locator('#score-range')).toBeVisible();
+    await expect(score).toHaveAttribute('aria-invalid', 'true');
+    await page.getByRole('button', { name: 'Reset' }).click();
+    await expect(score).toHaveValue('11');
+    await expect(page.locator('#score-range')).toBeHidden();
+    await expect(score).not.toHaveAttribute('aria-invalid');
+    // A blank field is not an error as the page loads.
+    const players = page.getByRole('spinbutton', { name: 'Players' });
+    await attachWith('players', '');
+    await expect(page.locator('#players-range')).toBeHidden();
+    await expect(players).not.toHaveAttribute('aria-invalid');
 });
 
 test("clears only its own words from a page's line, and says nothing once typed over or taken away", async ({

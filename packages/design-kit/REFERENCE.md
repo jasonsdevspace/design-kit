@@ -2714,8 +2714,10 @@ typed value fires. A button that would pass the least or the greatest value is o
 press of an off button does nothing. Each press reads the value again first, so a value a script or
 a form's reset set is followed. The field still takes a typed value. One the field refuses, outside
 the limits, none at all, or between steps, such as 2.5 with a step of 1, shows the stepper's own
-error, which waits hidden in the markup, once the value is changed, and the status line says it. The
-error is cleared as soon as the value is right again, and the attach function adds and takes away
+error, which waits hidden in the markup, once the value is changed, and the status line says it. A
+value drawn outside the limits or between steps shows the error as the stepper is attached, with
+nothing said, so a page that draws that state writes no code of its own for it, and a field drawn
+blank shows none until it is changed. The error is cleared as soon as the value is right again, and the attach function adds and takes away
 only its own error, so an error or a hint the page draws keeps its place. A page that draws the
 field again, as React does when the page's own error comes or goes, rewrites the field's description
 and its invalid mark, and the attach function puts its shown error back in both at once. It takes
