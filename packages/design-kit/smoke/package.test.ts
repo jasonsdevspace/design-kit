@@ -57,9 +57,15 @@ describe('the published package', () => {
     });
 
     it('names every value each module exports under its heading in the reference', () => {
-        const reference = readFileSync(new URL('../REFERENCE.md', import.meta.url), 'utf8');
+        const whole = readFileSync(new URL('../REFERENCE.md', import.meta.url), 'utf8');
+        // Only the section that lists the exports, so a heading elsewhere is never read for it.
+        const from = whole.indexOf('\n## What the package exports\n');
+        expect(from).toBeGreaterThan(-1);
+        const after = whole.slice(from + 1);
+        const next = after.indexOf('\n## ');
+        const reference = next === -1 ? after : after.slice(0, next);
         for (const [module, names] of Object.entries(VALUE_EXPORTS)) {
-            // The text under the module's heading in "What the package exports", up to the next.
+            // The text under the module's heading in that section, up to the next heading.
             const start = reference.indexOf(`### \`${module}\``);
             expect(start, module).toBeGreaterThan(-1);
             const rest = reference.slice(start + module.length + 6);

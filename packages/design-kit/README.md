@@ -4,11 +4,11 @@
 [![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
-Colors, type, light and dark themes, and ready-made pieces such as buttons, fields, dialogs and page
-layouts, for a web page or a small app, with React or without it. Every piece works by keyboard and
-screen reader. Three stylesheets draw the pieces, and plain JavaScript functions or React hooks make
-them work. It is the design system the demos on [jasonsdevspace.com](https://jasonsdevspace.com) are
-built from.
+A design system for a web page or a small app, with React or without it. It gives you colors, type,
+light and dark themes, and ready-made pieces such as buttons, fields, dialogs and page layouts, and
+every piece is built to work by keyboard and screen reader. Three stylesheets draw the pieces, and
+plain JavaScript functions or React hooks make them work. The demos on
+[jasonsdevspace.com](https://jasonsdevspace.com) are built from it.
 
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
@@ -37,13 +37,15 @@ More on [what it is built for](https://jasonsdevspace.com/design-kit/#built-for)
   [the app pieces page](https://jasonsdevspace.com/design-kit/app-pieces/).
 - **Pages.** A site header, a footer, bands and a "How it works" page, on [the page chrome
   page](https://jasonsdevspace.com/design-kit/page-chrome/) and [the explainer pieces page](https://jasonsdevspace.com/design-kit/explainer-pieces/).
-- **Lists and layout.** Rows, tiles and panels, and for a content page a hero, stacks, split rows
-  and numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#content-pages) in the reference.
-- **Waits and behavior.** A busy button, a loading line, progress, focus moved after a change, the
-  arrow keys through grids and tabs, and forms that say what is wrong when a submit is refused,
-  under [Status, focus, waits and progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress) in the reference.
+- **Lists and layout.** Rows, tiles and panels, under [Rows](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#rows) and
+  [Panels](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#panels) in the reference, and for a content page a hero, stacks, split rows and
+  numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#content-pages).
+- **Waits and behavior.** A [busy button](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#a-busy-button), a loading line, progress, focus moved
+  after a change and the arrow keys through grids and tabs, under [Status, focus, waits and
+  progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress) in the reference, and forms that say what is wrong
+  when a submit is refused, under [A refused form](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#a-refused-form).
 
-The strip above the page and the footer link to the author's portfolio and are meant for its demos.
+The portfolio strip and the demo footer link to the author's portfolio and are meant for its demos.
 Everything else works on any page, and your own styles win over the kit's without extra
 specificity.
 
@@ -121,7 +123,7 @@ needed only for the `vite` entry and the `react` entry.
 ## A first example
 
 Buttons and fields take their state from the attribute a screen reader already reads, such as
-`aria-pressed` or `aria-invalid`, never a class of the kit's. With React, the components write it.
+`aria-pressed` or `aria-invalid`, rather than a class. With React, the components write it.
 
 ```tsx
 import { useState } from 'react';
@@ -159,33 +161,35 @@ export const Checkout = ({ error, saved }: Props) => {
 };
 ```
 
-Without React, write the same markup by hand, and `components.css` styles it. Pieces with behavior
-work through an attach function from `./controls`, or a hook in React, and a screen wrapped in
-`StatusProvider` gets one status line for the hooks to speak on. Every control, in each state, with
-its markup and its React, is on [the controls page](https://jasonsdevspace.com/design-kit/controls/).
+Without React, write the same markup by hand and `components.css` styles it. A piece with behavior,
+such as the copy button or the dialog, works through an attach function from the `controls` entry,
+or through a hook in React. Wrap a screen in `StatusProvider` and the hooks share one status line.
+Every control, in each state, with its markup and its React, is on
+[the controls page](https://jasonsdevspace.com/design-kit/controls/).
 
 ## What it exports
 
-| Entry                  | What it gives a page                                                             |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| `tokens.css`           | Every named value as a `--dk-` custom property, and the layer order              |
-| `base.css`             | Type, colors, the focus ring and the reduced-motion rule                         |
-| `components.css`       | The classes every piece is drawn with                                            |
-| `tokens.resolver.json` | The tokens in the Design Tokens Community Group format, for a tool that reads it |
-| `theme`                | The theme script and the names of the themes                                     |
-| `controls`             | Plain JavaScript functions that make the pieces work and move focus              |
-| `react`                | The components, a props type for each, and the hooks                             |
-| `vite`                 | The plugin that writes in the theme script, its hash, and the browser floor      |
+| Entry                  | What it gives a page                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `tokens.css`           | Every named value as a `--dk-` custom property, and the layer order                              |
+| `base.css`             | Type, colors, the focus ring and the reduced-motion rule                                         |
+| `components.css`       | The classes every piece is drawn with                                                            |
+| `tokens.resolver.json` | The tokens in the Design Tokens Community Group format, for a tool that reads it                 |
+| `theme`                | The theme script and the names of the themes                                                     |
+| `controls`             | Plain JavaScript functions that make the pieces work and move focus                              |
+| `react`                | The components, a props type for each, and the hooks                                             |
+| `vite`                 | The plugin that writes the theme script into the head, the script's hash, and the browser floors |
 
-Each entry is imported by the package's name and its own, such as
+Import each entry by the package name and the entry's own, such as
 `@jasonsdevspace/design-kit/controls`. [What the package
 exports](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/packages/design-kit/REFERENCE.md#what-the-package-exports) in the reference names every function, hook, component and
 type each entry holds.
 
 ## Foundations
 
-- **Color.** Grounds, text, an accent, a highlight, and success, warning and danger, each with its
-  light and dark value in one `light-dark()`. Every pairing the palette is meant for passes WCAG AA.
+- **Color.** Backgrounds, text, an accent, a highlight, and success, warning and danger, each with
+  its light and dark value in one `light-dark()`. Every pairing the palette is meant for passes WCAG
+  AA.
 - **Type.** The system's sans and mono, from a 0.85rem caption to a 1.75rem display heading, a
   3.5rem numeral, and weights of 400, 500 and 600.
 - **Space.** Eight steps from 0.25rem to 4rem.
@@ -198,9 +202,11 @@ type each entry holds.
 ## The theme and a strict policy
 
 The theme script sets `data-theme` on the root from the theme saved in `localStorage` under `theme`,
-or follows the system where nothing is saved. A page whose Content Security Policy allows inline
-script only by its hash names the script with `themeScriptHash`, which holds only while nothing
-after the plugin rewrites the inline script, as an HTML minifier would.
+or follows the system where nothing is saved. Storage belongs to an origin, so only a page on the
+portfolio's origin reads the visitor's choice, and any other site follows the system. If your
+Content Security Policy allows inline script only by its hash, add `themeScriptHash` to
+`script-src`. The hash matches only while nothing after the plugin rewrites the script, as an HTML
+minifier would.
 
 ```ts
 import { themeScriptHash } from '@jasonsdevspace/design-kit/vite';
@@ -209,9 +215,9 @@ const policy = `script-src 'self' ${themeScriptHash}`;
 ```
 
 A strict `style-src` also refuses a `style` attribute, so set a property the kit names, such as
-`--dk-tile-ground`, from a class of your own. The strip and the footer put `about`, `source` and
-`license` into their links unchecked, so write each URL yourself, never one taken from the page's
-address or a visitor's input, which could send a visitor anywhere.
+`--dk-tile-ground`, from a class of your own. The portfolio strip and the demo footer put their
+`about`, `source` and `license` values into links unchecked. Pass a URL you wrote yourself, never
+one taken from the page's address or a visitor's input, since that could send a visitor anywhere.
 
 ## Going further
 
@@ -230,15 +236,16 @@ and Safari 17.5. What falls short at the floor, such as the missing pointer over
 in Firefox 120, is listed under [known
 limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.1/ACCESSIBILITY.md#known-limitations).
 With `browserFloor()` as the build target, each `light-dark()` color stays as written, and the
-target rises when the kit raises its floor.
+target rises when the kit raises its floor. A lower target rewrites each one into custom properties
+set once on the root, so a part of the page set to the other scheme keeps the page's colors.
 
 ## Versions and license
 
 The kit follows semantic versioning. Until 1.0.0, a minor version can rename a token or change what
-the theme script reads, and a patch changes neither. Each version's changes, with any step a page
-takes under Upgrading, are in the
-[changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
-Prereleases are under npm's `next` tag, as `@jasonsdevspace/design-kit@next`. The tests and the
-decisions behind the kit are in [the repository](https://github.com/jasonsdevspace/design-kit). The
-kit is MIT licensed, as [LICENSE](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
-states.
+the theme script reads, and a patch changes neither. The
+[changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md)
+lists each version's changes, and its Upgrading notes say what a page must change. Prereleases go
+out under npm's `next` tag, so install `@jasonsdevspace/design-kit@next` to try one. The tests and
+the decisions behind the kit are in [the repository](https://github.com/jasonsdevspace/design-kit).
+The kit is MIT licensed, and the terms are in
+[LICENSE](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE).

@@ -3536,8 +3536,8 @@ to what comes after the panel, or to the heading before it where nothing follows
 
 ## What the package exports
 
-Each entry is imported by the package's name and its own, such as
-`@jasonsdevspace/design-kit/controls`, and holds what is named under it.
+Import each entry by the package name and the entry's own, such as
+`@jasonsdevspace/design-kit/controls`. Each heading here lists what that entry holds.
 
 ### `@jasonsdevspace/design-kit/tokens.css`
 
