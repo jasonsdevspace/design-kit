@@ -37,7 +37,7 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
         if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
             continue;
         place.focus({ preventScroll: place.matches('.dk-app-body') });
-        if (document.activeElement === place) return true;
+        if (activeOf() === place) return true;
     }
     return false;
 };
@@ -60,11 +60,34 @@ export type MoveFocusOptions = {
     readonly from?: Element | null | undefined;
 };
 
-/** A place to focus, or nothing where it is an id with no element yet or a control marked off. */
-const placeOf = (target: FocusTarget): Element | null => {
+/** The root a node lives in: a shadow root where it sits in one, else the document. */
+const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
+    const root = node?.getRootNode();
+    return root instanceof ShadowRoot ? root : document;
+};
+
+/**
+ * The element an id names in the root a node lives in, so a piece inside a shadow root finds its
+ * own parts and never an element of the page around it that shares the id.
+ */
+const byId = (near: Node | null | undefined, id: string): HTMLElement | null =>
+    rootOf(near).getElementById(id);
+
+/** What has focus, followed into each shadow root that holds it. */
+const activeOf = (): Element | null => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+};
+
+/**
+ * A place to focus, or nothing where it is an id with no element yet or a control marked off. An id
+ * is looked for in the root of the element given, as where focus was when it was asked for.
+ */
+const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
     const place =
         typeof target === 'string'
-            ? document.getElementById(target)
+            ? byId(near, target)
             : typeof target === 'function'
               ? target()
               : (target ?? null);
@@ -82,10 +105,14 @@ const land = (
     asked: number
 ) => {
     if (performance.now() - asked > STALE) return;
-    const now = document.activeElement;
+    const now = activeOf();
     if (now !== from && now !== null && now !== document.body) return;
-    const place = placeOf(target);
-    focusFirst(place, ...(fallbacks ?? []).map(placeOf), homeOf(place ?? document.body));
+    const place = placeOf(target, from);
+    focusFirst(
+        place,
+        ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
+        homeOf(place ?? document.body)
+    );
 };
 
 /**
@@ -102,7 +129,7 @@ const land = (
  * new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
-    const from = options.from === undefined ? document.activeElement : options.from;
+    const from = options.from === undefined ? activeOf() : options.from;
     const asked = performance.now();
     const frame = window.requestAnimationFrame(() => {
         land(target, options.fallbacks, from, asked);
@@ -254,7 +281,7 @@ export const focusOnArrival = (
     const batch = arriving;
     const view: Arrival = {
         heading,
-        from: options.from === undefined ? document.activeElement : options.from,
+        from: options.from === undefined ? activeOf() : options.from,
         fallbacks: options.fallbacks,
     };
     batch.views.add(view);
@@ -1879,9 +1906,7 @@ const idsOf = (element: Element, attribute: string): string[] =>
 
 /** Whether a control is described by a hint, which then shows the format it takes. */
 const hinted = (control: Element): boolean =>
-    idsOf(control, 'aria-describedby').some((id) =>
-        document.getElementById(id)?.matches('.dk-field-hint')
-    );
+    idsOf(control, 'aria-describedby').some((id) => byId(control, id)?.matches('.dk-field-hint'));
 
 /** Words for a value that does not match the format a field takes. */
 const formatWords = (control: Checked) =>
@@ -2040,10 +2065,10 @@ const restore = (element: Element, name: string, value: string | null) => {
     else element.setAttribute(name, value);
 };
 
-/** An id no element of the page holds yet, from the one a field's error would take. */
-const freeId = (base: string): string => {
+/** An id no element of a root holds yet, from the one a field's error would take. */
+const freeId = (base: string, near: Node): string => {
     let id = base;
-    for (let more = 2; document.getElementById(id); more += 1) id = `${base}-${String(more)}`;
+    for (let more = 2; byId(near, id); more += 1) id = `${base}-${String(more)}`;
     return id;
 };
 
@@ -2066,10 +2091,10 @@ const errorFor = (
     words: string
 ): { readonly error: HTMLElement; readonly takeAway: () => void } => {
     const range = idsOf(control, 'aria-describedby')
-        .map((id) => document.getElementById(id))
+        .map((id) => byId(control, id))
         .find((part) => part?.matches('.dk-stepper-range') && !part.hidden);
     if (range) return { error: range, takeAway: () => undefined };
-    const page = field.id ? document.getElementById(`${field.id}-error`) : null;
+    const page = field.id ? byId(field, `${field.id}-error`) : null;
     if (page?.matches('.dk-field-error')) {
         const kept = [...page.childNodes];
         const hidden = page.hidden;
@@ -2085,7 +2110,7 @@ const errorFor = (
     }
     const made = document.createElement('p');
     made.className = 'dk-field-error';
-    made.id = freeId(`${field.id || control.id || 'dk-field'}-error`);
+    made.id = freeId(`${field.id || control.id || 'dk-field'}-error`, field);
     made.append(errorStart(), words);
     const set = field.matches('fieldset');
     const after = set
@@ -2172,7 +2197,7 @@ const namedText = (
     wanted: (part: HTMLElement) => boolean = () => true
 ): string =>
     idsOf(element, attribute)
-        .map((id) => document.getElementById(id))
+        .map((id) => byId(element, id))
         .filter((part): part is HTMLElement => part !== null && !part.hidden && wanted(part))
         .map((part) => part.textContent.trim())
         .join(' ');
@@ -2301,8 +2326,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const one of described) {
             const ids = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
             const hintsEnd =
-                ids.findLastIndex((id) => document.getElementById(id)?.matches('.dk-field-hint')) +
-                1;
+                ids.findLastIndex((id) => byId(one, id)?.matches('.dk-field-hint')) + 1;
             ids.splice(hintsEnd, 0, error.id);
             one.setAttribute('aria-describedby', ids.join(' '));
         }
@@ -2351,7 +2375,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
                     speak(unreachedWords(unmarked.field, unmarked.words, failures.length));
                 return;
             }
-            const focused = document.activeElement === target;
+            const focused = activeOf() === target;
             speak(refusalWords({ summary, field }, focused, fields.length));
         });
         const moving = moveFocus(() => target);

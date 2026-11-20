@@ -1621,15 +1621,19 @@ where they can carry on, so a keyboard and a screen reader never fall back to th
 as WCAG 2.4.3 asks. `moveFocus(target, { fallbacks })` from `./controls` moves focus to a control,
 given as an element or an id, once the change is drawn, a frame later, so a control the page draws
 in answer to the same press or key is there. Ask in the handler of the press or key that makes the
-change, or, for a change React draws later, in a transition or behind a suspense, in an effect
-once it is drawn. Where the target is gone, hidden, inert, disabled or marked off, focus goes to
-the first of the fallbacks that takes it, and then to the app frame's body or the page's main
-content, by the walk a closing panel hands focus back by. Focus a visitor has moved since the
-request is left where they put it: focus is free only while it is where it was when asked, or on
-the page's body, as it is once the control that had it is removed. A request still waiting a
-second later, as in a tab out of sight, is dropped, so focus does not jump when the visitor comes
-back. Each request is new, so the same control asked for twice is focused twice, and the function
-`moveFocus` returns calls a request off before it lands.
+change, or, for a change React draws later, in a transition or behind a suspense, in an effect once
+it is drawn. Where the target is gone, hidden, inert, disabled or marked off, focus goes to the
+first of the fallbacks that takes it, and then to the app frame's body or the page's main content,
+by the walk a closing panel hands focus back by. Focus a visitor has moved since the request is left
+where they put it: focus is free only while it is where it was when asked, or on the page's body, as
+it is once the control that had it is removed. A request still waiting a second later, as in a tab
+out of sight, is dropped, so focus does not jump when the visitor comes back. Each request is new,
+so the same control asked for twice is focused twice, and the function `moveFocus` returns calls a
+request off before it lands. An id is looked for in the root where focus was when the request was
+made, so a widget drawn inside a shadow root finds its own control, never an element of the page
+around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
+and labels they read the same way. A panel and its button are found from the page's document, which
+the panel listens on.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
