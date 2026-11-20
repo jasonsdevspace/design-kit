@@ -5,7 +5,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { progress } from '../examples/examples.js';
 import { StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { colorOf, forceColors, lengthOf, servePage, sideways, style, writePage } from './page.js';
+import {
+    colorOf,
+    forceColors,
+    lengthOf,
+    servePage,
+    sideways,
+    stillClock,
+    style,
+    writePage,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { doubled } from './text-size.js';
 
@@ -55,7 +64,7 @@ type Moving = {
 };
 
 const open = async (page: Page) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, { title: 'Import', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
     // The run starts from nothing done, which is not said.
@@ -288,7 +297,7 @@ test('counts its steps again when the page sets new ones, and says nothing once 
 test('names a bar by its own label, and says hundredths where it has no words', async ({
     page,
 }) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, {
         title: 'Upload',
         body:
@@ -320,7 +329,7 @@ test.describe('in React', () => {
     });
 
     test('says each quarter and the done words through useProgress', async ({ page }) => {
-        await page.clock.install();
+        await stillClock(page.clock);
         await servePage(page, { title: 'Import', body: '<div id="root"></div>', script: app });
         await expect(page.getByRole('progressbar', { name: 'Importing products' })).toBeVisible();
         for (const done of [10, 20, 30, 40]) {

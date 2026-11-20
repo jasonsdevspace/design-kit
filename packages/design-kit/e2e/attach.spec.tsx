@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { ORIGIN, servePage, tabKey, themeOf } from './page.js';
+import { ORIGIN, servePage, stillClock, tabKey, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -883,7 +883,7 @@ test("says a screen's messages on its own status line, the same words twice, wit
     const context = await browser.newContext();
     // On a stand-in clock, so the moment before a message and the time it holds are stepped through
     // exactly rather than waited out.
-    await context.clock.install();
+    await stillClock(context.clock);
     const opened = await tab(
         context,
         true,

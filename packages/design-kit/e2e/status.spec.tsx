@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * A status line said on at once or once its words stop changing, by `attachStatus` and through
@@ -81,7 +81,7 @@ test('says nothing more on a line let go of, and leaves no timer of its own runn
 }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, { title: 'Status', body: LINE, script: RELEASING });
     await page.waitForFunction(() => 'ready' in window);
     await page.evaluate(() => {
@@ -101,7 +101,7 @@ test('says nothing more on a line let go of, and leaves no timer of its own runn
 test('drops what waits on a line let go of while words are on it, and speaks once attached again', async ({
     page,
 }) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, { title: 'Status', body: LINE, script: RELEASING });
     await page.waitForFunction(() => 'ready' in window);
     await page.evaluate(() => {
@@ -131,7 +131,7 @@ test('drops what waits on a line let go of while words are on it, and speaks onc
 test('keeps a line let go of silent for a piece given it, until the page attaches it again', async ({
     page,
 }) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, {
         title: 'Status',
         body: `<main><button id="save" class="dk-button" type="button">Save</button>${LINE}</main>`,
@@ -174,7 +174,7 @@ window.ready = true;`,
 });
 
 test('speaks on a line built before it is put on the page', async ({ page }) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, {
         title: 'Status',
         body: '<main id="screen"></main>',

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * The controls inside an open shadow root, as a widget drawn into a host page draws them: a refused
@@ -42,7 +42,7 @@ type Shadowed = {
 };
 
 const open = async (page: Page) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, { title: 'Shop', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
 };

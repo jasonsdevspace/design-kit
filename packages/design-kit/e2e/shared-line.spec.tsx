@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, Progress, StatusLine, StepperField } from '../src/react.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * One status line shared by the pieces that speak on it, a busy button, a stepper and progress, as a
@@ -49,7 +49,7 @@ type Shared = {
 };
 
 const open = async (page: Page) => {
-    await page.clock.install();
+    await stillClock(page.clock);
     await servePage(page, {
         title: 'Import',
         body: BODY,

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
@@ -296,7 +296,7 @@ test.describe('in React', () => {
     test('leaves focus for a view first drawn after a press on a control that is off', async ({
         page,
     }) => {
-        await page.clock.install();
+        await stillClock(page.clock);
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         // Forced, since an off control waits for nothing to turn it on.
         await page.locator('#off').click({ force: true });
@@ -311,7 +311,7 @@ test.describe('in React', () => {
     test('leaves focus for a view a press brought only after the press had long passed', async ({
         page,
     }) => {
-        await page.clock.install();
+        await stillClock(page.clock);
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         // The view this press brings leaves at once, so the press is handed back and waits.
         await page.locator('#show-brief').click();
