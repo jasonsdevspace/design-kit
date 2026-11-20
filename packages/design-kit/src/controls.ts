@@ -1057,7 +1057,8 @@ export type StepperOptions = {
     readonly status?: HTMLElement | null | undefined;
     /**
      * What says each press in place of the stepper's line, for a page that has one already, such
-     * as React's `useStatus`, as the form, the busy button and progress take it.
+     * as React's `useStatus`, as the form, the busy button and progress take it. Given with a
+     * `status` line, it is the one used.
      */
     readonly say?: Say | undefined;
     /**
@@ -1196,11 +1197,16 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
      * the stepper's own, kept there alone, since focus stays on the button.
      */
     const tell = (message: Spoken) => {
+        lastSaid = message;
         if (chosen.say) {
+            // Said through the page's own function, which keeps no record to take it back from,
+            // so it leaves when the line's time for it is up.
+            saidOn = null;
             chosen.say(message);
             return;
         }
         const to = line();
+        saidOn = to === status ? null : to;
         if (to) say(to, message, to === status);
     };
     const locked = () => input.disabled || input.readOnly;
@@ -1258,20 +1264,19 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // is known, so only that is cleared there and the page's own words are left alone.
     let presses = 0;
     let lastSaid: Spoken | null = null;
+    // The page's line the stepper last said something on, so only what it said there is cleared.
+    let saidOn: HTMLElement | null = null;
     const quiet = () => {
         presses += 1;
         if (status) hush(status);
-        const page = chosen.status;
-        if (page) unsay(page, lastSaid);
+        if (saidOn) unsay(saidOn, lastSaid);
     };
     /** What a press says: the value, that it is a limit where it is one, and the page's words. */
     const spoken = (pressed: number) => {
-        const message = () =>
+        return () =>
             pressed !== presses || !attached
                 ? null
                 : pressWords(input, least(), most(), chosen.words);
-        lastSaid = message;
-        return message;
     };
     const press = (raise: boolean) => () => {
         mark();
@@ -1302,13 +1307,15 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         report(bad);
         if (bad && range) {
             const words = range.textContent;
-            const message = () => words;
-            lastSaid = message;
-            tell(message);
+            tell(() => words);
         }
     };
+    // Once the reset is done, and never once the stepper is let go, as with focus leaving it.
+    let resetting = 0;
     const onReset = () => {
-        window.setTimeout(() => {
+        window.clearTimeout(resetting);
+        resetting = window.setTimeout(() => {
+            if (!attached) return;
             quiet();
             mark();
             report(false);
@@ -1355,6 +1362,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         listening.abort();
         kept.disconnect();
         window.clearTimeout(settling);
+        window.clearTimeout(resetting);
         quiet();
         attached = false;
         report(false);
@@ -1365,8 +1373,10 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     attachedSteppers.set(stepper, {
         detach,
         set: (next) => {
-            // A page that takes the stepper's words to its own line leaves none on the stepper's.
+            // A page that takes the stepper's words to its own line leaves none on the stepper's,
+            // and words left on a line the page no longer gives are taken back from it.
             if ((next.status || next.say) && status) hush(status);
+            if (saidOn && saidOn !== next.status) unsay(saidOn, lastSaid);
             chosen = next;
         },
     });

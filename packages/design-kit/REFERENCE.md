@@ -2577,10 +2577,12 @@ changing at once, which can drop one. A page with a status line of its own gives
 the stepper says each press there in place of its own line, where it leaves as every message there
 does, and clears only what it said there when the value is typed over, the form is reset or the
 stepper is taken away, so the page's own words stay. A page that has a function for its line
-already, as React's `useStatus` returns, gives it as `say`, and each press is said through it. A
-message still waiting then is not said. Options given when the stepper is attached again take the
-place of the last. A stepper taken away and attached again as focus leaves it, as a page that checks
-a field on leaving and draws it again does, keeps its buttons.
+already, as React's `useStatus` returns, gives it as `say`, and each press is said through it, and
+is the one used where both are given. Words said through it leave when the line's time for them is
+up, since the stepper cannot take them back from a function. A message still waiting then is not
+said. Options given when the stepper is attached again take the place of the last. A stepper taken
+away and attached again as focus leaves it, as a page that checks a field on leaving and draws it
+again does, keeps its buttons.
 
 ```js
 attachStepper(document.querySelector('.dk-stepper'), {
@@ -2591,7 +2593,12 @@ attachStepper(document.querySelector('.dk-stepper'), {
 
 ```tsx
 const say = useStatus();
-useEffect(() => attachStepper(stepper.current, { say }), [say]);
+const box = useRef<HTMLDivElement>(null);
+useEffect(() => {
+    const stepper = box.current?.querySelector<HTMLElement>('.dk-stepper');
+    return stepper ? attachStepper(stepper, { say }) : undefined;
+}, [say]);
+// <div ref={box}><StepperField id="seats" label="Seats" min={2} max={8} /></div>
 ```
 
 `StepperField` draws it, taking `min`, `max` and a `step` of 1 unless given. Its `subject` is the
