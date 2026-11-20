@@ -7,14 +7,14 @@
  * pseudo-element reaches. So only the classes, the focus rules and those parts carry weight.
  *
  * The page chrome comes first, then the buttons and a row of them, the fields, a field with a
- * button beside it, the sets of choices, the callouts and a loading line, then the explainer page and the
- * steps, panel, table and code block it holds, then the theme switch, the eyebrow, the pills,
- * the tabs and the copy button's words, and then the pieces an app is made of: its frame, the
- * tab bar, the toast, the grid of buttons, the rows, the stepper and the dialog with its sheet.
- * Each piece keeps its rules together, at rest, under a pointer, in its states, on a phone and
- * in forced colors, in that order. The flow that spaces the pieces in a container follows them
- * all, then the print rules for every piece at once, and last the rule that hides a kit element
- * a page marks hidden.
+ * button beside it, the sets of choices, the callouts and a loading line, then the explainer page
+ * and the steps, panel, table and code block it holds, then the theme switch, the eyebrow, the
+ * pills, the tabs and the copy button's words, and then the pieces an app is made of: its frame,
+ * the tab bar, the toast, the grid of buttons, the rows, the stepper and the dialog with its sheet.
+ * Each piece keeps its rules together, at rest, under a pointer, in its states, on a phone and in
+ * forced colors, in that order. The flow that spaces the pieces in a container follows them all,
+ * then the print rules for every piece at once, and last the rule that hides a kit element a page
+ * marks hidden.
  *
  * Load it after tokens.css, whose first statement declares the order of the kit's layers.
  */
@@ -477,9 +477,9 @@
 
     /*
      * Busy, a button whose press has started something still running, such as a save. It is off at
-     * once, so a second press does nothing, but its look holds for --dk-wait before it changes, so a
-     * fast save does not flash the button grey, and the pointer shows the wait at once. The wait is
-     * a delay, which reduced motion keeps, and it holds in forced colors too.
+     * once, so a second press does nothing, but its look holds for --dk-wait before it changes, so
+     * a fast save does not flash the button grey, and the pointer shows the wait at once. The wait
+     * is a delay, which reduced motion keeps, and it holds in forced colors too.
      */
     :where(.dk-button[data-busy]) {
         transition-property:
@@ -670,13 +670,12 @@
     /*
      * Progress with a known amount, the native bar: a short track in the line color with the fill
      * in the accent, which stands 4.5 to 1 and more against it in both themes. The bar's own pill
-     * corners round the track's ends, and the fill ends square, so its edge marks the amount exactly
-     * in every engine.
-     * Each engine draws the bar through parts of its own, so each part is a rule of its own, since a
-     * selector one engine does not know drops the whole rule. A bar with no value draws an empty
-     * track rather than the browser's looping motion, since a wait with no amount to measure is a
-     * loading line's. In forced colors the track takes the canvas with an edge and the fill takes
-     * the highlight.
+     * corners round the track's ends, and the fill ends square, so its edge marks the amount
+     * exactly in every engine. Each engine draws the bar through parts of its own, so each part is
+     * a rule of its own, since a selector one engine does not know drops the whole rule. A bar with
+     * no value draws an empty track rather than the browser's looping motion, since a wait with no
+     * amount to measure is a loading line's. In forced colors the track takes the canvas with an
+     * edge and the fill takes the highlight.
      */
     :where(.dk-progress) {
         appearance: none;
@@ -769,7 +768,7 @@
         color: var(--dk-muted);
     }
 
-    /* A field's mark, required or optional, in its label at the muted text and the normal weight. */
+    /* A field's mark, required or optional, in its label at the muted text and normal weight. */
     :where(.dk-field-mark) {
         color: var(--dk-muted);
         font-weight: var(--dk-weight-normal);
@@ -834,9 +833,10 @@
     /*
      * A value a visitor reads but cannot change, such as a saved total. Its edge keeps its width,
      * so it lines up with the fields beside it, but is drawn clear on a clear ground, with its text
-     * in the page's own color, so it reads as a value rather than as a control that is off. It stays
-     * in the tab order, and its words can be read and copied. It comes before the error's edge,
-     * so a read-only field with an error still shows it, and a disabled one is drawn disabled.
+     * in the page's own color, so it reads as a value rather than as a control that is off. It
+     * stays in the tab order, and its words can be read and copied. It comes before the error's
+     * edge, so a read-only field with an error still shows it, and a disabled one is drawn
+     * disabled.
      */
     :where(.dk-input[readonly]:not(:disabled), .dk-textarea[readonly]:not(:disabled)) {
         border-color: transparent;
@@ -1162,8 +1162,8 @@
      * waits. It shows only once the wait outlasts --dk-wait, so a fast answer shows nothing: an
      * animation with no length, delayed by the wait, holds it out of sight until then, and the
      * delay stands under reduced motion, which cuts lengths and not delays, and in forced colors.
-     * It is in the muted text at the body size, a line of words and no spinner, and it is timed from
-     * when it first matches, so a page puts it in with the mark.
+     * It is in the muted text at the body size, a line of words and no spinner, and it is timed
+     * from when it first matches, so a page puts it in with the mark.
      */
     :where([aria-busy='true'] .dk-loading) {
         animation: dk-wait 0s var(--dk-wait) backwards;
@@ -1305,9 +1305,10 @@
      * A hero: a band's words in a stack beside its picture, the words first so a reader hears what
      * the page is before the picture. On a phone they stand one over the other, the picture no
      * taller than --dk-band-hero-picture, and from 48rem side by side, centered on each other, with
-     * the picture that wide, 28rem until a page sets it, and never past 45% of the row, so the words
-     * keep room for a display heading. An image, a video or a picture fills its cell and keeps its
-     * proportions, cropped rather than stretched, and one in a figure keeps its caption under it.
+     * the picture that wide, 28rem until a page sets it, and never past 45% of the row, so the
+     * words keep room for a display heading. An image, a video or a picture fills its cell and
+     * keeps its proportions, cropped rather than stretched, and one in a figure keeps its caption
+     * under it.
      */
     :where(.dk-band-hero) {
         display: grid;
@@ -2514,14 +2515,15 @@
     }
 
     /*
-     * A compact action beside the dock's main one, on one row: the compact action at its own
-     * width, the main one taking the rest, never under the target's width or its own longest word,
-     * its words wrapping inside it where they must, and the two stretched to one height, so the
-     * pair keeps the body its row of height. The main action is last, nearest the thumb and last
-     * in the keyboard's order. Each button keeps the target as its least width, rather than the
-     * larger target a tall button keeps, with a step less padding at its sides, so a short compact
-     * word at twice the text size on a 320px phone still leaves the main action room. Where the
-     * two cannot share a row, they take two rather than scroll the page sideways or cut a word. A text button keeps its own look, and a link drawn as a button centers its words.
+     * A compact action beside the dock's main one, on one row: the compact action at its own width,
+     * the main one taking the rest, never under the target's width or its own longest word, its
+     * words wrapping inside it where they must, and the two stretched to one height, so the pair
+     * keeps the body its row of height. The main action is last, nearest the thumb and last in the
+     * keyboard's order. Each button keeps the target as its least width, rather than the larger
+     * target a tall button keeps, with a step less padding at its sides, so a short compact word at
+     * twice the text size on a 320px phone still leaves the main action room. Where the two cannot
+     * share a row, they take two rather than scroll the page sideways or cut a word. A text button
+     * keeps its own look, and a link drawn as a button centers its words.
      */
     :where(.dk-app-dock-inline) {
         display: flex;
@@ -2540,7 +2542,8 @@
         flex: none;
     }
 
-    /* At least the target and its own longest word, so the pair takes two rows before a word is cut. */
+    /* At least the target and its own longest word, so the pair takes two rows before a word is
+     * cut. */
     :where(.dk-app-dock-inline > :last-child) {
         flex: 1 0 var(--dk-target);
         min-width: min-content;
@@ -3132,9 +3135,9 @@
     /*
      * In what pads its content, an explainer, a content page, a band, a panel, a callout, an app's
      * body or a dialog, a row and an empty state reach past the column by that room, as the pills
-     * and the choices do, so its words start on the column's line and the padding holds its ring. A list at a
-     * page's bare edge or in a table's cell keeps its rows inside it, so the page never scrolls
-     * sideways and no part of a ring is cut off.
+     * and the choices do, so its words start on the column's line and the padding holds its ring. A
+     * list at a page's bare edge or in a table's cell keeps its rows inside it, so the page never
+     * scrolls sideways and no part of a ring is cut off.
      */
     :where(
         :is(.dk-explainer, .dk-page, .dk-band, .dk-panel, .dk-callout, .dk-app-body, .dk-dialog)

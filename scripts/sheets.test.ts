@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 import { SHEET_ORDER, withoutComments } from './summary.mjs';
 
 /*
- * The kit's three sheets without their comments and blank lines, gzipped at the default level: small
- * enough to send to every visitor of every demo, held to a budget beside the controls', so the
- * components sheet cannot grow unseen as pieces are added. A page's minifier sends somewhat less
- * than this, as record 13 measures, so the budget errs on the side of the larger figure. The
+ * The kit's three sheets without their comments and blank lines, gzipped at the default level:
+ * small enough to send to every visitor of every demo, held to a budget beside the controls', so
+ * the components sheet cannot grow unseen as pieces are added. A page's minifier sends somewhat
+ * less than this, as record 13 measures, so the budget errs on the side of the larger figure. The
  * package record measures each sheet the same way, through the same function, so the figure it
  * shows is the one held here.
  */
@@ -21,11 +21,12 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * table's shade left too little room for another piece, again in 0.8.0, whose planned pieces took
  * the sheets past 9.25 KB, again in 0.8.2, whose corner Close took them past 10.25 KB, and again
  * in 0.8.6, whose grid of buttons dropping to a count that divides its cells took them past
- * 10.75 KB, and again after 0.8.7, measured with a prototype of the pieces planned for the next release, as
- * 0.8.0's were. The app's pieces stay in the components sheet, so a page loads one sheet whatever it
- * draws.
+ * 10.75 KB, again after 0.8.7, measured with a prototype of the pieces planned for the next
+ * release, as 0.8.0's were, and again once those pieces landed heavier than the prototype and left
+ * too little room for another. The app's pieces stay in the components sheet, so a page loads one
+ * sheet whatever it draws.
  */
-const BUDGET = 12 * 1024;
+const BUDGET = 12.25 * 1024;
 
 describe('the sheets', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped together, without their comments and blank lines`, () => {

@@ -87,8 +87,8 @@ jobs:
                   esac
 
     # A called workflow may ask for no more than its caller grants, and CI's deploy job asks for the
-    # Pages permissions even though it never runs on a tag, so they are granted here or the run fails
-    # at startup.
+    # Pages permissions even though it never runs on a tag, so they are granted here or the run
+    # fails at startup.
     checks:
         name: CI
         needs: agree

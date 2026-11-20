@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB, then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB, and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75 KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a press that brings a view from a key that moves took them past 15.5 KB
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB, then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB, and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75 KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a press that brings a view from a key that moves took them past 15.5 KB, and then at 17.25 KB, once every function of the release was in place, and to set the sheets' budget at 12.25 KB, once the release's pieces landed heavier than their prototype
 
 ## Context
 
@@ -151,10 +151,13 @@ a page's own status line to say them on. Every function sent together weighs 8,1
 
 The controls were measured again with `moveFocus`, which moves focus once a change is drawn, and
 `attachRoving`, which moves among a group's cells by the arrow keys, in place, as the next release
-gives them with its other behaviors. Every function sent together weighs 10,372 bytes, past the 8.75 KB they held, and the median a function adds is now 650 bytes, so the rule sets the controls at 11 KB.
+gives them with its other behaviors. Every function sent together weighs 10,372 bytes, past the 8.75
+KB they held, and the median a function adds is now 650 bytes, so the rule sets the controls at 11
+KB.
 
 The controls were measured again with `attachForm`, which refuses a form, and `attachBusy`, which
-says a busy button's wait, in place. Every function sent together weighs 11,524 bytes, past the 11 KB they held, and the median a function adds is now 672 bytes, so the rule sets the controls at 12
+says a busy button's wait, in place. Every function sent together weighs 11,524 bytes, past the 11
+KB they held, and the median a function adds is now 672 bytes, so the rule sets the controls at 12
 KB.
 
 The controls were measured again with `attachProgress`, which says progress at its steps, and the
@@ -172,10 +175,16 @@ a key that moves or typing, in place, beside the form's check. Every function se
 16,730 bytes, past the 15.5 KB they held, and the median a function adds is now 608 bytes, so the
 rule sets the controls at 17 KB.
 
+The controls were measured again with every function of the release in place, a stepper's own `say`
+and the lookups that find a piece's parts inside a shadow root among them. Every function sent
+together weighs 16,985 bytes, under the 17 KB they held but with less room than a function of the
+usual size, and the median a function adds is now 622 bytes, so the rule sets the controls at
+17.25 KB.
+
 For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
-divides its cells, which works out a column's width at each count from two to six in the sheet, since
-no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they held,
-and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
+divides its cells, which works out a column's width at each count from two to six in the sheet,
+since no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they
+held, and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
 
 After 0.8.7 the sheets were measured with every piece planned for the next release in place, as
 they were for 0.8.0: a dock row for a compact action, a busy button, a region that is loading, a
@@ -186,6 +195,10 @@ is raised once for them. The sheets weigh 11,398 bytes sent together at 0.8.7 an
 prototype in place, and the median a piece costs is still 169 bytes, so the rule sets the sheets at
 12 KB. A piece that lands heavier than its prototype and outgrows that says so with its figures, as
 the rule has it, and the package record measures the pieces as they ship.
+
+With every piece of the release landed, the sheets weigh 12,225 bytes sent together, 113 heavier
+than the prototype and with less room under 12 KB than a piece of the usual size, and the median a
+piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB.
 
 ## The sheets beside other systems
 

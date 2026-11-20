@@ -352,12 +352,12 @@ export const useBusy = <Busy extends HTMLElement>(
 };
 
 /**
- * A ref for a `progress` element, which `attachProgress` says at the steps given, each quarter until
- * a page gives others, and once at the end, or the `done` words in its place, on the status line of
- * the nearest `StatusProvider` or through the `say` given, giving way to any other words there. New
- * steps or `done` words are passed to the attach only when they change. A bar swapped for another
- * is let go and the new one attached, and with no provider above it and no `say`, it throws, since
- * its words would reach no one.
+ * A ref for a `progress` element, which `attachProgress` says at the steps given, each quarter
+ * until a page gives others, and once at the end, or the `done` words in its place, on the status
+ * line of the nearest `StatusProvider` or through the `say` given, giving way to any other words
+ * there. New steps or `done` words are passed to the attach only when they change. A bar swapped
+ * for another is let go and the new one attached, and with no provider above it and no `say`, it
+ * throws, since its words would reach no one.
  */
 export const useProgress = (
     options: Pick<ProgressOptions, 'say' | 'steps' | 'done'> = {}

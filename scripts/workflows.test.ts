@@ -378,7 +378,8 @@ describe('the workflows', () => {
         expect(installs.length).toBeGreaterThan(0);
         for (const { text } of installs) {
             expect(text).toMatch(/NPM_INTEGRITY: sha512-[A-Za-z0-9+/]+=*\s*$/m);
-            // The digest is compared with the pin, and a mismatch stops the step, before the install.
+            // The digest is compared with the pin, and a mismatch stops the step, before the
+            // install.
             const compared = text.search(
                 /if \[ "\$got" != "\$NPM_INTEGRITY" \]; then\n\s+echo[^\n]*\n\s+exit 1\n/
             );
@@ -467,8 +468,9 @@ describe('the workflows', () => {
 
     it('give the token that can publish or deploy to the deploy job alone in CI', () => {
         // Called from a release, every job in CI runs as the release, so any of them holding the
-        // token and naming the npm environment could publish to npm as the release does. The workflow's own permissions would
-        // give it to every job, as write-all would give it to a job.
+        // token and naming the npm environment could publish to npm as the release does. The
+        // workflow's own permissions would give it to every job, as write-all would give it to a
+        // job.
         const ci = (workflows.get('.github/workflows/ci.yml') ?? '')
             .replace(/\r\n/g, '\n')
             .replace(/^[ \t]*#.*\n/gm, '')

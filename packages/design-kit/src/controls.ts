@@ -2,17 +2,19 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
  * What the kit's theme switch, copy button, stepper, toast, dialog, panel, table and status line
- * do, for a page to attach to the markup the components draw or a page writes by hand. Each attach
- * function finds its control's parts by their classes, and `attachPanel` its panel by the id its
- * button names. The switch, the copy button and the stepper show their control, which the markup
- * keeps hidden so a visitor without script meets no control that does nothing, and return a
- * function that takes it away again, as the table's does. `attachToast` returns instead the
- * function that shows a message in it, `attachDialog` the function that opens it, `attachPanel`
- * the functions that open or close its panel and let its button go, and `attachStatus` the
- * function that says a message. Nothing runs when the module is imported but one listener on the
- * document, in a page, which notes whether the visitor's last input was a press for
- * `focusOnArrival`, and nothing here sets a style, so a page's policy can refuse every style it did
- * not serve.
+ * do, with moving focus after a change and on a view's arrival, the arrow keys in a group of cells,
+ * a form's check and refusal, a busy button and progress, for a page to attach to the markup the
+ * components draw or a page writes by hand. Each attach function finds its control's parts by their
+ * classes, and `attachPanel` its panel by the id its button names. The switch, the copy button and
+ * the stepper show their control, which the markup keeps hidden so a visitor without script meets
+ * no control that does nothing, and return a function that takes it away again, as the table's
+ * does. `attachToast` returns instead the function that shows a message in it, `attachDialog` the
+ * function that opens it, `attachPanel` the functions that open or close its panel and let its
+ * button go, `attachStatus` the function that says a message, `attachForm` the function that
+ * refuses its form, and `moveFocus` and `focusOnArrival` what call their request off. Nothing runs
+ * when the module is imported but one listener on the document, in a page, which notes whether the
+ * visitor's last input was a press for `focusOnArrival`, and nothing here sets a style, so a page's
+ * policy can refuse every style it did not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -2884,8 +2886,8 @@ const nameOf = (element: HTMLProgressElement) =>
  * waits. Every word it says gives way to any other on the line, so a page's own result or failure
  * is never put out by it. The end, or the `done` words in its place, is said once, until the amount
  * goes back for another run. The amount a bar first shows, as it is attached or once it is known,
- * is not said unless it is the end, and a bar with no amount says nothing. Attached again, a bar returns what it
- * returned first and takes options given in place of the last.
+ * is not said unless it is the end, and a bar with no amount says nothing. Attached again, a bar
+ * returns what it returned first and takes options given in place of the last.
  */
 export const attachProgress = (
     progress: HTMLProgressElement,
