@@ -2617,13 +2617,16 @@ const inPlaceOf = (
  * of tabs ignores up and down and wraps from one end to the other. An arrow held with Alt, Control
  * or Command is left to the browser. The stop is the cell the page names as current, else a
  * tablist's chosen tab, else the one focus last reached, else the first, and a cell that is
- * disabled, inert or out of sight is never the stop. A cell marked off keeps its place, as it does
- * in the tab order, and is never handed to `onMove`. The kit moves focus and the page chooses: a
- * page that chooses a tab as focus reaches it does so in `onMove`. A grid of buttons with the
- * group's role, or none, takes the toolbar's, so a screen reader says the arrows move within it.
- * Where the cell that had focus is taken out, focus goes to the next cell still there, or the one
- * before. Let go, each cell takes back its own tabindex and the grid its own role. Attached again,
- * a group returns what it returned first and takes options given in place of the last.
+ * disabled, inert or out of sight is never the stop. The stop is placed as the group is attached,
+ * as its cells change and as it comes into sight, so a group attached in a closed details, a hidden
+ * panel or a dialog not yet open has its stop once it shows. A cell marked off keeps its place, as
+ * it does in the tab order, and is never handed to `onMove`. The kit moves focus and the page
+ * chooses: a page that chooses a tab as focus reaches it does so in `onMove`. A grid of buttons
+ * with the group's role, or none, takes the toolbar's, so a screen reader says the arrows move
+ * within it. Where the cell that had focus is taken out, focus goes to the next cell still there,
+ * or the one before. Let go, each cell takes back its own tabindex and the grid its own role.
+ * Attached again, a group returns what it returned first and takes options given in place of the
+ * last.
  */
 export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
     const already = attachedGroups.get(group);
@@ -2714,6 +2717,19 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         subtree: true,
         attributeFilter: ['aria-selected', 'hidden', 'disabled', 'inert', 'class', 'style'],
     });
+    // A group attached out of sight, in a closed details, a hidden panel or a dialog not yet open,
+    // has no cell in sight to take the stop, and what shows it changes something outside the group,
+    // which the observer above does not hear. The group is drawn at no size while out of sight and
+    // at its own once it shows, so watching its size places the stop as it comes into sight,
+    // however it was hidden, and costs nothing while its size holds. Listening for a details'
+    // toggle would miss a panel or a dialog. Giving the named or first cell the stop while none is
+    // in sight cannot tell a cell hidden with its group from one hidden on its own, which would
+    // keep the stop out of sight once the group shows.
+    const drawn = new ResizeObserver(() => {
+        before = cellsIn(group);
+        place();
+    });
+    drawn.observe(group);
     const listening = new AbortController();
     const { signal } = listening;
     group.addEventListener('keydown', onKey, { signal });
@@ -2733,6 +2749,7 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         detached = true;
         listening.abort();
         kept.disconnect();
+        drawn.disconnect();
         for (const cell of group.querySelectorAll<HTMLElement>(CELLS)) {
             if (!ownTabIndex.has(cell)) continue;
             const own = ownTabIndex.get(cell) ?? null;
