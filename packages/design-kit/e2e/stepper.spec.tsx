@@ -15,11 +15,13 @@ import { textSize } from './text-size.js';
  * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
  * limits or none reported as a field's error once changed and said, and cleared once right while a
  * page's own error keeps its place, a value drawn past the limits shown as an error once attached
- * with nothing said, a phone's keyboard with a minus only where it is needed, the value in figures
- * of one width so the field keeps its width, every figure shown under the wider
- * spacing a reader may set, the label beside it on one line at a phone's narrowest width, a stepper
- * that fits a phone at twice the text size, the larger target when asked, an inline stepper's error
- * above it and its hint below it, the keyboard, and no audit findings in either theme.
+ * or brought back by a reset with nothing said, but not on a field no one can change, for a refusal
+ * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
+ * needed, the value in figures of one width so the field keeps its width, every figure shown under
+ * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
+ * a stepper that fits a phone at twice the text size, the larger target when asked, an inline
+ * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
+ * theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -741,26 +743,41 @@ test('keeps an error the page shows after attaching, and one shown before it', a
     );
 });
 
+/**
+ * Takes a stepper away, gives it a value, and attaches it again, as a page draws it: as its value
+ * alone, as the value a form's reset brings back too, or with a refusal the page sets of its own.
+ */
+const drawAndAttach = (
+    page: Page,
+    id: string,
+    value: string,
+    {
+        asDefault = false,
+        refusal = '',
+    }: { readonly asDefault?: boolean; readonly refusal?: string } = {}
+): Promise<void> =>
+    page.evaluate(
+        ({ to, at, kept, refused }) => {
+            const { attachStepper } = window as unknown as {
+                attachStepper: typeof import('../src/controls.js').attachStepper;
+            };
+            const input = document.querySelector<HTMLInputElement>(`#${to}`);
+            const stepper = input?.closest<HTMLElement>('.dk-stepper');
+            if (!input || !stepper) throw new Error('no stepper');
+            attachStepper(stepper)();
+            if (kept) input.defaultValue = at;
+            input.value = at;
+            input.setCustomValidity(refused);
+            attachStepper(stepper);
+        },
+        { to: id, at: value, kept: asDefault, refused: refusal }
+    );
+
 test('shows its error at once, with nothing said, when attached past its limit, and clears it after', async ({
     page,
 }) => {
     await open(page);
-    // Each stepper taken away, given its value, and attached again, as a page draws it.
-    const attachWith = (id: string, value: string) =>
-        page.evaluate(
-            ({ to, at }) => {
-                const { attachStepper } = window as unknown as {
-                    attachStepper: typeof import('../src/controls.js').attachStepper;
-                };
-                const input = document.querySelector<HTMLInputElement>(`#${to}`);
-                const stepper = input?.closest<HTMLElement>('.dk-stepper');
-                if (!input || !stepper) throw new Error('no stepper');
-                attachStepper(stepper)();
-                input.value = at;
-                attachStepper(stepper);
-            },
-            { to: id, at: value }
-        );
+    const attachWith = (id: string, value: string) => drawAndAttach(page, id, value);
     const said = 'Error: Enter a whole number from 0 to 10.';
     const error = page.locator('#bid-range');
     await attachWith('bid', '14');
@@ -795,6 +812,58 @@ test('shows its error at once, with nothing said, when attached past its limit, 
     await attachWith('players', '');
     await expect(page.locator('#players-range')).toBeHidden();
     await expect(players).not.toHaveAttribute('aria-invalid');
+});
+
+test("shows its error again when a form's reset brings back a value drawn past the limit", async ({
+    page,
+}) => {
+    await open(page);
+    const score = page.getByRole('spinbutton', { name: 'Score' });
+    const error = page.locator('#score-range');
+    await drawAndAttach(page, 'score', '15', { asDefault: true });
+    await expect(error).toBeVisible();
+    await score.fill('5');
+    await expect(error).toBeHidden();
+    await expect(score).not.toHaveAttribute('aria-invalid');
+    await page.getByRole('button', { name: 'Reset' }).click();
+    await expect(score).toHaveValue('15');
+    await expect(error).toBeVisible();
+    await expect(score).toHaveAttribute('aria-invalid', 'true');
+    await expect(score).toHaveAccessibleDescription('Error: Enter a whole number from -9 to 12.');
+    await expect(line(page, 'score')).toHaveText('');
+});
+
+test('shows no error at attach on a field no one can change', async ({ page }) => {
+    await open(page);
+    // Disabled and read only, a value past the limit is not marked wrong, since no one can fix it.
+    for (const id of ['locked', 'read']) {
+        await drawAndAttach(page, id, '14');
+        await expect(page.locator(`#${id}-range`)).toBeHidden();
+        await expect(page.locator(`#${id}`)).not.toHaveAttribute('aria-invalid');
+    }
+});
+
+test('leaves a refusal the page sets to the page, at attach and once changed', async ({ page }) => {
+    await open(page);
+    // A refusal the page sets on a value inside the limits is the page's to show, at attach and
+    // once the value is changed.
+    await drawAndAttach(page, 'bid', '5', { refusal: 'That bid is taken' });
+    const error = page.locator('#bid-range');
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+    await bid(page).fill('6');
+    await bid(page).press('Tab');
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+});
+
+test("leaves the page's own error as the one shown when attached past its limit", async ({
+    page,
+}) => {
+    await open(page);
+    await drawAndAttach(page, 'hand', '14');
+    await expect(page.locator('#hand-error')).toBeVisible();
+    await expect(page.locator('#hand-range')).toBeHidden();
 });
 
 test("clears only its own words from a page's line, and says nothing once typed over or taken away", async ({
