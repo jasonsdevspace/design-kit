@@ -1404,7 +1404,7 @@ const showScreen = () => {
     screen = new AbortController();
     // Draw the screen, then attach its controls.
     attachCopyButton(document.querySelector('.dk-copy'), {
-        source: () => document.querySelector('.dk-code'),
+        source: () => document.querySelector('#install-command'),
         status: document.querySelector('[role="status"]'),
         signal: screen.signal,
     });

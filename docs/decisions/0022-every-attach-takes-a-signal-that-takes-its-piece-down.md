@@ -67,14 +67,15 @@ Option E.
   added after the element where it takes none. What it returns is unchanged.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
-  it, so a later attach starts afresh. A piece already attached is left as it is, new options and
-  all. What the attach returns does nothing.
+  it, so a later attach starts afresh. A piece already attached is left as it is, and the new
+  options are not taken. What the attach returns does nothing.
 - **Aborting is the same as detach.** Everything the attach set up comes off: its listeners,
-  observers, timers and frames, a listener on the document it added, and what it drew or showed,
-  as its detach would. An attach that returns what acts rather than a detach is taken down by its
+  observers, timers and frames, a listener on the document it added, and what it drew or showed, as
+  its detach would. An attach that returns what acts rather than a detach is taken down by its
   signal alone. The module's own listeners are the exception, as record 13 accepts the one that
-  notes the visitor's last press: the theme's listeners on the window, added once, stay while no
-  switch is attached, so `chooseTheme` follows a choice made in another tab on a page with none.
+  notes the visitor's last press: the theme's listeners on the window, added once by the first
+  switch or `chooseTheme`, stay for the page's life, so `chooseTheme` follows a choice made in
+  another tab on a page with no switch.
 - **Detach is complete and safe to call twice.** The teardown runs once, whichever comes first,
   the abort or the detach, and a detach called again, even after the same element was attached
   anew, leaves that newer attach alone. An undo that throws is reported and the rest still run.
@@ -100,23 +101,23 @@ Given the page's signal, it gives null where that signal is already aborted, so 
 at once, and otherwise a signal of its own that every listener of the attach takes, `add` for what a
 signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel, and
 `stop`, which the attach returns as its detach. `stop` aborts its own signal and runs what `add`
-kept, once, and the page's signal calls it on abort. What `add` is given after the teardown runs at
-once. Work an attach sets after it is set up follows one of two rules: it lives in a variable an
-undo kept at setup clears, or its callback reads the attach's signal and does nothing once it is
-aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather than left
-to check. The listener on the page's signal comes off with the teardown, so a signal a page keeps
-for longer holds nothing of a piece already taken down. Until then the page's signal keeps the piece
-alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3 the theme switch
-and the copy button keep the contract through it.
+kept, once, and the page's signal calls it on abort. An undo given to `add` after the teardown has
+run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
+variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
+once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
+than left to check. The listener on the page's signal comes off with the teardown, so a signal a
+page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
+keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
+the theme switch and the copy button keep the contract through it.
 
 ## Consequences
 
 - A page takes down any piece the same way, whatever its attach returns, and a page that attaches
   many pieces for one screen aborts one controller as the screen goes.
-- The flags, lists and checks each attach kept for its own teardown give way to the helper. With
-  the theme switch and the copy button moved onto it, the controls weigh 17,532 bytes against
-  17,331 before, 201 more, which left less room than a function of the usual size, so record 13's
-  rule set their budget at 17.75 KB. The rule sets it again if a piece outgrows it.
+- The flags, lists and checks each attach kept for its own teardown give way to the helper. With the
+  theme switch and the copy button moved onto it, the controls weigh 17,532 bytes against 17,331
+  before, 201 more, which left less room than a function of the usual size, so record 13's rule set
+  their budget at 17.75 KB. The rule sets it again if a function outgrows it.
 - An attach is held to the contract by browser tests as it moves onto the helper.
 
 ## How it is tested

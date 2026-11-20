@@ -531,7 +531,8 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
         button?.setAttribute('aria-expanded', 'true');
         // The press that opened them was lifted before the page was listened to.
         pressedHere = false;
-        // The signal takes it off with the switch, however the switch reads as it goes.
+        // The signal takes it off with the switch, even where the button no longer reads as open,
+        // which close would take for nothing to close.
         document.addEventListener('pointerup', onDocumentLift, { capture: true, signal });
         (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
     };
@@ -576,7 +577,8 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     // Run once, so calling the detach again, even after the same element was attached anew, leaves
     // that newer attach alone.
     down.add(() => {
-        // Closing takes the page's listener away with it.
+        // Closing marks the button closed. The signal has already taken the document's
+        // listener off.
         close(false);
         switches.delete(show);
         group.hidden = true;
