@@ -2197,7 +2197,8 @@ const checkers = new WeakMap<
     HTMLFormElement,
     {
         readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
-        readonly clear: () => void;
+        readonly clear: () => boolean;
+        readonly cleared: () => void;
     }
 >();
 
@@ -2269,21 +2270,24 @@ const countWords = (count: number): string =>
     count === 1 ? '1 field needs attention.' : `${String(count)} fields need attention.`;
 
 /**
- * What a refusal says, chosen so nothing is said twice. Where focus moves to a summary, which reads
- * its own words, it says nothing, and where the summary already had focus, its words. Where focus
- * moves to a field, which reads the field and its error, it says the count. Where the field already
- * had focus, which then reads nothing, it says the error, with the count where more are wrong.
+ * What a refusal says. Where focus moves to a summary, which reads its own words, it says nothing,
+ * and where the summary already had focus, its words. Where it moves to a field or is already on
+ * one, it says the field's name and error, with the count where more are wrong, whatever the field
+ * reads itself, since VoiceOver on iOS reads a field's error only as a hint, after a pause or not
+ * at all, and focus moved by script may not land. A screen reader that reads the error as focus
+ * lands hears it twice, which slows a visitor less than an error never heard.
  */
 const refusalWords = (
-    to: { readonly summary: Element | null; readonly field: Element | null },
+    to: {
+        readonly summary: Element | null;
+        readonly wrong: Element | null;
+    },
     focused: boolean,
     count: number
 ): string => {
     if (to.summary) return focused ? to.summary.textContent.trim() : '';
-    if (!to.field || count === 0) return '';
-    if (!focused) return countWords(count);
-    const words = errorWords(to.field);
-    return count > 1 || words === '' ? `${words} ${countWords(count)}`.trim() : words;
+    if (!to.wrong || count === 0) return '';
+    return unreachedWords(to.wrong, errorWords(to.wrong), count);
 };
 
 /**
@@ -2311,14 +2315,15 @@ const unreachedWords = (field: Element, words: string, count: number): string =>
  *
  * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
  * page names one, else the first field in error that can take focus, or in a set its checked radio
- * or its first control that can, and says one message on the status line, chosen so nothing is said
- * twice: nothing where focus moves to a summary, whose words it reads, how many fields need
- * attention where focus moves to a field, since moving focus reads the field and its error, or the
- * error's own words, with the count where more are wrong, where the field already had focus, since
- * focus that does not move reads nothing. A set counts once however many of its choices are marked.
- * The field's error stays not live. A second refusal calls off one not yet landed, and each refusal
- * returns what calls it off. Attached again, a form returns what it returned first and takes
- * options given in place of the last.
+ * or its first control that can, and says one message on the status line: nothing where focus moves
+ * to a summary, whose words it reads, its words where the summary already had focus, and where it
+ * moves to a field or is already on one, that field's name and error, with how many fields need
+ * attention where more are wrong, since VoiceOver on iOS reads a field's error only as a hint and
+ * focus moved by script may not land. A set counts once however many of its choices are marked. The
+ * field's error stays not live. A second refusal calls off one not yet landed, and each refusal
+ * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
+ * where there were any, says the form is cleared. Attached again, a form returns what it returned
+ * first and takes options given in place of the last.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
     const already = attachedForms.get(form);
@@ -2420,7 +2425,8 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
                 return;
             }
             const focused = activeOf() === target;
-            speak(refusalWords({ summary, field }, focused, fields.length));
+            const wrong = fields.find((one) => focusIn(one) === field) ?? null;
+            speak(refusalWords({ summary, wrong }, focused, fields.length));
         });
         const moving = moveFocus(() => target, { from });
         pending = () => {
@@ -2456,10 +2462,14 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const failure of failures) draw(failure);
         refuseIn(whole, false);
     };
+    // Takes away the errors the kit drew, and says whether there were any.
     const clear = () => {
+        const had = drawn.size > 0;
         for (const field of [...drawn.keys()]) undraw(field);
+        return had;
     };
-    if (own && (own === form || !checkers.has(own))) checkers.set(own, { check, clear });
+    if (own && (own === form || !checkers.has(own)))
+        checkers.set(own, { check, clear, cleared: () => speak('Form cleared.') });
     if (own && !checkedForms.has(own)) {
         checkedForms.add(own);
         own.addEventListener(
@@ -2469,10 +2479,15 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             },
             { capture: true }
         );
-        // A reset a page calls off leaves the errors, since the values that failed stay.
+        // A reset a page calls off leaves the errors, since the values that failed stay. One that
+        // goes through takes away the errors the kit drew, and where there were any says so, since
+        // they go out of a screen reader's hearing and focus stays on the button. A reset with none
+        // the kit drew, as after a save, says nothing, and errors a page drew are the page's to clear.
         own.addEventListener('reset', (event) => {
             window.setTimeout(() => {
-                if (!event.defaultPrevented) checkers.get(own)?.clear();
+                if (event.defaultPrevented) return;
+                const checker = checkers.get(own);
+                if (checker?.clear()) checker.cleared();
             });
         });
     }

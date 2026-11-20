@@ -245,22 +245,23 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
 /**
  * A ref for a form and what refuses its submit, by `attachForm`: called once the page has set the
  * errors, it waits for the render that draws them, then moves focus to the summary or the first
- * field in error and says the refusal once, on the status line of the nearest `StatusProvider`, or
- * through the `say` given. It is called in the submit handler, after an await in it too, or in an
- * effect with dependencies, never as the component renders nor in an effect that runs on every
- * render, since refusing renders the component again. Errors set in a transition are refused inside
- * the same `startTransition`, so the refusal waits for the render that draws them, and errors drawn
- * in another React root are not waited for. Where focus was is read as the refusal is asked for, so
- * a visitor who moves focus before the errors are drawn is not pulled back. The summary is read as
- * the refusal lands, so a function written inline on every render is never set again. What refuses
- * stays the same across renders, does nothing until the form is drawn, and returns what calls that
- * refusal off, never a later one, which unmounting does too. A form with no provider above it and
- * no `say` throws, since its refusal would reach no one. A submit whose fields fail the browser's
- * constraints is stopped before the page's handler, and the failures are handed to `invalid`,
- * which the page must give, since the markup is its own: it sets the page's errors from them, and
- * the refusal follows once they are drawn. `invalid` is called only for a submit that fails, so the
- * page's own submit handler clears the errors it set. `errorWords` gives the words for each
- * failure in place of the kit's, read as each is put in words.
+ * field in error and says once, on the status line of the nearest `StatusProvider` or through the
+ * `say` given, that field's name and error, or nothing over a summary, as `attachForm` has it.
+ * It is called in the submit handler, after an await in it too, or in an effect with dependencies,
+ * never as the component renders nor in an effect that runs on every render, since refusing renders
+ * the component again. Errors set in a transition are refused inside the same `startTransition`, so
+ * the refusal waits for the render that draws them, and errors drawn in another React root are not
+ * waited for. Where focus was is read as the refusal is asked for, so a visitor who moves focus
+ * before the errors are drawn is not pulled back. The summary is read as the refusal lands, so a
+ * function written inline on every render is never set again. What refuses stays the same across
+ * renders, does nothing until the form is drawn, and returns what calls that refusal off, never a
+ * later one, which unmounting does too. A form with no provider above it and no `say` throws, since
+ * its refusal would reach no one. A submit whose fields fail the browser's constraints is stopped
+ * before the page's handler, and the failures are handed to `invalid`, which the page must give,
+ * since the markup is its own: it sets the page's errors from them, and the refusal follows once
+ * they are drawn. `invalid` is called only for a submit that fails, so the page's own submit
+ * handler clears the errors it set. `errorWords` gives the words for each failure in place of the
+ * kit's, read as each is put in words.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
     options: Pick<FormOptions, 'say' | 'summary' | 'errorWords'> & {
