@@ -3579,10 +3579,11 @@ focus inside a shadow root too, `focusOnArrival()`, which focuses a view's headi
 press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
 `attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
 and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
-progress at its steps, and the types `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`,
-`DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`, `FocusTarget`,
-`MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`, `FormOptions`,
-`Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and `ProgressOptions`.
+progress at its steps, and the types `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
+`DialogOpener`, `DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`,
+`FocusTarget`, `MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`,
+`FormOptions`, `Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and
+`ProgressOptions`.
 
 ### `@jasonsdevspace/design-kit/react`
 

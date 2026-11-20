@@ -427,7 +427,7 @@ const listen = () => {
  */
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
 /** What a copy button reads, which attaching it again replaces. */
-type CopyOptions = { readonly source: () => HTMLElement; readonly status: HTMLElement };
+export type CopyOptions = { readonly source: () => HTMLElement; readonly status: HTMLElement };
 const attachedButtons = new WeakMap<
     HTMLElement,
     { readonly detach: () => void; readonly set: (next: CopyOptions) => void }
