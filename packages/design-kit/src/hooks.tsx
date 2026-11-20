@@ -51,10 +51,10 @@ export type StatusProviderProps = {
  * part of the page under it the function that says a message on it, through `useStatus`. The line
  * is the markup `StatusLine` draws, attached by `attachStatus` as it lands, before the effects of
  * the parts under it run, so their first effects are heard. Words said before the line is in the
- * page are held, the last firm and the last polite, and said in order once it is, so they give way
- * to each other as on the line, and words said once it has gone are dropped. A provider inside
- * another, as inside a dialog, takes the calls of the parts under it on a line of its own, so the
- * provider sits inside the dialog element itself.
+ * page are held, the last firm and the last polite, and said in order once it is, so polite words
+ * wait behind firm words as they would on the line, and words said once it has gone are dropped. A
+ * provider inside another, as inside a dialog, takes the calls of the parts under it on a line of
+ * its own, so the provider sits inside the dialog element itself.
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);

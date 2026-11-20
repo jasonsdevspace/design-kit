@@ -19,7 +19,7 @@ import { sentOf } from './parts.mjs';
  * Set in 0.6.0 from the size audit of record 13: what a page's bundler sends for every function,
  * with room for one more of the usual size, the median a function adds, rounded up to the next
  * quarter of a kilobyte. Set again by the same rule for 0.8.4, with attachPanel and its fixes in
- * place, after 0.8.7 once a stepper's range in words, its limits said and a page's own words and
+ * place, for 0.9.0 once a stepper's range in words, its limits said and a page's own words and
  * line took them past 7.5 KB, and again once moving focus after a change and among a group's cells
  * took them past 8.75 KB, and again once refusing a form and a busy button took them past 11 KB,
  * again once saying progress at its steps took them past 12 KB, again once checking a form

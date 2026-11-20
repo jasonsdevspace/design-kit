@@ -332,8 +332,8 @@ A strict `style-src` refuses a `style` attribute, so a page sets a property the 
 ## Browser support
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
-and Safari 17.5. What falls short at the floor, such as an empty live callout in Firefox 120, is
-listed under [known
+and Safari 17.5. What falls short at the floor, such as a label that holds a checkbox showing no
+pointer in Firefox 120, is listed under [known
 limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.0/ACCESSIBILITY.md#known-limitations).
 
 A Vite build that takes `browserFloor()` as its target, as Setup shows, keeps each `light-dark()` as

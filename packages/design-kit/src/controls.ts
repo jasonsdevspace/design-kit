@@ -673,7 +673,7 @@ const leave = (status: HTMLElement) => {
  * Says a message on a status line. A message given as a function is read as it is put in, after the
  * moment's wait, so words a page draws from its own state follow the change that prompted them, and
  * one that gives nothing by then is not said. Polite words go, wait or give way as `admit` has it.
- * Any message drops words still settling and takes the place of the one the line is saying. Polite
+ * Firm words drop words still settling and takes the place of the one the line is saying. Polite
  * words not yet put in that firm words take the place of wait for those to leave, unless both were
  * said in the same moment, and a notice waits whatever takes its place. Firm words leave polite
  * words waiting as they are, and polite words that go take the place of the polite words waiting.

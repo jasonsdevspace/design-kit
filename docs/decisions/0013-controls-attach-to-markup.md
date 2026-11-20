@@ -9,17 +9,19 @@ shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces
 the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past
 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB,
 in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that
-divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces
-planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75
-KB, once a stepper's range in words, its limits said and a page's own words and line took them past
-7.5 KB, then at 11 KB, once moving focus after a change and among a group's cells took them past
-8.75 KB, and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at
-12.75 KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking
-a form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a
+divides its cells took the sheets past 10.75 KB, for 0.9.0 to set it at 12 KB, once the pieces
+planned for it took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a
+stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB,
+then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB,
+and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75
+KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a
+form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a
 press that brings a view from a key that moves took them past 15.5 KB, and in 0.9.0 to set the
 controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, measured whole, left
 less room under each than a function or a piece of the usual size, and for the listener the module
-adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`
+adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, and
+which the package marks as a side effect so a bundler keeps the module where a page imports it for
+that alone
 
 ## Context
 
@@ -170,24 +172,24 @@ divides its cells, which works out a column's width at each count from two to si
 since no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they
 held, and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
 
-After 0.8.7 the sheets were measured with every piece planned for the next release in place, as
-they were for 0.8.0: a dock row for a compact action, a busy button, a region that is loading, a
-mark for a required or optional field, the stack's steps, a split row, a note, a large numeral,
-progress, a read-only field, an empty state and a hero beside its picture. Their rules were written
-as a prototype and formatted as the sheets are, since the pieces land one at a time and the budget
-is raised once for them. The sheets weigh 11,398 bytes sent together at 0.8.7 and 12,112 with the
-prototype in place, and the median a piece costs is still 169 bytes, so the rule sets the sheets at
-12 KB. A piece that lands heavier than its prototype and outgrows that says so with its figures, as
-the rule has it, and the package record measures the pieces as they ship.
+For 0.9.0 the sheets were measured with every piece planned for it in place, as they were for 0.8.0:
+a dock row for a compact action, a busy button, a region that is loading, a mark for a required or
+optional field, the stack's steps, a split row, a note, a large numeral, progress, a read-only
+field, an empty state and a hero beside its picture. Their rules were written as a prototype and
+formatted as the sheets are, since the pieces land one at a time and the budget is raised once for
+them. The sheets weigh 11,398 bytes sent together at 0.8.7 and 12,112 with the prototype in place,
+and the median a piece costs is still 169 bytes, so the rule sets the sheets at 12 KB. A piece that
+lands heavier than its prototype and outgrows that says so with its figures, as the rule has it, and
+the package record measures the pieces as they ship.
 
-After 0.8.7 the controls were measured with a stepper that describes its field by its range in
+For 0.9.0 the controls were measured with a stepper that describes its field by its range in
 words, says when a press lands on a limit, and takes a page's own words to say after the value and
 a page's own status line to say them on. Every function sent together weighs 8,112 bytes, past the
 7.5 KB they held, and the median a function adds is now 655 bytes, so the rule sets the controls at
 8.75 KB.
 
 The controls were measured again with `moveFocus`, which moves focus once a change is drawn, and
-`attachRoving`, which moves among a group's cells by the arrow keys, in place, as the next release
+`attachRoving`, which moves among a group's cells by the arrow keys, in place, as 0.9.0
 gives them with its other behaviors. Every function sent together weighs 10,372 bytes, past the 8.75
 KB they held, and the median a function adds is now 650 bytes, so the rule sets the controls at 11
 KB.
@@ -198,9 +200,9 @@ KB they held, and the median a function adds is now 672 bytes, so the rule sets 
 KB.
 
 The controls were measured again with `attachProgress`, which says progress at its steps, and the
-polite words it says, which give way to any other on a status line as they did then, in place. Every
-function sent together weighs 12,340 bytes, past the 12 KB they held, and the median a function adds
-is now 622 bytes, so the rule sets the controls at 12.75 KB.
+polite words it says, in place. Every function sent together weighs 12,340 bytes, past the 12 KB
+they held, and the median a function adds is now 622 bytes, so the rule sets the controls at 12.75
+KB.
 
 The controls were measured again with `attachForm` checking a form against the browser's
 constraints itself, with the words for each way a field fails, as record 21 has it. Every function
