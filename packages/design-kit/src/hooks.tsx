@@ -187,10 +187,14 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * as the refusal lands, so a function written inline on every render is never set again. What
  * refuses stays the same across renders, does nothing until the form is drawn, and returns what
  * calls the refusal off, which unmounting does too. A form with no provider above it and no `say`
- * throws, since its refusal would reach no one.
+ * throws, since its refusal would reach no one. A submit whose fields fail the browser's
+ * constraints is stopped before the page's handler, and the failures are handed to `invalid`,
+ * which sets the page's errors, and the refusal follows once they are drawn, so a React page draws
+ * every error from its own state. `errorWords` gives the words for each failure in place of the
+ * kit's.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
-    options: Pick<FormOptions, 'say' | 'summary'> = {}
+    options: Pick<FormOptions, 'say' | 'summary' | 'invalid' | 'errorWords'> = {}
 ): readonly [RefCallback<Form>, Refuse] => {
     const speaker = useContext(Speaker);
     if (!speaker && !options.say)
@@ -200,29 +204,63 @@ export const useFormRefusal = <Form extends HTMLElement>(
         latest.current = { options, speaker };
     });
     const refuser = useRef<Refuse | null>(null);
-    const ref = useCallback((form: Form | null) => {
-        refuser.current = form
-            ? attachForm(form, {
-                  say: (words, settle) => {
-                      const { options: now, speaker: line } = latest.current;
-                      (now.say ?? line)?.(words, settle);
-                  },
-                  summary: () => latest.current.options.summary?.() ?? null,
-              })
-            : null;
-    }, []);
     const waiting = useRef<(() => void) | null>(null);
+    const refuse = useCallback<Refuse>(() => {
+        const cancel = refuser.current?.() ?? (() => undefined);
+        waiting.current = cancel;
+        return cancel;
+    }, []);
+    // A refusal owed once the page draws the errors it was handed, made after the render that
+    // draws them, or a frame later where that render is another component's.
+    const owed = useRef(false);
+    const pay = useCallback(() => {
+        if (!owed.current) return;
+        owed.current = false;
+        refuse();
+    }, [refuse]);
+    useEffect(pay);
+    const form = useRef<Form | null>(null);
+    const attach = useCallback(
+        (element: Form, drawsItself: boolean) =>
+            attachForm(element, {
+                say: (words, settle) => {
+                    const { options: now, speaker: line } = latest.current;
+                    (now.say ?? line)?.(words, settle);
+                },
+                summary: () => latest.current.options.summary?.() ?? null,
+                errorWords: latest.current.options.errorWords,
+                invalid: drawsItself
+                    ? (failures) => {
+                          owed.current = true;
+                          latest.current.options.invalid?.(failures);
+                          window.requestAnimationFrame(pay);
+                      }
+                    : undefined,
+            }),
+        [pay]
+    );
+    const ref = useCallback(
+        (element: Form | null) => {
+            form.current = element;
+            refuser.current = element
+                ? attach(element, Boolean(latest.current.options.invalid))
+                : null;
+        },
+        [attach]
+    );
+    // Given again only where they change, as each hook's options are: whether the page draws its
+    // own errors, and the words it gives for each failure.
+    const drawsItself = Boolean(options.invalid);
+    const { errorWords } = options;
+    useEffect(() => {
+        if (form.current) attach(form.current, drawsItself);
+    }, [attach, drawsItself, errorWords]);
     useEffect(
         () => () => {
             waiting.current?.();
         },
         []
     );
-    const refuse = useCallback<Refuse>(() => {
-        const cancel = refuser.current?.() ?? (() => undefined);
-        waiting.current = cancel;
-        return cancel;
-    }, []);
     return [ref, refuse] as const;
 };
 

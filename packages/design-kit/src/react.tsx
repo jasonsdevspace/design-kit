@@ -390,11 +390,11 @@ type FieldParts = {
     readonly id?: string | undefined;
     /**
      * Marks the field required or optional in words in its label, apart from the native `required`,
-     * which a page keeps since `validity` reads it for the page's own check and it tells a screen
-     * reader a field is required where a form marks its optional fields, while the kit's form
-     * refusal turns the browser's own check off. Required is said by the control's `aria-required`,
-     * so its words are hidden from a screen reader, which would say it twice, and optional is said
-     * in the label's name.
+     * which a page keeps since the kit's check on submit reads it and it tells a screen reader a
+     * field is required where a form marks its optional fields, while the kit's form refusal turns
+     * the browser's own check off. Required is said by the control's `aria-required`, so its words
+     * are hidden from a screen reader, which would say it twice, and optional is said in the
+     * label's name.
      */
     readonly mark?: 'required' | 'optional' | undefined;
     /** The mark's words in place of the kit's, "(required)" or "(optional)", as in another language. */

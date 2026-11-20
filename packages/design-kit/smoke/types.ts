@@ -17,6 +17,9 @@ import {
 import {
     attachBusy,
     attachForm,
+    type Failure,
+    type FailureWords,
+    type FieldFailure,
     attachPanel,
     attachProgress,
     attachRoving,
@@ -238,6 +241,19 @@ export const cancelOf = (heading: HTMLElement): (() => void) =>
 // A form refused once its errors are drawn, said on a line or through a page's own say.
 export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>
     attachForm(form, { status: line, summary: () => null });
+
+// A form's failures take the page's words, or go to a page that draws them itself.
+export const checkedOf = (form: HTMLFormElement, words: FailureWords): Refuse =>
+    attachForm(form, {
+        errorWords: { ...words, rangeUnderflow: (control) => `At least ${control.id}.` },
+        invalid: (failures: readonly FieldFailure[]) => {
+            const first: Failure | undefined = failures[0]?.failure;
+            void first;
+        },
+    });
+
+// @ts-expect-error A failure is named as validity names it.
+export const misnamed: FailureWords = { missing: 'Enter it.' };
 
 // A group of cells takes its orientation, its current cell and what to do as focus moves.
 const tabs: RovingOptions = {

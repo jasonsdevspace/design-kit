@@ -1529,7 +1529,130 @@ export type FormOptions = {
     readonly say?: Say | undefined;
     /** An error summary the page draws over the form, focused in place of the first field. */
     readonly summary?: (() => Element | null) | undefined;
+    /**
+     * The words for each way a field can fail the browser's constraints, in place of the kit's,
+     * as a page in another language gives them, each words or a function of the field.
+     */
+    readonly errorWords?: FailureWords | undefined;
+    /**
+     * Called with the fields that fail the browser's constraints on a submit, for a page that draws
+     * its errors itself, as React does from its state, and refuses once they are drawn. Without
+     * it, the kit draws each error in the field and refuses.
+     */
+    readonly invalid?: ((failures: readonly FieldFailure[]) => void) | undefined;
 };
+
+/** The ways a field fails the browser's constraints, in the order their words are chosen. */
+const FAILURES = [
+    'badInput',
+    'valueMissing',
+    'typeMismatch',
+    'patternMismatch',
+    'tooShort',
+    'tooLong',
+    'rangeUnderflow',
+    'rangeOverflow',
+    'stepMismatch',
+    'customError',
+] as const;
+
+/** A way a field fails the browser's constraints, named as its `validity` names it. */
+export type Failure = (typeof FAILURES)[number];
+
+/** Words for each way a field fails, each words or a function of the field. */
+export type FailureWords = Partial<Record<Failure, string | ((control: HTMLElement) => string)>>;
+
+/** A field that fails the browser's constraints, with the way it fails and the words for it. */
+export type FieldFailure = {
+    /** The field, a set's fieldset where the control is one of a set's choices. */
+    readonly field: Element;
+    /** The control that fails. */
+    readonly control: HTMLElement;
+    readonly failure: Failure;
+    readonly words: string;
+};
+
+type Checked = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+const DATED = new Set(['date', 'datetime-local', 'month', 'week', 'time']);
+
+const limitOf = (control: Checked, name: string) => control.getAttribute(name) ?? '';
+
+/**
+ * The kit's words for a failure, which say what to do, in the manner of GOV.UK's error messages.
+ * A pattern cannot be put in words from the pattern, so a field with one gives words of its own.
+ */
+const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
+    badInput: (control) => (DATED.has(control.type) ? 'Enter a real date.' : 'Enter a number.'),
+    valueMissing: (control) =>
+        control instanceof HTMLSelectElement || ['radio', 'checkbox'].includes(control.type)
+            ? 'Choose an option.'
+            : 'Enter a value.',
+    typeMismatch: (control) =>
+        control.type === 'email'
+            ? 'Enter an email address, like name@example.com.'
+            : control.type === 'url'
+              ? 'Enter a full web address, starting with https://.'
+              : 'Enter it in the form shown.',
+    patternMismatch: () => 'Enter it in the form shown.',
+    tooShort: (control) => `Enter at least ${limitOf(control, 'minlength')} characters.`,
+    tooLong: (control) => `Enter ${limitOf(control, 'maxlength')} characters or fewer.`,
+    rangeUnderflow: (control) =>
+        DATED.has(control.type)
+            ? `Enter a date on or after ${limitOf(control, 'min')}.`
+            : `Enter ${limitOf(control, 'min')} or more.`,
+    rangeOverflow: (control) =>
+        DATED.has(control.type)
+            ? `Enter a date on or before ${limitOf(control, 'max')}.`
+            : `Enter ${limitOf(control, 'max')} or less.`,
+    stepMismatch: (control) =>
+        ['', '1'].includes(limitOf(control, 'step'))
+            ? 'Enter a whole number.'
+            : `Enter a multiple of ${limitOf(control, 'step')}.`,
+    customError: (control) => control.validationMessage,
+};
+
+/**
+ * The words for a field's failure: the field's own for it, as `data-error-value-missing`, else the
+ * page's for the form, else the kit's, and never the browser's, which follow its language rather
+ * than the page's.
+ */
+const failureWords = (control: Checked, failure: Failure, given: FailureWords | undefined) => {
+    const own = control.getAttribute(
+        `data-error-${failure.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`
+    );
+    if (own) return own;
+    const page = given?.[failure];
+    if (page) return typeof page === 'string' ? page : page(control);
+    return KIT_WORDS[failure](control);
+};
+
+/** The fields in a form or a part of one that fail the browser's constraints, each set once. */
+const failuresOf = (scope: HTMLElement, given: FailureWords | undefined): FieldFailure[] => {
+    const seen = new Set<Element>();
+    return [...scope.querySelectorAll<Checked>('input, select, textarea')].flatMap((control) => {
+        if (!control.willValidate || control.validity.valid) return [];
+        const field = fieldOf(control);
+        if (seen.has(field)) return [];
+        seen.add(field);
+        const failure = FAILURES.find((one) => control.validity[one]) ?? 'customError';
+        return [{ field, control, failure, words: failureWords(control, failure, given) }];
+    });
+};
+
+/** The controls a field's error marks: a set's own choices where it is one, else the field. */
+const markedOf = (field: Element, control: Element): Element[] =>
+    field === control
+        ? [control]
+        : [
+              field,
+              ...field.querySelectorAll(
+                  `input[name="${CSS.escape(control.getAttribute('name') ?? '')}"]`
+              ),
+          ];
+
+/** An error the kit drew in a field, and what it marked, so a later submit can take it away. */
+type Drawn = { readonly error: HTMLElement; readonly marked: readonly Element[] };
 
 /**
  * Refuses a submit, once the page has drawn its errors: focus moves and the refusal is said. It
@@ -1649,10 +1772,59 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     let pending: (() => void) | null = null;
     // The browser's own check would stop a submit before the page's handler runs, showing its own
     // passing bubble in place of the kit's errors, so a form attached, or the form around a part
-    // of one, checks itself. Its fields keep required, which `validity` reads for the page's own
-    // check.
+    // of one, takes noValidate from script, and the kit checks the same constraints on submit. A
+    // page without script keeps the browser's check.
     const own = form instanceof HTMLFormElement ? form : form.closest('form');
     if (own) own.noValidate = true;
+    // A field not in error says so, so a browser does not read an empty required field as invalid
+    // before anything is submitted.
+    for (const control of form.querySelectorAll('input, select, textarea, fieldset'))
+        if (!control.hasAttribute('aria-invalid')) control.setAttribute('aria-invalid', 'false');
+    const drawn = new Map<Element, Drawn>();
+    /** Takes away an error the kit drew, and its marks. */
+    const undraw = (field: Element) => {
+        const was = drawn.get(field);
+        if (!was) return;
+        drawn.delete(field);
+        was.error.remove();
+        for (const one of was.marked) {
+            one.setAttribute('aria-invalid', 'false');
+            const rest = (one.getAttribute('aria-describedby') ?? '')
+                .split(/\s+/)
+                .filter((id) => id !== '' && id !== was.error.id);
+            if (rest.length > 0) one.setAttribute('aria-describedby', rest.join(' '));
+            else one.removeAttribute('aria-describedby');
+        }
+    };
+    /**
+     * Draws a failure's error in its field as the kit's field draws one: above the control, or
+     * under a set's legend, with a word a screen reader reads before it, tied to what it marks.
+     */
+    const draw = ({ field, control, words }: FieldFailure) => {
+        undraw(field);
+        const error = document.createElement('p');
+        error.className = 'dk-field-error';
+        error.id = `${field.id || control.id || 'dk-field'}-error`;
+        const said = document.createElement('span');
+        said.className = 'dk-visually-hidden';
+        said.textContent = 'Error: ';
+        error.append(said, words);
+        const legend = field.matches('fieldset') ? field.querySelector(':scope > legend') : null;
+        const holder = field.closest('.dk-field');
+        const before =
+            holder && holder !== field
+                ? ([...holder.children].find((child) => child.contains(control)) ?? control)
+                : control;
+        if (legend) legend.after(error);
+        else before.before(error);
+        const marked = markedOf(field, control);
+        for (const one of marked) {
+            one.setAttribute('aria-invalid', 'true');
+            const ids = (one.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+            one.setAttribute('aria-describedby', [error.id, ...ids].join(' '));
+        }
+        drawn.set(field, { error, marked });
+    };
     const speak = (words: string) => {
         if (words === '') return;
         if (chosen.say) chosen.say(words);
@@ -1688,6 +1860,33 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         };
         return pending;
     };
+    // The browser's constraints, checked as the form is submitted, before the page's own handler,
+    // which runs only where every field passes, so it can still check what they cannot express. A
+    // button marked formnovalidate submits unchecked, as it would with the browser's own check.
+    own?.addEventListener(
+        'submit',
+        (event) => {
+            const { submitter } = event;
+            if (
+                (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) &&
+                submitter.formNoValidate
+            )
+                return;
+            const failures = failuresOf(form, chosen.errorWords);
+            const failing = new Set(failures.map(({ field }) => field));
+            for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
+            if (failures.length === 0) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (chosen.invalid) {
+                chosen.invalid(failures);
+                return;
+            }
+            for (const failure of failures) draw(failure);
+            refuse();
+        },
+        { capture: true }
+    );
     attachedForms.set(form, {
         refuse,
         set: (next) => {
