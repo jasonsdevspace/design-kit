@@ -7,6 +7,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useReducer,
     useRef,
 } from 'react';
 
@@ -118,23 +119,42 @@ export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) =
  * The function that moves focus to a control once the change asking for it is drawn, the same
  * across renders, by `moveFocus`: to an element or an id, with fallbacks where it is gone, and
  * never from where a visitor has moved focus. It is called in the press or key handler that makes
- * the change, or in an effect once a change React draws later is drawn. Each call is a new request
- * that takes the place of one not yet landed, so the last asked for wins, and returns what calls it
- * off. A request not yet landed when the component unmounts is called off.
+ * the change, after an await in it, or in an effect once a change React draws later is drawn. Each
+ * call is a new request that takes the place of one not yet landed, so the last asked for wins, and
+ * returns what calls it off. A request not yet landed when the component unmounts is called off.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const waiting = useRef<(() => void) | null>(null);
+    // React draws state set after an await in a task of its own, which a frame can come before, so
+    // a request is made once the render it was asked in commits, or focus would find the control
+    // not yet drawn or still off and fall to the main content.
+    const owed = useRef<(() => () => void) | null>(null);
+    const [asked, ask] = useReducer((count: number) => count + 1, 0);
+    useEffect(() => {
+        const request = owed.current;
+        owed.current = null;
+        if (request) waiting.current = request();
+    }, [asked]);
     useEffect(
         () => () => {
+            owed.current = null;
             waiting.current?.();
         },
         []
     );
     return useCallback<FocusAfterDraw>((target, options) => {
         waiting.current?.();
-        const cancel = moveFocus(target, options);
-        waiting.current = cancel;
-        return cancel;
+        waiting.current = null;
+        // Where focus is as the change is asked for, not as it is drawn.
+        const from = options?.from === undefined ? document.activeElement : options.from;
+        let cancel: (() => void) | null = null;
+        const request = () => (cancel = moveFocus(target, { ...options, from }));
+        owed.current = request;
+        ask();
+        return () => {
+            if (owed.current === request) owed.current = null;
+            cancel?.();
+        };
     }, []);
 };
 
@@ -188,8 +208,9 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
 };
 
 /**
- * A ref for a form and what refuses its submit, by `attachForm`: called once the page has drawn the
- * errors, it moves focus to the summary or the first field in error and says the refusal once, on
+ * A ref for a form and what refuses its submit, by `attachForm`: called once the page has set the
+ * errors, in its submit handler or after an await in it, it waits for the render that draws them,
+ * then moves focus to the summary or the first field in error and says the refusal once, on
  * the status line of the nearest `StatusProvider`, or through the `say` given. The summary is read
  * as the refusal lands, so a function written inline on every render is never set again. What
  * refuses stays the same across renders, does nothing until the form is drawn, and returns what
@@ -215,20 +236,27 @@ export const useFormRefusal = <Form extends HTMLElement>(
     });
     const refuser = useRef<Refuse | null>(null);
     const waiting = useRef<(() => void) | null>(null);
-    const refuse = useCallback<Refuse>(() => {
-        const cancel = refuser.current?.() ?? (() => undefined);
-        waiting.current = cancel;
-        return cancel;
-    }, []);
     // A refusal owed once the page draws the failures it was handed, made after the render that
     // draws them, or a frame later where that render is another component's.
     const owed = useRef(false);
     const pay = useCallback(() => {
         if (!owed.current) return;
         owed.current = false;
-        refuse();
-    }, [refuse]);
+        waiting.current = refuser.current?.() ?? null;
+    }, []);
     useEffect(pay);
+    // The page's errors set after an await are drawn in a task of React's own, which a frame can
+    // come before, so the page's refusal is owed too and made once the render it was asked in
+    // commits, or it would find no field in error and leave focus where it was.
+    const [, ask] = useReducer((count: number) => count + 1, 0);
+    const refuse = useCallback<Refuse>(() => {
+        owed.current = true;
+        ask();
+        return () => {
+            owed.current = false;
+            waiting.current?.();
+        };
+    }, []);
     const ref = useCallback(
         (form: Form | null) => {
             refuser.current = form

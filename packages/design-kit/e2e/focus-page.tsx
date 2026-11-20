@@ -14,7 +14,8 @@ const page = window as unknown as Page;
  * one with a field that takes focus itself, two requests made in one frame, a row of tabs moved
  * along by the arrow keys or chosen by a press, whose views each take focus on arrival, a view
  * first drawn late beside a field, one gone in the frame it arrived in, a view drawn again many
- * times before any press, and a view and a section of it brought by one press.
+ * times before any press, a view and a section of it brought by one press, and a save answered
+ * after an await that turns on the control it asks focus for.
  */
 
 const Players = () => {
@@ -254,6 +255,36 @@ const Again = () => {
     );
 };
 
+// A save answered after an await, whose answer turns on the control focus goes to next.
+const Saving = () => {
+    const [saved, setSaved] = useState(false);
+    const focusNext = useFocusAfterDraw();
+    const save = async () => {
+        // Answered in a task of its own, as a store's answer is, so React draws what it sets later.
+        await new Promise((resolve) => {
+            setTimeout(resolve);
+        });
+        setSaved(true);
+        focusNext('saved-next');
+    };
+    return (
+        <section>
+            <button
+                id="save"
+                type="button"
+                onClick={() => {
+                    void save();
+                }}
+            >
+                Save
+            </button>
+            <button id="saved-next" type="button" aria-disabled={saved ? undefined : 'true'}>
+                Next
+            </button>
+        </section>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -266,5 +297,6 @@ if (root)
             <Brief />
             <Again />
             <Start />
+            <Saving />
         </main>
     );

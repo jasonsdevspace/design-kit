@@ -144,6 +144,24 @@ test.describe('in React', () => {
         await expect(page.locator('#round')).toBeFocused();
     });
 
+    test('focuses a control a save turns on after an await, though the frame comes before the render', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        // A frame due at once, as one late under load is, comes before React draws what the save
+        // set, which it draws in a task of its own.
+        await page.evaluate(() => {
+            window.requestAnimationFrame = (callback) => {
+                queueMicrotask(() => {
+                    callback(performance.now());
+                });
+                return 0;
+            };
+        });
+        await page.locator('#save').click();
+        await expect(page.locator('#saved-next')).toBeFocused();
+    });
+
     test('focuses the last of two requests made in one frame', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#remove-Ann').focus();

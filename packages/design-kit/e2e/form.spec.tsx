@@ -254,4 +254,23 @@ test.describe('in React', () => {
         await expect(page.getByRole('textbox', { name: 'Name' })).toBeFocused();
         await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
     });
+
+    test('refuses after an await, though the frame comes before the render that draws the error', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
+        // A frame due at once, as one late under load is, comes before React draws the error the
+        // page set, which it draws in a task of its own.
+        await page.evaluate(() => {
+            window.requestAnimationFrame = (callback) => {
+                queueMicrotask(() => {
+                    callback(performance.now());
+                });
+                return 0;
+            };
+        });
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByRole('textbox', { name: 'Player' })).toBeFocused();
+        await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
+    });
 });
