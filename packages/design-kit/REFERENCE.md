@@ -1574,15 +1574,16 @@ moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request takes
 the place of one not yet landed, so the last asked for wins, and one not yet landed when the
 component unmounts is called off. `useArrivalFocus(key)` returns a ref for a view's heading, gives
-the heading a tabindex of -1 where it has none, and focuses it when a visitor's press on a button or
-a link, or a submit, brings the view: when the key changes, such as the round on screen, and when
-the view is drawn by a press, as a tab bar's view is. It never moves focus as the page first draws,
-nor after a key that moves, such as Tab or an arrow along a row of tabs, after typing, or after a
-press on nothing, nor from a field the view focuses itself as it draws. A row of tabs' panels take
-no focus on arrival, since a tab keeps focus as its panel changes, whether chosen by an arrow, a
-press or Enter. Views drawn by one press land together, and the first in the page takes focus, so a
-view's title is heard before a section of it. What decides is `focusOnArrival(heading, { from })`
-from `./controls`, which a page without React calls as each view draws. The key is a string, a
+the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as the
+round on screen, and when the view is first drawn by a visitor's press on a button or a link, or a
+submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key that
+moves or types, such as Tab or an arrow along a row of tabs, after a press on nothing or on a
+control that is off, or more than five seconds after the press, as a view a poll brings. A row of
+tabs' panels take no focus on arrival, since a tab keeps focus as its panel changes, so they leave
+the hook out. Views first drawn by one press land together, and the first in the page takes focus,
+so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
+with autofocus does, is never taken. What decides a first draw is `focusOnArrival(heading, { from
+})` from `./controls`, which a page without React calls as each view draws. The key is a string, a
 number or a boolean, compared by value, and changes on a press or a submit, never as a visitor
 chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2 has it.
 

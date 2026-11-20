@@ -141,21 +141,29 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     key: ArrivalKey
 ): RefCallback<Heading> => {
     const heading = useRef<Heading | null>(null);
-    const last = useRef<{ readonly key: ArrivalKey } | null>(null);
+    const seen = useRef<{ readonly key: ArrivalKey; readonly first: boolean } | null>(null);
     // Where focus was as the change began, read as the view draws, before anything in it can take
     // focus, so a field the view focuses itself is not taken for the visitor's own place.
     const from = useRef<Element | null>(null);
     if (
-        (last.current === null || !Object.is(last.current.key, key)) &&
+        (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
         from.current = document.activeElement;
-    // Asks once for each key, since the effect runs again only when the key changes, and calls the
-    // request off as it is cleaned up, so React's second run in development asks again and a view
-    // gone before its frame moves nothing.
+    // Asks once for each key, since the effect runs again only when the key changes: as the view
+    // first draws, by whether a press brought it, and as its key changes, at once, since the page
+    // changes it on a press. The request is called off as the effect is cleaned up, so React's
+    // second run in development asks again and a view gone before its frame moves nothing.
     useEffect(() => {
-        last.current = { key };
-        return focusOnArrival(() => heading.current, { from: from.current });
+        // Run again with the same key, as React runs a new effect twice in development, a first
+        // draw is still one.
+        const first =
+            seen.current === null || (seen.current.first && Object.is(seen.current.key, key));
+        seen.current = { key, first };
+        const target = () => heading.current;
+        return first
+            ? focusOnArrival(target, { from: from.current })
+            : moveFocus(target, { from: from.current });
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;

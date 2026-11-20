@@ -112,6 +112,8 @@ export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): 
     };
 };
 
+/** A button or a link by its role, which Enter presses, and Space too but for a link. */
+const ROLE_ACTIVATOR = '[role="button"], [role="link"], [role="menuitem"]';
 /** What a press is made on: a button or a link, native or by its role. */
 const ACTIVATOR = [
     'button',
@@ -121,43 +123,65 @@ const ACTIVATOR = [
     'input[type="reset"]',
     'input[type="image"]',
     'summary',
-    '[role="button"]',
-    '[role="link"]',
-    '[role="menuitem"]',
+    ROLE_ACTIVATOR,
 ].join(', ');
+/** Keys that move rather than press. */
+const MOVES = [
+    'Tab',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+];
+/** How long a press may wait for the view it brings, in milliseconds, as one a slow load brings. */
+const PRESS_LIVES = 5000;
+
+/** Whether an event presses a button or a link that is not off and is not in a row of tabs. */
+const presses = (event: Event): boolean => {
+    if (event.type === 'submit') return true;
+    const { target } = event;
+    if (!(target instanceof Element) || target.closest('[role="tablist"]')) return false;
+    if (event instanceof KeyboardEvent) {
+        const own = target.closest(ROLE_ACTIVATOR);
+        return (
+            own === target &&
+            !isOff(own) &&
+            (event.key === 'Enter' || (event.key === ' ' && own.getAttribute('role') !== 'link'))
+        );
+    }
+    const control = target.closest(ACTIVATOR);
+    return control !== null && !isOff(control);
+};
 
 /**
- * Whether the visitor's last input was a press on a button or a link, or a submit, that no view has
- * taken focus for yet, and how many inputs they have made, so a press handed back is not handed
- * back over a later one. A key or a pointer going down clears it, so a press is the last input only
- * once its click has come, and a move, a Tab, typing or a press on nothing leaves none. A click in
- * a row of tabs counts for nothing, since a tab keeps focus as its panel changes, and Enter or
- * Space on a control of the page's own that is a button or a link by its role counts, since no
- * click follows them.
+ * When the visitor's last input was a press on a button or a link, or a submit, that no view has
+ * taken focus for, and how many inputs they have made, so a press handed back is not handed back
+ * over a later one. A press is any click or submit, a script's among them, so a page's own
+ * `click()` and a test's count. A key that moves or types clears it, so a Tab, an arrow along a
+ * row of tabs or typing in a field leaves none, as a click on nothing does, while a pointer going
+ * down to scroll leaves it. A press on a control that is off or in a row of tabs counts for
+ * nothing, since an off control only says why it is off and a tab keeps focus as its panel
+ * changes, and Enter or Space on a control of the page's own that is a button or a link by its
+ * role counts, since no click follows them.
  */
-let pressed = false;
+let pressedAt: number | null = null;
 let inputs = 0;
 const heard = (event: Event) => {
-    if (!event.isTrusted) return;
-    const { target } = event;
-    if (event instanceof KeyboardEvent && ['Shift', 'Control', 'Alt', 'Meta'].includes(event.key))
-        return;
+    if (event instanceof KeyboardEvent) {
+        if (presses(event)) pressedAt = performance.now();
+        else if (event.key.length === 1 || MOVES.includes(event.key)) pressedAt = null;
+        else return;
+    } else pressedAt = presses(event) ? performance.now() : null;
     inputs += 1;
-    pressed =
-        event.type === 'submit' ||
-        (target instanceof Element &&
-            !target.closest('[role="tablist"]') &&
-            (event.type === 'click'
-                ? target.closest(ACTIVATOR) !== null
-                : event instanceof KeyboardEvent &&
-                  (event.key === 'Enter' || event.key === ' ') &&
-                  target.matches('[role="button"], [role="link"], [role="menuitem"]')));
 };
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
 // view is heard. It notes inputs and nothing else.
 if (typeof document !== 'undefined')
-    for (const type of ['pointerdown', 'keydown', 'click', 'submit'])
-        document.addEventListener(type, heard, true);
+    for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
 
 /** A view asking to take focus for a press. */
 type Arrival = {
@@ -166,26 +190,34 @@ type Arrival = {
     readonly fallbacks: readonly FocusTarget[] | undefined;
 };
 /** The views asking for the press now being answered, landed together in one frame. */
-let arriving: { readonly views: Set<Arrival>; readonly frame: number; readonly at: number } | null =
-    null;
+let arriving: {
+    readonly views: Set<Arrival>;
+    readonly frame: number;
+    readonly at: number;
+    readonly press: number;
+} | null = null;
 
 /**
- * Moves focus to a view's heading as it arrives, as `moveFocus` does, where the visitor's last
- * input was a press on a button or a link, or a submit, that no view has taken focus for, and
- * returns what calls it off. A view drawn as the page first draws takes nothing, nor one drawn
- * after a key that moves, such as Tab or an arrow along a row of tabs, after typing, or after a
- * press on nothing or in a row of tabs. Views that ask for the same press land together in one
- * frame, and the one first in the page takes focus, so a view's title is heard before a section of
- * it. A request called off before it lands hands its press back where no input has come since, so
- * a view asked for again, as React asks again in development, takes focus.
+ * Moves focus to a view's heading as it is first drawn, as `moveFocus` does, where the visitor's
+ * last input was a press on a button or a link, or a submit, in the last five seconds that no view
+ * has taken focus for, and returns what calls it off. A view drawn as the page first draws takes
+ * nothing, nor one drawn after a key that moves or types, such as Tab or an arrow along a row of
+ * tabs, after a press on nothing, on a control that is off or in a row of tabs, or long after the
+ * press, as one a poll brings. Views first drawn for the same press land together in one frame, and
+ * the one first in the page takes focus, so a view's title is heard before a section of it. A
+ * request called off before it lands hands its press back where no input has come since, so a view
+ * asked for again, as React asks again in development, takes focus. A view already drawn whose
+ * content changes on a press moves focus with `moveFocus` itself.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
     options: MoveFocusOptions = {}
 ): (() => void) => {
     if (!arriving) {
-        if (!pressed) return () => undefined;
-        pressed = false;
+        if (pressedAt === null || performance.now() - pressedAt > PRESS_LIVES)
+            return () => undefined;
+        const press = pressedAt;
+        pressedAt = null;
         const views = new Set<Arrival>();
         const asked = performance.now();
         const frame = window.requestAnimationFrame(() => {
@@ -201,8 +233,13 @@ export const focusOnArrival = (
             );
             const [first] = places;
             if (first) land(first.place, first.view.fallbacks, first.view.from, asked);
+            else {
+                // No heading is there to take focus, so the first view asked goes by its fallbacks.
+                const [view] = views;
+                if (view) land(view.heading, view.fallbacks, view.from, asked);
+            }
         });
-        arriving = { views, frame, at: inputs };
+        arriving = { views, frame, at: inputs, press };
     }
     const batch = arriving;
     const view: Arrival = {
@@ -216,7 +253,7 @@ export const focusOnArrival = (
         if (batch.views.size > 0 || arriving !== batch) return;
         window.cancelAnimationFrame(batch.frame);
         arriving = null;
-        if (inputs === batch.at) pressed = true;
+        if (inputs === batch.at) pressedAt = batch.press;
     };
 };
 

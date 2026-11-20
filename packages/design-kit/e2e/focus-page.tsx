@@ -160,6 +160,9 @@ const Late = () => {
     return (
         <section>
             <input id="late-query" aria-label="Find a game" />
+            <button id="off" type="button" aria-disabled="true">
+                Deal
+            </button>
             {shown ? <LateView /> : null}
         </section>
     );

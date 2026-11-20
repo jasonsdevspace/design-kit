@@ -223,6 +223,47 @@ test.describe('in React', () => {
         await expect(page.locator('#late-query')).toBeFocused();
     });
 
+    test('leaves focus for a view first drawn after a press on a control that is off', async ({
+        page,
+    }) => {
+        await page.clock.install();
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        // Forced, since an off control waits for nothing to turn it on.
+        await page.locator('#off').click({ force: true });
+        await page.evaluate(() => {
+            (window as unknown as { showLate: () => void }).showLate();
+        });
+        await expect(page.locator('#late')).toBeVisible();
+        await page.clock.runFor(100);
+        await expect(page.locator('#off')).toBeFocused();
+    });
+
+    test('leaves focus for a view a press brought only after the press had long passed', async ({
+        page,
+    }) => {
+        await page.clock.install();
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        // The view this press brings leaves at once, so the press is handed back and waits.
+        await page.locator('#show-brief').click();
+        await page.clock.runFor(6000);
+        await page.evaluate(() => {
+            (window as unknown as { showLate: () => void }).showLate();
+        });
+        await expect(page.locator('#late')).toBeVisible();
+        await page.clock.runFor(100);
+        await expect(page.locator('#show-brief')).toBeFocused();
+    });
+
+    test("focuses a view's heading when a script's click changes its key", async ({ page }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#next').focus();
+        await page.evaluate(() => {
+            document.querySelector<HTMLButtonElement>('#next')?.click();
+        });
+        await expect(page.locator('#round')).toHaveText('Round 2');
+        await expect(page.locator('#round')).toBeFocused();
+    });
+
     test('moves nothing for a view gone in the frame it arrived in', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#show-brief').click();
