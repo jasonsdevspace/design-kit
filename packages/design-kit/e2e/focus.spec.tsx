@@ -163,4 +163,68 @@ test.describe('in React', () => {
         await page.waitForTimeout(100);
         await expect(page.locator('#query')).toBeFocused();
     });
+
+    test('keeps focus on each tab as the arrow keys move along a row whose views take focus on arrival', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        // A press first, so the visitor has acted, as the round's heading takes focus for it.
+        await page.locator('#next').click();
+        await expect(page.locator('#round')).toBeFocused();
+        await page.locator('#mode-number').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('#view-cards')).toBeVisible();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#mode-cards')).toBeFocused();
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.locator('#view-number')).toBeVisible();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#mode-number')).toBeFocused();
+    });
+
+    test('leaves focus where Tab put it for a view first drawn after the visitor only tabbed', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#remove-Ann')).toBeFocused();
+        await page.evaluate(() => {
+            (window as unknown as { showLate: () => void }).showLate();
+        });
+        await expect(page.locator('#late')).toBeVisible();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#remove-Ann')).toBeFocused();
+    });
+
+    test('moves nothing for a view gone in the frame it arrived in', async ({ page }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#show-brief').click();
+        await page.waitForTimeout(100);
+        await expect(page.locator('#brief')).toHaveCount(0);
+        await expect(page.locator('#show-brief')).toBeFocused();
+    });
+
+    test('listens once for presses however often a view is drawn before any', async ({
+        page,
+        browserName,
+    }) => {
+        test.skip(
+            browserName !== 'chromium',
+            "Listeners are counted through Chromium's own tools."
+        );
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.evaluate(() => {
+            (window as unknown as { drawAgain: () => void }).drawAgain();
+        });
+        await expect(page.locator('#again')).toHaveAttribute('data-count', '20');
+        const session = await page.context().newCDPSession(page);
+        const { result } = await session.send('Runtime.evaluate', { expression: 'document' });
+        const { listeners } = await session.send('DOMDebugger.getEventListeners', {
+            objectId: result.objectId ?? '',
+        });
+        const types = listeners.map(({ type }) => type).sort();
+        expect(
+            types.filter((type) => ['click', 'keydown', 'pointerdown', 'submit'].includes(type))
+        ).toEqual(['click', 'submit']);
+    });
 });

@@ -17,6 +17,7 @@ import {
     attachRoving,
     attachStatus,
     type BusyOptions,
+    focusOnArrival,
     type FocusTarget,
     type FormOptions,
     moveFocus,
@@ -124,35 +125,21 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
 /** What a view's arrival is told apart by, compared by value, such as a round's number. */
 export type ArrivalKey = string | number | boolean | null | undefined;
 
-/** Whether a visitor has pressed or typed on the page yet, so a first draw can be told apart. */
-let acted = false;
-const listenForAction = () => {
-    if (acted || typeof document === 'undefined') return;
-    const heard = (event: Event) => {
-        if (!event.isTrusted) return;
-        acted = true;
-        for (const type of ['pointerdown', 'keydown'] as const)
-            document.removeEventListener(type, heard, true);
-    };
-    for (const type of ['pointerdown', 'keydown'] as const)
-        document.addEventListener(type, heard, true);
-};
-
 /**
- * A ref for a view's heading, which takes focus when a visitor's action brings the view, so a
- * screen reader says where they are: when the key given changes, such as the round on screen, and
- * when a view is drawn after the visitor has pressed or typed, as a tab's view is. It never moves
- * focus as the page first draws, nor from focus the view placed itself as it drew, as a field with
- * autofocus does, nor from where a visitor has moved it. The key is a string, a number or a
- * boolean, compared by value, so a key drawn again with the same value moves nothing. The heading
- * takes a tabindex of -1 where it has none, so it can take focus at all. The key changes on a
- * visitor's press or submit, never as they choose in a list or a set of radios, which would move
- * them as they choose.
+ * A ref for a view's heading, which takes focus when a visitor's press or submit brings the view,
+ * so a screen reader says where they are: when the key given changes, such as the round on screen,
+ * and when a view is drawn by a press, as a tab bar's view is, by `focusOnArrival`. It never moves
+ * focus as the page first draws, nor as a visitor moves along a row of tabs with the arrow keys or
+ * Tabs past, nor from focus the view placed itself as it drew, as a field with autofocus does, nor
+ * from where a visitor has moved it, and a view gone in the frame it arrived in moves nothing. The
+ * key is a string, a number or a boolean, compared by value, so a key drawn again with the same
+ * value moves nothing. The heading takes a tabindex of -1 where it has none, so it can take focus
+ * at all. The key changes on a visitor's press or submit, never as they choose in a list or a set
+ * of radios, which would move them as they choose.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
     key: ArrivalKey
 ): RefCallback<Heading> => {
-    listenForAction();
     const heading = useRef<Heading | null>(null);
     const seen = useRef<{ readonly key: ArrivalKey } | null>(null);
     // Where focus was as the change began, read as the view draws, before anything in it can take
@@ -163,16 +150,17 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         typeof document !== 'undefined'
     )
         from.current = document.activeElement;
-    // The page's first draw is told by whether the visitor had acted when the view was first drawn.
-    const arrivedByAction = useRef(acted);
     useEffect(() => {
-        const first = seen.current === null;
-        if (!first && Object.is(seen.current?.key, key)) return;
+        if (seen.current !== null && Object.is(seen.current.key, key)) return;
+        const before = seen.current;
         seen.current = { key };
-        if (first && !arrivedByAction.current) return;
-        // Not called off as the effect is cleaned up, so React's second run of a new effect in
-        // development, which finds the key already seen, leaves the request to land.
-        moveFocus(heading.current, { from: from.current });
+        const cancel = focusOnArrival(() => heading.current, { from: from.current });
+        // Called off and forgotten as the effect is cleaned up, so React's second run of a new
+        // effect in development asks again, and a view gone before its frame moves nothing.
+        return () => {
+            cancel();
+            seen.current = before;
+        };
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;

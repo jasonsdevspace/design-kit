@@ -48,6 +48,7 @@ export const VALUE_EXPORTS = {
         'attachThemeSwitch',
         'attachToast',
         'chooseTheme',
+        'focusOnArrival',
         'moveFocus',
     ],
     '@jasonsdevspace/design-kit/vite': [

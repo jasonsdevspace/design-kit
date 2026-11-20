@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
-import { useArrivalFocus, useFocusAfterDraw } from '../src/react.js';
+import { useArrivalFocus, useFocusAfterDraw, useRoving } from '../src/react.js';
 
-type Page = { focusTwice?: () => void };
+type Page = { focusTwice?: () => void; showLate?: () => void; drawAgain?: () => void };
 const page = window as unknown as Page;
 
 /*
  * The page focus.spec.tsx draws with React: players each removed by a button that goes with them,
  * focus going to the next player's button or the list's heading, a round whose heading takes
  * focus when the round changes, tabs whose views take focus on their heading as a press draws them,
- * one with a field that takes focus itself, and two requests made in one frame.
+ * one with a field that takes focus itself, two requests made in one frame, a row of tabs moved
+ * along by the arrow keys whose views each take focus on arrival, a view first drawn late, one gone
+ * in the frame it arrived in, and a view drawn again many times before any press.
  */
 
 const Players = () => {
@@ -95,6 +98,105 @@ const Tabs = () => {
     );
 };
 
+const Mode = ({ name }: { readonly name: string }) => {
+    const heading = useArrivalFocus<HTMLHeadingElement>(name);
+    return (
+        <h2 id={`view-${name}`} ref={heading}>
+            {name}
+        </h2>
+    );
+};
+
+const MODES = ['number', 'cards'];
+
+const Modes = () => {
+    const [mode, setMode] = useState('number');
+    const row = useRoving<HTMLDivElement>({
+        onMove: (cell) => {
+            setMode(cell.id.replace('mode-', ''));
+        },
+    });
+    return (
+        <section>
+            <div className="dk-tabs" role="tablist" aria-label="Enter" ref={row}>
+                {MODES.map((one) => (
+                    <button
+                        key={one}
+                        id={`mode-${one}`}
+                        type="button"
+                        role="tab"
+                        className="dk-tab"
+                        aria-selected={mode === one}
+                    >
+                        {one}
+                    </button>
+                ))}
+            </div>
+            <Mode key={mode} name={mode} />
+        </section>
+    );
+};
+
+const LateView = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('late');
+    return (
+        <h2 id="late" ref={heading}>
+            Late
+        </h2>
+    );
+};
+
+const Late = () => {
+    const [shown, setShown] = useState(false);
+    useEffect(() => {
+        page.showLate = () => {
+            setShown(true);
+        };
+    }, []);
+    return shown ? <LateView /> : null;
+};
+
+const BriefView = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('brief');
+    return (
+        <h2 id="brief" ref={heading}>
+            Brief
+        </h2>
+    );
+};
+
+// A view that leaves in the frame it arrived in, as one a layout effect sends away from does.
+const Brief = () => {
+    const [shown, setShown] = useState(false);
+    useLayoutEffect(() => {
+        if (shown) setShown(false);
+    }, [shown]);
+    return (
+        <section>
+            <button id="show-brief" type="button" onClick={() => setShown(true)}>
+                Brief
+            </button>
+            {shown ? <BriefView /> : null}
+        </section>
+    );
+};
+
+const Again = () => {
+    const [count, setCount] = useState(0);
+    const heading = useArrivalFocus<HTMLHeadingElement>('again');
+    page.drawAgain = () => {
+        for (let draw = 0; draw < 20; draw += 1)
+            flushSync(() => {
+                setCount((now) => now + 1);
+            });
+    };
+    return (
+        <h2 id="again" ref={heading} data-count={count}>
+            Again
+        </h2>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -102,5 +204,9 @@ if (root)
             <Players />
             <Round />
             <Tabs />
+            <Modes />
+            <Late />
+            <Brief />
+            <Again />
         </main>
     );

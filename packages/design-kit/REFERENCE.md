@@ -1574,10 +1574,13 @@ moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request
 takes the place of one not yet landed, so the last asked for wins, and one not yet landed when the
 component unmounts is called off. `useArrivalFocus(key)` returns a ref for a view's heading, gives
-the heading a tabindex of -1 where it has none, and focuses it when a visitor's action brings the
-view: when the key changes, such as the round on screen, and when the view is drawn after the
-visitor has pressed or typed, as a tab's view is. It never moves focus as the page first draws, nor
-from a field the view focuses itself as it draws. The key is a string, a number or a boolean,
+the heading a tabindex of -1 where it has none, and focuses it when a visitor's press or submit
+brings the view: when the key changes, such as the round on screen, and when the view is drawn by a
+press, as a tab bar's view is. It never moves focus as the page first draws, nor as a visitor moves
+along a row of tabs with the arrow keys or Tabs past, nor for a second view drawn by the press one
+already took focus for, nor from a field the view focuses itself as it draws, and a view gone in the
+frame it arrived in moves nothing. What decides is `focusOnArrival(heading, { from })` from
+`./controls`, which a page without React calls as each view draws. The key is a string, a number or a boolean,
 compared by value, and changes on a press or a submit, never as a visitor chooses in a list or a set
 of radios, which would move them as they choose, as WCAG 3.2.2 has it.
 

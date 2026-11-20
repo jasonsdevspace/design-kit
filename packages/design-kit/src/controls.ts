@@ -104,6 +104,48 @@ export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): 
     };
 };
 
+/** The presses and submits a visitor has made since counting began, and that count as a view last took focus. */
+let activations = 0;
+let arrivedAt = 0;
+let counting = false;
+const count = (event: Event) => {
+    if (event.isTrusted) activations += 1;
+};
+
+/**
+ * Moves focus to a view's heading as it arrives, as `moveFocus` does, where a visitor's press or
+ * submit since a view last took focus brought it, and returns what calls it off. A view drawn as
+ * the page first draws takes nothing, nor one drawn after a key that only moves, such as Tab or an
+ * arrow along a row of tabs, nor a second view drawn for the press one already took focus for. The
+ * first call starts counting, so a page calls it as its first view draws, which takes nothing. A
+ * request called off before it lands is as if it was never made, so a view asked for again, as
+ * React asks again in development, takes focus, and one gone in the frame it arrived in takes none.
+ */
+export const focusOnArrival = (
+    heading: FocusTarget,
+    options: MoveFocusOptions = {}
+): (() => void) => {
+    if (!counting) {
+        counting = true;
+        for (const type of ['click', 'submit'] as const)
+            document.addEventListener(type, count, true);
+    }
+    if (activations === arrivedAt) return () => undefined;
+    const before = arrivedAt;
+    arrivedAt = activations;
+    const cancel = moveFocus(heading, options);
+    // Asked after the request, so it runs after it in the same frame, and marks it landed.
+    let landed = false;
+    const frame = window.requestAnimationFrame(() => {
+        landed = true;
+    });
+    return () => {
+        cancel();
+        window.cancelAnimationFrame(frame);
+        if (!landed) arrivedAt = before;
+    };
+};
+
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */
 let media: MediaQueryList | null | undefined;
 const scheme = () => {

@@ -1,6 +1,6 @@
 # 20. The kit's React hooks wrap its attach functions
 
-**Status:** accepted, amended for hooks over a function that acts once, such as `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which keeps the key it last acted on
+**Status:** accepted, amended for hooks over a function that acts once, such as `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which keeps the key it last acted on, while whether a visitor's press brought the view is decided by `focusOnArrival` in `./controls`
 
 ## Context
 
@@ -57,7 +57,11 @@ Option C. A hook is named for its attach, as `useStatus` would be for `attachSta
 Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
 returns the function, the same across renders, and keeps only what calls off a request not yet
 done, so a component that unmounts leaves nothing behind. A hook that acts when a view arrives, as
-`useArrivalFocus` does, keeps the key it last acted on, so it acts once for each arrival.
+`useArrivalFocus` does, keeps the key it last acted on, so it acts once for each arrival, and puts
+it back when its effect is cleaned up before the request lands, so React's second run in development
+asks again. Whether a visitor's press or submit brought the view, rather than a key that only moves,
+is decided by `focusOnArrival` in `./controls`, which counts presses on the document, so a page
+without React gets the same arrival from the same function.
 
 Where a piece needs one line for a whole page, as the status line does, a provider draws it and a
 hook finds it through context. The line is attached as it lands, before the effects of the parts
