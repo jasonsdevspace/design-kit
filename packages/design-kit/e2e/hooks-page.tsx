@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -29,6 +29,7 @@ export type Controls = {
     clicks: number;
     draws: number;
     chosen?: string;
+    dropped?: boolean;
 };
 const page = window as unknown as Controls;
 page.clicks = 0;
@@ -59,6 +60,11 @@ const Pieces = ({ which, dropped }: { readonly which: string; readonly dropped: 
             setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
         },
     });
+    // Set after the hooks' own effects, so a test waits for the options dropped to be passed on
+    // before it presses a key, rather than for the draw alone.
+    useEffect(() => {
+        page.dropped = dropped;
+    }, [dropped]);
     return (
         <>
             <div

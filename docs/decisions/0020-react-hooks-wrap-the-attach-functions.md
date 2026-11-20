@@ -3,7 +3,12 @@
 **Status:** accepted, amended in 0.9.0 for hooks over a function that acts once, such as
 `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which
 keeps the key it last drew and whether that was its first draw, while whether a visitor's press
-brought the view is decided by `focusOnArrival` in `./controls`
+brought the view is decided by `focusOnArrival` in `./controls`, and amended after 0.9.0 for the
+hooks whose request reads what the page draws, `useFocusAfterDraw` and the refusal `useFormRefusal`
+returns, which keep a request owed until their own next commit and a count of requests that renders
+them, so the request lands once the page's change is drawn. That holds for a change set in the same
+tick as the request, in the same lane, in the same React root: a change made in a transition is
+asked for inside the same `startTransition`, and one drawn in another root is not waited for.
 
 ## Context
 
@@ -57,20 +62,35 @@ exports beside the markup. Each hook follows the same rules.
 - **What it returns stays the same across renders,** so a page can list it in an effect's
   dependencies without running that effect again.
 - **It keeps no state of its own beyond the attach's handle,** so what a page sees is what the
-  attach does, and a page without React gets the same behavior from the same function.
+  attach does, and a page without React gets the same behavior from the same function. The hooks
+  whose request reads what the page draws are the exception below, since when React draws is a
+  React concern a page without React does not have.
 
 Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
 returns the function, the same across renders, and keeps only what calls off a request not yet done,
-so a component that unmounts leaves nothing behind. A hook that acts when a view arrives, as
-`useArrivalFocus` does, keeps the key it last drew and whether that was its first draw, so it reads
-where focus was as each arrival begins and asks once for each key, since its effect runs again only
-when the key changes. A key that changes asks through `focusOnArrival` with `changed`, so it takes
-focus whatever the last input was, lands with any view first drawn for the same press and spends the
-press. Whether a press brought a view's first draw, rather than a key that moves or typing, is
-decided by `focusOnArrival` in `./controls`, which notes on the document whether the visitor's last
-input was a recent press, so a page without React gets the same arrival from the same function. A
-request the effect calls off as it is cleaned up hands its press back, so React's second run in
-development asks again, as a first draw still.
+so a component that unmounts leaves nothing behind. A request whose landing reads what the page
+draws, as `useFocusAfterDraw` and the refusal `useFormRefusal` returns do, is held until the hook's
+own component next commits. React draws state set after an await in a task of its own, which a frame
+can come before, so a request made at once found the control not yet drawn or still off, or no field
+in error. The hook keeps the request owed and a count it raises as it is asked, which renders its
+component in the same batch as the page's change, and a layout effect makes the request as that
+render commits, so it lands in the frame that paints the change, whichever component drew it. Where
+focus was is read as the request is asked, followed into a shadow root by `activeOf` from
+`./controls`, so a visitor who moves focus before the commit is not pulled back. Each request takes
+the place of one not yet landed, and what it returns calls off that request alone. A request asked
+for once the component has unmounted has no render to wait for and is made at once, as it was before
+the hook waited. What the hook returns is still the function's, with `from` read as it is asked, and
+it is called in a handler or in an effect with dependencies, never as the component renders nor in
+an effect that runs on every render, since asking renders the component again. A hook that acts when
+a view arrives, as `useArrivalFocus` does, keeps the key it last drew and whether that was its first
+draw, so it reads where focus was as each arrival begins and asks once for each key, since its
+effect runs again only when the key changes. A key that changes asks through `focusOnArrival` with
+`changed`, so it takes focus whatever the last input was, lands with any view first drawn for the
+same press and spends the press. Whether a press brought a view's first draw, rather than a key that
+moves or typing, is decided by `focusOnArrival` in `./controls`, which notes on the document whether
+the visitor's last input was a recent press, so a page without React gets the same arrival from the
+same function. A request the effect calls off as it is cleaned up hands its press back, so React's
+second run in development asks again, as a first draw still.
 
 Where a piece needs one line for a whole page, as the status line does, a provider draws it and a
 hook finds it through context. The line is attached as it lands, before the effects of the parts
@@ -108,5 +128,11 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   mount it, find the attach ran on its element, swap the element and find the new one attached,
   render again with the same options and find them not set again, drop an option and find it
   cleared, and unmount it.
+- `e2e/focus.spec.tsx` and `e2e/form.spec.tsx` run frames before React draws and find focus on a
+  control a save turns on after an await, in the hook's component and in a sibling, and on a field
+  whose error is set after an await. They press a save inside a shadow root and find focus moved,
+  ask from a component that has since unmounted and find focus moved, call off the first of two
+  refusals and find the second lands, and move focus before the error is drawn and find it left
+  there.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.

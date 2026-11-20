@@ -35,6 +35,7 @@ export const VALUE_EXPORTS = {
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/controls': [
+        'activeOf',
         'attachBusy',
         'attachCopyButton',
         'attachDialog',

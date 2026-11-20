@@ -78,8 +78,11 @@ const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
 const byId = (near: Node | null | undefined, id: string): HTMLElement | null =>
     rootOf(near).getElementById(id);
 
-/** What has focus, followed into each shadow root that holds it. */
-const activeOf = (): Element | null => {
+/**
+ * What has focus, followed into each shadow root that holds it, as a request reads where focus was
+ * when it was asked for.
+ */
+export const activeOf = (): Element | null => {
     let active = document.activeElement;
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
@@ -2176,9 +2179,10 @@ const errorFor = (
 
 /**
  * Refuses a submit, once the page has drawn its errors: focus moves and the refusal is said. It
- * returns what calls the refusal off before it lands.
+ * returns what calls the refusal off before it lands. `from` is where focus was when the refusal
+ * was asked for, for one made later than that, as `moveFocus` takes it.
  */
-export type Refuse = () => () => void;
+export type Refuse = (options?: Pick<MoveFocusOptions, 'from'>) => () => void;
 
 const attachedForms = new WeakMap<
     HTMLElement,
@@ -2391,7 +2395,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
      * and the whole form where the kit refuses its own failures, which the page's summary does not
      * hold.
      */
-    const refuseIn = (within: HTMLElement, summed: boolean) => {
+    const refuseIn = (within: HTMLElement, summed: boolean, from?: Element | null) => {
         pending?.();
         const failures = failed;
         failed = [];
@@ -2418,14 +2422,14 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             const focused = activeOf() === target;
             speak(refusalWords({ summary, field }, focused, fields.length));
         });
-        const moving = moveFocus(() => target);
+        const moving = moveFocus(() => target, { from });
         pending = () => {
             window.cancelAnimationFrame(frame);
             moving();
         };
         return pending;
     };
-    const refuse: Refuse = () => refuseIn(form, true);
+    const refuse: Refuse = (asked) => refuseIn(form, true, asked?.from);
     // The browser's constraints, checked across the whole form as it is submitted, before the
     // page's own handler in the bubble phase, which runs only where every field passes, so it can
     // still check what they cannot express. A form is checked once however many of its parts are

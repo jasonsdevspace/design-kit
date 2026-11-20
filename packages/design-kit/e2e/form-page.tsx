@@ -1,12 +1,17 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Button, InputField, StatusProvider, useFormRefusal } from '../src/react.js';
 
 /*
  * The page form.spec.tsx draws with React: a form that refuses an empty name, drawing its error and
- * then refusing through the screen's status line.
+ * then refusing through the screen's status line, and one that refuses it after an await, as a
+ * page that asks its store first does, refused twice with the first called off, and refused as the
+ * visitor moves focus before the error is drawn.
  */
+
+type Page = { refuseTwice?: () => void; refuseAndMove?: () => void };
+const page = window as unknown as Page;
 
 const AddPlayer = () => {
     const [error, setError] = useState('');
@@ -30,10 +35,57 @@ const AddPlayer = () => {
     );
 };
 
+const SavePlayer = () => {
+    const [error, setError] = useState('');
+    const [form, refuse] = useFormRefusal<HTMLFormElement>({
+        invalid: (failures) => {
+            setError(failures[0]?.words ?? '');
+        },
+    });
+    const save = async (name: FormDataEntryValue | null) => {
+        // Answered in a task of its own, as a store's answer is, so React draws what it sets later.
+        await new Promise((resolve) => {
+            setTimeout(resolve);
+        });
+        if (typeof name === 'string' && name.trim() !== '') return;
+        setError('Enter a name.');
+        refuse();
+    };
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        void save(new FormData(event.currentTarget).get('name'));
+    };
+    useEffect(() => {
+        page.refuseTwice = () => {
+            setError('Enter a name.');
+            const first = refuse();
+            refuse();
+            first();
+        };
+        page.refuseAndMove = () => {
+            setError('Enter a name.');
+            refuse();
+            document.getElementById('elsewhere')?.focus();
+        };
+    }, [refuse]);
+    return (
+        <>
+            <form ref={form} onSubmit={submit} noValidate>
+                <InputField id="player" name="name" label="Player" error={error} />
+                <Button type="submit">Save</Button>
+            </form>
+            <button id="elsewhere" type="button">
+                Elsewhere
+            </button>
+        </>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
         <StatusProvider>
             <AddPlayer />
+            <SavePlayer />
         </StatusProvider>
     );

@@ -84,6 +84,10 @@ test('clears an option dropped', async ({ page }) => {
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#a-one')).toBeFocused();
     await run(page, 'drop');
+    // The page's draw comes in a task of React's own, after the call returns.
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Controls).dropped))
+        .toBe(true);
     await page.locator('#a-one').focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#a-two')).toBeFocused();

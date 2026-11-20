@@ -736,21 +736,30 @@ The error is not live, since a form that fails in several fields at once would s
 a submit that fails a check of the page's own, the page draws its errors and calls the function
 `attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal({
 invalid })` returns in React, which speaks on the screen's `StatusProvider`, and the kit does the
-same itself for the browser's constraints, as below. A frame later, once the errors are drawn, focus
-moves to an error summary where the page names one, else the first field in error that can take
-focus, passing over one that is disabled, inert, marked off, itself or by its set, or out of sight,
-or in a set its checked radio or its first control that can take focus, since the set's fieldset
-takes none. A set counts once, however many of its choices are marked. One message is said, chosen
-so nothing is said twice: nothing where focus moves to the summary, which reads its own words, how
-many fields need attention where focus moves to a field, since moving focus reads the field and its
-error, and where the field already had focus, which then reads nothing, the error's own words, with
-the count where more fields are wrong. A second refusal calls off one not yet landed, moves focus
-and speaks again, so a visitor who submits again hears it again. Refused with nothing wrong and no
-summary, focus stays where it is, and refused with fields in error that none can take focus in, as
-one out of sight, focus stays too and the first field's name and error are said, with the count
-where more are wrong. In React, a form with no `StatusProvider` above it and no `say` throws, since
-its refusal would reach no one. A form is attached as it is drawn, never from its submit handler,
-since the kit's check and `noValidate` must already be in place when the first submit comes.
+same itself for the browser's constraints, as below. Once the errors are drawn, a frame after the
+call in a page without React, and in React a frame after the render that draws them commits, even
+where the page set them after an await, as a page that saves to the browser's storage first does,
+focus moves to an error summary where the page names one, else the first field in error that can
+take focus, passing over one that is disabled, inert, marked off, itself or by its set, or out of
+sight, or in a set its checked radio or its first control that can take focus, since the set's
+fieldset takes none. A set counts once, however many of its choices are marked. One message is said,
+chosen so nothing is said twice: nothing where focus moves to the summary, which reads its own
+words, how many fields need attention where focus moves to a field, since moving focus reads the
+field and its error, and where the field already had focus, which then reads nothing, the error's
+own words, with the count where more fields are wrong. A second refusal calls off one not yet
+landed, moves focus and speaks again, so a visitor who submits again hears it again, and what each
+refusal returns calls off that refusal alone. Focus a visitor moved after the refusal was asked for
+stays where they put it, and a page that refuses later than it was asked passes `{ from }`, where
+focus was then, as `moveFocus` takes it. In React, `refuse` is called in the submit handler, after
+an await in it too, or in an effect with dependencies, never as the component renders nor in an
+effect that runs on every render, since refusing renders the component again. Errors set in a
+transition are refused inside the same `startTransition`, and errors drawn in another React root are
+not waited for. Refused with nothing wrong and no summary, focus stays where it is, and refused with
+fields in error that none can take focus in, as one out of sight, focus stays too and the first
+field's name and error are said, with the count where more are wrong. In React, a form with no
+`StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
+attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
+already be in place when the first submit comes.
 
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
@@ -1643,18 +1652,22 @@ as WCAG 2.4.3 asks. `moveFocus(target, { fallbacks })` from `./controls` moves f
 given as an element or an id, once the change is drawn, a frame later, so a control the page draws
 in answer to the same press or key is there. Ask in the handler of the press or key that makes the
 change, or, for a change React draws later, in a transition or behind a suspense, in an effect once
-it is drawn. Where the target is gone, hidden, inert, disabled or marked off, focus goes to the
-first of the fallbacks that takes it, and then to the app frame's body or the page's main content,
-by the walk a closing panel hands focus back by. Focus a visitor has moved since the request is left
-where they put it: focus is free only while it is where it was when asked, or on the page's body, as
-it is once the control that had it is removed. A request still waiting a second later, as in a tab
-out of sight, is dropped, so focus does not jump when the visitor comes back. Each request is new,
-so the same control asked for twice is focused twice, and the function `moveFocus` returns calls a
-request off before it lands. An id is looked for in the root where focus was when the request was
-made, so a widget drawn inside a shadow root finds its own control, never an element of the page
-around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
-and labels they read in their own element's root. A panel and its button are found from the page's
-document, which the panel listens on.
+it is drawn. A page in React asks through `useFocusAfterDraw`, below, which waits for the render
+that draws the change rather than a frame alone, so a change set after an await is drawn too. Where
+the target is gone, hidden, inert, disabled or marked off, focus goes to the first of the fallbacks
+that takes it, and then to the app frame's body or the page's main content, by the walk a closing
+panel hands focus back by. Focus a visitor has moved since the request is left where they put it:
+focus is free only while it is where it was when asked, or on the page's body, as it is once the
+control that had it is removed. A request still waiting a second later, as in a tab out of sight, is
+dropped, so focus does not jump when the visitor comes back. Each request is new, so the same
+control asked for twice is focused twice, and the function `moveFocus` returns calls a request off
+before it lands. An id is looked for in the root where focus was when the request was made, so a
+widget drawn inside a shadow root finds its own control, never an element of the page around it that
+shares the id, and the form's refusal, a stepper and progress find the errors, hints and labels they
+read in their own element's root. A panel and its button are found from the page's document, which
+the panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each
+shadow root that holds it, as a request reads where focus was, for a page that asks later and passes
+`from` itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -1663,9 +1676,19 @@ import { moveFocus } from '@jasonsdevspace/design-kit/controls';
 moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 ```
 
-In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request takes
-the place of one not yet landed, so the last asked for wins, and one not yet landed when the
-component unmounts is called off. `useArrivalFocus(key)` returns a ref for a view's heading, gives
+In React, `useFocusAfterDraw()` returns the same function, the same across renders, and makes each
+request once the render it was asked in commits, so it lands in the frame that paints the change. A
+page that sets its state after an await, as a save to the browser's storage does, and then asks
+finds the control drawn and on, though React draws that state in a task of its own and a frame can
+come before it, and so does a page whose change is drawn by another component. Where focus was is
+read as the request is asked, inside a shadow root too. Ask in a handler, after an await in it too,
+or in an effect with dependencies, never as the component renders nor in an effect that runs on
+every render, since asking renders the component again. A change made in a transition is asked for
+inside the same `startTransition`, and a change drawn in another React root is not waited for. A
+request takes the place of one not yet landed, so the last asked for wins, and what it returns calls
+off that request alone. One not yet landed when the component unmounts is called off, and one asked
+for after the component has unmounted, as a panel that closes itself and then asks, is made at
+once. `useArrivalFocus(key)` returns a ref for a view's heading, gives
 the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as the
 round on screen, and when the view is first drawn by a visitor's press on a button or a link, or a
 submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key that
