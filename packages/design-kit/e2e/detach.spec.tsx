@@ -56,14 +56,25 @@ const pieces = {
     progress: [document.querySelector('progress'), (el) => attachProgress(el)],
 };
 window.kept = {};
+window.shown = {};
 for (const [name, [element, attach]] of Object.entries(pieces)) {
-    const first = attach(element);
-    first();
-    const second = attach(element);
-    // The first detach, called late, as a page's own cleanup might run after the next attach.
-    first();
-    // Attaching again returns the newer attach's detach where that attach is still in place.
-    window.kept[name] = attach(element) === second;
+    try {
+        const first = attach(element);
+        first();
+        const second = attach(element);
+        // The first detach, called late, as a page's own cleanup might run after the next attach.
+        first();
+        // What the newer attach set up, read before anything attaches again.
+        window.shown[name] = {
+            hidden: element.hidden,
+            role: element.getAttribute('role'),
+            stops: element.querySelectorAll('[tabindex="0"]').length,
+        };
+        // Attaching again returns the newer attach's detach where that attach is still in place.
+        window.kept[name] = attach(element) === second;
+    } catch (error) {
+        window.kept[name] = String(error);
+    }
 }
 window.ready = true;`;
 
@@ -81,9 +92,21 @@ test('leaves a newer attach in place when the detach of an older one is called a
         busy: true,
         progress: true,
     });
-    // What the newer attach showed stays shown, and its controls still work.
-    await expect(page.locator('.dk-theme-switch')).toBeVisible();
-    await expect(page.locator('.dk-copy')).toBeVisible();
+    // What the newer attach showed stays shown, read before anything attached again.
+    const shown = await page.evaluate(
+        () =>
+            (
+                window as unknown as {
+                    shown: Record<string, { hidden: boolean; role: string | null; stops: number }>;
+                }
+            ).shown
+    );
+    expect(shown.switch?.hidden).toBe(false);
+    expect(shown.copy?.hidden).toBe(false);
+    // The group keeps the toolbar role and one stop for the Tab key.
+    expect(shown.roving?.role).toBe('toolbar');
+    expect(shown.roving?.stops).toBe(1);
+    // Its controls still work, each once.
     const value = page.locator('.dk-stepper input');
     await expect(value).toHaveValue('4');
     await page.locator('.dk-stepper button').last().click();
