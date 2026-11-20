@@ -29,6 +29,7 @@ import {
 import {
     activeOf,
     attachBusy,
+    attachCopyButton,
     attachForm,
     type Failure,
     type FailureWords,
@@ -37,7 +38,6 @@ import {
     attachProgress,
     attachRoving,
     attachStatus,
-    attachCopyButton,
     attachStepper,
     focusOnArrival,
     moveFocus,
@@ -247,6 +247,9 @@ export const setByWord = (set: SetPanel) => set('open');
 const copying: CopyOptions = { source: () => document.body, status: document.body };
 export const copyOf = (button: HTMLButtonElement): (() => void) =>
     attachCopyButton(button, copying);
+
+// @ts-expect-error A copy button's status is an element, never its words.
+export const copyingWords: CopyOptions = { source: () => document.body, status: 'Copied.' };
 
 // A stepper takes a page's own line and its words after the value, and returns what takes it away.
 const tricks: StepperOptions = { status: null, words: (value: string) => `${value} in all.` };
