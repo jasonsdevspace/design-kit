@@ -579,27 +579,39 @@ a submit that fails, the page draws its errors and calls the function `attachFor
 summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which speaks
 on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an error
 summary where the page names one, else the first field in error that can take focus, passing over
-one that is disabled, marked off or out of sight, or in a set its checked radio or its first control
-that can take focus, since the set's fieldset takes none. A set counts once, however many of its
-choices are marked. One message is said, chosen so nothing is said twice: nothing where focus moves
-to the summary, which reads its own words, how many fields need attention where focus moves to a
-field, since moving focus reads the field and its error, and where the field already had focus,
-which then reads nothing, the error's own words, with the count where more fields are wrong. A
-second refusal calls off one not yet landed, moves focus and speaks again, as WCAG 3.3.1 asks.
-Refused with nothing wrong and no summary, focus stays where it is. In React, a form with no
-`StatusProvider` above it and no `say` throws, since its refusal would reach no one. An attached
-form takes `noValidate`, so the browser's own check, which would stop the submit before the page's
-handler runs and show a passing bubble in place of the kit's errors, never runs, while its fields
-keep `required` for a screen reader to say.
+one that is disabled, inert, marked off, itself or by its set, or out of sight, or in a set its
+checked radio or its first control that can take focus, since the set's fieldset takes none. A set
+counts once, however many of its choices are marked. One message is said, chosen so nothing is said
+twice: nothing where focus moves to the summary, which reads its own words, how many fields need
+attention where focus moves to a field, since moving focus reads the field and its error, and where
+the field already had focus, which then reads nothing, the error's own words, with the count where
+more fields are wrong. A second refusal calls off one not yet landed, moves focus and speaks again,
+as WCAG 3.3.1 asks. Refused with nothing wrong and no summary, focus stays where it is, and refused
+with fields in error that none can take focus in, focus stays too and the first field's error is
+said with the count. In React, a form with no `StatusProvider` above it and no `say` throws, since
+its refusal would reach no one. An attached form takes `noValidate`, or the form around an attached
+part of one, so the browser's own check, which would stop the submit before the page's handler runs
+and show a passing bubble in place of the kit's errors, never runs. That turns off every check the
+browser makes, a required field's and a type's, a pattern's and a range's alike, so the page makes
+them itself: each field's `validity` still answers under `noValidate`, as `validity.valueMissing`
+for an empty required field or `validity.typeMismatch` for a malformed address, and the page draws a
+kit error for each field that fails before it refuses. Fields keep `required`, which `validity`
+reads and which tells a screen reader a field is required where a form marks its optional fields
+rather than its required ones. A form is attached as it is drawn, never from its submit handler,
+which the browser's check would stop before it ran.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
 
-const refuse = attachForm(document.querySelector('#rule'), {
-    status: document.querySelector('.screen-status'),
+const form = document.querySelector('#rule');
+const refuse = attachForm(form, { status: document.querySelector('.screen-status') });
+form.addEventListener('submit', (event) => {
+    const wrong = [...form.elements].filter((field) => field.validity && !field.validity.valid);
+    if (wrong.length === 0) return;
+    event.preventDefault();
+    // The page draws a kit error for each field in wrong, then:
+    refuse();
 });
-// Once the page has drawn its errors:
-refuse();
 ```
 
 The kit does no validation, so the page decides when to show an error, best after a submit is tried rather than while someone is typing.
@@ -716,8 +728,10 @@ name, since not every screen reader says a group is required, and a set of radio
 `aria-required` as well. A required set of checkboxes says in its hint how many to choose, such as
 "Choose at least one." The words are the kit's unless a page gives its own as `markWords`, as a page
 in another language does. The mark does no checking: `required` is still the native attribute, which
-a page keeps since a screen reader says it, while the kit's form refusal turns the browser's own
-check off, and the field, select, textarea, stepper and set of choices all take `mark`.
+a page keeps since `validity` reads it for the page's own check and it tells a screen reader a field
+is required where a form marks its optional fields instead, while the kit's form refusal turns the
+browser's own check off, and the field, select, textarea, stepper and set of choices all take
+`mark`.
 
 #### A field with a button
 

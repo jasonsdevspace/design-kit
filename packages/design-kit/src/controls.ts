@@ -1549,9 +1549,12 @@ const takesFocus = (control: Element): control is HTMLElement =>
     !control.closest('[inert]') &&
     control.checkVisibility();
 
-/** Whether a field in error can be handed focus: it takes it, and is not a control marked off. */
-const focusable = (control: Element): control is HTMLElement =>
-    takesFocus(control) && !isOff(control);
+/**
+ * Whether a refusal can hand a field focus: it is not marked off, itself or by a set around it,
+ * and it takes focus. The mark is read first, since it costs no layout.
+ */
+const reachable = (control: Element): control is HTMLElement =>
+    !control.closest('[aria-disabled="true"]') && takesFocus(control);
 
 /**
  * The field each mark of invalid stands for: a set's fieldset where a choice in it is marked, as
@@ -1572,10 +1575,10 @@ const wrongFields = (form: HTMLElement): Element[] => [
  * first of its controls that can take focus. Nothing where none can.
  */
 const focusIn = (field: Element): HTMLElement | null => {
-    if (!field.matches('fieldset')) return focusable(field) ? field : null;
+    if (!field.matches('fieldset')) return reachable(field) ? field : null;
     const checked = field.querySelector('input[type="radio"]:checked');
-    if (checked && focusable(checked)) return checked;
-    return [...field.querySelectorAll('input, select, textarea, button')].find(focusable) ?? null;
+    if (checked && reachable(checked)) return checked;
+    return [...field.querySelectorAll('input, select, textarea, button')].find(reachable) ?? null;
 };
 
 /**
@@ -1645,9 +1648,11 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
     // The browser's own check would stop a submit before the page's handler runs, showing its own
-    // passing bubble in place of the kit's errors, so a form attached checks itself. Its fields
-    // keep required, which a screen reader still says.
-    if (form instanceof HTMLFormElement) form.noValidate = true;
+    // passing bubble in place of the kit's errors, so a form attached, or the form around a part
+    // of one, checks itself. Its fields keep required, which `validity` reads for the page's own
+    // check.
+    const own = form instanceof HTMLFormElement ? form : form.closest('form');
+    if (own) own.noValidate = true;
     const speak = (words: string) => {
         if (words === '') return;
         if (chosen.say) chosen.say(words);
@@ -1663,9 +1668,14 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             const fields = wrongFields(form);
             const field = fields.map(focusIn).find((one) => one !== null) ?? null;
             target = summary instanceof HTMLElement ? summary : field;
-            // Nothing in error and no summary leaves focus where it is.
+            // Nothing in error and no summary leaves focus where it is, and so do fields in error
+            // that none can take focus in, whose first error is said with the count, as for a
+            // field that already had focus.
             if (!target) {
                 moving();
+                const [first] = fields;
+                if (first)
+                    speak(refusalWords({ summary: null, field: first }, true, fields.length));
                 return;
             }
             const focused = document.activeElement === target;

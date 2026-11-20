@@ -161,6 +161,23 @@ test('passes over a control marked off at the head of a set in error', async ({ 
     await expect(page.getByRole('checkbox', { name: 'New' })).toBeFocused();
 });
 
+test('keeps focus and says the error where no field in error can take focus', async ({ page }) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        // The whole set is marked off on its fieldset, so none of its choices can take focus.
+        document.querySelector('#tags')?.setAttribute('aria-disabled', 'true');
+        for (const box of document.querySelectorAll('#tags input'))
+            box.setAttribute('aria-invalid', 'true');
+    });
+    await refuse(page, []);
+    await page.waitForTimeout(300);
+    await expect(page.getByRole('button', { name: 'Save rule' })).toBeFocused();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['1 field needs attention.']);
+});
+
 test("refuses a form the page wrote without noValidate, rather than leaving it to the browser's own check", async ({
     page,
 }) => {
