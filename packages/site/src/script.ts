@@ -2,6 +2,8 @@ import {
     attachCopyButton,
     attachDialog,
     attachPanel,
+    attachRoving,
+    attachStatus,
     attachStepper,
     attachThemeSwitch,
     attachToast,
@@ -10,13 +12,13 @@ import {
 
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
- * each block of code, attaches the kit's steppers, dialogs, panels and toast where a page shows
- * them, and adds what the kit does not ship: tabs where a state's code has two blocks, the live
- * copies of the states a reader can change, and the note a tap on a preview brings. The theme
- * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
- * choice, and saves and draws a new one. It saves under the portfolio's key and with the
- * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
- * other way around.
+ * each block of code, attaches the kit's steppers, dialogs, panels, toast and arrow keys where a
+ * page shows them, and adds what the kit does not ship: tabs drawn where a state's code has two
+ * blocks, the live copies of the states a reader can change, and the note a tap on a preview
+ * brings, said on the kit's status line. The theme script the kit puts inline has already drawn the
+ * theme before this runs, so the switch shows the choice, and saves and draws a new one. It saves
+ * under the portfolio's key and with the portfolio's values, so a choice made here holds on every
+ * page of jasonsdevspace.com, and the other way around.
  */
 
 /**
@@ -61,27 +63,12 @@ const status =
     codes.length === 0 || !statusToCopy ? undefined : document.importNode(statusToCopy, true);
 if (status) (document.querySelector('main') ?? document.body).append(status);
 
-/** How long the status line holds what the preview note says, in milliseconds, as the kit's. */
-const SAID_FOR = 2000;
-
 /**
- * Says what the preview note says on the status line. It is emptied before each message and when
- * the message has been shown, on one timer, so a second message is heard too and one message never
- * empties the next. The copy buttons say theirs on the same line on the kit's own timer, so a
- * message is emptied only while it is still the one put there.
+ * Says what the preview note says on the status line, through the kit's own function for it, the
+ * line the copy buttons speak on too, so the two take turns by the kit's rules and neither empties
+ * the other's words early.
  */
-let statusTimer = 0;
-const say = (message: string) => {
-    if (!status) return;
-    window.clearTimeout(statusTimer);
-    status.textContent = '';
-    statusTimer = window.setTimeout(() => {
-        status.textContent = message;
-        statusTimer = window.setTimeout(() => {
-            if (status.textContent === message) status.textContent = '';
-        }, SAID_FOR);
-    }, 100);
-};
+const say = status ? attachStatus(status) : () => undefined;
 
 /** A block of code in a state's panel: its head, its word, its whole title and the block. */
 interface Block {
@@ -133,8 +120,9 @@ const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLEleme
 /**
  * Makes a state's blocks tabs, as the tabs pattern has them: one tab in the tab order, the arrow
  * keys moving the choice and the focus around the row, Home and End to its ends, and a tab chosen
- * as it is focused. The tabs are named for the state, as the summary is, and each block's own head
- * is hidden, since its tab names it. With no script the blocks stay one above the other.
+ * as it is focused, by the kit's arrow keys. The tabs are named for the state, as the summary is,
+ * and each block's own head is hidden, since its tab names it. With no script the blocks stay one
+ * above the other.
  */
 const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: Block) => void) => {
     const list = document.createElement('div');
@@ -159,45 +147,33 @@ const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: B
         block.head.hidden = true;
         return tab;
     });
-    const show = (index: number, focus: boolean) => {
+    let chosen = 0;
+    const show = (index: number) => {
+        chosen = index;
         blocks.forEach((block, at) => {
-            const chosen = at === index;
-            const tab = tabs[at];
-            if (!tab) return;
-            tab.setAttribute('aria-selected', String(chosen));
-            tab.tabIndex = chosen ? 0 : -1;
-            block.panel.hidden = !chosen;
-            if (chosen) {
-                showing(block);
-                if (focus) tab.focus();
-            }
+            const picked = at === index;
+            tabs[at]?.setAttribute('aria-selected', String(picked));
+            block.panel.hidden = !picked;
+            if (picked) showing(block);
         });
     };
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => {
-            show(index, false);
+            show(index);
         });
     });
-    list.addEventListener('keydown', (event) => {
-        // A key held with a modifier is the browser's or the system's, such as Back.
-        if (event.altKey || event.ctrlKey || event.metaKey) return;
-        const at = tabs.findIndex((tab) => tab === document.activeElement);
-        if (at < 0) return;
-        const last = tabs.length - 1;
-        const moves: Partial<Record<string, number>> = {
-            ArrowRight: at === last ? 0 : at + 1,
-            ArrowLeft: at === 0 ? last : at - 1,
-            Home: 0,
-            End: last,
-        };
-        const to = moves[event.key];
-        if (to === undefined) return;
-        event.preventDefault();
-        show(to, true);
-    });
     list.append(...tabs);
-    show(0, false);
-    return list;
+    show(0);
+    // The arrow keys are the kit's, attached once the row is on the page, where its stop is placed.
+    const keys = () =>
+        attachRoving(list, {
+            current: () => tabs[chosen] ?? null,
+            onMove: (tab) => {
+                const index = tabs.indexOf(tab as HTMLButtonElement);
+                if (index >= 0) show(index);
+            },
+        });
+    return { list, keys };
 };
 
 for (const code of codes) {
@@ -212,14 +188,24 @@ for (const code of codes) {
     }
     const bar = document.createElement('div');
     bar.className = 'site-code-bar';
-    bar.append(
-        tabsFor(code, blocks, (block) => {
-            shown = block;
-            rename();
-        }),
-        button
-    );
+    const { list, keys } = tabsFor(code, blocks, (block) => {
+        shown = block;
+        rename();
+    });
+    bar.append(list, button);
     code.querySelector(':scope > summary')?.after(bar);
+    // The code sits in a details shut until a reader opens it, where no tab can take the stop yet,
+    // so the keys are attached as it first opens, or at once where it is open already.
+    if (!(code instanceof HTMLDetailsElement) || code.open) keys();
+    else {
+        // Only once it is open, since an open and a shut in one task fire one toggle, shut.
+        const opened = () => {
+            if (!code.open) return;
+            code.removeEventListener('toggle', opened);
+            keys();
+        };
+        code.addEventListener('toggle', opened);
+    }
 }
 
 /*
@@ -301,6 +287,8 @@ for (const stepper of document.querySelectorAll<HTMLElement>('main .site-copy .d
     const input = field?.querySelector<HTMLInputElement>('.dk-stepper-value');
     if (stepper.closest('[inert]')) input?.dispatchEvent(new Event('change', { bubbles: true }));
     else {
+        // The live copy shows its error with nothing said as the page loads, which the kit's
+        // change would say, so the page shows it and the kit, watching the description, marks it.
         const range = field?.querySelector<HTMLElement>('.dk-stepper-range');
         if (input && range && !input.validity.valid) {
             range.hidden = false;
