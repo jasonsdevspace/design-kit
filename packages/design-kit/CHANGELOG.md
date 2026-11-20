@@ -7,6 +7,49 @@ the hash from the installed package rather than keeping a copy. An entry that as
 page opens with **Upgrading.** Each version from `0.1.0-next.1` on has a release on GitHub with its
 entry as the notes.
 
+## 0.9.2
+
+The package README, which npm shows, is a short front door: what the kit is, a line of contents, why
+to pick it, the setup, one example and the exports a line each, with deeper questions sent to the
+site and the reference, whose new "What the package exports" section names everything each entry
+holds. A button or a link given the arrival focus ref keeps its Tab stop, `CopyOptions` is exported,
+and `releaseStatus` lets a status line go, as `StatusProvider` now does when it unmounts, so nothing
+set for it keeps running. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same, and the sheets and the controls stay within their budgets.
+
+- **Controls.** `releaseStatus(line)` lets a status line go: it clears the line's timers, drops the
+  words said or held for it and empties it, and the function `attachStatus` returned, and any piece
+  speaking on the line, say nothing there and set no timer until the line is attached again. A line
+  built before it is put on the page still speaks as before. `CopyOptions`, what `attachCopyButton`
+  takes, is exported from `./controls`, so a TypeScript page can build a copy button's options apart
+  from the call, as it can a stepper's or a form's.
+- **React.** The ref `useArrivalFocus` returns gives `tabindex="-1"` only to an element that cannot
+  take focus by itself, such as a heading or a link with no address, so a button, a link or a field
+  given it, as a scores screen's "Change round" button is, stays in the order the Tab key moves in,
+  where before it left it for as long as the view was drawn. `StatusProvider` lets its line go as it
+  unmounts, so a screen taken away a moment after its parts spoke leaves no timer of the kit's
+  running, as a test that unmounts a screen found one outliving its page.
+- **Docs.** The hook's comment says which elements take the tabindex. The reference's status line
+  section names `releaseStatus`, and its list of what `./controls` exports names it. The reference's
+  list of what `./controls` exports names `CopyOptions`. The package README, which npm shows, opens
+  with what the kit is, a line of contents and why to pick it, lists what is in it in a line for
+  each group with the site page that shows it, and keeps the setup, one example, the foundations,
+  the theme script's hash under a strict policy and the browser floor. "What it exports" is a table
+  of a line for each entry, and the reference's new "What the package exports" section names every
+  function, hook, component and type each entry holds. The paragraph on a release's changes, the
+  other examples and the sections the reference holds word for word give way to links.
+- **Tests.** A browser test gives the ref to a button, finds it with no tabindex, focuses it as its
+  key changes from another button, and tabs away from it and back, and finds a link with no address
+  given the ref a tabindex as a heading is. Browser tests say words at once, words that settle and
+  words after the line is let go of, and hear nothing with no timer left to run, let a line go while
+  words are on it with polite words waiting and hear nothing more until it is attached again, and
+  hear a line built before it is on the page. The type smoke test, compiled against the packed
+  package, imports `CopyOptions` and types a copy button's options with it. A test points every link
+  within the README at one of its own headings, so the contents line keeps up with them. The smoke
+  test that every value a module exports is named reads it from the module's heading in the
+  reference, the components' module among them, where it read the README's row and passed the
+  components over.
+
 ## 0.9.1
 
 Focus and a refusal a React page asks for after a save now wait for React to draw the save's change,
