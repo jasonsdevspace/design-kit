@@ -1,6 +1,9 @@
 # 20. The kit's React hooks wrap its attach functions
 
-**Status:** accepted, amended for hooks over a function that acts once, such as `moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which keeps the key it last acted on, while whether a visitor's press brought the view is decided by `focusOnArrival` in `./controls`
+**Status:** accepted, amended in 0.9.0 for hooks over a function that acts once, such as
+`moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which
+keeps the key it last drew and whether that was its first draw, while whether a visitor's press
+brought the view is decided by `focusOnArrival` in `./controls`
 
 ## Context
 
@@ -25,15 +28,17 @@ behavior itself, in React's terms. Rejected, since the behavior would then be wr
 for React and once in `./controls` for a page without it, and `./react` has no budget, so whatever
 moved there would grow out of sight of the controls budget record 13 holds.
 
-**C. A hook for each attach, holding nothing but the attach's handle.** Each hook attaches its
-function to its element, returns what the function returns, such as `say` or `refuse`, and takes it
-away where the function returns what does so. The behavior stays in `./controls`, once, inside its
-budget.
+**C. A hook for an attach a React page needs, holding nothing but the attach's handle.** Each hook
+attaches its function to its element, returns what the function returns, such as `say` or `refuse`,
+and takes it away where the function returns what does so. The behavior stays in `./controls`, once,
+inside its budget.
 
 ## Decision
 
-Option C. A hook is named for its attach, as `useStatus` would be for `attachStatus`, and lives in
-`hooks.tsx`, which `./react` exports beside the markup. Each hook follows the same rules.
+Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `useRoving` for
+`attachRoving`, or for the part a page calls where the attach does more, `useFormRefusal` for
+`attachForm`, and lives in `hooks.tsx`, which `./react`
+exports beside the markup. Each hook follows the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
   hook sees each element as it arrives. A ref object would not do, since setting its `current`
@@ -79,10 +84,12 @@ components still render on a server and draw the same markup a page writes by ha
 - Behavior has one home, `./controls`, and one budget, and a hook adds a few lines of wiring rather
   than a second copy of the behavior. Each new attach function adds to the controls budget, which
   the piece that adds it raises by record 13's rule where it must.
-- Record 5 is amended: `./react` exports hooks that attach the controls, while its markup
+- Record 5 is amended: `./react` exports hooks that attach some of the controls, while its markup
   components still carry no stylesheet, set no style and run no effect.
-- Record 13 is amended: a React page attaches a control through a kit hook rather than an effect of
-  its own, and the attach functions are the contract both kinds of page share.
+- Record 13 is amended: a React page draws the status line with `StatusProvider`, which
+  `useStatus` finds, attaches a form, a busy button, progress and a group of cells and moves focus
+  through a kit hook, and the other controls in an effect of its own, and the
+  attach functions are the contract both kinds of page share.
 - Record 14 is amended: a hook may run a piece's keys or move its focus, while the state a page
   owns, such as the chosen tab, stays the page's, passed to the hook as an option and read back
   through a callback.

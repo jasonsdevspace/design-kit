@@ -1,7 +1,7 @@
 {
     "name": "@jasonsdevspace/design-kit",
     "version": "0.8.7",
-    "description": "Design tokens, also in the Design Tokens Community Group format, base styles, a theme script, and the pieces of the demos on jasonsdevspace.com: page chrome and a site header, a content page, bands, a hero and a group of sections for a landing page, an explainer, buttons and a busy button, fields with marks, read-only fields and a check of the browser's constraints, callouts, tabs, pills, an icon, a theme switch, a copy button and a status line, rows, tiles and an empty state, progress and a loading line, panels and a raised panel, an app's frame, tab bar, toast, grid of buttons, stepper and dialog, and React hooks that attach the controls.",
+    "description": "Design tokens, light and dark themes, and CSS components and React hooks that make them work, from the demos on jasonsdevspace.com. Built to work by keyboard, screen reader and forced colors, with no flash of the wrong theme.",
     "keywords": [
         "design-tokens",
         "design-system",
@@ -11,7 +11,10 @@
         "light-dark",
         "theme",
         "vite-plugin",
-        "react"
+        "react",
+        "react-hooks",
+        "accessibility",
+        "wcag"
     ],
     "license": "MIT",
     "author": "Jason Poteet",

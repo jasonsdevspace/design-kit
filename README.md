@@ -196,6 +196,20 @@ follow by area.
 </details>
 
 <details>
+<summary>The controls and hooks in the browser</summary>
+
+| Gotcha                                                                                                      | Where it is tested                             |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| A form that fails its constraints is refused before the page's handler, with the kit's errors and no bubble | `packages/design-kit/e2e/checked.spec.tsx`     |
+| Words a visitor must hear are not lost on a shared status line                                              | `packages/design-kit/e2e/shared-line.spec.tsx` |
+| A view's heading takes focus only for a recent press, never for Tab or typing                               | `packages/design-kit/e2e/focus.spec.tsx`       |
+| A grid and a tab row are one Tab stop moved by the arrows                                                   | `packages/design-kit/e2e/roving.spec.tsx`      |
+| A busy button saves once however often it is pressed                                                        | `packages/design-kit/e2e/busy.spec.tsx`        |
+| Each hook attaches a swapped element and sets nothing again on a redraw                                     | `packages/design-kit/e2e/hooks.spec.tsx`       |
+
+</details>
+
+<details>
 <summary>Explainer pages</summary>
 
 | Gotcha                                                                                        | Where it is tested                           |
@@ -260,15 +274,16 @@ follow by area.
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 12.25 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to 17.25
-  KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm publishes
-  is 80 KB packed, the sheets and modules a page loads together with the README, the types and the
-  tokens in the design tokens format, which it never does. [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each
-  sheet without its comments, and from 0.6.0 what each piece of the sheets and each function of the
+  KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
+  publishes is 80 KB packed, the sheets and modules a page loads together with the README, the
+  types and the tokens in the design tokens format, which it never does.
+  [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet
+  without its comments, and from 0.6.0 what each piece of the sheets and each function of the
   controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
   processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
-  shows its main content in under a second with nothing jumping as it loads, and downloads 16.5 to
-  25.4 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
+  shows its main content in under a second with nothing jumping as it loads, and downloads 24.4 to
+  39.5 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
   performance, that takes longer than two and a half seconds to show its main content, or whose
   layout shifts by more than a tenth. [The record](docs/benchmarks/site-pages.md) gives each page.
 
@@ -325,7 +340,8 @@ options rejected, what the choice costs, and the test behind it.
     the browser, held to a budget.
 14. [A piece with no state of its own ships as classes alone](docs/decisions/0014-stateless-pieces-ship-as-classes.md).
     Tabs, pills and the eyebrow look the same on every site from classes a page writes, with their
-    keys from `attachRoving` and the chosen tab the page's own.
+    keys from `attachRoving`, at the cost of each page choosing the tab and drawing its panel
+    itself.
 15. [A toast's attach function returns what shows a message](docs/decisions/0015-a-toast-attach-returns-what-shows-a-message.md).
     A page attaches a toast once and calls one function for every message, which a screen reader
     hears with its way back, at the cost of the one control whose attach function takes nothing
@@ -342,6 +358,18 @@ options rejected, what the choice costs, and the test behind it.
     A tool that reads the format reads the kit's tokens from the package, and a token changed in
     one file and not the other fails a test, at the cost of a second public copy of the tokens'
     names, where renaming or dropping one is a breaking change.
+19. [A closing panel hands focus to its button only where the visitor's place was in it](docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md).
+    Focus comes back to the button when it was in the panel, in every engine Safari included, at
+    the cost of a tabindex the kit writes on a panel's buttons, which makes them stops for Tab in
+    Safari where the page's other buttons are not.
+20. [The kit's React hooks wrap its attach functions](docs/decisions/0020-react-hooks-wrap-the-attach-functions.md).
+    A React page attaches a form, a busy button, progress or a group of cells, and moves focus, with
+    one hook over the same function a page without React calls, and draws the status line with
+    `StatusProvider`, at the cost of `./react` importing
+    `./controls`.
+21. [A refused form checks the browser's constraints itself](docs/decisions/0021-a-refused-form-checks-the-browsers-constraints-itself.md).
+    A form's native constraints are kept and its errors drawn in the kit's look and words, never the
+    browser's bubble, at the cost of a page's own checks running only once the constraints pass.
 
 </details>
 

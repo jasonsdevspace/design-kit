@@ -1,6 +1,9 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and politely, giving way to firm words said in the same moment and waiting for firm words being said, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
+**Status:** accepted, amended in 0.8.0 to export the status line's attach function, `attachStatus`, which
+returns what says a message, in 0.8.4 for the panel's, `attachPanel`, which returns what opens or
+closes it and what lets its button go, and in 0.9.0 for words that settle and polite words, which
+give way to firm words said in the same moment or still settling and wait for firm words being said
 
 ## Context
 
@@ -99,3 +102,6 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
 - `e2e/attach.spec.tsx` serves a screen's own status line and finds each message said on it with no
   element added, the same words said twice reaching it twice, and the line empty once a message has
   been held its time.
+- `e2e/status.spec.tsx` and `e2e/shared-line.spec.tsx` say words on a line at once, once they
+  settle and politely, and share one line between a busy button, a stepper and progress with
+  nothing a visitor must hear lost.

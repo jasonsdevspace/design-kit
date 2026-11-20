@@ -111,7 +111,8 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - A form works as the reference writes it: its constraints are kept without any code of the
   page's, and its errors match the kit's in look, place, words and language.
 - The controls carry the words and the check, and record 13 raises their budget by its rule.
-- `attachForm` keeps one listener on its form, which leaves with the form, where it kept none.
+- `attachForm` keeps a submit and a reset listener on its form, one of each however many of its
+  parts are attached, which leave with the form, where it kept none.
 - A page that fills a field from script gets no length check on it, since the browser counts
   length only after a visitor's edit, so its own handler checks that.
 - A page that already handles the browser's check itself sees no bubble now, and its own handler

@@ -19,8 +19,8 @@ const counted = (search: string) => {
 };
 
 /**
- * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts the
- * empty state in the list's place, with a way to clear the search.
+ * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts
+ * the empty state in the list's place, with a way to clear the search.
  */
 export const Games = () => {
     const [search, setSearch] = useState('');

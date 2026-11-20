@@ -1,6 +1,8 @@
 # 10. The markup each piece draws lives in one module of examples
 
-**Status:** accepted
+**Status:** accepted, amended in 0.9.0 for a block of TSX written from a file in the examples
+module, marked `<!-- source: name -->`, so a React part the reference prints is the one the type
+check and the browser tests run
 
 ## Context
 
@@ -97,10 +99,11 @@ The paths are in `packages/design-kit`.
 
 - `examples/readme.test.ts` writes the reference's blocks from the examples and fails when the
   reference differs, finds a marker for every example, none twice and each with a block after it,
-  closes an empty block at its own fence, keeps the line endings of a checkout that ends lines with
-  a carriage return, and refuses a marker that names no example. It also finds the package README
-  linking the reference at its own version's tag, only to headings the reference has, and making no
-  link a reader on npm could not follow.
+  writes each `<!-- source: name -->` block of TSX from its file in the examples module, closes an
+  empty block at its own fence, keeps the line endings of a checkout that ends lines with a carriage
+  return, and refuses a marker that names no example. It also finds the package README linking the
+  reference at its own version's tag, only to headings the reference has, and making no link a
+  reader on npm could not follow.
 - `examples/states.test.tsx` draws each state of the controls, the chrome and an explainer's pieces
   from the sources and finds the attribute printed under it, whole, finds each copy's ids its own,
   and finds `states.tsx` and `pieces.tsx` importing nothing of the kit but its types. It reads the
