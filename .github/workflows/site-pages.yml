@@ -155,12 +155,26 @@ jobs:
               with:
                   persist-credentials: false
 
+            # Into the runner's own folder, apart from the checkout, and only the files the record
+            # job wrote are copied in, each a plain file, so nothing the build job could have put
+            # in the artifact reaches the checkout git runs in.
             - name: Take the record
               if: steps.app.outputs.ready == 'true'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                   name: site-pages
-                  path: docs/benchmarks
+                  path: ${{ runner.temp }}/site-pages
+
+            - name: Copy in the record
+              if: steps.app.outputs.ready == 'true'
+              run: |
+                  for file in site-pages.json site-pages.md; do
+                      if [ ! -f "$RUNNER_TEMP/site-pages/$file" ] || [ -L "$RUNNER_TEMP/site-pages/$file" ]; then
+                          echo "The record holds no plain file at $file, so nothing was opened." >> "$GITHUB_STEP_SUMMARY"
+                          exit 1
+                      fi
+                      cp "$RUNNER_TEMP/site-pages/$file" "docs/benchmarks/$file"
+                  done
 
             - name: Get the records app's token
               if: steps.app.outputs.ready == 'true'

@@ -67,6 +67,7 @@ const ALLOWED = new Set([
     'git',
     'gh',
     'echo',
+    'cp',
     'exit',
     '[',
     'test',
@@ -76,11 +77,17 @@ const ALLOWED = new Set([
     'else',
     'elif',
     'fi',
+    'for',
+    'do',
+    'done',
 ]);
+
+/** Words an allowed command may not be given, since with them it runs anything. */
+const ESCAPES = /^(?:git\s+(?:-c\b|.*\balias\b)|gh\s+(?:extension|alias)\b)/;
 
 /** The lines of a `run` key's block, which runs on while they sit deeper than the key or are blank. */
 const blockOf = (lines: readonly string[], at: number, indent: number, value: string): string[] => {
-    if (value !== '|' && value !== '>') return [value];
+    if (!/^[|>][-+0-9]*$/.test(value)) return [value];
     const block: string[] = [];
     for (const next of lines.slice(at + 1)) {
         if (next.trim() !== '' && next.length - next.trimStart().length <= indent) break;
@@ -89,33 +96,49 @@ const blockOf = (lines: readonly string[], at: number, indent: number, value: st
     return block;
 };
 
-/** The first word of each command a script runs, those in a `$()` among them, but assignments. */
+/**
+ * Each command a script runs, from its first word, those in a `$()`, a process substitution or
+ * after a single `&` among them, with the assignments before a command left off.
+ */
 const commandsOf = (script: string): string[] =>
     script
         .replace(/\\\n\s*/g, ' ')
-        .split(/&&|\|\||;|\||\$\(|`|\n/)
-        .map(
-            (command) =>
-                command
-                    .trim()
-                    .replace(/^(?:if|then|else|elif|!)\s+/, '')
-                    .split(/\s+/)[0] ?? ''
+        .split(/&&|\|\||;|\||&|\$\(|[<>]\(|`|\n/)
+        .map((command) =>
+            command
+                .trim()
+                .replace(/^(?:(?:if|then|else|elif|do|!)\s+)+/, '')
+                .replace(/^(?:[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|\S*)\s*)+/, '')
+                .trim()
         )
-        .filter((first) => first !== '' && !first.startsWith('#') && !/^[A-Za-z_]\w*=/.test(first));
+        .filter((command) => command !== '' && !command.startsWith('#'));
 
 /**
- * What a job runs beyond what `ALLOWED` names: the first word of each command in its `run` blocks,
- * those in a `$()` among them, and each action of the repository's own it uses.
+ * What a job runs beyond what `ALLOWED` names: the first word of each command in its `run` blocks
+ * that is not allowed or is given a word that lets it run anything, each action of the
+ * repository's own it uses, any shell it names, and any write to the environment or the path later
+ * steps run with.
  */
-const straysOf = (body: string): string[] => {
+const straysOf = (body: string, repository = 'jasonsdevspace/design-kit'): string[] => {
     const lines = body.split('\n');
     return lines.flatMap((line, at) => {
-        const local = /^\s*(?:-\s+)?uses:\s*(\.\.?\/\S*)/.exec(line)?.[1];
-        if (local) return [local];
+        const uses = /^\s*(?:-\s+)?uses:\s*['"]?([^'"\s]+)/.exec(line)?.[1];
+        if (uses?.startsWith('.') || uses?.startsWith(`${repository}/`)) return [uses];
+        const shell = /^\s*(?:-\s+)?shell:\s*(\S+)/.exec(line)?.[1];
+        if (shell) return [`shell: ${shell}`];
         const run = /^(\s*)(?:-\s+)?run:\s*(.*)$/.exec(line);
         if (!run) return [];
-        const block = blockOf(lines, at, (run[1] ?? '').length, run[2] ?? '');
-        return commandsOf(block.join('\n')).filter((first) => !ALLOWED.has(first));
+        const script = blockOf(lines, at, (run[1] ?? '').length, run[2] ?? '').join('\n');
+        const written = /\$\{?GITHUB_(?:ENV|PATH)\b/.test(script)
+            ? ['GITHUB_ENV or GITHUB_PATH']
+            : [];
+        return [
+            ...written,
+            ...commandsOf(script).flatMap((command) => {
+                const first = command.split(/\s+/)[0] ?? '';
+                return !ALLOWED.has(first) || ESCAPES.test(command) ? [first] : [];
+            }),
+        ];
     });
 };
 
@@ -479,29 +502,69 @@ describe('the workflows', () => {
             ])
         );
         expect(holding.filter(({ strays }) => strays.length > 0)).toEqual([]);
+        // An artifact the build job made lands apart from the checkout, so none of its files, such
+        // as a git setting, reaches the folder git runs in but those the job copies in by name.
+        const landing = [...workflows].flatMap(([path, text]) =>
+            jobsOf(text)
+                .filter(({ body }) => /actions\/create-github-app-token@/.test(body))
+                .flatMap(({ id, body }) =>
+                    body
+                        .split(/\n(?=\s+- name:)/)
+                        .filter((step) => /actions\/download-artifact@/.test(step))
+                        .filter((step) => !/^\s+path:\s*\$\{\{\s*runner\.temp\s*\}\}\//m.test(step))
+                        .map(() => `${path} ${id}`)
+                )
+        );
+        expect(landing).toEqual([]);
         const steps = (line: string) => `\n        steps:\n            - ${line}\n`;
-        expect(straysOf(steps('run: npx something'))).toEqual(['npx']);
-        expect(straysOf(steps('run: ./scripts/release.sh'))).toEqual(['./scripts/release.sh']);
-        expect(straysOf(steps('run: .github/scripts/x.sh'))).toEqual(['.github/scripts/x.sh']);
-        expect(straysOf(steps('run: source x.sh'))).toEqual(['source']);
-        expect(straysOf(steps('run: . x.sh'))).toEqual(['.']);
-        expect(straysOf(steps('uses: ./.github/actions/x'))).toEqual(['./.github/actions/x']);
+        const stray = (line: string) => straysOf(steps(line));
+        expect(stray('run: npx something')).toEqual(['npx']);
+        expect(stray('run: ./scripts/release.sh')).toEqual(['./scripts/release.sh']);
+        expect(stray('run: .github/scripts/x.sh')).toEqual(['.github/scripts/x.sh']);
+        expect(stray('run: source x.sh')).toEqual(['source']);
+        expect(stray('run: . x.sh')).toEqual(['.']);
+        expect(stray('run: NODE_OPTIONS=x npm ci')).toEqual(['npm']);
+        expect(stray('run: git status & npm ci')).toEqual(['npm']);
+        expect(stray('run: echo <(npm ci)')).toEqual(['npm']);
+        expect(stray("run: git -c alias.x='!npm ci' x")).toEqual(['git']);
+        expect(stray('run: gh extension install x')).toEqual(['gh']);
+        expect(stray('run: echo "$PWD/scripts" >> "$GITHUB_PATH"')).toEqual([
+            'GITHUB_ENV or GITHUB_PATH',
+        ]);
+        expect(stray('uses: ./.github/actions/x')).toEqual(['./.github/actions/x']);
+        expect(stray("uses: './.github/actions/x'")).toEqual(['./.github/actions/x']);
+        expect(stray('uses: jasonsdevspace/design-kit/.github/actions/x@main')).toEqual([
+            'jasonsdevspace/design-kit/.github/actions/x@main',
+        ]);
+        expect(straysOf(`${steps('run: echo hi')}              shell: node {0}\n`)).toEqual([
+            'shell: node',
+        ]);
+        expect(stray('run: |-\n                  gh pr list')).toEqual([]);
         expect(
-            straysOf(
-                steps('run: |\n                  open="$(gh pr list)"\n                  git push')
-            )
+            stray('run: |\n                  open="$(gh pr list)"\n                  git push')
         ).toEqual([]);
     });
 
-    it("name no secret in a job that runs the repository's code or a package", () => {
+    it('name no secret but in a job that holds the records token, and none for a whole workflow', () => {
         // A secret named in a job is sent to that job's runner, where any code the job runs can
-        // read it, so a job that installs or runs anything names none but the run's own token.
-        const naming = [...workflows].flatMap(([path, text]) =>
-            jobsOf(text)
-                .filter(({ body }) => straysOf(body).length > 0)
-                .filter(({ body }) => /secrets\.(?!GITHUB_TOKEN\b)/.test(body))
-                .map(({ id }) => `${path} ${id}`)
-        );
+        // read it, so only the jobs that run nothing but git and gh name one, and a secret named
+        // before the jobs, which every job would take, is refused outright.
+        const naming = [...workflows].flatMap(([path, text]) => {
+            const jobs = jobsOf(text);
+            expect(jobs.length, `${path} has jobs the test can read`).toBeGreaterThan(0);
+            const before = text.slice(0, Math.max(0, text.search(/^jobs:/m)));
+            return [
+                ...(/\bsecrets\b/.test(before) ? [`${path} before its jobs`] : []),
+                ...jobs
+                    .filter(({ body }) => /\bsecrets\b(?!\.GITHUB_TOKEN\b)/.test(body))
+                    .filter(
+                        ({ body }) =>
+                            !/actions\/create-github-app-token@/.test(body) ||
+                            straysOf(body).length > 0
+                    )
+                    .map(({ id }) => `${path} ${id}`),
+            ];
+        });
         expect(naming).toEqual([]);
     });
 
