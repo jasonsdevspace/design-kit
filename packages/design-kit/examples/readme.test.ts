@@ -73,6 +73,19 @@ describe('the package README', () => {
         return match === null ? [] : [{ ref: match[1], heading: match[2] }];
     });
 
+    it('points each link within the page at one of its own headings', () => {
+        const headings = new Set(
+            readme
+                .replaceAll(/^```[\s\S]*?^```/gm, '')
+                .split('\n')
+                .filter((line) => /^#{1,6} /.test(line))
+                .map((line) => slug(line.replace(/^#+ /, '')))
+        );
+        const within = targets.filter((target) => target.startsWith('#')).map((t) => t.slice(1));
+        expect(within.length).toBeGreaterThan(0);
+        expect(within.filter((anchor) => !headings.has(anchor))).toEqual([]);
+    });
+
     it('makes only links a reader on npm can follow, since npm shows no other file of the repository', () => {
         expect(targets.filter((target) => !/^(?:https:\/\/|#)/.test(target))).toEqual([]);
     });

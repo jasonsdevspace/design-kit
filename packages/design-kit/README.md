@@ -17,6 +17,11 @@ plain JavaScript functions or React hooks make them work. The demos on
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit)
 
+**Contents:** [What is in it](#what-is-in-it) · [Setup](#setup) · [A first example](#a-first-example) ·
+[What it exports](#what-it-exports) · [Foundations](#foundations) · [Theme and
+policy](#the-theme-and-a-strict-policy) · [Going further](#going-further) · [Browser
+support](#browser-support) · [Versions](#versions-and-license)
+
 - **Keyboard and screen reader behavior built in.** After a change, focus moves to where a visitor
   needs it next, and announcements take turns on one status line, so one does not cut off another.
 - **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
