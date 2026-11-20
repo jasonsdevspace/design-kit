@@ -141,26 +141,21 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     key: ArrivalKey
 ): RefCallback<Heading> => {
     const heading = useRef<Heading | null>(null);
-    const seen = useRef<{ readonly key: ArrivalKey } | null>(null);
+    const last = useRef<{ readonly key: ArrivalKey } | null>(null);
     // Where focus was as the change began, read as the view draws, before anything in it can take
     // focus, so a field the view focuses itself is not taken for the visitor's own place.
     const from = useRef<Element | null>(null);
     if (
-        (seen.current === null || !Object.is(seen.current.key, key)) &&
+        (last.current === null || !Object.is(last.current.key, key)) &&
         typeof document !== 'undefined'
     )
         from.current = document.activeElement;
+    // Asks once for each key, since the effect runs again only when the key changes, and calls the
+    // request off as it is cleaned up, so React's second run in development asks again and a view
+    // gone before its frame moves nothing.
     useEffect(() => {
-        if (seen.current !== null && Object.is(seen.current.key, key)) return;
-        const before = seen.current;
-        seen.current = { key };
-        const cancel = focusOnArrival(() => heading.current, { from: from.current });
-        // Called off and forgotten as the effect is cleaned up, so React's second run of a new
-        // effect in development asks again, and a view gone before its frame moves nothing.
-        return () => {
-            cancel();
-            seen.current = before;
-        };
+        last.current = { key };
+        return focusOnArrival(() => heading.current, { from: from.current });
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;

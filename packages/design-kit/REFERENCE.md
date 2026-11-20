@@ -1571,18 +1571,20 @@ import { moveFocus } from '@jasonsdevspace/design-kit/controls';
 moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 ```
 
-In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request
-takes the place of one not yet landed, so the last asked for wins, and one not yet landed when the
+In React, `useFocusAfterDraw()` returns the same function, the same across renders. A request takes
+the place of one not yet landed, so the last asked for wins, and one not yet landed when the
 component unmounts is called off. `useArrivalFocus(key)` returns a ref for a view's heading, gives
-the heading a tabindex of -1 where it has none, and focuses it when a visitor's press or submit
-brings the view: when the key changes, such as the round on screen, and when the view is drawn by a
-press, as a tab bar's view is. It never moves focus as the page first draws, nor as a visitor moves
-along a row of tabs with the arrow keys or Tabs past, nor for a second view drawn by the press one
-already took focus for, nor from a field the view focuses itself as it draws, and a view gone in the
-frame it arrived in moves nothing. What decides is `focusOnArrival(heading, { from })` from
-`./controls`, which a page without React calls as each view draws. The key is a string, a number or a boolean,
-compared by value, and changes on a press or a submit, never as a visitor chooses in a list or a set
-of radios, which would move them as they choose, as WCAG 3.2.2 has it.
+the heading a tabindex of -1 where it has none, and focuses it when a visitor's press on a button or
+a link, or a submit, brings the view: when the key changes, such as the round on screen, and when
+the view is drawn by a press, as a tab bar's view is. It never moves focus as the page first draws,
+nor after a key that moves, such as Tab or an arrow along a row of tabs, after typing, or after a
+press on nothing, nor from a field the view focuses itself as it draws. A row of tabs' panels take
+no focus on arrival, since a tab keeps focus as its panel changes, whether chosen by an arrow, a
+press or Enter. Views drawn by one press land together, and the first in the page takes focus, so a
+view's title is heard before a section of it. What decides is `focusOnArrival(heading, { from })`
+from `./controls`, which a page without React calls as each view draws. The key is a string, a
+number or a boolean, compared by value, and changes on a press or a submit, never as a visitor
+chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';

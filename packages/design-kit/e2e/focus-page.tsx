@@ -12,8 +12,9 @@ const page = window as unknown as Page;
  * focus going to the next player's button or the list's heading, a round whose heading takes
  * focus when the round changes, tabs whose views take focus on their heading as a press draws them,
  * one with a field that takes focus itself, two requests made in one frame, a row of tabs moved
- * along by the arrow keys whose views each take focus on arrival, a view first drawn late, one gone
- * in the frame it arrived in, and a view drawn again many times before any press.
+ * along by the arrow keys or chosen by a press, whose views each take focus on arrival, a view
+ * first drawn late beside a field, one gone in the frame it arrived in, a view drawn again many
+ * times before any press, and a view and a section of it brought by one press.
  */
 
 const Players = () => {
@@ -127,6 +128,9 @@ const Modes = () => {
                         role="tab"
                         className="dk-tab"
                         aria-selected={mode === one}
+                        onClick={() => {
+                            setMode(one);
+                        }}
                     >
                         {one}
                     </button>
@@ -153,7 +157,46 @@ const Late = () => {
             setShown(true);
         };
     }, []);
-    return shown ? <LateView /> : null;
+    return (
+        <section>
+            <input id="late-query" aria-label="Find a game" />
+            {shown ? <LateView /> : null}
+        </section>
+    );
+};
+
+const Part = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('part');
+    return (
+        <h3 id="part" ref={heading}>
+            Scores so far
+        </h3>
+    );
+};
+
+// A view and a section of it, each taking focus on arrival, brought by one press.
+const Game = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('game');
+    return (
+        <section>
+            <h2 id="game" ref={heading}>
+                Game
+            </h2>
+            <Part />
+        </section>
+    );
+};
+
+const Start = () => {
+    const [started, setStarted] = useState(false);
+    return (
+        <section>
+            <button id="start" type="button" onClick={() => setStarted(true)}>
+                Start
+            </button>
+            {started ? <Game /> : null}
+        </section>
+    );
 };
 
 const BriefView = () => {
@@ -208,5 +251,6 @@ if (root)
             <Late />
             <Brief />
             <Again />
+            <Start />
         </main>
     );
