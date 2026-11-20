@@ -6,7 +6,8 @@ name: Site pages
 # of its own, so a record taken at the tag would describe a site that was never deployed. This one
 # names the version the site pins on main, and is taken again each time that pin moves. A change to
 # this workflow runs it too, as a run by hand does, and either records the pages where the record
-# on main names another version than the site pins.
+# on main names another version than the site pins. Only main is recorded, so a run by hand from
+# another branch records nothing.
 on:
     push:
         branches:
@@ -19,8 +20,9 @@ on:
 permissions:
     contents: read
 
-# One run at a time, and a run that has started finishes, so a push that leaves the pin as it is
-# never cancels the record of one that moved it, and no branch is pushed without its pull request.
+# One run at a time, and a run that has started finishes, so no branch is pushed without its pull
+# request. A newer push still cancels a run that is waiting its turn, which loses nothing, since
+# each run compares the pin with the record rather than with the commit before.
 concurrency:
     group: site-pages
     cancel-in-progress: false
@@ -30,9 +32,12 @@ jobs:
     # version the site pins differs from the one the record on main names. Comparing with the record
     # rather than the commit before means a run that failed or was stopped is made up by the next.
     # The site pins an exact version, so the record names what the pages drew from, and anything
-    # else fails here, before the audit, rather than in a branch name after it.
+    # else fails here, before the audit, rather than in a branch name after it. A prerelease pin is
+    # not recorded, as the release workflow records none, since main's records describe what a demo
+    # installs.
     pin:
         name: Find the site's pin
+        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         permissions:
@@ -50,13 +55,16 @@ jobs:
               id: pin
               run: |
                   now="$(node -p "(require('./packages/site/package.json').dependencies?.['design-kit-release'] ?? '').split('@').pop()")"
-                  recorded="$(node -p "require('./docs/benchmarks/site-pages.json').tools?.kit ?? ''")"
+                  recorded="$(node -p "const fs = require('fs'), path = './docs/benchmarks/site-pages.json'; fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf8')).tools?.kit ?? '' : ''")"
                   if ! [[ "$now" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
                       echo "The site pins '$now', which is not an exact version, so its pages cannot be named by it." >> "$GITHUB_STEP_SUMMARY"
                       exit 1
                   fi
                   echo "version=$now" >> "$GITHUB_OUTPUT"
-                  if [ "$now" != "$recorded" ]; then
+                  if [[ "$now" == *-* ]]; then
+                      echo "moved=false" >> "$GITHUB_OUTPUT"
+                      echo "The site pins $now, a prerelease, so its pages are not recorded." >> "$GITHUB_STEP_SUMMARY"
+                  elif [ "$now" != "$recorded" ]; then
                       echo "moved=true" >> "$GITHUB_OUTPUT"
                       echo "The site pins $now and the record names ${recorded:-nothing}, so its pages are recorded." >> "$GITHUB_STEP_SUMMARY"
                   else
@@ -125,8 +133,9 @@ jobs:
     # The record as a pull request, opened with a token from the records app rather than the run's
     # own, since a pull request opened with the run's token starts no workflow, so its required
     # checks would never run. This job installs and runs nothing of the repository's, so the token
-    # never meets a dependency's code. A run again moves the branch to the new record and leaves a
-    # pull request already open for it as it is.
+    # never meets a dependency's code. Every record goes on one branch, so a record taken while an
+    # earlier one is still open moves that pull request to the newer record and renames it, rather
+    # than leaving an older record open to be merged over it.
     record-pull-request:
         name: Open the record
         needs: [pin, record]
@@ -163,20 +172,22 @@ jobs:
                   GH_TOKEN: ${{ steps.token.outputs.token }}
                   REPOSITORY: ${{ github.repository }}
               run: |
-                  branch="records-site-$VERSION"
+                  branch="records-site"
+                  title="Record the site's pages with the site pinned to $VERSION"
                   git config user.name 'jasonsdevspace-records[bot]'
                   git config user.email 'jasonsdevspace-records[bot]@users.noreply.github.com'
                   git switch -c "$branch"
                   git add docs/benchmarks/site-pages.json docs/benchmarks/site-pages.md
-                  git commit -m "Record the site's pages with the site pinned to $VERSION"
+                  git commit -m "$title"
                   git push --force "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git" "HEAD:refs/heads/$branch"
+                  echo "The site's pages are recorded again from the commit on main that moved the site's pin to $VERSION, so the record names the version the site draws from." > body.md
                   open="$(gh pr list --repo "$REPOSITORY" --head "$branch" --state open --json url -q '.[0].url')"
                   if [ -n "$open" ]; then
+                      gh pr edit "$open" --repo "$REPOSITORY" --title "$title" --body-file body.md
                       echo "The record moved to $open." >> "$GITHUB_STEP_SUMMARY"
                       exit 0
                   fi
-                  echo "The site's pages are recorded again from the commit on main that moved the site's pin to $VERSION, so the record names the version the site draws from." > body.md
                   url="$(gh pr create --repo "$REPOSITORY" --base main --head "$branch" \
-                      --title "Record the site's pages with the site pinned to $VERSION" \
+                      --title "$title" \
                       --body-file body.md --label documentation --assignee jasonsdevspace)"
                   echo "The record is in $url." >> "$GITHUB_STEP_SUMMARY"

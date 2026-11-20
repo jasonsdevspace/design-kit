@@ -407,12 +407,19 @@ describe('the workflows', () => {
 
     it("run nothing of the repository's in a job that holds a token that can write", () => {
         // A token from an app can push and open pull requests, so the job that takes one installs
-        // and runs no package, which a dependency's code could reach it through.
+        // and runs no package, no script of the repository's and no action of its own, which a
+        // dependency's code or a change on a branch could reach it through.
         const runsCode = (body: string) =>
-            /^\s*(?:-\s+)?run:/m.test(body) &&
-            body
-                .split('\n')
-                .some((line) => /(?:^|[\s;&|(`])(?:npm|npx|node|yarn|pnpm)(?:\s|$)/.test(line));
+            /^\s*(?:-\s+)?uses:\s*\.\.?\//m.test(body) ||
+            (/^\s*(?:-\s+)?run:/m.test(body) &&
+                body
+                    .split('\n')
+                    .some(
+                        (line) =>
+                            /(?:^|[\s;&|(`])(?:npm|npx|node|yarn|pnpm|bun|bunx|deno|make|bash|sh|python3?)(?:\s|$)/.test(
+                                line
+                            ) || /(?:^|[\s;&|(`'"])(?:\.\.?\/|scripts\/)/.test(line)
+                    ));
         const holding = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
                 .filter(({ body }) => /actions\/create-github-app-token@/.test(body))
@@ -426,6 +433,10 @@ describe('the workflows', () => {
         );
         expect(holding.filter(({ runs }) => runs).map(({ job }) => job)).toEqual([]);
         expect(runsCode('\n        steps:\n            - run: npx something\n')).toBe(true);
+        expect(runsCode('\n        steps:\n            - run: ./scripts/release.sh\n')).toBe(true);
+        expect(runsCode('\n        steps:\n            - run: bash scripts/x.sh\n')).toBe(true);
+        expect(runsCode('\n        steps:\n            - uses: ./.github/actions/x\n')).toBe(true);
+        expect(runsCode('\n        steps:\n            - run: gh pr list\n')).toBe(false);
     });
 
     // Ubuntu, but for CI's jobs that draw in WebKit and Firefox, on a Mac, where neither needs
