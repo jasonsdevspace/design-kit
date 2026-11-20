@@ -70,13 +70,14 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - **`noValidate` is set from script** on the form attached, or the form around an attached part of
   one, so a page without script keeps the browser's check, and the server stays the final word.
 - **The kit checks the whole form on submit, before the page's handler in the bubble phase,** in a
-  capture listener on the form, one however many of its parts are attached. It reads the `validity`
-  of each of the form's fields, those tied to it from outside by `form` among them, counts a set
-  once, a group of radios with no set around it as well, passes over a field marked off, which no
-  one could put right, and where any field fails it stops the submit and its propagation, draws
-  each error, and refuses. Where every field passes, the page's handler
-  runs as ever, for checks the constraints cannot express, and refuses itself. A submitter marked
-  `formnovalidate` is not checked, as the browser would not check it.
+  capture listener on the form, one however many of its parts are attached, which takes the options
+  of the form's own attach where there is one. It reads the `validity` of each of the form's fields,
+  those tied to it from outside by `form` among them, counts a set once, a group of radios with no
+  set around it as well, passes over a field marked off, which no one could put right, and where any
+  field fails it stops the submit and its propagation, draws each error, and refuses. Where every
+  field passes, the page's handler runs as ever, for checks the constraints cannot express, and
+  refuses itself. A submitter marked `formnovalidate` is not checked, as the browser would not check
+  it, and the errors the kit drew go.
 - **Each failure takes words that say what to do,** in the manner of GOV.UK's errors, chosen in a
   fixed order where several apply: bad input, missing, wrong type, pattern, length, range, step,
   then the page's own from `setCustomValidity`. A field's own words for a failure come first, as
@@ -88,11 +89,12 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - **In plain markup the kit draws the error** as its field draws one: after the hint, above the
   control or under a set's legend, starting with a word a screen reader reads, described after the
   hint, and marked as the kit's set of choices marks one, a set of radios on its fieldset and a set
-  of checkboxes on each box. An error the page already drew for the field takes the kit's words,
-  and a stepper's range error is left as it is. The kit puts back what it changed once the field
-  passes on a later checked submit, or the form is reset. **In React the failures go to `invalid`,**
-  which the hook asks for, since the markup belongs to the page's state, and the hook refuses after
-  the render that draws them.
+  of checkboxes on each box. An error the page already drew for the field takes the kit's words, and
+  a stepper's range error is left as it is. The kit puts back what it changed once the field passes
+  on a later checked submit, or the form is reset, and only what still holds the kit's change, so a
+  mark a stepper has since taken away stays away. **In React the failures go to `invalid`,** which
+  the hook asks for, since the markup belongs to the page's state, and the hook refuses after the
+  render that draws them.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
 - **Fields not in error are marked `aria-invalid="false"`** as the form is attached, so an empty

@@ -606,10 +606,12 @@ error the page already drew for the field takes the kit's words until the field 
 stepper's range error is left as the one error. Where every field passes, the page's handler runs as
 ever, for the checks the constraints cannot express, such as two fields that must match or a name
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
-again. A button marked `formnovalidate` submits unchecked. Errors the kit drew go once their fields
-pass on a later checked submit, or the form is reset. Fields not in error are marked
-`aria-invalid="false"` as the form is attached, so a browser does not read an empty required field
-as invalid before anything is submitted.
+again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
+the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
+page calls the reset off. A form's own attach checks it where a part of it was attached first, so
+its options are the ones the check takes, and a refusal the page calls looks only in the part it
+attached. Fields not in error are marked `aria-invalid="false"` as the form is attached, so a
+browser does not read an empty required field as invalid before anything is submitted.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,

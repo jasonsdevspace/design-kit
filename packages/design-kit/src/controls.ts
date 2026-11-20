@@ -1596,6 +1596,9 @@ const formatWords = (control: Checked) =>
 /** Words for a value off a field's steps, counted from its least where it has one. */
 const stepWords = (control: Checked): string => {
     if (control.type === 'time') return 'Enter a time on one of the steps allowed.';
+    if (control.type === 'datetime-local')
+        return 'Enter a date and time on one of the steps allowed.';
+    if (DATED.has(control.type)) return 'Enter a date on one of the steps allowed.';
     const least = limitOf(control, 'min');
     const step = limitOf(control, 'step') || '1';
     if (step === '1' && (least === '' || Number.isInteger(Number(least))))
@@ -1606,15 +1609,18 @@ const stepWords = (control: Checked): string => {
 };
 
 /**
- * Whether a fieldset holds one set of choices, as the kit's set of choices draws it, rather than a
- * section of a form whose choices each stand alone.
+ * Whether a fieldset holds one set of choices, as the kit's set of choices draws it or a page
+ * writes one, rather than a section of a form with a choice standing alone in it.
  */
 const holdsOneSet = (fieldset: Element): boolean => {
     if (fieldset.matches('.dk-choice-field')) return true;
     const controls = [...fieldset.querySelectorAll('input, select, textarea')];
+    const choices = controls.filter((control) => control.matches(CHOICE));
+    // Choices alone, whatever their names, or a group of one name with a field beside it, as an
+    // Other box, while a section of fields with a box alone among them is no set.
     return (
-        controls.every((control) => control.matches(CHOICE)) &&
-        new Set(controls.map((choice) => choice.getAttribute('name'))).size === 1
+        choices.length === controls.length ||
+        (choices.length > 1 && new Set(choices.map((one) => one.getAttribute('name'))).size === 1)
     );
 };
 
@@ -1697,13 +1703,9 @@ const failureWords = (
  * The fields of a form that fail the browser's constraints, each set once, a group of radios with
  * no set around it among them, and none marked off, which a visitor could not put right.
  */
-const failuresOf = (scope: HTMLElement, given: FailureWords | undefined): FieldFailure[] => {
+const failuresOf = (form: HTMLFormElement, given: FailureWords | undefined): FieldFailure[] => {
     const seen = new Set<Element | string>();
-    const controls =
-        scope instanceof HTMLFormElement
-            ? [...scope.elements]
-            : [...scope.querySelectorAll('input, select, textarea')];
-    return controls.flatMap((control) => {
+    return [...form.elements].flatMap((control) => {
         if (
             !(
                 control instanceof HTMLInputElement ||
@@ -1797,10 +1799,11 @@ const errorFor = (
           field.querySelector(':scope > legend'))
         : null;
     const holder = field.closest('.dk-field');
+    // Never inside a label that holds the control, where it would join the control's name.
     const ahead =
         holder && holder !== field
             ? ([...holder.children].find((child) => child.contains(control)) ?? control)
-            : control;
+            : (control.closest('label') ?? control);
     if (after) after.after(made);
     else if (set) field.prepend(made);
     else ahead.before(made);
@@ -1825,6 +1828,15 @@ const attachedForms = new WeakMap<
 
 /** The forms the kit checks, each once however many of its parts are attached. */
 const checkedForms = new WeakSet<HTMLFormElement>();
+
+/** What checks each form, and clears what its check drew, from the attach that checks it. */
+const checkers = new WeakMap<
+    HTMLFormElement,
+    {
+        readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
+        readonly clear: () => void;
+    }
+>();
 
 /** Whether a control can take focus: enabled, not inert, and in sight. */
 const takesFocus = (control: Element): control is HTMLElement =>
@@ -2002,9 +2014,14 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         }
         drawn.set(field, () => {
             takeAway();
+            // Only what the kit changed is put back, and only where it still holds the kit's
+            // change, so a mark a stepper or the page has since taken away or set stays theirs.
             for (const [one, invalid, describedBy] of before) {
-                restore(one, 'aria-invalid', invalid);
-                restore(one, 'aria-describedby', describedBy);
+                if (marked.includes(one) && one.getAttribute('aria-invalid') === 'true')
+                    restore(one, 'aria-invalid', invalid);
+                const had = (describedBy ?? '').split(/\s+/).includes(error.id);
+                const rest = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
+                if (!had) restore(one, 'aria-describedby', rest.length > 0 ? rest.join(' ') : null);
             }
         });
     };
@@ -2013,7 +2030,12 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         if (chosen.say) chosen.say(words);
         else if (chosen.status) attachStatus(chosen.status)(words);
     };
-    const refuse: Refuse = () => {
+    /**
+     * Refuses in a part of the page: the part attached where the page refuses, with its summary,
+     * and the whole form where the kit refuses its own failures, which the page's summary does not
+     * hold.
+     */
+    const refuseIn = (within: HTMLElement, summed: boolean) => {
         pending?.();
         const failures = failed;
         failed = [];
@@ -2021,8 +2043,8 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         // where focus was.
         let target: HTMLElement | null = null;
         const frame = window.requestAnimationFrame(() => {
-            const summary = chosen.summary?.() ?? null;
-            const fields = wrongFields(scope);
+            const summary = summed ? (chosen.summary?.() ?? null) : null;
+            const fields = wrongFields(within);
             const field = fields.map(focusIn).find((one) => one !== null) ?? null;
             target = summary instanceof HTMLElement ? summary : field;
             // Nothing in error and no summary leaves focus where it is. So do fields in error that
@@ -2047,40 +2069,51 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         };
         return pending;
     };
+    const refuse: Refuse = () => refuseIn(form, true);
     // The browser's constraints, checked across the whole form as it is submitted, before the
     // page's own handler in the bubble phase, which runs only where every field passes, so it can
     // still check what they cannot express. A form is checked once however many of its parts are
-    // attached. A button marked formnovalidate submits unchecked, as with the browser's own check.
+    // attached, by the form's own attach where there is one, else the first part's. A button marked
+    // formnovalidate submits unchecked, as with the browser's own check, and clears what the kit
+    // drew, which no longer stands.
+    const check = (event: SubmitEvent, whole: HTMLFormElement) => {
+        const { submitter } = event;
+        const failures =
+            (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) &&
+            submitter.formNoValidate
+                ? []
+                : failuresOf(whole, chosen.errorWords);
+        const failing = new Set(failures.map(({ field }) => field));
+        for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
+        if (failures.length === 0) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        failed = failures;
+        if (chosen.invalid) {
+            chosen.invalid(failures);
+            return;
+        }
+        for (const failure of failures) draw(failure);
+        refuseIn(whole, false);
+    };
+    const clear = () => {
+        for (const field of [...drawn.keys()]) undraw(field);
+    };
+    if (own && (own === form || !checkers.has(own))) checkers.set(own, { check, clear });
     if (own && !checkedForms.has(own)) {
         checkedForms.add(own);
         own.addEventListener(
             'submit',
             (event) => {
-                const { submitter } = event;
-                if (
-                    (submitter instanceof HTMLButtonElement ||
-                        submitter instanceof HTMLInputElement) &&
-                    submitter.formNoValidate
-                )
-                    return;
-                const failures = failuresOf(own, chosen.errorWords);
-                const failing = new Set(failures.map(({ field }) => field));
-                for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
-                if (failures.length === 0) return;
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                failed = failures;
-                if (chosen.invalid) {
-                    chosen.invalid(failures);
-                    return;
-                }
-                for (const failure of failures) draw(failure);
-                refuse();
+                checkers.get(own)?.check(event, own);
             },
             { capture: true }
         );
-        own.addEventListener('reset', () => {
-            for (const field of [...drawn.keys()]) undraw(field);
+        // A reset a page calls off leaves the errors, since the values that failed stay.
+        own.addEventListener('reset', (event) => {
+            window.setTimeout(() => {
+                if (!event.defaultPrevented) checkers.get(own)?.clear();
+            });
         });
     }
     attachedForms.set(form, {

@@ -142,6 +142,7 @@ document.querySelector('form').addEventListener('submit', (event) => {
     window.submits += 1;
 });
 attachForm(document.querySelector(${JSON.stringify(attach)}), { status: line });
+window.attachForm = attachForm;
 window.ready = true;`,
     });
     await page.waitForFunction(() => 'ready' in window);
@@ -212,6 +213,11 @@ test('counts a group of radios with no set around it once, and a box alone in a 
     await send(page);
     await expect(page.locator('#agree')).toBeFocused();
     await expect(page.locator('#agree-error')).toHaveText('Error: Check the box to go on.');
+    // Before its label, never inside it, where it would join the box's name.
+    expect(
+        await page.locator('#agree-error').evaluate((error) => error.closest('label'))
+    ).toBeNull();
+    await expect(page.locator('#agree')).toHaveAccessibleName('I agree');
     await expect(page.locator('.dk-field-error')).toHaveCount(2);
     await expect.poll(() => heard(page)).toEqual(['2 fields need attention.']);
 });
@@ -328,6 +334,72 @@ window.ready = true;`,
     await send(page);
     await expect(page.locator('.dk-field-error:visible')).toHaveCount(1);
     await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    // Put right, the stepper takes its own mark away, and the kit leaves it so.
+    await bid.fill('7');
+    await bid.blur();
+    await send(page);
+    await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+});
+
+test("counts a page's own set of boxes of different names once", async ({ page }) => {
+    await openWith(
+        page,
+        `<form><fieldset id="topics"><legend>Topics</legend>
+<label><input type="checkbox" name="topics-news" required> News</label>
+<label><input type="checkbox" name="topics-offers" required> Offers</label></fieldset>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('.dk-field-error')).toHaveCount(1);
+    await expect(page.locator('#topics-error')).toBeVisible();
+});
+
+test('clears the errors it drew on a formnovalidate submit, and keeps them through a reset called off', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><label for="n">Name</label><input id="n" required>
+<button type="submit">Send</button><button type="submit" formnovalidate>Save a draft</button>
+<button type="reset">Clear</button></form>`
+    );
+    await page.locator('form').evaluate((form) => {
+        form.addEventListener('reset', (event) => {
+            if (form.dataset['keep'] === 'yes') event.preventDefault();
+        });
+    });
+    await send(page);
+    await expect(page.locator('#n-error')).toBeVisible();
+    await page.locator('form').evaluate((form) => {
+        (form as HTMLFormElement).dataset['keep'] = 'yes';
+    });
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#n-error')).toBeVisible();
+    await page.getByRole('button', { name: 'Save a draft' }).click();
+    await expect(page.locator('#n-error')).toHaveCount(0);
+});
+
+test("lets the form's own attach take over the check from a part attached first", async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form id="join"><fieldset id="part"><legend>Part</legend><label for="a">A</label><input id="a" required></fieldset>
+<button type="submit">Send</button></form>`,
+        '#part'
+    );
+    await page.evaluate(() => {
+        const { attachForm } = window as unknown as {
+            attachForm: (form: Element, options: object) => unknown;
+        };
+        attachForm(document.querySelector('#join') as Element, {
+            status: document.querySelector('.screen-status'),
+            errorWords: { valueMissing: 'Fill in A.' },
+        });
+    });
+    await send(page);
+    await expect(page.locator('#a-error')).toHaveText('Error: Fill in A.');
 });
 
 test.describe('in React', () => {
