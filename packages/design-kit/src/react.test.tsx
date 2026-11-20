@@ -1101,7 +1101,7 @@ describe('the status provider', () => {
             'useStatus needs a StatusProvider above it'
         );
         const Refused = () => {
-            useFormRefusal();
+            useFormRefusal({ invalid: () => undefined });
             return null;
         };
         expect(() => renderToStaticMarkup(<Refused />)).toThrow(
