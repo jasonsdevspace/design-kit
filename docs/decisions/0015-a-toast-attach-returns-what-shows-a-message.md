@@ -1,6 +1,6 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
+**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and politely, left unsaid where the line holds or is about to hold words that are not, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
 
 ## Context
 
@@ -63,7 +63,11 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 - The function the copy button and the stepper speak through is exported as `attachStatus`, which
   returns what says a message on a page's own status line, for a screen that says a change without
   moving focus. Its messages leave after two seconds, where the toast keeps its own until the toast
-  leaves and a stepper keeps its value until the next, so each keeps a line of its own. A line
+  leaves and a stepper keeps its value on its own line until the next, so each keeps a line of its
+  own, and a stepper speaking on a page's line leaves it as any message there does. A message said
+  politely, as progress and a busy button's notice are, is left unsaid where the line holds or is
+  about to hold one that is not, so a page's own result is never put out by words that only report
+  that work goes on, and a polite message is the one way a `Say` call can go unheard. A line
   handed to a copy button too keeps one timer with it, so a later message replaces an earlier one.
   The function returns what says a message rather than what takes the line away, since a line holds
   nothing to take away, and keeps record 13's rule for being called again: a line attached again

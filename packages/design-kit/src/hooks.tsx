@@ -73,7 +73,10 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
-        else if (!gone.current) held.current = [message, options];
+        else if (gone.current) return;
+        // Polite words held give way to firm ones held, as they do on the line.
+        else if (!options?.polite || !held.current || held.current[1]?.polite)
+            held.current = [message, options];
     }, []);
     return (
         <Speaker.Provider value={speak}>

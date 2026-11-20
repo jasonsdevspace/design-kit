@@ -466,7 +466,8 @@ screen's `StatusProvider`, marks a busy button `aria-disabled` where the page ha
 only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a field of
 the form it submits, is stopped before the button's own handlers and React's `onClick` hear it,
 though a capture listener further up still does. Once the wait the sheet holds the look back by
-has passed, the button's words are said once on the status line. `busy` set to true says "Saving.",
+has passed, the button's words are said once on the status line, politely, so they give way to a
+result already there and the end of a progress beside them takes their place. `busy` set to true says "Saving.",
 which fits a save alone, so any other action, such as a delete or a send, gives its own words.
 Words not yet said when the work is done are dropped, so a result a toast says is never followed by
 a late "Saving." There is no spinner, since words say what is happening. A page that sets a
@@ -1503,12 +1504,14 @@ wait that long for their words to stop changing, so a screen reader hears the co
 presses stop rather than every step of it or none. Words said again in the meantime take the place
 of those not yet said, any message said on the line drops words still waiting, so the last words said
 are the ones heard, and the same words said twice are heard twice. Words that must be heard, such
-as a save's result or the end of a progress, never wait, and words that settle never drop words
+as a save's result or the end of a progress, never wait to settle, and words that settle never drop words
 already said. A stepper's press words are put in a tenth of a second after each press, so a quick
 run of presses is heard once, at its end. Words that should give way to any other, such as a
-progress's steps and its end beside a page's own result, ask to be polite, as
-`say(words, { polite: true })`, and are left unsaid where the line holds or is about to hold words
-that are not.
+progress's steps and its end beside a page's own result, or a busy button's notice that work goes
+on, ask to be polite, as `say(words, { polite: true })`, and are left unsaid where the line holds or
+is about to hold words that are not, settling ones among them, while polite words take each other's
+place as any words do. A stepper's words on a page's line leave after a while as every message there
+does, so they never hold the line from the words after them.
 
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
@@ -1662,7 +1665,8 @@ import never stops, and at least three seconds after the last step, so one is he
 next, while the end never waits. Nothing replaces the end until the amount goes back for another
 run. The amount a bar first shows is not said, and a bar with no amount says nothing. What it says
 is polite, `say(words, { polite: true })`, so it gives way to any other words on the line, and a
-page's own result is heard over it:
+page's own result is heard over it, while a busy button's words beside it, polite too, give way to
+it:
 
 <!-- source: importing -->
 

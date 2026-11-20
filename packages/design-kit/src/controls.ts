@@ -472,6 +472,8 @@ export const attachStatus = (line: HTMLElement): Say => {
             say(line, message, false, polite);
             return;
         }
+        // Polite words give way to firm ones still waiting to settle, as to those on the line.
+        if (polite && firmLines.has(line)) return;
         // Waits on a timer of its own, so words already said are still put in and leave as ever,
         // and any message said in the meantime drops these.
         window.clearTimeout(settleTimers.get(line));
@@ -485,6 +487,22 @@ export const attachStatus = (line: HTMLElement): Say => {
     };
     attachedLines.set(line, speak);
     return speak;
+};
+
+/** Where a piece's words are said: the page's own function, or a status line the page names. */
+type SpeaksOn = {
+    readonly say?: Say | undefined;
+    readonly status?: HTMLElement | null | undefined;
+};
+
+/** Says a piece's words through the page's function where it gives one, else on its line. */
+const speakOn = (
+    chosen: SpeaksOn,
+    message: string | (() => string | null),
+    options?: SayOptions
+) => {
+    if (chosen.say) chosen.say(message, options);
+    else if (chosen.status) attachStatus(chosen.status)(message, options);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
@@ -984,8 +1002,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         const to = line();
-        // Kept, on the stepper's line or the page's, since focus stays on the button.
-        if (to) say(to, spoken(presses), true);
+        // Kept on the stepper's own line, since focus stays on the button, and on a page's line
+        // left to leave as every message there does, so the line is free for the words after it.
+        if (to) say(to, spoken(presses), to === status);
     };
     const onInput = () => {
         quiet();
@@ -996,7 +1015,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         const bad = wrong();
         report(bad);
         const to = line();
-        if (bad && to && range) say(to, range.textContent, true);
+        if (bad && to && range) say(to, range.textContent, to === status);
     };
     const onReset = () => {
         window.setTimeout(() => {
@@ -1640,9 +1659,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
     const speak = (words: string) => {
-        if (words === '') return;
-        if (chosen.say) chosen.say(words);
-        else if (chosen.status) attachStatus(chosen.status)(words);
+        if (words !== '') speakOn(chosen, words);
     };
     const refuse: Refuse = () => {
         pending?.();
@@ -1996,8 +2013,9 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
         const given = button.getAttribute('data-busy') ?? '';
         const words = given === '' ? 'Saving.' : given;
         const still = () => (busy() ? words : null);
-        if (chosen.say) chosen.say(still);
-        else if (chosen.status) say(chosen.status, still);
+        // Polite, as a notice that work goes on, so it gives way to a result, and the end of a
+        // progress said beside it, which is polite too, takes its place rather than being dropped.
+        speakOn(chosen, still, { polite: true });
     };
     const start = () => {
         window.clearTimeout(timer);
@@ -2114,8 +2132,7 @@ export const attachProgress = (
         return /[.!?]$/.test(said) ? said : `${said}.`;
     };
     const speak = (message: string) => {
-        if (chosen.say) chosen.say(message, { polite: true });
-        else if (chosen.status) say(chosen.status, message, false, true);
+        speakOn(chosen, message, { polite: true });
     };
     const check = () => {
         if (!known()) {
