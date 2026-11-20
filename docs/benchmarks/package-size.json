@@ -1,13 +1,13 @@
 {
     "recorded": {
         "date": "2026-11-20",
-        "commit": "d54ff06",
-        "machine": "AMD EPYC 9V45 96-Core Processor, 4 cores",
+        "commit": "1401468",
+        "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.3"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.9.1",
-    "size": 119292,
+    "version": "0.9.2",
+    "size": 118720,
     "sheets": 12250,
     "files": [
         {
@@ -24,23 +24,33 @@
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 28135,
-            "gzip": 8802
+            "size": 28247,
+            "gzip": 8851
         },
         {
             "path": "dist/controls.js",
-            "size": 120178,
-            "gzip": 33875
+            "size": 122079,
+            "gzip": 34222
         },
         {
             "path": "dist/hooks.d.ts",
-            "size": 8023,
-            "gzip": 2779
+            "size": 8177,
+            "gzip": 2838
         },
         {
             "path": "dist/hooks.js",
-            "size": 18154,
-            "gzip": 5185
+            "size": 19720,
+            "gzip": 5607
+        },
+        {
+            "path": "dist/line.d.ts",
+            "size": 2027,
+            "gzip": 913
+        },
+        {
+            "path": "dist/line.js",
+            "size": 1472,
+            "gzip": 618
         },
         {
             "path": "dist/react.d.ts",
@@ -95,8 +105,8 @@
         },
         {
             "path": "README.md",
-            "size": 28950,
-            "gzip": 7583
+            "size": 14586,
+            "gzip": 4845
         }
     ],
     "pieces": [
@@ -319,67 +329,67 @@
     "functions": [
         {
             "name": "attachForm",
-            "alone": 6047,
-            "added": 3652
+            "alone": 6138,
+            "added": 3668
         },
         {
             "name": "attachStepper",
-            "alone": 3615,
-            "added": 1943
+            "alone": 3683,
+            "added": 1954
         },
         {
             "name": "attachRoving",
-            "alone": 2712,
-            "added": 1701
+            "alone": 2733,
+            "added": 1711
         },
         {
             "name": "attachPanel",
             "alone": 2595,
-            "added": 1456
+            "added": 1478
         },
         {
             "name": "attachToast",
-            "alone": 2868,
-            "added": 1089
+            "alone": 2920,
+            "added": 1099
         },
         {
             "name": "attachDialog",
             "alone": 1813,
-            "added": 722
+            "added": 746
         },
         {
             "name": "attachThemeSwitch",
-            "alone": 2333,
-            "added": 690
+            "alone": 2346,
+            "added": 700
         },
         {
             "name": "attachCopyButton",
-            "alone": 2019,
-            "added": 618
+            "alone": 2091,
+            "added": 621
         },
         {
             "name": "attachProgress",
-            "alone": 2412,
+            "alone": 2512,
             "added": 547
         },
         {
             "name": "attachTable",
-            "alone": 1279,
-            "added": 484
+            "alone": 1299,
+            "added": 510
         },
         {
             "name": "attachBusy",
-            "alone": 2189,
-            "added": 463
+            "alone": 2287,
+            "added": 461
         },
         {
             "name": "focusOnArrival",
             "alone": 1722,
-            "added": 449
+            "added": 456
         },
         {
             "name": "attachStatus",
-            "alone": 1476,
+            "alone": 1555,
             "added": 5
         },
         {
@@ -388,21 +398,21 @@
             "added": 5
         },
         {
-            "name": "moveFocus",
-            "alone": 1276,
+            "name": "activeOf",
+            "alone": 727,
             "added": 2
         },
         {
-            "name": "activeOf",
-            "alone": 727,
-            "added": 0
+            "name": "moveFocus",
+            "alone": 1276,
+            "added": 2
         }
     ],
     "since": {
         "date": "2026-11-20",
-        "commit": "abf0d60",
-        "version": "0.9.0",
-        "size": 117469,
-        "sheets": 12225
+        "commit": "d54ff06",
+        "version": "0.9.1",
+        "size": 119292,
+        "sheets": 12250
     }
 }
