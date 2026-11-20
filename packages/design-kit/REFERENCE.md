@@ -1144,7 +1144,10 @@ and down left alone. A tab marked off is reached, to hear why, but never handed 
 moves focus and the page chooses, as it owns the panels: a page that chooses a tab as focus reaches
 it does so in `onMove`, and one whose panel is slow to draw leaves the choice to Enter or Space.
 `aria-controls` names each tab's panel. The base sheet keeps the focus ring on a tab given a
-tabindex of -1, so the ring follows the arrow keys.
+tabindex of -1, so the ring follows the arrow keys. A row attached while it is drawn at no size, in
+a closed `details`, under `hidden` or `display: none`, or in a dialog not yet open, places its stop
+as it comes into sight, so a page can attach it as the page loads. A row under `inert`, or hidden in
+a way that keeps its size, places its stop as its cells next change or are reached.
 
 ```js
 import { attachRoving } from '@jasonsdevspace/design-kit/controls';
@@ -2900,10 +2903,12 @@ the ends. Up and down move to the nearest cell in the row above or below as the 
 holds at any count of columns, left and right follow the page's reading direction, and an arrow held
 with Alt, Control or Command is left to the browser. A cell marked off keeps its place, a cell that
 is disabled or out of sight is passed over and never the stop, and where the cell that had focus is
-taken out, focus goes to the next cell still there, or the one before. A grid with the group's role,
-as above, or none takes the toolbar's while attached, so a screen reader says the arrows move
-within it, and keeps its `aria-label`, which a toolbar needs. Let go, each cell takes back its own
-tabindex and the grid its own role.
+taken out, focus goes to the next cell still there, or the one before. A grid attached while it is
+drawn at no size, as in a closed `details` or under `hidden`, places its stop as it comes into
+sight, and a cell a page's rule hides as it resizes the grid hands the stop on. A grid with the
+group's role, as above, or none takes the toolbar's while attached, so a screen reader says the
+arrows move within it, and keeps its `aria-label`, which a toolbar needs. Let go, each cell takes
+back its own tabindex and the grid its own role.
 
 The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
 unless it does:

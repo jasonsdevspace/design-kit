@@ -183,6 +183,105 @@ test('places the stop on a cell a press lands on, where Safari gives the press n
     await expect(page.locator('#n5')).toHaveAttribute('tabindex', '0');
 });
 
+test.describe('attached while out of sight', () => {
+    const HIDDEN =
+        '<details id="code"><summary>Code</summary>' +
+        '<div class="dk-tabs" role="tablist" aria-label="Language" id="langs">' +
+        '<button type="button" class="dk-tab" role="tab" id="html" aria-selected="false">HTML</button>' +
+        '<button type="button" class="dk-tab" role="tab" id="react" aria-selected="true">React</button>' +
+        '</div></details>' +
+        '<button type="button" id="between">Between</button>' +
+        '<div id="panel" hidden>' +
+        '<div class="dk-button-grid" id="keys" aria-label="Keys">' +
+        '<button type="button" id="k1" style="display:none">One</button>' +
+        '<button type="button" id="k2">Two</button>' +
+        '<button type="button" id="k3">Three</button>' +
+        '</div></div>' +
+        '<dialog id="dialog" aria-label="Choose">' +
+        '<button type="button" id="first" autofocus>First</button>' +
+        '<div class="dk-tabs" role="tablist" aria-label="Side" id="sides">' +
+        '<button type="button" class="dk-tab" role="tab" id="left" aria-selected="false">Left</button>' +
+        '<button type="button" class="dk-tab" role="tab" id="right" aria-selected="true">Right</button>' +
+        '</div></dialog>';
+
+    // Each group is attached as the page loads, with its details closed, its panel hidden or its
+    // dialog not yet open.
+    const AT_LOAD = `import { attachRoving } from './controls.js';
+attachRoving(document.querySelector('#langs'));
+attachRoving(document.querySelector('#keys'));
+attachRoving(document.querySelector('#sides'));
+window.ready = true;`;
+
+    test.beforeEach(async ({ page }) => {
+        await servePage(page, { title: 'Roving', body: `<main>${HIDDEN}</main>`, script: AT_LOAD });
+        await page.waitForFunction(() => 'ready' in window);
+    });
+
+    test('reaches the chosen tab by Tab once the closed details around it opens', async ({
+        page,
+    }) => {
+        await page.evaluate(() => {
+            document.querySelector('#code')?.setAttribute('open', '');
+        });
+        // The stop is placed as the group is next drawn, before Tab is pressed.
+        await expect(stops(page, 'langs')).toHaveId('react');
+        await page.locator('#code > summary').focus();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#react')).toBeFocused();
+        await expect(stops(page, 'langs')).toHaveCount(1);
+    });
+
+    test('reaches the first cell in sight by Tab once the hidden panel around it shows', async ({
+        page,
+    }) => {
+        await page.evaluate(() => {
+            document.querySelector('#panel')?.removeAttribute('hidden');
+        });
+        await expect(stops(page, 'keys')).toHaveId('k2');
+        await page.locator('#between').focus();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#k2')).toBeFocused();
+        await expect(stops(page, 'keys')).toHaveCount(1);
+    });
+
+    test('reaches the chosen tab by Tab once the dialog around it opens', async ({ page }) => {
+        await page.evaluate(() => {
+            document.querySelector<HTMLDialogElement>('#dialog')?.showModal();
+        });
+        await expect(stops(page, 'sides')).toHaveId('right');
+        await expect(page.locator('#first')).toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#right')).toBeFocused();
+        await expect(stops(page, 'sides')).toHaveCount(1);
+    });
+});
+
+test('hands the stop on from a cell a rule outside the group hides as it resizes the group', async ({
+    page,
+}) => {
+    // The column is as tall as its cells, so a cell a page's rule hides makes it shorter.
+    await servePage(page, {
+        title: 'Roving',
+        css: '.narrow #w2 { display: none; }',
+        body:
+            '<main><div class="dk-button-grid" id="column" aria-label="Sizes"' +
+            ' style="display:flex;flex-direction:column;width:max-content">' +
+            '<button type="button" id="w1">Small</button>' +
+            '<button type="button" id="w2">Medium</button>' +
+            '<button type="button" id="w3">Large</button></div></main>',
+        script: `import { attachRoving } from './controls.js';
+attachRoving(document.querySelector('#column'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#w2').focus();
+    await expect(stops(page, 'column')).toHaveId('w2');
+    // A class on the page, outside the group, which the group's own cells never hear change.
+    await page.evaluate(() => document.body.classList.add('narrow'));
+    await expect(page.locator('#w2')).toBeHidden();
+    await expect(stops(page, 'column')).toHaveId('w3');
+});
+
 test.describe('in React', () => {
     let app = '';
     test.beforeAll(async () => {
@@ -202,5 +301,17 @@ test.describe('in React', () => {
         await expect(page.locator('#modes > [tabindex="0"]')).toHaveCount(1);
         await expect(page.locator('#modes > [tabindex="0"]')).toHaveId('mode-number');
         await expect(page.locator('#panel')).toHaveText('number');
+    });
+
+    test('places the stop on the chosen tab once the closed details around it opens', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Roving', body: '<div id="root"></div>', script: app });
+        await expect(page.locator('#shut-tabs > [tabindex="0"]')).toHaveCount(0);
+        await page.locator('#shut > summary').click();
+        await expect(page.locator('#shut-tabs > [tabindex="0"]')).toHaveId('shut-react');
+        await page.locator('#shut > summary').focus();
+        await page.keyboard.press('Tab');
+        await expect(page.locator('#shut-react')).toBeFocused();
     });
 });
