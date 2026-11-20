@@ -1374,6 +1374,25 @@ policy can refuse every style it did not serve. Nothing runs when the module is 
 listeners on the document for keys, clicks and submits, which note the visitor's last press for
 `focusOnArrival`.
 
+### Taking a control down
+
+The theme switch and the copy button take an `AbortSignal` as `signal` in their options, as
+`addEventListener` does, so a page that attaches several controls for one screen aborts one
+controller as the screen goes. Aborting it does what the function the attach returned does, and
+either is safe to call or abort again. A signal already aborted attaches nothing: the control stays
+hidden and what the attach returns does nothing. Once a control is taken down, nothing it started
+acts, such as a copy the clipboard answers late. A control attached again before it is taken down
+returns what its first attach returned, and the later call's signal is not heard, so the first
+attach owns it until it is taken down. Record 22 has the contract.
+
+```ts
+const screen = new AbortController();
+attachThemeSwitch(document.querySelector('.dk-theme-switch')!, { signal: screen.signal });
+attachCopyButton(copy, { source: () => code, status, signal: screen.signal });
+// As the screen goes:
+screen.abort();
+```
+
 ### Theme switch
 
 <!-- example: themeSwitch -->
@@ -1447,8 +1466,9 @@ beside it leaves it open so a touch can scroll to choices below the screen's edg
 wider, and outside a strip at any width, the button stays hidden and the choices keep their row,
 wrapping as they do outside a strip where the column is narrower.
 
-Attaching one switch again before it is taken away attaches it once, and taking it away hides it
-again. A switch attached after every switch was taken away shows, and draws, the choice saved
+Attaching one switch again before it is taken away attaches it once, and taking it away, by the
+function it returns or by aborting the `signal` it took, as `attachThemeSwitch(element, { signal })`,
+hides it again. A switch attached after every switch was taken away shows, and draws, the choice saved
 meanwhile, or the one the page holds where the browser would not save it. Every switch on a page
 shows one choice, each with radios named for its own id. After the switch the component draws a
 line inside `noscript`, "With scripts on, a Theme switch sits here.", which only a visitor without
@@ -1506,7 +1526,7 @@ not `light`, `dark` or `system` is ignored.
 <p class="dk-visually-hidden" role="status"></p>
 ```
 
-`attachCopyButton(button, { source, status })` copies the text of the element `source()` returns
+`attachCopyButton(button, { source, status, signal })` copies the text of the element `source()` returns
 when the button is pressed, read at each press, so a button beside tabs copies the block its tab
 shows. Where the browser refuses the clipboard, it selects that text instead. The button says Copied
 or Selected for a moment, its three words sharing one cell so it keeps its width, and the status
@@ -1515,7 +1535,7 @@ command. One status line serves every button on a page, and it is on the page fr
 a line added at the moment it speaks may go unheard. Attaching a button again takes its new `source`
 and `status`, so a page that draws it again with a new source copies from that one, puts a word
 shown for the last source back to Copy, and returns the function it returned the first time. Taking
-a button away hides it and puts it back to Copy.
+a button away, by that function or by aborting `signal`, hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -3595,7 +3615,8 @@ focus inside a shadow root too, `focusOnArrival()`, which focuses a view's headi
 press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
 `attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
 and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
-progress at its steps, and the types `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
+progress at its steps, and the types `AttachOptions`, which carries the `signal` that takes a
+control down, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
 `DialogOpener`, `DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`,
 `FocusTarget`, `MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`,
 `FormOptions`, `Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and

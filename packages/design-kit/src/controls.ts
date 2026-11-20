@@ -1,4 +1,5 @@
 import { type Line, lineOf, lines } from './line.js';
+import { teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
@@ -427,8 +428,18 @@ const listen = () => {
  * other.
  */
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
-/** What a copy button reads, which attaching it again replaces. */
-export type CopyOptions = { readonly source: () => HTMLElement; readonly status: HTMLElement };
+/**
+ * How a page takes a piece down with an `AbortSignal`, as record 22 has it. Aborting it does what
+ * the piece's detach does, a signal already aborted attaches nothing, and attaching the piece again
+ * before it is taken down returns the first attach's handle and leaves this signal unheard, since
+ * the first attach owns the piece until it is taken down.
+ */
+export type AttachOptions = { readonly signal?: AbortSignal | undefined };
+/** What a copy button reads, which attaching it again replaces, and the signal that takes it down. */
+export type CopyOptions = AttachOptions & {
+    readonly source: () => HTMLElement;
+    readonly status: HTMLElement;
+};
 const attachedButtons = new WeakMap<
     HTMLElement,
     { readonly detach: () => void; readonly set: (next: CopyOptions) => void }
@@ -437,8 +448,9 @@ const attachedButtons = new WeakMap<
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
  * draws a choice when a visitor makes one. It takes the switch, or an element that holds it.
- * Attaching one switch again before it is taken away attaches it once, and taking it away hides
- * it again.
+ * Attaching one switch again before it is taken away attaches it once, and taking it away, by
+ * the function it returns or by aborting the `signal` it was given, hides it again. A signal
+ * already aborted leaves it hidden and unattached.
  *
  * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
  * narrower than 20rem, the button names the choice shown and opens the choices under itself, with
@@ -448,7 +460,7 @@ const attachedButtons = new WeakMap<
  * scroll to choices below the screen's edge. The button is wired on every switch, since the sheet
  * alone decides where it shows. A switch with no choices yet is left hidden and unattached.
  */
-export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
+export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions): (() => void) => {
     const group = element.matches('.dk-theme-switch')
         ? element
         : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
@@ -458,6 +470,9 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     // A switch with no choices yet is left hidden and unattached, so a page that attaches it before
     // its choices are drawn shows no empty control and can attach it again once they are.
     if (radios.length === 0) return () => undefined;
+    const down = teardown(options?.signal);
+    if (!down) return () => undefined;
+    const { signal } = down;
     const button = group.querySelector<HTMLButtonElement>('.dk-theme-switch-button');
     const choices = group.querySelector<HTMLElement>('.dk-theme-switch-choices');
     const show = () => {
@@ -540,9 +555,6 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     const onFocusOut = (event: FocusEvent) => {
         if (!group.contains(event.relatedTarget as Node | null)) close(false);
     };
-    // One signal takes away together every listener the switch puts on its own elements.
-    const listening = new AbortController();
-    const { signal } = listening;
     for (const radio of radios) radio.addEventListener('change', onChange, { signal });
     button?.addEventListener('click', onButtonClick, { signal });
     choices?.addEventListener('click', onChoicesClick, { signal });
@@ -555,21 +567,17 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     // Drawn as the switch shows it, so the two agree when a choice was held while no switch was.
     draw(current());
     group.hidden = false;
-    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // Run once, so calling the detach again, even after the same element was attached anew, leaves
     // that newer attach alone.
-    let detached = false;
-    const detach = () => {
-        if (detached) return;
-        detached = true;
-        listening.abort();
+    down.add(() => {
         // Closing takes the page's listener away with it.
         close(false);
         switches.delete(show);
         group.hidden = true;
         attachedSwitches.delete(group);
-    };
-    attachedSwitches.set(group, detach);
-    return detach;
+    });
+    attachedSwitches.set(group, down.stop);
+    return down.stop;
 };
 
 /** How long a copy button says what it did before it says Copy again, in milliseconds. */
@@ -820,7 +828,9 @@ const copied = async (text: string): Promise<boolean> => {
  * says which on the page's status line. `source` is read at each press, so a button beside tabs
  * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
  * that draws the button again with a new source copies from that one, puts a word shown for the
- * last source back to Copy, and returns what it returned the first time.
+ * last source back to Copy, and returns what it returned the first time. Aborting the `signal` it
+ * was first given takes it away as the function it returns does, and a signal already aborted
+ * leaves it hidden and unattached.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
     const already = attachedButtons.get(button);
@@ -828,10 +838,11 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
         already.set(options);
         return already.detach;
     }
+    const down = teardown(options.signal);
+    if (!down) return () => undefined;
     let { source, status } = options;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
-    let live = true;
     const showWord = (index: number) => {
         words.forEach((word, at) => {
             if (at === index) word.removeAttribute('aria-hidden');
@@ -841,7 +852,7 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     const onClick = () => {
         const pressed = source();
         void copied(pressed.textContent).then((done) => {
-            if (!live) return;
+            if (down.signal.aborted) return;
             // A source changed while the clipboard answered is not selected, and the button is left
             // as the change left it, but the status line still says what happened.
             if (source() !== pressed) {
@@ -863,23 +874,18 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
         window.clearTimeout(timer);
         showWord(0);
     };
-    button.addEventListener('click', onClick);
+    button.addEventListener('click', onClick, { signal: down.signal });
     button.hidden = false;
-    // Done once, so calling it again, even after the same element was attached anew, leaves
+    // Run once, so calling the detach again, even after the same element was attached anew, leaves
     // that newer attach alone.
-    let detached = false;
-    const detach = () => {
-        if (detached) return;
-        detached = true;
-        live = false;
-        button.removeEventListener('click', onClick);
+    down.add(() => {
         window.clearTimeout(timer);
         showWord(0);
         button.hidden = true;
         attachedButtons.delete(button);
-    };
-    attachedButtons.set(button, { detach, set });
-    return detach;
+    });
+    attachedButtons.set(button, { detach: down.stop, set });
+    return down.stop;
 };
 
 /** How long a toast with no action stays while nothing holds it, in milliseconds. */

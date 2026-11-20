@@ -8,7 +8,11 @@ hooks whose request reads what the page draws, `useFocusAfterDraw` and the refus
 returns, which keep a request owed until their own next commit and a count of requests that renders
 them, so the request lands once the page's change is drawn. That holds for a change set in the same
 tick as the request, in the same lane, in the same React root: a change made in a transition is
-asked for inside the same `startTransition`, and one drawn in another root is not waited for.
+asked for inside the same `startTransition`, and one drawn in another root is not waited for. It is
+amended in 0.9.3 by record 22: each hook's callback ref makes an `AbortController`, attaches with its
+signal and returns a cleanup that aborts it, as React 19 lets a ref do, in place of the call with
+null React makes on unmount, so React's second run in development leaves nothing doubled or
+dropped, and a focus request asked in the moment its component unmounts still lands.
 
 ## Context
 
