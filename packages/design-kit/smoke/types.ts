@@ -61,7 +61,7 @@ import {
     themeScriptHash,
     themeScriptPlugin,
 } from '@jasonsdevspace/design-kit/vite';
-import { createElement, createRef } from 'react';
+import { createElement, createRef, type RefCallback } from 'react';
 import type { UserConfig } from 'vite';
 
 /*

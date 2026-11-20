@@ -19,7 +19,7 @@ import {
  * dropped, or take away.
  */
 
-type Controls = {
+export type Controls = {
     swap: () => void;
     again: () => void;
     drop: () => void;
@@ -28,6 +28,7 @@ type Controls = {
     move: (done: number) => void;
     clicks: number;
     draws: number;
+    chosen?: string;
 };
 const page = window as unknown as Controls;
 page.clicks = 0;
@@ -39,7 +40,16 @@ const Pieces = ({ which, dropped }: { readonly which: string; readonly dropped: 
     const [done, setDone] = useState(0);
     page.busy = setBusy;
     page.move = setDone;
-    const row = useRoving<HTMLDivElement>(dropped ? {} : { orientation: 'vertical' });
+    // Its options written inline on every draw, with the cell the stop is placed on read from a
+    // value the page changes behind the row's back, so only options set again would move it.
+    const row = useRoving<HTMLDivElement>(
+        dropped
+            ? {}
+            : {
+                  orientation: 'vertical',
+                  current: () => document.getElementById(page.chosen ?? `${which}-one`),
+              }
+    );
     const save = useBusy<HTMLButtonElement>();
     const bar = useProgress(dropped ? {} : { done: 'Imported 40 products.' });
     const [errors, setErrors] = useState<Record<string, string>>({});
