@@ -82,6 +82,22 @@ const Round = () => {
     );
 };
 
+// A round's button that takes focus as its key changes, as a scores screen's "Change round" does.
+const Change = () => {
+    const [round, setRound] = useState(1);
+    const button = useArrivalFocus<HTMLButtonElement>(round);
+    return (
+        <section>
+            <button id="change" type="button" ref={button} onClick={() => setRound(round + 1)}>
+                Change round {round}
+            </button>
+            <button id="after-change" type="button">
+                After
+            </button>
+        </section>
+    );
+};
+
 const Scores = () => {
     const heading = useArrivalFocus<HTMLHeadingElement>('scores');
     return (
@@ -403,6 +419,7 @@ if (root)
         <main>
             <Players />
             <Round />
+            <Change />
             <Tabs />
             <Modes />
             <Late />

@@ -204,8 +204,9 @@ export type ArrivalKey = string | number | boolean | null | undefined;
  * Tabs past, nor from focus the view placed itself as it drew, as a field with autofocus does, nor
  * from where a visitor has moved it, and a view gone in the frame it arrived in moves nothing. The
  * key is a string, a number or a boolean, compared by value, so a key drawn again with the same
- * value moves nothing. The heading takes a tabindex of -1 where it has none, so it can take focus
- * at all. The key changes on a visitor's press or submit, never as they choose in a list or a set
+ * value moves nothing. A heading, or any element that cannot take focus by itself, takes a tabindex
+ * of -1 where it has none, so it can take focus at all, and a button, a link or a field keeps its
+ * place in the Tab order. The key changes on a visitor's press or submit, never as they choose in a list or a set
  * of radios, which would move them as they choose.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
@@ -238,7 +239,10 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;
-        if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
+        // Only an element that cannot take focus by itself, such as a heading, so a button or a link
+        // given the ref keeps its place in the order the Tab key moves in.
+        if (element && !element.hasAttribute('tabindex') && element.tabIndex < 0)
+            element.tabIndex = -1;
     }, []);
 };
 
