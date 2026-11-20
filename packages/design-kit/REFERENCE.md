@@ -1377,20 +1377,38 @@ listeners on the document for keys, clicks and submits, which note the visitor's
 ### Taking a control down
 
 The theme switch and the copy button take an `AbortSignal` as `signal` in their options, as
-`addEventListener` does, so a page that attaches several controls for one screen aborts one
-controller as the screen goes. Aborting it does what the function the attach returned does, and
-either is safe to call or abort again. A signal already aborted attaches nothing: the control stays
-hidden and what the attach returns does nothing. Once a control is taken down, nothing it started
-acts, such as a copy the clipboard answers late. A control attached again before it is taken down
-returns what its first attach returned, and the later call's signal is not heard, so the first
-attach owns it until it is taken down. Record 22 has the contract.
+`addEventListener` does. Aborting it takes the control down as the function its attach returned
+does, and calling that function or aborting the signal again does nothing. A signal already aborted
+does nothing: the control stays hidden, a control already attached keeps the options it had, and
+what the attach returns does nothing. Once a control is taken down, nothing it started acts, such as
+a copy the clipboard answers late. A control attached again before it is taken down returns what
+its first attach returned and does not hear the later call's signal, so the first attach owns it
+until it is taken down, as
+[decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
+sets out.
 
-```ts
-const screen = new AbortController();
-attachThemeSwitch(document.querySelector('.dk-theme-switch')!, { signal: screen.signal });
-attachCopyButton(copy, { source: () => code, status, signal: screen.signal });
-// As the screen goes:
-screen.abort();
+A page that draws its screens itself gives each screen's controls one controller, and aborts the old
+screen's before it attaches the next, so the next screen's attach finds nothing still attached.
+Until it is aborted, a signal keeps what its controls hold alive, so a page hands over one that
+lives no longer than the controls. A control that stays for the page's whole life, such as the
+switch in the strip, is attached once with no signal.
+
+```js
+import { attachCopyButton, attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
+
+attachThemeSwitch(document.querySelector('.dk-theme-switch'));
+
+let screen = new AbortController();
+const showScreen = () => {
+    screen.abort();
+    screen = new AbortController();
+    // Draw the screen, then attach its controls.
+    attachCopyButton(document.querySelector('.dk-copy'), {
+        source: () => document.querySelector('.dk-code'),
+        status: document.querySelector('[role="status"]'),
+        signal: screen.signal,
+    });
+};
 ```
 
 ### Theme switch
@@ -1467,13 +1485,13 @@ wider, and outside a strip at any width, the button stays hidden and the choices
 wrapping as they do outside a strip where the column is narrower.
 
 Attaching one switch again before it is taken away attaches it once, and taking it away, by the
-function it returns or by aborting the `signal` it took, as `attachThemeSwitch(element, { signal })`,
-hides it again. A switch attached after every switch was taken away shows, and draws, the choice saved
-meanwhile, or the one the page holds where the browser would not save it. Every switch on a page
-shows one choice, each with radios named for its own id. After the switch the component draws a
-line inside `noscript`, "With scripts on, a Theme switch sits here.", which only a visitor without
-script sees, and which a page words for itself or turns off with an empty `noscript`. A page that
-writes the switch by hand adds the line as it likes.
+function it returns or by aborting the `signal` its first attach took, as
+`attachThemeSwitch(element, { signal })`, hides it again. A switch attached after every switch was
+taken away shows, and draws, the choice saved meanwhile, or the one the page holds where the browser
+would not save it. Every switch on a page shows one choice, each with radios named for its own id.
+After the switch the component draws a line inside `noscript`, "With scripts on, a Theme switch sits
+here.", which only a visitor without script sees, and which a page words for itself or turns off
+with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -1526,16 +1544,17 @@ not `light`, `dark` or `system` is ignored.
 <p class="dk-visually-hidden" role="status"></p>
 ```
 
-`attachCopyButton(button, { source, status, signal })` copies the text of the element `source()` returns
-when the button is pressed, read at each press, so a button beside tabs copies the block its tab
-shows. Where the browser refuses the clipboard, it selects that text instead. The button says Copied
-or Selected for a moment, its three words sharing one cell so it keeps its width, and the status
-line says which to a screen reader, with how to copy a selection with the keys or the device's own
-command. One status line serves every button on a page, and it is on the page from the start, since
-a line added at the moment it speaks may go unheard. Attaching a button again takes its new `source`
-and `status`, so a page that draws it again with a new source copies from that one, puts a word
-shown for the last source back to Copy, and returns the function it returned the first time. Taking
-a button away, by that function or by aborting `signal`, hides it and puts it back to Copy.
+`attachCopyButton(button, { source, status, signal })` copies the text of the element `source()`
+returns when the button is pressed, read at each press, so a button beside tabs copies the block its
+tab shows. Where the browser refuses the clipboard, it selects that text instead. The button says
+Copied or Selected for a moment, its three words sharing one cell so it keeps its width, and the
+status line says which to a screen reader, with how to copy a selection with the keys or the
+device's own command. One status line serves every button on a page, and it is on the page from the
+start, since a line added at the moment it speaks may go unheard. Attaching a button again takes its
+new `source` and `status`, so a page that draws it again with a new source copies from that one,
+puts a word shown for the last source back to Copy, and returns the function it returned the first
+time. Taking a button away, by that function or by aborting the `signal` its first attach took,
+hides it and puts it back to Copy, and a later attach's `signal` is not heard.
 
 **`CopyButton` props**
 
@@ -3616,11 +3635,10 @@ press brought, `attachRoving()`, which moves among a group's cells by the arrow 
 `attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
 and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
 progress at its steps, and the types `AttachOptions`, which carries the `signal` that takes a
-control down, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
-`DialogOpener`, `DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`,
-`FocusTarget`, `MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`,
-`FormOptions`, `Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and
-`ProgressOptions`.
+control down, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`,
+`DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`, `FocusTarget`,
+`MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`, `FormOptions`,
+`Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and `ProgressOptions`.
 
 ### `@jasonsdevspace/design-kit/react`
 

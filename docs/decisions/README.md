@@ -87,4 +87,4 @@ costs, and the test behind it.
     what the detach does, a teardown complete and safe to repeat, calls after it that do nothing,
     the first attach owning the piece, the internal helper that keeps it, the research behind it,
     and why a release function for each piece, `Symbol.dispose`, one handle from every attach and
-    calls that throw were turned down.
+    calls that throw or warn were turned down.

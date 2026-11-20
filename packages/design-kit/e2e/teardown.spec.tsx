@@ -1,4 +1,4 @@
-import { type CDPSession, expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { copyButton, themeSwitch } from '../examples/examples.js';
@@ -6,32 +6,36 @@ import { servePage } from './page.js';
 
 /*
  * The teardown contract of record 22 on the theme switch and the copy button: a signal already
- * aborted attaches nothing, aborting takes away everything the attach set up, as its detach does,
- * a detach called twice, or after the abort, leaves a newer attach alone, the first attach owns the
+ * aborted does nothing, aborting takes away everything the attach set up, as its detach does, a
+ * detach called twice, or after the abort, leaves a newer attach alone, the first attach owns the
  * piece so a later call's signal is not heard, and nothing the piece did before its teardown acts
- * after it. Listeners are counted through Chromium's own tools, so the specs run there.
+ * after it. The behavior runs in Chromium, WebKit and Firefox, and listeners are counted only in
+ * Chromium, through its own tools.
  */
 
 const BODY = renderToStaticMarkup(
     <main>
         {themeSwitch}
         <pre id="code">npm install @jasonsdevspace/design-kit</pre>
+        <pre id="other">npm run verify</pre>
         {copyButton}
     </main>
 );
 
 /*
  * The clipboard is the page's own, so a press copies at once, or waits for the test's `release`
- * while `hold` is set, as a clipboard slow to answer would.
+ * while `hold` is set, as a clipboard slow to answer would, and what it was given is kept.
  */
 const SCRIPT = `import { attachCopyButton, attachThemeSwitch, chooseTheme } from './controls.js';
 let answer = () => undefined;
 window.hold = false;
+window.written = [];
 Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: {
-        writeText: () =>
+        writeText: (text) =>
             new Promise((done) => {
+                window.written.push(text);
                 if (window.hold) answer = done;
                 else done();
             }),
@@ -40,42 +44,47 @@ Object.defineProperty(navigator, 'clipboard', {
 window.release = () => answer();
 const group = document.querySelector('.dk-theme-switch');
 const button = document.querySelector('.dk-copy');
-const copying = {
-    source: () => document.querySelector('#code'),
-    status: document.querySelector('[role="status"]'),
-};
+const status = document.querySelector('[role="status"]');
 window.kit = {
     switchWith: (signal) => attachThemeSwitch(group, signal ? { signal } : undefined),
-    copyWith: (signal) => attachCopyButton(button, signal ? { ...copying, signal } : copying),
+    copyWith: (signal, from = '#code') => {
+        const copying = { source: () => document.querySelector(from), status };
+        return attachCopyButton(button, signal ? { ...copying, signal } : copying);
+    },
     chooseTheme,
 };
 window.ready = true;`;
 
-/** The page with its controls loaded and nothing attached yet. */
-const opened = async (page: Page): Promise<CDPSession> => {
+/**
+ * How many listeners sit on each target an expression in the page gives, as Chromium's tools count
+ * them, or null in another browser, which has no such tools.
+ */
+type Count = (targets: string) => Promise<number | null>;
+
+/** The page with its controls loaded and nothing attached yet, and how to count its listeners. */
+const opened = async (page: Page, browserName: string): Promise<Count> => {
     await servePage(page, { title: 'Teardown', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
-    return page.context().newCDPSession(page);
+    if (browserName !== 'chromium') return () => Promise.resolve(null);
+    const session = await page.context().newCDPSession(page);
+    return async (targets) => {
+        const found = Number(await page.evaluate(`(${targets}).length`));
+        let total = 0;
+        for (let at = 0; at < found; at += 1) {
+            const { result } = await session.send('Runtime.evaluate', {
+                expression: `(${targets})[${String(at)}]`,
+            });
+            const { listeners } = await session.send('DOMDebugger.getEventListeners', {
+                objectId: result.objectId ?? '',
+            });
+            total += listeners.length;
+        }
+        return total;
+    };
 };
 
-/** How many listeners sit on every element the selector finds, as Chromium's tools count them. */
-const listenersOn = async (page: Page, session: CDPSession, selector: string): Promise<number> => {
-    const found = await page.locator(selector).count();
-    let total = 0;
-    for (let at = 0; at < found; at += 1) {
-        const { result } = await session.send('Runtime.evaluate', {
-            expression: `document.querySelectorAll(${JSON.stringify(selector)})[${String(at)}]`,
-        });
-        const { listeners } = await session.send('DOMDebugger.getEventListeners', {
-            objectId: result.objectId ?? '',
-        });
-        total += listeners.length;
-    }
-    return total;
-};
-
-/** Every listener the switch and the copy button put on their own elements. */
-const PARTS = '.dk-theme-switch, .dk-theme-switch *, .dk-copy';
+/** The switch's and the copy button's own elements. */
+const PARTS = `[...document.querySelectorAll('.dk-theme-switch, .dk-theme-switch *, .dk-copy')]`;
 
 /** Which of the copy button's words shows: 0 for Copy, 1 for Copied, 2 for Selected. */
 const wordOf = (page: Page): Promise<number> =>
@@ -87,13 +96,9 @@ const wordOf = (page: Page): Promise<number> =>
             )
         );
 
-test.beforeEach(({ browserName }) => {
-    test.skip(browserName !== 'chromium', "Listeners are counted through Chromium's own tools.");
-});
-
-test('attaches nothing when given a signal already aborted', async ({ page }) => {
-    const session = await opened(page);
-    const before = await listenersOn(page, session, PARTS);
+test('attaches nothing when given a signal already aborted', async ({ page, browserName }) => {
+    const count = await opened(page, browserName);
+    const before = await count(PARTS);
     await page.evaluate(`(() => {
         const aborted = AbortSignal.abort();
         window.detachSwitch = kit.switchWith(aborted);
@@ -101,7 +106,7 @@ test('attaches nothing when given a signal already aborted', async ({ page }) =>
     })()`);
     await expect(page.locator('.dk-theme-switch')).toBeHidden();
     await expect(page.locator('.dk-copy')).toBeHidden();
-    expect(await listenersOn(page, session, PARTS)).toBe(before);
+    expect(await count(PARTS)).toBe(before);
     // What either returns does nothing, so calling it is harmless.
     await page.evaluate(`(() => {
         window.detachSwitch();
@@ -116,30 +121,75 @@ test('attaches nothing when given a signal already aborted', async ({ page }) =>
     await expect(page.locator('.dk-copy')).toBeVisible();
 });
 
-test('takes everything down when the signal aborts, as the detach does', async ({ page }) => {
-    const session = await opened(page);
-    const before = await listenersOn(page, session, PARTS);
+test('takes nothing from a repeat attach given a signal already aborted', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    await page.evaluate(`(() => {
+        window.first = kit.copyWith();
+        window.repeated = kit.copyWith(AbortSignal.abort(), '#other');
+    })()`);
+    expect(await page.evaluate('window.repeated === window.first')).toBe(false);
+    // The source the repeat named is not taken, so the button still copies the first one's.
+    await page.locator('.dk-copy').click();
+    await expect
+        .poll(() => page.evaluate('window.written'))
+        .toEqual(['npm install @jasonsdevspace/design-kit']);
+});
+
+test('takes everything down when the signal aborts, as the detach does', async ({
+    page,
+    browserName,
+}) => {
+    const count = await opened(page, browserName);
+    const before = await count(PARTS);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         kit.switchWith(controller.signal);
         kit.copyWith(controller.signal);
     })()`);
     await expect(page.locator('.dk-theme-switch')).toBeVisible();
-    expect(await listenersOn(page, session, PARTS)).toBeGreaterThan(before);
+    if (before !== null) expect(await count(PARTS)).toBeGreaterThan(before);
     await page.locator('.dk-copy').click();
     await expect.poll(() => wordOf(page)).toBe(1);
     await page.evaluate('controller.abort()');
     await expect(page.locator('.dk-theme-switch')).toBeHidden();
     await expect(page.locator('.dk-copy')).toBeHidden();
-    // The word shown goes back to Copy with its timer, and every listener comes off.
+    // The word shown goes back to Copy with its timer, and every listener on their own elements
+    // comes off.
     expect(await wordOf(page)).toBe(0);
-    expect(await listenersOn(page, session, PARTS)).toBe(before);
+    expect(await count(PARTS)).toBe(before);
+});
+
+test("takes the document's listener off a switch taken down with its choices open", async ({
+    page,
+    browserName,
+}) => {
+    const count = await opened(page, browserName);
+    const before = await count('[document]');
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.switchWith(controller.signal);
+        document.querySelector('.dk-theme-switch-button').click();
+    })()`);
+    await expect(page.locator('.dk-theme-switch-button')).toHaveAttribute('aria-expanded', 'true');
+    if (before !== null) expect(await count('[document]')).toBe(before + 1);
+    // The page marks the choices closed itself before the abort, which a teardown that closed them
+    // by reading the button would take for nothing to close.
+    await page.evaluate(`(() => {
+        document.querySelector('.dk-theme-switch-button').setAttribute('aria-expanded', 'false');
+        controller.abort();
+    })()`);
+    await expect(page.locator('.dk-theme-switch')).toBeHidden();
+    expect(await count('[document]')).toBe(before);
 });
 
 test('does nothing after its teardown, from a press in flight or a choice made elsewhere', async ({
     page,
+    browserName,
 }) => {
-    await opened(page);
+    await opened(page, browserName);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         kit.switchWith(controller.signal);
@@ -169,8 +219,9 @@ test('does nothing after its teardown, from a press in flight or a choice made e
 
 test('leaves a newer attach alone when the old detach runs twice and its signal aborts', async ({
     page,
+    browserName,
 }) => {
-    const session = await opened(page);
+    const count = await opened(page, browserName);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         const oldSwitch = kit.switchWith(controller.signal);
@@ -185,13 +236,17 @@ test('leaves a newer attach alone when the old detach runs twice and its signal 
     })()`);
     await expect(page.locator('.dk-theme-switch')).toBeVisible();
     await expect(page.locator('.dk-copy')).toBeVisible();
-    expect(await listenersOn(page, session, '.dk-copy')).toBe(1);
+    const onButton = await count(`[document.querySelector('.dk-copy')]`);
+    if (onButton !== null) expect(onButton).toBe(1);
     await page.locator('.dk-copy').click();
     await expect.poll(() => wordOf(page)).toBe(1);
 });
 
-test("hears only the first attach's signal while the piece stays attached", async ({ page }) => {
-    await opened(page);
+test("hears only the first attach's signal while the piece stays attached", async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
     await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();

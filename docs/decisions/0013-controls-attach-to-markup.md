@@ -21,9 +21,10 @@ controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, meas
 less room under each than a function or a piece of the usual size, and for the listener the module
 adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, a
 listener the package marks as a side effect, so a bundler keeps the module where a page imports it
-only for that listener, and in 0.9.3 by record 22, which has every attach take a signal that takes
-its piece down, leaves a later attach's signal unheard while the first attach holds the piece, and
-keeps the helper that does it inside the controls' budget
+only for that listener, by record 22, under which an attach takes a signal that takes its piece
+down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
+controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
+than a function of the usual size
 
 ## Context
 
@@ -85,8 +86,8 @@ table's frame, throws an error that names it, so a page that left one out learns
 attached. A part it can do without, such as a stepper's status line, is skipped. A theme switch with
 no choices yet is the one exception: it is left hidden and returns a function that does nothing, so
 a page that attaches it before its choices are drawn can attach it again once they are. Since 0.9.3
-a call that returns what the first returned also leaves its `signal` unheard, as record 22 has it,
-so the first attach owns the piece until it is taken down.
+`signal` is the one option such a call does not take, and a call given a signal already aborted
+takes nothing, as record 22 has it, so the first attach owns the piece until it is taken down.
 
 ## Consequences
 
@@ -230,11 +231,11 @@ than the prototype and with less room under 12 KB than a piece of the usual size
 piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB. It is set again here, before
 anything outgrows it, for the same reason as the controls'.
 
-For 0.9.3 the controls were measured with the helper record 22 keeps its contract through, with the
-theme switch and the copy button moved onto it. Every function sent together weighs 17,465 bytes,
-against 17,331 before, under the 17.25 KB they hold but with less room than a function of the usual
-size. The budget stays at 17.25 KB until a function outgrows it, as the rule has it, and each attach
-that moves onto the helper sheds the flag and the list it kept for its own teardown.
+For 0.9.3 the controls were measured with the helper record 22 keeps its contract through, and the
+theme switch and the copy button moved onto it. Every function sent together weighs 17,532 bytes,
+against 17,331 before, 201 more, under the 17.25 KB they held but with less room than a function of
+the usual size, and the median a function adds is now 586 bytes, so the rule sets the controls at
+17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0.
 
 ## The sheets beside other systems
 

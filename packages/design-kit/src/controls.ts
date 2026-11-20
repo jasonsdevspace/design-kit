@@ -430,12 +430,15 @@ const listen = () => {
 const attachedSwitches = new WeakMap<HTMLElement, () => void>();
 /**
  * How a page takes a piece down with an `AbortSignal`, as record 22 has it. Aborting it does what
- * the piece's detach does, a signal already aborted attaches nothing, and attaching the piece again
- * before it is taken down returns the first attach's handle and leaves this signal unheard, since
- * the first attach owns the piece until it is taken down.
+ * the piece's detach does, and a signal already aborted does nothing. Attaching the piece again
+ * before it is taken down returns the first attach's handle and leaves this signal unheard, as
+ * `addEventListener` ignores a listener added twice, signal and all.
  */
 export type AttachOptions = { readonly signal?: AbortSignal | undefined };
-/** What a copy button reads, which attaching it again replaces, and the signal that takes it down. */
+/**
+ * What a copy button reads, which attaching it again replaces, and the signal its first attach
+ * takes it down by.
+ */
 export type CopyOptions = AttachOptions & {
     readonly source: () => HTMLElement;
     readonly status: HTMLElement;
@@ -464,6 +467,8 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     const group = element.matches('.dk-theme-switch')
         ? element
         : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
+    // A signal already aborted does nothing, even to a switch already attached.
+    if (options?.signal?.aborted) return () => undefined;
     const already = attachedSwitches.get(group);
     if (already) return already;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
@@ -526,7 +531,8 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
         button?.setAttribute('aria-expanded', 'true');
         // The press that opened them was lifted before the page was listened to.
         pressedHere = false;
-        document.addEventListener('pointerup', onDocumentLift, true);
+        // The signal takes it off with the switch, however the switch reads as it goes.
+        document.addEventListener('pointerup', onDocumentLift, { capture: true, signal });
         (radios.find((radio) => radio.checked) ?? radios[0])?.focus();
     };
     const close = (back: boolean) => {
@@ -833,6 +839,9 @@ const copied = async (text: string): Promise<boolean> => {
  * leaves it hidden and unattached.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
+    // A signal already aborted does nothing, so even new options for a button already attached are
+    // not taken.
+    if (options.signal?.aborted) return () => undefined;
     const already = attachedButtons.get(button);
     if (already) {
         already.set(options);

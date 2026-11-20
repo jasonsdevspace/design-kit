@@ -5,9 +5,7 @@ which returns what says a message, in 0.8.4 for the panel's, `attachPanel`, whic
 or closes it and what lets its button go, and in 0.9.0 for words that settle and polite words, which
 give way to firm words said in the same moment or still settling and wait for firm words being said,
 and in 0.9.2 for a line let go of as `StatusProvider` unmounts, so nothing more is said on it by any
-piece until it is attached again, and in 0.9.3 by record 22, under which `attachStatus` and
-`attachToast` take a signal that lets their line or their toast go, as `StatusProvider` lets its line
-go, and what they returned does nothing once it has, while what each returns stays as it is
+piece until it is attached again
 
 ## Context
 
@@ -52,9 +50,7 @@ in it. Focus in a toast that leaves goes back to where it was the last time a me
 focus was outside the toast. What dismisses a message never dismisses a later one.
 
 The toast's listeners are on its own elements, so a toast taken from the page takes them with it,
-and there was nothing for a page to take away. Its resize listener and its observer outlive it,
-though, so since 0.9.3 it takes the signal every attach takes, as record 22 has it, and a page aborts
-that rather than calling a function the attach returns. Its behavior ships in the controls module beside the
+and there is nothing for a page to take away. Its behavior ships in the controls module beside the
 switch's and the copy button's, rather than in a module of its own, as its rules ship in the
 components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 
