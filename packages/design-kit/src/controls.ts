@@ -370,62 +370,113 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
 /** How long a copy button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
+type Spoken = string | (() => string | null);
+
 /**
- * Each status line's timer, so one message never empties the next and a second is heard too. A
- * message is put in a moment after the line is emptied, so the same words twice are heard twice,
- * and leaves after a while unless it is kept, as a toast keeps its own until the toast leaves.
+ * What a status line is saying. A message is put in a moment after the line is emptied, so the
+ * same words twice are heard twice, and leaves after a while unless it is kept, as a toast keeps
+ * its own until the toast leaves. Words waiting to settle keep a timer of their own, so words
+ * already said still leave as ever. Firm words are told apart while they are about to be put in,
+ * once they are on the line and while they settle, so polite words know whether to give way, wait
+ * or go, and one polite message may wait for the line to be free.
  */
-const statusTimers = new WeakMap<HTMLElement, number>();
-/** Each status line's words waiting to settle, apart from the timer of words already said. */
-const settleTimers = new WeakMap<HTMLElement, number>();
-/**
- * The lines holding or about to hold words that were not said politely, which polite words, such
- * as progress, give way to.
- */
-const firmLines = new WeakSet<HTMLElement>();
-/** Empties a status line, and drops what it was about to say, words waiting to settle among them. */
+type Line = {
+    timer: number;
+    settle: number;
+    /** Words put in or about to be. */
+    busy: boolean;
+    firm: 'none' | 'coming' | 'on';
+    settling: boolean;
+    waiting: Spoken | null;
+};
+const lines = new WeakMap<HTMLElement, Line>();
+const lineOf = (status: HTMLElement): Line => {
+    let line = lines.get(status);
+    if (!line) {
+        line = { timer: 0, settle: 0, busy: false, firm: 'none', settling: false, waiting: null };
+        lines.set(status, line);
+    }
+    return line;
+};
+
+/** Empties a status line, and drops what it was about to say, waiting words among them. */
 const hush = (status: HTMLElement) => {
-    window.clearTimeout(statusTimers.get(status));
-    window.clearTimeout(settleTimers.get(status));
-    firmLines.delete(status);
+    const line = lineOf(status);
+    window.clearTimeout(line.timer);
+    window.clearTimeout(line.settle);
+    Object.assign(line, { busy: false, firm: 'none', settling: false, waiting: null });
     status.textContent = '';
+};
+
+/**
+ * Whether polite words go now, wait for the line to be free, or give way. They give way to firm
+ * words about to be put in or still settling, so a result said in the same moment is heard in their
+ * place. They wait for firm words already on the line, and polite words given as a function, read
+ * as they are put in, such as a busy button's notice, wait for any words there, so they never put
+ * out the end of a progress and say nothing once no longer true.
+ */
+const politely = (line: Line, message: Spoken): 'go' | 'wait' | 'drop' => {
+    if (line.settling || line.firm === 'coming') return 'drop';
+    return line.firm === 'on' || (typeof message === 'function' && line.busy) ? 'wait' : 'go';
+};
+
+/** Frees a line whose words have left, and says the polite words waiting for it, if any. */
+const free = (status: HTMLElement) => {
+    const line = lineOf(status);
+    line.busy = false;
+    line.firm = 'none';
+    if (line.settling) return;
+    const waiting = line.waiting;
+    line.waiting = null;
+    if (waiting) say(status, waiting, false, true);
 };
 
 /**
  * Says a message on a status line. A message given as a function is read as it is put in, after the
  * moment's wait, so words a page draws from its own state follow the change that prompted them, and
- * one that gives nothing by then is not said. Polite words are left unsaid where the line holds or
- * is about to hold words that are not, so a page's own result is never put out by them.
+ * one that gives nothing by then is not said. Polite words give way, wait or go as `politely` has
+ * it, and the last polite message to wait is the one said once the line is free. Any message put in
+ * drops what was waiting and what was settling.
  */
-const say = (
-    status: HTMLElement,
-    message: string | (() => string | null),
-    keep = false,
-    polite = false
-) => {
-    if (polite && firmLines.has(status)) return;
+const say = (status: HTMLElement, message: Spoken, keep = false, polite = false) => {
+    const line = lineOf(status);
+    if (polite) {
+        const how = politely(line, message);
+        if (how === 'drop') return;
+        if (how === 'wait') {
+            line.waiting = message;
+            return;
+        }
+    }
     hush(status);
-    if (!polite) firmLines.add(status);
-    statusTimers.set(
-        status,
-        window.setTimeout(() => {
-            const words = typeof message === 'string' ? message : message();
-            // A message that is no longer wanted by the time it would be said is left unsaid.
-            if (words === null) {
-                firmLines.delete(status);
-                return;
-            }
-            status.textContent = words;
-            if (keep) return;
-            statusTimers.set(
-                status,
-                window.setTimeout(() => {
-                    firmLines.delete(status);
-                    status.textContent = '';
-                }, SAID_FOR)
-            );
-        }, 100)
-    );
+    line.busy = true;
+    if (!polite) line.firm = 'coming';
+    line.timer = window.setTimeout(() => {
+        const words = typeof message === 'string' ? message : message();
+        // A message that is no longer wanted by the time it would be said is left unsaid.
+        if (words === null) {
+            free(status);
+            return;
+        }
+        status.textContent = words;
+        if (!polite) line.firm = 'on';
+        if (keep) return;
+        line.timer = window.setTimeout(() => {
+            status.textContent = '';
+            free(status);
+        }, SAID_FOR);
+    }, 100);
+};
+
+/**
+ * Takes a piece's own words off a page's line before they would leave, freeing it for the next,
+ * where they are still what the line shows.
+ */
+const unsay = (status: HTMLElement, words: string) => {
+    if (words === '' || status.textContent !== words) return;
+    window.clearTimeout(lineOf(status).timer);
+    status.textContent = '';
+    free(status);
 };
 
 /** How a message is said on a status line. */
@@ -472,18 +523,23 @@ export const attachStatus = (line: HTMLElement): Say => {
             say(line, message, false, polite);
             return;
         }
-        // Polite words give way to firm ones still waiting to settle, as to those on the line.
-        if (polite && firmLines.has(line)) return;
+        const state = lineOf(line);
+        if (polite) {
+            const how = politely(state, message);
+            if (how === 'drop') return;
+            if (how === 'wait') {
+                state.waiting = message;
+                return;
+            }
+        }
         // Waits on a timer of its own, so words already said are still put in and leave as ever,
         // and any message said in the meantime drops these.
-        window.clearTimeout(settleTimers.get(line));
-        if (!polite) firmLines.add(line);
-        settleTimers.set(
-            line,
-            window.setTimeout(() => {
-                say(line, message, false, polite);
-            }, settle)
-        );
+        window.clearTimeout(state.settle);
+        state.settling = !polite;
+        state.settle = window.setTimeout(() => {
+            state.settling = false;
+            say(line, message, false, polite);
+        }, settle);
     };
     attachedLines.set(line, speak);
     return speak;
@@ -978,7 +1034,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         presses += 1;
         if (status) hush(status);
         const page = chosen.status;
-        if (page && lastSaid !== '' && page.textContent === lastSaid) page.textContent = '';
+        if (page) unsay(page, lastSaid);
     };
     /** What a press says: the value, that it is a limit where it is one, and the page's words. */
     const spoken = (pressed: number) => () => {

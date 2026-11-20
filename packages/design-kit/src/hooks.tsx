@@ -49,34 +49,31 @@ export type StatusProviderProps = {
  * part of the page under it the function that says a message on it, through `useStatus`. The line
  * is the markup `StatusLine` draws, attached by `attachStatus` as it lands, before the effects of
  * the parts under it run, so their first effects are heard. Words said before the line is in the
- * page are held and said once it is, the last of them alone, as a later message replaces an earlier
- * one, and words said once it has gone are dropped. A provider inside another, as inside a dialog,
+ * page are held and said in order once it is, so they give way to each other as on the line, and
+ * words said once it has gone are dropped. A provider inside another, as inside a dialog,
  * takes the calls of the parts under it on a line of its own, so the provider sits inside the
  * dialog element itself.
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
-    const held = useRef<Parameters<Say> | null>(null);
+    const held = useRef<Parameters<Say>[]>([]);
     const gone = useRef(false);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
             handle.current = null;
-            held.current = null;
+            held.current = [];
             gone.current = true;
             return;
         }
         gone.current = false;
         handle.current = attachStatus(element);
         const waiting = held.current;
-        held.current = null;
-        if (waiting) handle.current(...waiting);
+        held.current = [];
+        for (const call of waiting) handle.current(...call);
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
-        else if (gone.current) return;
-        // Polite words held give way to firm ones held, as they do on the line.
-        else if (!options?.polite || !held.current || held.current[1]?.polite)
-            held.current = [message, options];
+        else if (!gone.current) held.current.push([message, options]);
     }, []);
     return (
         <Speaker.Provider value={speak}>

@@ -7,8 +7,9 @@ import { servePage } from './page.js';
 /*
  * One status line shared by the pieces that speak on it, a busy button, a stepper and progress, as a
  * screen hands them its own: the end of a progress said though a busy button's words are on the
- * line, the end said after a stepper press on that line, and polite words giving way to firm words
- * still settling.
+ * line, the end waiting for a stepper's words and said once they leave or the field is typed in, a
+ * busy notice waiting out a failure on the line and dropped where the work ended while it waited,
+ * and polite words giving way to firm words still settling, whatever left the line meanwhile.
  */
 
 const BODY = renderToStaticMarkup(
@@ -44,7 +45,7 @@ type Shared = {
     heard: string[];
     move: (done: number) => void;
     busy: (on: boolean) => void;
-    say: (words: string, options?: object) => void;
+    say: (words: string | (() => string | null), options?: object) => void;
 };
 
 const open = async (page: Page) => {
@@ -79,10 +80,12 @@ test("says the end of a progress though a busy button's words are on the line", 
     expect(await heard(page)).toEqual(['Importing the file.', 'Imported 40 products.']);
 });
 
-test('says the end of a progress after a stepper press on the same line', async ({ page }) => {
+test("says the end of a progress once a stepper's words on the same line leave", async ({
+    page,
+}) => {
     await open(page);
     await page.getByRole('button', { name: /^Raise/ }).click();
-    await page.clock.runFor(3100);
+    await page.clock.runFor(1000);
     await page.evaluate(() => {
         (window as unknown as Shared).move(40);
     });
@@ -99,6 +102,91 @@ test('leaves firm words still settling in place of polite words said after them'
         const shared = window as unknown as Shared;
         shared.say('3 still to enter.', { settle: 700 });
         shared.say('Importing products, 10 of 40.', { settle: 100, polite: true });
+    });
+    await page.clock.runFor(1000);
+    expect(await heard(page)).toEqual(['3 still to enter.']);
+});
+
+test('says the end of a progress at once where the field is typed in after a press', async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: /^Raise/ }).click();
+    await page.clock.runFor(500);
+    await page.getByRole('spinbutton').fill('7');
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(300);
+    expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
+});
+
+test('says a busy notice once a failure on the line leaves, where the work goes on', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const shared = window as unknown as Shared;
+        shared.say("Couldn't import. Try again.");
+        shared.busy(true);
+    });
+    await page.clock.runFor(1000);
+    expect(await heard(page)).toEqual(["Couldn't import. Try again."]);
+    await page.clock.runFor(2000);
+    expect(await heard(page)).toEqual(["Couldn't import. Try again.", 'Importing the file.']);
+});
+
+test('drops a busy notice waiting behind the end of a progress once the work is done', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(true);
+    });
+    await page.clock.runFor(300);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(200);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(false);
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(['Imported 40 products.']);
+});
+
+test('keeps firm words settling over polite words said once earlier words leave', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Importing products, 10 of 40.', { polite: true });
+    });
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('3 still to enter.', { settle: 2500 });
+    });
+    // The polite words leave a little after two seconds, while the firm words still settle.
+    await page.clock.runFor(1800);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Importing products, 20 of 40.', { polite: true });
+    });
+    await page.clock.runFor(1500);
+    expect(await heard(page)).toEqual(['Importing products, 10 of 40.', '3 still to enter.']);
+});
+
+test('keeps firm words settling over polite words where a notice before them came to nothing', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const shared = window as unknown as Shared;
+        shared.say(() => null, { polite: true });
+        shared.say('3 still to enter.', { settle: 700 });
+    });
+    await page.clock.runFor(300);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Importing products, 10 of 40.', { polite: true });
     });
     await page.clock.runFor(1000);
     expect(await heard(page)).toEqual(['3 still to enter.']);
