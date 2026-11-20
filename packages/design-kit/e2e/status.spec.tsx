@@ -10,7 +10,8 @@ import { servePage } from './page.js';
  * twice heard twice, words said at once heard though words that settle follow straight after, a
  * part's first effect heard, the function the same across renders, a provider inside another taking
  * the calls under it, a call after the provider has gone saying nothing, a line let go of saying
- * nothing more and keeping no timer, and a line built before it is on the page speaking.
+ * nothing more and keeping no timer, for every piece given it until the page attaches it again, a
+ * provider letting its line go as it unmounts, and a line built before it is on the page speaking.
  */
 
 const LINE = '<p id="line" class="dk-visually-hidden" role="status"></p>';
@@ -126,6 +127,50 @@ test('drops what waits on a line let go of while words are on it, and speaks onc
     await expect(page.locator('#line')).toHaveText('Saved.');
 });
 
+test('keeps a line let go of silent for a piece given it, until the page attaches it again', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await servePage(page, {
+        title: 'Status',
+        body: `<main><button id="save" class="dk-button" type="button">Save</button>${LINE}</main>`,
+        script: `import { attachBusy, attachStatus, releaseStatus } from './controls.js';
+const line = document.querySelector('#line');
+const button = document.querySelector('#save');
+window.heard = [];
+new MutationObserver(() => {
+    if (line.textContent) window.heard.push(line.textContent);
+}).observe(line, { childList: true, characterData: true, subtree: true });
+attachStatus(line);
+attachBusy(button, { status: line });
+window.busy = () => button.setAttribute('data-busy', 'Saving the round.');
+window.done = () => button.removeAttribute('data-busy');
+window.letGo = () => releaseStatus(line);
+window.attachAgain = () => attachStatus(line);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    type Piece = { heard: string[]; busy: () => void; done: () => void; letGo: () => void };
+    await page.evaluate(() => {
+        const piece = window as unknown as Piece;
+        piece.letGo();
+        piece.busy();
+    });
+    // The busy button's wait comes due, and says nothing on the line let go of.
+    await page.clock.runFor(5000);
+    expect(await page.evaluate(() => (window as unknown as Piece).heard)).toEqual([]);
+    await page.evaluate(() => {
+        const piece = window as unknown as Piece & { attachAgain: () => unknown };
+        piece.done();
+        piece.attachAgain();
+        piece.busy();
+    });
+    await page.clock.runFor(5000);
+    expect(await page.evaluate(() => (window as unknown as Piece).heard)).toEqual([
+        'Saving the round.',
+    ]);
+});
+
 test('speaks on a line built before it is put on the page', async ({ page }) => {
     await page.clock.install();
     await servePage(page, {
@@ -206,6 +251,24 @@ test('takes the calls under a provider inside another on its own line', async ({
     await page.locator('#inner').click();
     await expect(page.locator('#dialog > p[role="status"]')).toHaveText('Inside.');
     await expect(page.locator('#outer > p[role="status"]')).not.toHaveText('Inside.');
+});
+
+test('lets its line go as the provider unmounts, so words said just before are never put in', async ({
+    page,
+}) => {
+    await draw(page);
+    await page.evaluate(() => {
+        const line = document.querySelector('#dialog [role="status"]');
+        (window as unknown as { kept: Element | null }).kept = line;
+        // Words said, then the provider taken away before they are put in.
+        document.querySelector<HTMLButtonElement>('#inner')?.click();
+        document.querySelector<HTMLButtonElement>('#leave')?.click();
+    });
+    await expect(page.locator('#outer')).toHaveCount(0);
+    await page.waitForTimeout(500);
+    expect(
+        await page.evaluate(() => (window as unknown as { kept: Element | null }).kept?.textContent)
+    ).toBe('');
 });
 
 test('says nothing and throws nothing for a call made after its provider has gone', async ({

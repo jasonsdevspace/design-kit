@@ -65,11 +65,24 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const held = useRef<Parameters<Say>[]>([]);
     const gone = useRef(false);
     const drawn = useRef<HTMLParagraphElement | null>(null);
+    // The moments set to say held words, called off if the line goes before they come.
+    const later = useRef<number[]>([]);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
-            // The line is let go of, so nothing said on it is left running once the screen goes.
-            if (drawn.current) releaseStatus(drawn.current);
+            // The line is let go of once this commit is done, so nothing said on it is left running
+            // once the screen goes, unless the same line comes back in it, as React's second run in
+            // development brings it, which keeps its words and the moments set for them.
+            const left = drawn.current;
             drawn.current = null;
+            if (left)
+                queueMicrotask(() => {
+                    if (drawn.current === left) return;
+                    if (drawn.current === null) {
+                        for (const timer of later.current) window.clearTimeout(timer);
+                        later.current = [];
+                    }
+                    releaseStatus(left);
+                });
             handle.current = null;
             held.current = [];
             gone.current = true;
@@ -78,16 +91,20 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
         gone.current = false;
         drawn.current = element;
         handle.current = attachStatus(element);
-        const [first, ...later] = held.current;
+        const [first, ...rest] = held.current;
         held.current = [];
         if (first) handle.current(...first);
         // Each later message in a moment of its own, as each was said apart from the first, so
         // polite words wait behind firm words rather than giving way as to a result said with them.
         const said = handle.current;
-        for (const call of later)
-            window.setTimeout(() => {
-                said(...call);
-            });
+        later.current = [
+            ...later.current,
+            ...rest.map((call) =>
+                window.setTimeout(() => {
+                    said(...call);
+                })
+            ),
+        ];
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
