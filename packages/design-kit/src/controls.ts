@@ -595,6 +595,8 @@ type Line = {
     settling: boolean;
     words: string | null;
     notice: (() => string | null) | null;
+    /** Let go of by `releaseStatus`, so nothing is said on it until it is attached again. */
+    released: boolean;
 };
 const lines = new WeakMap<HTMLElement, Line>();
 const lineOf = (status: HTMLElement): Line => {
@@ -609,6 +611,7 @@ const lineOf = (status: HTMLElement): Line => {
             settling: false,
             words: null,
             notice: null,
+            released: false,
         };
         lines.set(status, line);
     }
@@ -684,6 +687,8 @@ const leave = (status: HTMLElement) => {
  */
 const say = (status: HTMLElement, message: Spoken, keep = false, polite = false) => {
     const line = lineOf(status);
+    // A line let go of says nothing and sets no timer, until it is attached again.
+    if (line.released) return;
     if (polite && !admit(line, message)) return;
     if (polite) line.words = null;
     const before = line.current;
@@ -774,12 +779,14 @@ const attachedLines = new WeakMap<HTMLElement, Say>();
 export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);
     if (already) return already;
+    lineOf(line).released = false;
     const speak: Say = (message, { settle = 0, polite = false } = {}) => {
         if (settle <= 0) {
             say(line, message, false, polite);
             return;
         }
         const state = lineOf(line);
+        if (state.released) return;
         if (polite && !admit(state, message)) {
             // Polite words settling before these are dropped, so the last said is the one heard.
             if (!state.settling) window.clearTimeout(state.settle);
@@ -796,6 +803,26 @@ export const attachStatus = (line: HTMLElement): Say => {
     };
     attachedLines.set(line, speak);
     return speak;
+};
+
+/**
+ * Lets a status line go, as a page takes it away: its timers are cleared, the words said or held for
+ * it are dropped and it is emptied, so nothing more is said on it and nothing it set is left running.
+ * The function `attachStatus` returned, and any piece speaking on the line, then say nothing there
+ * until the line is attached again. A line never attached is left as it is.
+ */
+export const releaseStatus = (line: HTMLElement): void => {
+    attachedLines.delete(line);
+    const state = lines.get(line);
+    if (!state) return;
+    window.clearTimeout(state.timer);
+    window.clearTimeout(state.settle);
+    state.current = null;
+    state.words = null;
+    state.notice = null;
+    state.settling = false;
+    state.released = true;
+    line.textContent = '';
 };
 
 /** Where a piece's words are said: the page's own function, or a status line the page names. */

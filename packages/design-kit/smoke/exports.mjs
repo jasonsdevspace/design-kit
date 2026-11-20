@@ -44,6 +44,7 @@ export const VALUE_EXPORTS = {
         'attachProgress',
         'attachRoving',
         'attachStatus',
+        'releaseStatus',
         'attachStepper',
         'attachTable',
         'attachThemeSwitch',
