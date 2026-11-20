@@ -1591,10 +1591,10 @@ if (line) {
 puts the message in a tenth of a second later, so the same words said twice are heard twice, and
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
-copy button does, through the same function, so a line a page hands to both keeps one timer. A page
-that takes the line away calls `releaseStatus(line)`, which clears the line's timers and drops the
-words said or held for it, so nothing more is said there, by any piece given the line, until the
-page attaches it again with `attachStatus`. `StatusProvider` does this as it unmounts.
+copy button does, through the same function, so a line a page hands to both keeps one timer.
+`StatusProvider` lets its line go as it unmounts: the line's timers are cleared and the words said
+or held for it are dropped, so nothing more is said there, by any piece given the line, until it is
+attached again.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -3576,10 +3576,10 @@ large numeral, a hero beside its picture, an empty state and progress.
 ### `@jasonsdevspace/design-kit/controls`
 
 `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`,
-`attachPanel()`, `attachTable()`, `attachStatus()`, `releaseStatus()` and `chooseTheme()`, which
-make the controls work, `moveFocus()`, which moves focus once a change is drawn, `activeOf()`, which
-reads what has focus inside a shadow root too, `focusOnArrival()`, which focuses a view's heading on
-an arrival a press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
+`attachPanel()`, `attachTable()`, `attachStatus()` and `chooseTheme()`, which make the controls
+work, `moveFocus()`, which moves focus once a change is drawn, `activeOf()`, which reads what has
+focus inside a shadow root too, `focusOnArrival()`, which focuses a view's heading on an arrival a
+press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
 `attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
 and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
 progress at its steps, and the types `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
