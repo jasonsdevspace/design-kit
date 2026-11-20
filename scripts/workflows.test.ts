@@ -62,6 +62,63 @@ const jobsOf = (text: string) => {
         }));
 };
 
+/** The shell's own words and the commands a job holding a token may run. */
+const ALLOWED = new Set([
+    'git',
+    'gh',
+    'echo',
+    'exit',
+    '[',
+    'test',
+    'true',
+    'if',
+    'then',
+    'else',
+    'elif',
+    'fi',
+]);
+
+/** The lines of a `run` key's block, which runs on while they sit deeper than the key or are blank. */
+const blockOf = (lines: readonly string[], at: number, indent: number, value: string): string[] => {
+    if (value !== '|' && value !== '>') return [value];
+    const block: string[] = [];
+    for (const next of lines.slice(at + 1)) {
+        if (next.trim() !== '' && next.length - next.trimStart().length <= indent) break;
+        block.push(next);
+    }
+    return block;
+};
+
+/** The first word of each command a script runs, those in a `$()` among them, but assignments. */
+const commandsOf = (script: string): string[] =>
+    script
+        .replace(/\\\n\s*/g, ' ')
+        .split(/&&|\|\||;|\||\$\(|`|\n/)
+        .map(
+            (command) =>
+                command
+                    .trim()
+                    .replace(/^(?:if|then|else|elif|!)\s+/, '')
+                    .split(/\s+/)[0] ?? ''
+        )
+        .filter((first) => first !== '' && !first.startsWith('#') && !/^[A-Za-z_]\w*=/.test(first));
+
+/**
+ * What a job runs beyond what `ALLOWED` names: the first word of each command in its `run` blocks,
+ * those in a `$()` among them, and each action of the repository's own it uses.
+ */
+const straysOf = (body: string): string[] => {
+    const lines = body.split('\n');
+    return lines.flatMap((line, at) => {
+        const local = /^\s*(?:-\s+)?uses:\s*(\.\.?\/\S*)/.exec(line)?.[1];
+        if (local) return [local];
+        const run = /^(\s*)(?:-\s+)?run:\s*(.*)$/.exec(line);
+        if (!run) return [];
+        const block = blockOf(lines, at, (run[1] ?? '').length, run[2] ?? '');
+        return commandsOf(block.join('\n')).filter((first) => !ALLOWED.has(first));
+    });
+};
+
 /** npm's subcommands that install, or that run packages' install scripts, in every spelling. */
 const INSTALLS = new Set([
     'ci',
@@ -405,25 +462,15 @@ describe('the workflows', () => {
         expect(holding).toEqual(['deploy']);
     });
 
-    it("run nothing of the repository's in a job that holds a token that can write", () => {
-        // A token from an app can push and open pull requests, so the job that takes one installs
-        // and runs no package, no script of the repository's and no action of its own, which a
-        // dependency's code or a change on a branch could reach it through.
-        const runsCode = (body: string) =>
-            /^\s*(?:-\s+)?uses:\s*\.\.?\//m.test(body) ||
-            (/^\s*(?:-\s+)?run:/m.test(body) &&
-                body
-                    .split('\n')
-                    .some(
-                        (line) =>
-                            /(?:^|[\s;&|(`])(?:npm|npx|node|yarn|pnpm|bun|bunx|deno|make|bash|sh|python3?)(?:\s|$)/.test(
-                                line
-                            ) || /(?:^|[\s;&|(`'"])(?:\.\.?\/|scripts\/)/.test(line)
-                    ));
+    it("run only git, gh and the shell's own words in a job that holds a token that can write", () => {
+        // A token from an app can push and open pull requests, so the job that takes one runs no
+        // command but those it needs, rather than none of a list of runners, so a script, a package
+        // or an action of the repository's own, which a dependency's code or a change on a branch
+        // could reach it through, fails here whatever runs it.
         const holding = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
                 .filter(({ body }) => /actions\/create-github-app-token@/.test(body))
-                .map(({ id, body }) => ({ job: `${path} ${id}`, runs: runsCode(body) }))
+                .map(({ id, body }) => ({ job: `${path} ${id}`, strays: straysOf(body) }))
         );
         expect(holding.map(({ job }) => job)).toEqual(
             expect.arrayContaining([
@@ -431,12 +478,31 @@ describe('the workflows', () => {
                 '.github/workflows/site-pages.yml record-pull-request',
             ])
         );
-        expect(holding.filter(({ runs }) => runs).map(({ job }) => job)).toEqual([]);
-        expect(runsCode('\n        steps:\n            - run: npx something\n')).toBe(true);
-        expect(runsCode('\n        steps:\n            - run: ./scripts/release.sh\n')).toBe(true);
-        expect(runsCode('\n        steps:\n            - run: bash scripts/x.sh\n')).toBe(true);
-        expect(runsCode('\n        steps:\n            - uses: ./.github/actions/x\n')).toBe(true);
-        expect(runsCode('\n        steps:\n            - run: gh pr list\n')).toBe(false);
+        expect(holding.filter(({ strays }) => strays.length > 0)).toEqual([]);
+        const steps = (line: string) => `\n        steps:\n            - ${line}\n`;
+        expect(straysOf(steps('run: npx something'))).toEqual(['npx']);
+        expect(straysOf(steps('run: ./scripts/release.sh'))).toEqual(['./scripts/release.sh']);
+        expect(straysOf(steps('run: .github/scripts/x.sh'))).toEqual(['.github/scripts/x.sh']);
+        expect(straysOf(steps('run: source x.sh'))).toEqual(['source']);
+        expect(straysOf(steps('run: . x.sh'))).toEqual(['.']);
+        expect(straysOf(steps('uses: ./.github/actions/x'))).toEqual(['./.github/actions/x']);
+        expect(
+            straysOf(
+                steps('run: |\n                  open="$(gh pr list)"\n                  git push')
+            )
+        ).toEqual([]);
+    });
+
+    it("name no secret in a job that runs the repository's code or a package", () => {
+        // A secret named in a job is sent to that job's runner, where any code the job runs can
+        // read it, so a job that installs or runs anything names none but the run's own token.
+        const naming = [...workflows].flatMap(([path, text]) =>
+            jobsOf(text)
+                .filter(({ body }) => straysOf(body).length > 0)
+                .filter(({ body }) => /secrets\.(?!GITHUB_TOKEN\b)/.test(body))
+                .map(({ id }) => `${path} ${id}`)
+        );
+        expect(naming).toEqual([]);
     });
 
     // Ubuntu, but for CI's jobs that draw in WebKit and Firefox, on a Mac, where neither needs
