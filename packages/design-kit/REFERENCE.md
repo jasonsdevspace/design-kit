@@ -1996,8 +1996,9 @@ the page's rhythm rather than a piece's.
 ### Split rows, notes and numerals
 
 A title with a figure or a control at its end, such as a player's name and the round, is a
-`dk-split`. A note that belongs to no field is a `dk-note`, and a figure read from across a room,
-such as a score, is a `dk-numeral`:
+`dk-split`. A note that is not a field's hint or error, such as the round under a name or a word
+beside a label's, is a `dk-note`, and a figure read from across a room, such as a score, is a
+`dk-numeral`:
 
 <!-- example: splitRow -->
 
@@ -2016,8 +2017,9 @@ such as a score, is a `dk-numeral`:
 on their first line's baseline, and puts the end under the start, `--dk-space-1` apart, where the
 two do not fit, with `--dk-space-3` between them on one line. What it holds keeps no room of its
 own, and each piece breaks a word too long for the line, so a long name holds on a 320px phone
-rather than push the page sideways. `dk-note` is the muted text at the small size, which holds 4.5
-to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
+rather than push the page sideways. `dk-note` is the muted text at the small size and the normal
+weight, so one beside a label's words reads as a note rather than at the label's weight, and it
+holds 4.5 to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
 `--dk-text-numeral` in the mono face with tabular figures, so a score that changes keeps its width,
 at the strong weight on a line no taller than the figure. A numeral never breaks, since a score
 split over two lines reads as two numbers, so on a phone at a large text size it stops at a size

@@ -12,9 +12,9 @@ import { doubled } from './text-size.js';
  * group of sections narrowed by its least width: the row's start and end on one line, lined up on
  * their baseline, the end under the start a small step apart where they do not fit, a long first
  * word broken rather than the page pushed sideways at 320px and twice the text size, the note muted
- * at the small size, the numeral at its size in the mono face with tabular figures and whole under
- * wider spacing, the group's least width set by --dk-sections-least, and no audit findings in
- * either theme or in forced colors.
+ * at the small size and the normal weight beside a label's words, the numeral at its size in the
+ * mono face with tabular figures and whole under wider spacing, the group's least width set by
+ * --dk-sections-least, and no audit findings in either theme or in forced colors.
  */
 
 const EXAMPLE = renderToStaticMarkup(splitRow);
@@ -151,6 +151,37 @@ test('draws a note muted at the small size, and a numeral at its size in tabular
     expect(numeral['line-height']).toBe(`${String(size)}px`);
     expect(numeral['font-family']).toContain('monospace');
 });
+
+/** A field whose label holds a note beside its words, as a round's "deals" sits by a name. */
+const LABELLED =
+    '<div class="dk-field"><label class="dk-field-label" for="tricks">Ana ' +
+    '<span class="dk-note">deals</span></label><input class="dk-input" id="tricks"></div>';
+
+/** A weight token's value, as the root declares it. */
+const weight = (page: Page, name: string) =>
+    page.evaluate(
+        (token) => getComputedStyle(document.documentElement).getPropertyValue(token).trim(),
+        name
+    );
+
+for (const theme of ['light', 'dark'] as const) {
+    test(`draws a note beside a label's words at the normal weight in the ${theme} theme`, async ({
+        page,
+    }) => {
+        await draw(page, LABELLED, { theme });
+        const label = await style(page.locator('.dk-field-label'), 'font-weight');
+        const note = await style(
+            page.locator('.dk-field-label > .dk-note'),
+            'font-weight',
+            'color'
+        );
+        expect(label['font-weight']).toBe(await weight(page, '--dk-weight-medium'));
+        expect(note['font-weight']).toBe(await weight(page, '--dk-weight-normal'));
+        expect(note.color).toBe(await colorOf(page, 'var(--dk-muted)'));
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(results.violations.map(({ id }) => id)).toEqual([]);
+    });
+}
 
 test('keeps the numeral and the row whole under wider text spacing', async ({ page }) => {
     await draw(page, LONG, { css: SPACED, width: 320 });
