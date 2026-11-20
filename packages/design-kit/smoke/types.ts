@@ -385,4 +385,4 @@ export const HookTypes = (children: ProviderProps['children']): readonly unknown
 export const refusalWithout = () => useFormRefusal<HTMLFormElement>({});
 
 // @ts-expect-error A group of cells is laid out as a grid, a row or a column, and nothing else.
-export const rovingSideways = () => useRoving({ orientation: 'diagonal' });
+export const rovingDiagonal = () => useRoving({ orientation: 'diagonal' });

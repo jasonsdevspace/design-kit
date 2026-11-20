@@ -7,14 +7,15 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
  * classes, and `attachPanel` its panel by the id its button names. The switch, the copy button and
  * the stepper show their control, which the markup keeps hidden so a visitor without script meets
- * no control that does nothing, and return a function that takes it away again, as the table's
- * does. `attachToast` returns instead the function that shows a message in it, `attachDialog` the
- * function that opens it, `attachPanel` the functions that open or close its panel and let its
- * button go, `attachStatus` the function that says a message, `attachForm` the function that
- * refuses its form, and `moveFocus` and `focusOnArrival` what call their request off. Nothing runs
- * when the module is imported but one listener on the document, in a page, which notes whether the
- * visitor's last input was a press for `focusOnArrival`, and nothing here sets a style, so a page's
- * policy can refuse every style it did not serve.
+ * no control that does nothing, and return a function that takes it away again, as the table's, the
+ * group's, the busy button's and progress's do. `attachToast` returns instead the function that
+ * shows a message in it, `attachDialog` the function that opens it, `attachPanel` the functions
+ * that open or close its panel and let its button go, `attachStatus` the function that says a
+ * message, `attachForm` the function that refuses its form, and `moveFocus` and `focusOnArrival`
+ * what call their request off. Nothing runs when the module is imported but one listener on the
+ * document, in a page, which notes whether the visitor's last input was a press for
+ * `focusOnArrival`, and nothing here sets a style, so a page's policy can refuse every style it did
+ * not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -759,11 +760,12 @@ const attachedLines = new WeakMap<HTMLElement, Say>();
  * message is put in a moment after the line is emptied, so the same words said twice are heard
  * twice, and leaves after a while, so reading by line finds no old words. A message is said at once
  * unless it asks to settle, when it waits that long for its words to stop changing, and words said
- * again in the meantime take its place. Any message said on the line drops one still waiting, so
- * the last words said are the ones heard. A screen keeps a line of its own for this, as a toast and
- * a stepper keep theirs. It speaks through the same function as the copy button and the stepper, so
- * a line handed to a copy button too keeps one timer, and a later message replaces an earlier one.
- * Attached again, a line returns the function it returned first.
+ * again in the meantime take its place. Firm words said on the line drop words still waiting, and
+ * polite words give way to them, so the last words said are the ones heard. A screen keeps a line
+ * of its own for this, as a toast and a stepper keep theirs. It speaks through the same function as
+ * the copy button and the stepper, so a line handed to a copy button too keeps one timer, and a
+ * later message replaces an earlier one. Attached again, a line returns the function it returned
+ * first.
  */
 export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);

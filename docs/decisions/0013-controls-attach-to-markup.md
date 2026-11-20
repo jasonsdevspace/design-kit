@@ -1,6 +1,6 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB, then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB, and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75 KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a press that brings a view from a key that moves took them past 15.5 KB, and then at 17.25 KB, once every function of the release was in place, and to set the sheets' budget at 12.25 KB, once the release's pieces landed heavier than their prototype
+**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions return what shows or opens them, by record 20, for React pages, which attach a control through a kit hook rather than an effect of their own, in 0.7.0 to set the sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past 10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB, in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that divides its cells took the sheets past 10.75 KB, after 0.8.7 to set it at 12 KB, once the pieces planned for the next release took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB, then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB, and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75 KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a press that brings a view from a key that moves took them past 15.5 KB, and in 0.9.0 to set the controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, measured whole, left less room under each than a function or a piece of the usual size, and for the one listener the module adds as it loads, which notes the visitor's last press for `focusOnArrival`
 
 ## Context
 
@@ -178,8 +178,9 @@ rule sets the controls at 17 KB.
 The controls were measured again with every function of the release in place, a stepper's own `say`
 and the lookups that find a piece's parts inside a shadow root among them. Every function sent
 together weighs 16,985 bytes, under the 17 KB they held but with less room than a function of the
-usual size, and the median a function adds is now 622 bytes, so the rule sets the controls at
-17.25 KB.
+usual size, and the median a function adds is now 622 bytes, so the rule sets the controls at 17.25
+KB. It is set again here, before anything outgrows it, since a release is measured whole, as the
+audit of 0.6.0 was, and leaves room for one more of the usual size.
 
 For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
 divides its cells, which works out a column's width at each count from two to six in the sheet,
@@ -198,7 +199,8 @@ the rule has it, and the package record measures the pieces as they ship.
 
 With every piece of the release landed, the sheets weigh 12,225 bytes sent together, 113 heavier
 than the prototype and with less room under 12 KB than a piece of the usual size, and the median a
-piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB.
+piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB. It is set again here, before
+anything outgrows it, for the same reason as the controls'.
 
 ## The sheets beside other systems
 
@@ -233,7 +235,7 @@ The kit's sheets weigh about what Pico's do, a few hundred bytes either way by h
 while Pico draws plain pages, forms and a few pieces, and the kit also draws an app's frame, its tab
 bar and toast, the dialog, the stepper, the rows and a grid of buttons. The larger systems weigh
 more, though the figures compare sheets alone. Script is left out on every side, the kit's controls
-included, which are held to 7.5 KB of their own. Web Awesome keeps its pieces' styles in the script
+included, which were held to 7.5 KB of their own then. Web Awesome keeps its pieces' styles in the script
 that draws each one, so its sheet holds little of them, and GOV.UK's tabs and accordion and
 Bootstrap's dialog and toast need script to work. The comparison is context for a raise and sets no
 ceiling, since the rule above sets the budget.

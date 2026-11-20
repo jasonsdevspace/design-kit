@@ -33,10 +33,10 @@ export {
  * from hooks.tsx, beside them. Each component draws the markup components.css styles and nothing
  * else, with no stylesheet of its own and no style attribute, so a page without React writes the
  * same markup by hand, and a page whose policy allows styles only from its own origin draws it. A
- * control's state is a native or ARIA attribute, never a class of the kit's. A component trusts its
- * types, and guards at run time only where a value plain JavaScript can pass would become a class,
- * an element or an attribute of its own, as a callout's tone, heading level, role and live region
- * would.
+ * control's state is a native, ARIA or data attribute, never a class of the kit's. A component
+ * trusts its types, and guards at run time only where a value plain JavaScript can pass would
+ * become a class, an element or an attribute of its own, as a callout's tone, heading level, role
+ * and live region would.
  */
 
 /**

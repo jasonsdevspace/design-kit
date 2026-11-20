@@ -324,8 +324,8 @@ options rejected, what the choice costs, and the test behind it.
     with React and one without, from one copy of their behavior, at the cost of a second script in
     the browser, held to a budget.
 14. [A piece with no state of its own ships as classes alone](docs/decisions/0014-stateless-pieces-ship-as-classes.md).
-    Tabs, pills and the eyebrow look the same on every site from classes a page writes, at the cost
-    of each page running its own tabs' keys.
+    Tabs, pills and the eyebrow look the same on every site from classes a page writes, with their
+    keys from `attachRoving` and the chosen tab the page's own.
 15. [A toast's attach function returns what shows a message](docs/decisions/0015-a-toast-attach-returns-what-shows-a-message.md).
     A page attaches a toast once and calls one function for every message, which a screen reader
     hears with its way back, at the cost of the one control whose attach function takes nothing
