@@ -9,7 +9,8 @@ import { servePage } from './page.js';
  * when they stop changing, waiting words dropped by any message said meanwhile, the same words
  * twice heard twice, words said at once heard though words that settle follow straight after, a
  * part's first effect heard, the function the same across renders, a provider inside another taking
- * the calls under it, and a call after the provider has gone saying nothing.
+ * the calls under it, a call after the provider has gone saying nothing, and a line taken off the
+ * page saying nothing more.
  */
 
 const LINE = '<p id="line" class="dk-visually-hidden" role="status"></p>';
@@ -52,6 +53,33 @@ test('says words at once, and words that settle only once they stop changing', a
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Heard).heard.slice(-2)))
         .toEqual(['Saved.', 'Saved.']);
+});
+
+test('says nothing more on a line taken off the page, words waiting to settle among them', async ({
+    page,
+}) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await servePage(page, { title: 'Status', body: LINE, script: VANILLA });
+    await page.waitForFunction(() => 'ready' in window);
+    const line = await page.evaluate(() => {
+        const { say } = window as unknown as Heard;
+        say('Saved.');
+        say('3 still to enter.', { settle: 50 });
+        const removed = document.querySelector('#line');
+        removed?.remove();
+        (window as unknown as { removed: Element | null }).removed = removed;
+        return removed !== null;
+    });
+    expect(line).toBe(true);
+    await page.waitForTimeout(400);
+    expect(
+        await page.evaluate(
+            () => (window as unknown as { removed: Element | null }).removed?.textContent
+        )
+    ).toBe('');
+    expect(await page.evaluate(() => (window as unknown as Heard).heard)).toEqual([]);
+    expect(errors).toEqual([]);
 });
 
 test('says words already said at once even when words that settle follow straight after', async ({
