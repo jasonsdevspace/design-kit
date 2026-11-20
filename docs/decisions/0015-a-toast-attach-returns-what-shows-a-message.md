@@ -1,6 +1,6 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and politely, giving way to words said in the same moment and waiting for words on the line, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
+**Status:** accepted, amended to export the status line's attach function, `attachStatus`, which returns what says a message, at once or once its words settle, and politely, giving way to firm words said in the same moment and waiting for firm words being said, and in 0.8.4 for the panel's, `attachPanel`, which returns what opens or closes it and what lets its button go
 
 ## Context
 
@@ -65,11 +65,11 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   moving focus. Its messages leave after two seconds, where the toast keeps its own until the toast
   leaves and a stepper keeps its value on its own line until the next, so each keeps a line of its
   own, and a stepper speaking on a page's line leaves it as any message there does. A message said
-  politely, as progress and a busy button's notice are, gives way to words about to be put in or
-  still settling, so a page's own result said in the same moment is heard in its place, and waits
-  for words already on the line, so it is said once they leave. A polite message given as a
-  function waits for any words there, and is read as it is put in, so it says nothing once it is
-  no longer true.
+  politely, as progress and a busy button's notice are, gives way to firm words said in the same
+  moment or still settling, so a page's own result said with it is heard in its place, and waits
+  for firm words being said, so it is said once they leave, however many follow. A polite message
+  given as a function waits for any words there, and is read as it is put in, so it says nothing
+  once it is no longer true.
   The function returns what says a message rather than what takes the line away, since a line holds
   nothing to take away, and keeps record 13's rule for being called again: a line attached again
   returns the function it returned first.

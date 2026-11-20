@@ -191,3 +191,66 @@ test('keeps firm words settling over polite words where a notice before them cam
     await page.clock.runFor(1000);
     expect(await heard(page)).toEqual(['3 still to enter.']);
 });
+
+test('says the end of a progress waiting behind a stepper press once a second press leaves', async ({
+    page,
+}) => {
+    await open(page);
+    const raise = page.getByRole('button', { name: /^Raise/ });
+    await raise.click();
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(500);
+    await raise.click();
+    await page.clock.runFor(3100);
+    expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
+});
+
+test('keeps the end of a progress waiting through firm words said again', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Copied.');
+    });
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Copied again.');
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(['Copied.', 'Copied again.', 'Imported 40 products.']);
+});
+
+test('keeps the end of a progress said while a press is still being put in, and says it after', async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: /^Raise/ }).click();
+    await page.clock.runFor(50);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toHaveLength(2);
+    expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
+});
+
+test('says a busy notice a progress step took the place of once the step leaves', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(true);
+    });
+    // The notice is asked for once the wait has passed, and a step comes before it is put in.
+    await page.clock.runFor(450);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(10);
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(['Importing products, 10 of 40.', 'Importing the file.']);
+});

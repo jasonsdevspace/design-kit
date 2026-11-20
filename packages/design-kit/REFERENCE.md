@@ -1511,13 +1511,14 @@ so a quick run of presses is heard once, at its end, and on a page's line they l
 message there does.
 
 Words that should give way to a result, such as a progress's steps and its end, or a busy button's
-notice that work goes on, ask to be polite, as `say(words, { polite: true })`. Polite words said as
-other words are about to be put in, or while they settle, are left unsaid, so a result said in the
-same moment is heard in their place. Polite words said while other words are on the line wait for
-them to leave and are said then, the last of them alone, so the end of a progress is heard after a
-stepper's press or a copy. Polite words given as a function, such as the busy notice, wait for any
-words on the line, polite ones too, and are read as they are put in, so they never put out the end
-of a progress and say nothing once the work is done.
+notice that work goes on, ask to be polite, as `say(words, { polite: true })`. Polite words said in
+the same moment as firm words, or while firm words settle, are left unsaid, so a result said with
+them is heard in their place. Polite words said while firm words are being said wait for them to
+leave and are said then, the last of them alone, so the end of a progress is heard after a
+stepper's press or a copy, however many follow, and polite words not yet put in when firm words
+come wait for those in turn. Polite words given as a function, such as the busy notice, wait for
+any words on the line, polite ones too, and are read as they are put in, so they never put out the
+end of a progress and say nothing once the work is done.
 
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
