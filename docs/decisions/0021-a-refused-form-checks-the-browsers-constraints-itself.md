@@ -1,6 +1,9 @@
 # 21. A refused form checks the browser's constraints itself
 
-**Status:** accepted
+**Status:** accepted, amended in 0.9.1 for what a refusal says: the first field's name and error,
+with how many fields need attention where more are wrong, and nothing over a summary, since a device
+check with VoiceOver on an iPhone heard no error when the kit left it to the field's description,
+which iOS reads only as a hint, and for a reset that clears errors, which says "Form cleared.".
 
 ## Context
 
@@ -127,18 +130,18 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 
 The paths are in `packages/design-kit`.
 
-- `e2e/checked.spec.tsx` refuses a form with an empty required field and a malformed address
-  before the page's handler, draws each error and says the count, takes errors away once their
-  fields pass and lets the page handle a submit that passes, submits unchecked from a button
-  marked `formnovalidate`, takes each failure's words from the field, its set, the page's map and
-  the kit in turn, a pattern's among them, draws an error after its hint, names a field no one can
-  reach, lets a field marked off pass, counts a group of radios with no set once and a box alone in
-  a section as its own field, gives the page's own error the kit's words and puts it back, gives
-  fields with no id errors of their own, checks the whole form where a part is attached and a field
-  tied to it from outside, takes errors away on a reset, leaves a stepper's range error as the one
-  error, marks fields not in error before any submit, and in React hands the failures, a set's
-  among them, to the page, which draws them, and refuses once they are drawn. It runs in Chromium,
-  WebKit and Firefox.
+- `e2e/checked.spec.tsx` refuses a form with an empty required field and a malformed address before
+  the page's handler, draws each error and says the first field's name and error with the count,
+  takes errors away once their fields pass and lets the page handle a submit that passes, submits
+  unchecked from a button marked `formnovalidate`, takes each failure's words from the field, its
+  set, the page's map and the kit in turn, a pattern's among them, draws an error after its hint,
+  names a field no one can reach, lets a field marked off pass, counts a group of radios with no set
+  once and a box alone in a section as its own field, gives the page's own error the kit's words and
+  puts it back, gives fields with no id errors of their own, checks the whole form where a part is
+  attached and a field tied to it from outside, takes errors away on a reset, leaves a stepper's
+  range error as the one error, marks fields not in error before any submit, and in React hands the
+  failures, a set's among them, to the page, which draws them, and refuses once they are drawn. It
+  runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
   marked off, and names a set none of whose controls can take focus.
 - `smoke/types.ts` types the failures, the words and the options, and refuses a failure misnamed.
