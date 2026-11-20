@@ -1,93 +1,93 @@
 {
     "recorded": {
-        "date": "2026-11-18",
-        "commit": "b07bd18",
-        "machine": "AMD EPYC 9V45 96-Core Processor, 4 cores",
+        "date": "2026-11-20",
+        "commit": "142e4f7",
+        "machine": "AMD EPYC 9V74 80-Core Processor, 4 cores",
         "node": "v24.22.2"
     },
     "tools": {
         "lighthouse": "13.6.0",
         "chrome": "158",
-        "kit": "0.8.5"
+        "kit": "0.8.7"
     },
     "pages": [
         {
             "path": "/design-kit/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 755.3,
+            "paint": 754.9,
             "shift": 0,
-            "bytes": 25196,
+            "bytes": 25607,
             "requests": 4
         },
         {
             "path": "/design-kit/tokens/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 755.1,
+            "paint": 753.6,
             "shift": 0,
-            "bytes": 29306,
+            "bytes": 29717,
             "requests": 4
         },
         {
             "path": "/design-kit/controls/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 905,
+            "paint": 904.3,
             "shift": 0,
-            "bytes": 40083,
+            "bytes": 40490,
             "requests": 4
         },
         {
             "path": "/design-kit/app-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.7,
+            "paint": 755.7,
             "shift": 0,
-            "bytes": 31420,
+            "bytes": 31828,
             "requests": 4
         },
         {
             "path": "/design-kit/page-chrome/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.3,
+            "paint": 754.6,
             "shift": 0,
-            "bytes": 27034,
+            "bytes": 27440,
             "requests": 4
         },
         {
             "path": "/design-kit/explainer-pieces/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 753.6,
+            "paint": 755,
             "shift": 0,
-            "bytes": 26403,
+            "bytes": 26810,
             "requests": 4
         },
         {
             "path": "/design-kit/together/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 753.1,
+            "paint": 753.7,
             "shift": 0,
-            "bytes": 24620,
+            "bytes": 25028,
             "requests": 4
         },
         {
             "path": "/design-kit/how-it-works/",
             "accessibility": 100,
             "performance": 100,
-            "paint": 754.6,
+            "paint": 754.5,
             "shift": 0,
-            "bytes": 25694,
+            "bytes": 26102,
             "requests": 4
         }
     ],
     "since": {
         "date": "2026-11-18",
-        "commit": "d060cc2",
+        "commit": "b07bd18",
         "kit": "0.8.5",
-        "bytes": 229572
+        "bytes": 229756
     }
 }
