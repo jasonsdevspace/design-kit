@@ -254,3 +254,100 @@ test('says a busy notice a progress step took the place of once the step leaves'
     await page.clock.runFor(3100);
     expect(await heard(page)).toEqual(['Importing products, 10 of 40.', 'Importing the file.']);
 });
+
+test('says the end of a progress and a busy notice both waiting, the end first', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(10);
+    });
+    await page.clock.runFor(300);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(true);
+    });
+    // The notice waits behind the step, the end takes the step's place, and a press comes before
+    // the end is put in.
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(50);
+    await page.getByRole('button', { name: /^Raise/ }).click();
+    await page.clock.runFor(6000);
+    const said = await heard(page);
+    expect(said).toContain('Imported 40 products.');
+    expect(said.at(-1)).toBe('Importing the file.');
+});
+
+test('keeps the end of a progress waiting when a busy notice comes to wait too', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Shared).say('Copied.');
+    });
+    await page.clock.runFor(300);
+    await page.evaluate(() => {
+        const shared = window as unknown as Shared;
+        shared.move(40);
+        shared.busy(true);
+    });
+    await page.clock.runFor(1000);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(false);
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(['Copied.', 'Imported 40 products.']);
+});
+
+test("leaves the end of a progress unsaid where the page's result follows it in the same moment", async ({
+    page,
+}) => {
+    await open(page);
+    // The bar's change is heard in a microtask, so the result is said in the same task after it.
+    await page.evaluate(async () => {
+        const shared = window as unknown as Shared;
+        shared.move(40);
+        await Promise.resolve();
+        shared.say('Imported 40 products, 2 skipped.');
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(['Imported 40 products, 2 skipped.']);
+});
+
+test('says nothing for a busy notice still waiting from a run that ended', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        const shared = window as unknown as Shared;
+        shared.say("Couldn't import. Try again.");
+        shared.busy(true);
+    });
+    await page.clock.runFor(600);
+    // The run ends and a fast one starts and ends again before the failure leaves.
+    await page.evaluate(() => {
+        const shared = window as unknown as Shared;
+        shared.busy(false);
+        shared.busy(true);
+    });
+    await page.clock.runFor(200);
+    await page.evaluate(() => {
+        (window as unknown as Shared).busy(false);
+    });
+    await page.clock.runFor(3100);
+    expect(await heard(page)).toEqual(["Couldn't import. Try again."]);
+});
+
+test("frees the line of a stepper's range error once its field is typed in", async ({ page }) => {
+    await open(page);
+    const field = page.getByRole('spinbutton');
+    await field.fill('12');
+    await field.blur();
+    await page.clock.runFor(300);
+    await field.fill('6');
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(300);
+    expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
+});

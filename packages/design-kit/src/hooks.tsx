@@ -50,9 +50,9 @@ export type StatusProviderProps = {
  * is the markup `StatusLine` draws, attached by `attachStatus` as it lands, before the effects of
  * the parts under it run, so their first effects are heard. Words said before the line is in the
  * page are held, the last firm and the last polite, and said in order once it is, so they give way
- * to each other as on the line, and words said once it has gone are dropped. A provider inside another, as inside a dialog,
- * takes the calls of the parts under it on a line of its own, so the provider sits inside the
- * dialog element itself.
+ * to each other as on the line, and words said once it has gone are dropped. A provider inside
+ * another, as inside a dialog, takes the calls of the parts under it on a line of its own, so the
+ * provider sits inside the dialog element itself.
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
@@ -67,9 +67,16 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
         }
         gone.current = false;
         handle.current = attachStatus(element);
-        const waiting = held.current;
+        const [first, ...later] = held.current;
         held.current = [];
-        for (const call of waiting) handle.current(...call);
+        if (first) handle.current(...first);
+        // Each later message in a moment of its own, as each was said apart from the first, so
+        // polite words wait behind firm words rather than giving way as to a result said with them.
+        const said = handle.current;
+        for (const call of later)
+            window.setTimeout(() => {
+                said(...call);
+            });
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);

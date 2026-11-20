@@ -462,17 +462,17 @@ them with `busy`. It is off at once, so a second press does nothing, but it keep
 wait at once. A screen reader hears the off state at once, as it must for the press to be stopped.
 
 `attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which speaks on the
-screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes away
-only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a field of
-the form it submits, is stopped before the button's own handlers and React's `onClick` hear it,
-though a capture listener further up still does. Once the wait the sheet holds the look back by
+screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
+away only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a
+field of the form it submits, is stopped before the button's own handlers and React's `onClick` hear
+it, though a capture listener further up still does. Once the wait the sheet holds the look back by
 has passed, the button's words are said once on the status line, politely, so they wait for words
 already there and the end of a progress beside them takes their place. `busy` set to true says
-"Saving.",
-which fits a save alone, so any other action, such as a delete or a send, gives its own words.
-Words not yet said when the work is done are dropped, so a result a toast says is never followed by
-a late "Saving." There is no spinner, since words say what is happening. A page that sets a
-transition of its own on a busy button replaces the wait, and the button is drawn off at once.
+"Saving.", which fits a save alone, so any other action, such as a delete or a send, gives its own
+words. Words not yet said when the work is done are dropped, so a result a toast says is never
+followed by a late "Saving." There is no spinner, since words say what is happening. A page that
+sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
+once.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
