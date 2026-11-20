@@ -56,17 +56,23 @@ describe('the published package', () => {
         );
     });
 
-    it("names every value the theme, controls and Vite modules export in the README's row for each", () => {
-        const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-        // The components' row says what they are rather than naming each, as the reference does.
-        const listed = Object.entries(VALUE_EXPORTS).filter(
-            ([module]) => !module.endsWith('/react')
-        );
-        for (const [module, names] of listed) {
-            const row = readme.split('\n').find((line) => line.startsWith(`| \`${module}\``));
-            expect(row, module).toBeDefined();
+    it('names every value each module exports under its heading in the reference', () => {
+        const whole = readFileSync(new URL('../REFERENCE.md', import.meta.url), 'utf8');
+        // Only the section that lists the exports, so a heading elsewhere is never read for it.
+        const from = whole.indexOf('\n## What the package exports\n');
+        expect(from).toBeGreaterThan(-1);
+        const after = whole.slice(from + 1);
+        const next = after.indexOf('\n## ');
+        const reference = next === -1 ? after : after.slice(0, next);
+        for (const [module, names] of Object.entries(VALUE_EXPORTS)) {
+            // The text under the module's heading in that section, up to the next heading.
+            const start = reference.indexOf(`### \`${module}\``);
+            expect(start, module).toBeGreaterThan(-1);
+            const rest = reference.slice(start + module.length + 6);
+            const end = rest.search(/\n#{1,3} /);
+            const section = end === -1 ? rest : rest.slice(0, end);
             const missing = names.filter(
-                (name) => !row?.includes(`\`${name}\``) && !row?.includes(`\`${name}()\``)
+                (name) => !section.includes(`\`${name}\``) && !section.includes(`\`${name}()\``)
             );
             expect(missing, module).toEqual([]);
         }
