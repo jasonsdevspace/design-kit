@@ -60,7 +60,7 @@ test("refuses a form inside a shadow root and says its field's own error there",
         root.querySelector('form')?.requestSubmit();
     });
     await page.clock.runFor(300);
-    expect(await heard(page)).toEqual(['Error: Enter a value.']);
+    expect(await heard(page)).toEqual(['Name: Error: Enter a value.']);
     expect(await page.evaluate(() => (window as unknown as Shadowed).root.activeElement?.id)).toBe(
         'name'
     );

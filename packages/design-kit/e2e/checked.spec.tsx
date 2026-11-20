@@ -85,7 +85,9 @@ test("refuses a submit that fails the browser's constraints, before the page's h
     await expect(page.getByLabel('Email')).toHaveAccessibleDescription(
         /Enter an email address, like name@example.com/
     );
-    await expect.poll(() => heard(page)).toEqual(['2 fields need attention.']);
+    await expect
+        .poll(() => heard(page))
+        .toEqual(['Name: Error: Enter a value. 2 fields need attention.']);
     expect(await submits(page)).toBe(0);
 });
 
@@ -219,7 +221,9 @@ test('counts a group of radios with no set around it once, and a box alone in a 
     ).toBeNull();
     await expect(page.locator('#agree')).toHaveAccessibleName('I agree');
     await expect(page.locator('.dk-field-error')).toHaveCount(2);
-    await expect.poll(() => heard(page)).toEqual(['2 fields need attention.']);
+    await expect
+        .poll(() => heard(page))
+        .toEqual(['I agree: Error: Check the box to go on. 2 fields need attention.']);
 });
 
 test("gives an error the page drew for a field the kit's words, and puts the page's back once it passes", async ({

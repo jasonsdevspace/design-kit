@@ -7,9 +7,10 @@ import { servePage } from './page.js';
 
 /*
  * A refused submit by `attachForm` and React's `useFormRefusal`: focus on the first field in error,
- * a radio set's checked radio, or a summary the page names, and one message on the status line, how
- * many fields need attention where focus moved, or the error's own words where the field already
- * had focus, with a second refusal heard again.
+ * a radio set's checked radio, or a summary the page names, and one message on the status line,
+ * nothing over a summary and otherwise the first field's name and error with how many need attention
+ * where more are wrong, with a second refusal heard again, and "Form cleared." where a reset clears
+ * errors.
  */
 
 const FORM = renderToStaticMarkup(
@@ -91,7 +92,9 @@ const refuse = (page: Page, wrong: readonly (readonly [string, string])[]) =>
         form.refuse();
     }, wrong);
 
-test('focuses the first field in error and says how many need attention', async ({ page }) => {
+test('focuses the first field in error and says its name and error and how many need attention', async ({
+    page,
+}) => {
     await open(page);
     await page.getByRole('button', { name: 'Save rule' }).focus();
     await refuse(page, [
@@ -99,24 +102,31 @@ test('focuses the first field in error and says how many need attention', async 
         ['match', 'Choose how rules match.'],
     ]);
     await expect(page.locator('#name')).toBeFocused();
-    await expect(page.locator('.screen-status')).toHaveText('2 fields need attention.');
+    await expect(page.locator('.screen-status')).toHaveText(
+        'Rule name: Error: Give the rule a name. 2 fields need attention.'
+    );
 });
 
-test("says the error's own words where the field already had focus, and again on a second refusal", async ({
+test("says the field's name and error where the field already had focus, and again on a second refusal", async ({
     page,
 }) => {
     await open(page);
     await page.locator('#name').focus();
     await refuse(page, [['name', 'Give the rule a name.']]);
-    await expect(page.locator('.screen-status')).toHaveText('Error: Give the rule a name.');
+    await expect(page.locator('.screen-status')).toHaveText(
+        'Rule name: Error: Give the rule a name.'
+    );
     await refuse(page, []);
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['Error: Give the rule a name.', 'Error: Give the rule a name.']);
+        .toEqual([
+            'Rule name: Error: Give the rule a name.',
+            'Rule name: Error: Give the rule a name.',
+        ]);
     await expect(page.locator('#name')).toBeFocused();
 });
 
-test('says the error and how many more need attention where the field already had focus', async ({
+test('says the field, its error and how many more need attention where the field already had focus', async ({
     page,
 }) => {
     await open(page);
@@ -126,7 +136,7 @@ test('says the error and how many more need attention where the field already ha
         ['match', 'Choose how rules match.'],
     ]);
     await expect(page.locator('.screen-status')).toHaveText(
-        'Error: Give the rule a name. 2 fields need attention.'
+        'Rule name: Error: Give the rule a name. 2 fields need attention.'
     );
 });
 
@@ -142,7 +152,10 @@ test('passes over a field that cannot take focus, and counts a set of checkboxes
     });
     await refuse(page, [['code', 'Enter the code.']]);
     await expect(page.getByRole('checkbox', { name: 'New' })).toBeFocused();
-    await expect(page.locator('.screen-status')).toHaveText('2 fields need attention.');
+    // The box reads no error of its own, so the set is named with the count.
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Tags: 2 fields need attention.']);
 });
 
 test('passes over a control marked off at the head of a set in error', async ({ page }) => {
@@ -203,9 +216,70 @@ form.addEventListener('submit', (event) => {
     await page.getByRole('button', { name: 'Save rule' }).click();
     await expect(page.getByLabel('Rule name')).toBeFocused();
     await expect(page.getByLabel('Rule name')).toHaveAttribute('aria-invalid', 'true');
+    // The field's name and error are said, since VoiceOver on iOS reads the error only as a hint.
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['1 field needs attention.']);
+        .toEqual(['Rule name: Error: Enter a value.']);
+});
+
+test("says the field's name and the count where the only field in error has no error drawn", async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() =>
+        document.querySelector('#name')?.setAttribute('aria-invalid', 'true')
+    );
+    await refuse(page, []);
+    await expect(page.getByLabel('Rule name')).toBeFocused();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Rule name: 1 field needs attention.']);
+});
+
+test("says a set's name and error where focus moves to a choice its error does not describe", async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    // Written by hand, the set is described on its fieldset alone, which a choice does not read.
+    await page.evaluate(() => {
+        for (const radio of document.querySelectorAll('#match input'))
+            radio.removeAttribute('aria-describedby');
+    });
+    await refuse(page, [['match', 'Choose how rules match.']]);
+    await expect(page.getByRole('radio', { name: 'Any' })).toBeFocused();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Match: Error: Choose how rules match.']);
+});
+
+test('says the form is cleared where a reset clears its errors, and nothing where none showed', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const form = document.querySelector('#rule');
+        const reset = document.createElement('button');
+        reset.type = 'reset';
+        reset.textContent = 'Start over';
+        form?.append(reset);
+    });
+    // A reset of a form with nothing wrong, as after a save, says nothing.
+    await page.getByRole('button', { name: 'Start over' }).click();
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([]);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await refuse(page, [['name', 'Give the rule a name.']]);
+    await expect(page.locator('#name')).toBeFocused();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Rule name: Error: Give the rule a name.']);
+    await page.getByRole('button', { name: 'Start over' }).click();
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Rule name: Error: Give the rule a name.', 'Form cleared.']);
+    await expect(page.getByRole('button', { name: 'Start over' })).toBeFocused();
 });
 
 test('leaves focus where it is when nothing is wrong', async ({ page }) => {
@@ -220,9 +294,17 @@ test('leaves focus where it is when nothing is wrong', async ({ page }) => {
 test("focuses a radio set's checked radio, and a summary the page names", async ({ page }) => {
     await open(page);
     await page.getByRole('button', { name: 'Save rule' }).focus();
+    // Marked as `ChoiceField` draws a set's error, on the fieldset and on each choice, and its
+    // name and error are said all the same, since VoiceOver on iOS reads a description only as a
+    // hint.
+    await page.evaluate(() => {
+        for (const radio of document.querySelectorAll('#match input'))
+            radio.setAttribute('aria-describedby', 'match-error');
+    });
     await refuse(page, [['match', 'Choose how rules match.']]);
     await expect(page.getByRole('radio', { name: 'Any' })).toBeFocused();
-    await expect(page.locator('.screen-status')).toHaveText('1 field needs attention.');
+    // A second refusal calls off words not yet said, so the first is given time to speak.
+    await page.waitForTimeout(1000);
     await page.getByRole('button', { name: 'Save rule' }).focus();
     await page.evaluate(() => {
         const summary = document.querySelector<HTMLElement>('#summary');
@@ -233,12 +315,10 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
     await expect(page.locator('#summary')).toBeFocused();
     // Moving focus reads the summary, so the line says nothing over it, and refused again from
     // the summary, the line says the summary's words, since focus that stays reads nothing.
-    await page.waitForTimeout(300);
-    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
-        '1 field needs attention.',
-    ]);
     await refuse(page, []);
-    await expect(page.locator('.screen-status')).toHaveText('Two fields need attention.');
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Match: Error: Choose how rules match.', 'Two fields need attention.']);
 });
 
 test.describe('in React', () => {
@@ -252,7 +332,11 @@ test.describe('in React', () => {
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
         await page.getByRole('button', { name: 'Add' }).click();
         await expect(page.getByRole('textbox', { name: 'Name' })).toBeFocused();
-        await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
+        await expect(page.getByRole('textbox', { name: 'Name' })).toHaveAttribute(
+            'aria-invalid',
+            'true'
+        );
+        await expect(page.locator('#root p[role="status"]')).toHaveText(/^Name: Error: /);
     });
 
     test('refuses after an await, though the frame comes before the render that draws the error', async ({
