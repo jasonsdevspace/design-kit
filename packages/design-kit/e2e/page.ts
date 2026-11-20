@@ -17,7 +17,9 @@ export const ORIGIN = 'https://kit.test';
 /**
  * Puts a stand-in clock on a page or a context and stops it, so time moves only by the test's own
  * steps. An installed clock left running keeps pace with real time between steps as well, and on a
- * slow runner that real time brings a timer due before the step that expects it still waiting.
+ * slow runner that real time can fire a timer before the step that expects it to be still waiting.
+ * It stops a second after it starts, since the clock runs from the moment it is installed and can
+ * only be stopped at a time it has not yet passed.
  */
 export const stillClock = async (clock: Clock): Promise<void> => {
     const time = Date.now();

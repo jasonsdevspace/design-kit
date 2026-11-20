@@ -2990,13 +2990,22 @@ test.describe('how each state is shown', () => {
     }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.emulateMedia({ colorScheme: 'light' });
-        await page.clock.install();
+        // The clock stands still from the start, so time moves only by the test's own steps. It can
+        // only be stopped at a time it has not yet passed, so it stops a second after it starts.
+        const time = Date.now();
+        await page.clock.install({ time });
+        await page.clock.pauseAt(time + 1000);
         await page.goto('/design-kit/controls/');
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
-        await expect(page.locator(STATUS)).toHaveText('Copied.');
-        // From here the clock stands still between steps, so a slow machine moves no timer itself.
-        await page.clock.pauseAt(await page.evaluate(() => Date.now() + 50));
+        // The clipboard answers in its own time, so the clock is stepped a little at a time until
+        // the copy's words are on the line, and the tap comes no more than a step after them.
+        await expect
+            .poll(async () => {
+                await page.clock.runFor(50);
+                return page.locator(STATUS).textContent();
+            })
+            .toBe('Copied.');
         // A tap on a preview while the copy's words are still on the line.
         const preview = page
             .locator('.site-state')
