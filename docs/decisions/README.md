@@ -39,10 +39,10 @@ costs, and the test behind it.
     in the room the strip keeps and copy buttons beside the code, and why React in the browser and
     a second inline script were turned down.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
-    the theme switch, the copy button, the stepper, the toast, the dialog, the panel and the table as
-    markup from a component and a function a page calls on it, from `./controls`, and the behaviors
-    added since, a form's check and refusal, a busy button, progress, moving focus and a group's
-    keys, and why a stateful component and a script that builds the DOM were turned down.
+    the theme switch, the copy button, the stepper, the toast, the dialog, the panel and the table
+    as markup from a component and a function a page calls on it, from `./controls`, and the
+    behaviors added since, a form's check and refusal, a busy button, progress, moving focus and a
+    group's keys, and why a stateful component and a script that builds the DOM were turned down.
 14. [A piece with no state of its own ships as classes alone](0014-stateless-pieces-ship-as-classes.md):
     tabs, pills and the eyebrow as classes a page writes by hand, with the roles the page writes,
     the keys `attachRoving` runs and the chosen tab the page owns, and why a component for each was
@@ -72,8 +72,8 @@ costs, and the test behind it.
     link in the panel jumps, Escape, and why the path of the last click and a flag for interaction
     outside were turned down.
 20. [The kit's React hooks wrap its attach functions](0020-react-hooks-wrap-the-attach-functions.md):
-    a hook for each attach a React page needs, the status line, a form, a busy button, progress and
-    a group of cells, and for moving focus, each keeping only its handle, attaching through a
+    a hook for each attach a React page needs, a form, a busy button, progress and a group of cells,
+    the status line through `StatusProvider`, and for moving focus, each keeping only its handle, attaching through a
     callback ref, setting its options again only when one changes, and holding words said before a
     provider's line is attached, the markup components held free of effects by the lint, and why
     leaving pages to attach in an effect and behavior written in React were turned down.

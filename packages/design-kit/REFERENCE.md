@@ -583,17 +583,16 @@ class of its own stands `--dk-space-4` below it. A form with a class lays out it
 
 A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
 button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
-is tapped. It sits on the page's own ground, so it reads as a well
-on a card. The hint and the error are in the caption size, the error in the danger color, and an
-invalid control's edge in the danger color too. In forced colors, where that color is gone, an
-invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
-error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
-on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
-background, and in forced colors the browser's own arrow comes back. A select that shows its options
-as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
-takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
-and its text at the top rather than centered, and it resizes in height alone, since a wider one
-would push its column.
+is tapped. It sits on the page's own ground, so it reads as a well on a card. The hint and the error
+are in the caption size, the error in the danger color, and an invalid control's edge in the danger
+color too. In forced colors, where that color is gone, an invalid control gains a dashed line around
+its edge in `CanvasText`, which moves nothing as the error comes and goes, and gives way to the
+focus ring when it has focus. A disabled control is drawn on the surface ground in the muted text.
+The select is a native `<select>`, its caret drawn as a background, and in forced colors the
+browser's own arrow comes back. A select that shows its options as a list, with `multiple` or a
+`size`, is left as the browser draws it, with no caret. A textarea takes the same look but is as
+tall as its rows, three unless given, its lines at the body's leading and its text at the top rather
+than centered, and it resizes in height alone, since a wider one would push its column.
 
 </details>
 
@@ -1331,10 +1330,10 @@ choices apart.
 | `actions`      | none            | Drawn after the message, outside it                                                  |
 
 A live callout's message is drawn even when it is empty, so the page can fill it later, and the
-callout marks itself `data-empty` until it has words or actions. Every other
-prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except `style`, `role`,
-the `title` attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes
-its role from `live` alone.
+callout marks itself `data-empty` until it has words or actions. Every other prop goes to the
+callout's `<div>`, `id`, `ref` and `className` included, except `style`, `role`, the `title`
+attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes its role from
+`live` alone.
 
 **Hooks**
 
@@ -1352,8 +1351,9 @@ and a button that copies a block's text. Each is markup the components draw, or 
 hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
 returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
 without script meets no control that does nothing, and the functions set no style, so a page's
-policy can refuse every style it did not serve. Nothing runs when the module is imported but a
-listener on the document, which notes the visitor's last press for `focusOnArrival`.
+policy can refuse every style it did not serve. Nothing runs when the module is imported but
+listeners on the document for keys, clicks and submits, which note the visitor's last press for
+`focusOnArrival`.
 
 ### Theme switch
 
@@ -1539,12 +1539,14 @@ title's line, and wraps under the title where the line has no room. The block fo
 it follows a title on its own. The button is hidden until it is attached, so without script the
 head shows the title alone, as an explainer's block does.
 
-## Status, waits and progress
+## Status, focus, waits and progress
 
-Every piece that speaks shares one status line for each screen, so what a visitor must hear is said
-once and in turn. A wait shows as a busy button, a loading line or progress, by what is known of it.
-A busy button is under [Buttons](#buttons), a failure with Try again under [Callouts](#callouts),
-and an empty state under [Rows](#rows).
+The pieces that speak on a screen's status line, a refused form, a busy button, progress and a
+stepper given one, take turns on it, so what a visitor must hear is said once and in turn. Focus
+moves after a change to where a visitor carries on, and to a view's heading on an arrival a press
+brought. A wait shows as a busy button, a loading line or progress, by what is known of it. A busy
+button is under [Buttons](#buttons), a failure with Try again under [Callouts](#callouts), and an
+empty state under [Rows](#rows).
 
 ### Status line
 
@@ -1579,7 +1581,7 @@ Every piece that speaks on a line follows one policy. Words are said at once. Wo
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
 wait that long for their words to stop changing, so a screen reader hears the count once the
 presses stop rather than every step of it or none. Words said again in the meantime take the place
-of those not yet said, any message said on the line drops words still waiting, so the last words
+of those not yet said, any message said on the line drops words still settling, so the last words
 said are the ones heard, and the same words said twice are heard twice. Words that must be heard,
 such as a save's result or the end of a progress, never wait to settle, and words that settle never
 drop words already said. A stepper's press words are put in a tenth of a second after each press,
@@ -1771,9 +1773,11 @@ until it sets others, and once at the end, or the `done` words in its place, suc
 products.". Each is said at once, with no wait for the amount to stop changing, since a steady
 import never stops, and at least three seconds after the last step, so one is heard before the next,
 while the end never waits. Nothing replaces the end until the amount goes back for another run. The
-amount a bar first shows is not said, and a bar with no amount says nothing. What it says is polite,
-`say(words, { polite: true })`, so it gives way to a page's own result said with it, and waits for
-words already being said, while a busy button's words beside it, polite too, give way to it:
+amount a bar first shows is not said, an amount that becomes known at the end, after the bar is
+attached, aside, so a bar attached already full says nothing, and a bar with no amount says nothing.
+What it says is polite, `say(words, { polite: true })`, so it gives way to a page's own result said
+with it, and waits for firm words already being said, while a busy button's words beside it, polite
+too, give way to it:
 
 <!-- source: importing -->
 
@@ -2692,7 +2696,7 @@ it away again.
 | `inline`              | `false`                                         | Puts the label to the left, on one line with the stepper                                         |
 | `tall`                | `false`                                         | Draws the buttons and the value at `--dk-target-large`                                           |
 | `hint`, `error`, `id` | none                                            | As for every field                                                                               |
-| `mark`, `markWords`   | none                                            | As for every field                                                                               |
+| `mark`, `markWords`   | as a field's                                    | As for every field                                                                               |
 
 <details>
 <summary>How a stepper is drawn</summary>

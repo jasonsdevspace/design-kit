@@ -27,16 +27,18 @@ the keys and the attribute that marks the chosen one.
 ## Decision
 
 Option B. The sheet draws the row, and a piece's state is the attribute a screen reader already
-reads for it, as record 6 has it for a control: `aria-selected="true"` on a tab, `aria-current` on
-a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike. A page that writes a
-row with `role="tablist"` runs the tabs pattern's keys itself, as the site does. The reference
-shows the markup for each, generated from the examples module as every other block is, so the
-reference and the browser tests cannot drift from each other.
+reads for it, as record 6 has it for a control: `aria-selected="true"` on a tab, `aria-current` on a
+link among pages, or `aria-pressed="true"` on a toggle, each drawn alike. A page that writes a row
+with `role="tablist"` runs the tabs pattern's keys itself, as the site does. Since 0.9.0
+`attachRoving` from `./controls`, or `useRoving` in React, runs those keys, as the amendment has it,
+and the chosen tab stays the page's. The reference shows the markup for each, generated from the
+examples module as every other block is, so the reference and the browser tests cannot drift from
+each other.
 
 ## Consequences
 
-- A page owns its tabs' keys and the chosen tab, so a page's own state never has to pass through
-  the kit, and a page without React writes the same markup as one with it.
+- A page owns the chosen tab, so a page's own state never has to pass through the kit, and a page
+  without React writes the same markup as one with it.
 - A new look with no state of its own joins the sheet the same way, as classes, with its block in
   the reference generated from an example, and a component only where the kit holds something a
   page would otherwise write twice.

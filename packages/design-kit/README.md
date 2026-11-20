@@ -26,7 +26,7 @@ it. Three stylesheets draw the pieces, and plain script or React hooks make them
   toast, a grid of buttons, a stepper and a dialog.
 - **Behavior.** Script, or React hooks, that move focus after a change and on arrival, move through
   a grid or a row of tabs by the arrow keys, check a form against the browser's constraints and
-  draw the kit's errors, and share one status line among the pieces that speak.
+  draw the kit's errors, and take turns on a screen's status line.
 
 The tokens also ship in the Design Tokens Community Group format, for a tool that reads it.
 
@@ -40,13 +40,6 @@ styles win over the kit's without extra weight.
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit)
 
-**New in 0.9.0.** React hooks attach the controls, and the controls move focus after a change,
-move by the arrow keys, check a form themselves and say a wait on a shared status line. The release
-adds a busy button, a loading line, progress, read-only fields, required and optional marks, empty
-states, a hero, stacks, split rows, notes, numerals and a dock row. A page that writes a stepper, a
-list marked as a stack, or a live callout by hand has a step to take, under Upgrading in the
-[changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
-
 - **No flash of the wrong theme.** A small script in the head sets the theme before the page draws.
 - **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
   and a test keeps it that way.
@@ -56,13 +49,20 @@ list marked as a stack, or a live callout by hand has a step to take, under Upgr
 - **Clear of a phone's edges.** On a page that draws to the edge of the screen, the strip, a site
   header, the footer, a content page, an explainer and an app's frame keep their content clear of a
   phone's notch and corners.
-- **Keyboard and screen reader behavior built in.** Focus moves to the first field in error, or to
-  a new view's heading when a press brought it. The arrow keys move through a grid or a row of
-  tabs, and pieces that speak share one status line, so words a visitor must hear are not lost.
-- **Quiet about short waits.** A busy button and a loading line keep their look for a wait under
-  400ms, then say what is happening in words, never with a spinner.
+- **Keyboard and screen reader behavior built in.** After a change, focus lands where a visitor
+  needs it next, and the pieces that speak on a screen's status line take turns on it, so words a
+  visitor must hear are not lost.
+- **Quiet about short waits.** Through a wait under 400ms a busy button keeps its look and a loading
+  line stays out of sight. Only then do they say what is happening, in words rather than a spinner.
 - **Tested where layouts break.** Browser tests draw the pieces in both themes, 320 pixels wide, at
   twice the text size, under wider text spacing and in forced colors.
+
+**New in 0.9.0.** React hooks attach the controls, and the controls move focus after a change,
+move by the arrow keys, check a form themselves and say a wait on a shared status line. The release
+adds a busy button, a loading line, progress, read-only fields, required and optional marks, empty
+states, a hero, stacks, split rows, notes, numerals and a dock row. A page that writes a stepper, a
+list marked as a stack, or a live callout by hand has a step to take, under Upgrading in the
+[changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
 
 ## Setup
 
@@ -238,8 +238,10 @@ export const Screen = (props: Props) => (
 );
 ```
 
-Moving focus after a change, in the reference, gives the focus hooks, and Fields gives a form that
-checks the browser's constraints and draws the kit's errors.
+[Moving focus after a change](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.7/packages/design-kit/REFERENCE.md#moving-focus-after-a-change)
+in the reference gives the focus hooks, and
+[A refused form](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.7/packages/design-kit/REFERENCE.md#a-refused-form)
+gives a form that checks the browser's constraints and draws the kit's errors.
 
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
 gives the markup for each piece, [Content

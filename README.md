@@ -360,11 +360,12 @@ options rejected, what the choice costs, and the test behind it.
     names, where renaming or dropping one is a breaking change.
 19. [A closing panel hands focus to its button only where the visitor's place was in it](docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md).
     Focus comes back to the button when it was in the panel, in every engine Safari included, at
-    the cost of a tabindex the kit writes on a panel and its buttons, which makes them stops for Tab
-    in Safari.
+    the cost of a tabindex the kit writes on a panel's buttons, which makes them stops for Tab in
+    Safari where the page's other buttons are not.
 20. [The kit's React hooks wrap its attach functions](docs/decisions/0020-react-hooks-wrap-the-attach-functions.md).
-    A React page attaches a form, a busy button, progress, a group of cells or the status line with
-    one hook over the same function a page without React calls, at the cost of `./react` importing
+    A React page attaches a form, a busy button, progress or a group of cells, and moves focus, with
+    one hook over the same function a page without React calls, and draws the status line with
+    `StatusProvider`, at the cost of `./react` importing
     `./controls`.
 21. [A refused form checks the browser's constraints itself](docs/decisions/0021-a-refused-form-checks-the-browsers-constraints-itself.md).
     A form's native constraints are kept and its errors drawn in the kit's look and words, never the
