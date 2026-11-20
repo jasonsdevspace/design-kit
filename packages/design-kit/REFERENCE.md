@@ -462,15 +462,17 @@ them with `busy`. It is off at once, so a second press does nothing, but it keep
 wait at once. A screen reader hears the off state at once, as it must for the press to be stopped.
 
 `attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which speaks on the
-screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes away
-only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a field of
-the form it submits, is stopped before the button's own handlers and React's `onClick` hear it,
-though a capture listener further up still does. Once the wait the sheet holds the look back by
-has passed, the button's words are said once on the status line. `busy` set to true says "Saving.",
-which fits a save alone, so any other action, such as a delete or a send, gives its own words.
-Words not yet said when the work is done are dropped, so a result a toast says is never followed by
-a late "Saving." There is no spinner, since words say what is happening. A page that sets a
-transition of its own on a busy button replaces the wait, and the button is drawn off at once.
+screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
+away only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a
+field of the form it submits, is stopped before the button's own handlers and React's `onClick` hear
+it, though a capture listener further up still does. Once the wait the sheet holds the look back by
+has passed, the button's words are said once on the status line, politely, so they wait for words
+already there and the end of a progress beside them takes their place. `busy` set to true says
+"Saving.", which fits a save alone, so any other action, such as a delete or a send, gives its own
+words. Words not yet said when the work is done are dropped, so a result a toast says is never
+followed by a late "Saving." There is no spinner, since words say what is happening. A page that
+sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
+once.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
@@ -1558,14 +1560,22 @@ Every piece that speaks on a line follows one policy. Words are said at once. Wo
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
 wait that long for their words to stop changing, so a screen reader hears the count once the
 presses stop rather than every step of it or none. Words said again in the meantime take the place
-of those not yet said, any message said on the line drops words still waiting, so the last words said
-are the ones heard, and the same words said twice are heard twice. Words that must be heard, such
-as a save's result or the end of a progress, never wait, and words that settle never drop words
-already said. A stepper's press words are put in a tenth of a second after each press, so a quick
-run of presses is heard once, at its end. Words that should give way to any other, such as a
-progress's steps and its end beside a page's own result, ask to be polite, as
-`say(words, { polite: true })`, and are left unsaid where the line holds or is about to hold words
-that are not.
+of those not yet said, any message said on the line drops words still waiting, so the last words
+said are the ones heard, and the same words said twice are heard twice. Words that must be heard,
+such as a save's result or the end of a progress, never wait to settle, and words that settle never
+drop words already said. A stepper's press words are put in a tenth of a second after each press,
+so a quick run of presses is heard once, at its end, and on a page's line they leave as every
+message there does.
+
+Words that should give way to a result, such as a progress's steps and its end, or a busy button's
+notice that work goes on, ask to be polite, as `say(words, { polite: true })`. Polite words said in
+the same moment as firm words, or while firm words settle, are left unsaid, so a result said with
+them is heard in their place. Polite words said while firm words are being said wait for them to
+leave and are said then, the last of them alone, so the end of a progress is heard after a
+stepper's press or a copy, however many follow, and polite words not yet put in when firm words
+come wait for those in turn. Polite words given as a function, such as the busy notice, wait for
+any words on the line, polite ones too, and are read as they are put in, so they never put out the
+end of a progress and say nothing once the work is done.
 
 Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
 inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
@@ -1719,7 +1729,8 @@ import never stops, and at least three seconds after the last step, so one is he
 next, while the end never waits. Nothing replaces the end until the amount goes back for another
 run. The amount a bar first shows is not said, and a bar with no amount says nothing. What it says
 is polite, `say(words, { polite: true })`, so it gives way to any other words on the line, and a
-page's own result is heard over it:
+page's own result is heard over it, while a busy button's words beside it, polite too, give way to
+it:
 
 <!-- source: importing -->
 

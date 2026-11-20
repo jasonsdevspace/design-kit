@@ -50,31 +50,46 @@ export type StatusProviderProps = {
  * part of the page under it the function that says a message on it, through `useStatus`. The line
  * is the markup `StatusLine` draws, attached by `attachStatus` as it lands, before the effects of
  * the parts under it run, so their first effects are heard. Words said before the line is in the
- * page are held and said once it is, the last of them alone, as a later message replaces an earlier
- * one, and words said once it has gone are dropped. A provider inside another, as inside a dialog,
- * takes the calls of the parts under it on a line of its own, so the provider sits inside the
- * dialog element itself.
+ * page are held, the last firm and the last polite, and said in order once it is, so they give way
+ * to each other as on the line, and words said once it has gone are dropped. A provider inside
+ * another, as inside a dialog, takes the calls of the parts under it on a line of its own, so the
+ * provider sits inside the dialog element itself.
  */
 export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
-    const held = useRef<Parameters<Say> | null>(null);
+    const held = useRef<Parameters<Say>[]>([]);
     const gone = useRef(false);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
             handle.current = null;
-            held.current = null;
+            held.current = [];
             gone.current = true;
             return;
         }
         gone.current = false;
         handle.current = attachStatus(element);
-        const waiting = held.current;
-        held.current = null;
-        if (waiting) handle.current(...waiting);
+        const [first, ...later] = held.current;
+        held.current = [];
+        if (first) handle.current(...first);
+        // Each later message in a moment of its own, as each was said apart from the first, so
+        // polite words wait behind firm words rather than giving way as to a result said with them.
+        const said = handle.current;
+        for (const call of later)
+            window.setTimeout(() => {
+                said(...call);
+            });
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
-        else if (!gone.current) held.current = [message, options];
+        else if (!gone.current) {
+            // The last firm and the last polite words alone, in the order said, since each takes
+            // the place of the one before it of its kind as it would on the line.
+            const polite = Boolean(options?.polite);
+            held.current = [
+                ...held.current.filter(([, given]) => Boolean(given?.polite) !== polite),
+                [message, options],
+            ];
+        }
     }, []);
     return (
         <Speaker.Provider value={speak}>
