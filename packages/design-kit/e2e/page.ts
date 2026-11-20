@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { type BrowserContext, expect, type Locator, type Page } from '@playwright/test';
+import { type BrowserContext, type Clock, expect, type Locator, type Page } from '@playwright/test';
 import ts from 'typescript';
 
 import { contrast as ratio } from '../examples/palette.js';
@@ -13,6 +13,17 @@ import { contrast as ratio } from '../examples/palette.js';
 
 /** The origin the specs that load a module serve their page from, so it has storage of its own. */
 export const ORIGIN = 'https://kit.test';
+
+/**
+ * Puts a stand-in clock on a page or a context and stops it, so time moves only by the test's own
+ * steps. An installed clock left running keeps pace with real time between steps as well, and on a
+ * slow runner that real time brings a timer due before the step that expects it still waiting.
+ */
+export const stillClock = async (clock: Clock): Promise<void> => {
+    const time = Date.now();
+    await clock.install({ time });
+    await clock.pauseAt(time + 1000);
+};
 
 /** A module of the kit's, as a browser loads it, built from the source with its imports kept. */
 export const js = (file: string): string =>

@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
 import { type Controls } from './hooks-page.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * What record 20 asks of each hook that attaches to an element, through a row of cells, a busy
@@ -104,7 +104,7 @@ test('lets each element go once the hooks are taken away, saying nothing late', 
 }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.clock.install();
+    await stillClock(page.clock);
     await open(page);
     // A busy notice waits a moment before it is said, and the button is taken away before then.
     await busy(page, true);

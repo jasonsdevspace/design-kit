@@ -11,6 +11,7 @@ import {
     servePage,
     settle,
     sideways,
+    stillClock,
     style,
     tabKey,
 } from './page.js';
@@ -85,7 +86,7 @@ const open = async (
         readonly clock?: boolean;
     } = {}
 ): Promise<void> => {
-    if (clock) await page.clock.install();
+    if (clock) await stillClock(page.clock);
     await page.setViewportSize({ width, height });
     await servePage(page, {
         title: 'Scores',
