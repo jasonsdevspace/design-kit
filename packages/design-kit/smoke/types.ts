@@ -25,6 +25,7 @@ import {
     attachRoving,
     attachStatus,
     attachStepper,
+    focusOnArrival,
     moveFocus,
     type BusyOptions,
     type PanelControl,
@@ -237,6 +238,14 @@ export const settledByWord = (say: Say) => say('Saved.', { settle: 'soon' });
 // Focus moves to an element or an id, with fallbacks, and the request can be called off.
 export const cancelOf = (heading: HTMLElement): (() => void) =>
     moveFocus('remove-ben', { fallbacks: [heading, null] });
+
+// A view's heading takes focus on an arrival a press brought, from where focus was as it began.
+export const arrivalOf = (heading: HTMLElement, from: Element | null): (() => void) =>
+    focusOnArrival(() => heading, { from });
+
+// A view drawn before that changed on a press takes focus whatever the last input was.
+export const changedOf = (heading: HTMLElement): (() => void) =>
+    focusOnArrival(heading, { changed: true, fallbacks: [null] });
 
 // A form refused once its errors are drawn, said on a line or through a page's own say.
 export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>

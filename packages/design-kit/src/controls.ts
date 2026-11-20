@@ -9,8 +9,10 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
  * function that takes it away again, as the table's does. `attachToast` returns instead the
  * function that shows a message in it, `attachDialog` the function that opens it, `attachPanel`
  * the functions that open or close its panel and let its button go, and `attachStatus` the
- * function that says a message. Nothing runs when the module is imported, and nothing here sets a
- * style, so a page's policy can refuse every style it did not serve.
+ * function that says a message. Nothing runs when the module is imported but one listener on the
+ * document, in a page, which notes whether the visitor's last input was a press for
+ * `focusOnArrival`, and nothing here sets a style, so a page's policy can refuse every style it did
+ * not serve.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>
@@ -72,6 +74,20 @@ const placeOf = (target: FocusTarget): Element | null => {
 /** How long a request may wait before it is dropped, as in a tab out of sight, in milliseconds. */
 const STALE = 1000;
 
+/** Focuses a request's target or a fallback, where focus is still where it was and it is fresh. */
+const land = (
+    target: FocusTarget,
+    fallbacks: readonly FocusTarget[] | undefined,
+    from: Element | null,
+    asked: number
+) => {
+    if (performance.now() - asked > STALE) return;
+    const now = document.activeElement;
+    if (now !== from && now !== null && now !== document.body) return;
+    const place = placeOf(target);
+    focusFirst(place, ...(fallbacks ?? []).map(placeOf), homeOf(place ?? document.body));
+};
+
 /**
  * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
  * next player's entry, and returns what calls it off before it lands. It waits for the next frame,
@@ -89,18 +105,165 @@ export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): 
     const from = options.from === undefined ? document.activeElement : options.from;
     const asked = performance.now();
     const frame = window.requestAnimationFrame(() => {
-        if (performance.now() - asked > STALE) return;
-        const now = document.activeElement;
-        if (now !== from && now !== null && now !== document.body) return;
-        const place = placeOf(target);
-        focusFirst(
-            place,
-            ...(options.fallbacks ?? []).map(placeOf),
-            homeOf(place ?? document.body)
-        );
+        land(target, options.fallbacks, from, asked);
     });
     return () => {
         window.cancelAnimationFrame(frame);
+    };
+};
+
+/** A button or a link by its role, which Enter presses, and Space too but for a link. */
+const ROLE_ACTIVATOR = '[role="button"], [role="link"], [role="menuitem"]';
+/** What a press is made on: a button or a link, native or by its role. */
+const ACTIVATOR = [
+    'button',
+    'a[href]',
+    'input[type="button"]',
+    'input[type="submit"]',
+    'input[type="reset"]',
+    'input[type="image"]',
+    'summary',
+    ROLE_ACTIVATOR,
+].join(', ');
+/** Keys that move rather than press. */
+const MOVES = [
+    'Tab',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+];
+/** How long a press may wait for the view it brings, in milliseconds, as one a slow load brings. */
+const PRESS_LIVES = 5000;
+
+/** Whether an event presses a button or a link that is not off and is not in a row of tabs. */
+const presses = (event: Event): boolean => {
+    if (event.type === 'submit') return true;
+    const { target } = event;
+    if (!(target instanceof Element) || target.closest('[role="tablist"]')) return false;
+    if (event instanceof KeyboardEvent) {
+        const own = target.closest(ROLE_ACTIVATOR);
+        return (
+            own === target &&
+            !isOff(own) &&
+            (event.key === 'Enter' || (event.key === ' ' && own.getAttribute('role') !== 'link'))
+        );
+    }
+    const control = target.closest(ACTIVATOR);
+    return control !== null && !isOff(control);
+};
+
+/**
+ * When the visitor's last input was a press on a button or a link, or a submit, that no view has
+ * taken focus for, and how many inputs they have made, so a press handed back is not handed back
+ * over a later one. A press is any click or submit, a script's among them, so a page's own
+ * `click()` and a test's count. A key that moves or types clears it, so a Tab, an arrow along a
+ * row of tabs or typing in a field leaves none, as a click on nothing does, while a pointer going
+ * down to scroll leaves it. A press on a control that is off or in a row of tabs counts for
+ * nothing, since an off control only says why it is off and a tab keeps focus as its panel
+ * changes, and Enter or Space on a control of the page's own that is a button or a link by its
+ * role counts, since no click follows them.
+ */
+let pressedAt: number | null = null;
+let inputs = 0;
+const heard = (event: Event) => {
+    if (event instanceof KeyboardEvent) {
+        if (presses(event)) pressedAt = performance.now();
+        else if (event.key.length === 1 || MOVES.includes(event.key)) pressedAt = null;
+        else return;
+    } else pressedAt = presses(event) ? performance.now() : null;
+    inputs += 1;
+};
+// The one thing the module does as it loads, in a page, so the press that brings a page's first
+// view is heard. It notes inputs and nothing else.
+if (typeof document !== 'undefined')
+    for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
+
+/** How a view asks to take focus as it arrives. */
+export type ArrivalOptions = MoveFocusOptions & {
+    /**
+     * Whether the view was drawn before and changed on a press of the page's, as a round that moves
+     * on, so it takes focus whatever the visitor's last input was, and spends the press.
+     */
+    readonly changed?: boolean | undefined;
+};
+
+/** A view asking to take focus for a press. */
+type Arrival = {
+    readonly heading: FocusTarget;
+    readonly from: Element | null;
+    readonly fallbacks: readonly FocusTarget[] | undefined;
+};
+/** The views asking for the press now being answered, landed together in one frame. */
+let arriving: {
+    readonly views: Set<Arrival>;
+    readonly frame: number;
+    readonly at: number;
+    readonly press: number | null;
+} | null = null;
+
+/**
+ * Moves focus to a view's heading as it is first drawn, as `moveFocus` does, where the visitor's
+ * last input was a press on a button or a link, or a submit, in the last five seconds that no view
+ * has taken focus for, and returns what calls it off. A view drawn as the page first draws takes
+ * nothing, nor one drawn after a key that moves or types, such as Tab or an arrow along a row of
+ * tabs, after a press on nothing, on a control that is off or in a row of tabs, or long after the
+ * press, as one a poll brings. Views first drawn for the same press land together in one frame, and
+ * the one first in the page takes focus, so a view's title is heard before a section of it. A
+ * request called off before it lands hands its press back where no input has come since, so a view
+ * asked for again, as React asks again in development, takes focus. A view already drawn that
+ * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
+ * with the views first drawn for the same press, and spends the press.
+ */
+export const focusOnArrival = (
+    heading: FocusTarget,
+    options: ArrivalOptions = {}
+): (() => void) => {
+    if (!arriving) {
+        const fresh = pressedAt !== null && performance.now() - pressedAt <= PRESS_LIVES;
+        if (!fresh && !options.changed) return () => undefined;
+        const press = pressedAt;
+        pressedAt = null;
+        const views = new Set<Arrival>();
+        const asked = performance.now();
+        const frame = window.requestAnimationFrame(() => {
+            arriving = null;
+            const places = [...views].flatMap((view) => {
+                const place = placeOf(view.heading);
+                return place?.isConnected ? [{ view, place }] : [];
+            });
+            places.sort((one, other) =>
+                one.place.compareDocumentPosition(other.place) & Node.DOCUMENT_POSITION_PRECEDING
+                    ? 1
+                    : -1
+            );
+            const [first] = places;
+            if (first) land(first.place, first.view.fallbacks, first.view.from, asked);
+            else {
+                // No heading is there to take focus, so the first view asked goes by its fallbacks.
+                const [view] = views;
+                if (view) land(view.heading, view.fallbacks, view.from, asked);
+            }
+        });
+        arriving = { views, frame, at: inputs, press };
+    }
+    const batch = arriving;
+    const view: Arrival = {
+        heading,
+        from: options.from === undefined ? document.activeElement : options.from,
+        fallbacks: options.fallbacks,
+    };
+    batch.views.add(view);
+    return () => {
+        batch.views.delete(view);
+        if (batch.views.size > 0 || arriving !== batch) return;
+        window.cancelAnimationFrame(batch.frame);
+        arriving = null;
+        if (inputs === batch.at) pressedAt = batch.press;
     };
 };
 
