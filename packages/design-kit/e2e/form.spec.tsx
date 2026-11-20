@@ -355,7 +355,7 @@ test.describe('in React', () => {
         });
         await page.getByRole('button', { name: 'Save' }).click();
         await expect(page.getByRole('textbox', { name: 'Player' })).toBeFocused();
-        await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
+        await expect(page.locator('#root p[role="status"]')).toHaveText(/^Player: Error: /);
     });
 
     test('refuses the second of two refusals once the first is called off', async ({ page }) => {
@@ -364,7 +364,7 @@ test.describe('in React', () => {
             (window as unknown as { refuseTwice: () => void }).refuseTwice();
         });
         await expect(page.getByRole('textbox', { name: 'Player' })).toBeFocused();
-        await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
+        await expect(page.locator('#root p[role="status"]')).toHaveText(/^Player: Error: /);
     });
 
     test('leaves focus where the visitor moved it before the error was drawn', async ({ page }) => {
