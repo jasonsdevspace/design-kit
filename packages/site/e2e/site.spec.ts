@@ -2990,11 +2990,13 @@ test.describe('how each state is shown', () => {
     }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await page.emulateMedia({ colorScheme: 'light' });
+        await page.clock.install();
         await page.goto('/design-kit/controls/');
         await page.locator('summary', { hasText: 'The code, An action' }).click();
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
+        await page.clock.runFor(150);
         await expect(page.locator(STATUS)).toHaveText('Copied.');
-        // A tap on a preview a moment after the copy, while the copy's words are still on the line.
+        // A tap on a preview while the copy's words are still on the line.
         const preview = page
             .locator('.site-state')
             .filter({ hasText: 'A field with an error' })
@@ -3002,11 +3004,15 @@ test.describe('how each state is shown', () => {
         const box = await preview.boundingBox();
         if (!box) throw new Error('no preview');
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await page.clock.runFor(150);
         const said = 'This is only a preview of the dark theme. Try the light one.';
         await expect(page.locator(STATUS)).toHaveText(said);
-        // The copy's own timer, due about two seconds after its words, leaves the note in place.
-        await page.waitForTimeout(1800);
+        // Past when the copy's words were due to leave, the note is still on the line.
+        await page.clock.runFor(1900);
         await expect(page.locator(STATUS)).toHaveText(said);
+        // And it leaves in its own time.
+        await page.clock.runFor(300);
+        await expect(page.locator(STATUS)).toHaveText('');
     });
 
     test('closes the note when the page changes theme some other way, so it never names the wrong one', async ({

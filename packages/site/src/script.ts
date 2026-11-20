@@ -15,11 +15,10 @@ import {
  * each block of code, attaches the kit's steppers, dialogs, panels, toast and arrow keys where a
  * page shows them, and adds what the kit does not ship: tabs drawn where a state's code has two
  * blocks, the live copies of the states a reader can change, and the note a tap on a preview
- * brings, said on the kit's status line. The theme
- * script the kit puts inline has already drawn the theme before this runs, so the switch shows the
- * choice, and saves and draws a new one. It saves under the portfolio's key and with the
- * portfolio's values, so a choice made here holds on every page of jasonsdevspace.com, and the
- * other way around.
+ * brings, said on the kit's status line. The theme script the kit puts inline has already drawn the
+ * theme before this runs, so the switch shows the choice, and saves and draws a new one. It saves
+ * under the portfolio's key and with the portfolio's values, so a choice made here holds on every
+ * page of jasonsdevspace.com, and the other way around.
  */
 
 /**
@@ -121,8 +120,9 @@ const copyButton = (made: HTMLButtonElement, shown: () => Block, line: HTMLEleme
 /**
  * Makes a state's blocks tabs, as the tabs pattern has them: one tab in the tab order, the arrow
  * keys moving the choice and the focus around the row, Home and End to its ends, and a tab chosen
- * as it is focused, by the kit's arrow keys. The tabs are named for the state, as the summary is, and each block's own head
- * is hidden, since its tab names it. With no script the blocks stay one above the other.
+ * as it is focused, by the kit's arrow keys. The tabs are named for the state, as the summary is,
+ * and each block's own head is hidden, since its tab names it. With no script the blocks stay one
+ * above the other.
  */
 const tabsFor = (code: HTMLElement, blocks: readonly Block[], showing: (block: Block) => void) => {
     const list = document.createElement('div');
@@ -197,7 +197,15 @@ for (const code of codes) {
     // The code sits in a details shut until a reader opens it, where no tab can take the stop yet,
     // so the keys are attached as it first opens, or at once where it is open already.
     if (!(code instanceof HTMLDetailsElement) || code.open) keys();
-    else code.addEventListener('toggle', keys, { once: true });
+    else {
+        // Only once it is open, since an open and a shut in one task fire one toggle, shut.
+        const opened = () => {
+            if (!code.open) return;
+            code.removeEventListener('toggle', opened);
+            keys();
+        };
+        code.addEventListener('toggle', opened);
+    }
 }
 
 /*
