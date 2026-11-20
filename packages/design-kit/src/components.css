@@ -1382,10 +1382,14 @@
         overflow-wrap: anywhere;
     }
 
-    /* A note that belongs to no field: the muted text at the small size. */
+    /*
+     * A note that belongs to no field: the muted text at the small size and the normal weight, so a
+     * note beside a label's words reads as a note rather than at the label's weight.
+     */
     :where(.dk-note) {
         color: var(--dk-muted);
         font-size: var(--dk-text-small);
+        font-weight: var(--dk-weight-normal);
     }
 
     /*

@@ -1993,8 +1993,9 @@ such as a score, is a `dk-numeral`:
 on their first line's baseline, and puts the end under the start, `--dk-space-1` apart, where the
 two do not fit, with `--dk-space-3` between them on one line. What it holds keeps no room of its
 own, and each piece breaks a word too long for the line, so a long name holds on a 320px phone
-rather than push the page sideways. `dk-note` is the muted text at the small size, which holds 4.5
-to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
+rather than push the page sideways. `dk-note` is the muted text at the small size and the normal
+weight, so one beside a label's words reads as a note rather than at the label's weight, and it
+holds 4.5 to 1 on every ground the kit draws, so a note adds no color to check. `dk-numeral` is
 `--dk-text-numeral` in the mono face with tabular figures, so a score that changes keeps its width,
 at the strong weight on a line no taller than the figure. A numeral never breaks, since a score
 split over two lines reads as two numbers, so on a phone at a large text size it stops at a size

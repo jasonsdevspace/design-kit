@@ -12,9 +12,9 @@ import { doubled } from './text-size.js';
  * group of sections narrowed by its least width: the row's start and end on one line, lined up on
  * their baseline, the end under the start a small step apart where they do not fit, a long first
  * word broken rather than the page pushed sideways at 320px and twice the text size, the note muted
- * at the small size, the numeral at its size in the mono face with tabular figures and whole under
- * wider spacing, the group's least width set by --dk-sections-least, and no audit findings in
- * either theme or in forced colors.
+ * at the small size and the normal weight beside a label's words, the numeral at its size in the
+ * mono face with tabular figures and whole under wider spacing, the group's least width set by
+ * --dk-sections-least, and no audit findings in either theme or in forced colors.
  */
 
 const EXAMPLE = renderToStaticMarkup(splitRow);
@@ -150,6 +150,23 @@ test('draws a note muted at the small size, and a numeral at its size in tabular
     );
     expect(numeral['line-height']).toBe(`${String(size)}px`);
     expect(numeral['font-family']).toContain('monospace');
+});
+
+test("draws a note beside a label's words at the normal weight, not the label's", async ({
+    page,
+}) => {
+    await draw(
+        page,
+        '<div class="dk-field"><label class="dk-field-label" for="tricks">Ana ' +
+            '<span class="dk-note">deals</span></label><input class="dk-input" id="tricks"></div>'
+    );
+    const label = await style(page.locator('.dk-field-label'), 'font-weight');
+    const note = await style(page.locator('.dk-field-label > .dk-note'), 'font-weight');
+    const normal = await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--dk-weight-normal').trim()
+    );
+    expect(label['font-weight']).not.toBe(normal);
+    expect(note['font-weight']).toBe(normal);
 });
 
 test('keeps the numeral and the row whole under wider text spacing', async ({ page }) => {
