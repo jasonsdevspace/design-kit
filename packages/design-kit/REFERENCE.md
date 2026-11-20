@@ -1973,8 +1973,9 @@ the page's rhythm rather than a piece's.
 ### Split rows, notes and numerals
 
 A title with a figure or a control at its end, such as a player's name and the round, is a
-`dk-split`. A note that belongs to no field is a `dk-note`, and a figure read from across a room,
-such as a score, is a `dk-numeral`:
+`dk-split`. A note that is not a field's hint or error, such as the round under a name or a word
+beside a label's, is a `dk-note`, and a figure read from across a room, such as a score, is a
+`dk-numeral`:
 
 <!-- example: splitRow -->
 

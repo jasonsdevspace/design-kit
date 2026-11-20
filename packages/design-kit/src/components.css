@@ -768,8 +768,11 @@
         color: var(--dk-muted);
     }
 
-    /* A field's mark, required or optional, in its label at the muted text and normal weight. */
-    :where(.dk-field-mark) {
+    /*
+     * A field's mark, required or optional, and a note, each the muted text at the normal weight,
+     * so either beside a label's words reads as an aside rather than at the label's weight.
+     */
+    :where(.dk-field-mark, .dk-note) {
         color: var(--dk-muted);
         font-weight: var(--dk-weight-normal);
     }
@@ -1382,14 +1385,9 @@
         overflow-wrap: anywhere;
     }
 
-    /*
-     * A note that belongs to no field: the muted text at the small size and the normal weight, so a
-     * note beside a label's words reads as a note rather than at the label's weight.
-     */
+    /* A note that is not a field's hint or error, at the small size, muted with a field's mark. */
     :where(.dk-note) {
-        color: var(--dk-muted);
         font-size: var(--dk-text-small);
-        font-weight: var(--dk-weight-normal);
     }
 
     /*
