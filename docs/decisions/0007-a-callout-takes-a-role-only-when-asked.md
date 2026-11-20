@@ -1,6 +1,8 @@
 # 7. A callout takes a role only when a page asks for one
 
-**Status:** accepted
+**Status:** accepted, amended in 0.9.0 for `data-empty`, which marks an empty live callout so it
+leaves the flow in a browser without `:has()`, as `Callout` writes it and a page writing the markup
+by hand writes it too
 
 ## Context
 
@@ -67,3 +69,5 @@ The paths are in `packages/design-kit`.
 - `src/tokens.test.ts` measures text, muted text and the accent at 4.5 to 1, and a control's edge at
   3 to 1, on the highlight and on each callout's ground, in both themes.
 - `smoke/types.ts` fails to compile a tone outside the three against the packed package.
+- `e2e/controls.spec.tsx` finds a live callout marked `data-empty` out of sight and out of the flow
+  until it has words, with no `:has()`.

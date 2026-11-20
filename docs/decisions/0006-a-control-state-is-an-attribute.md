@@ -1,7 +1,9 @@
 # 6. A control's state is an attribute, and its rules weigh nothing
 
 **Status:** accepted, amended in 0.6.0 to let a component's selector follow its `:where()` with a
-number field's spin buttons or a dialog's `::backdrop`
+number field's spin buttons or a dialog's `::backdrop`, and in 0.9.0 to let a component reach a
+progress bar's track and fill, `::-webkit-progress-bar`, `::-webkit-progress-value` and
+`::-moz-progress-bar`, which each engine names apart
 
 ## Context
 
@@ -10,9 +12,9 @@ on or off, the button of a panel that is open, or off for a while, such as Previ
 page of results. A field can hold an error. Each state needs a look, and a screen reader has to hear
 the same state the eye sees. The components' sheet allows a selector to be a bare class of the kit's
 or one `:where()` followed at most by a focus pseudo-class, a number field's spin buttons or a
-dialog's `::backdrop`, as record 2 sets out, so any state written as an attribute selector sits in
-`:where()` and weighs nothing. A button that is off for a while has to stay where the keyboard can
-reach it, so a visitor can find out why it is off.
+dialog's `::backdrop` or a progress bar's track and fill, as record 2 sets out, so any state written
+as an attribute selector sits in `:where()` and weighs nothing. A button that is off for a while has
+to stay where the keyboard can reach it, so a visitor can find out why it is off.
 
 ## Options
 
@@ -86,7 +88,7 @@ The paths are in `packages/design-kit`.
   Space and a click alike, with focus held on it and the page's handler never run.
 - `src/scope.test.ts` holds every selector in `components.css` to a kit class alone or one
   `:where()` followed at most by a focus pseudo-class, a number field's spin buttons or a dialog's
-  `::backdrop`, and allows a bare class only for the page chrome, so every rule for a button, a
-  field or a callout sits in `:where()`.
+  `::backdrop` or a progress bar's track and fill, and allows a bare class only for the page chrome,
+  so every rule for a button, a field or a callout sits in `:where()`.
 - `smoke/types.ts` fails to compile `accent` with `pressed` against the packed package, as Node and
   as a bundler resolve it.

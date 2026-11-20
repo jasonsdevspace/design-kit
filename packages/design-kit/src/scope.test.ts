@@ -101,8 +101,8 @@ const CONTROL_PARTS = [
  * pseudo-element, followed by at most a focus pseudo-class, so nothing outside it but the focus
  * adds weight. A sheet whose rules have to reach every part of a page, the base alone, may follow
  * the :where() with a pseudo-element instead, and the components with one of the parts given, a
- * number field's spin buttons or a dialog's backdrop. A quoted string is read as empty first, so
- * a :: inside one is text.
+ * number field's spin buttons, a dialog's backdrop or a progress bar's track and fill. A quoted
+ * string is read as empty first, so a :: inside one is text.
  */
 
 const scoped = (

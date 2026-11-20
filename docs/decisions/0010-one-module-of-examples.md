@@ -1,6 +1,8 @@
 # 10. The markup each piece draws lives in one module of examples
 
-**Status:** accepted
+**Status:** accepted, amended in 0.9.0 for a block of TSX written from a file in the examples
+module, marked `<!-- source: name -->`, so a React part the reference prints is the one the type
+check and the browser tests run
 
 ## Context
 

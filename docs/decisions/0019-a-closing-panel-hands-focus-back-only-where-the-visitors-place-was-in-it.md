@@ -1,6 +1,8 @@
 # 19. A closing panel hands focus to its button only where the visitor's place was in it
 
-**Status:** accepted, amended for `moveFocus`, which moves focus once a change is drawn by the same walk through a target and its fallbacks that a closing panel hands focus back by, so a panel and a page fall back alike
+**Status:** accepted, amended in 0.9.0 for `moveFocus`, which moves focus once a change is drawn by
+the same walk through a target and its fallbacks that a closing panel hands focus back by, so a
+panel and a page fall back alike
 
 ## Context
 
@@ -107,3 +109,5 @@ The path is in `packages/design-kit`.
   page set, and, in WebKit, a press on a button of the page's own outside any panel leaving it
   unfocused, so the tests above test Safari's way.
 - `scripts/controls.test.ts` holds the controls to their budget.
+- `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
+  walk a closing panel hands focus back by.

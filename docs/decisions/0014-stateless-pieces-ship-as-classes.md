@@ -1,6 +1,9 @@
 # 14. A piece with no state of its own ships as classes alone
 
-**Status:** accepted, amended by record 20, for hooks that may run a piece's keys or move its focus while the state a page owns stays the page's, and for `attachRoving`, which runs a tab row's keys and a grid's while the page still chooses the tab
+**Status:** accepted, amended by record 20, for hooks that may run a piece's keys or move its focus
+while the state a page owns stays the page's, and in 0.9.0 for `attachRoving`, which runs a tab
+row's keys and a grid's in place of the page while the page still chooses the tab, so Option A stays
+turned down for the chosen tab alone
 
 ## Context
 
@@ -52,3 +55,5 @@ The paths are in `packages/design-kit`.
   that never reads as a control, the current pill marked by weight, the eyebrow in caps at the
   caption size in the muted text, and no word cut off under the wider text spacing a visitor may
   set.
+- `e2e/roving.spec.tsx` moves along a row of tabs and a grid by the arrow keys, Home and End, as
+  one stop for Tab, and finds the chosen tab the page's to set.

@@ -4,21 +4,34 @@
 [![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
-Colors, type, light and dark themes and the pieces a page is built from, shared by the demos on
-[jasonsdevspace.com](https://jasonsdevspace.com). Three stylesheets draw them.
+Colors, type, light and dark themes and the pieces a page is built from, with the behavior that
+makes them work by keyboard and screen reader. It is the design system the demos on
+[jasonsdevspace.com](https://jasonsdevspace.com) are built from, and any page or small app can use
+it. Three stylesheets draw the pieces, and plain script or React hooks make them work.
 
-- **Pages.** A strip above the page, a site header, a footer, a content page with its lead, and
-  the "How it works" page beside each demo, called the explainer.
-- **Controls.** Buttons, a quiet button for Close, form fields and a field with a button, callouts,
-  pills, tabs, an icon, a theme switch, a copy button and a status line a screen reader speaks.
-- **Lists and panels.** Rows with a picture at their start or a group of buttons at their end, rows
-  as tiles, which can flow into columns, and a panel that can sit raised above a list.
-- **An app's frame.** A tab bar, a toast, a grid of buttons, a stepper and a dialog.
+- **Pages.** A strip above the page, a site header, a footer, a content page with its lead, bands
+  with a hero beside its picture and groups of sections, and the "How it works" page beside each
+  demo, called the explainer.
+- **Controls.** Buttons, a busy button and a quiet button for Close, fields marked required or
+  optional, read-only fields, errors the kit draws on a refused submit, a field with a button,
+  callouts, pills, tabs, an icon, a theme switch, a copy button and a status line a screen reader
+  speaks.
+- **Waits and results.** A loading line that shows only once a wait is long enough to notice,
+  progress through a known amount, a failure with Try again, and an empty state that offers the
+  next step.
+- **Lists and layout.** Rows with a picture at their start or a group of buttons at their end, rows
+  as tiles, which can flow into columns, a panel that can sit raised above a list, stacks spaced at
+  a pair's or a heading's step, a split row, a note and a large numeral.
+- **An app's frame.** A tab bar, a dock that can hold a compact action beside the main one, a
+  toast, a grid of buttons, a stepper and a dialog.
+- **Behavior.** Script, or React hooks, that move focus after a change and on arrival, move through
+  a grid or a row of tabs by the arrow keys, check a form against the browser's constraints and
+  draw the kit's errors, and share one status line among the pieces that speak.
 
 The tokens also ship in the Design Tokens Community Group format, for a tool that reads it.
 
-It is made for those demos, so its strip and footer link to the author's portfolio. The rest works
-on any page, and a page's own styles win over the kit's without extra weight.
+Its strip and footer link to the author's portfolio. The rest works on any page, and a page's own
+styles win over the kit's without extra weight.
 
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
@@ -26,6 +39,13 @@ on any page, and a page's own styles win over the kit's without extra weight.
 [Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.7/packages/design-kit/REFERENCE.md) ·
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit)
+
+**New in 0.9.0.** React hooks attach the controls, and the controls move focus after a change,
+move by the arrow keys, check a form themselves and say a wait on a shared status line. The release
+adds a busy button, a loading line, progress, read-only fields, required and optional marks, empty
+states, a hero, stacks, split rows, notes, numerals and a dock row. A page that writes a stepper, a
+list marked as a stack, or a live callout by hand has a step to take, under Upgrading in the
+[changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md).
 
 - **No flash of the wrong theme.** A small script in the head sets the theme before the page draws.
 - **Measured contrast.** Every color pairing the palette is meant for passes WCAG AA in both themes,
@@ -36,6 +56,11 @@ on any page, and a page's own styles win over the kit's without extra weight.
 - **Clear of a phone's edges.** On a page that draws to the edge of the screen, the strip, a site
   header, the footer, a content page, an explainer and an app's frame keep their content clear of a
   phone's notch and corners.
+- **Keyboard and screen reader behavior built in.** Focus moves to the first field in error, or to
+  a new view's heading when a press brought it. The arrow keys move through a grid or a row of
+  tabs, and pieces that speak share one status line, so words a visitor must hear are not lost.
+- **Quiet about short waits.** A busy button and a loading line keep their look for a wait under
+  400ms, then say what is happening in words, never with a spinner.
 - **Tested where layouts break.** Browser tests draw the pieces in both themes, 320 pixels wide, at
   twice the text size, under wider text spacing and in forced colors.
 
@@ -85,7 +110,7 @@ const head = `<script>${themeScript}</script>`;
 ```
 
 The theme module, the plugin and the components load on Node 22.12 or later. Vite 8 or later and
-React `^19.3.0` are optional peers, needed only for the plugin and the components.
+React `^19.3.0` are optional peers, needed only for the plugin and for the components and hooks.
 
 ## What it exports
 
@@ -187,6 +212,35 @@ callouts](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.7/pa
 in the reference gives each component's props and the rules a page follows, such as why an
 unavailable button is `aria-disabled` and how a message is made live.
 
+A piece with behavior works through an attach function from `./controls`, or a hook in React. A
+screen draws its status line with `StatusProvider`, and the hooks under it speak there. A busy
+button ignores a second press at once, and says its wait only once the wait is long enough to
+notice.
+
+```tsx
+import { Button, StatusProvider, useBusy } from '@jasonsdevspace/design-kit/react';
+
+type Props = { readonly saving: boolean; readonly save: () => void };
+
+const SaveRound = ({ saving, save }: Props) => {
+    const busy = useBusy<HTMLButtonElement>();
+    return (
+        <Button ref={busy} accent busy={saving ? 'Saving the round.' : false} onClick={save}>
+            Save the round
+        </Button>
+    );
+};
+
+export const Screen = (props: Props) => (
+    <StatusProvider>
+        <SaveRound {...props} />
+    </StatusProvider>
+);
+```
+
+Moving focus after a change, in the reference, gives the focus hooks, and Fields gives a form that
+checks the browser's constraints and draws the kit's errors.
+
 A page without React writes the same markup by hand, and `components.css` styles it. The reference
 gives the markup for each piece, [Content
 pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.8.7/packages/design-kit/REFERENCE.md#content-pages)
@@ -203,6 +257,22 @@ page drawn in the frame says `viewport-fit=cover` in its viewport meta, which gi
 their values. A page that shows a picture of a screen rather than being one, such as a page of an
 app's pieces, gives the picture `dk-picture` and makes it `inert`, so the page around it stays a
 content page.
+
+## Foundations
+
+- **Color.** Page, card and raised grounds, text and muted text, a line and a control's edge, the
+  accent with the text on it, the highlight, success, warning and danger with their grounds, and
+  the scrim behind a dialog. Each role holds light and dark in one `light-dark()`, and every pairing
+  the palette is meant for passes WCAG AA.
+- **Type.** The system's sans and mono, from a 0.85rem caption to a 1.75rem display heading, a
+  3.5rem numeral, and weights of 400, 500 and 600.
+- **Space.** Eight steps from 0.25rem to 4rem.
+- **Radius.** Small, the default, large and a pill.
+- **Motion.** 150ms for a change of state and 250ms for a surface arriving, both cut under reduced
+  motion, and `--dk-wait`, 400ms, a delay before a wait shows, which reduced motion keeps.
+
+[The tokens page](https://jasonsdevspace.com/design-kit/tokens/) draws them, and the next section
+changes their values.
 
 ## Your own layers and palette
 

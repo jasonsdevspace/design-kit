@@ -1,7 +1,10 @@
 # 5. The components carry no stylesheet of their own
 
 **Status:** accepted, amended in 0.6.0 to let a selector in the components sheet follow its
-`:where()` with a number field's spin buttons or a dialog's `::backdrop`, and by record 20, whose hooks in `./react` attach the controls while the components still draw markup alone
+`:where()` with a number field's spin buttons or a dialog's `::backdrop`, and by record 20, whose
+hooks in `./react` attach some of the controls while the components still draw markup alone, and in
+0.9.0 to let a component reach a progress bar's track and fill, `::-webkit-progress-bar`,
+`::-webkit-progress-value` and `::-moz-progress-bar`, which each engine names apart
 
 ## Context
 
@@ -72,7 +75,8 @@ The paths are in `packages/design-kit`.
 - `src/scope.test.ts` reads every sheet, `components.css` among them, and holds its rules to
   `dk.components`, its selectors to the kit's own classes or one `:where()` followed at most by a
   focus pseudo-class, a number field's spin buttons (`::-webkit-inner-spin-button` and
-  `::-webkit-outer-spin-button`) or a dialog's `::backdrop`, and its custom properties to none.
+  `::-webkit-outer-spin-button`) or a dialog's `::backdrop` or a progress bar's track and fill, and
+  its custom properties to none.
 - `scripts/sheets.test.ts`, from the repository's root beside the record's own test, holds the three
   sheets together, without their comments and blank lines, to a budget gzipped, as the controls are
   held to theirs, so the components sheet cannot grow unseen as pieces are added. The package record

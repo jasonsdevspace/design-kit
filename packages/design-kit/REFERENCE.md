@@ -123,7 +123,7 @@ may change in any release.
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
-| `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words, from 48rem wide                                                                                |
+| `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                       |
 
 ## Page chrome
 
@@ -349,9 +349,9 @@ which could send a visitor anywhere.
 </header>
 ```
 
-A site's own pages, such as a landing page and an about page, open under the strip with a
-`header class="dk-site-header"`, the page's one banner. It holds a `dk-site-brand` link home with the
-site's mark and its name, and the site's pages as pills in a `nav`, the current page's link marked
+A site's own pages, such as a landing page and an about page, open under the strip with a `header
+class="dk-site-header"`, the page's one banner. It holds a `dk-site-brand` link home with the site's
+mark and its name, and the site's pages as pills in a `nav`, the current page's link marked
 `aria-current="page"`. The nav is named Site, never the site's own name, which the brand link
 already says, so a screen reader hears the name once, and never Pages, which the pills example uses.
 The mark is the site's own drawing in a `dk-site-mark` slot, 1.75em square so it grows with the
@@ -456,10 +456,12 @@ a press shows the errors rather than doing nothing.
 ```
 
 A button whose press has started something still running, such as a save, is busy: marked
-`data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes
-them with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
+`data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes them
+with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
 `--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
-wait at once. A screen reader hears the off state at once, as it must for the press to be stopped.
+wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
+forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
+off state at once, as it must for the press to be stopped.
 
 `attachBusy(button, { status })` from `./controls`, or `useBusy()` in React, which speaks on the
 screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
@@ -576,87 +578,57 @@ error, followed by any description of the page's own, and is left off when there
 `aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
-The error is not live, since a form that fails in several fields at once would speak over itself. On
-a submit that fails a check of the page's own, the page draws its errors and calls the function
-`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal()`
-returns in React, which speaks on the screen's `StatusProvider`, and the kit does the same itself
-for the browser's constraints, as below. A frame later, once the errors are drawn, focus moves to an
-error summary where the page names one, else the first field in error that can take focus, passing
-over one that is disabled, inert, marked off, itself or by its set, or out of sight, or in a set its
-checked radio or its first control that can take focus, since the set's fieldset takes none. A set
-counts once, however many of its choices are marked. One message is said, chosen so nothing is said
-twice: nothing where focus moves to the summary, which reads its own words, how many fields need
-attention where focus moves to a field, since moving focus reads the field and its error, and where
-the field already had focus, which then reads nothing, the error's own words, with the count where
-more fields are wrong. A second refusal calls off one not yet landed, moves focus and speaks again,
-as WCAG 3.3.1 asks. Refused with nothing wrong and no summary, focus stays where it is, and refused
-with fields in error that none can take focus in, as one out of sight, focus stays too and the first
-field's name and error are said, with the count where more are wrong. In React, a form with no
-`StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
-attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
-already be in place when the first submit comes.
+<details>
+<summary>How a field is drawn</summary>
 
-The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
-`minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
-record 21 has it. An attached form takes `noValidate` from script, or the form around an attached
-part of one, so a page without script still gets the browser's own check. On a submit the kit reads
-the `validity` of each of the form's fields, the whole form even where a part of it is attached and
-fields tied to it from outside by `form` among them, before the page's handler, passing over a field
-marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
-field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
-error the page already drew for the field takes the kit's words until the field passes, and a
-stepper's range error is left as the one error. Where every field passes, the page's handler runs as
-ever, for the checks the constraints cannot express, such as two fields that must match or a name
-already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
-again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
-the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
-page calls the reset off. A form's own attach checks it where a part of it was attached first, so
-its options are the ones the check takes, and a refusal the page calls looks only in the part it
-attached. Fields not in error are marked `aria-invalid="false"` as the form is attached, so a
-browser does not read an empty required field as invalid before anything is submitted.
+A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
+button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
+is tapped. It sits on the page's own ground, so it reads as a well
+on a card. The hint and the error are in the caption size, the error in the danger color, and an
+invalid control's edge in the danger color too. In forced colors, where that color is gone, an
+invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
+error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
+on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
+background, and in forced colors the browser's own arrow comes back. A select that shows its options
+as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
+takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
+and its text at the top rather than centered, and it resizes in height alone, since a wider one
+would push its column.
 
-Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
-an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
-"Enter an email address, like name@example.com." for a malformed address, "Enter at least 8
-characters." for one too short, "Enter 18 or more." for a number under its least, "Enter a whole
-number." for a fraction, and the page's own words from `setCustomValidity`. A field's own words for
-a failure come first, as `data-error-value-missing="Enter your name."` on the control or on its
-set's fieldset, then the words a page gives the form as `errorWords`, as a page in another language
-gives them, then the kit's. Each attribute is the failure's `validity` name in kebab case after
-`data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A field with a
-`pattern` gives words of its own, since the kit cannot put a pattern in words, and without them it
-asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`, since the markup
-is the page's: the failures go to it, the page sets its errors from them, keyed by each failure's
-`field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. `invalid`
-is called only for a submit that fails, so the page's own submit handler clears the errors it set.
+</details>
 
-```js
-import { attachForm } from '@jasonsdevspace/design-kit/controls';
+#### A required or an optional field
 
-const form = document.querySelector('#rule');
-attachForm(form, { status: document.querySelector('.screen-status') });
-form.addEventListener('submit', (event) => {
-    // Only a submit whose fields pass the browser's constraints reaches the page.
-    event.preventDefault();
-});
+<!-- example: fieldMarks -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-name"
+        >Rule name <span class="dk-field-mark" aria-hidden="true">(required)</span></label
+    ><input class="dk-input" required="" id="rule-name" aria-required="true" />
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="rule-note"
+        >Note <span class="dk-field-mark">(optional)</span></label
+    ><input class="dk-input" id="rule-note" />
+</div>
 ```
 
-```tsx
-const [form] = useFormRefusal<HTMLFormElement>({
-    errorWords: { valueMissing: 'Enter your name.' },
-    invalid: (failures) => {
-        setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
-    },
-});
-const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrors({});
-};
-// <form ref={form} onSubmit={submit}>
-```
-
-The kit checks only on a submit, never while someone is typing or as they leave a field, and checks
-beyond the browser's constraints are the page's.
+A field is marked required or optional in words in its label, `mark="required"` or
+`mark="optional"`, never by an asterisk alone, which needs a key to explain it. The words are in the
+muted text at the normal weight, so they do not compete with the label. Required is said by the
+control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say
+it twice, and optional is said in the label's name, since nothing else says it. A form where most
+fields are required marks the optional ones instead, and a form uses one kind of mark, never both,
+as the example shows each kind only to draw it. A set of choices keeps "(required)" in its legend's
+name, since not every screen reader says a group is required, and a set of radios is marked
+`aria-required` as well. A required set of checkboxes says in its hint how many to choose, such as
+"Choose at least one." The words are the kit's unless a page gives its own as `markWords`, as a page
+in another language does. The mark does no checking. `required` stays the native attribute, since
+the kit's check on submit reads it and it tells a screen reader a field is required where a form
+marks its optional fields. `attachForm` turns the browser's own check off. The field, select,
+textarea, stepper and set of choices all take `mark`. In forced colors the mark takes the text's
+color and is told apart by its words.
 
 #### Read only, off, busy and disabled
 
@@ -723,58 +695,6 @@ and a screen reader reads it only while browsing, as unavailable, and its hint s
 whose field turns read only while a button has focus keeps that button, marked off, until focus
 leaves it, so focus is never dropped, and a stepper in the middle of a save is busy, not read only.
 
-<details>
-<summary>How a field is drawn</summary>
-
-A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
-button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
-is tapped. It sits on the page's own ground, so it reads as a well
-on a card. The hint and the error are in the caption size, the error in the danger color, and an
-invalid control's edge in the danger color too. In forced colors, where that color is gone, an
-invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
-error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
-on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
-background, and in forced colors the browser's own arrow comes back. A select that shows its options
-as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
-takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
-and its text at the top rather than centered, and it resizes in height alone, since a wider one
-would push its column.
-
-</details>
-
-#### A required or an optional field
-
-<!-- example: fieldMarks -->
-
-```html
-<div class="dk-field">
-    <label class="dk-field-label" for="rule-name"
-        >Rule name <span class="dk-field-mark" aria-hidden="true">(required)</span></label
-    ><input class="dk-input" required="" id="rule-name" aria-required="true" />
-</div>
-<div class="dk-field">
-    <label class="dk-field-label" for="rule-note"
-        >Note <span class="dk-field-mark">(optional)</span></label
-    ><input class="dk-input" id="rule-note" />
-</div>
-```
-
-A field is marked required or optional in words in its label, `mark="required"` or
-`mark="optional"`, never by an asterisk alone, which needs a key to explain it. The words are in the
-muted text at the normal weight, so they do not compete with the label. Required is said by the
-control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say
-it twice, and optional is said in the label's name, since nothing else says it. A form where most
-fields are required marks the optional ones instead, and a form uses one kind of mark, never both,
-as the example shows each kind only to draw it. A set of choices keeps "(required)" in its legend's
-name, since not every screen reader says a group is required, and a set of radios is marked
-`aria-required` as well. A required set of checkboxes says in its hint how many to choose, such as
-"Choose at least one." The words are the kit's unless a page gives its own as `markWords`, as a page
-in another language does. The mark does no checking: `required` is still the native attribute, which
-a page keeps since the kit's check on submit reads it and it tells a screen reader a field is
-required where a form marks its optional fields instead, while the kit's form refusal turns the
-browser's own check off, and the field, select, textarea, stepper and set of choices all take
-`mark`.
-
 #### A field with a button
 
 <!-- example: fieldAction -->
@@ -810,6 +730,90 @@ screen, and is named by its own words, not the field's label.
     />
 </form>
 ```
+
+#### A refused form
+
+The error is not live, since a form that fails in several fields at once would speak over itself. On
+a submit that fails a check of the page's own, the page draws its errors and calls the function
+`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal({
+invalid })` returns in React, which speaks on the screen's `StatusProvider`, and the kit does the
+same itself for the browser's constraints, as below. A frame later, once the errors are drawn, focus
+moves to an error summary where the page names one, else the first field in error that can take
+focus, passing over one that is disabled, inert, marked off, itself or by its set, or out of sight,
+or in a set its checked radio or its first control that can take focus, since the set's fieldset
+takes none. A set counts once, however many of its choices are marked. One message is said, chosen
+so nothing is said twice: nothing where focus moves to the summary, which reads its own words, how
+many fields need attention where focus moves to a field, since moving focus reads the field and its
+error, and where the field already had focus, which then reads nothing, the error's own words, with
+the count where more fields are wrong. A second refusal calls off one not yet landed, moves focus
+and speaks again, so a visitor who submits again hears it again. Refused with nothing wrong and no
+summary, focus stays where it is, and refused with fields in error that none can take focus in, as
+one out of sight, focus stays too and the first field's name and error are said, with the count
+where more are wrong. In React, a form with no `StatusProvider` above it and no `say` throws, since
+its refusal would reach no one. A form is attached as it is drawn, never from its submit handler,
+since the kit's check and `noValidate` must already be in place when the first submit comes.
+
+The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
+`minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
+record 21 has it. An attached form takes `noValidate` from script, or the form around an attached
+part of one, so a page without script still gets the browser's own check. On a submit the kit reads
+the `validity` of each of the form's fields, the whole form even where a part of it is attached and
+fields tied to it from outside by `form` among them, before the page's handler, passing over a field
+marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
+field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
+error the page already drew for the field takes the kit's words until the field passes, and a
+stepper's range error is left as the one error. Where every field passes, the page's handler runs as
+ever, for the checks the constraints cannot express, such as two fields that must match or a name
+already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
+again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
+the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
+page calls the reset off. A form's own attach checks it where a part of it was attached first, so
+its options are the ones the check takes, and a refusal the page calls looks only in the part it
+attached. Fields not in error are marked `aria-invalid="false"` as the form is attached, so a
+browser does not read an empty required field as invalid before anything is submitted.
+
+Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
+an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
+"Enter an email address, like name@example.com." for a malformed address, "Enter at least 8
+characters." for one too short, "Enter 18 or more." for a number under its least, "Enter a whole
+number." for a fraction, and the page's own words from `setCustomValidity`. A field's own words for
+a failure come first, as `data-error-value-missing="Enter your name."` on the control or on its
+set's fieldset, then the words a page gives the form as `errorWords`, as a page in another language
+gives them, then the kit's. Each attribute is the failure's `validity` name in kebab case after
+`data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A field with a
+`pattern` gives words of its own, since the kit cannot put a pattern in words, and without them it
+asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`, since the markup
+is the page's: the failures go to it, the page sets its errors from them, keyed by each failure's
+`field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. `invalid`
+is called only for a submit that fails, so the page's own submit handler clears the errors it set.
+
+```js
+import { attachForm } from '@jasonsdevspace/design-kit/controls';
+
+const form = document.querySelector('#rule');
+attachForm(form, { status: document.querySelector('.screen-status') });
+form.addEventListener('submit', (event) => {
+    // Only a submit whose fields pass the browser's constraints reaches the page.
+    event.preventDefault();
+});
+```
+
+```tsx
+const [form] = useFormRefusal<HTMLFormElement>({
+    errorWords: { valueMissing: 'Enter your name.' },
+    invalid: (failures) => {
+        setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
+    },
+});
+const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrors({});
+};
+// <form ref={form} onSubmit={submit}>
+```
+
+The kit checks only on a submit, never while someone is typing or as they leave a field, and checks
+beyond the browser's constraints are the page's.
 
 ### Choice fields
 
@@ -867,9 +871,9 @@ describe the set, through `aria-describedby` on the fieldset. A set of radios ca
 `role="radiogroup"`, and `aria-invalid="true"` on the fieldset while an error is drawn, since the
 keyboard enters a radio group at the chosen radio, wherever that is, and a radio takes no invalid
 state of its own. Each radio is described by the error as well, since a screen reader that lands on
-a radio may read nothing of its group. Checkboxes are each a stop of their own, so each carries `aria-invalid="true"`
-instead. The arrow keys move and check among radios, as the browser has them, and a choice a visitor
-cannot make uses `disabled` on its control.
+a radio may read nothing of its group. Checkboxes are each a stop of their own, so each carries
+`aria-invalid="true"` instead. The arrow keys move and check among radios, as the browser has them,
+and a choice a visitor cannot make uses `disabled` on its control.
 
 <details>
 <summary>How a choice is drawn</summary>
@@ -930,10 +934,12 @@ explains. A message that arrives after the page has loaded is made live in three
    `:has()`, so the oldest browsers the kit supports draw no empty box. A callout with an empty
    message and no actions is also taken out of sight where `:has()` works, so one written without
    the mark is never drawn empty in a current browser.
-3. Fill the message when there is something to say, which is when a screen reader reads it, and
-   take the mark away, as a page does when it gives the callout actions. A page that empties the
-   message again, with no actions, marks it again. For success, warning or danger, put the hidden word in with it, as
-   `<span class="dk-visually-hidden">Success: </span>Saved.`
+3. Fill the message when there is something to say, which is when a screen reader reads it, and take
+   the mark away, as a page does when it gives the callout actions. A page that empties the message
+   again, with no actions, marks it again. For success, warning or danger, put the hidden word in
+   with it, as `<span class="dk-visually-hidden">Success: </span>Saved.`
+
+#### A failure with Try again
 
 A failure that loading or saving meets is a live callout of the danger tone, mounted empty with
 `role="alert"` and filled with what happened and a way forward. Try again goes in the actions, so
@@ -1106,22 +1112,22 @@ below.
 Tabs are a row of muted words with the chosen one in the page's text over an accent line, each
 `.dk-tab` in a `.dk-tabs` row over a rule. Each tab draws the rule along its own foot and stands on
 the row's, so a row too wide for its place wraps onto more lines with every tab on a line, the
-chosen one's line over it. The classes draw the row alone, and ship no script and no React
-component, since a tab's role and its keys belong to the page that owns the panels. The chosen tab
-carries the attribute a screen reader already reads for its control: `aria-selected="true"` on a
-tab, `aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike.
-It keeps the resting weight, so no tab moves as the choice does. In forced colors the chosen tab
-stands in the system's selection colors, as the current pill does, and a resting tab keeps its line.
-A tab is the strip's height, and a thumb wide and tall on a phone, and its first word sits in from
-the rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as the pills
-do, and each link fills its item down to the rule.
+chosen one's line over it. The classes draw the row, with no React component, since the chosen tab
+and its panel belong to the page. The keys come from `attachRoving`, below. The chosen tab carries
+the attribute a screen reader already reads for its control: `aria-selected="true"` on a tab,
+`aria-current` on a link among pages, or `aria-pressed="true"` on a toggle, each drawn alike. It
+keeps the resting weight, so no tab moves as the choice does. In forced colors the chosen tab stands
+in the system's selection colors, as the current pill does, and a resting tab keeps its line. A tab
+is the strip's height, and a thumb wide and tall on a phone, and its first word sits in from the
+rule's end by its padding, as a pill's does. A row of links keeps `role="list"`, as the pills do,
+and each link fills its item down to the rule.
 
 A row with `role="tablist"` takes the tabs pattern's keys from `attachRoving(row, { onMove })` in
 `./controls`, or `useRoving()` in React: one tab in the tab order, the chosen one, and the left and
 right arrows, Home and End moving focus along the row, wrapping from one end to the other, with up
-and down left alone. A tab marked off is reached, to hear why, but never handed to `onMove`. The kit moves
-focus and the page chooses, as it owns the panels: a page that chooses a tab as focus reaches it
-does so in `onMove`, and one whose panel is slow to draw leaves the choice to Enter or Space.
+and down left alone. A tab marked off is reached, to hear why, but never handed to `onMove`. The kit
+moves focus and the page chooses, as it owns the panels: a page that chooses a tab as focus reaches
+it does so in `onMove`, and one whose panel is slow to draw leaves the choice to Enter or Space.
 `aria-controls` names each tab's panel. The base sheet keeps the focus ring on a tab given a
 tabindex of -1, so the ring follows the arrow keys.
 
@@ -1280,29 +1286,33 @@ themselves.
 
 **`InputField`, `SelectField` and `TextareaField` props**
 
-| `InputField`, `SelectField`, `TextareaField` | Default      | What it does                                                                          |
-| -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------- |
-| `label`                                      | required     | Names the control                                                                     |
-| `hint`                                       | none         | Drawn when it holds something, and read as a description                              |
-| `error`                                      | none         | Drawn when it holds something, and marks the control invalid                          |
-| `id`                                         | from `useId` | The control's id. Set it when something else links to the field                       |
-| `action`                                     | none         | Drawn after the control in a `dk-field-action` row, on `InputField` and `SelectField` |
+| `InputField`, `SelectField`, `TextareaField` | Default         | What it does                                                                                               |
+| -------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `label`                                      | required        | Names the control                                                                                          |
+| `hint`                                       | none            | Drawn when it holds something, and read as a description                                                   |
+| `error`                                      | none            | Drawn when it holds something, and marks the control invalid                                               |
+| `id`                                         | from `useId`    | The control's id. Set it when something else links to the field                                            |
+| `action`                                     | none            | Drawn after the control in a `dk-field-action` row, on `InputField` and `SelectField`                      |
+| `mark`                                       | none            | `'required'` or `'optional'`, drawn in words in the label, apart from the native `required`                |
+| `markWords`                                  | the kit's words | The mark's words in place of the kit's, as in another language                                             |
+| `readOnly`                                   | `false`         | On `SelectField`, draws a read-only field with the chosen option's words and a hidden field for each value |
 
-Every other prop goes to the control, `ref` and `className` included, except `style`,
-`aria-invalid` and `action`, which the field draws beside the control. A select field's children are its options, and a textarea field's text is its
-`defaultValue` or `value`, never children, with three rows unless given `rows`. An `aria-describedby`
-of the page's own is listed after the hint and the error.
+Every other prop goes to the control, `ref` and `className` included, except `style`, `aria-invalid`
+and `action`, which the field draws beside the control. A select field's children are its options,
+and a textarea field's text is its `defaultValue` or `value`, never children, with three rows unless
+given `rows`. An `aria-describedby` of the page's own is listed after the hint and the error.
 
 **`ChoiceField` props**
 
-| `ChoiceField`         | Default      | What it does                                                          |
-| --------------------- | ------------ | --------------------------------------------------------------------- |
-| `label`               | required     | Names the set, as its legend                                          |
-| `name`                | required     | The controls' name, shared by every choice                            |
-| `choices`             | required     | Each a `value`, a `label`, a `hint` and the control's own props       |
-| `type`                | `'radio'`    | `'checkbox'` where any number of choices can be on                    |
-| `row`                 | `false`      | Draws the choices in a row that wraps                                 |
-| `hint`, `error`, `id` | as a field's | The hint and the error describe the set, and the id is the fieldset's |
+| `ChoiceField`         | Default      | What it does                                                                                    |
+| --------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
+| `label`               | required     | Names the set, as its legend                                                                    |
+| `name`                | required     | The controls' name, shared by every choice                                                      |
+| `choices`             | required     | Each a `value`, a `label`, a `hint` and the control's own props                                 |
+| `type`                | `'radio'`    | `'checkbox'` where any number of choices can be on                                              |
+| `row`                 | `false`      | Draws the choices in a row that wraps                                                           |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the set, and the id is the fieldset's                           |
+| `mark`, `markWords`   | as a field's | The mark in the legend, kept in its name since not every screen reader says a group is required |
 
 Every other prop goes to the `<fieldset>`, `ref` and `className` included, except `style` and
 `aria-invalid`. A choice's own props go to its control, `ref` among them, except `style`,
@@ -1320,7 +1330,8 @@ choices apart.
 | `prefix`       | the tone's word | The word read first. An empty string drops it                                        |
 | `actions`      | none            | Drawn after the message, outside it                                                  |
 
-A live callout's message is drawn even when it is empty, so the page can fill it later. Every other
+A live callout's message is drawn even when it is empty, so the page can fill it later, and the
+callout marks itself `data-empty` until it has words or actions. Every other
 prop goes to the callout's `<div>`, `id`, `ref` and `className` included, except `style`, `role`,
 the `title` attribute, `dangerouslySetInnerHTML` and the live attributes, since the message takes
 its role from `live` alone.
@@ -1341,7 +1352,8 @@ and a button that copies a block's text. Each is markup the components draw, or 
 hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
 returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
 without script meets no control that does nothing, and the functions set no style, so a page's
-policy can refuse every style it did not serve. Nothing runs when the module is imported.
+policy can refuse every style it did not serve. Nothing runs when the module is imported but a
+listener on the document, which notes the visitor's last press for `focusOnArrival`.
 
 ### Theme switch
 
@@ -1527,6 +1539,13 @@ title's line, and wraps under the title where the line has no room. The block fo
 it follows a title on its own. The button is hidden until it is attached, so without script the
 head shows the title alone, as an explainer's block does.
 
+## Status, waits and progress
+
+Every piece that speaks shares one status line for each screen, so what a visitor must hear is said
+once and in turn. A wait shows as a busy button, a loading line or progress, by what is known of it.
+A busy button is under [Buttons](#buttons), a failure with Try again under [Callouts](#callouts),
+and an empty state under [Rows](#rows).
+
 ### Status line
 
 <!-- example: statusLine -->
@@ -1632,8 +1651,8 @@ so the same control asked for twice is focused twice, and the function `moveFocu
 request off before it lands. An id is looked for in the root where focus was when the request was
 made, so a widget drawn inside a shadow root finds its own control, never an element of the page
 around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
-and labels they read the same way. A panel and its button are found from the page's document, which
-the panel listens on.
+and labels they read in their own element's root. A panel and its button are found from the page's
+document, which the panel listens on.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -1750,12 +1769,11 @@ from `./controls`, or `useProgress()` in React, which speaks on the line of the 
 words, such as "Importing products, 12 of 40.", at steps the page sets with `steps`, each quarter
 until it sets others, and once at the end, or the `done` words in its place, such as "Imported 40
 products.". Each is said at once, with no wait for the amount to stop changing, since a steady
-import never stops, and at least three seconds after the last step, so one is heard before the
-next, while the end never waits. Nothing replaces the end until the amount goes back for another
-run. The amount a bar first shows is not said, and a bar with no amount says nothing. What it says
-is polite, `say(words, { polite: true })`, so it gives way to any other words on the line, and a
-page's own result is heard over it, while a busy button's words beside it, polite too, give way to
-it:
+import never stops, and at least three seconds after the last step, so one is heard before the next,
+while the end never waits. Nothing replaces the end until the amount goes back for another run. The
+amount a bar first shows is not said, and a bar with no amount says nothing. What it says is polite,
+`say(words, { polite: true })`, so it gives way to a page's own result said with it, and waits for
+words already being said, while a busy button's words beside it, polite too, give way to it:
 
 <!-- source: importing -->
 
@@ -1779,6 +1797,18 @@ export const Importing = ({ done, total }: { readonly done: number; readonly tot
     );
 };
 ```
+
+**`Progress` props**
+
+| `Progress`  | Default                 | What it does                                                                                        |
+| ----------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| `label`     | required                | Names the bar, as what is progressing                                                               |
+| `value`     | none                    | How far it has come, out of `max`. Left out while the amount is unknown, which draws an empty track |
+| `max`       | `1`                     | The whole amount                                                                                    |
+| `words`     | required with a `value` | Words that say the amount, such as "12 of 40", drawn under the bar and read as its description      |
+| `id`        | from `useId`            | The bar's id, and what the words' id starts with                                                    |
+| `className` | none                    | A page's class, after the kit's, on the field that holds the bar                                    |
+| `ref`       | none                    | The bar, for a page that hands it to `useProgress` or `attachProgress`                              |
 
 A run that fails partway takes the bar's `value` away, so it says no more, and puts a live danger
 callout with a way forward beside it, as a failed load does. The callout reads the failure, so the
@@ -1869,25 +1899,33 @@ and its `h2` at the heading size, and a section it holds spaces as a content pag
 prose and a stack's are held to the measure. A grid the band holds is one piece of its flow, so the
 grid's items stand apart by its gap alone, and a column of pieces in a grid's cell, such as a hero's
 words beside its picture, is a `dk-stack`, the flow with no room of its own, at the step of what
-holds it. A hero, the words that open a page beside its picture, is a `dk-band-hero` holding
-the words' stack and then the picture, so a reader hears what the page is before the picture. On a
-phone the two stand one over the other, `--dk-space-6` apart, the picture no taller than
-`--dk-band-hero-picture`. From 48rem they stand side by side, centered on each other, with the
-picture that wide, 28rem until a page sets it, and never past 45% of the row, so the words keep room
-for a display heading. An `img`, a `video` or a `picture` fills its cell and keeps its proportions,
-cropped rather than stretched, and one in a `figure` keeps its own shape with its caption under it.
-Give a picture the width and height it was made at, so it holds its room while it loads. A picture
-that only sets a mood, beside words that already say what the page is, takes `alt=""`. One that
-shows what the words do not, such as the app's screen, says so in its `alt` and keeps its subject in
-frame, with an `object-position` of the page's own or `object-fit: contain`, since the crop grows as
-a visitor's text does, and a picture with words in it goes in a `figure`, uncropped. A hero video
-does not play by itself, or carries `controls` so a visitor can stop it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more, 20rem until a page sets it, one to a row on
-a phone, `--dk-space-7` apart, each with its heading, an `h2` under a page's `h1` or an `h3` under a
-band's `h2`, at the title size and `--dk-space-3` over its text, and its prose held to the measure.
-A group stands a section's step from what comes before it, or the flow's step under the heading that
-names it, so a group and a section under it read as one page.
+holds it. `dk-sections` sets its sections as many to a row as fit at `--dk-sections-least` or more,
+20rem until a page sets it, one to a row on a phone, `--dk-space-7` apart, each with its heading, an
+`h2` under a page's `h1` or an `h3` under a band's `h2`, at the title size and `--dk-space-3` over
+its text, and its prose held to the measure. A group stands a section's step from what comes before
+it, or the flow's step under the heading that names it, so a group and a section under it read as
+one page.
+
+#### A hero
+
+A hero, the words that open a page beside its picture, is a `dk-band-hero` holding the words' stack
+and then the picture, so a reader hears what the page is before the picture. On a phone the two
+stand one over the other, `--dk-space-6` apart, the picture no taller than `--dk-band-hero-picture`.
+From 48rem they stand side by side, centered on each other, with the picture that wide, 28rem until
+a page sets it, and never past 45% of the row, so the words keep room for a display heading. An
+`img`, a `video` or a `picture` fills its cell and keeps its proportions, cropped rather than
+stretched, and one in a `figure` keeps its own shape with its caption under it. Give a picture the
+width and height it was made at, so it holds its room while it loads. A picture that only sets a
+mood, beside words that already say what the page is, takes `alt=""`. One that shows what the words
+do not, such as the app's screen, says so in its `alt` and keeps its subject in frame, with an
+`object-position` of the page's own or `object-fit: contain`, since the crop grows as a visitor's
+text does, and a picture with words in it goes in a `figure`, uncropped. A hero video does not play
+by itself, or carries `controls` so a visitor can stop it.
 
 ### Stacks
+
+A stack, a split row, a note and a numeral work the same in a content page, a band, a panel, a
+dialog and an app's body.
 
 A column of pieces inside another piece, such as a hero's words, a label over its value or a heading
 over a list, is a `dk-stack`, the flow with no room of its own. A plain stack spaces what it holds
@@ -1956,13 +1994,12 @@ to 1 on every ground the kit draws, so a note adds no color to check. `dk-numera
 `--dk-text-numeral` in the mono face with tabular figures, so a score that changes keeps its width,
 at the strong weight on a line no taller than the figure. A numeral never breaks, since a score
 split over two lines reads as two numbers, so on a phone at a large text size it stops at a size
-five figures fit in, such as `-1234`. Give a numeral its unit, out of sight where the screen shows it
-elsewhere, so a screen reader says what it counts. A numeral that changes is not a live region,
-which would read every score on every change, so say the change on the screen's
-[status line](#status-line), with whose score it is, as `say('Ana, 212 points.')`. A number in a
-row is a `dk-row-figure`, which lines up digits the same way, rather than a numeral. A split row on
-a page, a band or a stack holds to the measure with the prose around it, so its end stays near its
-start.
+five figures fit in, such as `-1234`. Give a numeral its unit, out of sight where the screen shows
+it elsewhere, so a screen reader says what it counts. A numeral that changes is not a live region,
+which would read every score on every change, so say the change on the screen's [status
+line](#status-line), with whose score it is, as `say('Ana, 212 points.')`. A number in a row is a
+`dk-row-figure`, which lines up digits the same way, rather than a numeral. A split row on a page, a
+band or a stack holds to the measure with the prose around it, so its end stays near its start.
 
 ## Explainer pages
 
@@ -2279,10 +2316,10 @@ dropped.
 ## App frame
 
 An app's screen is a frame as tall as the screen: a bar across the top that says where the visitor
-is, a body that scrolls between, and a dock at the bottom for what the screen is for. `components.css`
-styles the markup below with no script. The frame is the page's whole content, with nothing above or
-below it but a skip link, since anything else would add to the screen's height and push the dock out
-of view.
+is, a body that scrolls between, and a dock at the bottom for what the screen is for.
+`components.css` styles the markup below with no script. The frame is the page's whole content, with
+nothing above or below it but a skip link, since anything else would add to the screen's height and
+push the dock out of view.
 
 <!-- example: appFrame -->
 
@@ -2334,30 +2371,6 @@ scroll it whatever it holds, as a frame that scrolls always does in the kit. The
 named for what it holds, so a screen reader moving by landmark finds the screen's main button after
 the body. It holds that button at the larger target, and a second one below it, or a compact one
 beside it in a row, where a screen has two.
-
-<!-- example: dockInline -->
-
-```html
-<section class="dk-app-dock" aria-label="Actions">
-    <div class="dk-app-dock-inline">
-        <button type="button" class="dk-button dk-button-tall">Scores</button>
-        <button type="button" class="dk-button dk-button-accent dk-button-tall">
-            Save the round
-        </button>
-    </div>
-</section>
-```
-
-Where a screen has a compact action beside its main one, such as Scores beside the button that moves
-a round on, `dk-app-dock-inline` holds the two on one row: the compact action at its own width and
-the main one taking the rest, never under the target's width or its own longest word, its words
-wrapping inside it where they must, and the two stretched to one height. Each keeps the target as its least width, with a step less padding at its
-sides, so at twice the text size on a 320px phone a compact word such as Scores still shares the
-row, and the main action can be narrower than it is tall, though never under the target. Where the
-two cannot share it, as a compact word as long as Scoreboard or a compact action of several words
-cannot at that size, they take two rows rather than scroll the page sideways or cut a word. Keep the
-compact action to a short word. The main action is last, so it
-sits nearest the thumb and comes last in the keyboard's order, after the one used now and then.
 
 `dk-app-toast` is a toast's place, above the dock, and `dk-app-tabs` is a tab bar's, at the bottom
 edge. A screen leaves out any part it does not have, the dock included, and its row closes to
@@ -2436,6 +2449,33 @@ area only by what the column's own margin does not already clear. On paper the f
 as wide as what it holds and the body prints whole.
 
 </details>
+
+### A compact action beside the main one
+
+<!-- example: dockInline -->
+
+```html
+<section class="dk-app-dock" aria-label="Actions">
+    <div class="dk-app-dock-inline">
+        <button type="button" class="dk-button dk-button-tall">Scores</button>
+        <button type="button" class="dk-button dk-button-accent dk-button-tall">
+            Save the round
+        </button>
+    </div>
+</section>
+```
+
+Where a screen has a compact action beside its main one, such as Scores beside the button that moves
+a round on, `dk-app-dock-inline` holds the two on one row: the compact action at its own width and
+the main one taking the rest, never under the target's width or its own longest word, its words
+wrapping inside it where they must, and the two stretched to one height. Each keeps the target as
+its least width, with a step less padding at its sides, so at twice the text size on a 320px phone a
+compact word such as Scores still shares the row, and the main action can be narrower than it is
+tall, though never under the target. Where the two cannot share it, as a compact word as long as
+Scoreboard or a compact action of several words cannot at that size, they take two rows rather than
+scroll the page sideways or cut a word. Keep the compact action to a short word. The main action is
+last, so it sits nearest the thumb and comes last in the keyboard's order, after the one used now
+and then.
 
 ## Tab bar
 
@@ -2572,20 +2612,20 @@ import { attachStepper } from '@jasonsdevspace/design-kit/controls';
 attachStepper(document.querySelector('.dk-stepper'));
 ```
 
-It is the kit's field, so its label, hint and error work as every field's do, around a native
-`input type="number"` that says its value to a screen reader. Most screen readers do not say a
-number field's limits, so once attached the field is described by its range in words, such as "From
-2 to 8.", after any description the page gives it, from a span out of sight with
-`dk-stepper-limits`, which the attach function fills and follows as the limits change, or "Only 3."
-where the least and the greatest are one value. A page no longer states the range in its hint,
-which would read it twice. While the stepper's error shows, the error, which names the range,
-describes the field in its place. The buttons are hidden until
-`attachStepper(element)` shows them, so without script it is a number field alone, and they are
-named for what they do and to which field, "Lower the number of players" and "Raise the number of
-players". A status line out of sight says the value a press sets, since focus stays on the button,
-and that it is the least or the most where a press lands on a limit, as "8, the most", or on the
-last value a step reaches short of the greatest, so a press that does nothing next is expected. The line is emptied once the value is typed over, its form is
-reset or the stepper is taken away.
+It is the kit's field, so its label, hint and error work as every field's do, around a native `input
+type="number"` that says its value to a screen reader. Most screen readers do not say a number
+field's limits, so once attached the field is described by its range in words, such as "From 2 to
+8.", after any description the page gives it, from a span out of sight with `dk-stepper-limits`,
+which the attach function fills and follows as the limits change, or "Only 3." where the least and
+the greatest are one value. A page no longer states the range in its hint, which would read it
+twice. While the stepper's error shows, the error, which names the range, describes the field in its
+place. The buttons are hidden until `attachStepper(element)` shows them, so without script it is a
+number field alone, and they are named for what they do and to which field, "Lower the number of
+players" and "Raise the number of players". A status line out of sight says the value a press sets,
+since focus stays on the button, and that it is the least or the most where a press lands on a
+limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
+does nothing next is expected. The line is emptied once the value is typed over, its form is reset
+or the stepper is taken away.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -2652,6 +2692,7 @@ it away again.
 | `inline`              | `false`                                         | Puts the label to the left, on one line with the stepper                                         |
 | `tall`                | `false`                                         | Draws the buttons and the value at `--dk-target-large`                                           |
 | `hint`, `error`, `id` | none                                            | As for every field                                                                               |
+| `mark`, `markWords`   | none                                            | As for every field                                                                               |
 
 <details>
 <summary>How a stepper is drawn</summary>
@@ -2941,7 +2982,7 @@ with figures of one width, so a column of them lines up.
 
 </details>
 
-### An empty list
+### An empty state
 
 A list, a table or a set of rows with nothing in it yet draws a `dk-empty` in its place: what is
 missing, in words, and the next step as a button under it, with no picture needed:
@@ -2960,7 +3001,8 @@ never reads as a callout. Its sides are a row's, so its words start where a row'
 the column's line in a page, a panel, a dialog or an app's body and inside a bare edge, with
 `--dk-space-3` above and below. Its button is a plain `dk-button`, never the accent one, since the
 accent action is the dock's, and a screen whose add control is already in view leaves it out and
-says in the words where that control is. It is not live: it is read where it is, as the list would be.
+says in the words where that control is. It is not live: it is read where it is, as the list would
+be.
 
 A list a visitor empties, as a search that matches nothing does, says so on the screen's
 [status line](#status-line) once they stop typing, naming what they searched for so a typo is
@@ -2992,8 +3034,8 @@ const counted = (search: string) => {
 };
 
 /**
- * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts the
- * empty state in the list's place, with a way to clear the search.
+ * Saved games narrowed by a search, under a `StatusProvider`. A search that matches nothing puts
+ * the empty state in the list's place, with a way to clear the search.
  */
 export const Games = () => {
     const [search, setSearch] = useState('');
@@ -3484,8 +3526,8 @@ To put the kit's layer over the page's, before the kit's sheets load:
 Each sheet declares the layer it fills, so a sheet a page imports into a layer of its own keeps its
 rules in the kit's layer nested inside that one. A page with a reset in a layer, as a framework's
 base is, has the reset win over the kit's components wherever its layer comes after `dk`, and a
-button loses its edge. Such a page puts the kit's layer first in its own order, then its reset's, then
-one for the components, and imports the components sheet into that one:
+button loses its edge. Such a page puts the kit's layer first in its own order, then its reset's,
+then one for the components, and imports the components sheet into that one:
 
 ```css
 @layer dk, reset, kit;
