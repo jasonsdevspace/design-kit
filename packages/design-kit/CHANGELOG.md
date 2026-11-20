@@ -10,14 +10,14 @@ entry as the notes.
 ## 0.9.1
 
 Focus and a refusal a React page asks for after a save now wait for React to draw the save's change,
-so they land on the control or the field rather than the main content. A refused form says the name
-and error of the field it focuses, which VoiceOver on iOS otherwise never reads, and a reset that
-takes away the kit's errors says the form is cleared. A note beside a label's words is drawn at the
-normal weight, and a hero, a group of sections and a split row written on a band, a content page or
-a stack keep their own spacing. No token is added or renamed and the theme script is unchanged, so
-`themeScriptHash` is the same, and the sheets and the controls stay within their budgets. A page
-that set a note inside a label back to the normal weight can take its own rule away, under
-Upgrading.
+so they land on the control or the field rather than the main content, and `activeOf` is exported
+and a refusal takes `{ from }` for a page that refuses later than it asked. A refused form says the
+name and error of the field it focuses, which VoiceOver on iOS otherwise reads late or not at all,
+and a reset that takes away the kit's errors says the form is cleared. A note is drawn at the normal
+weight wherever it sits, beside a label's words or in a heading, and a hero, a group of sections and
+a split row written on a band, a content page or a stack keep their own spacing. No token is added
+or renamed and the theme script is unchanged, so `themeScriptHash` is the same, and the sheets and
+the controls stay within their budgets. Upgrading names the one rule a page can now take away.
 
 - **Upgrading.** A `dk-note` is drawn at the normal weight wherever it sits, so a note inside a
   heading, a strong title or a button no longer takes their weight, and a page that set a note
@@ -28,7 +28,7 @@ Upgrading.
   a rule after the flow's, since each spaces its pieces by its own gaps. A hero written on the same
   element as `dk-band` or `dk-page`, rather than inside one, no longer stands its picture the flow's
   step lower than its words, on a phone a step further from them and on a wider screen off center
-  beside them, a group of sections written on a band no longer stands each section after the first a
+  beside them. A group of sections written on a band no longer stands each section after the first a
   section's step lower, and a split row written on a stack keeps its ends on one line.
 - **Controls.** `activeOf` is exported, which returns what has focus followed into each shadow root
   that holds it, and the function `attachForm` returns takes `{ from }`, where focus was when the
@@ -58,10 +58,10 @@ Upgrading.
   for.
 - **Docs.** The comments of both hooks, the reference's "Moving focus after a change" and "A refused
   form", and record 20 say when a request is made, where to call the hooks from, and the transition
-  and other-root limits, record 20 is amended for the request a hook keeps owed until its commit,
-  and the README's row for the controls names `activeOf`. The reference's refused form section says
-  what a refusal and a reset say and why, the comments of `attachForm` and `useFormRefusal` say what
-  a refusal says, and `attachForm`'s what a reset says, and record 21 is amended with the device
+  and other-root limits. Record 20 is amended for the request a hook keeps owed until its commit,
+  and the README's row for the controls names `activeOf`. "A refused form" also says what a refusal
+  and a reset say and why, the comments of `attachForm` and `useFormRefusal` say what a refusal
+  says, `attachForm`'s comment also says what a reset says, and record 21 is amended with the device
   check behind it. The reference's split row, note and numeral section says a note is any that is
   not a field's hint or error, such as a word beside a label's, and that it is at the normal weight.
   The reference's band section says a hero can sit on an element inside a band, or on the band or
@@ -73,7 +73,7 @@ Upgrading.
   and find the second lands, and move focus before the error is drawn and find it left there. The
   test that drops a hook's options waits for them to be passed on before it presses a key, since the
   page's draw comes after the call that drops them returns. Browser tests in a page without React,
-  through `useFormRefusal` and inside a shadow root hear the field's name and error, with the count
+  through `useFormRefusal` and inside a shadow root, hear the field's name and error, with the count
   where more are wrong, for a field focus moves to, one already focused, a set the kit draws, a set
   described on its fieldset alone, a field marked in error with no error drawn and a box alone in a
   section, and hear "Form cleared." after a reset that takes away the kit's errors and nothing after
