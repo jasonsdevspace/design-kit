@@ -1166,23 +1166,26 @@ const stepperParts = (
 
 /**
  * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
- * script meets the number field alone, and steps the value by the field's step when one is
- * pressed. A press that changes the value fires the input and change events a typed value fires,
- * and says the new value on the stepper's status line, since focus stays on the button. A button
- * that would pass the field's least or greatest value is marked off, aria-disabled so focus stays
- * on it, as both are on a field that is disabled or read only, and a press of an off button does
- * nothing. Each is read again as a press lands, so a value a script or a form's reset set is
- * followed. A typed value the field refuses, or none at all, shows the stepper's own error once the
- * value is changed and says it on the status line, and the error is cleared as soon as the value is
- * right again. Only the error's own id and the invalid state it set are added and taken away, so a
- * hint or an error the page draws keeps its place, and a shown error is put back whenever a page
- * that draws the field again, as React does, rewrites its description or its invalid mark. The
- * field is described by its range in words, after the page's own description, and while the error
- * is shown by the error alone, which names the range itself. A press that lands on a limit says so
- * with the value, and a page's words, given as an option, are said after it in the same message,
- * on the page's status line when one is given. It takes the stepper's field or the stepper,
- * attaches each stepper once whichever it is given, takes options given again in place of the
- * last, and returns what takes it away again.
+ * script meets the number field alone, and steps the value by the field's step when one is pressed.
+ * A press that changes the value fires the input and change events a typed value fires, and says
+ * the new value on the stepper's status line, since focus stays on the button. A button that would
+ * pass the field's least or greatest value is marked off, aria-disabled so focus stays on it, as
+ * both are on a field that is disabled or read only, and a press of an off button does nothing.
+ * Each is read again as a press lands, so a value a script or a form's reset set is followed. A
+ * typed value outside the limits or between steps, or none at all, shows the stepper's own error
+ * once the value is changed and says it on the status line, while a refusal the page sets of its
+ * own is left to the page. A value drawn outside the limits or between steps shows the error as the
+ * stepper is attached or a form's reset brings the value back, with nothing said, unless the field
+ * is disabled or read only or the page shows an error of its own. The error is cleared as soon as
+ * the value is right again. Only the error's own id and the invalid state it set are added and
+ * taken away, so a hint or an error the page draws keeps its place, and a shown error is put back
+ * whenever a page that draws the field again, as React does, rewrites its description or its
+ * invalid mark. The field is described by its range in words, after the page's own description, and
+ * while the error is shown by the error alone, which names the range itself. A press that lands on
+ * a limit says so with the value, and a page's words, given as an option, are said after it in the
+ * same message, on the page's status line when one is given. It takes the stepper's field or the
+ * stepper, attaches each stepper once whichever it is given, takes options given again in place of
+ * the last, and returns what takes it away again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1260,22 +1263,39 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         if (after) input.setAttribute('aria-describedby', after);
         else input.removeAttribute('aria-describedby');
     };
+    /** Whether the page shows an error of its own in the field, which the stepper's never hides. */
+    const pageError = () =>
+        [...field.querySelectorAll<HTMLElement>('.dk-field-error')].some(
+            (error) => error !== range && !error.hidden
+        );
     const report = (wrong: boolean) => {
         if (range) range.hidden = !wrong;
         describe();
         if (!range) return;
-        const pageError = [...field.querySelectorAll<HTMLElement>('.dk-field-error')].some(
-            (error) => error !== range && !error.hidden
-        );
         if (wrong && input.getAttribute('aria-invalid') !== 'true') {
             input.setAttribute('aria-invalid', 'true');
             setInvalid = true;
-        } else if (!wrong && setInvalid && !pageError) {
+        } else if (!wrong && setInvalid && !pageError()) {
             input.removeAttribute('aria-invalid');
             setInvalid = false;
         }
     };
-    const wrong = () => input.value === '' || !input.validity.valid;
+    /**
+     * Whether the value is one the stepper's error names: outside the limits, between steps, or
+     * none at all. A page's own refusal, set with `setCustomValidity`, is the page's to show.
+     */
+    const outOfRange = () => {
+        const { rangeUnderflow, rangeOverflow, stepMismatch } = input.validity;
+        return rangeUnderflow || rangeOverflow || stepMismatch;
+    };
+    const wrong = () => input.value === '' || outOfRange();
+    /**
+     * Whether a value the page drew, as the stepper is attached or a form's reset brings it back,
+     * shows the error at once, with nothing said. A blank field is left unflagged until it is
+     * changed, so a form that starts empty shows no error as it loads, a field no one can change
+     * is never marked wrong, and an error the page shows of its own keeps the field to itself.
+     */
+    const drawnWrong = () => !locked() && input.value !== '' && outOfRange() && !pageError();
     // Each press counts, so a message still waiting when the value is typed over, the form is reset
     // or the stepper is taken away is left unsaid, and the message a press last gave a page's line
     // is known, so only that is cleared there and the page's own words are left alone.
@@ -1335,7 +1355,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             if (!attached) return;
             quiet();
             mark();
-            report(false);
+            report(drawnWrong());
         });
     };
     // One signal takes every listener away together when the stepper is.
@@ -1374,7 +1394,10 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         { signal }
     );
     mark();
-    describe();
+    // A value drawn past the limits, or between steps, shows its error at once, so a page that
+    // draws that state needs no code of its own.
+    if (drawnWrong()) report(true);
+    else describe();
     // Done once, so calling it again, even after the same element was attached anew, leaves
     // that newer attach alone.
     let detached = false;

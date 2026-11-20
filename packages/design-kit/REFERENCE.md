@@ -2715,15 +2715,21 @@ A press steps the value by the step, and one that changes it fires the `input` a
 typed value fires. A button that would pass the least or the greatest value is off, by
 `aria-disabled` so focus stays on it, as both are on a field that is disabled or read only, and a
 press of an off button does nothing. Each press reads the value again first, so a value a script or
-a form's reset set is followed. The field still takes a typed value. One the field refuses, outside
-the limits, none at all, or between steps, such as 2.5 with a step of 1, shows the stepper's own
-error, which waits hidden in the markup, once the value is changed, and the status line says it. The
-error is cleared as soon as the value is right again, and the attach function adds and takes away
-only its own error, so an error or a hint the page draws keeps its place. A page that draws the
-field again, as React does when the page's own error comes or goes, rewrites the field's description
-and its invalid mark, and the attach function puts its shown error back in both at once. It takes
-the stepper or its field, attaches each stepper once whichever it is given, and returns what takes
-it away again.
+a form's reset set is followed. The field still takes a typed value. One outside the limits, none at
+all, or between steps, such as 2.5 with a step of 1, shows the stepper's own error, which waits
+hidden in the markup, once the value is changed, and the status line says it. A refusal the page
+sets of its own with `setCustomValidity` is left to the page. A value drawn outside the limits or
+between steps shows the error as the stepper is attached, and again when a form's reset brings it
+back, with nothing said, so a page that draws that state writes no code of its own for it. A field
+drawn blank shows none until it is changed, so a stepper attached again, as on a remount, shows the
+error for a value past its limits but not for a field left blank. A field that is disabled or read
+only shows none, since no one can put it right, and where the page draws its own error in the field,
+the page's error is the one shown as the page loads. The error is cleared as soon as the value is
+right again, and the attach function adds and takes away only its own error, so an error or a hint
+the page draws keeps its place. A page that draws the field again, as React does when the page's own
+error comes or goes, rewrites the field's description and its invalid mark, and the attach function
+puts its shown error back in both at once. It takes the stepper or its field, attaches each stepper
+once whichever it is given, and returns what takes it away again.
 
 **`StepperField` props**
 
