@@ -20,7 +20,7 @@ const isChoice = (value: string | null): value is ThemeChoice =>
 
 /** What has focus, or null where nothing does and the page's body stands in for it. */
 const focusedNow = (): Element | null => {
-    const active = document.activeElement;
+    const active = activeOf();
     return active === document.body ? null : active;
 };
 
@@ -47,7 +47,9 @@ export type FocusTarget = Element | string | (() => Element | null) | null | und
 
 /** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
 const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ?? document.querySelector('main');
+    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
+    rootOf(element).querySelector('main') ??
+    document.querySelector('main');
 
 /** How focus is moved after a change. */
 export type MoveFocusOptions = {
@@ -111,7 +113,7 @@ const land = (
     focusFirst(
         place,
         ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
-        homeOf(place ?? document.body)
+        homeOf(place ?? from ?? document.body)
     );
 };
 
@@ -170,7 +172,8 @@ const PRESS_LIVES = 5000;
 /** Whether an event presses a button or a link that is not off and is not in a row of tabs. */
 const presses = (event: Event): boolean => {
     if (event.type === 'submit') return true;
-    const { target } = event;
+    // The control itself, inside a shadow root too, where the document hears its host instead.
+    const [target] = event.composedPath();
     if (!(target instanceof Element) || target.closest('[role="tablist"]')) return false;
     if (event instanceof KeyboardEvent) {
         const own = target.closest(ROLE_ACTIVATOR);
@@ -260,7 +263,7 @@ export const focusOnArrival = (
         const frame = window.requestAnimationFrame(() => {
             arriving = null;
             const places = [...views].flatMap((view) => {
-                const place = placeOf(view.heading);
+                const place = placeOf(view.heading, view.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
             places.sort((one, other) =>
@@ -477,7 +480,7 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
     let pressedHere = false;
     /** Closes the choices where they are, and keeps focus on the switch if it was in them. */
     const closeHere = () => {
-        const held = group.contains(document.activeElement);
+        const held = group.contains(activeOf());
         close(false);
         if (held) button?.focus({ preventScroll: true });
     };
@@ -993,7 +996,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     };
     const dismiss = () => {
         window.clearTimeout(timer);
-        const hadFocus = element.contains(document.activeElement);
+        const hadFocus = element.contains(activeOf());
         shown = 0;
         focused = false;
         onAction = undefined;
@@ -1021,7 +1024,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
         // Focus on an action that this message does not have moves to the close button.
-        if (!action && document.activeElement === actionButton) close.focus();
+        if (!action && activeOf() === actionButton) close.focus();
         onAction = action?.onAction;
         actionButton.textContent = action?.label ?? '';
         actionButton.hidden = !action;
@@ -1228,7 +1231,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         // focus stays, marked off, until focus leaves it, so focus is never dropped.
         const fixed = input.readOnly && !input.disabled;
         for (const button of [down, up])
-            button.hidden = attached && fixed ? document.activeElement !== button : !attached;
+            button.hidden = attached && fixed ? activeOf() !== button : !attached;
     };
     let setInvalid = false;
     /**
@@ -1428,7 +1431,7 @@ const moveOffClose = (dialog: HTMLDialogElement, close: Element): void => {
             continue;
         }
         next.focus();
-        if (document.activeElement === next) return;
+        if (activeOf() === next) return;
     }
     const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
     if (!title) return;
@@ -1527,7 +1530,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
         // in the dialog asks for focus, as when React's autoFocus writes no attribute.
         const close = dialog.querySelector(':scope > .dk-close');
-        if (close?.contains(document.activeElement)) moveOffClose(dialog, close);
+        if (close?.contains(activeOf())) moveOffClose(dialog, close);
     };
     attachedDialogs.set(dialog, { open, set });
     return open;
@@ -2655,8 +2658,7 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         if (gone) {
             const next = inPlaceOf(gone, before, cells) ?? null;
             last = next;
-            const fell =
-                document.activeElement === document.body || document.activeElement === null;
+            const fell = activeOf() === document.body || activeOf() === null;
             if (holding === gone && fell && next) next.focus();
         }
         before = cells;
