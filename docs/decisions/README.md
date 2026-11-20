@@ -73,3 +73,8 @@ costs, and the test behind it.
     options again only when one changes, and holds words said before a provider's line is attached,
     the markup components held free of effects by the lint, and why leaving pages to attach in an
     effect and behavior written in React were turned down.
+21. [A refused form checks the browser's constraints itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
+    the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`
+    from script so a page without script keeps the browser's check, words for each failure a field
+    or a page can replace, the research behind it, and why leaving the check on, leaving the check
+    to each page and canceling each `invalid` event were turned down.

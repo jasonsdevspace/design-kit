@@ -73,7 +73,8 @@ jobs:
                   fi
 
     # The pages recorded from the commit on main that moved the pin. This job runs the build and the
-    # audit and holds no token that can write, and the record leaves it as an artifact. A slow trace
+    # audit and names no secret, so no token that can write and no key that mints one is on its
+    # runner, and the record leaves it as an artifact. A slow trace
     # on a shared runner can fail it, and a run again, by hand, records the pages then.
     record:
         name: Record the site's pages
@@ -83,19 +84,7 @@ jobs:
         timeout-minutes: 20
         permissions:
             contents: read
-        outputs:
-            ready: ${{ steps.app.outputs.ready }}
         steps:
-            - name: Say whether the records app is set up
-              id: app
-              env:
-                  READY: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
-              run: |
-                  echo "ready=$READY" >> "$GITHUB_OUTPUT"
-                  if [ "$READY" != "true" ]; then
-                      echo "The record was not opened as a pull request, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
-                  fi
-
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
@@ -139,7 +128,7 @@ jobs:
     record-pull-request:
         name: Open the record
         needs: [pin, record]
-        if: needs.record.result == 'success' && needs.record.outputs.ready == 'true'
+        if: needs.record.result == 'success'
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         permissions:
@@ -147,18 +136,48 @@ jobs:
         env:
             VERSION: ${{ needs.pin.outputs.version }}
         steps:
+            # The app's secrets are read here alone, in the job that installs and runs nothing of
+            # the repository's, so a dependency's code never runs beside the key that mints its
+            # token.
+            - name: Say whether the records app is set up
+              id: app
+              env:
+                  READY: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
+              run: |
+                  echo "ready=$READY" >> "$GITHUB_OUTPUT"
+                  if [ "$READY" != "true" ]; then
+                      echo "The record was not opened as a pull request, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
             - name: Checkout
+              if: steps.app.outputs.ready == 'true'
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   persist-credentials: false
 
+            # Into the runner's own folder, apart from the checkout, and only the files the record
+            # job wrote are copied in, each a plain file, so nothing the build job could have put
+            # in the artifact reaches the checkout git runs in.
             - name: Take the record
+              if: steps.app.outputs.ready == 'true'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                   name: site-pages
-                  path: docs/benchmarks
+                  path: ${{ runner.temp }}/site-pages
+
+            - name: Copy in the record
+              if: steps.app.outputs.ready == 'true'
+              run: |
+                  for file in site-pages.json site-pages.md; do
+                      if [ ! -f "$RUNNER_TEMP/site-pages/$file" ] || [ -L "$RUNNER_TEMP/site-pages/$file" ]; then
+                          echo "The record holds no plain file at $file, so nothing was opened." >> "$GITHUB_STEP_SUMMARY"
+                          exit 1
+                      fi
+                      cp "$RUNNER_TEMP/site-pages/$file" "docs/benchmarks/$file"
+                  done
 
             - name: Get the records app's token
+              if: steps.app.outputs.ready == 'true'
               id: token
               uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
               with:
@@ -168,6 +187,7 @@ jobs:
                   permission-pull-requests: write
 
             - name: Open a pull request with the record
+              if: steps.app.outputs.ready == 'true'
               env:
                   GH_TOKEN: ${{ steps.token.outputs.token }}
                   REPOSITORY: ${{ github.repository }}

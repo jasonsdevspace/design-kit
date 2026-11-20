@@ -230,7 +230,8 @@ jobs:
     # record names is one main keeps. A prerelease records nothing, since main's records describe
     # what a demo installs. The site's pages are recorded by the site pages workflow when the site's
     # pin moves, since at the tag the site still draws from the version before. This job runs the
-    # build and holds no token that can write, and the record leaves it as an artifact. A failure here
+    # build and names no secret, so no token that can write and no key that mints one is on its
+    # runner, and the record leaves it as an artifact. A failure here
     # does not fail the release, which is already staged.
     records:
         name: Record the release
@@ -241,19 +242,7 @@ jobs:
         continue-on-error: true
         permissions:
             contents: read
-        outputs:
-            ready: ${{ steps.app.outputs.ready }}
         steps:
-            - name: Say whether the records app is set up
-              id: app
-              env:
-                  READY: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
-              run: |
-                  echo "ready=$READY" >> "$GITHUB_OUTPUT"
-                  if [ "$READY" != "true" ]; then
-                      echo "The records were not opened as a pull request, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
-                  fi
-
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
@@ -295,7 +284,7 @@ jobs:
     records-pull-request:
         name: Open the records
         needs: [agree, records]
-        if: needs.records.result == 'success' && needs.records.outputs.ready == 'true'
+        if: needs.records.result == 'success'
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         continue-on-error: true
@@ -304,17 +293,48 @@ jobs:
         env:
             VERSION: ${{ needs.agree.outputs.version }}
         steps:
+            # The app's secrets are read here alone, in the job that installs and runs nothing of
+            # the repository's, so a dependency's code never runs beside the key that mints its
+            # token.
+            - name: Say whether the records app is set up
+              id: app
+              env:
+                  READY: ${{ secrets.RECORDS_APP_CLIENT_ID != '' && secrets.RECORDS_APP_PRIVATE_KEY != '' }}
+              run: |
+                  echo "ready=$READY" >> "$GITHUB_OUTPUT"
+                  if [ "$READY" != "true" ]; then
+                      echo "The records were not opened as a pull request, since the records app's secrets are not set." >> "$GITHUB_STEP_SUMMARY"
+                  fi
+
             - name: Checkout
+              if: steps.app.outputs.ready == 'true'
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   persist-credentials: false
 
+            # Into the runner's own folder, apart from the checkout, and only the files the records
+            # job wrote are copied in, each a plain file, so nothing the build job could have put
+            # in the artifact, such as a git setting, reaches the checkout git runs in.
             - name: Take the records
+              if: steps.app.outputs.ready == 'true'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                   name: records
+                  path: ${{ runner.temp }}/records
+
+            - name: Copy in the records
+              if: steps.app.outputs.ready == 'true'
+              run: |
+                  for file in docs/benchmarks/package-size.json docs/benchmarks/package-size.md README.md; do
+                      if [ ! -f "$RUNNER_TEMP/records/$file" ] || [ -L "$RUNNER_TEMP/records/$file" ]; then
+                          echo "The records hold no plain file at $file, so nothing was opened." >> "$GITHUB_STEP_SUMMARY"
+                          exit 1
+                      fi
+                      cp "$RUNNER_TEMP/records/$file" "$file"
+                  done
 
             - name: Get the records app's token
+              if: steps.app.outputs.ready == 'true'
               id: token
               uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
               with:
@@ -324,6 +344,7 @@ jobs:
                   permission-pull-requests: write
 
             - name: Open a pull request with the records
+              if: steps.app.outputs.ready == 'true'
               env:
                   GH_TOKEN: ${{ steps.token.outputs.token }}
                   REPOSITORY: ${{ github.repository }}

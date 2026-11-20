@@ -533,62 +533,167 @@ export const attachThemeSwitch = (element: HTMLElement): (() => void) => {
 /** How long a copy button says what it did before it says Copy again, in milliseconds. */
 const SAID_FOR = 2000;
 
+/** A message a status line says: words, or a function that gives them as they are put in. */
+type Spoken = Parameters<Say>[0];
+
 /**
- * Each status line's timer, so one message never empties the next and a second is heard too. A
- * message is put in a moment after the line is emptied, so the same words twice are heard twice,
- * and leaves after a while unless it is kept, as a toast keeps its own until the toast leaves.
+ * What a status line is saying. A message is put in a moment after the line is emptied, so the
+ * same words twice are heard twice, and leaves after a while unless it is kept, as a toast keeps
+ * its own until the toast leaves. Words waiting to settle keep a timer of their own, so words
+ * already said still leave as ever. The line knows the message it is saying and whether it was said
+ * in this moment, whether firm words were said in this moment or still settle, and the polite words
+ * and the polite notice, given as a function, waiting for it to be free.
  */
-const statusTimers = new WeakMap<HTMLElement, number>();
-/** Each status line's words waiting to settle, apart from the timer of words already said. */
-const settleTimers = new WeakMap<HTMLElement, number>();
-/**
- * The lines holding or about to hold words that were not said politely, which polite words, such
- * as progress, give way to.
- */
-const firmLines = new WeakSet<HTMLElement>();
-/** Empties a status line, and drops what it was about to say, words waiting to settle among them. */
+type Line = {
+    timer: number;
+    settle: number;
+    current: {
+        readonly message: Spoken;
+        readonly polite: boolean;
+        put: boolean;
+        now: boolean;
+    } | null;
+    firmNow: boolean;
+    /** How many firm messages the line has been given, so only the last clears the moment's mark. */
+    firms: number;
+    settling: boolean;
+    words: string | null;
+    notice: (() => string | null) | null;
+};
+const lines = new WeakMap<HTMLElement, Line>();
+const lineOf = (status: HTMLElement): Line => {
+    let line = lines.get(status);
+    if (!line) {
+        line = {
+            timer: 0,
+            settle: 0,
+            current: null,
+            firmNow: false,
+            firms: 0,
+            settling: false,
+            words: null,
+            notice: null,
+        };
+        lines.set(status, line);
+    }
+    return line;
+};
+
+/** Empties a status line, and drops what it was about to say, waiting words among them. */
 const hush = (status: HTMLElement) => {
-    window.clearTimeout(statusTimers.get(status));
-    window.clearTimeout(settleTimers.get(status));
-    firmLines.delete(status);
+    const line = lineOf(status);
+    window.clearTimeout(line.timer);
+    window.clearTimeout(line.settle);
+    Object.assign(line, {
+        current: null,
+        firmNow: false,
+        settling: false,
+        words: null,
+        notice: null,
+    });
     status.textContent = '';
+};
+
+/** Keeps polite words to say once the line is free, words and a notice each in a place apart. */
+const hold = (line: Line, message: Spoken) => {
+    if (typeof message === 'string') line.words = message;
+    else line.notice = message;
+};
+
+/**
+ * Whether polite words go now. They give way to firm words said in the same moment or still
+ * settling, so a result said with them is heard in their place. They wait for firm words the line
+ * is saying, and polite words given as a function, read as they are put in, such as a busy
+ * button's notice, wait for any words, so they never put out the end of a progress and say nothing
+ * once no longer true. Words that wait take the place of words of their kind waiting before them.
+ */
+const admit = (line: Line, message: Spoken): boolean => {
+    if (line.settling || line.firmNow) return false;
+    const { current } = line;
+    if (current && (!current.polite || typeof message === 'function')) {
+        hold(line, message);
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Ends what a line is saying, and says what waits for it once nothing settles: the polite words
+ * first, and the notice once those have left too.
+ */
+const leave = (status: HTMLElement) => {
+    const line = lineOf(status);
+    line.current = null;
+    status.textContent = '';
+    if (line.settling) return;
+    const next = line.words ?? line.notice;
+    if (next === line.words) line.words = null;
+    else line.notice = null;
+    if (!next) return;
+    say(status, next, false, true);
+    // Said earlier and only held, so not taken for words said in this moment.
+    const said = lineOf(status).current;
+    if (said?.message === next) said.now = false;
 };
 
 /**
  * Says a message on a status line. A message given as a function is read as it is put in, after the
  * moment's wait, so words a page draws from its own state follow the change that prompted them, and
- * one that gives nothing by then is not said. Polite words are left unsaid where the line holds or
- * is about to hold words that are not, so a page's own result is never put out by them.
+ * one that gives nothing by then is not said. Polite words go, wait or give way as `admit` has it.
+ * Any message drops words still settling and takes the place of the one the line is saying. Polite
+ * words not yet put in that firm words take the place of wait for those to leave, unless both were
+ * said in the same moment, and a notice waits whatever takes its place. Firm words leave polite
+ * words waiting as they are, and polite words that go take the place of the polite words waiting.
  */
-const say = (
-    status: HTMLElement,
-    message: string | (() => string | null),
-    keep = false,
-    polite = false
-) => {
-    if (polite && firmLines.has(status)) return;
-    hush(status);
-    if (!polite) firmLines.add(status);
-    statusTimers.set(
-        status,
-        window.setTimeout(() => {
-            const words = typeof message === 'string' ? message : message();
-            // A message that is no longer wanted by the time it would be said is left unsaid.
-            if (words === null) {
-                firmLines.delete(status);
-                return;
-            }
-            status.textContent = words;
-            if (keep) return;
-            statusTimers.set(
-                status,
-                window.setTimeout(() => {
-                    firmLines.delete(status);
-                    status.textContent = '';
-                }, SAID_FOR)
-            );
-        }, 100)
-    );
+const say = (status: HTMLElement, message: Spoken, keep = false, polite = false) => {
+    const line = lineOf(status);
+    if (polite && !admit(line, message)) return;
+    if (polite) line.words = null;
+    const before = line.current;
+    if (
+        before?.polite &&
+        !before.put &&
+        (typeof before.message === 'function' || (!polite && !before.now))
+    )
+        hold(line, before.message);
+    window.clearTimeout(line.timer);
+    window.clearTimeout(line.settle);
+    line.settling = false;
+    status.textContent = '';
+    const current = { message, polite, put: false, now: true };
+    line.current = current;
+    if (!polite) {
+        line.firmNow = true;
+        line.firms += 1;
+    }
+    const firms = line.firms;
+    // The moment ends with the task, whether the words are still on the line or have left it.
+    window.setTimeout(() => {
+        current.now = false;
+        if (!polite && line.firms === firms) line.firmNow = false;
+    });
+    line.timer = window.setTimeout(() => {
+        const words = typeof message === 'string' ? message : message();
+        // A message that is no longer wanted by the time it would be said is left unsaid.
+        if (words === null) {
+            leave(status);
+            return;
+        }
+        status.textContent = words;
+        current.put = true;
+        if (keep) return;
+        line.timer = window.setTimeout(() => {
+            leave(status);
+        }, SAID_FOR);
+    }, 100);
+};
+
+/** Takes a piece's own message off a page's line before it would leave, freeing it for the next. */
+const unsay = (status: HTMLElement, message: Spoken | null) => {
+    const line = lineOf(status);
+    if (message === null || line.current?.message !== message) return;
+    window.clearTimeout(line.timer);
+    leave(status);
 };
 
 /** How a message is said on a status line. */
@@ -600,8 +705,9 @@ export type SayOptions = {
      */
     readonly settle?: number | undefined;
     /**
-     * Said only where the line holds no words, or only polite ones, and none are waiting, for words
-     * that should give way to any other, such as progress beside a page's own result.
+     * For words that should give way to a result, such as progress or a busy button's notice:
+     * left unsaid where firm words are said in the same moment or still settle, and said once the
+     * line is free where firm words are on it. Given as a function, they wait for any words.
      */
     readonly polite?: boolean | undefined;
 };
@@ -635,19 +741,35 @@ export const attachStatus = (line: HTMLElement): Say => {
             say(line, message, false, polite);
             return;
         }
+        const state = lineOf(line);
+        if (polite && !admit(state, message)) {
+            // Polite words settling before these are dropped, so the last said is the one heard.
+            if (!state.settling) window.clearTimeout(state.settle);
+            return;
+        }
         // Waits on a timer of its own, so words already said are still put in and leave as ever,
         // and any message said in the meantime drops these.
-        window.clearTimeout(settleTimers.get(line));
-        if (!polite) firmLines.add(line);
-        settleTimers.set(
-            line,
-            window.setTimeout(() => {
-                say(line, message, false, polite);
-            }, settle)
-        );
+        window.clearTimeout(state.settle);
+        state.settling = !polite;
+        state.settle = window.setTimeout(() => {
+            state.settling = false;
+            say(line, message, false, polite);
+        }, settle);
     };
     attachedLines.set(line, speak);
     return speak;
+};
+
+/** Where a piece's words are said: the page's own function, or a status line the page names. */
+type SpeaksOn = {
+    readonly say?: Say | undefined;
+    readonly status?: HTMLElement | null | undefined;
+};
+
+/** Says a piece's words through the page's function where it gives one, else on its line. */
+const speakOn = (chosen: SpeaksOn, message: Spoken, options?: SayOptions) => {
+    if (chosen.say) chosen.say(message, options);
+    else if (chosen.status) attachStatus(chosen.status)(message, options);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
@@ -1115,21 +1237,24 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     };
     const wrong = () => input.value === '' || !input.validity.valid;
     // Each press counts, so a message still waiting when the value is typed over, the form is reset
-    // or the stepper is taken away is left unsaid, and what a press last said on a page's line is
-    // known, so only that is cleared there and the page's own words are left alone.
+    // or the stepper is taken away is left unsaid, and the message a press last gave a page's line
+    // is known, so only that is cleared there and the page's own words are left alone.
     let presses = 0;
-    let lastSaid = '';
+    let lastSaid: Spoken | null = null;
     const quiet = () => {
         presses += 1;
         if (status) hush(status);
         const page = chosen.status;
-        if (page && lastSaid !== '' && page.textContent === lastSaid) page.textContent = '';
+        if (page) unsay(page, lastSaid);
     };
     /** What a press says: the value, that it is a limit where it is one, and the page's words. */
-    const spoken = (pressed: number) => () => {
-        if (pressed !== presses || !attached) return null;
-        lastSaid = pressWords(input, least(), most(), chosen.words);
-        return lastSaid;
+    const spoken = (pressed: number) => {
+        const message = () =>
+            pressed !== presses || !attached
+                ? null
+                : pressWords(input, least(), most(), chosen.words);
+        lastSaid = message;
+        return message;
     };
     const press = (raise: boolean) => () => {
         mark();
@@ -1147,8 +1272,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         const to = line();
-        // Kept, on the stepper's line or the page's, since focus stays on the button.
-        if (to) say(to, spoken(presses), true);
+        // Kept on the stepper's own line, since focus stays on the button, and on a page's line
+        // left to leave as every message there does, so the line is free for the words after it.
+        if (to) say(to, spoken(presses), to === status);
     };
     const onInput = () => {
         quiet();
@@ -1159,7 +1285,12 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         const bad = wrong();
         report(bad);
         const to = line();
-        if (bad && to && range) say(to, range.textContent, true);
+        if (bad && to && range) {
+            const words = range.textContent;
+            const message = () => words;
+            lastSaid = message;
+            say(to, message, to === status);
+        }
     };
     const onReset = () => {
         window.setTimeout(() => {
@@ -1692,6 +1823,290 @@ export type FormOptions = {
     readonly say?: Say | undefined;
     /** An error summary the page draws over the form, focused in place of the first field. */
     readonly summary?: (() => Element | null) | undefined;
+    /**
+     * The words for each way a field can fail the browser's constraints, in place of the kit's,
+     * as a page in another language gives them, each words or a function of the field.
+     */
+    readonly errorWords?: FailureWords | undefined;
+    /**
+     * Called with the fields that fail the browser's constraints on a submit, for a page that draws
+     * its errors itself, as React does from its state, and refuses once they are drawn. Without
+     * it, the kit draws each error in the field and refuses.
+     */
+    readonly invalid?: ((failures: readonly FieldFailure[]) => void) | undefined;
+};
+
+/** The ways a field fails the browser's constraints, in the order their words are chosen. */
+const FAILURES = [
+    'badInput',
+    'valueMissing',
+    'typeMismatch',
+    'patternMismatch',
+    'tooShort',
+    'tooLong',
+    'rangeUnderflow',
+    'rangeOverflow',
+    'stepMismatch',
+    'customError',
+] as const;
+
+/** A way a field fails the browser's constraints, named as its `validity` names it. */
+export type Failure = (typeof FAILURES)[number];
+
+/** Words for each way a field fails, each words or a function of the field. */
+export type FailureWords = Partial<Record<Failure, string | ((control: HTMLElement) => string)>>;
+
+/** A field that fails the browser's constraints, with the way it fails and the words for it. */
+export type FieldFailure = {
+    /** The field, a set's fieldset where the control is one of a set's choices. */
+    readonly field: Element;
+    /** The control that fails. */
+    readonly control: HTMLElement;
+    readonly failure: Failure;
+    readonly words: string;
+};
+
+type Checked = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+const DATED = new Set(['date', 'datetime-local', 'month', 'week']);
+const CHOICE = 'input[type="checkbox"], input[type="radio"]';
+
+const limitOf = (control: Checked, name: string) => control.getAttribute(name) ?? '';
+
+/** The ids an element's attribute names, in order. */
+const idsOf = (element: Element, attribute: string): string[] =>
+    (element.getAttribute(attribute) ?? '').split(/\s+/).filter(Boolean);
+
+/** Whether a control is described by a hint, which then shows the format it takes. */
+const hinted = (control: Element): boolean =>
+    idsOf(control, 'aria-describedby').some((id) =>
+        document.getElementById(id)?.matches('.dk-field-hint')
+    );
+
+/** Words for a value that does not match the format a field takes. */
+const formatWords = (control: Checked) =>
+    hinted(control) ? 'Enter it in the format the hint shows.' : 'Enter it in the right format.';
+
+/** Words for a value off a field's steps, counted from its least where it has one. */
+const stepWords = (control: Checked): string => {
+    if (control.type === 'time') return 'Enter a time on one of the steps allowed.';
+    if (control.type === 'datetime-local')
+        return 'Enter a date and time on one of the steps allowed.';
+    if (DATED.has(control.type)) return 'Enter a date on one of the steps allowed.';
+    const least = limitOf(control, 'min');
+    const step = limitOf(control, 'step') || '1';
+    if (step === '1' && (least === '' || Number.isInteger(Number(least))))
+        return 'Enter a whole number.';
+    return least !== '' && Number(least) !== 0
+        ? `Enter ${least}, or ${least} plus a multiple of ${step}.`
+        : `Enter a multiple of ${step}.`;
+};
+
+/**
+ * Whether a fieldset holds one set of choices, as the kit's set of choices draws it or a page
+ * writes one, rather than a section of a form with a choice standing alone in it.
+ */
+const holdsOneSet = (fieldset: Element): boolean => {
+    if (fieldset.matches('.dk-choice-field')) return true;
+    const controls = [...fieldset.querySelectorAll('input, select, textarea')];
+    const choices = controls.filter((control) => control.matches(CHOICE));
+    // Choices alone, whatever their names, or a group of one name with a field beside it, as an
+    // Other box, while a section of fields with a box alone among them is no set.
+    return (
+        choices.length === controls.length ||
+        (choices.length > 1 && new Set(choices.map((one) => one.getAttribute('name'))).size === 1)
+    );
+};
+
+/**
+ * The field a control stands for: a set's fieldset where the control is one of its choices, so a
+ * set counts once, else the control itself, a box that stands alone in a section among them.
+ */
+const fieldOf = (marked: Element): Element => {
+    if (!marked.matches(CHOICE)) return marked;
+    const set = marked.closest('fieldset');
+    return set && holdsOneSet(set) ? set : marked;
+};
+
+/**
+ * The kit's words for a failure, which say what to do, in the manner of GOV.UK's error messages.
+ * A pattern cannot be put in words from the pattern, so a field with one gives words of its own.
+ */
+const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
+    badInput: (control) =>
+        control.type === 'time'
+            ? 'Enter a real time.'
+            : DATED.has(control.type)
+              ? 'Enter a real date.'
+              : 'Enter a number.',
+    valueMissing: (control) => {
+        if (control.type === 'checkbox' && fieldOf(control) === control)
+            return 'Check the box to go on.';
+        return control instanceof HTMLSelectElement || control.matches(CHOICE)
+            ? 'Choose an option.'
+            : 'Enter a value.';
+    },
+    typeMismatch: (control) => {
+        if (control.type === 'email') return 'Enter an email address, like name@example.com.';
+        return control.type === 'url'
+            ? 'Enter a full web address, starting with https://.'
+            : formatWords(control);
+    },
+    patternMismatch: formatWords,
+    tooShort: (control) => `Enter at least ${limitOf(control, 'minlength')} characters.`,
+    tooLong: (control) => `Enter ${limitOf(control, 'maxlength')} characters or fewer.`,
+    rangeUnderflow: (control) => {
+        const least = limitOf(control, 'min');
+        if (control.type === 'time') return `Enter a time at or after ${least}.`;
+        return DATED.has(control.type)
+            ? `Enter a date on or after ${least}.`
+            : `Enter ${least} or more.`;
+    },
+    rangeOverflow: (control) => {
+        const most = limitOf(control, 'max');
+        if (control.type === 'time') return `Enter a time at or before ${most}.`;
+        return DATED.has(control.type)
+            ? `Enter a date on or before ${most}.`
+            : `Enter ${most} or less.`;
+    },
+    stepMismatch: stepWords,
+    customError: (control) => control.validationMessage,
+};
+
+/**
+ * The words for a field's failure: the control's own for it, as `data-error-value-missing`, else
+ * its set's, else the page's for the form, else the kit's, and never the browser's, which follow
+ * its language rather than the page's.
+ */
+const failureWords = (
+    control: Checked,
+    field: Element,
+    failure: Failure,
+    given: FailureWords | undefined
+): string => {
+    const name = `data-error-${failure.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+    const own = control.getAttribute(name) ?? field.getAttribute(name);
+    if (own) return own;
+    const page = given?.[failure];
+    const words = typeof page === 'function' ? page(control) : page;
+    // Words that come to nothing give way to the kit's, so a field never shows an empty error.
+    return words === undefined || words === '' ? KIT_WORDS[failure](control) : words;
+};
+
+/**
+ * The fields of a form that fail the browser's constraints, each set once, a group of radios with
+ * no set around it among them, and none marked off, which a visitor could not put right.
+ */
+const failuresOf = (form: HTMLFormElement, given: FailureWords | undefined): FieldFailure[] => {
+    const seen = new Set<Element | string>();
+    return [...form.elements].flatMap((control) => {
+        if (
+            !(
+                control instanceof HTMLInputElement ||
+                control instanceof HTMLSelectElement ||
+                control instanceof HTMLTextAreaElement
+            ) ||
+            !control.willValidate ||
+            control.validity.valid ||
+            control.closest('[aria-disabled="true"]')
+        )
+            return [];
+        const field = fieldOf(control);
+        const key = field === control && control.type === 'radio' ? `radio ${control.name}` : field;
+        if (seen.has(key)) return [];
+        seen.add(key);
+        const failure = FAILURES.find((one) => control.validity[one]) ?? 'customError';
+        return [{ field, control, failure, words: failureWords(control, field, failure, given) }];
+    });
+};
+
+/**
+ * What a field's error marks invalid and what it describes, as the kit's field marks them: a set of
+ * radios on its fieldset, a set of checkboxes on each box, each choice described by the error, and
+ * a field on its own control.
+ */
+const marksOf = (field: Element, control: Element) => {
+    if (field === control) return { marked: [control], described: [control] };
+    const choices = [...field.querySelectorAll(CHOICE)];
+    return {
+        marked: control.matches('input[type="radio"]') ? [field] : choices,
+        described: [field, ...choices],
+    };
+};
+
+/** An element's attribute put back as it was, or taken away where it had none. */
+const restore = (element: Element, name: string, value: string | null) => {
+    if (value === null) element.removeAttribute(name);
+    else element.setAttribute(name, value);
+};
+
+/** An id no element of the page holds yet, from the one a field's error would take. */
+const freeId = (base: string): string => {
+    let id = base;
+    for (let more = 2; document.getElementById(id); more += 1) id = `${base}-${String(more)}`;
+    return id;
+};
+
+/** The words a screen reader starts an error with, so it is told from the hint by more than color. */
+const errorStart = () => {
+    const said = document.createElement('span');
+    said.className = 'dk-visually-hidden';
+    said.textContent = 'Error: ';
+    return said;
+};
+
+/**
+ * The error a failure is shown in, and what takes it away: a stepper's range error, which says what
+ * is wrong already, left as it is, an error the page already drew for the field given the kit's
+ * words, else one the kit draws after the field's hint, above the control or under a set's legend.
+ */
+const errorFor = (
+    field: Element,
+    control: Element,
+    words: string
+): { readonly error: HTMLElement; readonly takeAway: () => void } => {
+    const range = idsOf(control, 'aria-describedby')
+        .map((id) => document.getElementById(id))
+        .find((part) => part?.matches('.dk-stepper-range') && !part.hidden);
+    if (range) return { error: range, takeAway: () => undefined };
+    const page = field.id ? document.getElementById(`${field.id}-error`) : null;
+    if (page?.matches('.dk-field-error')) {
+        const kept = [...page.childNodes];
+        const hidden = page.hidden;
+        page.replaceChildren(errorStart(), words);
+        page.hidden = false;
+        return {
+            error: page,
+            takeAway: () => {
+                page.replaceChildren(...kept);
+                page.hidden = hidden;
+            },
+        };
+    }
+    const made = document.createElement('p');
+    made.className = 'dk-field-error';
+    made.id = freeId(`${field.id || control.id || 'dk-field'}-error`);
+    made.append(errorStart(), words);
+    const set = field.matches('fieldset');
+    const after = set
+        ? ([...field.querySelectorAll(':scope > .dk-field-hint')].at(-1) ??
+          field.querySelector(':scope > legend'))
+        : null;
+    const holder = field.closest('.dk-field');
+    // Never inside a label that holds the control, where it would join the control's name.
+    const ahead =
+        holder && holder !== field
+            ? ([...holder.children].find((child) => child.contains(control)) ?? control)
+            : (control.closest('label') ?? control);
+    if (after) after.after(made);
+    else if (set) field.prepend(made);
+    else ahead.before(made);
+    return {
+        error: made,
+        takeAway: () => {
+            made.remove();
+        },
+    };
 };
 
 /**
@@ -1705,21 +2120,31 @@ const attachedForms = new WeakMap<
     { readonly refuse: Refuse; readonly set: (next: FormOptions) => void }
 >();
 
+/** The forms the kit checks, each once however many of its parts are attached. */
+const checkedForms = new WeakSet<HTMLFormElement>();
+
+/** What checks each form, and clears what its check drew, from the attach that checks it. */
+const checkers = new WeakMap<
+    HTMLFormElement,
+    {
+        readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
+        readonly clear: () => void;
+    }
+>();
+
 /** Whether a control can take focus: enabled, not inert, and in sight. */
-const focusable = (control: Element): control is HTMLElement =>
+const takesFocus = (control: Element): control is HTMLElement =>
     control instanceof HTMLElement &&
     !control.matches(':disabled') &&
     !control.closest('[inert]') &&
     control.checkVisibility();
 
 /**
- * The field each mark of invalid stands for: a set's fieldset where a choice in it is marked, as
- * the kit marks each checkbox of a set, else the control itself, so a set counts once.
+ * Whether a refusal can hand a field focus: it is not marked off, itself or by a set around it,
+ * and it takes focus. The mark is read first, since it costs no layout.
  */
-const fieldOf = (marked: Element): Element =>
-    marked.matches('input[type="checkbox"], input[type="radio"]')
-        ? (marked.closest('fieldset') ?? marked)
-        : marked;
+const reachable = (control: Element): control is HTMLElement =>
+    !control.closest('[aria-disabled="true"]') && takesFocus(control);
 
 /** The fields of a refused form in error, each once, in order. */
 const wrongFields = (form: HTMLElement): Element[] => [
@@ -1731,10 +2156,10 @@ const wrongFields = (form: HTMLElement): Element[] => [
  * first of its controls that can take focus. Nothing where none can.
  */
 const focusIn = (field: Element): HTMLElement | null => {
-    if (!field.matches('fieldset')) return focusable(field) ? field : null;
+    if (!field.matches('fieldset')) return reachable(field) ? field : null;
     const checked = field.querySelector('input[type="radio"]:checked');
-    if (checked && focusable(checked)) return checked;
-    return [...field.querySelectorAll('input, select, textarea, button')].find(focusable) ?? null;
+    if (checked && reachable(checked)) return checked;
+    return [...field.querySelectorAll('input, select, textarea, button')].find(reachable) ?? null;
 };
 
 /**
@@ -1746,9 +2171,7 @@ const namedText = (
     attribute: string,
     wanted: (part: HTMLElement) => boolean = () => true
 ): string =>
-    (element.getAttribute(attribute) ?? '')
-        .split(/\s+/)
-        .filter(Boolean)
+    idsOf(element, attribute)
         .map((id) => document.getElementById(id))
         .filter((part): part is HTMLElement => part !== null && !part.hidden && wanted(part))
         .map((part) => part.textContent.trim())
@@ -1757,6 +2180,20 @@ const namedText = (
 /** The words of the errors a field is described by, as a screen reader reads them. */
 const errorWords = (field: Element): string =>
     namedText(field, 'aria-describedby', (part) => part.matches('.dk-field-error'));
+
+/** A field's name, from its set's legend or its control's label, to say before an error. */
+const fieldName = (field: Element): string => {
+    const named =
+        field.querySelector(':scope > legend')?.textContent ??
+        (field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLTextAreaElement
+            ? field.labels?.[0]?.textContent
+            : null) ??
+        field.getAttribute('aria-label') ??
+        '';
+    return named.replace(/\s+/g, ' ').trim();
+};
 
 /** How many fields a refused form has in error. */
 const countWords = (count: number): string =>
@@ -1781,18 +2218,38 @@ const refusalWords = (
 };
 
 /**
- * Makes the step after a refused submit work for a form, and returns what refuses it, which a page
- * calls once it has drawn the errors, as the reference's form guidance asks. A frame later, so the
- * errors are drawn, focus moves to an error summary where the page names one, else the first field
- * in error that can take focus, or in a set its checked radio or its first control that can, and
- * one message is said on the status line, chosen so nothing is said twice: nothing where focus
- * moves to a summary, whose words it reads, how many fields need attention where focus moves to a
- * field, since moving focus reads the field and its error, or the error's own words, with the
- * count where more are wrong, where the field already had focus, since focus that does not move
- * reads nothing. A set counts once however many of its choices are marked. The field's error stays
- * not live. A second refusal calls off one not yet landed, moves focus and speaks again, and each
- * refusal returns what calls it off. Attached again, a form returns what it returned first and
- * takes options given in place of the last.
+ * What a refusal says where no field in error can take focus, as one out of sight or marked off:
+ * the first field's name and error, since nothing else tells the visitor which it is, with the
+ * count where more are wrong.
+ */
+const unreachedWords = (field: Element, words: string, count: number): string => {
+    const name = fieldName(field);
+    // A field with no words of error shown is named with the count, which says it needs attention.
+    const said = words === '' ? countWords(count) : words;
+    const named = name === '' ? said : `${name}: ${said}`;
+    return count > 1 && words !== '' ? `${named} ${countWords(count)}` : named;
+};
+
+/**
+ * Makes a form refuse a submit, and returns what refuses it. The form takes `noValidate` from
+ * script, or the form around an attached part of one, and the kit checks the browser's constraints
+ * on submit, before the page's own handler, which runs only where every field passes, so a page
+ * without script keeps the browser's check, as record 21 has it. Where a field fails, the submit
+ * is stopped, and the kit draws each error as its field draws one and refuses, or hands the
+ * failures to `invalid` for a page that draws them itself and refuses. Each failure's words are the
+ * field's own, else the page's `errorWords`, else the kit's. A button marked formnovalidate
+ * submits unchecked, and errors the kit drew go once their fields pass or the form is reset.
+ *
+ * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
+ * page names one, else the first field in error that can take focus, or in a set its checked radio
+ * or its first control that can, and says one message on the status line, chosen so nothing is said
+ * twice: nothing where focus moves to a summary, whose words it reads, how many fields need
+ * attention where focus moves to a field, since moving focus reads the field and its error, or the
+ * error's own words, with the count where more are wrong, where the field already had focus, since
+ * focus that does not move reads nothing. A set counts once however many of its choices are marked.
+ * The field's error stays not live. A second refusal calls off one not yet landed, and each refusal
+ * returns what calls it off. Attached again, a form returns what it returned first and takes
+ * options given in place of the last.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
     const already = attachedForms.get(form);
@@ -1802,24 +2259,96 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     }
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
-    const speak = (words: string) => {
-        if (words === '') return;
-        if (chosen.say) chosen.say(words);
-        else if (chosen.status) attachStatus(chosen.status)(words);
+    // The failures of the last submit the kit refused, said where a page that draws its own errors
+    // marks none, so the refusal is still heard.
+    let failed: readonly FieldFailure[] = [];
+    // The browser's own check would stop a submit before the page's handler runs, showing its own
+    // bubble, which fades, in place of the kit's errors, so the form takes noValidate from script
+    // and the kit checks the same constraints on submit. A page without script keeps the browser's
+    // check.
+    const own = form instanceof HTMLFormElement ? form : form.closest('form');
+    if (own) own.noValidate = true;
+    const scope = own ?? form;
+    // A field not in error says so, so a browser does not read an empty required field as invalid
+    // before anything is submitted.
+    for (const control of scope.querySelectorAll('input, select, textarea, fieldset'))
+        if (!control.hasAttribute('aria-invalid')) control.setAttribute('aria-invalid', 'false');
+    /** What puts back each field the kit drew an error in, as it was before. */
+    const drawn = new Map<Element, () => void>();
+    const undraw = (field: Element) => {
+        drawn.get(field)?.();
+        drawn.delete(field);
     };
-    const refuse: Refuse = () => {
+    /**
+     * Draws a failure's error in its field as the kit's field draws one: after its hint, above the
+     * control or under a set's legend, starting with a word a screen reader reads, and described
+     * after the hint. An error the page already drew for the field takes the kit's words, and a
+     * stepper's range error, which says what is wrong already, is left as it is and only marked.
+     */
+    const draw = ({ field, control, words }: FieldFailure) => {
+        undraw(field);
+        const { marked, described } = marksOf(field, control);
+        const before = [...new Set([...marked, ...described])].map(
+            (one) =>
+                [
+                    one,
+                    one.getAttribute('aria-invalid'),
+                    one.getAttribute('aria-describedby'),
+                ] as const
+        );
+        const { error, takeAway } = errorFor(field, control, words);
+        for (const one of marked) one.setAttribute('aria-invalid', 'true');
+        for (const one of described) {
+            const ids = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
+            const hintsEnd =
+                ids.findLastIndex((id) => document.getElementById(id)?.matches('.dk-field-hint')) +
+                1;
+            ids.splice(hintsEnd, 0, error.id);
+            one.setAttribute('aria-describedby', ids.join(' '));
+        }
+        drawn.set(field, () => {
+            takeAway();
+            // Only what the kit changed is put back, and only where it still holds the kit's
+            // change, so a mark a stepper or the page has since taken away or set stays theirs.
+            for (const [one, invalid, describedBy] of before) {
+                if (marked.includes(one) && one.getAttribute('aria-invalid') === 'true')
+                    restore(one, 'aria-invalid', invalid);
+                const had = (describedBy ?? '').split(/\s+/).includes(error.id);
+                const rest = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
+                if (!had) restore(one, 'aria-describedby', rest.length > 0 ? rest.join(' ') : null);
+            }
+        });
+    };
+    const speak = (words: string) => {
+        if (words !== '') speakOn(chosen, words);
+    };
+    /**
+     * Refuses in a part of the page: the part attached where the page refuses, with its summary,
+     * and the whole form where the kit refuses its own failures, which the page's summary does not
+     * hold.
+     */
+    const refuseIn = (within: HTMLElement, summed: boolean) => {
         pending?.();
+        const failures = failed;
+        failed = [];
         // Read in the same frame as focus moves, before it moves, so what a refusal says follows
         // where focus was.
         let target: HTMLElement | null = null;
         const frame = window.requestAnimationFrame(() => {
-            const summary = chosen.summary?.() ?? null;
-            const fields = wrongFields(form);
+            const summary = summed ? (chosen.summary?.() ?? null) : null;
+            const fields = wrongFields(within);
             const field = fields.map(focusIn).find((one) => one !== null) ?? null;
             target = summary instanceof HTMLElement ? summary : field;
-            // Nothing in error and no summary leaves focus where it is.
+            // Nothing in error and no summary leaves focus where it is. So do fields in error that
+            // none can take focus in, whose first is named and its error said, and failures a page
+            // that draws its own errors marked none of, whose first is said the same way.
             if (!target) {
                 moving();
+                const [first] = fields;
+                const [unmarked] = failures;
+                if (first) speak(unreachedWords(first, errorWords(first), fields.length));
+                else if (unmarked)
+                    speak(unreachedWords(unmarked.field, unmarked.words, failures.length));
                 return;
             }
             const focused = document.activeElement === target;
@@ -1832,6 +2361,53 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         };
         return pending;
     };
+    const refuse: Refuse = () => refuseIn(form, true);
+    // The browser's constraints, checked across the whole form as it is submitted, before the
+    // page's own handler in the bubble phase, which runs only where every field passes, so it can
+    // still check what they cannot express. A form is checked once however many of its parts are
+    // attached, by the form's own attach where there is one, else the first part's. A button marked
+    // formnovalidate submits unchecked, as with the browser's own check, and clears what the kit
+    // drew, which no longer stands.
+    const check = (event: SubmitEvent, whole: HTMLFormElement) => {
+        const { submitter } = event;
+        const failures =
+            (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) &&
+            submitter.formNoValidate
+                ? []
+                : failuresOf(whole, chosen.errorWords);
+        const failing = new Set(failures.map(({ field }) => field));
+        for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
+        if (failures.length === 0) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        failed = failures;
+        if (chosen.invalid) {
+            chosen.invalid(failures);
+            return;
+        }
+        for (const failure of failures) draw(failure);
+        refuseIn(whole, false);
+    };
+    const clear = () => {
+        for (const field of [...drawn.keys()]) undraw(field);
+    };
+    if (own && (own === form || !checkers.has(own))) checkers.set(own, { check, clear });
+    if (own && !checkedForms.has(own)) {
+        checkedForms.add(own);
+        own.addEventListener(
+            'submit',
+            (event) => {
+                checkers.get(own)?.check(event, own);
+            },
+            { capture: true }
+        );
+        // A reset a page calls off leaves the errors, since the values that failed stay.
+        own.addEventListener('reset', (event) => {
+            window.setTimeout(() => {
+                if (!event.defaultPrevented) checkers.get(own)?.clear();
+            });
+        });
+    }
     attachedForms.set(form, {
         refuse,
         set: (next) => {
@@ -1938,9 +2514,7 @@ const CELLS = ':scope > :is(button, a[href], [role="tab"])';
  * inert or out of sight, which could take no focus and so could not be the group's stop.
  */
 const cellsIn = (group: HTMLElement): HTMLElement[] =>
-    [...group.querySelectorAll<HTMLElement>(CELLS)].filter(
-        (cell) => !cell.matches(':disabled') && !cell.closest('[inert]') && cell.checkVisibility()
-    );
+    [...group.querySelectorAll<HTMLElement>(CELLS)].filter(takesFocus);
 
 /** Each cell's own tabindex before a group was attached, put back as the group is let go. */
 const ownTabIndex = new WeakMap<HTMLElement, string | null>();
@@ -2153,16 +2727,21 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     let chosen: BusyOptions = options ?? {};
     let timer = 0;
     let marked = false;
+    // Each busy run counts, so a notice waiting from a run that ended says nothing in another.
+    let runs = 0;
     const busy = () => button.hasAttribute('data-busy');
     const speak = () => {
         if (!busy()) return;
         const given = button.getAttribute('data-busy') ?? '';
         const words = given === '' ? 'Saving.' : given;
-        const still = () => (busy() ? words : null);
-        if (chosen.say) chosen.say(still);
-        else if (chosen.status) say(chosen.status, still);
+        const run = runs;
+        const still = () => (busy() && run === runs ? words : null);
+        // Polite, as a notice that work goes on, so it gives way to a result, and the end of a
+        // progress said beside it, which is polite too, takes its place rather than being dropped.
+        speakOn(chosen, still, { polite: true });
     };
     const start = () => {
+        runs += 1;
         window.clearTimeout(timer);
         if (button.getAttribute('aria-disabled') !== 'true') {
             button.setAttribute('aria-disabled', 'true');
@@ -2171,6 +2750,7 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
         timer = window.setTimeout(speak, waitOf(button));
     };
     const end = () => {
+        runs += 1;
         window.clearTimeout(timer);
         if (marked) button.removeAttribute('aria-disabled');
         marked = false;
@@ -2277,8 +2857,7 @@ export const attachProgress = (
         return /[.!?]$/.test(said) ? said : `${said}.`;
     };
     const speak = (message: string) => {
-        if (chosen.say) chosen.say(message, { polite: true });
-        else if (chosen.status) say(chosen.status, message, false, true);
+        speakOn(chosen, message, { polite: true });
     };
     const check = () => {
         if (!known()) {
