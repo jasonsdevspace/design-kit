@@ -1594,7 +1594,8 @@ message said over another replaces it, so only the last of a quick run is heard.
 copy button does, through the same function, so a line a page hands to both keeps one timer.
 `StatusProvider` lets its line go as it unmounts: the line's timers are cleared and the words said
 or held for it are dropped, so nothing more is said there, by any piece given the line, until it is
-attached again.
+attached again. A piece's own timers, such as a busy button's wait, still come due, and say nothing
+there.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -1617,9 +1618,10 @@ come wait for those in turn. Polite words given as a function, such as the busy 
 any words on the line, polite ones too, and are read as they are put in, so they never put out the
 end of a progress and say nothing once the work is done.
 
-Attached again, a line returns the function it returned first. A stepper speaks on a line of its own
-inside its field, and the toast on one of its own, so a page finds its screen's line by a class of
-its own rather than by its role, which those share.
+Attached again, a line returns the function it returned first, unless `StatusProvider` let it go as
+it unmounted, when it returns one afresh. A stepper speaks on a line of its own inside its field,
+and the toast on one of its own, so a page finds its screen's line by a class of its own rather than
+by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
 what happened on its own line and the two would speak over each other. A field's error is never said

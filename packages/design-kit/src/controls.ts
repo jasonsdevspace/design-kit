@@ -573,15 +573,6 @@ const SAID_FOR = 2000;
 /** A message a status line says: words, or a function that gives them as they are put in. */
 type Spoken = Parameters<Say>[0];
 
-/**
- * What a status line is saying. A message is put in a moment after the line is emptied, so the
- * same words twice are heard twice, and leaves after a while unless it is kept, as a toast keeps
- * its own until the toast leaves. Words waiting to settle keep a timer of their own, so words
- * already said still leave as ever. The line knows the message it is saying and whether it was said
- * in this moment, whether firm words were said in this moment or still settle, and the polite words
- * and the polite notice, given as a function, waiting for it to be free.
- */
-
 /** Empties a status line, and drops what it was about to say, waiting words among them. */
 const hush = (status: HTMLElement) => {
     const line = lineOf(status);
@@ -727,6 +718,9 @@ export type SayOptions = {
  */
 export type Say = (message: string | (() => string | null), options?: SayOptions) => void;
 
+/** The function each attached line says by, kept so attaching it again returns the same one. */
+const attachedLines = new WeakMap<HTMLElement, Say>();
+
 /**
  * Returns the function that says a message on a status line, which a page draws out of sight and
  * puts on the page from the start, so a screen reader hears each message without focus moving. A
@@ -738,10 +732,9 @@ export type Say = (message: string | (() => string | null), options?: SayOptions
  * being said, so the last words said are the ones heard. A screen keeps a line of its own for this,
  * as a toast and a stepper keep theirs. It speaks through the same function as the copy button and
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
- * an earlier one. Attached again, a line returns the function it returned first.
+ * an earlier one. Attached again, a line returns the function it returned first, unless the line
+ * was let go of, as `StatusProvider` does when it unmounts, when it returns one afresh.
  */
-/** The function each attached line says by, kept so attaching it again returns the same one. */
-const attachedLines = new WeakMap<HTMLElement, Say>();
 export const attachStatus = (line: HTMLElement): Say => {
     const already = attachedLines.get(line);
     // A line let go of, as `StatusProvider` does when it unmounts, is attached afresh.
