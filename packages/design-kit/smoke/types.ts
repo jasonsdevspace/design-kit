@@ -27,6 +27,7 @@ import {
     useStatus,
 } from '@jasonsdevspace/design-kit/react';
 import {
+    activeOf,
     attachBusy,
     attachForm,
     type Failure,
@@ -277,6 +278,10 @@ export const changedOf = (heading: HTMLElement): (() => void) =>
 // A form refused once its errors are drawn, said on a line or through a page's own say.
 export const refuseOf = (form: HTMLElement, line: HTMLElement): Refuse =>
     attachForm(form, { status: line, summary: () => null });
+
+// A refusal made later than it was asked, from where focus stood then, inside a shadow root too.
+export const laterRefusalOf = (refuse: Refuse, from: Element | null = activeOf()): (() => void) =>
+    refuse({ from });
 
 // A form's failures take the page's words, or go to a page that draws them itself.
 export const checkedOf = (form: HTMLFormElement, words: FailureWords): Refuse =>

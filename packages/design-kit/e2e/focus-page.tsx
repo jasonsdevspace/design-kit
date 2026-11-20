@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
@@ -14,9 +14,17 @@ const page = window as unknown as Page;
  * one with a field that takes focus itself, two requests made in one frame, a row of tabs moved
  * along by the arrow keys or chosen by a press, whose views each take focus on arrival, a view
  * first drawn late beside a field, one gone in the frame it arrived in, a view drawn again many
- * times before any press, a view and a section of it brought by one press, and a save answered
- * after an await that turns on the control it asks focus for.
+ * times before any press, a view and a section of it brought by one press, a save answered
+ * after an await that turns on the control it asks focus for, the same with the control in a
+ * sibling and with the save pressed inside a shadow root, and a panel that asks for focus on its
+ * opener once it is gone.
  */
+
+/** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
+const answered = () =>
+    new Promise((resolve) => {
+        setTimeout(resolve);
+    });
 
 const Players = () => {
     const [players, setPlayers] = useState(['Ann', 'Ben']);
@@ -260,10 +268,7 @@ const Saving = () => {
     const [saved, setSaved] = useState(false);
     const focusNext = useFocusAfterDraw();
     const save = async () => {
-        // Answered in a task of its own, as a store's answer is, so React draws what it sets later.
-        await new Promise((resolve) => {
-            setTimeout(resolve);
-        });
+        await answered();
         setSaved(true);
         focusNext('saved-next');
     };
@@ -285,6 +290,113 @@ const Saving = () => {
     );
 };
 
+// The control a save turns on drawn by a sibling, so only the sibling draws the save's change.
+let turnOnSibling: (() => void) | null = null;
+
+const SiblingNext = () => {
+    const [on, setOn] = useState(false);
+    useEffect(() => {
+        turnOnSibling = () => {
+            setOn(true);
+        };
+        return () => {
+            turnOnSibling = null;
+        };
+    }, []);
+    return (
+        <button id="sibling-next" type="button" aria-disabled={on ? undefined : 'true'}>
+            Next in the sibling
+        </button>
+    );
+};
+
+const SiblingSave = () => {
+    const focusNext = useFocusAfterDraw();
+    const save = async () => {
+        await answered();
+        turnOnSibling?.();
+        focusNext('sibling-next');
+    };
+    return (
+        <button
+            id="sibling-save"
+            type="button"
+            onClick={() => {
+                void save();
+            }}
+        >
+            Save for the sibling
+        </button>
+    );
+};
+
+// A save pressed inside a shadow root, as a widget's own button is, whose answer turns on a control
+// of the page around it.
+const ShadowSave = () => {
+    const [saved, setSaved] = useState(false);
+    const focusNext = useFocusAfterDraw();
+    const host = useCallback(
+        (element: HTMLDivElement | null) => {
+            if (!element || element.shadowRoot) return;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.id = 'shadow-save';
+            button.textContent = 'Save in the widget';
+            button.addEventListener('click', () => {
+                void (async () => {
+                    await answered();
+                    setSaved(true);
+                    focusNext(() => document.getElementById('shadow-next'));
+                })();
+            });
+            element.attachShadow({ mode: 'open' }).append(button);
+        },
+        [focusNext]
+    );
+    return (
+        <section>
+            <div ref={host} />
+            <button id="shadow-next" type="button" aria-disabled={saved ? undefined : 'true'}>
+                Next after the widget
+            </button>
+        </section>
+    );
+};
+
+// A panel closed by its own press, which asks for focus on its opener after an await, once it is
+// gone.
+const Panel = ({ onClose }: { readonly onClose: () => void }) => {
+    const focusBack = useFocusAfterDraw();
+    const close = async () => {
+        onClose();
+        await answered();
+        focusBack(() => document.getElementById('panel-open'));
+    };
+    return (
+        <button
+            id="panel-close"
+            type="button"
+            onClick={() => {
+                void close();
+            }}
+        >
+            Close the panel
+        </button>
+    );
+};
+
+const Panels = () => {
+    const [open, setOpen] = useState(true);
+    return (
+        <section>
+            <button id="panel-open" type="button" onClick={() => setOpen(true)}>
+                Open the panel
+            </button>
+            {open ? <Panel onClose={() => setOpen(false)} /> : null}
+        </section>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -298,5 +410,11 @@ if (root)
             <Again />
             <Start />
             <Saving />
+            <section>
+                <SiblingSave />
+                <SiblingNext />
+            </section>
+            <ShadowSave />
+            <Panels />
         </main>
     );

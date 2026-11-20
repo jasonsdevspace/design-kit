@@ -162,6 +162,42 @@ test.describe('in React', () => {
         await expect(page.locator('#saved-next')).toBeFocused();
     });
 
+    test('focuses a control a sibling draws, turned on after an await, though the frame comes before the render', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        // A frame due at once comes before React draws the sibling the save turned the control
+        // on in.
+        await page.evaluate(() => {
+            window.requestAnimationFrame = (callback) => {
+                queueMicrotask(() => {
+                    callback(performance.now());
+                });
+                return 0;
+            };
+        });
+        await page.locator('#sibling-save').click();
+        await expect(page.locator('#sibling-next')).toBeFocused();
+    });
+
+    test('focuses a control a save pressed inside a shadow root turns on after an await', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#shadow-save').focus();
+        await page.keyboard.press('Enter');
+        await expect(page.locator('#shadow-next')).toBeFocused();
+    });
+
+    test('moves focus asked for after an await by a component that has since unmounted', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#panel-close').click();
+        await expect(page.locator('#panel-close')).toHaveCount(0);
+        await expect(page.locator('#panel-open')).toBeFocused();
+    });
+
     test('focuses the last of two requests made in one frame', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#remove-Ann').focus();

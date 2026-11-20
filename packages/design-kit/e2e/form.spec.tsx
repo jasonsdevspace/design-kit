@@ -273,4 +273,26 @@ test.describe('in React', () => {
         await expect(page.getByRole('textbox', { name: 'Player' })).toBeFocused();
         await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
     });
+
+    test('refuses the second of two refusals once the first is called off', async ({ page }) => {
+        await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
+        await page.evaluate(() => {
+            (window as unknown as { refuseTwice: () => void }).refuseTwice();
+        });
+        await expect(page.getByRole('textbox', { name: 'Player' })).toBeFocused();
+        await expect(page.locator('#root p[role="status"]')).toHaveText('1 field needs attention.');
+    });
+
+    test('leaves focus where the visitor moved it before the error was drawn', async ({ page }) => {
+        await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
+        await page.evaluate(() => {
+            (window as unknown as { refuseAndMove: () => void }).refuseAndMove();
+        });
+        await expect(page.getByRole('textbox', { name: 'Player' })).toHaveAttribute(
+            'aria-invalid',
+            'true'
+        );
+        await page.waitForTimeout(100);
+        await expect(page.locator('#elsewhere')).toBeFocused();
+    });
 });
