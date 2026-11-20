@@ -197,16 +197,18 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
 export type ArrivalKey = string | number | boolean | null | undefined;
 
 /**
- * A ref for a view's heading, which takes focus when a visitor's press or submit brings the view,
- * so a screen reader says where they are: when the key given changes, such as the round on screen,
- * and when a view is drawn by a press, as a tab bar's view is, by `focusOnArrival`. It never moves
- * focus as the page first draws, nor as a visitor moves along a row of tabs with the arrow keys or
- * Tabs past, nor from focus the view placed itself as it drew, as a field with autofocus does, nor
- * from where a visitor has moved it, and a view gone in the frame it arrived in moves nothing. The
- * key is a string, a number or a boolean, compared by value, so a key drawn again with the same
- * value moves nothing. The heading takes a tabindex of -1 where it has none, so it can take focus
- * at all. The key changes on a visitor's press or submit, never as they choose in a list or a set
- * of radios, which would move them as they choose.
+ * A ref for what a view's arrival focuses, such as its heading, which takes focus when a visitor's
+ * press or submit brings the view, so a screen reader says where they are: when the key given
+ * changes, such as the round on screen, and when a view is drawn by a press, as a tab bar's view
+ * is, by `focusOnArrival`. It never moves focus as the page first draws, nor as a visitor moves
+ * along a row of tabs with the arrow keys or Tabs past, nor from focus the view placed itself as it
+ * drew, as a field with autofocus does, nor from where a visitor has moved it, and a view gone in
+ * the frame it arrived in moves nothing. The key is a string, a number or a boolean, compared by
+ * value, so a key drawn again with the same value moves nothing. A heading, or any element that
+ * cannot take focus by itself, takes a tabindex of -1 where it has none, so it can take focus at
+ * all, and a button, a link or a field keeps its place in the Tab order. The key changes on a
+ * visitor's press or submit, never as they choose in a list or a set of radios, which would move
+ * them as they choose.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
     key: ArrivalKey
@@ -238,7 +240,13 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     }, [key]);
     return useCallback((element: Heading | null) => {
         heading.current = element;
-        if (element && !element.hasAttribute('tabindex')) element.tabIndex = -1;
+        // Only an element that cannot take focus by itself, such as a heading or a link with no
+        // address, so a button, a link or a field keeps its place in the Tab order.
+        const takes =
+            element !== null &&
+            element.tabIndex >= 0 &&
+            !element.matches('a:not([href]), area:not([href])');
+        if (element && !element.hasAttribute('tabindex') && !takes) element.tabIndex = -1;
     }, []);
 };
 

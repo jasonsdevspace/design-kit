@@ -82,6 +82,35 @@ const Round = () => {
     );
 };
 
+// A round's button that takes focus as its key changes, as a scores screen's "Change round" does.
+const Change = () => {
+    const [round, setRound] = useState(1);
+    const button = useArrivalFocus<HTMLButtonElement>(round);
+    return (
+        <section>
+            <button id="change" type="button" ref={button} onClick={() => setRound(round + 1)}>
+                Change round {round}
+            </button>
+            <button id="after-change" type="button">
+                After
+            </button>
+            <button id="bump" type="button" onClick={() => setRound(round + 1)}>
+                Next round
+            </button>
+        </section>
+    );
+};
+
+// A title written as a link with no address, which cannot take focus until the ref gives it a way.
+const LinkTitle = () => {
+    const title = useArrivalFocus<HTMLAnchorElement>('link-title');
+    return (
+        <a id="link-title" ref={title}>
+            Round notes
+        </a>
+    );
+};
+
 const Scores = () => {
     const heading = useArrivalFocus<HTMLHeadingElement>('scores');
     return (
@@ -403,6 +432,8 @@ if (root)
         <main>
             <Players />
             <Round />
+            <Change />
+            <LinkTitle />
             <Tabs />
             <Modes />
             <Late />
