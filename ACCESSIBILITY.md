@@ -82,11 +82,10 @@ is its CSS transformer, as the package README shows.
 
 ## Known limitations
 
-- In Firefox 120, which lacks `:has()`, an empty live callout draws its ground and keeps its place
-  in the flow until it is filled, so a grid opens its gap around it, and a label that holds a
-  checkbox or a radio shows no pointer, though the box or the dot does. In a choice field there, a
-  choice the keyboard lands on lights no word, so the ring on the control is the one cue, and a
-  disabled choice keeps its word in the text color, with only the control drawn off.
+- In Firefox 120, which lacks `:has()`, a label that holds a checkbox or a radio shows no pointer,
+  though the box or the dot does. In a choice field there, a choice the keyboard lands on lights no
+  word, so the ring on the control is the one cue, and a disabled choice keeps its word in the text
+  color, with only the control drawn off.
 - In Firefox 120, the room a page that ends in a tab bar keeps for it, the room a page keeps for a
   toast shown over it, and the room a table's frame keeps for its pinned column all rest on
   `:has()`, so there the keyboard can bring a control to rest under the bar, the toast or the pinned

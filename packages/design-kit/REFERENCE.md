@@ -1579,14 +1579,14 @@ copy button does, through the same function, so a line a page hands to both keep
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
-wait that long for their words to stop changing, so a screen reader hears the count once the
-presses stop rather than every step of it or none. Words said again in the meantime take the place
-of those not yet said, any message said on the line drops words still settling, so the last words
-said are the ones heard, and the same words said twice are heard twice. Words that must be heard,
+wait that long for their words to stop changing, so a screen reader hears the count once the presses
+stop rather than every step of it or none. Words said again in the meantime take the place of those
+not yet said, and firm words, any not asked to be polite, drop words still settling, so the last
+words said are the ones heard. The same words said twice are heard twice. Words that must be heard,
 such as a save's result or the end of a progress, never wait to settle, and words that settle never
-drop words already said. A stepper's press words are put in a tenth of a second after each press,
-so a quick run of presses is heard once, at its end, and on a page's line they leave as every
-message there does.
+drop words already said. A stepper's press words are put in a tenth of a second after each press, so
+a quick run of presses is heard once, at its end, and on a page's line they leave as every message
+there does.
 
 Words that should give way to a result, such as a progress's steps and its end, or a busy button's
 notice that work goes on, ask to be polite, as `say(words, { polite: true })`. Polite words said in
