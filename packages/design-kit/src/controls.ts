@@ -653,7 +653,7 @@ const admit = (line: Line, message: Spoken): boolean => {
     return true;
 };
 
-/** Drops every message waiting on a line taken off the page, so nothing is said there again. */
+/** Drops every message held for a line taken off the page, so nothing is said there again. */
 const dropAll = (line: Line) => {
     line.current = null;
     line.words = null;
