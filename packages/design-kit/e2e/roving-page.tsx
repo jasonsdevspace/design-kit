@@ -5,7 +5,7 @@ import { useRoving } from '../src/react.js';
 
 /*
  * The page roving.spec.tsx draws with React: a row of tabs that chooses as focus moves, with its
- * options written inline on every render.
+ * options written inline on every render, and a row of tabs in a details closed as it mounts.
  */
 
 const MODES = ['number', 'cards'] as const;
@@ -42,5 +42,34 @@ const Modes = () => {
     );
 };
 
+const Shut = () => {
+    const row = useRoving<HTMLDivElement>();
+    return (
+        <details id="shut">
+            <summary>Code</summary>
+            <div id="shut-tabs" className="dk-tabs" role="tablist" aria-label="Language" ref={row}>
+                <button
+                    id="shut-html"
+                    type="button"
+                    role="tab"
+                    className="dk-tab"
+                    aria-selected={false}
+                >
+                    HTML
+                </button>
+                <button id="shut-react" type="button" role="tab" className="dk-tab" aria-selected>
+                    React
+                </button>
+            </div>
+        </details>
+    );
+};
+
 const root = document.getElementById('root');
-if (root) createRoot(root).render(<Modes />);
+if (root)
+    createRoot(root).render(
+        <>
+            <Modes />
+            <Shut />
+        </>
+    );

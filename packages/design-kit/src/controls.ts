@@ -2618,15 +2618,16 @@ const inPlaceOf = (
  * or Command is left to the browser. The stop is the cell the page names as current, else a
  * tablist's chosen tab, else the one focus last reached, else the first, and a cell that is
  * disabled, inert or out of sight is never the stop. The stop is placed as the group is attached,
- * as its cells change and as it comes into sight, so a group attached in a closed details, a hidden
- * panel or a dialog not yet open has its stop once it shows. A cell marked off keeps its place, as
- * it does in the tab order, and is never handed to `onMove`. The kit moves focus and the page
- * chooses: a page that chooses a tab as focus reaches it does so in `onMove`. A grid of buttons
- * with the group's role, or none, takes the toolbar's, so a screen reader says the arrows move
- * within it. Where the cell that had focus is taken out, focus goes to the next cell still there,
- * or the one before. Let go, each cell takes back its own tabindex and the grid its own role.
- * Attached again, a group returns what it returned first and takes options given in place of the
- * last.
+ * as its cells change and as its size does, so a group attached while drawn at no size, in a closed
+ * details, under hidden or display none, or in a dialog not yet open, has its stop once it shows. A
+ * group under inert, or hidden in a way that keeps its size, is placed again only as its cells
+ * change. A cell marked off keeps its place, as it does in the tab order, and is never handed to
+ * `onMove`. The kit moves focus and the page chooses: a page that chooses a tab as focus reaches it
+ * does so in `onMove`. A grid of buttons with the group's role, or none, takes the toolbar's, so a
+ * screen reader says the arrows move within it. Where the cell that had focus is taken out, focus
+ * goes to the next cell still there, or the one before. Let go, each cell takes back its own
+ * tabindex and the grid its own role. Attached again, a group returns what it returned first and
+ * takes options given in place of the last.
  */
 export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
     const already = attachedGroups.get(group);
@@ -2700,7 +2701,10 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         });
     };
     let before = cellsIn(group);
-    const kept = new MutationObserver(() => {
+    // Run as the group's cells change and as its size does: a cell that went out, or out of sight,
+    // hands its place to the next cell still there, and focus with it where it fell from that cell,
+    // and the stop is placed again.
+    const settle = () => {
         const cells = cellsIn(group);
         const gone = last && !cells.includes(last) ? last : null;
         if (gone) {
@@ -2711,24 +2715,26 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         }
         before = cells;
         place();
-    });
+    };
+    const kept = new MutationObserver(settle);
     kept.observe(group, {
         childList: true,
         subtree: true,
         attributeFilter: ['aria-selected', 'hidden', 'disabled', 'inert', 'class', 'style'],
     });
-    // A group attached out of sight, in a closed details, a hidden panel or a dialog not yet open,
-    // has no cell in sight to take the stop, and what shows it changes something outside the group,
-    // which the observer above does not hear. The group is drawn at no size while out of sight and
-    // at its own once it shows, so watching its size places the stop as it comes into sight,
-    // however it was hidden, and costs nothing while its size holds. Listening for a details'
-    // toggle would miss a panel or a dialog. Giving the named or first cell the stop while none is
-    // in sight cannot tell a cell hidden with its group from one hidden on its own, which would
-    // keep the stop out of sight once the group shows.
-    const drawn = new ResizeObserver(() => {
-        before = cellsIn(group);
-        place();
-    });
+    // A group attached out of sight in a way that draws it at no size, in a closed details, under
+    // hidden or display none, or in a dialog not yet open, has no cell in sight to take the stop,
+    // and what shows it changes something outside the group, which the observer above does not
+    // hear. Such a group is drawn at its own size once it shows, so watching its size places the
+    // stop as it comes into sight. The watch also hears a cell a media query or a page's rule hides
+    // as it resizes the group. It runs on each change of the group's size, such as each frame a
+    // window is dragged or a font that loads, and each run checks whether each of the group's cells
+    // is in sight, on a layout the observer runs after, and writes a tabindex only where one
+    // changes. A group made inert, or hidden in a way that keeps its size, is not heard. Listening
+    // for a details' toggle would miss a panel or a dialog. Giving the named or first cell the stop
+    // while none is in sight cannot tell a cell hidden with its group from one hidden on its own,
+    // which would keep the stop out of sight once the group shows.
+    const drawn = new ResizeObserver(settle);
     drawn.observe(group);
     const listening = new AbortController();
     const { signal } = listening;
