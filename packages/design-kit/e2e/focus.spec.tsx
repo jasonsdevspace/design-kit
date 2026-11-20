@@ -137,13 +137,15 @@ test.describe('in React', () => {
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await expect(page.locator('#change')).not.toHaveAttribute('tabindex', /.*/);
-        await page.locator('#change').click();
+        // The key changes from another button, so focus can only reach this one by the hook.
+        await page.locator('#bump').click();
         await expect(page.locator('#change')).toHaveText('Change round 2');
         await expect(page.locator('#change')).toBeFocused();
         await page.keyboard.press('Tab');
         await expect(page.locator('#after-change')).toBeFocused();
         await page.keyboard.press('Shift+Tab');
-        await expect(page.locator('#change')).toBeFocused();
+        await expect(page.locator('#change')).toBeFocused(); // A link with no address takes focus no other way, so it is given a tabindex as a heading is.
+        await expect(page.locator('#link-title')).toHaveAttribute('tabindex', '-1');
     });
 
     test("focuses a view's heading when its key changes, but never as the page first draws", async ({

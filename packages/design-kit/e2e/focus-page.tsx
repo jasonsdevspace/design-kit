@@ -94,7 +94,20 @@ const Change = () => {
             <button id="after-change" type="button">
                 After
             </button>
+            <button id="bump" type="button" onClick={() => setRound(round + 1)}>
+                Next round
+            </button>
         </section>
+    );
+};
+
+// A title written as a link with no address, which cannot take focus until the ref gives it a way.
+const LinkTitle = () => {
+    const title = useArrivalFocus<HTMLAnchorElement>('link-title');
+    return (
+        <a id="link-title" ref={title}>
+            Round notes
+        </a>
     );
 };
 
@@ -420,6 +433,7 @@ if (root)
             <Players />
             <Round />
             <Change />
+            <LinkTitle />
             <Tabs />
             <Modes />
             <Late />
