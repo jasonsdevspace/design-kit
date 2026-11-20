@@ -17,6 +17,7 @@ import {
     attachRoving,
     attachStatus,
     type BusyOptions,
+    type Failure,
     type FocusTarget,
     type FormOptions,
     moveFocus,
@@ -189,12 +190,15 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * calls the refusal off, which unmounting does too. A form with no provider above it and no `say`
  * throws, since its refusal would reach no one. A submit whose fields fail the browser's
  * constraints is stopped before the page's handler, and the failures are handed to `invalid`,
- * which sets the page's errors, and the refusal follows once they are drawn, so a React page draws
- * every error from its own state. `errorWords` gives the words for each failure in place of the
- * kit's.
+ * which the page must give, since the markup is its own: it sets the page's errors from them, and
+ * the refusal follows once they are drawn. `invalid` is called only for a submit that fails, so the
+ * page's own submit handler clears the errors it set. `errorWords` gives the words for each
+ * failure in place of the kit's, read as each is put in words.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
-    options: Pick<FormOptions, 'say' | 'summary' | 'invalid' | 'errorWords'> = {}
+    options: Pick<FormOptions, 'say' | 'summary' | 'errorWords'> & {
+        readonly invalid: NonNullable<FormOptions['invalid']>;
+    }
 ): readonly [RefCallback<Form>, Refuse] => {
     const speaker = useContext(Speaker);
     if (!speaker && !options.say)
@@ -210,7 +214,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
         waiting.current = cancel;
         return cancel;
     }, []);
-    // A refusal owed once the page draws the errors it was handed, made after the render that
+    // A refusal owed once the page draws the failures it was handed, made after the render that
     // draws them, or a frame later where that render is another component's.
     const owed = useRef(false);
     const pay = useCallback(() => {
@@ -219,42 +223,36 @@ export const useFormRefusal = <Form extends HTMLElement>(
         refuse();
     }, [refuse]);
     useEffect(pay);
-    const form = useRef<Form | null>(null);
-    const attach = useCallback(
-        (element: Form, drawsItself: boolean) =>
-            attachForm(element, {
-                say: (words, settle) => {
-                    const { options: now, speaker: line } = latest.current;
-                    (now.say ?? line)?.(words, settle);
-                },
-                summary: () => latest.current.options.summary?.() ?? null,
-                errorWords: latest.current.options.errorWords,
-                invalid: drawsItself
-                    ? (failures) => {
-                          owed.current = true;
-                          latest.current.options.invalid?.(failures);
-                          window.requestAnimationFrame(pay);
-                      }
-                    : undefined,
-            }),
-        [pay]
-    );
     const ref = useCallback(
-        (element: Form | null) => {
-            form.current = element;
-            refuser.current = element
-                ? attach(element, Boolean(latest.current.options.invalid))
+        (form: Form | null) => {
+            refuser.current = form
+                ? attachForm(form, {
+                      say: (words, settle) => {
+                          const { options: now, speaker: line } = latest.current;
+                          (now.say ?? line)?.(words, settle);
+                      },
+                      summary: () => latest.current.options.summary?.() ?? null,
+                      // Read as each failure is put in words, so words written inline on every
+                      // render are never set again.
+                      errorWords: new Proxy(
+                          {},
+                          {
+                              get: (_, failure) =>
+                                  typeof failure === 'string'
+                                      ? latest.current.options.errorWords?.[failure as Failure]
+                                      : undefined,
+                          }
+                      ),
+                      invalid: (failures) => {
+                          owed.current = true;
+                          latest.current.options.invalid(failures);
+                          window.requestAnimationFrame(pay);
+                      },
+                  })
                 : null;
         },
-        [attach]
+        [pay]
     );
-    // Given again only where they change, as each hook's options are: whether the page draws its
-    // own errors, and the words it gives for each failure.
-    const drawsItself = Boolean(options.invalid);
-    const { errorWords } = options;
-    useEffect(() => {
-        if (form.current) attach(form.current, drawsItself);
-    }, [attach, drawsItself, errorWords]);
     useEffect(
         () => () => {
             waiting.current?.();

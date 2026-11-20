@@ -10,7 +10,11 @@ import { Button, InputField, StatusProvider, useFormRefusal } from '../src/react
 
 const AddPlayer = () => {
     const [error, setError] = useState('');
-    const [form, refuse] = useFormRefusal<HTMLFormElement>();
+    const [form, refuse] = useFormRefusal<HTMLFormElement>({
+        invalid: (failures) => {
+            setError(failures[0]?.words ?? '');
+        },
+    });
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const name = new FormData(event.currentTarget).get('name');

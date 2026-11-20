@@ -25,7 +25,7 @@ import { sentOf } from './parts.mjs';
  * again once saying progress at its steps took them past 12 KB, and again once checking a form
  * against the browser's constraints took them past 12.75 KB.
  */
-const BUDGET = 14.25 * 1024;
+const BUDGET = 15.5 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

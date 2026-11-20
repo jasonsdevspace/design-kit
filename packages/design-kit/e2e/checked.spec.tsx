@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { InputField, StatusLine } from '../src/react.js';
+import { InputField, StatusLine, StepperField } from '../src/react.js';
 import { bundle } from './bundle.js';
 import { servePage } from './page.js';
 
@@ -125,6 +125,211 @@ test("takes each failure's words from the field, else the page's map, else the k
     await expect(errorOf(page, 'age')).toHaveText('Error: Enter 18 or more.');
 });
 
+/** A page of the page's own markup, with the form attached as it is drawn. */
+const openWith = async (page: Page, form: string, attach = 'form') => {
+    await servePage(page, {
+        title: 'Join',
+        body: `<main><h1>Join</h1>${form}<p class="dk-visually-hidden screen-status" role="status"></p></main>`,
+        script: `import { attachForm } from './controls.js';
+const line = document.querySelector('.screen-status');
+window.heard = [];
+window.submits = 0;
+new MutationObserver(() => {
+    if (line.textContent) window.heard.push(line.textContent);
+}).observe(line, { childList: true, characterData: true, subtree: true });
+document.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    window.submits += 1;
+});
+attachForm(document.querySelector(${JSON.stringify(attach)}), { status: line });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+const send = (page: Page) => page.getByRole('button', { name: 'Send' }).click();
+
+test("draws a field's error after its hint, and describes it after the hint", async ({ page }) => {
+    await openWith(
+        page,
+        `<form><div class="dk-field"><label class="dk-field-label" for="code">Code</label>
+<p class="dk-field-hint" id="code-hint">Six letters.</p>
+<input class="dk-input" id="code" required aria-describedby="code-hint"></div>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#code-error')).toHaveText('Error: Enter a value.');
+    expect(
+        await page.evaluate(() => {
+            const hint = document.querySelector('#code-hint');
+            const error = document.querySelector('#code-error');
+            return hint && error
+                ? hint.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING
+                : 0;
+        })
+    ).toBeTruthy();
+    await expect(page.locator('#code')).toHaveAttribute('aria-describedby', 'code-hint code-error');
+});
+
+test('names a field no one can reach, and leaves focus where it is', async ({ page }) => {
+    await openWith(
+        page,
+        `<form><details><summary>More</summary><label for="phone">Phone</label><input id="phone" required></details>
+<button type="submit">Send</button></form>`
+    );
+    // By Enter, since a press of the pointer leaves a button without focus in Safari.
+    await page.getByRole('button', { name: 'Send' }).focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => heard(page)).toEqual(['Phone: Error: Enter a value.']);
+    await expect(page.getByRole('button', { name: 'Send' })).toBeFocused();
+});
+
+test('lets a field marked off pass, since no one could put it right', async ({ page }) => {
+    await openWith(
+        page,
+        `<form><fieldset aria-disabled="true"><legend>Size</legend>
+<label><input type="radio" name="size" value="s" required> Small</label>
+<label><input type="radio" name="size" value="l"> Large</label></fieldset>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect.poll(() => submits(page)).toBe(1);
+});
+
+test('counts a group of radios with no set around it once, and a box alone in a section as its own field', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><fieldset><legend>Your details</legend>
+<label for="who">Name</label><input id="who" value="Ana">
+<label><input type="checkbox" id="agree" name="agree" required> I agree</label></fieldset>
+<p>Size</p>
+<label><input type="radio" id="size-s" name="size" value="s" required> Small</label>
+<label><input type="radio" id="size-l" name="size" value="l"> Large</label>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#agree')).toBeFocused();
+    await expect(page.locator('#agree-error')).toHaveText('Error: Check the box to go on.');
+    await expect(page.locator('.dk-field-error')).toHaveCount(2);
+    await expect.poll(() => heard(page)).toEqual(['2 fields need attention.']);
+});
+
+test("gives an error the page drew for a field the kit's words, and puts the page's back once it passes", async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><label for="nick">Name</label>
+<p class="dk-field-error" id="nick-error"><span class="dk-visually-hidden">Error: </span>That name is taken.</p>
+<input id="nick" required aria-invalid="true" aria-describedby="nick-error">
+<label for="mail">Email</label><input id="mail" required>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('.dk-field-error')).toHaveCount(2);
+    await expect(page.locator('#nick-error')).toHaveText('Error: Enter a value.');
+    await page.locator('#nick').fill('Ana');
+    await send(page);
+    await expect(page.locator('#nick-error')).toHaveText('Error: That name is taken.');
+    await expect(page.locator('#nick')).toHaveAttribute('aria-invalid', 'true');
+});
+
+test('gives fields with no id errors of their own', async ({ page }) => {
+    await openWith(
+        page,
+        `<form><label>Name <input required></label><label>Town <input required></label>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    const ids = await page
+        .locator('.dk-field-error')
+        .evaluateAll((errors) => errors.map((error) => error.id));
+    expect(new Set(ids).size).toBe(2);
+    await expect(page.getByLabel('Town')).toHaveAccessibleDescription('Error: Enter a value.');
+});
+
+test("takes words written on a set's fieldset, and a field's own for its pattern", async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><fieldset id="size" data-error-value-missing="Choose a size."><legend>Size</legend>
+<label><input type="radio" name="size" value="s" required> Small</label>
+<label><input type="radio" name="size" value="l"> Large</label></fieldset>
+<label for="post">Postcode</label><input id="post" pattern="[A-Z]{2}" value="1" data-error-pattern-mismatch="Enter two capital letters.">
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#size-error')).toHaveText('Error: Choose a size.');
+    await expect(page.locator('#size')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('input[name="size"]').first()).not.toHaveAttribute(
+        'aria-invalid',
+        'true'
+    );
+    await expect(page.locator('#post-error')).toHaveText('Error: Enter two capital letters.');
+});
+
+test('checks the whole form where only a part of it is attached, a field tied to it from outside among them', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form id="join"><fieldset id="part"><legend>Part</legend><label for="a">A</label><input id="a" value="x" required></fieldset>
+<label for="b">B</label><input id="b" required>
+<button type="submit">Send</button></form>
+<label for="c">C</label><input id="c" form="join" required>`,
+        '#part'
+    );
+    await send(page);
+    await expect(page.locator('#b-error')).toBeVisible();
+    await expect(page.locator('#c-error')).toBeVisible();
+    expect(await submits(page)).toBe(0);
+});
+
+test("takes the kit's errors away as the form is reset", async ({ page }) => {
+    await openWith(
+        page,
+        `<form><label for="n">Name</label><input id="n" required>
+<button type="submit">Send</button><button type="reset">Clear</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#n-error')).toBeVisible();
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await expect(page.locator('#n-error')).toHaveCount(0);
+    await expect(page.locator('#n')).toHaveAttribute('aria-invalid', 'false');
+});
+
+test("leaves a stepper's own range error as the one error for a value past its limits", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Bid',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Bid</h1>
+                <form>
+                    <StepperField id="bid" label="Bid" min={0} max={10} defaultValue={5} />
+                    <button type="submit">Send</button>
+                </form>
+                <StatusLine className="screen-status" />
+            </main>
+        ),
+        script: `import { attachForm, attachStepper } from './controls.js';
+attachStepper(document.querySelector('.dk-stepper'));
+attachForm(document.querySelector('form'), { status: document.querySelector('.screen-status') });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('15');
+    await bid.blur();
+    await send(page);
+    await expect(page.locator('.dk-field-error:visible')).toHaveCount(1);
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+});
+
 test.describe('in React', () => {
     let app = '';
     test.beforeAll(async () => {
@@ -139,6 +344,7 @@ test.describe('in React', () => {
         await page.getByRole('button', { name: 'Join' }).click();
         await expect(page.getByLabel('Name')).toBeFocused();
         await expect(page.locator('#name-error')).toHaveText('Error: Enter your name.');
+        await expect(page.locator('#size-error')).toHaveText(/Choose an option/);
         await expect(page.locator('#count')).toHaveText('0');
     });
 });

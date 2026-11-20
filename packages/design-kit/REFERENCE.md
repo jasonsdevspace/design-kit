@@ -575,11 +575,12 @@ error, followed by any description of the page's own, and is left off when there
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
 The error is not live, since a form that fails in several fields at once would speak over itself. On
-a submit that fails, the page draws its errors and calls the function `attachForm(form, { status,
-summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which speaks
-on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an error
-summary where the page names one, else the first field in error that can take focus, passing over
-one that is disabled, inert, marked off, itself or by its set, or out of sight, or in a set its
+a submit that fails a check of the page's own, the page draws its errors and calls the function
+`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal()`
+returns in React, which speaks on the screen's `StatusProvider`, and the kit does the same itself
+for the browser's constraints, as below. A frame later, once the errors are drawn, focus moves to an
+error summary where the page names one, else the first field in error that can take focus, passing
+over one that is disabled, inert, marked off, itself or by its set, or out of sight, or in a set its
 checked radio or its first control that can take focus, since the set's fieldset takes none. A set
 counts once, however many of its choices are marked. One message is said, chosen so nothing is said
 twice: nothing where focus moves to the summary, which reads its own words, how many fields need
@@ -587,33 +588,43 @@ attention where focus moves to a field, since moving focus reads the field and i
 the field already had focus, which then reads nothing, the error's own words, with the count where
 more fields are wrong. A second refusal calls off one not yet landed, moves focus and speaks again,
 as WCAG 3.3.1 asks. Refused with nothing wrong and no summary, focus stays where it is, and refused
-with fields in error that none can take focus in, focus stays too and the first field's error is
-said with the count. In React, a form with no `StatusProvider` above it and no `say` throws, since
-its refusal would reach no one. A form is attached as it is drawn, never from its submit handler.
+with fields in error that none can take focus in, as one out of sight, focus stays too and the first
+field's name and error are said, with the count where more are wrong. In React, a form with no
+`StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
+attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
+already be in place when the first submit comes.
 
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
 record 21 has it. An attached form takes `noValidate` from script, or the form around an attached
 part of one, so a page without script still gets the browser's own check. On a submit the kit reads
-each field's `validity` before the page's handler, and where any field fails it stops the submit,
-draws each failing field's error as the kit's field draws one, marks it invalid, and refuses. Where
-every field passes, the page's handler runs as ever, for the checks the constraints cannot express,
-such as two fields that must match or a name already taken, and it draws those errors and refuses
-itself. A button marked `formnovalidate` submits unchecked. Errors the kit drew go once their
-fields pass on a later submit. Fields not in error are marked `aria-invalid="false"` as the form is
-attached, so a browser does not read an empty required field as invalid before anything is
-submitted.
+the `validity` of each of the form's fields, the whole form even where a part of it is attached and
+fields tied to it from outside by `form` among them, before the page's handler, passing over a field
+marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
+field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
+error the page already drew for the field takes the kit's words until the field passes, and a
+stepper's range error is left as the one error. Where every field passes, the page's handler runs as
+ever, for the checks the constraints cannot express, such as two fields that must match or a name
+already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
+again. A button marked `formnovalidate` submits unchecked. Errors the kit drew go once their fields
+pass on a later checked submit, or the form is reset. Fields not in error are marked
+`aria-invalid="false"` as the form is attached, so a browser does not read an empty required field
+as invalid before anything is submitted.
 
-Each way a field fails takes words that say what to do: "Enter a value." for an empty field and
-"Choose an option." for an empty set or select, "Enter an email address, like name@example.com." for
-a malformed address, "Enter at least 8 characters." for one too short, "Enter 18 or more." for a
-number under its least, "Enter a whole number." for a fraction, and the page's own words from
-`setCustomValidity`. A field's own words for a failure come first, as
-`data-error-value-missing="Enter your name."`, then the words a page gives the form as
-`errorWords`, as a page in another language gives them, then the kit's. A field with a `pattern`
-gives words of its own, since the kit cannot put a pattern in words. In React, the failures go to
-`invalid`, which sets the page's errors from its state, and the refusal follows once they are
-drawn.
+Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
+an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
+"Enter an email address, like name@example.com." for a malformed address, "Enter at least 8
+characters." for one too short, "Enter 18 or more." for a number under its least, "Enter a whole
+number." for a fraction, and the page's own words from `setCustomValidity`. A field's own words for
+a failure come first, as `data-error-value-missing="Enter your name."` on the control or on its
+set's fieldset, then the words a page gives the form as `errorWords`, as a page in another language
+gives them, then the kit's. Each attribute is the failure's `validity` name in kebab case after
+`data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A field with a
+`pattern` gives words of its own, since the kit cannot put a pattern in words, and without them it
+asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`, since the markup
+is the page's: the failures go to it, the page sets its errors from them, keyed by each failure's
+`field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. `invalid`
+is called only for a submit that fails, so the page's own submit handler clears the errors it set.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -630,9 +641,14 @@ form.addEventListener('submit', (event) => {
 const [form] = useFormRefusal<HTMLFormElement>({
     errorWords: { valueMissing: 'Enter your name.' },
     invalid: (failures) => {
-        setErrors(Object.fromEntries(failures.map(({ control, words }) => [control.id, words])));
+        setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
     },
 });
+const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrors({});
+};
+// <form ref={form} onSubmit={submit}>
 ```
 
 The kit checks only on a submit, never while someone is typing or as they leave a field, and checks

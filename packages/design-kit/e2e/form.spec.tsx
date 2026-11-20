@@ -175,13 +175,13 @@ test('keeps focus and says the error where no field in error can take focus', as
     await expect(page.getByRole('button', { name: 'Save rule' })).toBeFocused();
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['1 field needs attention.']);
+        .toEqual(['Tags: 1 field needs attention.']);
 });
 
 test("refuses a form the page wrote without noValidate, rather than leaving it to the browser's own check", async ({
     page,
 }) => {
-    // The page's own form, with a required field and no noValidate, refused from its submit.
+    // The page's own form, with a required field and no noValidate, which the kit refuses.
     const body = FORM.replace(/\snovalidate=""/i, '').replace('id="name"', 'id="name" required=""');
     expect(body).not.toMatch(/novalidate/i);
     await servePage(page, {

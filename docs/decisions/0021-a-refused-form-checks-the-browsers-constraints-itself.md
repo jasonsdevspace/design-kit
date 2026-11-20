@@ -19,9 +19,6 @@ constraints are checked, and who draws the errors.
 
 ## Research
 
-The research was done on 2026-11-19, from the standards, accessibility practice and the design
-systems below.
-
 - **The bubble is not relied on for errors.** GOV.UK's validation pattern says to turn HTML5
   validation off with `novalidate`, since the bubble's look, placement and words cannot be made
   consistent. WCAG 2.2's Understanding text for 3.3.1, updated 2026-11-02, says native validation
@@ -29,8 +26,9 @@ systems below.
   accessibility supported. Its sufficient techniques are all errors the author draws. Adrian
   Roselli's tests, updated to May 2026, found fields said to be invalid on focus, patterns never
   explained and a bubble that does not grow with zoom.
-- **No platform fix is near.** The WHATWG issue asking for an event that fires only on a check a
-  visitor started (whatwg/html#9878, opened 2023-10-24) still awaits implementer interest. The CSS
+- **No platform fix is near.** The WHATWG issue asking for an event that fires only when the
+  browser reports a failure, apart from a quiet `checkValidity()` (whatwg/html#9878, opened
+  2023-10-24), still awaits implementer interest. The CSS
   Working Group discussed styling validation messages (#7172) on 2025-07-10 with no resolution and
   handed the question to Open UI.
 - **The constraints stay the source of truth.** Cloud Four's progressively enhanced validation
@@ -39,9 +37,9 @@ systems below.
   accessible errors notes the browser sets no `aria-invalid`, and that Firefox and Safari read an
   empty required field as invalid on load unless it is marked `aria-invalid="false"`.
 - **The design systems split three ways.** GOV.UK Frontend and Primer's Rails forms drop native
-  validation and check on the server. React Aria, whose `native` mode is its default, and Radix
-  Form keep native validation as the truth, hide the bubble by canceling the `invalid` event, and
-  map each `ValidityState` key to words an author can replace. Conform keeps the browser's check
+  validation and check on the server. React Aria Components, whose `native` mode is its default, and
+  Radix Form keep native validation as the truth, hide the bubble by canceling the `invalid` event,
+  and map each `ValidityState` key to words an author can replace. Conform keeps the browser's check
   until its script loads, then sets `noValidate` and checks the same rules itself. Carbon, Fluent
   and Polaris only draw errors an app hands them.
 
@@ -59,12 +57,11 @@ reference writes it.
 **C. Keep the browser's check, cancel each `invalid` event and draw the kit's errors.** Rejected,
 though React Aria and Radix work this way. The `invalid` event also fires when a page calls
 `checkValidity()` for a quiet check of its own, and nothing tells the two apart, so the kit would
-draw errors and move focus during it. A form the browser refuses never reaches the page's submit
-handler either, so a page could not add an error the constraints cannot express to the same
-refusal.
+draw errors and move focus during it.
 
-**D. Set `noValidate` from script and check the constraints in the kit on submit.** The same
-outcome as C, with the order of B, as Conform has it.
+**D. Set `noValidate` from script and check the constraints in the kit on submit.** The kit's
+errors as in C, decided in a submit listener of the kit's own rather than from the `invalid` event,
+so a page's quiet `checkValidity()` draws nothing, as Conform does.
 
 ## Decision
 
@@ -72,25 +69,35 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 
 - **`noValidate` is set from script** on the form attached, or the form around an attached part of
   one, so a page without script keeps the browser's check, and the server stays the final word.
-- **The kit checks on submit, before the page's handler,** in a capture listener on the form. It
-  reads each field's `validity`, counts a set once, and where any field fails it stops the submit
-  and its propagation, draws each error, and refuses. Where every field passes, the page's handler
+- **The kit checks the whole form on submit, before the page's handler in the bubble phase,** in a
+  capture listener on the form, one however many of its parts are attached. It reads the `validity`
+  of each of the form's fields, those tied to it from outside by `form` among them, counts a set
+  once, a group of radios with no set around it as well, passes over a field marked off, which no
+  one could put right, and where any field fails it stops the submit and its propagation, draws
+  each error, and refuses. Where every field passes, the page's handler
   runs as ever, for checks the constraints cannot express, and refuses itself. A submitter marked
   `formnovalidate` is not checked, as the browser would not check it.
 - **Each failure takes words that say what to do,** in the manner of GOV.UK's errors, chosen in a
   fixed order where several apply: bad input, missing, wrong type, pattern, length, range, step,
   then the page's own from `setCustomValidity`. A field's own words for a failure come first, as
-  `data-error-value-missing`, then a map the page gives the form as `errorWords`, then the kit's.
+  `data-error-value-missing`, or its set's, then a map the page gives the form as `errorWords`,
+  then the kit's.
   The browser's own words are never used, since they follow its language rather than the page's.
   A pattern cannot be put in words from the pattern, so the reference asks a field with one to
   give its own.
-- **In plain markup the kit draws the error** as its field draws one, above the control or under a
-  set's legend, starting with a word a screen reader reads, tied to the control and marking it
-  invalid, and takes it away once the field passes on a later submit. **In React the failures go
-  to `invalid`,** since the markup belongs to the page's state, and the hook refuses after the
-  render that draws them.
+- **In plain markup the kit draws the error** as its field draws one: after the hint, above the
+  control or under a set's legend, starting with a word a screen reader reads, described after the
+  hint, and marked as the kit's set of choices marks one, a set of radios on its fieldset and a set
+  of checkboxes on each box. An error the page already drew for the field takes the kit's words,
+  and a stepper's range error is left as it is. The kit puts back what it changed once the field
+  passes on a later checked submit, or the form is reset. **In React the failures go to `invalid`,**
+  which the hook asks for, since the markup belongs to the page's state, and the hook refuses after
+  the render that draws them.
+- **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
+  refusal says which field it is and what is wrong with it.
 - **Fields not in error are marked `aria-invalid="false"`** as the form is attached, so an empty
-  required field is not read as invalid before anything is submitted. `required` stays, since the
+  required field is not read as invalid before anything is submitted. Only the fields drawn by then
+  are marked, and in React a field whose error clears loses its mark. `required` stays, since the
   kit's check reads it and it tells a screen reader a field is required where a form marks its
   optional fields.
 - **Errors appear only on a submit,** never as a field is left or typed in, since GOV.UK and the
@@ -107,6 +114,11 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   length only after a visitor's edit, so its own handler checks that.
 - A page that already handles the browser's check itself sees no bubble now, and its own handler
   runs only once the constraints pass.
+- A check of the page's own, such as two fields that must match, is drawn only once the constraints
+  pass, so a visitor can meet its error on a second submit, unless the page sets it with
+  `setCustomValidity` as the field changes.
+- Attaching a part of a form checks the whole of it, since the browser's check is off for the whole
+  of it.
 
 ## How it is tested
 
@@ -115,12 +127,19 @@ The paths are in `packages/design-kit`.
 - `e2e/checked.spec.tsx` refuses a form with an empty required field and a malformed address
   before the page's handler, draws each error and says the count, takes errors away once their
   fields pass and lets the page handle a submit that passes, submits unchecked from a button
-  marked `formnovalidate`, takes each failure's words from the field, the page's map and the kit
-  in turn, marks fields not in error before any submit, and in React hands the failures to the
-  page, which draws them, and refuses once they are drawn. It runs in Chromium, WebKit and Firefox.
-- `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, and passes over controls
-  marked off.
+  marked `formnovalidate`, takes each failure's words from the field, its set, the page's map and
+  the kit in turn, a pattern's among them, draws an error after its hint, names a field no one can
+  reach, lets a field marked off pass, counts a group of radios with no set once and a box alone in
+  a section as its own field, gives the page's own error the kit's words and puts it back, gives
+  fields with no id errors of their own, checks the whole form where a part is attached and a field
+  tied to it from outside, takes errors away on a reset, leaves a stepper's range error as the one
+  error, marks fields not in error before any submit, and in React hands the failures, a set's
+  among them, to the page, which draws them, and refuses once they are drawn. It runs in Chromium,
+  WebKit and Firefox.
+- `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
+  marked off, and names a set none of whose controls can take focus.
 - `smoke/types.ts` types the failures, the words and the options, and refuses a failure misnamed.
+- `scripts/controls.test.ts` holds the controls to the budget record 13 sets.
 
 ## Sources
 
@@ -133,16 +152,16 @@ The paths are in `packages/design-kit`.
   2019, updated May 2026.
 - Cloud Four, [Progressively Enhanced Form Validation, part 2](https://cloudfour.com/thinks/progressively-enhanced-form-validation-part-2-layering-in-javascript/)
   and [part 4](https://cloudfour.com/thinks/progressively-enhanced-form-validation-part-4-custom-validation-messages/), 2023.
-- Wes Goulet, [HTMHell advent calendar, day 28](https://htmhell.dev/adventcalendar/2025/28/),
+- Wes Goulet, [HTML Input Validation is (maybe) Good](https://htmhell.dev/adventcalendar/2025/28/),
   2025-12-28.
 - Chrome for Developers, [accessible error announcement](https://developer.chrome.com/docs/modern-web-guidance/guides/accessibility/accessible-error-announcement),
   read 2026-11-19.
 - WHATWG, [HTML constraint validation](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#constraint-validation)
-  and [issue 9878](https://github.com/whatwg/html/issues/9878).
+  and [issue 9878](https://github.com/whatwg/html/issues/9878), read 2026-11-19.
 - CSS Working Group, [minutes of 2025-07-10 on #7172](https://lists.w3.org/Archives/Public/public-css-archive/2025Jul/0291.html).
 - React Aria, [forms](https://react-aria.adobe.com/forms), and
   [useFormValidation](https://github.com/adobe/react-spectrum/blob/main/packages/react-aria/src/form/useFormValidation.ts),
-  release of October 2026.
+  React Aria Components 1.22.0, read 2026-11-19.
 - Radix, [Form](https://www.radix-ui.com/primitives/docs/components/form), 0.3.0.
 - Conform, [getFormProps](https://github.com/edmundhung/conform/blob/main/docs/api/react/getFormProps.md),
   1.21.3.
