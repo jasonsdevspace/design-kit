@@ -10,7 +10,8 @@ import { servePage } from './page.js';
  * twice heard twice, words said at once heard though words that settle follow straight after, a
  * part's first effect heard, the function the same across renders, a provider inside another taking
  * the calls under it, a call after the provider has gone saying nothing, a line let go of saying
- * nothing more and keeping no timer, and a line built before it is on the page speaking.
+ * nothing more and keeping no timer, for every piece given it until the page attaches it again, a
+ * provider letting its line go as it unmounts, and a line built before it is on the page speaking.
  */
 
 const LINE = '<p id="line" class="dk-visually-hidden" role="status"></p>';
@@ -250,6 +251,24 @@ test('takes the calls under a provider inside another on its own line', async ({
     await page.locator('#inner').click();
     await expect(page.locator('#dialog > p[role="status"]')).toHaveText('Inside.');
     await expect(page.locator('#outer > p[role="status"]')).not.toHaveText('Inside.');
+});
+
+test('lets its line go as the provider unmounts, so words said just before are never put in', async ({
+    page,
+}) => {
+    await draw(page);
+    await page.evaluate(() => {
+        const line = document.querySelector('#dialog [role="status"]');
+        (window as unknown as { kept: Element | null }).kept = line;
+        // Words said, then the provider taken away before they are put in.
+        document.querySelector<HTMLButtonElement>('#inner')?.click();
+        document.querySelector<HTMLButtonElement>('#leave')?.click();
+    });
+    await expect(page.locator('#outer')).toHaveCount(0);
+    await page.waitForTimeout(500);
+    expect(
+        await page.evaluate(() => (window as unknown as { kept: Element | null }).kept?.textContent)
+    ).toBe('');
 });
 
 test('says nothing and throws nothing for a call made after its provider has gone', async ({
