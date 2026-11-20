@@ -2569,22 +2569,29 @@ and that it is the least or the most where a press lands on a limit, as "8, the 
 last value a step reaches short of the greatest, so a press that does nothing next is expected. The line is emptied once the value is typed over, its form is
 reset or the stepper is taken away.
 
-A page that says something of its own after each press, such as how many tricks are still to
-enter, gives `attachStepper` its words as `words`, a function of the value read as the message is
-put on the line, a moment after the press, so the page's own state has caught up with it. One
-message then says the value and the page's words, "2, the most. Every trick is in.", rather than
-two lines changing at once, which can drop one. A page with a status line of its own gives it as
-`status`, and the stepper says each press there in place of its own line, keeps it there as it
-keeps its own, since focus stays on the button, and clears only what it said there when the value
-is typed over, the form is reset or the stepper is taken away, so the page's own words stay. A
+A page that says something of its own after each press, such as how many tricks are still to enter,
+gives `attachStepper` its words as `words`, a function of the value read as the message is put on
+the line, a moment after the press, so the page's own state has caught up with it. One message then
+says the value and the page's words, "2, the most. Every trick is in.", rather than two lines
+changing at once, which can drop one. A page with a status line of its own gives it as `status`, and
+the stepper says each press there in place of its own line, where it leaves as every message there
+does, and clears only what it said there when the value is typed over, the form is reset or the
+stepper is taken away, so the page's own words stay. A page that has a function for its line
+already, as React's `useStatus` returns, gives it as `say`, and each press is said through it. A
 message still waiting then is not said. Options given when the stepper is attached again take the
-place of the last.
+place of the last. A stepper taken away and attached again as focus leaves it, as a page that checks
+a field on leaving and draws it again does, keeps its buttons.
 
 ```js
 attachStepper(document.querySelector('.dk-stepper'), {
     status: document.querySelector('#page-status'),
     words: (players) => `${players} seats at the table.`,
 });
+```
+
+```tsx
+const say = useStatus();
+useEffect(() => attachStepper(stepper.current, { say }), [say]);
 ```
 
 `StepperField` draws it, taking `min`, `max` and a `step` of 1 unless given. Its `subject` is the

@@ -1054,12 +1054,17 @@ export type StepperOptions = {
      * A status line to say each press on, such as the page's own, in place of the stepper's line,
      * so a page that says something after a press has one line and not two.
      */
-    readonly status?: HTMLElement | null;
+    readonly status?: HTMLElement | null | undefined;
+    /**
+     * What says each press in place of the stepper's line, for a page that has one already, such
+     * as React's `useStatus`, as the form, the busy button and progress take it.
+     */
+    readonly say?: Say | undefined;
     /**
      * Words to say after the value, read as the message is put on the line, a moment after the
      * press, so a page's own state has caught up with it.
      */
-    readonly words?: ((value: string) => string) | null;
+    readonly words?: ((value: string) => string) | null | undefined;
 };
 
 const attachedSteppers = new WeakMap<
@@ -1186,6 +1191,18 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const most = () => topOf(least(), greatest(), input.step);
     /** Where a press is said: the page's line when it gave one, or the stepper's own. */
     const line = () => chosen.status ?? status;
+    /**
+     * Says a press's words through the page's `say` where it gave one, else on the page's line or
+     * the stepper's own, kept there alone, since focus stays on the button.
+     */
+    const tell = (message: Spoken) => {
+        if (chosen.say) {
+            chosen.say(message);
+            return;
+        }
+        const to = line();
+        if (to) say(to, message, to === status);
+    };
     const locked = () => input.disabled || input.readOnly;
     let attached = true;
     const off = (button: HTMLButtonElement, stop: boolean) => {
@@ -1271,10 +1288,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         if (input.value === before) return;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
-        const to = line();
         // Kept on the stepper's own line, since focus stays on the button, and on a page's line
         // left to leave as every message there does, so the line is free for the words after it.
-        if (to) say(to, spoken(presses), to === status);
+        tell(spoken(presses));
     };
     const onInput = () => {
         quiet();
@@ -1284,12 +1300,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const onChange = () => {
         const bad = wrong();
         report(bad);
-        const to = line();
-        if (bad && to && range) {
+        if (bad && range) {
             const words = range.textContent;
             const message = () => words;
             lastSaid = message;
-            say(to, message, to === status);
+            tell(message);
         }
     };
     const onReset = () => {
@@ -1321,10 +1336,16 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     kept.observe(input, {
         attributeFilter: ['aria-describedby', 'aria-invalid', 'min', 'max', 'readonly', 'disabled'],
     });
+    // Marked once focus has settled, and never once the stepper is let go, so a stepper taken
+    // away and attached again from a page's own focusout handler keeps its buttons.
+    let settling = 0;
     stepper.addEventListener(
         'focusout',
         () => {
-            window.setTimeout(mark);
+            window.clearTimeout(settling);
+            settling = window.setTimeout(() => {
+                if (attached) mark();
+            });
         },
         { signal }
     );
@@ -1333,6 +1354,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const detach = () => {
         listening.abort();
         kept.disconnect();
+        window.clearTimeout(settling);
         quiet();
         attached = false;
         report(false);
@@ -1344,7 +1366,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         detach,
         set: (next) => {
             // A page that takes the stepper's words to its own line leaves none on the stepper's.
-            if (next.status && status) hush(status);
+            if ((next.status || next.say) && status) hush(status);
             chosen = next;
         },
     });
