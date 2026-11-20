@@ -351,3 +351,26 @@ test("frees the line of a stepper's range error once its field is typed in", asy
     await page.clock.runFor(300);
     expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
 });
+
+test('says the end of a progress after a press whose words were taken off in the moment they were said', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        // A press, then the field typed in within the same task, which takes its words off.
+        [...document.querySelectorAll('button')]
+            .find((button) => button.textContent.startsWith('Raise'))
+            ?.click();
+        const field = document.querySelector<HTMLInputElement>('#batch');
+        if (field) {
+            field.value = '7';
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+    await page.clock.runFor(500);
+    await page.evaluate(() => {
+        (window as unknown as Shared).move(40);
+    });
+    await page.clock.runFor(300);
+    expect((await heard(page)).at(-1)).toBe('Imported 40 products.');
+});

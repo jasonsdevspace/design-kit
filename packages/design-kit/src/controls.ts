@@ -391,6 +391,8 @@ type Line = {
         now: boolean;
     } | null;
     firmNow: boolean;
+    /** How many firm messages the line has been given, so only the last clears the moment's mark. */
+    firms: number;
     settling: boolean;
     words: string | null;
     notice: (() => string | null) | null;
@@ -404,6 +406,7 @@ const lineOf = (status: HTMLElement): Line => {
             settle: 0,
             current: null,
             firmNow: false,
+            firms: 0,
             settling: false,
             words: null,
             notice: null,
@@ -496,10 +499,15 @@ const say = (status: HTMLElement, message: Spoken, keep = false, polite = false)
     status.textContent = '';
     const current = { message, polite, put: false, now: true };
     line.current = current;
-    if (!polite) line.firmNow = true;
+    if (!polite) {
+        line.firmNow = true;
+        line.firms += 1;
+    }
+    const firms = line.firms;
+    // The moment ends with the task, whether the words are still on the line or have left it.
     window.setTimeout(() => {
         current.now = false;
-        if (!polite && line.current === current) line.firmNow = false;
+        if (!polite && line.firms === firms) line.firmNow = false;
     });
     line.timer = window.setTimeout(() => {
         const words = typeof message === 'string' ? message : message();
