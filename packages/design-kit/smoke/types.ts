@@ -226,6 +226,15 @@ export const setByWord = (set: SetPanel) => set('open');
 const tricks: StepperOptions = { status: null, words: (value: string) => `${value} in all.` };
 export const stepperOf = (stepper: HTMLElement): (() => void) => attachStepper(stepper, tricks);
 
+// A stepper's line and words may be undefined, as a page's optional ones are, and it speaks
+// through a page's own say.
+export const stepperSaying = (
+    stepper: HTMLElement,
+    line: HTMLElement | undefined,
+    words: ((value: string) => string) | undefined,
+    say: Say
+): (() => void) => attachStepper(stepper, { status: line, words, say });
+
 // A status line says at once, or waits for its words to settle, and says nothing back.
 export const sayOf = (line: HTMLElement): Say => attachStatus(line);
 export const settled = (say: Say): void => {
