@@ -1592,9 +1592,9 @@ puts the message in a tenth of a second later, so the same words said twice are 
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
 copy button does, through the same function, so a line a page hands to both keeps one timer. A page
-that takes the line away calls `releaseStatus(line)`, which clears its timers and drops the words
-said or held for it, so nothing more is said there until it is attached again, and `StatusProvider`
-does this as it unmounts.
+that takes the line away calls `releaseStatus(line)`, which clears the line's timers and drops the
+words said or held for it, so nothing more is said there, by any piece given the line, until the
+page attaches it again with `attachStatus`. `StatusProvider` does this as it unmounts.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and

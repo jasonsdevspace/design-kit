@@ -126,6 +126,50 @@ test('drops what waits on a line let go of while words are on it, and speaks onc
     await expect(page.locator('#line')).toHaveText('Saved.');
 });
 
+test('keeps a line let go of silent for a piece given it, until the page attaches it again', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await servePage(page, {
+        title: 'Status',
+        body: `<main><button id="save" class="dk-button" type="button">Save</button>${LINE}</main>`,
+        script: `import { attachBusy, attachStatus, releaseStatus } from './controls.js';
+const line = document.querySelector('#line');
+const button = document.querySelector('#save');
+window.heard = [];
+new MutationObserver(() => {
+    if (line.textContent) window.heard.push(line.textContent);
+}).observe(line, { childList: true, characterData: true, subtree: true });
+attachStatus(line);
+attachBusy(button, { status: line });
+window.busy = () => button.setAttribute('data-busy', 'Saving the round.');
+window.done = () => button.removeAttribute('data-busy');
+window.letGo = () => releaseStatus(line);
+window.attachAgain = () => attachStatus(line);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    type Piece = { heard: string[]; busy: () => void; done: () => void; letGo: () => void };
+    await page.evaluate(() => {
+        const piece = window as unknown as Piece;
+        piece.letGo();
+        piece.busy();
+    });
+    // The busy button's wait comes due, and says nothing on the line let go of.
+    await page.clock.runFor(5000);
+    expect(await page.evaluate(() => (window as unknown as Piece).heard)).toEqual([]);
+    await page.evaluate(() => {
+        const piece = window as unknown as Piece & { attachAgain: () => unknown };
+        piece.done();
+        piece.attachAgain();
+        piece.busy();
+    });
+    await page.clock.runFor(5000);
+    expect(await page.evaluate(() => (window as unknown as Piece).heard)).toEqual([
+        'Saving the round.',
+    ]);
+});
+
 test('speaks on a line built before it is put on the page', async ({ page }) => {
     await page.clock.install();
     await servePage(page, {

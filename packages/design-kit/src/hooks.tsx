@@ -65,9 +65,13 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const held = useRef<Parameters<Say>[]>([]);
     const gone = useRef(false);
     const drawn = useRef<HTMLParagraphElement | null>(null);
+    // The moments set to say held words, called off if the line goes before they come.
+    const later = useRef<number[]>([]);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
             // The line is let go of, so nothing said on it is left running once the screen goes.
+            for (const timer of later.current) window.clearTimeout(timer);
+            later.current = [];
             if (drawn.current) releaseStatus(drawn.current);
             drawn.current = null;
             handle.current = null;
@@ -78,16 +82,17 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
         gone.current = false;
         drawn.current = element;
         handle.current = attachStatus(element);
-        const [first, ...later] = held.current;
+        const [first, ...rest] = held.current;
         held.current = [];
         if (first) handle.current(...first);
         // Each later message in a moment of its own, as each was said apart from the first, so
         // polite words wait behind firm words rather than giving way as to a result said with them.
         const said = handle.current;
-        for (const call of later)
+        later.current = rest.map((call) =>
             window.setTimeout(() => {
                 said(...call);
-            });
+            })
+        );
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
