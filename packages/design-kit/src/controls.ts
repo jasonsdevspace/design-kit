@@ -1543,11 +1543,15 @@ const attachedForms = new WeakMap<
 >();
 
 /** Whether a control can take focus: enabled, not inert, and in sight. */
-const focusable = (control: Element): control is HTMLElement =>
+const takesFocus = (control: Element): control is HTMLElement =>
     control instanceof HTMLElement &&
     !control.matches(':disabled') &&
     !control.closest('[inert]') &&
     control.checkVisibility();
+
+/** Whether a field in error can be handed focus: it takes it, and is not a control marked off. */
+const focusable = (control: Element): control is HTMLElement =>
+    takesFocus(control) && !isOff(control);
 
 /**
  * The field each mark of invalid stands for: a set's fieldset where a choice in it is marked, as
@@ -1624,12 +1628,13 @@ const refusalWords = (
  * in error that can take focus, or in a set its checked radio or its first control that can, and
  * one message is said on the status line, chosen so nothing is said twice: nothing where focus
  * moves to a summary, whose words it reads, how many fields need attention where focus moves to a
- * field, since moving focus reads the field and its error, or the error's own words, with the
- * count where more are wrong, where the field already had focus, since focus that does not move
- * reads nothing. A set counts once however many of its choices are marked. The field's error stays
- * not live. A second refusal calls off one not yet landed, moves focus and speaks again, and each
- * refusal returns what calls it off. Attached again, a form returns what it returned first and
- * takes options given in place of the last.
+ * field, since moving focus reads the field and its error, or the error's own words, with the count
+ * where more are wrong, where the field already had focus, since focus that does not move reads
+ * nothing. A set counts once however many of its choices are marked. The field's error stays not
+ * live. A second refusal calls off one not yet landed, moves focus and speaks again, and each
+ * refusal returns what calls it off. A form attached takes `noValidate`, so the browser's own check
+ * never stops a submit before the page's handler runs. Attached again, a form returns what it
+ * returned first and takes options given in place of the last.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
     const already = attachedForms.get(form);
@@ -1639,6 +1644,10 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     }
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
+    // The browser's own check would stop a submit before the page's handler runs, showing its own
+    // passing bubble in place of the kit's errors, so a form attached checks itself. Its fields
+    // keep required, which a screen reader still says.
+    if (form instanceof HTMLFormElement) form.noValidate = true;
     const speak = (words: string) => {
         if (words === '') return;
         if (chosen.say) chosen.say(words);
@@ -1775,9 +1784,7 @@ const CELLS = ':scope > :is(button, a[href], [role="tab"])';
  * inert or out of sight, which could take no focus and so could not be the group's stop.
  */
 const cellsIn = (group: HTMLElement): HTMLElement[] =>
-    [...group.querySelectorAll<HTMLElement>(CELLS)].filter(
-        (cell) => !cell.matches(':disabled') && !cell.closest('[inert]') && cell.checkVisibility()
-    );
+    [...group.querySelectorAll<HTMLElement>(CELLS)].filter(takesFocus);
 
 /** Each cell's own tabindex before a group was attached, put back as the group is let go. */
 const ownTabIndex = new WeakMap<HTMLElement, string | null>();

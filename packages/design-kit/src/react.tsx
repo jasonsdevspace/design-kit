@@ -389,10 +389,11 @@ type FieldParts = {
     /** The control's id, made with useId unless a page gives one, as it does for a link to it. */
     readonly id?: string | undefined;
     /**
-     * Marks the field required or optional in words in its label, apart from the native
-     * `required`, which a page keeps for the browser's own check. Required is said by the
-     * control's `aria-required`, so its words are hidden from a screen reader, which would say it
-     * twice, and optional is said in the label's name.
+     * Marks the field required or optional in words in its label, apart from the native `required`,
+     * which a page keeps since a screen reader says it, while the kit's form refusal turns the
+     * browser's own check off. Required is said by the control's `aria-required`, so its words are
+     * hidden from a screen reader, which would say it twice, and optional is said in the label's
+     * name.
      */
     readonly mark?: 'required' | 'optional' | undefined;
     /** The mark's words in place of the kit's, "(required)" or "(optional)", as in another language. */

@@ -145,6 +145,52 @@ test('passes over a field that cannot take focus, and counts a set of checkboxes
     await expect(page.locator('.screen-status')).toHaveText('2 fields need attention.');
 });
 
+test('passes over a control marked off at the head of a set in error', async ({ page }) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        const why = document.createElement('button');
+        why.type = 'button';
+        why.textContent = 'Why are tags off?';
+        why.setAttribute('aria-disabled', 'true');
+        document.querySelector('#tags')?.prepend(why);
+        for (const box of document.querySelectorAll('#tags input'))
+            box.setAttribute('aria-invalid', 'true');
+    });
+    await refuse(page, []);
+    await expect(page.getByRole('checkbox', { name: 'New' })).toBeFocused();
+});
+
+test("refuses a form the page wrote without noValidate, rather than leaving it to the browser's own check", async ({
+    page,
+}) => {
+    // The page's own form, with a required field and no noValidate, refused from its submit.
+    const body = FORM.replace(/\snovalidate=""/i, '').replace('id="name"', 'id="name" required=""');
+    expect(body).not.toMatch(/novalidate/i);
+    await servePage(page, {
+        title: 'Form',
+        body,
+        script: `${SCRIPT}
+attachForm(form, { status: line });
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (document.querySelector('#name').value === '') window.markWrong('name', 'Enter a rule name.');
+    attachForm(form)();
+});`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await expect(page.locator('#name')).toHaveAttribute('required', '');
+    expect(
+        await page.locator('#rule').evaluate((form) => (form as HTMLFormElement).noValidate)
+    ).toBe(true);
+    await page.getByRole('button', { name: 'Save rule' }).click();
+    await expect(page.getByLabel('Rule name')).toBeFocused();
+    await expect(page.getByLabel('Rule name')).toHaveAttribute('aria-invalid', 'true');
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['1 field needs attention.']);
+});
+
 test('leaves focus where it is when nothing is wrong', async ({ page }) => {
     await open(page);
     await page.getByRole('button', { name: 'Save rule' }).focus();

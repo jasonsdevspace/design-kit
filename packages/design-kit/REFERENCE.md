@@ -574,20 +574,23 @@ error, followed by any description of the page's own, and is left off when there
 `aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
 class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
 
-The error is not live, since a form that fails in several fields at once would speak over itself.
-On a submit that fails, the page draws its errors and calls the function `attachForm(form, {
-status, summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which
-speaks on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an
-error summary where the page names one, else the first field in error that can take focus, passing
-over one that is disabled or out of sight, or in a set its checked radio or its first control, since
-the set's fieldset takes no focus. A set counts once, however many of its choices are marked. One
-message is said, chosen so nothing is said twice: nothing where focus moves to the summary, which
-reads its own words, how many fields need attention where focus moves to a field, since moving focus
-reads the field and its error, and where the field already had focus, which then reads nothing, the
-error's own words, with the count where more fields are wrong. A second refusal calls off one not
-yet landed, moves focus and speaks again, as WCAG 3.3.1 asks. Refused with nothing wrong and no
-summary, focus stays where it is. In React, a form with no `StatusProvider` above it and no `say`
-throws, since its refusal would reach no one.
+The error is not live, since a form that fails in several fields at once would speak over itself. On
+a submit that fails, the page draws its errors and calls the function `attachForm(form, { status,
+summary })` from `./controls` returns, or the one `useFormRefusal()` returns in React, which speaks
+on the screen's `StatusProvider`. A frame later, once the errors are drawn, focus moves to an error
+summary where the page names one, else the first field in error that can take focus, passing over
+one that is disabled, marked off or out of sight, or in a set its checked radio or its first control
+that can take focus, since the set's fieldset takes none. A set counts once, however many of its
+choices are marked. One message is said, chosen so nothing is said twice: nothing where focus moves
+to the summary, which reads its own words, how many fields need attention where focus moves to a
+field, since moving focus reads the field and its error, and where the field already had focus,
+which then reads nothing, the error's own words, with the count where more fields are wrong. A
+second refusal calls off one not yet landed, moves focus and speaks again, as WCAG 3.3.1 asks.
+Refused with nothing wrong and no summary, focus stays where it is. In React, a form with no
+`StatusProvider` above it and no `say` throws, since its refusal would reach no one. An attached
+form takes `noValidate`, so the browser's own check, which would stop the submit before the page's
+handler runs and show a passing bubble in place of the kit's errors, never runs, while its fields
+keep `required` for a screen reader to say.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -705,16 +708,16 @@ would push its column.
 A field is marked required or optional in words in its label, `mark="required"` or
 `mark="optional"`, never by an asterisk alone, which needs a key to explain it. The words are in the
 muted text at the normal weight, so they do not compete with the label. Required is said by the
-control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say it
-twice, and optional is said in the label's name, since nothing else says it. A form where most
+control's `aria-required`, so its words are hidden from a screen reader, which would otherwise say
+it twice, and optional is said in the label's name, since nothing else says it. A form where most
 fields are required marks the optional ones instead, and a form uses one kind of mark, never both,
-as the example shows each kind only to draw it. A set of choices keeps "(required)" in its
-legend's name, since not every screen reader says a group is required, and a set of radios is
-marked `aria-required` as well. A required set of checkboxes says in its hint how many to choose,
-such as "Choose at least one." The words are the kit's unless a page gives its own as
-`markWords`, as a page in another language does. The mark
-does no checking: `required` is still the native attribute, which a page keeps for the browser's
-own check, and the field, select, textarea, stepper and set of choices all take `mark`.
+as the example shows each kind only to draw it. A set of choices keeps "(required)" in its legend's
+name, since not every screen reader says a group is required, and a set of radios is marked
+`aria-required` as well. A required set of checkboxes says in its hint how many to choose, such as
+"Choose at least one." The words are the kit's unless a page gives its own as `markWords`, as a page
+in another language does. The mark does no checking: `required` is still the native attribute, which
+a page keeps since a screen reader says it, while the kit's form refusal turns the browser's own
+check off, and the field, select, textarea, stepper and set of choices all take `mark`.
 
 #### A field with a button
 
