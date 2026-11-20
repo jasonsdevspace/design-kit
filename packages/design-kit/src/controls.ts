@@ -597,6 +597,8 @@ type Line = {
     notice: (() => string | null) | null;
     /** Let go of by `releaseStatus`, so nothing is said on it until it is attached again. */
     released: boolean;
+    /** The timers that end the moments words were said in, each taken off as it comes. */
+    moments: Set<number>;
 };
 const lines = new WeakMap<HTMLElement, Line>();
 const lineOf = (status: HTMLElement): Line => {
@@ -612,6 +614,7 @@ const lineOf = (status: HTMLElement): Line => {
             words: null,
             notice: null,
             released: false,
+            moments: new Set(),
         };
         lines.set(status, line);
     }
@@ -710,10 +713,12 @@ const say = (status: HTMLElement, message: Spoken, keep = false, polite = false)
     }
     const firms = line.firms;
     // The moment ends with the task, whether the words are still on the line or have left it.
-    window.setTimeout(() => {
+    const moment = window.setTimeout(() => {
+        line.moments.delete(moment);
         current.now = false;
         if (!polite && line.firms === firms) line.firmNow = false;
     });
+    line.moments.add(moment);
     line.timer = window.setTimeout(() => {
         const words = typeof message === 'string' ? message : message();
         // A message that is no longer wanted by the time it would be said is left unsaid.
@@ -806,10 +811,12 @@ export const attachStatus = (line: HTMLElement): Say => {
 };
 
 /**
- * Lets a status line go, as a page takes it away: its timers are cleared, the words said or held for
- * it are dropped and it is emptied, so nothing more is said on it and nothing it set is left running.
- * The function `attachStatus` returned, and any piece speaking on the line, then say nothing there
- * until the line is attached again. A line never attached is left as it is.
+ * Lets a status line go, as a page takes it away: the line's timers are cleared, the words said or
+ * held for it are dropped and it is emptied. Nothing more is said on it, by the function
+ * `attachStatus` returned or by any piece given it, such as a busy button, a copy button or a
+ * form, until the page attaches it again with `attachStatus`. A piece's own timers, such as a busy
+ * button's wait, are the piece's, and come due saying nothing. A line nothing has spoken on is left
+ * as it is.
  */
 export const releaseStatus = (line: HTMLElement): void => {
     attachedLines.delete(line);
@@ -817,7 +824,10 @@ export const releaseStatus = (line: HTMLElement): void => {
     if (!state) return;
     window.clearTimeout(state.timer);
     window.clearTimeout(state.settle);
+    for (const moment of state.moments) window.clearTimeout(moment);
+    state.moments.clear();
     state.current = null;
+    state.firmNow = false;
     state.words = null;
     state.notice = null;
     state.settling = false;
@@ -834,7 +844,9 @@ type SpeaksOn = {
 /** Says a piece's words through the page's function where it gives one, else on its line. */
 const speakOn = (chosen: SpeaksOn, message: Spoken, options?: SayOptions) => {
     if (chosen.say) chosen.say(message, options);
-    else if (chosen.status) attachStatus(chosen.status)(message, options);
+    // A line let go of stays silent for every piece until the page attaches it again.
+    else if (chosen.status && !lines.get(chosen.status)?.released)
+        attachStatus(chosen.status)(message, options);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
