@@ -37,11 +37,13 @@ import {
     attachProgress,
     attachRoving,
     attachStatus,
+    attachCopyButton,
     attachStepper,
     focusOnArrival,
     moveFocus,
     type ArrivalOptions,
     type BusyOptions,
+    type CopyOptions,
     type FocusTarget,
     type FormOptions,
     type MoveFocusOptions,
@@ -240,6 +242,11 @@ export const setOf = (button: HTMLButtonElement): SetPanel => attachPanel(button
 
 // @ts-expect-error A panel opens or closes by a boolean.
 export const setByWord = (set: SetPanel) => set('open');
+
+// A copy button's options can be built apart from the call, as their type is exported.
+const copying: CopyOptions = { source: () => document.body, status: document.body };
+export const copyOf = (button: HTMLButtonElement): (() => void) =>
+    attachCopyButton(button, copying);
 
 // A stepper takes a page's own line and its words after the value, and returns what takes it away.
 const tricks: StepperOptions = { status: null, words: (value: string) => `${value} in all.` };
