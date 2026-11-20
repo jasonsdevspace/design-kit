@@ -65,6 +65,25 @@ window.redrawPanel = () => {
     panel.replaceWith(drawn);
 };
 window.sameTips = attachPanel(document.querySelector('#tips-button')) === tips;
+// Every press the page hears, first of all, with what it landed on and what was under the tips'
+// button then, so a press that misses says where it went.
+window.presses = [];
+for (const type of ['pointerdown', 'mousedown', 'mouseup', 'click'])
+    window.addEventListener(
+        type,
+        (event) => {
+            const button = document.querySelector('#tips-button').getBoundingClientRect();
+            const under = document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2);
+            window.presses.push(
+                type + ' on ' + (event.target.id || event.target.localName) + (event.isTrusted ? '' : ' (script)') +
+                    ' at ' + Math.round(event.clientX) + ',' + Math.round(event.clientY) +
+                    ', button at ' + Math.round(button.x) + ',' + Math.round(button.y) +
+                    ', under it ' + (under ? under.id || under.localName : 'nothing') +
+                    ', panel ' + (document.querySelector('#round-tips').hidden ? 'hidden' : 'shown')
+            );
+        },
+        true
+    );
 window.attach = (selector) => attachPanel(document.querySelector(selector));
 // A button of the page's own, with no tabindex, as a page writes one.
 window.addButton = (where, id, text) => {
@@ -81,6 +100,9 @@ try {
     window.refused = error.message;
 }
 window.ready = true;`;
+
+/** The presses the page heard, each with where it landed, for a test whose press misses. */
+type Presses = { presses: string[] };
 
 /** What the page's script puts on the window for the tests to reach. */
 type Kit = {
@@ -331,7 +353,15 @@ test.describe("the page's code", () => {
     test('keeps focus on the button when its own press closes the panel', async ({ page }) => {
         await open(page);
         await button(page).click();
-        await expect(panel(page)).toBeVisible();
+        // The first press once missed in WebKit under the load of every test at once, so a miss
+        // shows the presses the page heard and where each landed, rather than a hidden panel alone.
+        await expect
+            .poll(
+                async () =>
+                    (await panel(page).isVisible()) ||
+                    (await page.evaluate(() => (window as unknown as Presses).presses.join('\n')))
+            )
+            .toBe(true);
         await button(page).click();
         await expect(panel(page)).toBeHidden();
         await expect(button(page)).toBeFocused();
