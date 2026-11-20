@@ -40,6 +40,7 @@ import {
     attachStepper,
     focusOnArrival,
     moveFocus,
+    releaseStatus,
     type ArrivalOptions,
     type BusyOptions,
     type FocusTarget,
@@ -256,6 +257,10 @@ export const stepperSaying = (
 
 // A status line says at once, or waits for its words to settle, and says nothing back.
 export const sayOf = (line: HTMLElement): Say => attachStatus(line);
+// A line is let go of with nothing returned.
+export const letGo = (line: HTMLElement): void => {
+    releaseStatus(line);
+};
 export const settled = (say: Say): void => {
     say('3 tricks still to enter.', { settle: 700 });
 };

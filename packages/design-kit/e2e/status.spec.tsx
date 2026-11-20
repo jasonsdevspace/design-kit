@@ -9,8 +9,8 @@ import { servePage } from './page.js';
  * when they stop changing, waiting words dropped by any message said meanwhile, the same words
  * twice heard twice, words said at once heard though words that settle follow straight after, a
  * part's first effect heard, the function the same across renders, a provider inside another taking
- * the calls under it, a call after the provider has gone saying nothing, and a line taken off the
- * page saying nothing more.
+ * the calls under it, a call after the provider has gone saying nothing, a line let go of saying
+ * nothing more and keeping no timer, and a line built before it is on the page speaking.
  */
 
 const LINE = '<p id="line" class="dk-visually-hidden" role="status"></p>';
@@ -55,31 +55,93 @@ test('says words at once, and words that settle only once they stop changing', a
         .toEqual(['Saved.', 'Saved.']);
 });
 
-test('says nothing more on a line taken off the page, words waiting to settle among them', async ({
+/** A page that attaches its line, records what is put in it however the line is placed, and lets go. */
+const RELEASING = `import { attachStatus, releaseStatus } from './controls.js';
+const line = document.querySelector('#line');
+window.heard = [];
+new MutationObserver(() => {
+    if (line.textContent) window.heard.push(line.textContent);
+}).observe(line, { childList: true, characterData: true, subtree: true });
+window.say = attachStatus(line);
+window.letGo = () => releaseStatus(line);
+window.attachAgain = () => attachStatus(line);
+window.ready = true;`;
+
+type Releasing = {
+    heard: string[];
+    say: (words: string, options?: { settle?: number; polite?: boolean }) => void;
+    letGo: () => void;
+    attachAgain: () => (words: string) => void;
+};
+
+test('says nothing more on a line let go of, and leaves no timer of its own running', async ({
     page,
 }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await servePage(page, { title: 'Status', body: LINE, script: VANILLA });
+    await page.clock.install();
+    await servePage(page, { title: 'Status', body: LINE, script: RELEASING });
     await page.waitForFunction(() => 'ready' in window);
-    const line = await page.evaluate(() => {
-        const { say } = window as unknown as Heard;
+    await page.evaluate(() => {
+        const { say, letGo } = window as unknown as Releasing;
         say('Saved.');
         say('3 still to enter.', { settle: 50 });
-        const removed = document.querySelector('#line');
-        removed?.remove();
-        (window as unknown as { removed: Element | null }).removed = removed;
-        return removed !== null;
+        letGo();
+        // Said after the line is let go of, as a late answer to a press might be.
+        say('Copied.');
     });
-    expect(line).toBe(true);
-    await page.waitForTimeout(400);
-    expect(
-        await page.evaluate(
-            () => (window as unknown as { removed: Element | null }).removed?.textContent
-        )
-    ).toBe('');
+    await page.clock.runFor(5000);
     expect(await page.evaluate(() => (window as unknown as Heard).heard)).toEqual([]);
+    await expect(page.locator('#line')).toHaveText('');
     expect(errors).toEqual([]);
+});
+
+test('drops what waits on a line let go of while words are on it, and speaks once attached again', async ({
+    page,
+}) => {
+    await page.clock.install();
+    await servePage(page, { title: 'Status', body: LINE, script: RELEASING });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.evaluate(() => {
+        const { say } = window as unknown as Releasing;
+        say('Saving the round.');
+        // Polite words wait for the firm words on the line to leave.
+        say('Ann is next.', { polite: true });
+    });
+    await page.clock.runFor(200);
+    await expect(page.locator('#line')).toHaveText('Saving the round.');
+    await page.evaluate(() => {
+        (window as unknown as Releasing).letGo();
+    });
+    await page.clock.runFor(5000);
+    expect(await page.evaluate(() => (window as unknown as Heard).heard)).toEqual([
+        'Saving the round.',
+    ]);
+    await expect(page.locator('#line')).toHaveText('');
+    // Attached again, the line speaks.
+    await page.evaluate(() => {
+        (window as unknown as Releasing).attachAgain()('Saved.');
+    });
+    await page.clock.runFor(200);
+    await expect(page.locator('#line')).toHaveText('Saved.');
+});
+
+test('speaks on a line built before it is put on the page', async ({ page }) => {
+    await page.clock.install();
+    await servePage(page, {
+        title: 'Status',
+        body: '<main id="screen"></main>',
+        script: `import { attachStatus } from './controls.js';
+const line = document.createElement('p');
+line.id = 'line';
+line.setAttribute('role', 'status');
+attachStatus(line)('Saved.');
+document.querySelector('#screen').append(line);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.clock.runFor(200);
+    await expect(page.locator('#line')).toHaveText('Saved.');
 });
 
 test('says words already said at once even when words that settle follow straight after', async ({

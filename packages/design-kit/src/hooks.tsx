@@ -28,6 +28,7 @@ import {
     type MoveFocusOptions,
     type ProgressOptions,
     type Refuse,
+    releaseStatus,
     type RovingOptions,
     type Say,
 } from './controls.js';
@@ -63,14 +64,19 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const handle = useRef<Say | null>(null);
     const held = useRef<Parameters<Say>[]>([]);
     const gone = useRef(false);
+    const drawn = useRef<HTMLParagraphElement | null>(null);
     const line = useCallback((element: HTMLParagraphElement | null) => {
         if (!element) {
+            // The line is let go of, so nothing said on it is left running once the screen goes.
+            if (drawn.current) releaseStatus(drawn.current);
+            drawn.current = null;
             handle.current = null;
             held.current = [];
             gone.current = true;
             return;
         }
         gone.current = false;
+        drawn.current = element;
         handle.current = attachStatus(element);
         const [first, ...later] = held.current;
         held.current = [];
