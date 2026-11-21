@@ -1368,15 +1368,17 @@ attribute, `dangerouslySetInnerHTML` and the live attributes, since the message 
 Where `./react` gives a hook for a control, it attaches that control's function from `./controls`
 to the element its ref lands on, and returns what the function returns, the same across renders, as
 [decision 0020](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0020-react-hooks-wrap-the-attach-functions.md)
-has it. It sets its options again only when one changes. Its ref returns the cleanup that takes the
-control down, which React 19 calls as the element leaves, and a ref called with null, as a helper
-written to merge refs before React 19 calls it, does nothing. A row of cells, a busy button and
-progress are let go by the cleanup. A form keeps what `attachForm` set on it, and attaching it again
-hands back its first refusal, so its cleanup only stops refusing through it. Under `StrictMode` in
-development, React runs the cleanup and the ref again as the page first draws, and nothing is
-doubled or dropped. `StatusProvider` waits a microtask before it lets its line go, and keeps it
-where the same line comes back, so words said in a first effect are not emptied by that second run.
-A page without React calls the same function on the same markup and gets the same behavior.
+has it. It sets its options again only when one changes. Its ref makes an `AbortController` as the
+element arrives, hands the function its `signal`, and returns the cleanup that aborts it, which
+React 19 calls as the element leaves, so the control is taken down as [taking a control
+down](#taking-a-control-down) has it, a form's check included. A ref called with null, as a helper
+written to merge refs before React 19 calls it, does nothing. Under `StrictMode` in development,
+React runs the cleanup and the ref again as the page first draws, and the control is taken down and
+attached afresh, with nothing doubled or dropped. `StatusProvider` waits a microtask before it
+aborts its line's signal, and keeps the line attached where the same line comes back, so words said
+in a first effect are not emptied by that second run, and the function `useStatus` returns keeps
+speaking. A page without React calls the same function on the same markup and gets the same
+behavior.
 
 ## Theme switch and copy button
 

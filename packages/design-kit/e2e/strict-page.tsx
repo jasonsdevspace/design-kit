@@ -21,8 +21,9 @@ import {
  * each ref, takes it down and attaches it again as the page first draws, and runs each effect
  * twice: a part that speaks on its provider's line in its first effect, a row of cells, a busy
  * button, a progress bar and a form whose words the page hears through a `say` of its own, rows
- * that each ask for focus on the next as they are removed, a way to take the pieces away, and a way
- * to call each piece's ref with null.
+ * that each ask for focus on the next as they are removed, a way to take the pieces away, a way to
+ * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
+ * provider afresh.
  */
 
 export type Strict = {
@@ -32,6 +33,9 @@ export type Strict = {
     move: (done: number) => void;
     leave: () => void;
     nullRefs: () => void;
+    moveForm: () => void;
+    speak?: Say;
+    remount: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -47,6 +51,7 @@ const say: Say = (message) => {
 // a line that keeps them through the second run is heard saying them.
 const Ready = () => {
     const speak = useStatus();
+    page.speak = speak;
     const said = useRef(false);
     useEffect(() => {
         if (said.current) return;
@@ -162,18 +167,48 @@ const Players = () => {
     );
 };
 
+// Two forms on the page for good, and the one refused through the hook chosen by the page, so the
+// ref moves from one to the other with both still drawn.
+const FormMover = () => {
+    const [second, setSecond] = useState(false);
+    page.moveForm = () => {
+        setSecond(true);
+    };
+    const [form] = useFormRefusal<HTMLFormElement>({ say, invalid: () => undefined });
+    return (
+        <>
+            {['one', 'two'].map((which) => (
+                <form
+                    key={which}
+                    id={`move-${which}`}
+                    ref={(which === 'two') === second ? form : undefined}
+                    onSubmit={(event) => event.preventDefault()}
+                >
+                    <InputField id={`move-${which}-name`} label="Copy name" required />
+                    <button type="submit">Copy the list</button>
+                </form>
+            ))}
+        </>
+    );
+};
+
 const App = () => {
     const [shown, setShown] = useState(true);
+    const [drawn, setDrawn] = useState(0);
+    page.remount = () => {
+        setDrawn((now) => now + 1);
+    };
     page.leave = () => {
         setShown(false);
     };
     return (
-        <StatusProvider>
+        <StatusProvider key={drawn}>
             <main>
                 <h1>Lists</h1>
                 <Ready />
                 {shown ? <Pieces /> : null}
                 <Players />
+                <FormMover />
             </main>
         </StatusProvider>
     );

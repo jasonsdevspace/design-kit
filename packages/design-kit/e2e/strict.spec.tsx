@@ -5,12 +5,14 @@ import { servePage } from './page.js';
 import { type Strict } from './strict-page.js';
 
 /*
- * The hooks under React's `StrictMode`, in its development build, which attaches each ref, runs
- * its cleanup and attaches it again as the page first draws, as record 20 asks: words a part says
- * in its first effect kept on the provider's line, one arrow key moving one cell, a busy notice,
- * the end of a progress and a refusal each said once, a row removed asking for focus on the next
- * and finding it there, each piece taken down as it leaves, saying nothing late, and a ref called
- * with null doing nothing.
+ * The hooks under React's `StrictMode`, in its development build, which attaches each ref, runs its
+ * cleanup and attaches it again as the page first draws, as record 20 asks: words a part says in
+ * its first effect kept on the provider's line, its function speaking after that run and a new
+ * provider's after it is drawn afresh while the old one stays silent, one arrow key moving one
+ * cell, a busy notice, the end of a progress and a refusal each said once, a row removed asking for
+ * focus on the next and finding it there, each piece taken down as it leaves, saying nothing late,
+ * a ref called with null doing nothing, and a form given back, its check and listeners gone, as the
+ * ref moves on.
  */
 
 let app = '';
@@ -37,6 +39,41 @@ test("keeps words said in a part's first effect on the provider's line through t
 }) => {
     await open(page);
     await expect(line(page)).toHaveText('Lists ready.');
+});
+
+test("speaks through the provider's function after the second run, and after the provider is drawn afresh", async ({
+    page,
+}) => {
+    await open(page);
+    await expect(line(page)).toHaveText('Lists ready.');
+    await page.evaluate(() => {
+        (window as unknown as Strict).speak?.('Saved.');
+    });
+    await expect(line(page)).toHaveText('Saved.');
+    // The function the first provider handed out, kept past the provider drawn afresh.
+    await page.evaluate(() => {
+        const page = window as unknown as Strict & { old?: Strict['speak'] };
+        page.old = page.speak;
+        page.remount();
+    });
+    await expect
+        .poll(() =>
+            page.evaluate(() => {
+                const page = window as unknown as Strict & { old?: Strict['speak'] };
+                return page.speak !== page.old;
+            })
+        )
+        .toBe(true);
+    await expect(line(page)).toHaveText('Lists ready.');
+    await page.evaluate(() => {
+        (window as unknown as Strict & { old?: Strict['speak'] }).old?.('Said too late.');
+    });
+    await page.waitForTimeout(300);
+    await expect(line(page)).toHaveText('Lists ready.');
+    await page.evaluate(() => {
+        (window as unknown as Strict).speak?.('Saved again.');
+    });
+    await expect(line(page)).toHaveText('Saved again.');
 });
 
 test('moves one cell for one arrow key, with one stop in the row', async ({ page }) => {
@@ -109,4 +146,45 @@ test('does nothing for a ref called with null, and leaves each piece working', a
     await page.locator('#cell-one').focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#cell-two')).toBeFocused();
+});
+
+test("gives a form back as the hook's ref moves to another", async ({ page, browserName }) => {
+    await open(page);
+    const state = (id: string) =>
+        page.locator(id).evaluate((form) => ({
+            noValidate: (form as HTMLFormElement).noValidate,
+            marked: form.querySelectorAll('[aria-invalid]').length,
+        }));
+    // The listeners on a form and its fields, where the form's check puts them, counted through
+    // Chromium's own tools. React keeps one of its own on each field, so the form not yet attached
+    // gives the count a form given back returns to.
+    const listeners = async (id: string): Promise<number | null> => {
+        if (browserName !== 'chromium') return null;
+        const session = await page.context().newCDPSession(page);
+        const targets = `[...document.querySelectorAll('${id}, ${id} *')]`;
+        const found = Number(await page.evaluate(`${targets}.length`));
+        let total = 0;
+        for (let at = 0; at < found; at += 1) {
+            const { result } = await session.send('Runtime.evaluate', {
+                expression: `${targets}[${String(at)}]`,
+            });
+            const { listeners: on } = await session.send('DOMDebugger.getEventListeners', {
+                objectId: result.objectId ?? '',
+            });
+            total += on.length;
+        }
+        return total;
+    };
+    expect(await state('#move-one')).toEqual({ noValidate: true, marked: 1 });
+    expect(await state('#move-two')).toEqual({ noValidate: false, marked: 0 });
+    const attached = await listeners('#move-one');
+    const bare = await listeners('#move-two');
+    if (attached !== null && bare !== null) expect(attached).toBeGreaterThan(bare);
+    await page.evaluate(() => {
+        (window as unknown as Strict).moveForm();
+    });
+    await expect.poll(() => state('#move-two')).toEqual({ noValidate: true, marked: 1 });
+    expect(await state('#move-one')).toEqual({ noValidate: false, marked: 0 });
+    expect(await listeners('#move-one')).toBe(bare);
+    expect(await listeners('#move-two')).toBe(attached);
 });

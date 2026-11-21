@@ -31,26 +31,18 @@ import {
     type RovingOptions,
     type Say,
 } from './controls.js';
-import { releaseLine } from './line.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over a function from `./controls`, as decision 20 has
  * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
  * function that acts once keeps only what calls it off, and each returns what the function returns,
  * the same across renders. `./react` exports them beside the markup, whose components run
- * no effect. Each ref returns the cleanup that takes its piece down, which React 19 calls as the
- * element leaves in place of calling the ref with null, by aborting a controller made as the
- * element arrived. A ref called with null, as a helper written to merge refs before React 19 may
- * still call it, does nothing rather than throw, so such a helper takes nothing down.
+ * no effect. Each ref makes an `AbortController` as its element arrives, hands its attach the
+ * signal, as record 22 has every attach take, and returns the cleanup that aborts it, which React
+ * 19 calls as the element leaves in place of calling the ref with null. A ref called with null, as
+ * a helper written to merge refs before React 19 may still call it, does nothing rather than
+ * throw, so such a helper takes nothing down.
  */
-
-/**
- * Runs the detach an attach returned once `signal` aborts, for an attach that takes no signal of
- * its own, so the hook takes it down through its controller all the same.
- */
-const detachOn = (signal: AbortSignal, detach: () => void) => {
-    signal.addEventListener('abort', detach, { once: true });
-};
 
 /** What a status provider hands the parts of the page under it. */
 const Speaker = createContext<Say | null>(null);
@@ -92,12 +84,10 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
             attached.current?.element === element
                 ? attached.current
                 : { element, controller: new AbortController() };
-        if (kept !== attached.current)
-            detachOn(kept.controller.signal, () => {
-                releaseLine(element);
-            });
         attached.current = kept;
-        handle.current = attachStatus(element);
+        // The same line back in one commit is attached with the signal its first attach heard, so
+        // that attach's handle comes back and the controller kept is the one that takes it down.
+        handle.current = attachStatus(element, { signal: kept.controller.signal });
         const [first, ...rest] = held.current;
         held.current = [];
         if (first) handle.current(...first);
@@ -399,7 +389,9 @@ export const useFormRefusal = <Form extends HTMLElement>(
     const ref = useCallback(
         (form: Form | null) => {
             if (!form) return;
+            const controller = new AbortController();
             refuser.current = attachForm(form, {
+                signal: controller.signal,
                 say: (words, settle) => {
                     const { options: now, speaker: line } = latest.current;
                     (now.say ?? line)?.(words, settle);
@@ -422,9 +414,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
                     refuse();
                 },
             });
-            // The form keeps what attachForm set on it, and attaching it again hands back its first
-            // refusal with these options, so the cleanup only stops refusing through it.
             return () => {
+                controller.abort();
                 refuser.current = null;
             };
         },
@@ -476,7 +467,7 @@ export const useRoving = <Group extends HTMLElement>(
             const now = latest.current;
             shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
             const controller = new AbortController();
-            detachOn(controller.signal, attachRoving(element, wired()));
+            attachRoving(element, { ...wired(), signal: controller.signal });
             return () => {
                 controller.abort();
                 if (group.current === element) group.current = null;
@@ -506,15 +497,13 @@ export const useBusy = <Busy extends HTMLElement>(
     return useCallback((button: Busy | null) => {
         if (!button) return;
         const controller = new AbortController();
-        detachOn(
-            controller.signal,
-            attachBusy(button, {
-                say: (words, settle) => {
-                    const { options: now, speaker: line } = latest.current;
-                    (now.say ?? line)?.(words, settle);
-                },
-            })
-        );
+        attachBusy(button, {
+            say: (words, settle) => {
+                const { options: now, speaker: line } = latest.current;
+                (now.say ?? line)?.(words, settle);
+            },
+            signal: controller.signal,
+        });
         return () => {
             controller.abort();
         };
@@ -562,7 +551,7 @@ export const useProgress = (
             if (!progress) return;
             bar.current = progress;
             const controller = new AbortController();
-            detachOn(controller.signal, attachProgress(progress, optionsFor(given.current)));
+            attachProgress(progress, { ...optionsFor(given.current), signal: controller.signal });
             return () => {
                 controller.abort();
                 if (bar.current === progress) bar.current = null;

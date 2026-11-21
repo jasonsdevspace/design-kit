@@ -9,18 +9,19 @@ returns, which keep a request owed until their own next commit and a count of re
 them, so the request lands once the page's change is drawn. That holds for a change set in the same
 tick as the request, in the same lane, in the same React root: a change made in a transition is
 asked for inside the same `startTransition`, and one drawn in another root is not waited for.
-Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do,
-in place of being called with null, and do nothing when a helper that merges refs still calls them
-with null. The cleanup takes the piece down by aborting an `AbortController` made as the element
-arrived, whose abort runs the detach the attach returned. A form keeps what `attachForm` set on it,
-and attaching it again hands back its first refusal, so its cleanup only stops refusing through it.
-`StatusProvider` still waits a microtask before its cleanup lets its line go, and keeps the line's
-controller where the same line comes back, since React's second run in development calls the
-cleanup and the ref again and letting go at once would empty the line of the words said in the
-first run. A focus request asked in the task that unmounts its component still lands, so the hook
-hands it no signal of the component's, which that unmount would abort, and calls it off only by
-what `moveFocus` returns. One asked after the component has unmounted takes focus only from the
-page's body.
+Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do, in
+place of being called with null, and do nothing when a helper that merges refs still calls them with
+null. Each ref makes an `AbortController` as its element arrives and hands its attach the signal, as
+record 22 has every attach take, and the cleanup aborts it, which takes the piece down, a form's
+check included. `StatusProvider` still waits a microtask before its cleanup lets its line go, and
+keeps the line's controller where the same line comes back, since React's second run in development
+calls the cleanup and the ref again, and an abort at once would let the line go and empty it of the
+words said in the first run. The function `useStatus` hands out is the provider's own, which says
+through whichever attach holds the line, so it keeps speaking after that run and says nothing once
+the provider has gone. A focus request asked in the task that unmounts its component still lands, so
+the hook hands it no signal of the component's, which that unmount would abort, and calls it off
+only by what `moveFocus` returns. One asked after the component has unmounted takes focus only from
+the page's body.
 
 ## Context
 
