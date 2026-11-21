@@ -85,10 +85,10 @@ costs, and the test behind it.
     to each page and canceling each `invalid` event were turned down.
 22. [Every attach takes a signal that takes its piece down](0022-every-attach-takes-a-signal-that-takes-its-piece-down.md):
     `{ signal }` on every attach, nothing attached for a signal already aborted, an abort that does
-    what the detach does, a teardown complete and safe to repeat, calls after it that do nothing,
-    the first attach owning the piece, which record 23 replaced, the internal helper that keeps it,
-    the research behind it, and why a release function for each piece, `Symbol.dispose`, one handle
-    from every attach and calls that throw or warn were turned down.
+    what the detach does, a teardown complete and safe to repeat, calls after it that do nothing, a
+    later attach joining the piece, which record 23 settles, the internal helper that keeps it, the
+    research behind it, and why a release function for each piece, `Symbol.dispose`, one handle from
+    every attach and calls that throw or warn were turned down.
 23. [A control outlives a takedown and an attach in one task](0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md):
     every signal that attaches an element holding its control, a takedown a microtask after the last
     of them aborts that an attach before then cancels, a detach that still takes it down at once,

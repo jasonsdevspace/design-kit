@@ -22,10 +22,11 @@ differently.
 
 - **The DOM takes a signal.** Section 3.3 of the DOM standard asks an API whose operations can be
   aborted to take an `AbortSignal` through a `signal` member, to act at once on one already aborted,
-  and to treat an abort as its own cancel, and asks an API that returns no promise to follow these
-  as far as it can. `addEventListener` does: a listener given a signal already aborted is not added,
-  and an abort takes it off as `removeEventListener` would. A listener added again with the same
-  type, callback and capture is ignored, its signal with it, so the first add owns the listener.
+  and to treat an abort as its own cancel, which record 23 qualifies by a microtask for a control's
+  takedown, and asks an API that returns no promise to follow these as far as it can.
+  `addEventListener` does: a listener given a signal already aborted is not added, and an abort
+  takes it off as `removeEventListener` would. A listener added again with the same type, callback
+  and capture is ignored, its signal with it, so the first add owns the listener.
 - **React 19 hands a ref its cleanup.** A ref callback may return a cleanup, which React calls when
   the element leaves, in place of calling the ref again with null, which React plans to deprecate. A
   hook can make an `AbortController` in its ref and return what aborts it, so the attach's signal is
@@ -69,9 +70,8 @@ Option E.
   added after the element where it takes none. What it returns is unchanged.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
-  it, so a later attach starts afresh, or joins a control whose takedown is still to land, as
-  record 23 has it. A piece already attached is left as it is, and the new options are not taken.
-  What the attach returns does nothing.
+  it, so a later attach finds nothing of it. A piece already attached is left as it is, and the new
+  options are not taken. What the attach returns does nothing.
 - **Aborting is the same as detach.** Everything the attach set up comes off: its listeners,
   observers, timers and frames, a listener on the document it added, and what it drew or showed, as
   its detach would. An attach that returns what acts rather than a detach is taken down by its
@@ -85,11 +85,9 @@ Option E.
 - **Calls after teardown do nothing, silently.** What an attach returned, such as a status line's
   `say` or a toast's show, does nothing once its piece is taken down, as do a timer or an answer
   that comes late, such as the clipboard's. Nothing throws and nothing warns.
-- **The first attach owns the piece's lifetime.** Attaching a piece again before it is taken down
-  is the call record 13 describes: it returns the first attach's handle, takes any new options, and
-  leaves its own signal unheard. Record 23 replaces this rule: each signal that attaches the piece
-  holds it, the piece is taken down a microtask after the last of them aborts, and it runs on its
-  newest holder's options.
+- **A later attach joins the piece.** Attaching a piece again before it is taken down is the call
+  record 13 describes, and returns the first attach's handle. Record 23 sets which signals hold the
+  piece and whose options it runs on.
 - **A focus request still lands when its component unmounts before the request is drawn,** so a
   row that asks for focus on the next one as it is deleted moves focus there, as record 20 already
   has a request made after unmount.

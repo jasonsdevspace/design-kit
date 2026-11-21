@@ -46,11 +46,13 @@ line is out of sight and on the page from the start, says the message with the a
 reader reads, since the words drawn are hidden from it. It is emptied a moment before each message,
 so the same words shown twice are heard twice.
 
-A toast with an action stays until its close button, its action, Escape with focus in it or the
-next message dismisses it, since a timer would take the way back from anyone slower than it. One
-with no action also leaves after five seconds, a wait held while the pointer is over it or focus is
-in it. Focus in a toast that leaves goes back to where it was the last time a message arrived while
-focus was outside the toast. What dismisses a message never dismisses a later one.
+A toast with an action stays until its close button, its action, Escape with focus in it or the next
+message dismisses it, since a timer would take the way back from anyone slower than it. One with no
+action also leaves after five seconds, a wait held while the pointer is over it or focus is in it.
+Focus in a toast that leaves goes back to where it was the last time a message arrived while focus
+was outside the toast. Focus goes back only where it is in the toast, or where the page has taken
+the toast away with focus in it so that focus has fallen to the body or to nothing, while focus a
+visitor has put anywhere else stays. What dismisses a message never dismisses a later one.
 
 The toast's listeners are on its own elements, so a toast taken from the page takes them with it. A
 page that takes a toast away while the page stays gives `attachToast` a `signal`, as record 22 has

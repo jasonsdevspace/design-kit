@@ -1416,18 +1416,27 @@ later, unless the same element is attached again by then, which keeps the contro
 its state, such as a busy wait, a form's check and its errors, an open dialog or a shown toast. So a
 page that aborts and attaches the same element in one task keeps its control, and one that attaches
 after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
-abort's own task, such as a panel's `set`, still acts. The function an attach returns takes the
-control down at once, whoever holds it, so a page that means to start afresh within the task calls
-it. A control runs on the options of its newest holder: a new holder's options apply at once, a call
-from the holder whose options apply replaces them, and a call from another older holder is kept for
-when it is the newest again, and when the holder whose options apply lets go, the newest one left
-that gave options takes over with them a microtask later, unless a newer holder has given its own by
-then. A call with no signal holds the control only where nothing else does, and elsewhere speaks for
-the newest holder, so its options replace that holder's and leave with it. A call with no signal
-made while a takedown waits, with no signal joined since, lands that takedown at once and attaches
-afresh, since it holds the control for the page's life and nothing of the holder that let go carries
-over. An attach made from inside a control's own takedown, as a dialog's close handler that attaches
-it again, gets a control of its own.
+abort's own task, such as a panel's `set`, still acts, and a dialog left open keeps the page behind
+it inert. The function an attach returns takes the control down at once, whoever holds it, so a page
+that means to start afresh within the task calls it. A call with no signal holds the control for the
+page's life where nothing else holds it, an attach in the abort's own task among them, is filed
+under that hold where the page already holds the control without a signal, and elsewhere speaks for
+the newest holder without holding. An attach made from inside a control's own takedown, as a
+dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
+signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
+needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
+it, or where focus is on the body or nowhere and the piece had it as it left, so focus a page sets
+in the abort's own task stays, and a `moveFocus` asked in that task still lands.
+
+A control runs on its newest holder's options. A new holder's options apply at once. A later call
+from the newest holder, or from the holder whose options apply, replaces them, and a call from an
+older holder is kept and applies once every newer holder that gave options has let go. When the
+holder whose options apply lets go, the newest one left that gave options takes over with them a
+microtask later, unless a newer holder has given its own by then. A call with no signal applies its
+options at once, and they stay with the page where the page holds the control without a signal, and
+elsewhere leave with the newest holder they are filed under. Options that give only a `signal` count
+as none, and a call that gives none keeps its holder's last ones, while any other object replaces
+them, an empty `{}` among them.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
@@ -1604,12 +1613,12 @@ tab shows. Where the browser refuses the clipboard, it selects that text instead
 Copied or Selected for a moment, its three words sharing one cell so it keeps its width, and the
 status line says which to a screen reader, with how to copy a selection with the keys or the
 device's own command. One status line serves every button on a page, and it is on the page from the
-start, since a line added at the moment it speaks may go unheard. Attaching a button again, where
-the call is its newest holder, takes its new `source` and `status`, so a page that draws it again
-with a new source copies from that one, puts a word shown for the last source back to Copy where the
-new source gives another element, and returns the function it returned the first time. Taking a
-button down, by that function or by its `signal`, as [Taking a control down](#taking-a-control-down)
-has it, hides it and puts it back to Copy.
+start, since a line added at the moment it speaks may go unheard. Attaching a button again takes its
+new `source` and `status`, by the rule for whose options apply that the section linked below sets
+out, so a page that draws it again with a new source copies from that one, puts a word shown for the
+last source back to Copy where the new source gives another element, and returns the function it
+returned the first time. Taking a button down, by that function or by its `signal`, as [Taking a
+control down](#taking-a-control-down) has it, hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -1776,7 +1785,8 @@ the target is gone, hidden, inert, disabled or marked off, focus goes to the fir
 that takes it, and then to the app frame's body or the page's main content, by the walk a closing
 panel hands focus back by. Focus a visitor has moved since the request is left where they put it:
 focus is free only while it is where it was when asked, or on the page's body, as it is once the
-control that had it is removed. A request still waiting a second later, as in a tab out of sight, is
+control that had it is removed, or where the kit has handed it back since, as a toast, a dialog or a
+panel does as it closes. A request still waiting a second later, as in a tab out of sight, is
 dropped, so focus does not jump when the visitor comes back. Each request is new, so the same
 control asked for twice is focused twice, and the function `moveFocus` returns calls a request off
 before it lands, as aborting the `signal` it is given does. A request asked as its component
@@ -2804,10 +2814,10 @@ stepper is taken down, so the page's own words stay. A page that has a function 
 already, as React's `useStatus` returns, gives it as `say`, and each press is said through it, and
 is the one used where both are given. Words said through it leave when the line's time for them is
 up, since the stepper cannot take them back from a function. A message still waiting then is not
-said. Options given when the stepper is attached again take the place of the last, where the call
-is the newest holder, as [Taking a control down](#taking-a-control-down) has it. A stepper taken
-down and attached again as focus leaves it, as a page that checks a field on leaving and draws it
-again does, keeps its buttons.
+said. Options given when the stepper is attached again take the place of the last, by the rule
+[Taking a control down](#taking-a-control-down) sets for whose options apply. A stepper taken down
+and attached again as focus leaves it, as a page that checks a field on leaving and draws it again
+does, keeps its buttons.
 
 ```js
 attachStepper(document.querySelector('.dk-stepper'), {
@@ -2959,10 +2969,10 @@ A page that takes a toast down while the toast stays on the page, such as on a s
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
 down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,
 takes off its listeners, its observer, its listener on the window's size and its timer, takes away a
-tabindex it added that the page has not changed since and lets its line go. Focus in it goes back
-where a dismiss sends it rather than to the page's body, even where the page has taken the toast
-from the page with focus in it before the takedown lands. A toast missing a part is refused even
-with a signal already aborted.
+tabindex it added that the page has not changed since and lets its line go. Focus goes back where a
+dismiss sends it only where it is in the toast, or where the page has taken the toast away with
+focus in it so that focus has fallen to the body or to nothing, while focus a visitor has put
+anywhere else stays. A toast missing a part is refused even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -3549,13 +3559,15 @@ A dialog that must be answered is attached with `{ stay: true }`, and then stays
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
 from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a close once and closes
 the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
-that can be dismissed too. Attaching a dialog again with options replaces them where the call is its
-newest holder, attaching it again with none leaves them as they were, so a dialog attached to stay
-still stays, and either returns the same function, an open dialog staying open. Options that give
-only a `signal` count as none, so a dialog attached through a ref made afresh on every render keeps
-`stay`. Its listeners are on the dialog, so a dialog taken from the page takes them with it. Taken
-down by its `signal`, as [Taking a control down](#taking-a-control-down) has it, an open dialog
-closes with focus handed back to what opened it, and the function that opens it does nothing.
+that can be dismissed too. Attaching a dialog again with options replaces them, by the rule for
+whose options apply that the section linked below sets out, and attaching it again with none leaves
+them as they were, so a dialog attached to stay still stays, and either returns the same function,
+an open dialog staying open. Options that give only a `signal` count as none, so a dialog attached
+through a ref made afresh on every render keeps `stay`. Its listeners are on the dialog, so a dialog
+taken from the page takes them with it. Taken down by its `signal`, as [Taking a control
+down](#taking-a-control-down) has it, an open dialog closes, with focus handed back to what opened
+it where focus is in the dialog or has fallen to the body, and the function that opens it does
+nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
