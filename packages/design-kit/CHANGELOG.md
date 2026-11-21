@@ -9,17 +9,18 @@ entry as the notes.
 
 ## 0.9.3
 
-Every attach takes an `AbortSignal` as `signal`, and aborting it takes the piece down as the
-function the attach returned does, under the teardown contract record 22 writes down, with
-`moveFocus` called off the same way. The React hooks take their controls down through ref cleanups,
-so `StrictMode` in development attaches each afresh with nothing doubled or dropped, and a focus
-request asked as its component unmounts still lands. A stepper drawn past its limits shows its error
-at once, a group the arrow keys move through places its Tab stop as it comes into sight from no
-size, and an open panel follows one rule once the button that opened it is let go. Browser tests
-prove every attach and hook leaves nothing running once it is taken down, in Chromium, WebKit and
-Firefox. No token is added or renamed and the theme script is unchanged, so
-`themeScriptHash` is the same. The sheets stay within their budget, and the controls' budget is set
-at 18.5 KB under record 13's rule.
+Every attach takes an `AbortSignal` as `signal`, and aborting it takes the piece down under the
+teardown contract record 22 writes down, with a request to `moveFocus` called off the same way. The
+React hooks take their controls down through ref cleanups, so `StrictMode` in development attaches
+each afresh with nothing doubled or dropped, and a focus request asked as its component unmounts
+still lands. A stepper drawn past its limits shows its error at once, a group the arrow keys move
+through places its Tab stop as it comes into sight from no size, and Escape closes an open panel
+once the button that opened it is let go. Browser tests in Chromium, WebKit and Firefox count the
+listeners, observers, timers and frames on a page and find every attach and hook leaves none of its
+own once it is taken down, and the tests on a stand-in clock move time only by their own steps, so a
+slow runner no longer makes a message leave early. No token is added or renamed and the theme script
+is unchanged, so `themeScriptHash` is the same. The sheets stay within their budget, and the
+controls' budget is set at 18.5 KB under record 13's rule.
 
 - **Controls.** `attachThemeSwitch(element, { signal })` and
   `attachCopyButton(button, { source, status, signal })` take an `AbortSignal`, and aborting it does
@@ -58,36 +59,37 @@ at 18.5 KB under record 13's rule.
   panel's buttons are kept apart from the page, so one in a shadow root takes the panel too. A
   reset, and a submit the form's own attach checks, take away errors a part's attach drew before it,
   and a reset calls off a refusal still due, which would otherwise say the errors it took away in
-  place of "Form cleared." The theme switch's listener on the document comes off however its choices
-  close. `attachStepper` shows the stepper's error as it attaches, and again when a form's reset
-  brings the value back, when the value is outside the limits or between steps, describes the field
-  by it and marks it invalid, and says nothing on the status line, so a page that draws that state,
-  as the kit's site does, writes no code of its own for it. A field drawn blank, a field that is
-  disabled or read only, and a field showing the page's own error show no error as the page loads,
-  and the error is cleared as before once the value is right or the stepper is taken away. The error
-  now names only a value outside the limits, between steps or missing, so a refusal a page sets with
-  `setCustomValidity` no longer shows the stepper's error, as it attaches or once the value is
-  changed. `attachRoving`, and `useRoving` in React, place the group's stop again as the group's
-  size changes, so a group attached in a closed `details`, under `hidden` or `display: none`, or in
-  a dialog not yet open has its stop once it shows. Such a row of tabs used to leave every cell at
-  `tabindex="-1"` once it showed, so a keyboard user tabbed past it. A cell a media query or a
-  page's rule hides as it resizes the group hands the stop on to the next cell, as a cell taken out
-  does. A group under `inert`, or hidden in a way that keeps its size, is placed again only as its
-  cells change or are reached. The group's detach stops watching its size. `attachStepper`,
-  `attachTable`, `attachRoving`, `attachBusy`, `attachProgress` and `attachDialog` take an
-  `AbortSignal` as `signal`, and aborting it does what the function they return does. `attachTable`
-  takes its options as a new second argument, and still refuses an element outside a table's frame
-  when its signal is already aborted. A signal already aborted attaches nothing and leaves a piece
-  already attached with the options it had. The dialog, whose attach returns what opens it, is taken
-  down by its signal alone: an open dialog closes with focus handed back to what opened it, as does
-  one closed in the same moment, a close still to come never reaches a later attach, its listeners
-  come off with the `closedby` its `stay` set, and its open function does nothing. A busy wait still
-  running is cleared, so its words are never said, a stepper's error not yet said through a page's
-  `say` is left unsaid, and a progress step not yet heard on its status line is taken back, even one
-  waiting behind firm words. `moveFocus` takes a `signal` that calls off a request not yet landed,
-  as the function it returns does, and a request that lands lets go of the signal. A request asked
-  as its component unmounts still lands when it is given no signal that unmount aborts. Each takes
-  itself down through the internal helper in place of its own guard against a second detach.
+  place of "Form cleared." `attachStepper`, `attachTable`, `attachRoving`, `attachBusy`,
+  `attachProgress` and `attachDialog` take an `AbortSignal` as `signal`, and aborting it does what
+  the function they return does. `attachTable` takes its options as a new second argument, and still
+  refuses an element outside a table's frame when its signal is already aborted. A signal already
+  aborted attaches nothing and leaves a piece already attached with the options it had. The dialog,
+  whose attach returns what opens it, is taken down by its signal alone: an open dialog closes with
+  focus handed back to what opened it, as does one closed in the same moment, a close still to come
+  never reaches a later attach, its listeners come off with the `closedby` its `stay` set, and its
+  open function does nothing. A busy wait still running is cleared, so its words are never said, a
+  stepper's error not yet said through a page's `say` is left unsaid, and a progress step not yet
+  heard on its status line is taken back, even one waiting behind firm words. `moveFocus` takes a
+  `signal` that calls off a request not yet landed, as the function it returns does, and a request
+  that lands lets go of the signal. A request asked as its component unmounts still lands when it is
+  given no signal that unmount aborts. `attachStepper`, `attachTable`, `attachRoving`, `attachBusy`,
+  `attachProgress`, `attachDialog` and `moveFocus` each take themselves down through the internal
+  helper in place of their own guard against a second detach. `attachStepper` shows the stepper's
+  error as it attaches, and again when a form's reset brings the value back, when the value is
+  outside the limits or between steps, describes the field by it and marks it invalid, and says
+  nothing on the status line, so a page that draws that state, as the kit's site does, writes no
+  code of its own for it. A field drawn blank, a field that is disabled or read only, and a field
+  showing the page's own error show no error as the page loads, and the error is cleared as before
+  once the value is right or the stepper is taken away. The error names only a value outside the
+  limits, between steps or missing, so a refusal a page sets with `setCustomValidity` shows no
+  stepper error as it attaches, and no longer shows it once the value is changed. `attachRoving`,
+  and `useRoving` in React, place the group's stop again as the group's size changes, so a group
+  attached in a closed `details`, under `hidden` or `display: none`, or in a dialog not yet open has
+  its stop once it shows. Such a row of tabs used to leave every cell at `tabindex="-1"` once it
+  showed, so a keyboard user tabbed past it. A cell a media query or a page's rule hides as it
+  resizes the group hands the stop on to the next cell, as a cell taken out does. A group under
+  `inert`, or hidden in a way that keeps its size, is placed again only as its cells change or are
+  reached. The group's detach stops watching its size.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
@@ -120,30 +122,32 @@ at 18.5 KB under record 13's rule.
   Record 15 is amended for the status line's and the toast's signal, and record 22 names them among
   the pieces that keep the contract. The reference gives `attachStatus` and `attachToast` their
   `signal` and says how the signal alone takes each down. Record 13 sets the controls' budget at
-  18.5 KB, from 17.25 KB, by way of 17.75 KB once the helper and the first attaches moved onto it,
-  once moving the status line, the toast, the form, the panels and the remaining attaches onto the
-  helper took them to 18,269 bytes together, with a median function of 606 bytes. The reference
-  gives `attachForm` and `attachPanel` their `signal` and the panel's rule, and its section on
-  taking a control down names the form and the panels. Record 19 is amended for the panel's rule and
-  record 21 for the form's `noValidate` given back, and record 22 names the form and the panels
-  among the attaches that keep its contract. Record 20 is amended for the hooks' ref cleanups, with
-  `StatusProvider`'s wait and the focus requests around an unmount, and names the ways of telling a
-  stale request apart that were rejected. Record 22 says a focus request lands when its component
-  unmounts before the request is drawn. The reference says how a hook takes its control down and
-  when a focus request asked around an unmount lands. Record 22 names the new tests and the
-  counters, and records 15 and 22 say the teardown tests count listeners in each engine they run in.
-  The reference and the attach function's comment say when a value drawn past the limits shows the
-  error and when it does not. The reference's sections on tabs and on a grid of buttons, and
-  `attachRoving`'s comment, say the stop is placed as the group comes into sight from no size. The
-  reference names `signal` on each, and says how the dialog is taken down and how a focus request
-  asked at unmount still lands. Record 22 lists them among the attaches that keep the contract.
+  18.5 KB, from 17.25 KB. The helper, with the theme switch and the copy button moved onto it, took
+  the controls to 17,532 bytes with a median function of 586 bytes, which set it at 17.75 KB, and
+  moving the status line, the toast, the form, the panels and the remaining attaches onto the helper
+  took them to 18,269 bytes, with a median function of 606 bytes. The reference gives `attachForm`
+  and `attachPanel` their `signal` and the panel's rule, and its section on taking a control down
+  names the form and the panels. Record 19 is amended for the panel's rule and record 21 for the
+  form's `noValidate` given back, and record 22 names the form and the panels among the attaches
+  that keep its contract. The reference names `signal` on the stepper, the table, the group, a busy
+  button, progress, the dialog and `moveFocus`, and says how the dialog is taken down and how a
+  focus request asked at unmount still lands. Record 22 lists them among the pieces that keep the
+  contract. Record 20 is amended for the hooks' ref cleanups, with `StatusProvider`'s wait and the
+  focus requests around an unmount, and names the ways of telling a stale request apart that were
+  rejected. Record 22 says a focus request lands when its component unmounts before the request is
+  drawn. The reference says how a hook takes its control down and when a focus request asked around
+  an unmount lands. Record 22 names the new tests and the counters, and records 15 and 22 say the
+  teardown tests count listeners in each engine they run in. The reference and the attach function's
+  comment say when a value drawn past the limits shows the error and when it does not. The
+  reference's sections on tabs and on a grid of buttons, and `attachRoving`'s comment, say the stop
+  is placed as the group comes into sight from no size.
 - **Tests.** Browser tests in Chromium, WebKit and Firefox attach the theme switch and the copy
   button with a signal already aborted and find nothing attached and a repeat attach's new source
   not taken, abort a signal and find both hidden, find a late clipboard answer and a theme chosen
   after the teardown change nothing, find an old detach called twice and its signal aborted leave a
-  newer attach alone, and find a later attach's signal unheard. In Chromium they count the listeners
-  on the controls' own elements and on the document, and find every one the attach added off after
-  an abort. Unit tests hold the helper to running once, whichever of the abort and the detach comes
+  newer attach alone, and find a later attach's signal unheard. They count the listeners on the
+  controls' own elements and on the document, and find every one the attach added off after an
+  abort. Unit tests hold the helper to running once, whichever of the abort and the detach comes
   first, to running every undo where one throws, and to taking its listener off the page's signal.
   Browser tests in Chromium, WebKit and Firefox attach a status line and a toast with a signal
   already aborted and find nothing said or shown, abort a signal and find the line emptied and
@@ -152,20 +156,31 @@ at 18.5 KB under record 13's rule.
   toast taken down with focus on its Close send focus back where it came from and a later message
   unshown, the tabindex it added taken away and one the page set since kept, and find a later
   attach's signal unheard. They count the timers and observers running before attaching and after
-  aborting and find them equal, and in Chromium they count the listeners on the toast's elements and
-  on the window, and find every one the attach added off after an abort. Unit tests find a line let
-  go of and attached afresh take its old attach down, leaving nothing on that attach's signal, and a
-  toast missing a part refused whatever its signal. Browser tests in Chromium, WebKit and Firefox
-  take a form's check down with a refusal and a reset still due and find its timers and frames as
-  before the attach, nothing said and the form as its markup drew it, find the check kept until the
-  last attach in the form is taken down, and find a signal already aborted attaching nothing.
-  Another finds a reset clears the errors a part's attach drew before the form's own attach came,
-  and calls off a refusal still due, on a clock held still. Others let a panel's button go by its
-  signal, close a panel by Escape and by its Close alike once its opener is let go, by Escape once
-  its button is drawn again, the only one among them too, and hand a panel to a button in a shadow
-  root. In Chromium they count the listeners on the form, the panels' buttons and the document and
-  find them as before after an abort, and the theme switch's listener on the document off after each
-  way its choices close. Browser tests in Chromium, WebKit and Firefox find focus on the next row as
+  aborting and find them equal, and they count the listeners on the toast's elements and on the
+  window, and find every one the attach added off after an abort. Unit tests find a line let go of
+  and attached afresh take its old attach down, leaving nothing on that attach's signal, and a toast
+  missing a part refused whatever its signal. Browser tests in Chromium, WebKit and Firefox take a
+  form's check down with a refusal and a reset still due and find its timers and frames as before
+  the attach, nothing said and the form as its markup drew it, find the check kept until the last
+  attach in the form is taken down, and find a signal already aborted attaching nothing. Another
+  finds a reset clears the errors a part's attach drew before the form's own attach came, and calls
+  off a refusal still due, on a clock held still. Others let a panel's button go by its signal,
+  close a panel by Escape and by its Close alike once its opener is let go, by Escape once its
+  button is drawn again, the only one among them too, and hand a panel to a button in a shadow root.
+  They count the listeners on the form, the panels' buttons and the document and find them as before
+  after an abort, and the theme switch's listener on the document off after each way its choices
+  close. Browser tests in Chromium, WebKit and Firefox attach the stepper, a table's frame, a group
+  the arrow keys move through, a busy button, progress and the dialog with a signal already aborted
+  and find nothing attached and a repeat attach's options not taken, abort a signal and find each
+  taken down and an open dialog closed with focus back on its opener, find a detach, an open, a
+  press, a step of progress and the arrow keys doing nothing after the teardown, find a busy wait, a
+  pending focus request, a stepper's error and a progress step called off by an abort, find focus
+  back on the opener of a dialog closed and taken down at once and kept there when the dialog is
+  attached again as it closes, find a `closedby` the page set left alone and a table outside its
+  frame still refused, find an old detach called twice and its signal aborted leave a newer attach
+  alone, and find a later attach's signal unheard. They count the listeners on the pieces' own
+  elements and find every one off after an abort, and find a focus request that landed holds nothing
+  on the page's signal. Browser tests in Chromium, WebKit and Firefox find focus on the next row as
   a row asking for it is removed at once, after an await, from a timer and in a transition, a
   request whose transition was overtaken landing where focus fell, leaving a field the visitor moved
   to and going to its fallback where the transition draws the target, a request whose component an
@@ -192,33 +207,21 @@ at 18.5 KB under record 13's rule.
   called after, seven times in a row, with every count back where it started each time, and each
   given a signal already aborted starts nothing. A page drawn by React that uses every hook is
   drawn, used and taken away seven times, in production and under `StrictMode`, with every count but
-  React's own listeners on elements back where it was before. The teardown tests that counted
-  listeners through Chromium's own tools, or timers through counters of their own, count through the
-  same script, which in Chromium is still held to the engine's own count, and those that run in
-  WebKit and Firefox count listeners there too. Browser tests attach a stepper past its limit and
-  find the error shown, the field described by it and marked invalid, and its status line empty,
-  then find the error cleared by a right value, by taking the stepper away and by a form's reset,
-  and find a field attached blank with no error. Others find the error back once a reset brings back
-  a value drawn past the limit, none on a disabled or read-only field, none for a refusal the page
-  sets, and the page's own error alone where it shows one. Browser tests attach a row of tabs in a
-  closed `details`, open it and reach the chosen tab by Tab, attach a grid in a hidden panel whose
-  first cell is hidden on its own, show the panel and reach the first cell in sight by Tab, and
-  attach a row of tabs in a dialog, open it with `showModal()` and reach the chosen tab by Tab, each
-  finding the stop placed before Tab is pressed. Another hides a cell that had focus by a class
-  outside its group and finds the stop on the next cell, and a React test opens a details around a
-  row given `useRoving` and reaches its chosen tab by Tab. Every kit browser test that steps a
-  stand-in clock installs it stopped, through one helper, since a clock left running keeps pace with
-  real time between steps as well. Browser tests in Chromium, WebKit and Firefox attach each with a
-  signal already aborted and find nothing attached and a repeat attach's options not taken, abort a
-  signal and find each taken down and an open dialog closed with focus back on its opener, find a
-  detach, an open, a press, a step of progress and the arrow keys doing nothing after the teardown,
-  find a busy wait, a pending focus request, a stepper's error and a progress step called off by an
-  abort, find focus back on the opener of a dialog closed and taken down at once and kept there when
-  the dialog is attached again as it closes, find a `closedby` the page set left alone and a table
-  outside its frame still refused, find an old detach called twice and its signal aborted leave a
-  newer attach alone, and find a later attach's signal unheard. In Chromium they count the listeners
-  on the pieces' own elements and find every one off after an abort, and find a focus request that
-  landed holds nothing on the page's signal.
+  React's own listeners on elements back where it was before. The teardown tests above take their
+  counts from the same script. Browser tests attach a stepper past its limit and find the error
+  shown, the field described by it and marked invalid, and its status line empty, then find the
+  error cleared by a right value, by taking the stepper away and by a form's reset, and find a field
+  attached blank with no error. Others find the error back once a reset brings back a value drawn
+  past the limit, none on a disabled or read-only field, none for a refusal the page sets, and the
+  page's own error alone where it shows one. Browser tests attach a row of tabs in a closed
+  `details`, open it and reach the chosen tab by Tab, attach a grid in a hidden panel whose first
+  cell is hidden on its own, show the panel and reach the first cell in sight by Tab, and attach a
+  row of tabs in a dialog, open it with `showModal()` and reach the chosen tab by Tab, each finding
+  the stop placed before Tab is pressed. Another hides a cell that had focus by a class outside its
+  group and finds the stop on the next cell, and a React test opens a details around a row given
+  `useRoving` and reaches its chosen tab by Tab. Every kit browser test that steps a stand-in clock
+  installs it stopped, through one helper, since a clock left running keeps pace with real time
+  between steps as well.
 
 ## 0.9.2
 
