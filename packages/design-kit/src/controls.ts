@@ -783,8 +783,8 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     // another, so it never claims that one copied, and kept where it gives the same. The source is
     // read only while a word is shown, and one that throws, as one reading a ref not yet drawn
     // does, counts as another.
-    // A call that gives no source, as the defaults a holder that gave none goes back to, keeps the
-    // one the button has, since a copy button has no source of its own.
+    // A call that gives no source or status line, as the defaults a holder that gave none goes back
+    // to, keeps the ones the button has, since a copy button has neither of its own.
     const set = (next: CopyOptions) => {
         ({ source = source, status = status } = next);
         if (!copiedFrom) return;
@@ -1503,11 +1503,12 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
  * options replaces them, by the rule for whose options apply in the reference's Taking a control
- * down, attaching it again with none, or with only a `signal`, leaves them as they were, and either
- * returns the same function, an open dialog staying open. Its listeners are on the dialog, so a
- * dialog taken from the page takes them with it. Taken down by its `signal`, an open dialog closes,
- * focus goes back to what opened it where focus is in the dialog or has fallen to the body, its
- * listeners and the closedby its `stay` set come off, and the function that opens it does nothing.
+ * down, attaching it again with none, or with no key but `signal` given a value, as `{}` or
+ * `{ stay: undefined }`, leaves them as they were, and either returns the same function, an open
+ * dialog staying open. Its listeners are on the dialog, so a dialog taken from the page takes them
+ * with it. Taken down by its `signal`, an open dialog closes, focus goes back to what opened it
+ * where focus is in the dialog or has fallen to the body, its listeners and the closedby its `stay`
+ * set come off, and the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are

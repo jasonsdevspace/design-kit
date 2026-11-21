@@ -48,12 +48,13 @@ export type Kept<Handle, Options = AttachOptions> = {
 };
 
 /**
- * Options count as given only where a key other than `signal` has a value, so `{}`, `{ signal }`
- * and options whose every other key is undefined are no options, and a call with them leaves the
- * last alone.
+ * Options count as given only where a key of their own other than `signal` has a value, so `{}`,
+ * `{ signal }` and options whose every other key is undefined are no options, and a call with them
+ * leaves the last alone.
  */
 const optionsIn = <Options>(options?: Options): Options | undefined => {
-    for (const key in options) if (key !== 'signal' && options[key] !== undefined) return options;
+    for (const key of Object.keys(options ?? {}) as (keyof Options)[])
+        if (key !== 'signal' && options?.[key] !== undefined) return options;
 };
 
 /**

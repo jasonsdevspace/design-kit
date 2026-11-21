@@ -1437,9 +1437,13 @@ options at once, and they stay with the page where the page holds the control wi
 elsewhere leave with the newest holder they are filed under. Options count as given only where a key
 other than `signal` has a value, `null` and `false` among values, so `{}`, `{ signal }` and options
 whose every other key is `undefined` count as none, and a call that gives none keeps its holder's
-last ones. Where no holder left gave options, the control goes back to its defaults, as a first
-attach that gave none has them, though a copy button, which has no source of its own, keeps the one
-it has.
+last ones. Options that count as given replace the holder's last ones whole, so a key left out goes
+back to its default. Where no value names an option's default, as for a group's `orientation`, a
+dialog's `returnTo` or progress's `steps`, a page puts the defaults back by taking the control down
+and attaching it again, with the function its attach returned, or for a dialog, whose attach returns
+what opens it, by aborting the signals that hold it and attaching it a microtask later. Where no
+holder left gave options, the control goes back to its defaults, as a first attach that gave none
+has them, though a copy button keeps the source and status line it has.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
@@ -3565,8 +3569,10 @@ the dialog on a second Escape or Back, so a page there treats a dialog that must
 that can be dismissed too. Attaching a dialog again with options replaces them, by the rule for
 whose options apply that the section linked below sets out, and attaching it again with none leaves
 them as they were, so a dialog attached to stay still stays, and either returns the same function,
-an open dialog staying open. Options that give only a `signal` count as none, so a dialog attached
-through a ref made afresh on every render keeps `stay`. Its listeners are on the dialog, so a dialog
+an open dialog staying open. Options with no key but `signal` given a value, as `{}`, `{ signal }`
+or `{ stay: undefined }`, count as none, so a dialog attached through a ref made afresh on every
+render, or with props that leave `stay` undefined, keeps `stay`, and a page that means it to be
+dismissed again attaches it with `{ stay: false }`. Its listeners are on the dialog, so a dialog
 taken from the page takes them with it. Taken down by its `signal`, as [Taking a control
 down](#taking-a-control-down) has it, an open dialog closes, with focus handed back to what opened
 it where focus is in the dialog or has fallen to the body, and the function that opens it does

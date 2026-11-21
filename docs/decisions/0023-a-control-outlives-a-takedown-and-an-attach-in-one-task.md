@@ -87,11 +87,11 @@ Option C.
   without a signal applies its options at once, and files them under the newest holder, so they
   leave with it, or under the page's own hold where the page holds the control without a signal, so
   they stay with the page as hooks come and go. Options count as given only where a key other than
-  `signal` has a value, so an empty object, a signal alone and keys left undefined, as a page
-  spreading its own optional props passes, count as none, as record 13 has a call with none leave
-  them as they were, and a call that gives no options keeps the ones its holder gave before. Where
-  no holder left gave options, the control goes back to its defaults, as a first attach that gave
-  none has them, though a copy button, which has no source of its own, keeps the one it has.
+  `signal` has a value, `null` and `false` among values, so an empty object, a signal alone and keys
+  left undefined, which a page spreading its own optional props passes, count as none, and a call
+  with none keeps the options its holder gave before, as record 13 has a call with none leave them
+  as they were. Where no holder left gave options, the control goes back to its defaults, as a first
+  attach that gave none has them, though a copy button keeps the source and status line it has.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment the
   takedown lands. A focus request's takedown waits the same microtask, which changes nothing for it,
@@ -162,8 +162,12 @@ The paths are in `packages/design-kit`.
   kept through a call from it that gives none, no options applied after the detach, an attach made
   from inside a takedown getting a control of its own, a page's own options given without a signal
   applied at once and kept as a hook sharing the element goes, options that give only a signal taken
-  for none, a first attach's among them, an empty object and keys left undefined taken for none
-  while `null` is given, and no options applied once the only holder that gave any lets go.
+  for none, a first attach's among them, an empty object, keys left undefined and keys only
+  inherited taken for none while `null` and `false` are given, and no options applied once the only
+  holder that gave any lets go.
+- `e2e/dialog.spec.ts` finds a dialog attached to stay still staying once attached again with `{}`,
+  and no longer staying once attached again with `{ stay: false }` or with options that leave
+  `stay` out.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, aborts and attaches without a signal in one task and finds each kept and a busy wait

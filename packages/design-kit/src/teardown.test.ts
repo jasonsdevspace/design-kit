@@ -231,6 +231,7 @@ describe('a teardown with several holders', () => {
     it('takes options for given only where a key other than signal has a value', () => {
         type Options = {
             readonly name?: string | null | undefined;
+            readonly stay?: boolean | undefined;
             readonly signal?: AbortSignal | undefined;
         };
         const registry = new WeakMap<object, Kept<() => void, Options>>();
@@ -244,10 +245,13 @@ describe('a teardown with several holders', () => {
         join(registry, element, {});
         join(registry, element, { name: undefined });
         join(registry, element, { name: undefined, signal: undefined });
+        // A key the options only inherit is not theirs.
+        join(registry, element, Object.create({ name: 'inherited' }) as Options);
         expect(applied).toEqual([]);
-        // Null is a value, so it is given.
+        // Null and false are values, so each is given.
         join(registry, element, { name: null });
-        expect(applied).toEqual([{ name: null }]);
+        join(registry, element, { stay: false });
+        expect(applied).toEqual([{ name: null }, { stay: false }]);
     });
 
     it('gives an attach made from inside a takedown a control of its own', () => {
