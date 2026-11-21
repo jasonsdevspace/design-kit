@@ -463,9 +463,8 @@ wait at once. The wait is a delay rather than a motion, so it stands under reduc
 forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
 off state at once, as it must for the press to be stopped.
 
-`attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks
-on the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not,
-and takes
+`attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks on
+the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
 away only that mark once the work is done. A press by pointer, Enter or Space, or by Enter in a
 field of the form it submits, is stopped before the button's own handlers and React's `onClick` hear
 it, though a capture listener further up still does. Once the wait the sheet holds the look back by
@@ -1381,13 +1380,12 @@ The theme switch, the copy button, the stepper, a table's frame, a group the arr
 through, a busy button, progress and the dialog take an `AbortSignal` as `signal` in their options,
 as `addEventListener` does. Aborting it takes the control down as the function its attach returned
 does, and calling that function or aborting the signal again does nothing. The dialog's attach
-returns what opens it, so its signal alone takes it down, closing it where it is open. A signal
-already aborted does nothing: the control stays as the markup drew it, a control already attached
-keeps the options it had, and what the attach returns does nothing.
-Once a control is taken down, nothing it started acts, such as
-a copy the clipboard answers late. A control attached again before it is taken down returns what
-its first attach returned and does not hear the later call's signal, so the first attach owns it
-until it is taken down, as
+returns what opens it, so its signal alone takes it down, closing it where it is open and handing
+focus back to what opened it. A signal already aborted does nothing: the control stays as the markup
+drew it, a control already attached keeps the options it had, and what the attach returns does
+nothing. Once a control is taken down, nothing it started acts, such as a copy the clipboard answers
+late. A control attached again before it is taken down returns what its first attach returned and
+does not hear the later call's signal, so the first attach owns it until it is taken down, as
 [decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
@@ -1720,14 +1718,13 @@ control that had it is removed. A request still waiting a second later, as in a 
 dropped, so focus does not jump when the visitor comes back. Each request is new, so the same
 control asked for twice is focused twice, and the function `moveFocus` returns calls a request off
 before it lands, as aborting the `signal` it is given does. A request asked as its component
-unmounts is given no signal that unmount aborts, so it still lands.
-An id is looked for in the root where focus was when the request was made, so a
-widget drawn inside a shadow root finds its own control, never an element of the page around it that
-shares the id, and the form's refusal, a stepper and progress find the errors, hints and labels they
-read in their own element's root. A panel and its button are found from the page's document, which
-the panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each
-shadow root that holds it, as a request reads where focus was, for a page that asks later and passes
-`from` itself.
+unmounts is given no signal that unmount aborts, so it still lands. An id is looked for in the root
+where focus was when the request was made, so a widget drawn inside a shadow root finds its own
+control, never an element of the page around it that shares the id, and the form's refusal, a
+stepper and progress find the errors, hints and labels they read in their own element's root. A
+panel and its button are found from the page's document, which the panel listens on. `activeOf()`
+from `./controls` returns what has focus, followed into each shadow root that holds it, as a request
+reads where focus was, for a page that asks later and passes `from` itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -1849,19 +1846,18 @@ measure is [a loading line's](#a-part-of-the-page-that-is-loading). `Progress` i
 label, the bar and the words, from its `label`, `value`, `max` and `words`.
 
 Progress is said on the screen's [status line](#status-line) by
-`attachProgress(bar, { status, signal })`
-from `./controls`, or `useProgress()` in React, which speaks on the line of the nearest
-`StatusProvider`. It says the bar's name, from its label or the words it is labeled by, and its
-words, such as "Importing products, 12 of 40.", at steps the page sets with `steps`, each quarter
-until it sets others, and once at the end, or the `done` words in its place, such as "Imported 40
-products.". Each is said at once, with no wait for the amount to stop changing, since a steady
-import never stops, and at least three seconds after the last step, so one is heard before the next,
-while the end never waits. Nothing replaces the end until the amount goes back for another run. The
-amount a bar first shows is not said, an amount that becomes known at the end, after the bar is
-attached, aside, so a bar attached already full says nothing, and a bar with no amount says nothing.
-What it says is polite, `say(words, { polite: true })`, so it gives way to a page's own result said
-with it, and waits for firm words already being said, while a busy button's words beside it, polite
-too, give way to it:
+`attachProgress(bar, { status, signal })` from `./controls`, or `useProgress()` in React, which
+speaks on the line of the nearest `StatusProvider`. It says the bar's name, from its label or the
+words it is labeled by, and its words, such as "Importing products, 12 of 40.", at steps the page
+sets with `steps`, each quarter until it sets others, and once at the end, or the `done` words in
+its place, such as "Imported 40 products.". Each is said at once, with no wait for the amount to
+stop changing, since a steady import never stops, and at least three seconds after the last step, so
+one is heard before the next, while the end never waits. Nothing replaces the end until the amount
+goes back for another run. The amount a bar first shows is not said, an amount that becomes known at
+the end, after the bar is attached, aside, so a bar attached already full says nothing, and a bar
+with no amount says nothing. What it says is polite, `say(words, { polite: true })`, so it gives way
+to a page's own result said with it, and waits for firm words already being said, while a busy
+button's words beside it, polite too, give way to it:
 
 <!-- source: importing -->
 
@@ -2287,8 +2283,8 @@ markup is on the page, passing the frame or anything in it. What the keyboard re
 fully into view, clear of a pinned column, where Chromium and Safari would leave one that is partly
 in view cut by the frame's edge. Focus a pointer brings is left to the browser. A frame added later
 is attached on its own, and the function returned lets it go, as aborting the `signal` given as
-`attachTable(element, { signal })` does. Without script the frame keeps a
-target's room at its end, so a link with no more than that showing still comes into view.
+`attachTable(element, { signal })` does. Without script the frame keeps a target's room at its end,
+so a link with no more than that showing still comes into view.
 
 A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every cell
 of a numeric column, its header included, is `.dk-table-number`. A table is never stacked into cards
@@ -2717,8 +2713,8 @@ players" and "Raise the number of players". A status line out of sight says the 
 since focus stays on the button, and that it is the least or the most where a press lands on a
 limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
-or the stepper is taken away, by the function `attachStepper` returns or by aborting the `signal`
-it was given.
+or the stepper is taken away, by the function `attachStepper` returns or by aborting the `signal` it
+was given.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -2952,18 +2948,17 @@ grid where only one can be on is a choice field.
 A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
 page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
 Tab key. A page with many cells gives the group one stop instead with `attachRoving(grid)`, which
-takes a `signal` as the other attaches do, in
-`./controls`, or `useRoving()` in React, so the arrow keys move between cells and Home and End reach
-the ends. Up and down move to the nearest cell in the row above or below as the grid is drawn, so it
-holds at any count of columns, left and right follow the page's reading direction, and an arrow held
-with Alt, Control or Command is left to the browser. A cell marked off keeps its place, a cell that
-is disabled or out of sight is passed over and never the stop, and where the cell that had focus is
-taken out, focus goes to the next cell still there, or the one before. A grid attached while it is
-drawn at no size, as in a closed `details` or under `hidden`, places its stop as it comes into
-sight, and a cell a page's rule hides as it resizes the grid hands the stop on. A grid with the
-group's role, as above, or none takes the toolbar's while attached, so a screen reader says the
-arrows move within it, and keeps its `aria-label`, which a toolbar needs. Let go, each cell takes
-back its own tabindex and the grid its own role.
+takes a `signal` as the other attaches do, in `./controls`, or `useRoving()` in React, so the arrow
+keys move between cells and Home and End reach the ends. Up and down move to the nearest cell in the
+row above or below as the grid is drawn, so it holds at any count of columns, left and right follow
+the page's reading direction, and an arrow held with Alt, Control or Command is left to the browser.
+A cell marked off keeps its place, a cell that is disabled or out of sight is passed over and never
+the stop, and where the cell that had focus is taken out, focus goes to the next cell still there,
+or the one before. A grid attached while it is drawn at no size, as in a closed `details` or under
+`hidden`, places its stop as it comes into sight, and a cell a page's rule hides as it resizes the
+grid hands the stop on. A grid with the group's role, as above, or none takes the toolbar's while
+attached, so a screen reader says the arrows move within it, and keeps its `aria-label`, which a
+toolbar needs. Let go, each cell takes back its own tabindex and the grid its own role.
 
 The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
 unless it does:
@@ -3454,14 +3449,13 @@ options come before its first control gives its title `tabindex="-1"` and `autof
 at its top with its title said, rather than scrolled to a control further down.
 
 `attachDialog(dialog, { signal })` returns the function that opens it, and focus goes back to what
-opened it
-when the dialog closes, however it is closed. Handed the event of the press that opened it, from a
-listener on the button, on a part of the page that holds it or in React, it finds the button the
-press landed on, since Safari gives a clicked button no focus to remember. Called otherwise, it
-takes the element to return to, or remembers what had focus. Where nothing had focus, or what it
-returns to is gone from the page by the time the dialog closes, focus goes to what `returnTo` gives.
-It also closes the dialog on a tap on the scrim around it, one that starts and ends there so a drag
-out of the dialog closes nothing.
+opened it when the dialog closes, however it is closed. Handed the event of the press that opened
+it, from a listener on the button, on a part of the page that holds it or in React, it finds the
+button the press landed on, since Safari gives a clicked button no focus to remember. Called
+otherwise, it takes the element to return to, or remembers what had focus. Where nothing had focus,
+or what it returns to is gone from the page by the time the dialog closes, focus goes to what
+`returnTo` gives. It also closes the dialog on a tap on the scrim around it, one that starts and
+ends there so a drag out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads

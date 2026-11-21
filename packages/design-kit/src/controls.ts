@@ -132,16 +132,15 @@ const land = (
 /**
  * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
  * next player's entry, and returns what calls it off before it lands, as aborting the `signal` it
- * is given does. It waits for the next frame,
- * so a page that draws the control in answer to the same press or key has drawn it, and finds an
- * id then. A change React draws later, in a transition or behind a suspense, asks from an effect
- * once it is drawn. Where the target is gone from the page, hidden, inert, disabled or off, focus
- * goes to the first fallback that takes it, and then to the app frame's body or the page's main
- * content, by the walk a closing panel hands focus back by, so it does not fall to the page. Focus
- * a visitor has moved since the request is left where they put it: focus is free only while it is
- * where it was when asked, or on the page's body. A request still waiting a second later, as in a
- * tab out of sight, is dropped, so focus does not jump when the visitor comes back. Each request is
- * new, so a control asked for twice is focused twice.
+ * is given does. It waits for the next frame, so a page that draws the control in answer to the
+ * same press or key has drawn it, and finds an id then. A change React draws later, in a transition
+ * or behind a suspense, asks from an effect once it is drawn. Where the target is gone from the
+ * page, hidden, inert, disabled or off, focus goes to the first fallback that takes it, and then to
+ * the app frame's body or the page's main content, by the walk a closing panel hands focus back by,
+ * so it does not fall to the page. Focus a visitor has moved since the request is left where they
+ * put it: focus is free only while it is where it was when asked, or on the page's body. A request
+ * still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump when
+ * the visitor comes back. Each request is new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
     // Aborting calls off a request that has not landed, as the function it returns does, and one
@@ -720,9 +719,13 @@ const say = (status: HTMLElement, message: Spoken, keep = false, polite = false)
     }, 100);
 };
 
-/** Takes a piece's own message off a page's line before it would leave, freeing it for the next. */
+/**
+ * Takes a piece's own message off a page's line before it would leave, freeing it for the next, or
+ * out of the wait polite words keep there.
+ */
 const unsay = (status: HTMLElement, message: Spoken | null) => {
     const line = lineOf(status);
+    if (line.words === message) line.words = null;
     if (message === null || line.current?.message !== message) return;
     window.clearTimeout(line.timer);
     leave(status);
@@ -1380,7 +1383,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         report(bad);
         if (bad && range) {
             const words = range.textContent;
-            tell(() => words);
+            tell(() => (attached() ? words : null));
         }
     };
     // Once the reset is done, and never once the stepper is let go, since the teardown clears it, as
@@ -1544,8 +1547,8 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * closes it on a tap on the scrim around it, one that starts and ends there so a drag out of the
  * dialog closes nothing, and on close returns focus to what opened it. That is the element the
  * press that opened it landed on, found from the event a page's listener or React's hands over,
- * since a browser that gives a pressed button no focus leaves nothing else, or else what had
- * focus. Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says.
+ * since a browser that gives a pressed button no focus leaves nothing else, or else what had focus.
+ * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -1553,7 +1556,8 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * options replaces them, attaching it again with none leaves them as they were, and either returns
  * the same function. Its listeners are on the dialog, so a dialog taken from the page takes them
  * with it. Aborting the `signal` its first attach was given lets it go: an open dialog closes,
- * its listeners and the closedby it set come off, and the function that opens it does nothing.
+ * focus goes back to what opened it, its listeners and the closedby its `stay` set come off, and
+ * the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1626,14 +1630,19 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         const close = dialog.querySelector(':scope > .dk-close');
         if (close?.contains(activeOf())) moveOffClose(dialog, close);
     };
-    // A dialog let go while open closes, its focus handed back at once, since the close event that
-    // would hand it back comes after its listener is off, and the page behind is no longer inert.
+    // A dialog let go while open closes, so the page behind is no longer inert, and focus goes back
+    // at once, open or closed in the same task, since the close event that would hand it back comes
+    // after its listener is off. That event is stopped where it lands, so an attach made since
+    // never takes it for a closing of its own and sends focus to its returnTo.
     down.add(() => {
-        if (dialog.open) {
+        if (dialog.open || opener) {
+            dialog.addEventListener('close', (event) => event.stopImmediatePropagation(), {
+                once: true,
+            });
             dialog.close();
             onClose();
         }
-        dialog.removeAttribute('closedby');
+        if (settings.stay) dialog.removeAttribute('closedby');
         attachedDialogs.delete(dialog);
     });
     attachedDialogs.set(dialog, { open, set });
@@ -1915,10 +1924,9 @@ const attachedTables = new WeakMap<HTMLElement, () => void>();
  * `signal` its first attach was given does.
  */
 export const attachTable = (element: HTMLElement, options?: AttachOptions): (() => void) => {
-    // A signal already aborted does nothing, not even ask for the frame.
-    if (options?.signal?.aborted) return () => undefined;
     const frame = element.closest<HTMLElement>('.dk-table-scroll');
     if (!frame) throw new Error('a table needs its frame');
+    if (options?.signal?.aborted) return () => undefined;
     const already = attachedTables.get(frame);
     if (already) return already;
     const down = teardown(options?.signal);
@@ -2708,8 +2716,8 @@ const inPlaceOf = (
  * screen reader says the arrows move within it. Where the cell that had focus is taken out, focus
  * goes to the next cell still there, or the one before. Let go, by what it returns or by aborting
  * the `signal` its first attach was given, each cell takes back its own tabindex and the grid its
- * own role. Attached again, a group returns what it returned first and
- * takes options given in place of the last.
+ * own role. Attached again, a group returns what it returned first and takes options given in place
+ * of the last.
  */
 export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a group already attached are
@@ -2894,14 +2902,14 @@ const attachedBusy = new WeakMap<
  * what takes it away. While it is busy the attach marks it `aria-disabled` too, where the page has
  * not, and takes away only the mark it set when the work is done. A press of a busy button, by a
  * pointer or by Enter or Space, is stopped before the button's own handlers and React's `onClick`
- * hear it, so a submit button submits nothing, though a capture listener further up still hears
- * it. Once the button has been busy for the wait the sheet holds its look back by, --dk-wait, its
- * words are said once on the status line, the `data-busy` value, or "Saving." where it is empty,
- * so a fast save says nothing. Words not yet on the line when the work is done are dropped, so a
- * result a toast says is never followed by a late "Saving.", and a button made busy again before
- * the last wait ended starts a wait of its own. Attached again, a button returns what it returned
- * first and takes options given in place of the last. Let go, by what it returns or by aborting the
- * `signal` its first attach was given, it takes away the mark it set and says nothing still waiting.
+ * hear it, so a submit button submits nothing, though a capture listener further up still hears it.
+ * Once the button has been busy for the wait the sheet holds its look back by, --dk-wait, its words
+ * are said once on the status line, the `data-busy` value, or "Saving." where it is empty, so a
+ * fast save says nothing. Words not yet on the line when the work is done are dropped, so a result
+ * a toast says is never followed by a late "Saving.", and a button made busy again before the last
+ * wait ended starts a wait of its own. Attached again, a button returns what it returned first and
+ * takes options given in place of the last. Let go, by what it returns or by aborting the `signal`
+ * its first attach was given, it takes away the mark it set and says nothing still waiting.
  */
 export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a button already attached are
@@ -3024,7 +3032,7 @@ const nameOf = (element: HTMLProgressElement) =>
  * becomes known at the end, after the bar is attached, is, and a bar with no amount says nothing.
  * Attached again, a bar returns what it returned first and takes options given in place of the
  * last. Let go, by what it returns or by aborting the `signal` its first attach was given, it says
- * nothing more.
+ * nothing more on its status line, and a step still waiting there is left unsaid.
  */
 export const attachProgress = (
     progress: HTMLProgressElement,
@@ -3058,7 +3066,9 @@ export const attachProgress = (
         const said = name ? `${name}, ${amount}` : amount;
         return /[.!?]$/.test(said) ? said : `${said}.`;
     };
+    let last = '';
     const speak = (message: string) => {
+        last = message;
         speakOn(chosen, message, { polite: true });
     };
     const check = () => {
@@ -3095,6 +3105,10 @@ export const attachProgress = (
     // that newer attach alone.
     down.add(() => {
         kept.disconnect();
+        // The last step said is taken off the bar's line, or out of its wait there, so a step
+        // still to be heard is never said once the bar is let go. A page's own `say` keeps what
+        // it was handed.
+        if (!chosen.say && chosen.status) unsay(chosen.status, last);
         attachedProgress.delete(progress);
     });
     attachedProgress.set(progress, {

@@ -39,6 +39,7 @@ const SCRIPT = `import {
     attachDialog,
     attachProgress,
     attachRoving,
+    attachStatus,
     attachStepper,
     attachTable,
     moveFocus,
@@ -50,7 +51,8 @@ new MutationObserver(() => {
 }).observe(line, { childList: true, characterData: true, subtree: true });
 const withSignal = (signal, options = {}) => (signal ? { ...options, signal } : options);
 window.kit = {
-    stepper: (signal) => attachStepper(document.querySelector('.dk-stepper'), withSignal(signal)),
+    stepper: (signal, options) =>
+        attachStepper(document.querySelector('.dk-stepper'), withSignal(signal, options)),
     table: (signal) =>
         attachTable(document.querySelector('.dk-table-scroll'), withSignal(signal)),
     roving: (signal) =>
@@ -65,6 +67,7 @@ window.kit = {
     dialog: (signal, options) =>
         attachDialog(document.querySelector('#end-game'), withSignal(signal, options)),
     focus: (signal) => moveFocus('target', withSignal(signal)),
+    line: () => attachStatus(line),
 };
 /** Every piece attached with the signal given, by name, and what each returned. */
 window.all = (signal) => Object.fromEntries(
@@ -313,4 +316,119 @@ test("hears only the first attach's signal while the piece stays attached", asyn
     expect(await attached(page)).toEqual(ALL);
     await page.evaluate('first.abort()');
     expect(await attached(page)).toEqual(NONE);
+});
+
+test('hands focus back from a dialog closed and taken down in one task', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    await page.evaluate(`(() => {
+        const controller = new AbortController();
+        kit.dialog(controller.signal, {
+            returnTo: () => document.querySelector('#start'),
+        })(document.querySelector('#finish'));
+        document.querySelector('#end-game').close();
+        controller.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).not.toHaveAttribute('open');
+    await expect(page.locator('#finish')).toBeFocused();
+});
+
+test('leaves a dialog attached again as the last is taken down open to its own closings', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    // The close the teardown makes arrives once the new attach listens, which would send focus to
+    // its returnTo if it took that closing for its own.
+    await page.evaluate(`(() => {
+        const controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+        controller.abort();
+        window.show = kit.dialog(undefined, { returnTo: () => document.querySelector('#start') });
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#finish')).toBeFocused();
+    // The new attach still hands focus back for an opening of its own.
+    await page.evaluate(`(() => {
+        show(document.querySelector('#target'));
+        document.querySelector('#end-game').close();
+    })()`);
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('leaves a closedby the dialog was not attached to stay with', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    await page.evaluate(`(() => {
+        const controller = new AbortController();
+        kit.dialog(controller.signal);
+        document.querySelector('#end-game').setAttribute('closedby', 'closerequest');
+        controller.abort();
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'closerequest');
+});
+
+test('still refuses a table with no frame when given a signal already aborted', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    const thrown = await page.evaluate(`(async () => {
+        const { attachTable } = await import('./controls.js');
+        try {
+            attachTable(document.querySelector('#start'), { signal: AbortSignal.abort() });
+            return null;
+        } catch (error) {
+            return error.message;
+        }
+    })()`);
+    expect(thrown).toBe('a table needs its frame');
+});
+
+test('says nothing of a stepper error or a progress step taken down before it is heard', async ({
+    page,
+    browserName,
+}) => {
+    await opened(page, browserName);
+    // The bar's observer hears the step in a microtask, so the step is said before the abort.
+    await page.evaluate(`(async () => {
+        const controller = new AbortController();
+        kit.stepper(controller.signal, { say: kit.line() });
+        kit.progress(controller.signal);
+        const input = document.querySelector('.dk-stepper-value');
+        input.value = '99';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        document.querySelector('progress').value = 25;
+        await null;
+        controller.abort();
+    })()`);
+    // Past the moment the status line says a message.
+    await page.evaluate(() => new Promise((done) => setTimeout(done, 300)));
+    expect(await page.evaluate('window.heard')).toEqual([]);
+});
+
+test('drops a progress step waiting behind firm words once the bar is taken down', async ({
+    page,
+    browserName,
+}) => {
+    await stillClock(page.clock);
+    await opened(page, browserName);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.progress(controller.signal);
+        kit.line()('Saved.');
+    })()`);
+    await page.clock.runFor(200);
+    await page.evaluate(`(async () => {
+        document.querySelector('progress').value = 25;
+        await null;
+        controller.abort();
+    })()`);
+    await page.clock.runFor(5000);
+    expect(await page.evaluate('window.heard')).toEqual(['Saved.']);
 });
