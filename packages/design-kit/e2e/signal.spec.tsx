@@ -681,3 +681,30 @@ test('keeps a busy wait a new signal joined for an attach without a signal in th
     expect(await page.evaluate('marks')).toBe(0);
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
 });
+
+test('keeps a dialog staying where a later attach gives it only a signal', async ({ page }) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        kit.dialog(new AbortController().signal, { stay: true });
+        kit.dialog(new AbortController().signal);
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'none');
+});
+
+test('leaves focus a visitor moved after a toast with focus in it left the page', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#target').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    // Taken from the page while still attached, and focus put on a field afterward.
+    await page.evaluate(`document.querySelector('.dk-toast').remove()`);
+    await page.locator('#start').focus();
+    await page.evaluate('controller.abort()');
+    await page.evaluate('frames()');
+    await expect(page.locator('#start')).toBeFocused();
+});

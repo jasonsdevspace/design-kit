@@ -47,10 +47,13 @@ Option C.
 - **Each signal holds the control.** An attach given a signal adds it as a holder, and a call given
   one already held adds no second holder, as `addEventListener` ignores a listener added twice. A
   call without a signal holds the control until its detach only where nothing else holds it, and
-  elsewhere joins without holding, its options going to the newest holder. A call without a signal
-  made while the last holder's takedown waits, with no signal joined since, lands that takedown at
-  once and attaches afresh, since such a call holds the piece for the page's life and nothing of the
-  holder that let go should carry over to it.
+  elsewhere joins without holding, its options going to the newest holder, unless the page already
+  holds it without a signal, when its options are filed under that hold and stay with the page as
+  hooks come and go. Options that give only a signal count as no options, as record 13 has a call
+  with none leave them as they were. A call without a signal made while the last holder's takedown
+  waits, with no signal joined since, lands that takedown at once and attaches afresh, since such a
+  call holds the piece for the page's life and nothing of the holder that let go should carry over
+  to it.
 - **The last holder letting go takes the control down a microtask later.** An attach of the same
   element before then cancels the takedown and keeps the control's state, a busy wait, a form's
   check and the errors it drew, a group's observers, an open dialog, a shown toast and a status
@@ -98,12 +101,14 @@ ever held.
 - A takedown that hands focus back runs after React has taken the element away, so the toast reads
   whether focus was in it from the focus it has heard, not from where focus is. Chromium fires
   focusout on a toast taken from the page with focus in it while WebKit and Firefox fire none, so
-  the toast reads where focus is a microtask after it hears focusout, and keeps focus that left the
-  page with it apart, for the handback alone.
+  the toast reads where focus is a microtask after it hears focusout, and keeps whether focus left
+  the page with it apart. It hands focus back only where focus is still in it, or where focus is
+  free, on the body or nowhere, and it had focus as it left, so focus a visitor put anywhere else is
+  never taken.
 - A copy button joined with a source that gives the element its last press copied keeps the word it
   shows, reading the source only while a word is shown, and progress counts its steps again only
   where their count changes, since a join that sets the same options would otherwise undo them.
-- The controls weigh 18,533 bytes, against 18,117 before, which leaves less room under 18.5 KB than
+- The controls weigh 18,553 bytes, against 18,117 before, which leaves less room under 18.5 KB than
   a function of the usual size, so record 13's rule sets them at 18.75 KB.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.
@@ -117,8 +122,10 @@ The paths are in `packages/design-kit`.
   nothing else does, `stop` running at once whoever holds and leaving no listener on any holder's
   signal, the listeners on a signal not growing as holders come and go, the options of the newest
   holder that gave any applied as holders join and let go, a newer holder joined in the same task
-  keeping its own, a call without a signal landing a waiting takedown and starting afresh, and an
-  attach made from inside a takedown getting a control of its own.
+  keeping its own, a call without a signal landing a waiting takedown and starting afresh, an attach
+  made from inside a takedown getting a control of its own, a page's own options given without a
+  signal kept as a hook sharing the element goes, and options that give only a signal taken for
+  none.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, and aborts, waits a microtask and attaches and finds each attached afresh. It finds a
@@ -126,7 +133,9 @@ The paths are in `packages/design-kit`.
   attached without a signal in the task its holder let go started afresh, a toast kept shown while
   focus leaves it and comes back in one task, one moved in the page with focus in it starting its
   wait again in Chromium, focus left on a control outside a toast taken away as focus moves there,
-  and a progress step still heard through a join that gives the same count.
+  focus a visitor moved after a toast with focus in it left the page left where it is, a dialog kept
+  staying where a later attach gives it only a signal, and a progress step still heard through a
+  join that gives the same count.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
   put back to Copy where a source that reads the page's state gives another block, or throws.
 - `e2e/strict.spec.tsx` draws a form, a group and a busy button mid-wait behind refs made afresh on

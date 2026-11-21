@@ -895,10 +895,15 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const dismiss = () => {
         window.clearTimeout(timer);
-        // A toast taken from the page with focus in it gave that focus up with it, so the focus it
-        // last heard stands for focus it held.
+        // Focus goes back only where it is still in the toast, or where it is free, on the body or
+        // nowhere, and the toast had it as it left the page, so focus a visitor put anywhere else
+        // is never taken.
+        const active = activeOf();
         const hadFocus =
-            element.contains(activeOf()) || (!element.isConnected && (focused || leftWith));
+            element.contains(active) ||
+            ((!active || active === document.body) &&
+                !element.isConnected &&
+                (focused || leftWith));
         shown = 0;
         focused = false;
         leftWith = false;
@@ -1003,17 +1008,13 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     element.addEventListener(
         'focusout',
-        ({ relatedTarget }) => {
+        () => {
             // Read a microtask later, where focus has settled, so focus that leaves and comes back
             // in one task stays in. Chromium fires focusout as a toast with focus in it is taken
             // from the page, and WebKit and Firefox fire none, so focus that left with the toast
-            // is kept apart for the handback, and focus a visitor took to a control outside is not.
+            // is kept apart for the handback.
             queueMicrotask(() => {
-                const outside =
-                    relatedTarget instanceof Element &&
-                    relatedTarget.isConnected &&
-                    !element.contains(relatedTarget);
-                if (!element.isConnected && !outside) leftWith ||= focused;
+                if (!element.isConnected) leftWith ||= focused;
                 focused = element.isConnected && element.contains(activeOf());
                 wait();
             });
@@ -1471,9 +1472,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
- * options replaces them where it is the newest holder, so a page that attaches it with `stay` gives
- * `stay` every time, attaching it again with none leaves them as they were, and either returns the
- * same function, an open dialog staying open. Its listeners are on the dialog, so a dialog taken
+ * options replaces them where it is the newest holder, attaching it again with none, or with only a
+ * `signal`, leaves them as they were, and either returns the same function, an open dialog staying
+ * open. Its listeners are on the dialog, so a dialog taken
  * from the page takes them with it. Taken down by its `signal`, an open dialog closes, focus goes
  * back to what opened it, its listeners and the closedby its `stay` set come off, and the function
  * that opens it does nothing.

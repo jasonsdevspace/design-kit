@@ -199,6 +199,32 @@ describe('a teardown with several holders', () => {
         expect(applied).toEqual(['second']);
     });
 
+    it("keeps a page's own options given without a signal as a hook sharing the element goes", async () => {
+        type Options = { readonly name: string };
+        const down = teardown<Options>(undefined, { name: 'page' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        const hook = new AbortController();
+        down.hold(hook.signal, { name: 'hook' });
+        // The page's own update, with no signal, applies and stays the page's.
+        down.hold(undefined, { name: 'page again' });
+        hook.abort();
+        await Promise.resolve();
+        expect(applied).toEqual(['hook', 'page again']);
+    });
+
+    it('takes options that give only a signal for no options', () => {
+        type Options = { readonly name?: string; readonly signal?: AbortSignal };
+        const registry = new WeakMap<object, Kept<() => void, Options>>();
+        const element = {};
+        const down = teardown<Options>(undefined, { name: 'first' });
+        const applied: (string | undefined)[] = [];
+        down.set = (options) => applied.push(options.name);
+        keep(registry, element, down, down.stop);
+        join(registry, element, { signal: new AbortController().signal });
+        expect(applied).toEqual([]);
+    });
+
     it('gives an attach made from inside a takedown a control of its own', () => {
         const registry = new WeakMap<object, Kept<() => void>>();
         const element = {};

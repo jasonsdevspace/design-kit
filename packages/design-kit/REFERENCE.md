@@ -3551,12 +3551,11 @@ from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a cl
 the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
 that can be dismissed too. Attaching a dialog again with options replaces them where the call is its
 newest holder, attaching it again with none leaves them as they were, so a dialog attached to stay
-still stays, and either returns the same function, an open dialog staying open. Options given with a
-signal are that signal's, so a page that attaches a dialog through a ref made afresh on every render
-gives `stay` with every call. Its listeners are on the dialog, so a dialog taken from the page takes
-them with it. Taken down by its `signal`, as [Taking a control down](#taking-a-control-down) has it,
-an open dialog closes with focus handed back to what opened it, and the function that opens it does
-nothing.
+still stays, and either returns the same function, an open dialog staying open. Options that give
+only a `signal` count as none, so a dialog attached through a ref made afresh on every render keeps
+`stay`. Its listeners are on the dialog, so a dialog taken from the page takes them with it. Taken
+down by its `signal`, as [Taking a control down](#taking-a-control-down) has it, an open dialog
+closes with focus handed back to what opened it, and the function that opens it does nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.

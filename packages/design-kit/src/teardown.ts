@@ -109,6 +109,10 @@ export const teardown = <Options = AttachOptions>(
             down.set?.(next[1] as Options);
         });
     };
+    // Where a call without a signal is filed: under the page's own hold where nothing else holds
+    // the control or the page holds it already, so its options stay with the page, and elsewhere
+    // under the newest holder, so its options leave with that holder. Its options apply at once.
+    const unsigned = () => (holders.size && !holders.has(undefined) ? newest() : undefined);
     const hold = (by: AbortSignal | undefined, next?: Options) => {
         if (signal.aborted) return;
         // A call without a signal holds the piece for the page's life, so where the takedown the
@@ -120,11 +124,9 @@ export const teardown = <Options = AttachOptions>(
         }
         // Added once however many calls a signal makes, as the DOM ignores the same listener again.
         by?.addEventListener('abort', release, { once: true });
-        // A call without a signal holds the control only where nothing else does, and elsewhere
-        // speaks for the newest holder, so its options leave with that holder.
-        const key = by ?? (holders.size ? newest() : undefined);
+        const key = by ?? unsigned();
         if (!holders.has(key) || next) holders.set(key, next ?? holders.get(key));
-        if (next && (key === newest() || key === applied)) {
+        if (next && (!by || key === newest() || key === applied)) {
             applied = key;
             down.set?.(next);
         }
@@ -153,7 +155,9 @@ export const join = <Element extends object, Handle, Options>(
     options?: Options & AttachOptions
 ): Handle | undefined => {
     const kept = registry.get(element);
-    kept?.down.hold(options?.signal, options);
+    // Options that give only a signal are no options, so a later call leaves the last as they were.
+    const given = options && Object.keys(options).join() !== 'signal';
+    kept?.down.hold(options?.signal, given ? options : undefined);
     // A control taken down by now, or being taken down, as an attach made from its own takedown
     // finds it, is attached afresh.
     return kept && !kept.down.signal.aborted ? kept.handle : undefined;
