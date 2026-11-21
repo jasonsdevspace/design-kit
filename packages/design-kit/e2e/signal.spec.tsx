@@ -194,7 +194,9 @@ test('takes each piece down when the signal aborts, as its detach does', async (
     await expect(page.locator('#end-game')).not.toHaveAttribute('open');
     await expect(page.locator('#end-game')).not.toHaveAttribute('closedby');
     await expect(page.locator('#finish')).toBeFocused();
-    expect(await count(PARTS)).toBe(before);
+    // Polled, since the dialog closed by its teardown hears its close event a task later, through a
+    // listener that comes off as it does.
+    await expect.poll(() => count(PARTS)).toBe(before);
 });
 
 test('does nothing after its teardown', async ({ page }) => {
