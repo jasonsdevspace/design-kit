@@ -8,10 +8,10 @@ import { servePage } from './page.js';
 /*
  * The teardown contract of record 22 on the theme switch and the copy button: a signal already
  * aborted does nothing, aborting takes away everything the attach set up, as its detach does, a
- * detach called twice, or after the abort, leaves a newer attach alone, the first attach owns the
- * piece so a later call's signal is not heard, and nothing the piece did before its teardown acts
- * after it. The behavior runs in Chromium, WebKit and Firefox, and so do the counts of listeners,
- * through the counters in leaks.ts.
+ * detach called twice, or after the abort, leaves a newer attach alone, each signal that attached
+ * the piece holds it until it aborts, as record 23 has it, and nothing the piece did before its
+ * teardown acts after it. The behavior runs in Chromium, WebKit and Firefox, and so do the counts
+ * of listeners, through the counters in leaks.ts.
  */
 
 const BODY = renderToStaticMarkup(
@@ -52,6 +52,20 @@ window.kit = {
         const copying = { source: () => document.querySelector(from), status };
         return attachCopyButton(button, signal ? { ...copying, signal } : copying);
     },
+    // A source that reads the page's state as the press comes, as one behind tabs does, and one
+    // that throws while its block is not drawn, as one reading a ref does.
+    copyLive: (signal) => {
+        const copying = { source: () => document.querySelector(window.tab), status };
+        return attachCopyButton(button, signal ? { ...copying, signal } : copying);
+    },
+    copyDrawn: () =>
+        attachCopyButton(button, {
+            source: () => {
+                if (!window.drawn) throw new Error('the block is not drawn');
+                return document.querySelector('#code');
+            },
+            status,
+        }),
     chooseTheme,
 };
 window.ready = true;`;
@@ -214,11 +228,13 @@ test('does nothing after its teardown, from a press in flight or a choice made e
         all.map((radio) => (radio as HTMLInputElement).checked)
     );
     await page.locator('.dk-copy').click();
+    // The clipboard answers in the abort's task, and the choice comes once the takedown has
+    // landed, a microtask after the abort, as record 23 has it.
     await page.evaluate(`(() => {
         controller.abort();
         window.release();
-        kit.chooseTheme('dark');
     })()`);
+    await page.evaluate(`kit.chooseTheme('dark')`);
     // Past the moment the status line says a message, where a press heard after the teardown would
     // show Copied and say it.
     await page.evaluate(() => new Promise((done) => setTimeout(done, 300)));
@@ -254,7 +270,7 @@ test('leaves a newer attach alone when the old detach runs twice and its signal 
     await expect.poll(() => wordOf(page)).toBe(1);
 });
 
-test("hears only the first attach's signal while the piece stays attached", async ({ page }) => {
+test('keeps the piece attached until every signal holding it has aborted', async ({ page }) => {
     await opened(page);
     await page.evaluate(`(() => {
         window.first = new AbortController();
@@ -263,12 +279,56 @@ test("hears only the first attach's signal while the piece stays attached", asyn
             kit.switchWith(first.signal) === kit.switchWith(later.signal),
             kit.copyWith(first.signal) === kit.copyWith(later.signal),
         ];
-        later.abort();
+        first.abort();
     })()`);
     expect(await page.evaluate('window.same')).toEqual([true, true]);
     await expect(page.locator('.dk-theme-switch')).toBeVisible();
     await expect(page.locator('.dk-copy')).toBeVisible();
-    await page.evaluate('first.abort()');
+    await page.evaluate('later.abort()');
     await expect(page.locator('.dk-theme-switch')).toBeHidden();
     await expect(page.locator('.dk-copy')).toBeHidden();
+});
+
+test("puts the word back to Copy where a source that reads the page's state gives another block", async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.tab = '#code';
+        kit.copyLive();
+    })()`);
+    await page.locator('.dk-copy').click();
+    await expect.poll(() => wordOf(page)).toBe(1);
+    // Attached again on the same block, the word stays.
+    await page.evaluate('kit.copyLive()');
+    expect(await wordOf(page)).toBe(1);
+    // The page shows another block, and the source, read as it is, gives that one.
+    await page.evaluate(`(() => {
+        window.tab = '#other';
+        kit.copyLive();
+    })()`);
+    expect(await wordOf(page)).toBe(0);
+});
+
+test('reads a source only while a word is shown, and takes one that throws for another block', async ({
+    page,
+}) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.drawn = true;
+        kit.copyDrawn();
+        window.drawn = false;
+        kit.copyDrawn();
+        window.drawn = true;
+    })()`);
+    await page.locator('.dk-copy').click();
+    await expect.poll(() => wordOf(page)).toBe(1);
+    await page.evaluate(`(() => {
+        window.drawn = false;
+        kit.copyDrawn();
+    })()`);
+    expect(await wordOf(page)).toBe(0);
+    expect(errors).toEqual([]);
 });

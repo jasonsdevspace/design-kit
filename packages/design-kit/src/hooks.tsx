@@ -41,48 +41,51 @@ import {
  * the same across renders. `./react` exports them beside the markup, whose components run
  * no effect. Each ref makes an `AbortController` as its element arrives, hands its attach the
  * signal, as record 22 has every attach take, and returns the cleanup that aborts it, which React
- * 19 calls as the element leaves in place of calling the ref with null.
+ * 19 calls as the element leaves in place of calling the ref with null. The kit takes the control
+ * down a microtask after the last signal holding it aborts, as record 23 has it, so a ref made
+ * afresh on every render, a ref that merges two hooks and React's second run in development keep
+ * it, and two hooks on one element each hold it.
  */
 
-/** An element a hook holds, what takes it down, and whether a null call has let it go. */
-type Held = { readonly down: () => void; released: boolean };
+/** An element a hook holds: the signal its attach was given, and what takes its part down. */
+type Held = { readonly signal: AbortSignal; readonly down: () => void };
 
 /**
  * The ref of a hook that attaches to each element it lands on, and the elements attached now, the
- * oldest first. `attach` attaches one element and returns what takes it down, which the ref returns
- * as its cleanup. React 19 never calls with null where the ref returned a cleanup, but a helper
- * written to merge refs before it does, dropping the cleanup, and one that makes a new ref on every
- * render calls with null and then with the same element again. So a null call lets every element
- * go, since it does not say which left, and takes them down a microtask later, except an element
- * the ref has been called with again by then, which stays attached as it was.
+ * oldest first, each with the signal its attach was given. `attach` attaches one element with the
+ * signal of a controller the ref makes for it, and may return more to undo. The cleanup the ref
+ * returns aborts that controller, drops the element and runs that undo at once, and the kit keeps
+ * the control a microtask after the last signal holding it aborts, as record 23 has it, so a ref
+ * made afresh on every render, which React calls with the same element right after the old ref's
+ * cleanup, keeps the control. React 19 never calls with null where the ref returned a cleanup, but
+ * a helper written to merge refs before it does calls with null, dropping the cleanup, so a null
+ * call lets every element go, since it does not say which left.
  */
 const useLiveRef = <Attached extends Element>(
-    attach: (element: Attached) => () => void
-): readonly [RefCallback<Attached>, ReadonlyMap<Attached, unknown>] => {
+    attach: (element: Attached, signal: AbortSignal) => (() => void) | undefined
+): readonly [RefCallback<Attached>, ReadonlyMap<Attached, Held>] => {
     const [elements] = useState(() => new Map<Attached, Held>());
     const ref = useCallback(
         (element: Attached | null) => {
             if (!element) {
-                const left = [...elements.values()];
-                for (const held of left) held.released = true;
-                queueMicrotask(() => {
-                    for (const held of left) if (held.released) held.down();
-                });
+                for (const held of [...elements.values()]) held.down();
                 return;
             }
             const already = elements.get(element);
-            if (already) {
-                already.released = false;
-                return already.down;
-            }
-            const undo = attach(element);
+            if (already) return already.down;
+            const controller = new AbortController();
+            const undo = attach(element, controller.signal);
             const held: Held = {
+                signal: controller.signal,
                 down: () => {
+                    if (controller.signal.aborted) return;
+                    controller.abort();
+                    // Only this element's own attach is undone, so a down kept from an older one
+                    // leaves a newer attach of the element alone.
                     if (elements.get(element) !== held) return;
                     elements.delete(element);
-                    undo();
+                    undo?.();
                 },
-                released: false,
             };
             elements.set(element, held);
             return held.down;
@@ -118,23 +121,13 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const drawn = useRef<HTMLParagraphElement | null>(null);
     // The moments set to say held words, called off if the line goes before they come.
     const later = useRef<number[]>([]);
-    // The line attached and the controller its attach was given, kept while the same line comes
-    // back in one commit, so the attach that first heard the controller is the one it takes down.
-    const attached = useRef<{
-        readonly element: HTMLParagraphElement;
-        readonly controller: AbortController;
-    } | null>(null);
-    const attachLine = useCallback((element: HTMLParagraphElement) => {
+    const attachLine = useCallback((element: HTMLParagraphElement, signal: AbortSignal) => {
         gone.current = false;
         drawn.current = element;
-        const kept =
-            attached.current?.element === element
-                ? attached.current
-                : { element, controller: new AbortController() };
-        attached.current = kept;
-        // The same line back in one commit is attached with the signal its first attach heard, so
-        // that attach's handle comes back and the controller kept is the one that takes it down.
-        handle.current = attachStatus(element, { signal: kept.controller.signal });
+        // React's second run in development aborts the line's signal and attaches it again in one
+        // commit, so the attach joins the line's control before its takedown lands and returns the
+        // same function, its words kept.
+        handle.current = attachStatus(element, { signal });
         const [first, ...rest] = held.current;
         held.current = [];
         if (first) handle.current(...first);
@@ -153,21 +146,13 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
             handle.current = null;
             held.current = [];
             gone.current = true;
-            // The line is let go of once this commit is done, so nothing said on it is left running
-            // once the screen goes, unless the same line comes back in it, as React's second run in
-            // development brings it. Aborting at once would empty the line of words said in the
-            // first run, so the controller waits a microtask and is kept if the line comes back.
+            // The moments set for held words say them on whichever line is attached as they come,
+            // so they outlast the second run, which draws a line again in the same commit, and are
+            // called off a microtask later where no line is drawn by then.
             queueMicrotask(() => {
-                if (drawn.current === element) return;
-                // The moments set for held words say them on whichever line is attached as they
-                // come, so they are kept for a line swapped for another and called off for a line
-                // gone with none in its place.
-                if (drawn.current === null) {
-                    for (const timer of later.current) window.clearTimeout(timer);
-                    later.current = [];
-                }
-                if (attached.current === kept) attached.current = null;
-                kept.controller.abort();
+                if (drawn.current) return;
+                for (const timer of later.current) window.clearTimeout(timer);
+                later.current = [];
             });
         };
     }, []);
@@ -485,10 +470,9 @@ export const useFormRefusal = <Form extends HTMLElement>(
         [refuseThrough, refusers]
     );
     const attachOne = useCallback(
-        (form: Form) => {
-            const controller = new AbortController();
+        (form: Form, signal: AbortSignal) => {
             const handle = attachForm(form, {
-                signal: controller.signal,
+                signal,
                 say,
                 summary: () => latest.current.summary?.() ?? null,
                 // Read as each failure is put in words, so words written inline on every render are
@@ -510,7 +494,6 @@ export const useFormRefusal = <Form extends HTMLElement>(
             });
             refusers.set(form, handle);
             return () => {
-                controller.abort();
                 refusers.delete(form);
             };
         },
@@ -525,8 +508,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
  * gives one stop for the Tab key and the arrow keys, Home and End. The page's `current` and
  * `onMove` are read as the keys land, so functions written inline on every render are never set
  * again, and the group is attached again only when its orientation, or whether it names a current
- * cell, changes. A group swapped for another is let go and the new one attached, and the group is
- * let go when the component unmounts.
+ * cell, changes. A group swapped for another is taken down and the new one attached, and the group
+ * is taken down when the component unmounts.
  */
 export const useRoving = <Group extends HTMLElement>(
     options: RovingOptions = {}
@@ -550,24 +533,23 @@ export const useRoving = <Group extends HTMLElement>(
     // What the group was last attached with, so it is attached again only when that changes.
     const shape = useRef<string | null>(null);
     const attachOne = useCallback(
-        (element: Group) => {
+        (element: Group, signal: AbortSignal) => {
             const now = latest.current;
             shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
-            const controller = new AbortController();
-            attachRoving(element, { ...wired(), signal: controller.signal });
-            return () => {
-                controller.abort();
-            };
+            attachRoving(element, { ...wired(), signal });
+            return undefined;
         },
         [wired]
     );
     const [ref, groups] = useLiveRef(attachOne);
-    // Every group attached now takes the new options, so one ref on two groups keeps both.
+    // Every group attached now takes the new options, so one ref on two groups keeps both. Each is
+    // attached with its own signal, so the options are this hook's where another hook shares the
+    // group.
     useEffect(() => {
         const now = `${orientation ?? ''}|${String(names)}`;
         if (groups.size === 0 || shape.current === now) return;
         shape.current = now;
-        for (const group of groups.keys()) attachRoving(group, wired());
+        for (const [group, { signal }] of groups) attachRoving(group, { ...wired(), signal });
     }, [orientation, names, wired, groups]);
     return ref;
 };
@@ -576,7 +558,7 @@ export const useRoving = <Group extends HTMLElement>(
  * A ref for a button that can be busy, which `attachBusy` makes ignore presses while busy and say
  * its busy words once the wait outlasts --dk-wait, on the status line of the nearest
  * `StatusProvider`, or through the `say` given. The `Button` drawn with `busy` marks it. A button
- * swapped for another is let go and the new one attached, and with no provider above it and no
+ * swapped for another is taken down and the new one attached, and with no provider above it and no
  * `say`, it throws, since its words would reach no one.
  */
 export const useBusy = <Busy extends HTMLElement>(
@@ -584,12 +566,9 @@ export const useBusy = <Busy extends HTMLElement>(
 ): RefCallback<Busy> => {
     const say = useSpeaker('useBusy', options.say);
     const attachOne = useCallback(
-        (button: Busy) => {
-            const controller = new AbortController();
-            attachBusy(button, { say, signal: controller.signal });
-            return () => {
-                controller.abort();
-            };
+        (button: Busy, signal: AbortSignal) => {
+            attachBusy(button, { say, signal });
+            return undefined;
         },
         [say]
     );
@@ -601,7 +580,7 @@ export const useBusy = <Busy extends HTMLElement>(
  * until a page gives others, and once at the end, or the `done` words in its place, on the status
  * line of the nearest `StatusProvider` or through the `say` given, politely, as the status line's
  * policy has it. New steps or `done` words are passed to the attach only when they change. A bar
- * swapped for another is let go and the new one attached, and with no provider above it and no
+ * swapped for another is taken down and the new one attached, and with no provider above it and no
  * `say`, it throws, since its words would reach no one.
  */
 export const useProgress = (
@@ -618,21 +597,20 @@ export const useProgress = (
         [say]
     );
     const attachOne = useCallback(
-        (progress: HTMLProgressElement) => {
-            const controller = new AbortController();
-            attachProgress(progress, { ...optionsFor(given.current), signal: controller.signal });
-            return () => {
-                controller.abort();
-            };
+        (progress: HTMLProgressElement, signal: AbortSignal) => {
+            attachProgress(progress, { ...optionsFor(given.current), signal });
+            return undefined;
         },
         [optionsFor]
     );
     const [ref, bars] = useLiveRef(attachOne);
-    // Every bar attached now takes the new steps or words, so one ref on two bars keeps both.
+    // Every bar attached now takes the new steps or words, so one ref on two bars keeps both, each
+    // with its own signal, so the options are this hook's where another hook shares the bar.
     useEffect(() => {
         if (given.current.steps === steps && given.current.done === done) return;
         given.current = { steps, done };
-        for (const bar of bars.keys()) attachProgress(bar, optionsFor(given.current));
+        for (const [bar, { signal }] of bars)
+            attachProgress(bar, { ...optionsFor(given.current), signal });
     }, [steps, done, optionsFor, bars]);
     return ref;
 };

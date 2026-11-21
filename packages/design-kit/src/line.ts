@@ -193,8 +193,9 @@ export const unsay = (status: HTMLElement, message: Spoken | null) => {
 
 /**
  * Says a message on a status line, at once or once its words stop changing, without attaching the
- * line. The kit's own pieces speak through it, so none becomes a page's line's first attach, whose
- * signal would then go unheard, and a page that attaches its line with a signal owns it.
+ * line. The kit's own pieces speak through it, so none holds a page's line, and a line a page
+ * attaches with a signal is taken down a microtask after that signal, and every other that holds
+ * it, aborts.
  */
 export const sayOn = (
     line: HTMLElement,

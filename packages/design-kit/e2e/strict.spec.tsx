@@ -17,8 +17,12 @@ import { type Strict } from './strict-page.js';
  * focus, a refusal still waiting as its form leaves saying nothing and moving nothing, a refusal
  * asked as its form first draws landing, with one ref on two forms or two rows of cells, the one
  * left still refusing or taking new options whichever is taken away, a failed submit refused
- * through the form submitted, and a form behind a ref made afresh on every render keeping its
- * refusal.
+ * through the form submitted, a form behind a ref made afresh on every render keeping its refusal,
+ * a form, a row of cells and a busy button mid-wait behind arrows that return the hook's cleanup
+ * keeping their errors, their observer and their wait as the page draws again, a busy wait and a
+ * row of cells kept where another hook joins them through a merged ref, a form and a row of cells
+ * kept as each moves to another hook's ref and taking that hook's options, and either of two hooks
+ * on one form dropped leaving the other's check and refusal.
  */
 
 let app = '';
@@ -274,6 +278,227 @@ test('keeps a form behind a ref made afresh on every render attached through a f
     ).toBe(true);
     await page.waitForTimeout(300);
     expect((await said(page)).filter((words) => words.startsWith('Deck name'))).toHaveLength(1);
+});
+
+/**
+ * Counts each time an element is observed for its size, as a group's attach does, and each time a
+ * form's check sets or gives back its noValidate, by the element's id.
+ */
+const counting = (page: Page) =>
+    page.addInitScript(() => {
+        const counted = window as unknown as {
+            observed: Record<string, number>;
+            checks: Record<string, number>;
+        };
+        counted.observed = {};
+        counted.checks = {};
+        const Made = window.ResizeObserver;
+        window.ResizeObserver = class extends Made {
+            override observe(target: Element, options?: ResizeObserverOptions) {
+                counted.observed[target.id] = (counted.observed[target.id] ?? 0) + 1;
+                super.observe(target, options);
+            }
+        };
+        const own = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'noValidate');
+        Object.defineProperty(HTMLFormElement.prototype, 'noValidate', {
+            ...own,
+            set(this: HTMLFormElement, value: boolean) {
+                counted.checks[this.id] = (counted.checks[this.id] ?? 0) + 1;
+                own?.set?.call(this, value);
+            },
+        });
+    });
+
+/** What the counters have seen so far. */
+const counts = (page: Page) =>
+    page.evaluate(() => {
+        const { observed, checks } = window as unknown as {
+            observed: Record<string, number>;
+            checks: Record<string, number>;
+        };
+        return { observed: { ...observed }, checks: { ...checks } };
+    });
+
+/** Counts each change to a button's busy mark from here on, which an attach made afresh makes. */
+const watchMarks = (page: Page, id: string) =>
+    page.evaluate((watched) => {
+        const counted = window as unknown as { marks: number };
+        counted.marks = 0;
+        const button = document.getElementById(watched);
+        if (button)
+            new MutationObserver((records) => {
+                counted.marks += records.length;
+            }).observe(button, { attributeFilter: ['aria-disabled'] });
+    }, id);
+
+const marks = (page: Page) => page.evaluate(() => (window as unknown as { marks: number }).marks);
+
+/** Waits two frames, so a draw the page asked for and the microtasks after it are done. */
+const frames = (page: Page) =>
+    page.evaluate(
+        () =>
+            new Promise<void>((done) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        done();
+                    });
+                });
+            })
+    );
+
+/** Presses the arrow key from a group's first cell, and finds focus on its second. */
+const expectArrows = async (page: Page, group: string) => {
+    await expect(page.locator(`#${group}-row [tabindex="0"]`)).toHaveCount(1);
+    await page.locator(`#${group}-a`).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator(`#${group}-b`)).toBeFocused();
+};
+
+const noValidate = (page: Page, id: string) =>
+    page.locator(id).evaluate((form) => (form as HTMLFormElement).noValidate);
+
+test("keeps a form, a row and a busy wait behind arrows that return the hook's cleanup as the page draws again", async ({
+    page,
+}) => {
+    await counting(page);
+    await open(page, '1s');
+    await page.getByRole('button', { name: 'Make the table' }).click();
+    await expect(page.locator('#returned-name')).toBeFocused();
+    await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
+    await page.evaluate(() => {
+        (window as unknown as Strict).busyAfresh(true);
+    });
+    await expect(page.locator('#returned-save')).toHaveAttribute('aria-disabled', 'true');
+    await frames(page);
+    const made = await counts(page);
+    expect(made.observed['returned-row']).toBeGreaterThan(0);
+    await watchMarks(page, 'returned-save');
+    for (let draw = 0; draw < 3; draw += 1)
+        await page.evaluate(() => {
+            (window as unknown as Strict).redraw();
+        });
+    await expect(page.locator('#returned-row')).toHaveAttribute('data-drawn', '3');
+    await frames(page);
+    // The form keeps its errors and its check, set up once, and the row its one observer.
+    await expect(page.locator('#returned-name-error')).toHaveText('Error: Enter a value.');
+    await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
+    expect(await noValidate(page, '#returned')).toBe(true);
+    expect(await counts(page)).toEqual(made);
+    await expectArrows(page, 'returned');
+    // The busy wait kept its mark and says its words once as it outlasts --dk-wait.
+    await expect.poll(() => said(page)).toContain('Saving the table.');
+    expect(await marks(page)).toBe(0);
+    await expect(page.locator('#returned-save')).toHaveAttribute('aria-disabled', 'true');
+    const heard = await said(page);
+    expect(heard.filter((words) => words === 'Saving the table.')).toHaveLength(1);
+    expect(heard.filter((words) => words.startsWith('Table name'))).toHaveLength(1);
+});
+
+test('keeps a busy wait as another hook joins its button through a merged ref', async ({
+    page,
+}) => {
+    await open(page, '1s');
+    await page.evaluate(() => {
+        (window as unknown as Strict).joinBusy(true);
+    });
+    await expect(page.locator('#joined')).toHaveAttribute('aria-disabled', 'true');
+    await watchMarks(page, 'joined');
+    await page.evaluate(() => {
+        (window as unknown as Strict).join();
+    });
+    await expect.poll(() => said(page)).toContain('Saving the deck.');
+    expect(await marks(page)).toBe(0);
+    await expect(page.locator('#joined')).toHaveAttribute('aria-disabled', 'true');
+    expect((await said(page)).filter((words) => words === 'Saving the deck.')).toHaveLength(1);
+});
+
+test('observes a row two hooks share through a merged ref once, as the page draws again', async ({
+    page,
+}) => {
+    await counting(page);
+    await open(page);
+    await frames(page);
+    const made = await counts(page);
+    expect(made.observed['shared-row']).toBeGreaterThan(0);
+    await page.evaluate(() => {
+        (window as unknown as Strict).join();
+    });
+    await expect(page.locator('#shared-row')).toHaveAttribute('data-joined', 'true');
+    await frames(page);
+    expect((await counts(page)).observed['shared-row']).toBe(made.observed['shared-row']);
+    await expectArrows(page, 'shared');
+});
+
+test("keeps a form and a row as each moves from one hook's ref to another's, under the new hook's options", async ({
+    page,
+}) => {
+    await counting(page);
+    await open(page);
+    await page.getByRole('button', { name: 'Save the player' }).click();
+    await expect(page.locator('#handed-name')).toHaveAttribute('aria-invalid', 'true');
+    await expect.poll(() => said(page)).toContain('Adding: Player name: Error: Enter a value.');
+    await frames(page);
+    const made = await counts(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).handOff();
+    });
+    await expect(page.locator('#handed-row')).toHaveAttribute('data-editing', 'true');
+    await frames(page);
+    // The form keeps its errors and the check it set up once, and the row its observer.
+    await expect(page.locator('#handed-name')).toHaveAttribute('aria-invalid', 'true');
+    expect(await noValidate(page, '#handed')).toBe(true);
+    expect(await counts(page)).toEqual(made);
+    // A failed submit goes through the hook the form moved to, and an arrow key through the row's.
+    await page.getByRole('button', { name: 'Save the player' }).click();
+    await expect.poll(() => said(page)).toContain('Editing: Player name: Error: Enter a value.');
+    expect(await page.evaluate(() => (window as unknown as Strict).invalids)).toEqual([
+        'adding',
+        'editing',
+    ]);
+    await expectArrows(page, 'handed');
+    expect(await page.evaluate(() => (window as unknown as Strict).rovedBy)).toEqual(['editing']);
+});
+
+for (const dropped of ['newer', 'older'] as const) {
+    const kept = dropped === 'newer' ? 'older' : 'newer';
+    const Kept = kept === 'older' ? 'Older' : 'Newer';
+    test(`keeps the check and refuses through the ${kept} of two hooks on one form as the ${dropped} is dropped`, async ({
+        page,
+    }) => {
+        await counting(page);
+        await open(page);
+        // Both hooks hold the form, and it runs on the newer one's options.
+        await page.getByRole('button', { name: 'Save the club' }).click();
+        await expect(page.locator('#shared-name')).toHaveAttribute('aria-invalid', 'true');
+        await expect.poll(() => said(page)).toContain('Newer: Club name: Error: Enter a value.');
+        await frames(page);
+        const made = await counts(page);
+        await page.evaluate((which) => {
+            (window as unknown as Strict).dropHook(which);
+        }, dropped);
+        await expect(page.locator('#shared')).toHaveAttribute('data-dropped', dropped);
+        await frames(page);
+        expect(await noValidate(page, '#shared')).toBe(true);
+        expect(await counts(page)).toEqual(made);
+        await page.getByRole('button', { name: 'Save the club' }).click();
+        await expect.poll(() => said(page)).toContain(`${Kept}: Club name: Error: Enter a value.`);
+        expect(await page.evaluate(() => (window as unknown as Strict).invalids)).toEqual([
+            'newer',
+            kept,
+        ]);
+    });
+}
+
+test('keeps refusing through a form whose old cleanup is called after a new attach of it', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).staleCleanup();
+    });
+    await page.getByRole('button', { name: 'Make the list' }).click();
+    await expect(page.locator('#name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('List name: Error: Enter a list name.');
 });
 
 test('lands a refusal asked as its form first draws', async ({ page }) => {
