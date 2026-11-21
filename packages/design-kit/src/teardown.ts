@@ -81,17 +81,23 @@ export const teardown = <Options = AttachOptions>(
             }
         }
     };
+    // The holder whose options apply now, which only a call with options from the newest holder
+    // changes.
+    let applied: AbortSignal | undefined | null = null;
     const release = ({ target }: Event) => {
-        const was = newest() === target;
         holders.delete(target as AbortSignal);
         // The last holder gone, the control waits a microtask for an attach of its element.
         if (!holders.size)
             queueMicrotask(() => {
                 if (!holders.size) stop();
             });
-        else if (was) {
-            const next = holders.get(newest());
-            if (next) down.set?.(next);
+        else if (target === applied) {
+            // The newest holder left that gave options takes over with them.
+            const next = [...holders].findLast(([, given]) => given);
+            if (next) {
+                applied = next[0];
+                down.set?.(next[1] as Options);
+            }
         }
     };
     const hold = (by: AbortSignal | undefined, next?: Options) => {
@@ -99,10 +105,13 @@ export const teardown = <Options = AttachOptions>(
         // Added once however many calls a signal makes, as the DOM ignores the same listener again.
         by?.addEventListener('abort', release, { once: true });
         // A call without a signal holds the control only where nothing else does, and elsewhere
-        // speaks for the newest holder.
+        // speaks for the newest holder, so its options leave with that holder.
         const key = by ?? (holders.size ? newest() : undefined);
         if (!holders.has(key) || next) holders.set(key, next ?? holders.get(key));
-        if (next && key === newest()) down.set?.(next);
+        if (next && key === newest()) {
+            applied = key;
+            down.set?.(next);
+        }
     };
     const down: Teardown<Options> = {
         signal,

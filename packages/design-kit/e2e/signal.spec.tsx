@@ -564,3 +564,54 @@ test('hands focus back from a toast taken down and then removed from the page in
     })()`);
     await expect(page.locator('#start')).toBeFocused();
 });
+
+test('counts its steps again only where a join gives another count', async ({ page }) => {
+    await stillClock(page.clock);
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.progress(controller.signal);
+    })()`);
+    // A step crossed, and the bar joined in the same task with the same count written out, as a
+    // hook's ref made afresh gives it, before the bar's observer hears the step.
+    await page.evaluate(`(() => {
+        document.querySelector('progress').value = 25;
+        kit.progress(controller.signal, { steps: 4 });
+    })()`);
+    await page.clock.runFor(1000);
+    expect(await page.evaluate('window.heard')).toHaveLength(1);
+});
+
+test('keeps a toast shown while focus leaves it and comes back in one task', async ({ page }) => {
+    await stillClock(page.clock);
+    await opened(page);
+    await page.evaluate(`kit.toast()('Round 2 saved.')`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`(() => {
+        document.querySelector('#start').focus();
+        document.querySelector('.dk-toast-close').focus();
+    })()`);
+    await page.clock.runFor(10_000);
+    await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown');
+});
+
+test("starts a toast's wait again once it is moved in the page with focus in it", async ({
+    page,
+    browserName,
+}) => {
+    // Only Chromium fires focusout as an element with focus in it leaves the page.
+    test.skip(browserName !== 'chromium', 'WebKit and Firefox fire no focusout as the toast moves');
+    await stillClock(page.clock);
+    await opened(page);
+    await page.evaluate(`kit.toast()('Round 2 saved.')`);
+    await page.locator('.dk-toast-close').focus();
+    // Taken out in one task and put back in a later one, as a page that draws it elsewhere does.
+    await page.evaluate(`(() => {
+        window.toast = document.querySelector('.dk-toast');
+        window.home = toast.parentElement;
+        toast.remove();
+    })()`);
+    await page.evaluate('home.append(toast)');
+    await page.clock.runFor(10_000);
+    await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
+});

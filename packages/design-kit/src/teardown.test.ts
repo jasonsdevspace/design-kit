@@ -210,14 +210,31 @@ describe('a teardown with several holders', () => {
         expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned']);
         middle.abort();
         expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned', 'oldest again']);
-        // A holder that gave no options keeps what is current, and the one before it takes over
-        // again as it lets go.
+        // A holder that gave no options keeps what is current, and its leaving changes nothing.
         const bare = new AbortController();
         down.hold(bare.signal);
-        expect(applied).toHaveLength(5);
         bare.abort();
-        expect(applied.at(-1)).toBe('oldest again');
-        expect(applied).toHaveLength(6);
+        expect(applied).toHaveLength(5);
+    });
+
+    it('hands the options to the newest holder left that gave any as the one applied lets go', () => {
+        type Options = { readonly name: string };
+        const oldest = new AbortController();
+        const middle = new AbortController();
+        const bare = new AbortController();
+        const down = teardown<Options>(oldest.signal, { name: 'oldest' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        down.hold(middle.signal, { name: 'middle' });
+        down.hold(bare.signal);
+        // The middle holder's options apply, though it is not the newest, and go as it lets go.
+        middle.abort();
+        expect(applied).toEqual(['middle', 'oldest']);
+        // A call without a signal speaks for the newest holder, so its options leave with it.
+        down.hold(undefined, { name: 'unsigned' });
+        expect(applied).toEqual(['middle', 'oldest', 'unsigned']);
+        bare.abort();
+        expect(applied).toEqual(['middle', 'oldest', 'unsigned', 'oldest']);
     });
 
     it('keeps a control by its element until it is taken down, and joins a later call to it', async () => {

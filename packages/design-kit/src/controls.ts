@@ -645,10 +645,11 @@ const attachedLines = new WeakMap<HTMLElement, Kept<Say>>();
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
  * an earlier one. Attached again, a line returns the function it returned first, its `signal` one
  * more holder, unless the line was let go of, when it returns one afresh and the old attach is
- * taken down at once. Taken down, by its `signal` as `StatusProvider` takes it as it unmounts, it
- * lets the line go, so no piece says anything on it until it is attached again. The function an
- * attach returned says nothing once that attach is taken down, while a piece given the line itself
- * speaks on its next attach. A signal already aborted returns a function that says nothing.
+ * taken down at once. Taken down by its `signal`, as `StatusProvider` takes its line down when it
+ * unmounts, it lets the line go, so no piece says anything on it until it is attached again. The
+ * function an attach returned says nothing once that attach is taken down, while a piece given the
+ * line itself speaks on its next attach. A signal already aborted returns a function that says
+ * nothing.
  */
 export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say => {
     // A signal already aborted does nothing, even to a line already attached.
@@ -724,6 +725,8 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     let { source, status } = options;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
+    // The element the word shown was copied from, while one is shown.
+    let copiedFrom: HTMLElement | null = null;
     const showWord = (index: number) => {
         words.forEach((word, at) => {
             if (at === index) word.removeAttribute('aria-hidden');
@@ -741,20 +744,29 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
                 return;
             }
             if (!done) select(pressed);
+            copiedFrom = pressed;
             showWord(done ? 1 : 2);
             say(status, done ? 'Copied.' : howToCopy());
             window.clearTimeout(timer);
             timer = window.setTimeout(() => {
+                copiedFrom = null;
                 showWord(0);
             }, SAID_FOR);
         });
     };
-    // A word shown for the last source is put back to Copy where the new one gives another
-    // element, so it never claims that one copied, and kept where it gives the same.
+    // A word shown for the element a press copied is put back to Copy where the new source gives
+    // another, so it never claims that one copied, and kept where it gives the same. The source is
+    // read only while a word is shown, and one that throws, as one reading a ref not yet drawn
+    // does, counts as another.
     const set = (next: CopyOptions) => {
-        const moved = next.source() !== source();
         ({ source, status } = next);
-        if (!moved) return;
+        if (!copiedFrom) return;
+        try {
+            if (source() === copiedFrom) return;
+        } catch {
+            // Taken as another element.
+        }
+        copiedFrom = null;
         window.clearTimeout(timer);
         showWord(0);
     };
@@ -871,6 +883,8 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let shown = 0;
     let hovered = false;
     let focused = false;
+    // Whether focus was in the toast as it was taken from the page, read for the handback alone.
+    let leftWith = false;
     let onAction: (() => void) | undefined;
     let returnTo: HTMLElement | undefined;
     const wait = () => {
@@ -883,9 +897,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         window.clearTimeout(timer);
         // A toast taken from the page with focus in it gave that focus up with it, so the focus it
         // last heard stands for focus it held.
-        const hadFocus = element.contains(activeOf()) || (focused && !element.isConnected);
+        const hadFocus =
+            element.contains(activeOf()) || (!element.isConnected && (focused || leftWith));
         shown = 0;
         focused = false;
+        leftWith = false;
         onAction = undefined;
         message.textContent = '';
         actionButton.textContent = '';
@@ -987,15 +1003,14 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     element.addEventListener(
         'focusout',
-        (event) => {
-            const within =
-                event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
-            // Chromium fires focusout as a toast with focus in it is taken from the page, and
-            // WebKit and Firefox fire none, so focus is taken to have left only where the toast
-            // is still in the page a microtask later.
+        () => {
+            // Read a microtask later, where focus has settled, so focus that leaves and comes back
+            // in one task stays in. Chromium fires focusout as a toast with focus in it is taken
+            // from the page, and WebKit and Firefox fire none, so focus that left with the toast
+            // is kept apart for the handback.
             queueMicrotask(() => {
-                if (!element.isConnected) return;
-                focused = within;
+                if (!element.isConnected) leftWith ||= focused;
+                focused = element.isConnected && element.contains(activeOf());
                 wait();
             });
         },
@@ -2960,6 +2975,9 @@ export type ProgressOptions = AttachOptions & {
     readonly say?: Say | undefined;
 };
 
+/** How many steps a bar is said at, so steps given again as the same count compare equal. */
+const countOf = ({ steps }: ProgressOptions) => Math.max(1, Math.floor(steps ?? 4));
+
 /** The least time between two steps said, in milliseconds, so one is heard before the next. */
 const STEP_GAP = 3000;
 
@@ -3003,7 +3021,7 @@ export const attachProgress = (
     let chosen: ProgressOptions = options ?? {};
     const known = () => progress.hasAttribute('value');
     const stepOf = () => {
-        const steps = Math.max(1, Math.floor(chosen.steps ?? 4));
+        const steps = countOf(chosen);
         // A hair over, so a boundary a fraction lands just under, as 57 hundredths does, counts.
         return Math.floor(Math.min(1, progress.position) * steps + 1e-9);
     };
@@ -3061,7 +3079,7 @@ export const attachProgress = (
         if (!chosen.say && chosen.status) unsay(chosen.status, last);
     });
     down.set = (next) => {
-        const moved = next.steps !== chosen.steps;
+        const moved = countOf(next) !== countOf(chosen);
         chosen = next;
         // Counted again in new steps, so the next step is one of them. The same steps leave the
         // count alone, so a step whose record is still to come is still heard.
