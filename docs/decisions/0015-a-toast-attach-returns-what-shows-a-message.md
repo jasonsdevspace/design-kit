@@ -5,7 +5,8 @@ which returns what says a message, in 0.8.4 for the panel's, `attachPanel`, whic
 or closes it and what lets its button go, and in 0.9.0 for words that settle and polite words, which
 give way to firm words said in the same moment or still settling and wait for firm words being said,
 and in 0.9.2 for a line let go of as `StatusProvider` unmounts, so nothing more is said on it by any
-piece until it is attached again
+piece until it is attached again, and for a `signal` on `attachStatus` and `attachToast`, as record
+22 has every attach take, whose abort lets the line go and dismisses the toast without moving focus
 
 ## Context
 
@@ -49,9 +50,13 @@ with no action also leaves after five seconds, a wait held while the pointer is 
 in it. Focus in a toast that leaves goes back to where it was the last time a message arrived while
 focus was outside the toast. What dismisses a message never dismisses a later one.
 
-The toast's listeners are on its own elements, so a toast taken from the page takes them with it,
-and there is nothing for a page to take away. Its behavior ships in the controls module beside the
-switch's and the copy button's, rather than in a module of its own, as its rules ship in the
+The toast's listeners are on its own elements, so a toast taken from the page takes them with it. A
+page that takes a toast away while the page stays gives `attachToast` a `signal`, as record 22 has
+every attach take. Aborting it dismisses the message without moving focus, since the page is taking
+the toast away, takes off its listeners, its observer, its listener on the window's size and its
+timer, takes away the tabindex the attach added and lets its line go, and the function the attach
+returned, and what that returned, do nothing after. Its behavior ships in the controls module beside
+the switch's and the copy button's, rather than in a module of its own, as its rules ship in the
 components sheet, and the module's budget rose from 3 KB to 5 KB for it.
 
 ## Consequences
@@ -75,9 +80,13 @@ components sheet, and the module's budget rose from 3 KB to 5 KB for it.
   for firm words being said, so it is said once they leave, however many follow. A polite message
   given as a function waits for any words there, and is read as it is put in, so it says nothing
   once it is no longer true.
-  The function returns what says a message rather than what takes the line away, since a line holds
-  nothing to take away, and keeps record 13's rule for being called again: a line attached again
-  returns the function it returned first.
+  The function returns what says a message rather than what takes the line away, and keeps record
+  13's rule for being called again: a line attached again returns the function it returned first.
+  A line is let go of by aborting the `signal` its first attach took, which clears its timers and
+  drops its words as `StatusProvider` does when it unmounts, so no piece says anything on it until
+  it is attached again, and the function that attach returned stays silent for good. The kit's own
+  pieces speak on a page's line without attaching it, so a page that attaches the line with a
+  signal after a stepper or progress has spoken on it still owns it.
 - A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
   closes it and what lets the button go, since a page calls the first from its own code and a
   button can leave the page while its panel stays. It hears its buttons and Closes through one
@@ -107,3 +116,12 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
 - `e2e/status.spec.tsx` and `e2e/shared-line.spec.tsx` say words on a line at once, once they
   settle and politely, and share one line between a busy button, a stepper and progress with
   nothing a visitor must hear lost.
+- `e2e/status-teardown.spec.tsx` attaches a status line and a toast with a signal already aborted
+  and finds nothing said or shown, aborts a signal and finds the line emptied and silent for the
+  page's function, a stepper and progress, a line those spoke on first let go of by the page's
+  signal, a toast dismissed without focus sent back, its tabindex taken away and a later message
+  unshown, and a later attach's signal unheard. It counts the timers and observers running, before
+  attaching and after aborting, and finds them equal, in Chromium, WebKit and Firefox, and in
+  Chromium alone it counts the listeners on the toast's elements and on the window, finding the
+  window's size listened to once however many messages are shown and every listener off after an
+  abort.

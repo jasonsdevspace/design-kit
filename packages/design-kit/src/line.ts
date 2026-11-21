@@ -58,12 +58,12 @@ export const lineOf = (status: HTMLElement): Line => {
 };
 
 /**
- * Lets a status line go, as `StatusProvider` does when it unmounts: the line's timers are cleared,
- * the words said or held for it are dropped and it is emptied. Nothing more is said on it, by the
- * function `attachStatus` returned or by any piece given it, such as a busy button, a copy button
- * or a form, until the page attaches it again with `attachStatus`. A piece's own timers, such as a
- * busy button's wait, are the piece's, and come due saying nothing. A line nothing has spoken on is
- * left as it is.
+ * Lets a status line go, as `StatusProvider` does when it unmounts and an abort of the `signal`
+ * `attachStatus` took does: the line's timers are cleared, the words said or held for it are
+ * dropped and it is emptied. Nothing more is said on it, by the function `attachStatus` returned or
+ * by any piece given it, such as a busy button, a copy button or a form, until the page attaches it
+ * again with `attachStatus`. A piece's own timers, such as a busy button's wait, are the piece's,
+ * and come due saying nothing. A line nothing has spoken on is left as it is.
  */
 export const releaseLine = (line: HTMLElement): void => {
     const state = lines.get(line);
