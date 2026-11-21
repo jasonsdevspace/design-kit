@@ -750,7 +750,8 @@ its name and the count where it shows no error. VoiceOver on iOS reads a field's
 hint, after a pause, which other speech cuts off and which a visitor who turns hints off never
 hears, and focus moved by script may not land, so the error is always said. A screen reader that
 reads the error as focus lands hears it twice, which slows a visitor less than an error never heard.
-A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
+A reset that goes through calls off a refusal not yet landed, since it would say errors no longer
+shown. A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
 submits again hears it again, and what each refusal returns calls off that refusal alone. Focus a
 visitor moved after the refusal was asked for stays where they put it, and a page that refuses later
 than it was asked passes `{ from }`, where focus was then, as `moveFocus` takes it. In React,
@@ -764,6 +765,14 @@ the count where more are wrong. In React, a form with no `StatusProvider` above 
 throws, since its refusal would reach no one. A form is attached as it is drawn, never from its
 submit handler, since the kit's check and `noValidate` must already be in place when the first
 submit comes.
+
+`attachForm(form, { status, signal })` is taken down by aborting `signal`, as
+[Taking a control down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet
+landed and a reset still waiting are called off, and the errors it drew go, so nothing is said after,
+not even "Form cleared.", and a refusal the page calls after does nothing. The form keeps the kit's
+check, its `noValidate` and the `aria-invalid="false"` marks while any attach in it is still
+attached, and gets back its own `noValidate` and loses the marks once the last is taken down, so
+the browser checks it again. A signal already aborted leaves the form as its markup drew it.
 
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
@@ -1376,19 +1385,19 @@ listeners on the document for keys, clicks and submits, which note the visitor's
 
 ### Taking a control down
 
-The theme switch, the copy button, the status line, the toast, the stepper, a table's frame, a group
-the arrow keys move through, a busy button, progress and the dialog take an `AbortSignal` as
-`signal` in their options, as `addEventListener` does. Aborting it takes the control down as the
-function its attach returned does, and calling that function or aborting the signal again does
-nothing. The status line, the toast and the dialog return what says, shows or opens rather than what
-takes them away, so the signal alone takes them down: the line is let go of, the toast's message is
-dismissed as its Close dismisses it, and an open dialog closes with focus handed back to what opened
-it, and what each returned does nothing after. A signal already aborted does nothing: the control
-stays as the markup drew it, a control already attached keeps the options it had, and what the
-attach returns does nothing. Once a control is taken down, nothing it started acts, such as a copy
-the clipboard answers late. A control attached again before it is taken down returns what its first
-attach returned and does not hear the later call's signal, so the first attach owns it until it is
-taken down, as
+The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
+stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
+dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. Aborting it
+takes the control down as the function its attach returned does, and calling that function or
+aborting the signal again does nothing. The status line, the toast and the dialog return what says,
+shows or opens rather than what takes them away, so the signal alone takes them down: the line is
+let go of, the toast's message is dismissed as its Close dismisses it, and an open dialog closes
+with focus handed back to what opened it, and what each returned does nothing after. A signal
+already aborted does nothing: the control stays as the markup drew it, a control already attached
+keeps the options it had, and what the attach returns does nothing. Once a control is taken down,
+nothing it started acts, such as a copy the clipboard answers late. A control attached again before
+it is taken down returns what its first attach returned and does not hear the later call's signal,
+so the first attach owns it until it is taken down, as
 [decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
@@ -3592,6 +3601,16 @@ such as Japanese, one on a panel's button that is off, one in a dialog or a popo
 panel, and one on a search with words in it or on a combobox or a button whose list or menu is open.
 A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
 prefixes or strips the ids in it.
+
+`attachPanel(button, { signal })` lets the button go when `signal` aborts, as `detach` does, and a
+signal already aborted attaches nothing. An open panel stays the kit's while an attached button
+names it. Once the button that opened it is let go, Escape and its Close both still close it, and
+focus goes back to the first attached button in the page that names it, as record 19 has it. A
+button let go, by its signal or `detach`, takes `aria-expanded="false"`, since it no longer follows
+the panel and would otherwise go on saying the panel is open after another button closes it. A button attached
+for it while it is open takes it where no attached button named it, so a button drawn again, the
+only one among them, keeps the panel open whatever its new markup says and closes it by Escape. Once no attached button names it, neither Escape nor its Close closes it, and it stays
+as it is for the page to hide.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
 goes to the button that opened it where focus is in the panel, or where nothing has focus and the

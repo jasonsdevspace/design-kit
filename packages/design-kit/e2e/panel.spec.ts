@@ -1289,7 +1289,8 @@ test.describe('attaching and letting go', () => {
         expect(await detach([0, 2])).toBe(0);
         await close(page).click();
         await expect(panel(page)).toBeVisible();
-        await expect(button(page)).toHaveAttribute('aria-expanded', 'true');
+        // A button let go says it opens nothing, since it no longer follows the panel.
+        await expect(button(page)).toHaveAttribute('aria-expanded', 'false');
         await page.locator('#rules-button').click();
         await expect(page.locator('#rules')).toBeHidden();
         expect(await detach([1, 3])).toBe(1);

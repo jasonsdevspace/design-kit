@@ -185,6 +185,46 @@ test("takes the document's listener off a switch taken down with its choices ope
     expect(await count('[document]')).toBe(before);
 });
 
+/*
+ * Each way the switch's choices close, given as script that closes them once they are open: the
+ * button pressed again, Escape, a choice picked by a pointer, focus leaving the switch and a tap
+ * outside it. Events are sent by script, since the button shows only in a narrow demo strip.
+ */
+const CLOSINGS = {
+    'the button': `group.querySelector('.dk-theme-switch-button').click()`,
+    Escape: `group.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`,
+    'a pick': `(() => {
+        const choice = group.querySelector('.dk-theme-switch-choice');
+        choice.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        choice.click();
+    })()`,
+    'focus leaving': `group.dispatchEvent(
+        new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body })
+    )`,
+    'a tap outside': `document.body.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`,
+};
+
+test("takes the document's listener off however the switch's choices close", async ({
+    page,
+    browserName,
+}) => {
+    const count = await opened(page, browserName);
+    const before = await count('[document]');
+    await page.evaluate(`(() => {
+        window.group = document.querySelector('.dk-theme-switch');
+        kit.switchWith(new AbortController().signal);
+    })()`);
+    const button = page.locator('.dk-theme-switch-button');
+    for (const [way, closing] of Object.entries(CLOSINGS)) {
+        await page.evaluate(`group.querySelector('.dk-theme-switch-button').click()`);
+        await expect(button).toHaveAttribute('aria-expanded', 'true');
+        if (before !== null) expect(await count('[document]'), way).toBe(before + 1);
+        await page.evaluate(closing);
+        await expect(button, way).toHaveAttribute('aria-expanded', 'false');
+        expect(await count('[document]'), way).toBe(before);
+    }
+});
+
 test('does nothing after its teardown, from a press in flight or a choice made elsewhere', async ({
     page,
     browserName,

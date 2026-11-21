@@ -2,7 +2,8 @@
 
 **Status:** accepted, amended in 0.9.0 for `moveFocus`, which moves focus once a change is drawn by
 the same walk through a target and its fallbacks that a closing panel hands focus back by, so a
-panel and a page fall back alike
+panel and a page fall back alike, and in 0.9.3 for a button let go while its panel is open, after
+which the panel stays the kit's while an attached button names it
 
 ## Context
 
@@ -77,6 +78,17 @@ already handled, one that ends typing in a script such as Japanese, one on a pan
 off, one in a dialog or a popover inside the panel, and one on a search with words in it or on a
 combobox or a button whose list or menu is open, where Escape means something of its own.
 
+A panel stays the kit's while an attached button names it. Once the button that opened it is let
+go while it is open, by its `detach` or its signal, as record 22 has it, Escape and its Close both
+still close it, focus goes back to the first attached button that names it, as above, and the
+button let go takes `aria-expanded="false"`, since it no longer follows the panel. A button
+attached for it while it is open takes it where no attached button named it, so a button drawn
+again keeps it. Once none names it, neither closes it, and the page holds it as it is. Before
+0.9.3, the Close closed such a panel while Escape did not, since Escape followed the button that
+opened it and the Close any button that named it. The one rule follows the buttons, chosen over
+closing the panel as its button is let go, which would move focus and change the page in the
+moment a page takes a button away or draws it again.
+
 An option on `set` to hand focus back stays turned down, since every page would have to ask for
 it and the drop-in rule has the kit do it.
 
@@ -108,6 +120,11 @@ The path is in `packages/design-kit`.
   field, after the page's own handler and in a dialog, the tabindexes the kit writes and those a
   page set, and, in WebKit, a press on a button of the page's own outside any panel leaving it
   unfocused, so the tests above test Safari's way.
+- `e2e/teardown-form-panel.spec.tsx`, in Chromium, WebKit and Firefox, closes a panel by Escape and
+  by its Close alike once the button that opened it is let go, with focus on the first attached
+  button and the button let go marked collapsed, by Escape once its button is drawn again, the only
+  one among them too, hands it to a button in a shadow root, and closes it by neither once no
+  attached button names it.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.
