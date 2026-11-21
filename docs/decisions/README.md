@@ -88,3 +88,8 @@ costs, and the test behind it.
     the first attach owning the piece, the internal helper that keeps it, the research behind it,
     and why a release function for each piece, `Symbol.dispose`, one handle from every attach and
     calls that throw or warn were turned down.
+23. [A control outlives a takedown and an attach of its element in the same task](0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md):
+    every signal that attaches an element holding its control, a takedown a microtask after the last
+    of them aborts that an attach before then cancels, a detach that still takes it down at once,
+    the newest holder's options, the hooks taking their part down at once, and why deferring the
+    takedown in the hooks and leaving it to pages were turned down.

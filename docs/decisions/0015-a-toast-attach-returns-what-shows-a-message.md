@@ -6,7 +6,9 @@ or closes it and what lets its button go, and in 0.9.0 for words that settle and
 give way to firm words said in the same moment or still settling and wait for firm words being said,
 and in 0.9.2 for a line let go of as `StatusProvider` unmounts, so nothing more is said on it by any
 piece until it is attached again, and for a `signal` on `attachStatus` and `attachToast`, as record
-22 has every attach take, whose abort lets the line go and dismisses the toast as its Close does
+22 has every attach take, whose abort lets the line go and dismisses the toast as its Close does,
+and by record 23, under which the line and the toast are taken down once every signal that holds
+them has aborted
 
 ## Context
 
@@ -83,7 +85,7 @@ ship in the components sheet, and the module's budget rose from 3 KB to 5 KB for
   once it is no longer true.
   The function returns what says a message rather than what takes the line away, and keeps record
   13's rule for being called again: a line attached again returns the function it returned first.
-  A line is let go of by aborting the `signal` its first attach took, which clears its timers and
+  A line is let go of once every `signal` that holds it has aborted, which clears its timers and
   drops its words as `StatusProvider` does when it unmounts, so no piece says anything on it until
   it is attached again. A line let go of and attached afresh takes its old attach down, so the old
   attach's signal holds nothing of it. The function an attach returned says nothing once that attach

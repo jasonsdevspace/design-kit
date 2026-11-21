@@ -1,6 +1,8 @@
 # 22. Every attach takes a signal that takes its piece down
 
-**Status:** accepted
+**Status:** accepted, amended by record 23, under which every signal that attaches an element holds
+its control, taken down a microtask after the last of them aborts unless the element is attached
+again by then, and the control runs on its newest holder's options
 
 ## Context
 
@@ -67,8 +69,9 @@ Option E.
   added after the element where it takes none. What it returns is unchanged.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
-  it, so a later attach starts afresh. A piece already attached is left as it is, and the new
-  options are not taken. What the attach returns does nothing.
+  it, so a later attach starts afresh, or joins a control whose takedown is still to land, as
+  record 23 has it. A piece already attached is left as it is, and the new options are not taken.
+  What the attach returns does nothing.
 - **Aborting is the same as detach.** Everything the attach set up comes off: its listeners,
   observers, timers and frames, a listener on the document it added, and what it drew or showed, as
   its detach would. An attach that returns what acts rather than a detach is taken down by its
@@ -84,10 +87,9 @@ Option E.
   that comes late, such as the clipboard's. Nothing throws and nothing warns.
 - **The first attach owns the piece's lifetime.** Attaching a piece again before it is taken down
   is the call record 13 describes: it returns the first attach's handle, takes any new options, and
-  leaves its own signal unheard. It works as `addEventListener` does with a listener added twice,
-  which keeps the first and ignores the second, signal and all. So one part of a page cannot take
-  down a piece another part attached, and the piece is attached again only once its first attach
-  is taken down.
+  leaves its own signal unheard. Record 23 replaces this rule: each signal that attaches the piece
+  holds it, the piece is taken down a microtask after the last of them aborts, and it runs on its
+  newest holder's options.
 - **A focus request still lands when its component unmounts before the request is drawn,** so a
   row that asks for focus on the next one as it is deleted moves focus there, as record 20 already
   has a request made after unmount.
@@ -103,16 +105,17 @@ and `stop`, which the attach returns as its detach. Where the page's signal is a
 gives a teardown already stopped, whose `add` runs each undo at once, so it never gives null. That
 is no guard, since what an attach registers after its undos would outlive them, so each attach
 checks for a signal already aborted before it sets anything up. `stop` aborts its own signal and
-runs what `add` kept, once, and the page's signal calls it on abort. An undo given to `add` after
-the teardown has run runs at once. Work an attach sets after it is set up follows one of two rules:
-it lives in a variable an undo kept at setup clears, or its callback reads the attach's signal and
-does nothing once it is aborted. Anything that waits longer than one task, a timer or a frame, is
-cleared rather than left to check. The listener on the page's signal comes off with the teardown, so
-a signal a page keeps for longer holds nothing of a piece already taken down. Until then the page's
-signal keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In
-0.9.3 the theme switch, the copy button, the status line, the toast, the form, the panels, the
-stepper, a table's frame, a group the arrow keys move through, a busy button, progress, the dialog
-and `moveFocus` keep the contract through it.
+runs what `add` kept, once, and the page's signal calls it on abort, a microtask later since record
+23, once every signal holding the piece has aborted. An undo given to `add` after the teardown has
+run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
+variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
+once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
+than left to check. The listener on the page's signal comes off with the teardown, so a signal a
+page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
+keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
+the theme switch, the copy button, the status line, the toast, the form, the panels, the stepper, a
+table's frame, a group the arrow keys move through, a busy button, progress, the dialog and
+`moveFocus` keep the contract through it.
 
 ## Consequences
 
@@ -136,11 +139,10 @@ The paths are in `packages/design-kit`.
   aborted and finds them hidden and attached afresh by a later call, a copy button attached again
   with an aborted signal keeping its first source, an abort hiding both and putting the copy
   button's word back to Copy, a press answered after the abort silent and a theme chosen after it
-  unseen by the switch, an old detach called twice and its signal aborted leaving a newer attach
-  working, and a later attach's signal unheard while the first attach's takes the piece down. It
-  runs in Chromium, WebKit and Firefox, and counts the listeners on the switch's and the button's
-  own elements, finding none added for an aborted signal and every one off after an abort, and the
-  document's, finding the switch's listener there off after an abort with its choices open.
+  unseen by the switch, and an old detach called twice and its signal aborted leaving a newer attach
+  working. It runs in Chromium, WebKit and Firefox, and counts the listeners on the switch's and the
+  button's own elements, finding none added for an aborted signal and every one off after an abort,
+  and the document's, finding the switch's listener there off after an abort with its choices open.
 - `e2e/signal.spec.tsx` holds the stepper, a table's frame, a group the arrow keys move through, a
   busy button, progress, the dialog and `moveFocus` to the same rules in the three engines, with a
   busy wait and a pending focus request called off by an abort. It counts their listeners and finds
