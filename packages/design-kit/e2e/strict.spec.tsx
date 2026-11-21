@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
 import { countLeaks, listenersOn } from './leaks.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 import { type Strict } from './strict-page.js';
 
 /*
@@ -365,11 +365,13 @@ test("keeps a form, a row and a busy wait behind arrows that return the hook's c
     await page.getByRole('button', { name: 'Make the table' }).click();
     await expect(page.locator('#returned-name')).toBeFocused();
     await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
+    // The clock stands still from here, so the busy wait is timed by hand and each frame is run.
+    await stillClock(page.clock);
     await page.evaluate(() => {
         (window as unknown as Strict).busyAfresh(true);
     });
     await expect(page.locator('#returned-save')).toHaveAttribute('aria-disabled', 'true');
-    await frames(page);
+    await page.clock.runFor(100);
     const made = await counts(page);
     expect(made.observed['returned-row']).toBeGreaterThan(0);
     await watchMarks(page, 'returned-save');
@@ -378,7 +380,7 @@ test("keeps a form, a row and a busy wait behind arrows that return the hook's c
             (window as unknown as Strict).redraw();
         });
     await expect(page.locator('#returned-row')).toHaveAttribute('data-drawn', '3');
-    await frames(page);
+    await page.clock.runFor(100);
     // The form keeps its errors and its check, set up once, and the row its one observer.
     await expect(page.locator('#returned-name-error')).toHaveText('Error: Enter a value.');
     await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
@@ -386,7 +388,8 @@ test("keeps a form, a row and a busy wait behind arrows that return the hook's c
     expect(await counts(page)).toEqual(made);
     await expectArrows(page, 'returned');
     // The busy wait kept its mark and says its words once as it outlasts --dk-wait.
-    await expect.poll(() => said(page)).toContain('Saving the table.');
+    await page.clock.runFor(2000);
+    expect(await said(page)).toContain('Saving the table.');
     expect(await marks(page)).toBe(0);
     await expect(page.locator('#returned-save')).toHaveAttribute('aria-disabled', 'true');
     const heard = await said(page);
@@ -397,6 +400,7 @@ test("keeps a form, a row and a busy wait behind arrows that return the hook's c
 test('keeps a busy wait as another hook joins its button through a merged ref', async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await open(page, '1s');
     await page.evaluate(() => {
         (window as unknown as Strict).joinBusy(true);
@@ -406,7 +410,8 @@ test('keeps a busy wait as another hook joins its button through a merged ref', 
     await page.evaluate(() => {
         (window as unknown as Strict).join();
     });
-    await expect.poll(() => said(page)).toContain('Saving the deck.');
+    await page.clock.runFor(2000);
+    expect(await said(page)).toContain('Saving the deck.');
     expect(await marks(page)).toBe(0);
     await expect(page.locator('#joined')).toHaveAttribute('aria-disabled', 'true');
     expect((await said(page)).filter((words) => words === 'Saving the deck.')).toHaveLength(1);

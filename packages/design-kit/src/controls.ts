@@ -58,6 +58,30 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
     return false;
 };
 
+/**
+ * Whether a piece closing or leaving may hand focus back: where focus is in it, or where focus is
+ * on the body or nowhere and the piece had focus as it left, so focus a visitor or the page has put
+ * anywhere else stays. The toast, the dialog and the panels hand focus back by this one rule.
+ */
+const mayHandBack = (piece: Element, had: boolean): boolean => {
+    const active = focusedNow();
+    return active ? piece.contains(active) : had;
+};
+
+/** The element the kit last handed focus back to as a piece closed or left, and when. */
+let handedTo: Element | null = null;
+let handedAt = 0;
+
+/**
+ * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
+ * where focus is then, so a request asked before it finds that focus free and not the visitor's.
+ */
+const handBack = (...places: readonly (Element | null | undefined)[]): void => {
+    focusFirst(...places);
+    handedTo = activeOf();
+    handedAt = performance.now();
+};
+
 /** Where focus is asked to go: an element, an element's id, one found as focus moves, or nothing. */
 export type FocusTarget = Element | string | (() => Element | null) | null | undefined;
 
@@ -122,7 +146,10 @@ const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
 /** How long a request may wait before it is dropped, as in a tab out of sight, in milliseconds. */
 const STALE = 1000;
 
-/** Focuses a request's target or a fallback, where focus is still where it was and it is fresh. */
+/**
+ * Focuses a request's target or a fallback, where focus is still where it was, or where the kit has
+ * handed it back since the request was asked, and the request is fresh.
+ */
 const land = (
     target: FocusTarget,
     fallbacks: readonly FocusTarget[] | undefined,
@@ -130,8 +157,8 @@ const land = (
     asked: number
 ) => {
     if (performance.now() - asked > STALE) return;
-    const now = activeOf();
-    if (now !== from && now !== null && now !== document.body) return;
+    const now = focusedNow();
+    if (now && now !== from && (now !== handedTo || handedAt < asked)) return;
     const place = placeOf(target, from);
     focusFirst(
         place,
@@ -150,7 +177,8 @@ const land = (
  * off, focus goes to the first fallback that takes it, and then to the app frame's body or the
  * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
  * page. Focus a visitor has moved since the request is left where they put it: focus is free only
- * while it is where it was when asked, or on the page's body. A request still waiting a second
+ * while it is where it was when asked, on the page's body, or where the kit has handed it back
+ * since, as a toast, a dialog or a panel does as it closes. A request still waiting a second
  * later, as in a tab out of sight, is dropped, so focus does not jump when the visitor comes back.
  * Each request is new, so a control asked for twice is focused twice.
  */
@@ -838,15 +866,16 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
  * goes back to the last control outside the toast that had focus when a message arrived, and where
  * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
- * frame to its main content. Its Close and its action take a tabindex of 0 where the page set none,
- * so Safari, which focuses a pressed button only where it has one, leaves focus in the toast on a
- * press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
- * function, its message still shown. Taken down by its `signal`, it dismisses its message as its
- * Close does, focus in it going back where it came from, even from a toast taken from the page with
- * focus in it, takes off its listeners, its observer, its listener on the window's size and its
- * timer, takes away the tabindex it added and lets its line go, and the function it returned, and
- * what that returned, do nothing after. A signal already aborted returns a function that shows
- * nothing.
+ * frame to its main content. Focus goes back only where it is in the toast, or where the page has
+ * taken the toast away with focus in it so that focus has fallen to the body or to nothing, while
+ * focus a visitor has put anywhere else stays. Its Close and its action take a tabindex of 0 where
+ * the page set none, so Safari, which focuses a pressed button only where it has one, leaves focus
+ * in the toast on a press or a tap and focus can go back as it leaves. Attaching a toast again
+ * returns the same function, its message still shown. Taken down by its `signal`, it dismisses its
+ * message as its Close does, takes off its listeners, its observer, its listener on the window's
+ * size and its timer, takes away the tabindex it added and lets its line go, and the function it
+ * returned, and what that returned, do nothing after. A signal already aborted returns a function
+ * that shows nothing.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -895,15 +924,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const dismiss = () => {
         window.clearTimeout(timer);
-        // Focus goes back only where it is still in the toast, or where it is free, on the body or
-        // nowhere, and the toast had it as it left the page, so focus a visitor put anywhere else
-        // is never taken.
-        const active = activeOf();
-        const hadFocus =
-            element.contains(active) ||
-            ((!active || active === document.body) &&
-                !element.isConnected &&
-                (focused || leftWith));
+        // Focus goes back by the rule every piece hands it back by, the toast having had it as it
+        // left where focus was in it as it was taken from the page.
+        const hadFocus = mayHandBack(element, !element.isConnected && (focused || leftWith));
         shown = 0;
         focused = false;
         leftWith = false;
@@ -922,7 +945,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame or the page's main content rather
         // than to nowhere.
-        if (hadFocus) focusFirst(returnTo, homeOf(element));
+        if (hadFocus) handBack(returnTo, homeOf(element));
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
@@ -1021,6 +1044,14 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         },
         { signal }
     );
+    // Focus a visitor moves outside the toast, or a press while it is off the page, is theirs, so a
+    // toast held off the page forgets it had focus and hands nothing back over their move.
+    const forget = ({ type, target }: Event) => {
+        if (type === 'focusin' ? !element.contains(target as Node) : !element.isConnected)
+            focused = leftWith = false;
+    };
+    for (const type of ['focusin', 'pointerdown'])
+        document.addEventListener(type, forget, { capture: true, signal });
     // Run once as the signal aborts, since a toast returns what shows a message and no detach.
     down.add(() => {
         dismiss();
@@ -1472,12 +1503,12 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
- * options replaces them where it is the newest holder, attaching it again with none, or with only a
- * `signal`, leaves them as they were, and either returns the same function, an open dialog staying
- * open. Its listeners are on the dialog, so a dialog taken
- * from the page takes them with it. Taken down by its `signal`, an open dialog closes, focus goes
- * back to what opened it, its listeners and the closedby its `stay` set come off, and the function
- * that opens it does nothing.
+ * options replaces them, by the rule for whose options apply in the reference's Taking a control
+ * down, attaching it again with none, or with only a `signal`, leaves them as they were, and either
+ * returns the same function, an open dialog staying open. Its listeners are on the dialog, so a
+ * dialog taken from the page takes them with it. Taken down by its `signal`, an open dialog closes,
+ * focus goes back to what opened it where focus is in the dialog or has fallen to the body, its
+ * listeners and the closedby its `stay` set come off, and the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1532,7 +1563,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
         if (dialog.open) return;
-        focusFirst(opener, settings.returnTo?.());
+        handBack(opener, settings.returnTo?.());
         opener = null;
     };
     dialog.addEventListener('close', onClose, { signal });
@@ -1547,15 +1578,18 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     };
     // A dialog let go while open closes, so the page behind is no longer inert, and focus goes back
     // at once, open or closed in the same task, since the close event that would hand it back comes
-    // after its listener is off. That event is stopped where it lands, so an attach made since
-    // never takes it for a closing of its own and sends focus to its returnTo.
+    // after its listener is off. It goes back by the rule every piece hands it back by, read before
+    // the close moves it, so focus the page set in the abort's task stays. That event is stopped
+    // where it lands, so an attach made since never takes it for a closing of its own and sends
+    // focus to its returnTo.
     down.add(() => {
         if (dialog.open || opener) {
+            const back = mayHandBack(dialog, true);
             dialog.addEventListener('close', (event) => event.stopImmediatePropagation(), {
                 once: true,
             });
             dialog.close();
-            onClose();
+            if (back) onClose();
         }
         if (settings.stay) dialog.removeAttribute('closedby');
     });
@@ -1671,12 +1705,12 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (!open) lastOpener.delete(id);
     if (!panel) return;
     takeFocus(panel);
-    const active = focusedNow();
-    const held = active ? panel.contains(active) : lastPath.includes(panel);
+    const held = mayHandBack(panel, lastPath.includes(panel));
     panel.hidden = !open;
     if (open || !held) return;
-    if (focusFirst(jumpFrom(panel), ...[by, ...openers].filter((button) => !isOff(button)))) return;
-    focusFirst(
+    handBack(
+        jumpFrom(panel),
+        ...[by, ...openers].filter((button) => !isOff(button)),
         ...[...document.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
             (next) =>
                 next.tabIndex >= 0 &&

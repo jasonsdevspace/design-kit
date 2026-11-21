@@ -636,7 +636,7 @@ test('leaves focus on a control outside a toast that is removed and taken down a
     await expect(page.locator('#target')).toBeFocused();
 });
 
-test('starts a piece afresh where it is attached without a signal in the task its holder let go', async ({
+test('joins a piece attached without a signal in the task its holder let go, keeping its state', async ({
     page,
 }) => {
     await opened(page);
@@ -645,17 +645,17 @@ test('starts a piece afresh where it is attached without a signal in the task it
         const one = all(first.signal);
         kit.dialog(first.signal)(document.querySelector('#finish'));
         first.abort();
-        // The page now holds each piece for its life, with nothing of the holder's carried over.
+        // As any attach in the task, the page's call joins, and holds each piece for its life.
         const two = all();
-        window.dialogOpen = document.querySelector('#end-game').open;
-        return Object.keys(one).filter((name) => one[name] === two[name]);
+        return Object.keys(one).filter((name) => one[name] !== two[name]);
     })()`);
     expect(same).toEqual([]);
-    expect(await page.evaluate('dialogOpen')).toBe(false);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
     expect(await attached(page)).toEqual(ALL);
 });
 
-test('keeps a busy wait a new signal joined for an attach without a signal in the same task', async ({
+test('keeps a busy wait for an attach without a signal in the task its holder let go', async ({
     page,
 }) => {
     await opened(page);
@@ -671,10 +671,7 @@ test('keeps a busy wait a new signal joined for an attach without a signal in th
             marks += records.length;
         }).observe(document.querySelector('#busy'), { attributeFilter: ['aria-disabled'] });
         first.abort();
-        window.later = new AbortController();
-        const two = kit.busy(later.signal);
-        const three = kit.busy();
-        return one === two && two === three;
+        return one === kit.busy();
     })()`);
     expect(same).toBe(true);
     await page.evaluate('frames()');
@@ -707,4 +704,94 @@ test('leaves focus a visitor moved after a toast with focus in it left the page'
     await page.evaluate('controller.abort()');
     await page.evaluate('frames()');
     await expect(page.locator('#start')).toBeFocused();
+});
+
+test('hands focus back from a toast taken from the page with focus in it and taken down in a later task', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#target').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`document.querySelector('.dk-toast').remove()`);
+    await page.evaluate('controller.abort()');
+    await page.evaluate('frames()');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('leaves focus on the body where a visitor moved it after a toast left the page with focus in it', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#target').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`document.querySelector('.dk-toast').remove()`);
+    // The visitor moves focus to a control the page then takes away, so focus falls to the body.
+    await page.locator('#start').focus();
+    await page.evaluate(`document.querySelector('#start').remove()`);
+    await page.evaluate('controller.abort()');
+    await page.evaluate('frames()');
+    expect(await page.evaluate('document.activeElement === document.body')).toBe(true);
+});
+
+test('lands a focus request asked in the task a dialog with focus in it is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    await page.evaluate(`(() => {
+        controller.abort();
+        kit.focus();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).not.toHaveAttribute('open');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('lands a focus request asked in the task a toast with focus in it is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#start').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`(() => {
+        controller.abort();
+        kit.focus();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('leaves focus the page sets in the task a dialog taken from the page is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    // As a view that draws new content in place of the dialog and focuses a control in it.
+    await page.evaluate(`(() => {
+        document.querySelector('#end-game').remove();
+        controller.abort();
+        document.querySelector('#target').focus();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#target')).toBeFocused();
 });

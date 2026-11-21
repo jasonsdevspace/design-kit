@@ -151,20 +151,22 @@ describe('a teardown with several holders', () => {
         expect(joinedRan).toBe(1);
     });
 
-    it('lands a waiting takedown at once for a call without a signal, which starts afresh', () => {
+    it("joins a call without a signal in the abort's task as the page's own hold", async () => {
         const gone = new AbortController();
         const registry = new WeakMap<object, Kept<() => void>>();
         const element = {};
         const down = teardown(gone.signal);
         let ran = 0;
         down.add(() => (ran += 1));
-        keep(registry, element, down, down.stop);
+        const handle = keep(registry, element, down, down.stop);
         gone.abort();
+        // As any attach in the task, it joins and keeps the state, and holds for the page's life.
+        expect(join(registry, element)).toBe(handle);
+        await Promise.resolve();
         expect(ran).toBe(0);
-        // The page holds the piece for its life now, so the holder's piece is not carried over.
-        expect(join(registry, element)).toBeUndefined();
+        expect(registry.get(element)?.handle).toBe(handle);
+        down.stop();
         expect(ran).toBe(1);
-        expect(registry.has(element)).toBe(false);
     });
 
     it('keeps a control a new signal joined for a call without a signal in the same task', async () => {
@@ -208,6 +210,7 @@ describe('a teardown with several holders', () => {
         down.hold(hook.signal, { name: 'hook' });
         // The page's own update, with no signal, applies and stays the page's.
         down.hold(undefined, { name: 'page again' });
+        expect(applied).toEqual(['hook', 'page again']);
         hook.abort();
         await Promise.resolve();
         expect(applied).toEqual(['hook', 'page again']);
@@ -366,5 +369,34 @@ describe('a teardown with several holders', () => {
         later.abort();
         await Promise.resolve();
         expect(registry.has(element)).toBe(false);
+    });
+
+    it("keeps an older holder's options through a later call from it that gives none", async () => {
+        type Options = { readonly name: string };
+        const older = new AbortController();
+        const newer = new AbortController();
+        const down = teardown<Options>(older.signal, { name: 'older' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        down.hold(newer.signal, { name: 'newer' });
+        // The older holder calls again with only its signal, which gives no options.
+        down.hold(older.signal);
+        newer.abort();
+        await Promise.resolve();
+        expect(applied).toEqual(['newer', 'older']);
+    });
+
+    it('applies no options after the detach for a holder that let go just before it', async () => {
+        type Options = { readonly name: string };
+        const older = new AbortController();
+        const newer = new AbortController();
+        const down = teardown<Options>(older.signal, { name: 'older' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        down.hold(newer.signal, { name: 'newer' });
+        newer.abort();
+        down.stop();
+        await Promise.resolve();
+        expect(applied).toEqual(['newer']);
     });
 });

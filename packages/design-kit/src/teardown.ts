@@ -29,10 +29,12 @@ export type Teardown<Options = AttachOptions> = {
      */
     readonly stop: () => void;
     /**
-     * Joins a later call to the control: its signal as one more holder, or with no signal the
-     * newest holder's call, and its options as that holder's, applied where it is the newest or the
-     * one whose options apply. A call with no signal while the takedown waits, with nothing holding
-     * the control, lands it at once instead.
+     * Joins a later call to the control: its signal as one more holder, and a call with no signal
+     * as the page's own hold where nothing else holds the control or the page holds it already, a
+     * call in the abort's task among them, and elsewhere as the newest holder's call. Its options
+     * are kept as that holder's, a call that gives none keeping the ones it gave before, and apply
+     * where the call has no signal, comes from the newest holder or comes from the holder whose
+     * options apply.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
     /** What applies a holder's options to the control, given by the attach before `keep`. */
@@ -73,6 +75,7 @@ export const teardown = <Options = AttachOptions>(
         // Taken off by name rather than given the control's own signal, which would keep a step on
         // it for every signal it has held.
         for (const by of holders.keys()) by?.removeEventListener('abort', release);
+        holders.clear();
         // Each undo runs even where one before it throws, so a teardown is never left half done,
         // and the error is still reported as an uncaught one would be.
         for (const undo of undos) {
@@ -84,48 +87,37 @@ export const teardown = <Options = AttachOptions>(
         }
     };
     // The holder whose options apply now, which a call with options from the newest holder takes,
-    // and a call from that holder itself keeps.
-    let applied: AbortSignal | undefined | null = null;
-    // Whether the last holder has let go and the takedown waits for the next microtask.
-    let waiting = false;
+    // and a call from that holder itself keeps. A call without a signal always applies, so the
+    // page's own hold is never compared against it.
+    let applied: AbortSignal | undefined;
     const release = ({ target }: Event) => {
         holders.delete(target as AbortSignal);
         // The last holder gone, the control waits a microtask for an attach of its element. Where
         // the holder whose options apply goes, the newest one left that gave options takes over in
         // that same microtask, unless a newer holder has given its own by then, as a ref made
         // afresh does, so the options do not pass to an older holder and back.
-        waiting = !holders.size;
+        // A control already taken down keeps no holders, so this finds none and stops nothing.
         queueMicrotask(() => {
-            if (signal.aborted) return;
-            if (!holders.size) {
-                stop();
-                return;
+            if (!holders.size) stop();
+            else if (target === applied) {
+                // Where no holder left gave options, none applies, so no aborted signal is kept.
+                const next = [...holders].findLast(([, given]) => given);
+                applied = next?.[0];
+                if (next) down.set?.(next[1] as Options);
             }
-            waiting = false;
-            if (target !== applied) return;
-            const next = [...holders].findLast(([, given]) => given);
-            if (!next) return;
-            applied = next[0];
-            down.set?.(next[1] as Options);
         });
     };
-    // Where a call without a signal is filed: under the page's own hold where nothing else holds
-    // the control or the page holds it already, so its options stay with the page, and elsewhere
-    // under the newest holder, so its options leave with that holder. Its options apply at once.
-    const unsigned = () => (holders.size && !holders.has(undefined) ? newest() : undefined);
     const hold = (by: AbortSignal | undefined, next?: Options) => {
         if (signal.aborted) return;
-        // A call without a signal holds the piece for the page's life, so where the takedown the
-        // last holder asked for still waits, with no signal joined since, it lands at once and the
-        // call starts afresh rather than keeping a piece that holder let go of.
-        if (!by && waiting && !holders.size) {
-            stop();
-            return;
-        }
         // Added once however many calls a signal makes, as the DOM ignores the same listener again.
         by?.addEventListener('abort', release, { once: true });
-        const key = by ?? unsigned();
-        if (!holders.has(key) || next) holders.set(key, next ?? holders.get(key));
+        // A call without a signal is filed under the page's own hold where nothing else holds the
+        // control or the page holds it already, so its options stay with the page, and elsewhere
+        // under the newest holder, so they leave with that holder. Its options apply at once.
+        const key = by ?? (holders.size && !holders.has(undefined) ? newest() : undefined);
+        // A call that gives no options keeps the ones its holder gave before, and a holder called
+        // again keeps its place among the others.
+        holders.set(key, next ?? holders.get(key));
         if (next && (!by || key === newest() || key === applied)) {
             applied = key;
             down.set?.(next);

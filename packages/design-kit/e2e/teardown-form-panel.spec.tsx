@@ -118,6 +118,21 @@ test.describe('a form', () => {
         await expect(page.getByLabel('Name')).not.toBeFocused();
     });
 
+    test('opens and closes its panel through set in the task its signal aborts', async ({
+        page,
+    }) => {
+        await opened(page);
+        await page.evaluate(`(() => {
+            const controller = new AbortController();
+            const tips = kit.panel('#tips-button', controller.signal);
+            tips.set(true);
+            controller.abort();
+            tips.set(false);
+        })()`);
+        await expect(page.locator('#round-tips')).toBeHidden();
+        await expect(page.locator('#tips-button')).toHaveAttribute('aria-expanded', 'false');
+    });
+
     test('attaches nothing when given a signal already aborted', async ({ page }) => {
         const count = await opened(page);
         const listeners = await count(FORM);

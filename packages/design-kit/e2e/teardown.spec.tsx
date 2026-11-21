@@ -58,6 +58,14 @@ window.kit = {
         const copying = { source: () => document.querySelector(window.tab), status };
         return attachCopyButton(button, signal ? { ...copying, signal } : copying);
     },
+    copyCounted: () =>
+        attachCopyButton(button, {
+            source: () => {
+                window.reads = (window.reads ?? 0) + 1;
+                return document.querySelector('#code');
+            },
+            status,
+        }),
     copyDrawn: () =>
         attachCopyButton(button, {
             source: () => {
@@ -331,4 +339,15 @@ test('reads a source only while a word is shown, and takes one that throws for a
     })()`);
     expect(await wordOf(page)).toBe(0);
     expect(errors).toEqual([]);
+});
+
+test('reads its source on a join only while a word is shown', async ({ page }) => {
+    await opened(page);
+    const reads = await page.evaluate(`(() => {
+        kit.copyCounted();
+        kit.copyCounted();
+        kit.copyCounted();
+        return window.reads ?? 0;
+    })()`);
+    expect(reads).toBe(0);
 });
