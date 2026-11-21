@@ -9,12 +9,21 @@ import { build } from 'vite';
  * a beforeAll on its own clock.
  */
 
-/** An entry in this folder and React as one module, for a page written into the browser. */
-export const bundle = async (entry: string): Promise<string> => {
+/**
+ * An entry in this folder and React as one module, for a page written into the browser. React's
+ * development build is taken where `development` is given, since only it runs a ref and an effect
+ * a second time under `StrictMode`, as a page sees while it is being written.
+ */
+export const bundle = async (
+    entry: string,
+    { development = false }: { readonly development?: boolean } = {}
+): Promise<string> => {
     const output = await build({
         configFile: false,
         logLevel: 'silent',
-        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+        define: {
+            'process.env.NODE_ENV': JSON.stringify(development ? 'development' : 'production'),
+        },
         build: {
             write: false,
             lib: {

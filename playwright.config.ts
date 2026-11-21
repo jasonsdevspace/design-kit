@@ -24,21 +24,23 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * button, and how the switch's choices open and close by pointer and tap are what Safari draws or
  * does its own way, and a grid's columns rest on each engine's sums of a share and its clamps. The
  * teardown of each piece a signal takes down runs here and in Firefox too, since a signal's abort
- * and what follows it are each engine's own.
+ * and what follows it are each engine's own, and so does focus moved after a change, since where
+ * focus falls as a control leaves is each engine's own.
  */
 const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel}.spec.{ts,tsx}';
+    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
  * there unless `appearance: textfield` takes them away, the controls and the pieces, whose
  * lengths Firefox rounds to a sixty-fourth of a pixel, and a table's frame, whose shade a browser
  * draws only where it ties an animation to a scroll, in the current Firefox Playwright brings
- * rather than the kit's floor, an icon, whose stroke each engine draws its own way, and a grid's
- * columns, which rest on each engine's sums of a share and its clamps.
+ * rather than the kit's floor, an icon, whose stroke each engine draws its own way, a grid's
+ * columns, which rest on each engine's sums of a share and its clamps, and the teardown and focus
+ * moved after a change that run in WebKit too.
  */
 const FIREFOX =
-    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel}.spec.{ts,tsx}';
+    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
