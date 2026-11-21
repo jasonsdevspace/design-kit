@@ -187,6 +187,13 @@ test('lets a line go when its signal aborts, so no piece speaks on it until atta
     await page.evaluate(`again('Saved again.')`);
     await page.clock.runFor(300);
     await expect(line(page)).toHaveText('Saved again.');
+    // A piece given the line itself, rather than the old function, speaks on it again.
+    await page.clock.runFor(2500);
+    // Apart, so progress sees its run start again before it ends.
+    await page.evaluate('kit.again()');
+    await page.evaluate('kit.end()');
+    await page.clock.runFor(300);
+    await expect(line(page)).toHaveText('Imported.');
 });
 
 test('lets a line go that a stepper and progress spoke on before the page attached it', async ({
@@ -258,7 +265,7 @@ test('shows nothing in a toast given a signal already aborted', async ({ page, b
     await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown', '');
 });
 
-test('takes a toast down when its signal aborts, leaving focus where it is', async ({
+test('takes a toast down when its signal aborts, sending focus back as a dismiss does', async ({
     page,
     browserName,
 }) => {
@@ -279,12 +286,18 @@ test('takes a toast down when its signal aborts, leaving focus where it is', asy
     if (onWindow !== null) expect(await count('[window]')).toBe(onWindow + 1);
     expect((await running(page)).observers).toBe(before.observers + 1);
     await page.locator('.dk-toast-close').focus();
-    await page.evaluate('controller.abort()');
+    // A tabindex the page sets after the attach is the page's, and stays.
+    await page.evaluate(`(() => {
+        document.querySelector('.dk-toast-action').tabIndex = -1;
+        controller.abort();
+    })()`);
     await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
     await expect(toastLine(page)).toHaveText('');
     await expect(page.locator('.dk-toast-close')).not.toHaveAttribute('tabindex');
-    // Focus is not sent back to Save, since the page is taking the toast away.
-    await expect(page.locator('#save')).not.toBeFocused();
+    await expect(page.locator('.dk-toast-action')).toHaveAttribute('tabindex', '-1');
+    // Focus that was on its Close, which the teardown hides, goes back to Save, as a dismiss sends
+    // it, rather than dropping to the page's body.
+    await expect(page.locator('#save')).toBeFocused();
     expect(await running(page)).toEqual(before);
     expect(await count(PARTS)).toBe(parts);
     expect(await count('[window]')).toBe(onWindow);

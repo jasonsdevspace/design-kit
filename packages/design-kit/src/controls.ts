@@ -739,8 +739,11 @@ export type SayOptions = {
  */
 export type Say = (message: string | (() => string | null), options?: SayOptions) => void;
 
-/** The function each attached line says by, kept so attaching it again returns the same one. */
-const attachedLines = new WeakMap<HTMLElement, Say>();
+/**
+ * The function each attached line says by, kept so attaching it again returns the same one, and
+ * what takes that attach down.
+ */
+const attachedLines = new WeakMap<HTMLElement, readonly [Say, () => void]>();
 
 /**
  * Says a message on a status line, at once or once its words stop changing, without attaching the
@@ -785,31 +788,34 @@ const sayOn = (
  * as a toast and a stepper keep theirs. It speaks through the same function as the copy button and
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
  * an earlier one. Attached again, a line returns the function it returned first and leaves the
- * later call's `signal` unheard, unless the line was let go of, when it returns one afresh.
- * Aborting the `signal` its first attach took lets the line go, as `StatusProvider` does when it
- * unmounts, so no piece says anything on it until it is attached again, and the function it
- * returned stays silent for good. A signal already aborted returns a function that says nothing.
+ * later call's `signal` unheard, unless the line was let go of, when it returns one afresh and the
+ * old attach is taken down. Aborting the `signal` its first attach took lets the line go, as
+ * `StatusProvider` does when it unmounts, so no piece says anything on it until it is attached
+ * again. The function an attach returned says nothing once that attach is taken down, while a
+ * piece given the line itself speaks on its next attach. A signal already aborted returns a
+ * function that says nothing.
  */
 export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say => {
     // A signal already aborted does nothing, even to a line already attached.
     if (options?.signal?.aborted) return () => undefined;
     const already = attachedLines.get(line);
-    // A line let go of, by its signal or as `StatusProvider` unmounts, is attached afresh.
-    if (already && !lineOf(line).released) return already;
+    if (already && !lineOf(line).released) return already[0];
+    // A line let go of as `StatusProvider` unmounts is attached afresh, and its old attach taken
+    // down, so the old attach's signal holds nothing of it.
+    already?.[1]();
     const down = teardown(options?.signal);
     if (!down) return () => undefined;
     lineOf(line).released = false;
-    // Only the line's current attach speaks, so a function from one let go of stays silent even
-    // once the line is attached again.
     const speak: Say = (message, given) => {
-        if (attachedLines.get(line) === speak) sayOn(line, message, given);
+        if (!down.signal.aborted) sayOn(line, message, given);
     };
     down.add(() => {
-        if (attachedLines.get(line) !== speak) return;
+        // An attach taken down after a newer one took the line leaves the newer one speaking.
+        if (attachedLines.get(line)?.[0] !== speak) return;
         attachedLines.delete(line);
         releaseLine(line);
     });
-    attachedLines.set(line, speak);
+    attachedLines.set(line, [speak, down.stop]);
     return speak;
 };
 
@@ -988,16 +994,12 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * so Safari, which focuses a pressed button only where it has one, leaves focus in the toast on a
  * press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
  * function and leaves the later call's `signal` unheard. Aborting the `signal` its first attach
- * took dismisses its message without moving focus, takes off its listeners, its observer and its
- * timer, takes away the tabindex it added and lets its line go, and the function it returned, and
- * what that returned, do nothing after. A signal already aborted returns a function that shows
- * nothing.
+ * took dismisses its message as its Close does, focus in it going back where it came from, takes
+ * off its listeners, its observer, its listener on the window's size and its timer, takes away the
+ * tabindex it added and lets its line go, and the function it returned, and what that returned, do
+ * nothing after. A signal already aborted returns a function that shows nothing.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
-    // A signal already aborted does nothing, even to a toast already attached.
-    if (options?.signal?.aborted) return () => () => undefined;
-    const already = attachedToasts.get(element);
-    if (already) return already;
     const part = <T extends HTMLElement>(name: string) => {
         const found = element.querySelector<T>(`.dk-toast-${name}`);
         if (!found) throw new Error(`a toast needs its ${name}`);
@@ -1007,6 +1009,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
+    // Checked after the parts, so markup missing one throws whatever the signal. A signal already
+    // aborted does nothing, even to a toast already attached.
+    if (options?.signal?.aborted) return () => () => undefined;
+    const already = attachedToasts.get(element);
+    if (already) return already;
     const down = teardown(options?.signal);
     if (!down) return () => () => undefined;
     const { signal } = down;
@@ -1036,8 +1043,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             timer = window.setTimeout(dismiss, TOAST_FOR);
         }
     };
-    // Taken down, the toast leaves focus where it is, since the page is taking it away.
-    const dismiss = (stay = false) => {
+    const dismiss = () => {
         window.clearTimeout(timer);
         const hadFocus = element.contains(activeOf());
         shown = 0;
@@ -1057,7 +1063,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // Focus that was in the toast goes back where it came from, and where nothing had focus or
         // that no longer takes it, to the body of the app's frame or the page's main content rather
         // than to nowhere.
-        if (hadFocus && !stay) focusFirst(returnTo, homeOf(element));
+        if (hadFocus) focusFirst(returnTo, homeOf(element));
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
@@ -1151,9 +1157,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     // Run once as the signal aborts, since a toast returns what shows a message and no detach.
     down.add(() => {
-        dismiss(true);
+        dismiss();
         releaseLine(status);
-        for (const button of given) button.removeAttribute('tabindex');
+        // A tabindex the page has set since is the page's.
+        for (const button of given)
+            if (button.getAttribute('tabindex') === '0') button.removeAttribute('tabindex');
         attachedToasts.delete(element);
     });
     attachedToasts.set(element, show);
