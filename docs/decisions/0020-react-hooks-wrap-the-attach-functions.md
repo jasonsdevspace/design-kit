@@ -11,13 +11,14 @@ tick as the request, in the same lane, in the same React root: a change made in 
 asked for inside the same `startTransition`, and one drawn in another root is not waited for.
 Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do, in
 place of being called with null. Each ref makes an `AbortController` as each element arrives and
-hands its attach the signal, as record 22 has every attach take, and the cleanup aborts it, which
-takes the piece down, a form's check included. A hook keeps each element it holds with its cleanup,
-so one ref on two elements keeps the one left working as the other goes, and each form refuses a
-failed submit through itself. A ref called with null by a helper that merges refs and drops the
-cleanup lets every element go, since it does not say which left, and takes them down a microtask
-later, except one the ref is called with again by then, so a ref made afresh on every render keeps
-its element attached as it was. `StatusProvider` still waits a microtask before its cleanup lets its
+hands its attach the signal, as record 22 has every attach take, and the cleanup aborts it a
+microtask later, which takes the piece down, a form's check included. A hook keeps each element it
+holds with its cleanup, so one ref on two elements keeps the one left working as the other goes, and
+each form refuses a failed submit through itself. A ref called with null by a helper that merges
+refs and drops the cleanup lets every element go, since it does not say which left. Either way an
+element is taken down a microtask later, except one the ref is called with again by then, so a ref
+made afresh on every render keeps its element attached as it was, whether its wrapper returns the
+hook's cleanup or drops it. `StatusProvider` still waits a microtask before its cleanup lets its
 line go, and keeps the line's controller where the same line comes back, since React's second run in
 development calls the cleanup and the ref again, and an abort at once would let the line go and
 empty it of the words said in the first run. The function `useStatus` hands out is the provider's
@@ -90,11 +91,13 @@ Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `us
 exports beside the markup. Each hook follows the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
-  hook sees each element as it arrives. The ref returns the cleanup that takes the piece down, so
-  React's second run in development leaves nothing doubled or dropped, and the hook keeps every
-  element attached now, so one ref on several elements keeps those left working and a null call from
-  an older helper takes them all down. A ref object would not do, since setting its `current` starts
-  no render and no effect, so a swapped element would never be attached.
+  hook sees each element as it arrives. The ref returns the cleanup that takes the piece down a
+  microtask later, unless the same element comes straight back, so React's second run in development
+  and a ref made afresh on every render keep the piece attached, with nothing doubled or dropped,
+  and the hook keeps every element attached now, so one ref on several elements keeps those left
+  working and a null call from an older helper takes them all down. A ref object would not do, since
+  setting its `current` starts no render and no effect, so a swapped element would never be
+  attached.
 - **It takes the attach away when its element leaves or the component unmounts, where the attach
   returns what does so.** An attach that returns what says or opens, as record 15 has it for the
   status line, the toast and the dialog, keeps its listeners on its own element, so they leave with
@@ -219,6 +222,8 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   and moving nothing, and a refusal asked as its form first draws landing. With one ref on two forms
   or two rows of cells, it finds the one left still refusing or taking new options whichever is
   taken away, and a failed submit refused through the form submitted. It finds a form behind a ref
-  made afresh on every render keeping its check, its errors and its refusal through a failed submit.
+  made afresh on every render keeping its check, its errors and its refusal through a failed submit,
+  and a form and a row of cells behind arrows that return the hook's cleanup attached once through
+  the parent's renders.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.
