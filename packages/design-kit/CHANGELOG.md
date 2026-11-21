@@ -14,119 +14,127 @@ teardown contract record 22 writes down, with a request to `moveFocus` called of
 control outlives an abort and an attach of its element in the same task, as record 23 has it, so a
 hook's ref made afresh on every render, a ref that merges two hooks and an element passed from one
 hook's ref to another's keep their control and its state. The React hooks take their controls down
-through ref cleanups, so `StrictMode` in development keeps each control with nothing doubled or
-dropped, and a focus request asked as its component unmounts still lands. The toast, the dialog and
-the panels hand focus back by one rule, so focus a page or a visitor moves elsewhere stays. A
-stepper drawn past its limits shows its error at once, a group the arrow keys move through places
-its Tab stop as it comes into sight from no size, and Escape closes an open panel once the button
-that opened it is let go. Browser tests in Chromium, WebKit and Firefox count the listeners,
-observers, timers and frames on a page and find every attach and hook leaves none of its own once it
-is taken down, and the tests on a stand-in clock move time only by their own steps, so a slow runner
-no longer makes a message leave early. No token is added or renamed and the theme script is
-unchanged, so `themeScriptHash` is the same. The sheets stay within their budget, and the controls'
-budget is set at 19 KB under record 13's rule.
+through ref cleanups, and under `StrictMode` in development each control is kept with nothing
+doubled or dropped, and a focus request asked as its component unmounts still lands. The toast, the
+dialog and the panels hand focus back by one rule, so focus a page or a visitor moves elsewhere
+stays. A stepper drawn past its limits shows its error at once, a group the arrow keys move through
+places its Tab stop as it comes into sight from no size, and Escape closes an open panel once the
+button that opened it is let go. Upgrading names the code a page can now take away for the stepper
+and the group. Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers
+and frames on a page and find every attach and hook leaves none of its own once it is taken down,
+and the tests on a stand-in clock move time only by their own steps, so a slow runner no longer
+makes a message leave early. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same. The sheets stay within their budget, and the controls' budget is set
+at 19 KB under record 13's rule.
 
+- **Upgrading.** A page that draws a stepper's error itself when the stepper is attached with a
+  value past its limits can take that code away, since the attach now shows it, and a refusal the
+  page sets with `setCustomValidity` no longer shows the stepper's error once the value is changed.
+  A page that waits for a closed `details`, a hidden panel or a dialog to show before it attaches a
+  group the arrow keys move through can attach the group at once.
 - **Controls.** `attachThemeSwitch(element, { signal })` and
-  `attachCopyButton(button, { source, status, signal })` take an `AbortSignal`, and aborting it does
-  what the function they return does, the switch's listener on the document taken off with it even
-  where the page has marked its choices closed. A signal already aborted does nothing, so the
-  control stays hidden, and a control already attached keeps the options it had. A press the
-  clipboard answers after the teardown says nothing, and a control attached again returns what its
-  first attach returned, the later call's signal holding it too. The theme's listeners on the window
-  stay, so `chooseTheme` still follows another tab with no switch on the page. The type
-  `AttachOptions` carries the option. Both take themselves down through one internal helper, which
-  no entry exports. It runs every undo even where one throws, and reports the error.
-  `attachStatus(line, { signal })` lets the line go when its signal takes it down, as
-  `StatusProvider` does when it unmounts: its timers are cleared, its words dropped and it is
-  emptied, no piece says anything on it until it is attached again, and the function the attach
-  returned says nothing after. A line let go of and attached afresh takes its old attach down, so
-  its signal holds nothing, while a piece given the line itself speaks on its next attach.
-  `attachToast(element, { signal })`, taken down by its signal, dismisses its message as its Close
-  does, focus in it going back where a dismiss sends it, takes off its listeners, its observer, its
-  listener on the window's size and its timer, takes away a tabindex it added that the page has not
-  changed since, and lets its line go, and the function it returned, and what that returned, do
-  nothing after. A signal already aborted returns a function that says or shows nothing, though a
-  toast missing a part is still refused, and a piece attached again returns its first attach's
-  function, the later call's signal holding it too. The form, a busy button and progress now speak
-  on a page's line without attaching it, as the stepper and the copy button already did, so none of
-  them holds a line a page attaches with a signal. A toast listens to the window's size once however
-  many messages it shows. `attachForm(form, { signal })`, taken down by its signal, takes its
-  listeners off, calls off a refusal not yet landed and a reset's timer still waiting, and takes
-  away the errors it drew, so nothing is said after, not even "Form cleared.", and a refusal asked
-  for after does nothing. The form's check, its `noValidate` and its marks on fields not in error
-  stay while any attach in the form is attached, and go with the last, so the browser checks the
-  form again. `attachPanel(button, { signal })` lets the button go when its signal takes it down, as
-  `detach` does. A signal already aborted attaches nothing to either. An open panel stays the kit's
-  while an attached button names it, so once the button that opened it is let go, Escape closes it
-  as its Close does, with focus going back to the first attached button in the page that names it,
-  where before only the Close did, and the button let go takes `aria-expanded="false"`. A button
-  drawn again while its panel is open, the only one among them too, keeps the panel open and closes
-  it by Escape. A panel's buttons are kept apart from the page, so one in a shadow root takes the
-  panel too. A reset, and a submit the form's own attach checks, take away errors a part's attach
-  drew before it, and a reset calls off a refusal still due, which would otherwise say the errors it
-  took away in place of "Form cleared." The theme switch's listener on the document comes off
-  however its choices close. `attachStepper`, `attachTable`, `attachRoving`, `attachBusy`,
-  `attachProgress` and `attachDialog` take an `AbortSignal` as `signal`, and aborting it does what
-  the function they return does. `attachTable` takes its options as a new second argument, and still
-  refuses an element outside a table's frame when its signal is already aborted. A signal already
-  aborted attaches nothing and leaves a piece already attached with the options it had. The dialog,
-  whose attach returns what opens it, is taken down by its signal alone: an open dialog closes with
-  focus handed back to what opened it, as does one closed in the same moment, a close still to come
-  never reaches a later attach, its listeners come off with the `closedby` its `stay` set, and its
-  open function does nothing. A busy wait still running is cleared, so its words are never said, a
-  stepper's error not yet said through a page's `say` is left unsaid, and a progress step not yet
-  heard on its status line is taken back, even one waiting behind firm words. `moveFocus` takes a
-  `signal` that calls off a request not yet landed, as the function it returns does, and a request
-  that lands lets go of the signal. A request asked as its component unmounts still lands when it is
-  given no signal that unmount aborts. Each takes itself down through the internal helper in place
-  of its own guard against a second detach. `attachStepper` shows the stepper's error as it
-  attaches, and again when a form's reset brings the value back, when the value is outside the
-  limits or between steps, describes the field by it and marks it invalid, and says nothing on the
-  status line, so a page that draws that state, as the kit's site does, writes no code of its own
-  for it. A field drawn blank, a field that is disabled or read only, and a field showing the page's
-  own error show no error as the page loads, and the error is cleared as before once the value is
-  right or the stepper is taken away. The error now names only a value outside the limits, between
-  steps or missing, so a refusal a page sets with `setCustomValidity` no longer shows the stepper's
-  error, as it attaches or once the value is changed. `attachRoving`, and `useRoving` in React,
-  place the group's stop again as the group's size changes, so a group attached in a closed
-  `details`, under `hidden` or `display: none`, or in a dialog not yet open has its stop once it
-  shows. Such a row of tabs used to leave every cell at `tabindex="-1"` once it showed, so a
-  keyboard user tabbed past it. A cell a media query or a page's rule hides as it resizes the group
-  hands the stop on to the next cell, as a cell taken out does. A group under `inert`, or hidden in
-  a way that keeps its size, is placed again only as its cells change or are reached. The group's
-  detach stops watching its size. The internal module that keeps each status line's state now holds
-  the code that says, holds and hushes words on it too, and letting a line go hushes it through that
-  code. The internal teardown helper, given a signal already aborted, gives a teardown already
-  stopped, whose undos run at once, in place of null, so each attach keeps one early check and the
-  form's shared check uses the helper rather than building its own. Each signal an attach of an
-  element is given holds its control, and the control is taken down a microtask after the last of
-  them aborts, unless the element is attached again by then, which joins it and keeps its state and
-  the parts it found first. Until then the control is whole, so a call in the abort's own task, such
-  as a panel's `set` or a dialog's opener, still acts, and a page that means to start afresh within
-  the task calls the function the attach returned, which takes the control down at once, or attaches
-  after a microtask. A call with no signal holds the control for the page's life where nothing else
-  holds it, an attach in the abort's own task among them, and an attach made from inside a control's
-  own takedown gets a control of its own. A control attached again returns what its first attach
-  returned and runs on the options of its newest holder, or of the holder whose options apply where
-  that one gives new ones, and when the holder whose options apply lets go, the newest one left that
-  gave options takes over with them a microtask later, unless a newer holder has given its own by
-  then. Options that give only a `signal` count as none, so a dialog attached again with only its
-  `signal`, as through a ref made afresh, keeps `stay`, a call that gives no options keeps its
-  holder's last ones, a control whose holders left gave no options goes back to its defaults, a copy
-  button keeping its source, and a call with no signal is kept under the page's own hold where it
-  has one, so a hook sharing the element takes nothing of the page's update with it as it goes. The
-  toast, the dialog and the panels hand focus back by one rule, only where focus is in the piece, or
-  where it is on the body or nowhere and the piece had it as it left, so focus a page sets in the
-  abort's own task stays, and `moveFocus` treats focus the kit handed back after a request was asked
-  as free, so a request asked as a dialog or a toast with focus in it is taken down still lands. A
-  toast taken from the page with focus in it hands focus back in every engine, though Chromium fires
-  focusout as it goes and WebKit and Firefox fire none, and forgets it had focus once the visitor
-  moves focus outside it or presses while it is off the page. A toast reads whether focus is in it a
-  microtask after focus leaves, so focus that leaves and comes back in one task keeps it shown, and
-  in Chromium one moved in the page with focus in it starts its wait again. A copy button joined
-  with a source that gives the element its last press copied keeps the word it shows, reads the
-  source only while a word is shown and takes one that throws for another element, and progress
-  counts its steps again only where their count changes.
+  `attachCopyButton(button, { source, status, signal })` take an `AbortSignal`, and aborting it
+  takes the control down as the function they return does, a microtask later and once no other
+  signal holds it, the switch's listener on the document taken off with it even where the page has
+  marked its choices closed. A signal already aborted does nothing, so the control stays hidden, and
+  a control already attached keeps the options it had. A press the clipboard answers after the
+  teardown says nothing, and a control attached again returns what its first attach returned, the
+  later call's signal holding it too. The theme's listeners on the window stay, so `chooseTheme`
+  still follows another tab with no switch on the page. The type `AttachOptions` carries the option.
+  Both take themselves down through one internal helper, which no entry exports. It runs every undo
+  even where one throws, and reports the error. `attachStatus(line, { signal })` lets the line go
+  when its signal takes it down, as `StatusProvider` does when it unmounts: its timers are cleared,
+  its words dropped and it is emptied, no piece says anything on it until it is attached again, and
+  the function the attach returned says nothing after. A line let go of and attached afresh takes
+  its old attach down, so its signal holds nothing, while a piece given the line itself speaks on
+  its next attach. `attachToast(element, { signal })`, taken down by its signal, dismisses its
+  message as its Close does, focus in it going back where a dismiss sends it, takes off its
+  listeners, its observer, its listener on the window's size and its timer, takes away a tabindex it
+  added that the page has not changed since, and lets its line go, and the function it returned, and
+  what that returned, do nothing after. A signal already aborted returns a function that says or
+  shows nothing, though a toast missing a part is still refused, and a piece attached again returns
+  its first attach's function, the later call's signal holding it too. The form, a busy button and
+  progress now speak on a page's line without attaching it, as the stepper and the copy button
+  already did, so none of them holds a line a page attaches with a signal. A toast listens to the
+  window's size once however many messages it shows. `attachForm(form, { signal })`, taken down by
+  its signal, takes its listeners off, calls off a refusal not yet landed and a reset's timer still
+  waiting, and takes away the errors it drew, so nothing is said after, not even "Form cleared.",
+  and a refusal asked for after does nothing. The form's check, its `noValidate` and its marks on
+  fields not in error stay while any attach in the form is attached, and go with the last, so the
+  browser checks the form again. `attachPanel(button, { signal })` lets the button go when its
+  signal takes it down, as `detach` does. A signal already aborted attaches nothing to either. An
+  open panel stays the kit's while an attached button names it, so once the button that opened it is
+  let go, Escape closes it as its Close does, with focus going back to the first attached button in
+  the page that names it, where before only the Close did, and the button let go takes
+  `aria-expanded="false"`. A button drawn again while its panel is open, the only one among them
+  too, keeps the panel open and closes it by Escape. A panel's buttons are kept apart from the page,
+  so one in a shadow root takes the panel too. A reset, and a submit the form's own attach checks,
+  take away errors a part's attach drew before it, and a reset calls off a refusal still due, which
+  would otherwise say the errors it took away in place of "Form cleared." The theme switch's
+  listener on the document comes off however its choices close. `attachStepper`, `attachTable`,
+  `attachRoving`, `attachBusy`, `attachProgress` and `attachDialog` take an `AbortSignal` as
+  `signal`, and aborting it takes the piece down as the function they return does, a microtask later
+  and once no other signal holds it. `attachTable` takes its options as a new second argument, and
+  still refuses an element outside a table's frame when its signal is already aborted. A signal
+  already aborted attaches nothing and leaves a piece already attached with the options it had. The
+  dialog, whose attach returns what opens it, is taken down by its signal alone: an open dialog
+  closes, handing focus back to what opened it by the rule below, as does one closed in the same
+  moment, a close still to come never reaches a later attach, its listeners come off with the
+  `closedby` its `stay` set, and its open function does nothing. A busy wait still running is
+  cleared, so its words are never said, a stepper's error not yet said through a page's `say` is
+  left unsaid, and a progress step not yet heard on its status line is taken back, even one waiting
+  behind firm words. `moveFocus` takes a `signal` that calls off a request not yet landed, as the
+  function it returns does, and a request that lands lets go of the signal. A request asked as its
+  component unmounts still lands when it is given no signal that unmount aborts. Each takes itself
+  down through the internal helper in place of its own guard against a second detach.
+  `attachStepper` shows the stepper's error as it attaches, and again when a form's reset brings the
+  value back, when the value is outside the limits or between steps, describes the field by it and
+  marks it invalid, and says nothing on the status line, so a page that draws that state, as the
+  kit's site does, writes no code of its own for it. A field drawn blank, a field that is disabled
+  or read only, and a field showing the page's own error show no error as the page loads, and the
+  error is cleared as before once the value is right or the stepper is taken away. The error now
+  names only a value outside the limits, between steps or missing, so a refusal a page sets with
+  `setCustomValidity` no longer shows the stepper's error, as it attaches or once the value is
+  changed. `attachRoving`, and `useRoving` in React, place the group's stop again as the group's
+  size changes, so a group attached in a closed `details`, under `hidden` or `display: none`, or in
+  a dialog not yet open has its stop once it shows. Such a row of tabs used to leave every cell at
+  `tabindex="-1"` once it showed, so a keyboard user tabbed past it. A cell a media query or a
+  page's rule hides as it resizes the group hands the stop on to the next cell, as a cell taken out
+  does. A group under `inert`, or hidden in a way that keeps its size, is placed again only as its
+  cells change or are reached. The group's detach stops watching its size. The internal module that
+  keeps each status line's state now holds the code that says, holds and hushes words on it too, and
+  letting a line go hushes it through that code. The internal teardown helper, given a signal
+  already aborted, gives a teardown already stopped, whose undos run at once, in place of null, so
+  each attach keeps one early check and the form's shared check uses the helper rather than building
+  its own. Each signal an attach of an element is given holds its control, and the control is taken
+  down a microtask after the last of them aborts, unless the element is attached again by then,
+  which joins it and keeps its state and the parts it found first. Until then the control is whole,
+  so a call in the abort's own task, such as a panel's `set` or a dialog's opener, still acts, and a
+  page that means to start afresh within the task calls the function the attach returned, which
+  takes the control down at once, or attaches after a microtask. A call with no signal holds the
+  control for the page's life where nothing else holds it, an attach in the abort's own task among
+  them, and an attach made from inside a control's own takedown gets a control of its own. A control
+  attached again returns what its first attach returned and runs on the options of its newest
+  holder, or of the holder whose options apply where that one gives new ones, and when the holder
+  whose options apply lets go, the newest one left that gave options takes over with them a
+  microtask later, unless a newer holder has given its own by then. Options that give only a
+  `signal` count as none, so a dialog attached again with only its `signal`, as through a ref made
+  afresh, keeps `stay`, a call that gives no options keeps its holder's last ones, a control whose
+  holders left gave no options goes back to its defaults, a copy button keeping its source, and a
+  call with no signal is kept under the page's own hold where it has one, so a hook sharing the
+  element takes nothing of the page's update with it as it goes. The toast, the dialog and the
+  panels hand focus back by one rule, only where focus is in the piece, or where it is on the body
+  or nowhere and the piece had it as it left, so focus a page sets in the abort's own task stays,
+  and `moveFocus` treats focus the kit handed back after a request was asked as free, so a request
+  asked as a dialog or a toast with focus in it is taken down still lands. A toast taken from the
+  page with focus in it hands focus back in every engine, though Chromium fires focusout as it goes
+  and WebKit and Firefox fire none, and forgets it had focus once the visitor moves focus outside it
+  or presses while it is off the page. A toast reads whether focus is in it a microtask after focus
+  leaves, so focus that leaves and comes back in one task keeps it shown, and in Chromium one moved
+  in the page with focus in it starts its wait again. A copy button joined with a source that gives
+  the element its last press copied keeps the word it shows, reads the source only while a word is
+  shown and takes one that throws for another element, and progress counts its steps again only
+  where their count changes.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
@@ -134,61 +142,57 @@ budget is set at 19 KB under record 13's rule.
   ref on two forms, rows of cells or bars keeps the one left refusing or taking new options as the
   other goes, each form refuses a failed submit through itself, and a ref called with null by a
   helper that merges refs and drops the cleanup takes every element down, since it does not say
-  which left. Under `StrictMode` in development, the second run keeps each control as it was, with
-  nothing doubled or dropped, so words said on `StatusProvider`'s line in a first effect stay
-  through that run, held words are said on whichever line is attached as they come, and the function
-  `useStatus` returns keeps speaking, and says nothing once its provider has gone.
-  `useFocusAfterDraw` waits for the render of a request asked as its component first draws, from a
-  ref on its own markup too. A request still waiting when its component unmounts, or when an
-  `Activity` hides it, is made then, with where focus was read as it was asked, so a row that asks
-  for focus on the next one as its press removes it moves focus there, at once, after an await, from
-  a timer or in a transition. Nothing at unmount calls a focus request off, and `moveFocus` lands it
-  only where focus is still where it was or has fallen to the page's body, so a visitor who moved on
-  keeps their place. A request in a transition an urgent update overtook lands before the transition
-  draws, on its fallbacks where the transition draws its target. A request asked after the component
-  has gone, as a panel that closes and then asks after an await, waits a frame and is made then,
-  taking focus only from the page's body, whatever `from` it was given, and only where its target is
-  in sight, so one whose target an `Activity` hides with the component is held until it shows. A
-  refusal still waiting as its form's component unmounts is called off, a microtask later so a
-  refusal asked as the form first draws lands through React's second run in development.
-  `useFormRefusal`, `useBusy` and `useProgress` speak through one private helper that keeps the
-  page's `say` or the provider's line current, so a busy button and progress now speak through the
-  `say` of the render that changed them, as the form's refusal already did. `useRoving` and
-  `useProgress` pass their new options with the element's own signal, so where two hooks share an
-  element each one's options apply to its own hold.
+  which left, while an element it is called with again in the same task keeps its control. Under
+  `StrictMode` in development, the second run keeps each control as it was, with nothing doubled or
+  dropped, so words said on `StatusProvider`'s line in a first effect stay through that run, held
+  words are said on whichever line is attached as they come, and the function `useStatus` returns
+  keeps speaking, and says nothing once its provider has gone. `useFocusAfterDraw` waits for the
+  render of a request asked as its component first draws, from a ref on its own markup too. A
+  request still waiting when its component unmounts, or when an `Activity` hides it, is made then,
+  with where focus was read as it was asked, so a row that asks for focus on the next one as its
+  press removes it moves focus there, at once, after an await, from a timer or in a transition.
+  Nothing at unmount calls a focus request off, and `moveFocus` lands it only where focus is still
+  where it was or has fallen to the page's body, so a visitor who moved on keeps their place. A
+  request in a transition an urgent update overtook lands before the transition draws, on its
+  fallbacks where the transition draws its target. A request asked after the component has gone, as
+  a panel that closes and then asks after an await, waits a frame and is made then, taking focus
+  only from the page's body, whatever `from` it was given, and only where its target is in sight, so
+  one whose target an `Activity` hides with the component is held until it shows. A refusal still
+  waiting as its form's component unmounts is called off, a microtask later so a refusal asked as
+  the form first draws lands through React's second run in development. `useFormRefusal`, `useBusy`
+  and `useProgress` speak through one private helper that keeps the page's `say` or the provider's
+  line current, so a busy button and progress now speak through the `say` of the render that changed
+  them, as the form's refusal already did. `useRoving` and `useProgress` pass their new options with
+  the element's own signal, so where two hooks share an element each one's options apply to its own
+  hold.
 - **Docs.** Record 22 states the teardown contract, with the research and the options weighed, and
-  record 13 is amended for it. Record 13 sets the controls' budget at 17.75 KB, from 17.25 KB, once
-  the helper and the two attaches moved onto it took them to 17,532 bytes with a median function of
-  586 bytes. The reference says how a control is taken down, with a screen's controller aborted
-  before the next screen attaches, and gives the two attaches their `signal`. Record 15 is amended
-  for the status line's and the toast's signal, and record 22 names them among the pieces that keep
-  the contract. The reference gives `attachStatus` and `attachToast` their `signal` and says how the
-  signal alone takes each down. Record 13 sets the controls' budget at 18.5 KB, from 17.75 KB, once
-  moving the status line, the toast, the form, the panels and the remaining attaches onto the helper
-  took them to 18,269 bytes together, with a median function of 606 bytes. The holders of record 23
-  then took them to 18,553 bytes, with a median function of 635 bytes, so the rule sets the budget
-  at 18.75 KB, and one rule for handing focus back with a toast that forgets focus a visitor moved
-  took them to 18,638 bytes, with a median function of 641 bytes, so the rule sets it at 19 KB. The
+  record 13 is amended for it. The reference says how a control is taken down, with a screen's
+  controller aborted before the next screen attaches, and gives the two attaches their `signal`.
+  Record 15 is amended for the status line's and the toast's signal. The reference gives
+  `attachStatus` and `attachToast` their `signal` and says how the signal alone takes each down. The
   reference gives `attachForm` and `attachPanel` their `signal` and the panel's rule, and its
   section on taking a control down names the form and the panels. Record 19 is amended for the
-  panel's rule and record 21 for the form's `noValidate` given back, and record 22 names the form
-  and the panels among the attaches that keep its contract. The reference names `signal` on each,
-  and says how the dialog is taken down and how a focus request asked at unmount still lands. Record
-  22 lists them among the attaches that keep the contract. Record 20 is amended for the hooks' ref
-  cleanups and the focus requests around an unmount, and names the ways of telling a stale request
-  apart that were rejected. Record 22 says a focus request lands when its component unmounts before
-  the request is drawn. The reference says how a hook takes its control down and when a focus
-  request asked around an unmount lands. Record 22 names the new tests and the counters, and records
-  15 and 22 say the teardown tests count listeners in each engine they run in. The reference and the
-  attach function's comment say when a value drawn past the limits shows the error and when it does
-  not. The reference's sections on tabs and on a grid of buttons, and `attachRoving`'s comment, say
-  the stop is placed as the group comes into sight from no size. Record 22 says what the helper
-  gives for a signal already aborted. Record 23 states the rule and why deferring the takedown in
-  the hooks was turned down, and records 13, 15, 19, 20 and 22 say what it changes. The reference's
-  section on taking a control down names `moveFocus`, says when a takedown lands, how options follow
-  the newest holder and when the kit hands focus back, and each attach's section links it. The doc
-  comments on `./controls` and the hooks say what the code does now. A panel's button taken from the
-  page without being taken down is said to stay held until it is.
+  panel's rule and record 21 for the form's `noValidate` given back. The reference names `signal` on
+  the stepper, the table, the group, a busy button, progress, the dialog and `moveFocus`, and says
+  how the dialog is taken down and how a focus request asked at unmount still lands. Record 22 names
+  every attach and `moveFocus` among the pieces that keep its contract. Record 20 is amended for the
+  hooks' ref cleanups and the focus requests around an unmount, and names the ways of telling a
+  stale request apart that were rejected. Record 22 says a focus request lands when its component
+  unmounts before the request is drawn. The reference says how a hook takes its control down and
+  when a focus request asked around an unmount lands. Record 22 names the new tests and the
+  counters, and records 15 and 22 say the teardown tests count listeners in each engine they run in.
+  The reference and the attach function's comment say when a value drawn past the limits shows the
+  error and when it does not. The reference's sections on tabs and on a grid of buttons, and
+  `attachRoving`'s comment, say the stop is placed as the group comes into sight from no size.
+  Record 22 says what the helper gives for a signal already aborted. Record 23 states the rule and
+  why deferring the takedown in the hooks was turned down, and records 13, 15, 19, 20 and 22 say
+  what it changes. Record 13 sets the controls' budget at 19 KB, from 17.25 KB, once the helper with
+  every attach moved onto it, record 23's holders and the one rule for handing focus back took the
+  controls to 18,638 bytes, with a median function of 641 bytes. The reference's section on taking a
+  control down names `moveFocus`, says when a takedown lands, how options follow the newest holder
+  and when the kit hands focus back, and each attach's section links it. The doc comments on
+  `./controls` and the hooks say what the code does now. A panel's button taken from the page
+  without being taken down is said to stay held until it is.
 - **Tests.** Browser tests in Chromium, WebKit and Firefox attach the theme switch and the copy
   button with a signal already aborted and find nothing attached and a repeat attach's new source
   not taken, abort a signal and find both hidden, find a late clipboard answer and a theme chosen
@@ -272,12 +276,11 @@ budget is set at 19 KB under record 13's rule.
   a details around a row given `useRoving` and reaches its chosen tab by Tab. Every kit browser test
   that steps a stand-in clock installs it stopped, through one helper, since a clock left running
   keeps pace with real time between steps as well. The helper's unit test finds a signal already
-  aborted gives a teardown already stopped, whose `add` runs at once. The other tests pass with only
-  the helper's null checks and a comment taken out of them. The helper's unit tests find an abort's
-  takedown waits a microtask, a signal held before then keeps the control, a call with no signal
-  holding only where nothing else does and joining as the page's own hold in the abort's task, the
-  detach taking it down at once with no listener left on any signal, the options of the newest
-  holder that gave any applied as holders come and go, a newer holder joined in the same task
+  aborted gives a teardown already stopped, whose `add` runs at once. The helper's unit tests find
+  an abort's takedown waits a microtask, a signal held before then keeps the control, a call with no
+  signal holding only where nothing else does and joining as the page's own hold in the abort's
+  task, the detach taking it down at once with no listener left on any signal, the options of the
+  newest holder that gave any applied as holders come and go, a newer holder joined in the same task
   keeping its own, an older holder's options kept through a call from it that gives none, no options
   applied after the detach, defaults applied once the only holder that gave options lets go, a first
   attach's options that give only a signal taken for none, and an attach from inside a takedown
