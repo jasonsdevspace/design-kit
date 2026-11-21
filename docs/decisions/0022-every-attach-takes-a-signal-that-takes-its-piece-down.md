@@ -108,7 +108,8 @@ once it is aborted. Anything that waits longer than one task, a timer or a frame
 than left to check. The listener on the page's signal comes off with the teardown, so a signal a
 page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
 keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch and the copy button keep the contract through it.
+the theme switch, the copy button, the stepper, a table's frame, a group the arrow keys move
+through, a busy button, progress, the dialog and `moveFocus` keep the contract through it.
 
 ## Consequences
 
@@ -138,6 +139,10 @@ The paths are in `packages/design-kit`.
   the listeners on the switch's and the button's own elements, finding none added for an aborted
   signal and every one off after an abort, and the document's, finding the switch's listener there
   off after an abort with its choices open.
+- `e2e/signal.spec.tsx` holds the stepper, a table's frame, a group the arrow keys move through, a
+  busy button, progress, the dialog and `moveFocus` to the same rules in the three engines, with a
+  busy wait and a pending focus request called off by an abort, and in Chromium counts their
+  listeners and finds a focus request that landed holds nothing on the page's signal.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources
