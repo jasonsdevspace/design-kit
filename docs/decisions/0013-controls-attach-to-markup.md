@@ -24,7 +24,8 @@ listener the package marks as a side effect, so a bundler keeps the module where
 only for that listener, and by record 22, under which an attach takes a signal that takes its piece
 down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
 controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
-than a function of the usual size
+than a function of the usual size, and then at 18.5 KB, once moving the status line, the toast, the
+form, the panels and the remaining attaches onto it took them past 17.75 KB
 
 ## Context
 
@@ -236,7 +237,10 @@ For 0.9.3 the controls were measured with the helper record 22 keeps its contrac
 theme switch and the copy button moved onto it. Every function sent together weighs 17,532 bytes,
 against 17,331 before, 201 more, under the 17.25 KB they held but with less room than a function of
 the usual size, and the median a function adds is now 586 bytes, so the rule sets the controls at
-17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0.
+17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0. The
+status line, the toast, the form, the panels and the remaining attaches moving onto the helper took
+the controls to 18,269 bytes together, past the 17.75 KB they held, and the median a function adds
+is now 606 bytes, so the rule sets them at 18.5 KB.
 
 ## The sheets beside other systems
 
