@@ -108,7 +108,7 @@ once it is aborted. Anything that waits longer than one task, a timer or a frame
 than left to check. The listener on the page's signal comes off with the teardown, so a signal a
 page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
 keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch and the copy button keep the contract through it.
+the theme switch, the copy button, the form and the panels keep the contract through it.
 
 ## Consequences
 

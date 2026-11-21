@@ -765,6 +765,14 @@ throws, since its refusal would reach no one. A form is attached as it is drawn,
 submit handler, since the kit's check and `noValidate` must already be in place when the first
 submit comes.
 
+`attachForm(form, { status, signal })` is taken down by aborting `signal`, as
+[Taking a control down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet
+landed and a reset still waiting are called off, and the errors it drew go, so nothing is said after,
+not even "Form cleared.", and a refusal the page calls after does nothing. The form keeps the kit's
+check, its `noValidate` and the `aria-invalid="false"` marks while any attach in it is still
+attached, and gets back its own `noValidate` and loses the marks once the last is taken down, so
+the browser checks it again. A signal already aborted leaves the form as its markup drew it.
+
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
 record 21 has it. An attached form takes `noValidate` from script, or the form around an attached
@@ -1376,8 +1384,8 @@ listeners on the document for keys, clicks and submits, which note the visitor's
 
 ### Taking a control down
 
-The theme switch and the copy button take an `AbortSignal` as `signal` in their options, as
-`addEventListener` does. Aborting it takes the control down as the function its attach returned
+The theme switch, the copy button, a form's check and a panel's button take an `AbortSignal` as
+`signal` in their options, as `addEventListener` does. Aborting it takes the control down as the function its attach returned
 does, and calling that function or aborting the signal again does nothing. A signal already aborted
 does nothing: the control stays hidden, a control already attached keeps the options it had, and
 what the attach returns does nothing. Once a control is taken down, nothing it started acts, such as
@@ -3568,6 +3576,14 @@ such as Japanese, one on a panel's button that is off, one in a dialog or a popo
 panel, and one on a search with words in it or on a combobox or a button whose list or menu is open.
 A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
 prefixes or strips the ids in it.
+
+`attachPanel(button, { signal })` lets the button go when `signal` aborts, as `detach` does, and a
+signal already aborted attaches nothing. An open panel stays the kit's while an attached button
+names it. Once the button that opened it is let go, Escape and its Close both still close it, and
+focus goes back to the first attached button that names it, as record 19 has it. A button attached
+for it while it is open takes it where no attached button named it, so a button drawn again works
+as before. Once no attached button names it, neither Escape nor its Close closes it, and it stays
+as it is for the page to hide.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
 goes to the button that opened it where focus is in the panel, or where nothing has focus and the

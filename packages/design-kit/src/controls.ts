@@ -1806,29 +1806,47 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * document hear the presses, the focus and the Escape of every panel, and come off once every
  * button is let go. A panel's id must be the only one on the page. Attached again, a button returns
  * what it returned first.
+ *
+ * Aborting the `signal` it was given lets the button go as `detach` does, and a signal already
+ * aborted attaches nothing. An open panel stays the kit's while an attached button names it, so
+ * once the button that opened it is let go, Escape and its Close both still close it, and focus
+ * goes back to the first attached button that names it. A button attached to it while it is open
+ * takes it where no attached button names it. Once none does, neither closes it, and the page
+ * holds it as it is.
  */
-export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
+export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
+    const idle: PanelControl = { set: () => undefined, detach: () => undefined };
+    // A signal already aborted does nothing, even to a button already attached.
+    if (options?.signal?.aborted) return idle;
     const already = attachedPanels.get(opener);
     if (already) return already;
     if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
-    const attached = () => attachedPanels.get(opener) === control;
+    const down = teardown(options?.signal);
+    if (!down) return idle;
     const control: PanelControl = {
         set: (open) => {
             const id = panelIdOf(opener);
-            if (attached()) showPanel(id, open, lastOpener.get(id) ?? opener);
+            if (!down.signal.aborted) showPanel(id, open, lastOpener.get(id) ?? opener);
         },
-        detach: () => {
-            if (!attached()) return;
-            attachedPanels.delete(opener);
-            for (const [id, button] of lastOpener) if (button === opener) lastOpener.delete(id);
-            if (--attachedCount) return;
-            document.removeEventListener('focusin', onPanelFocus, true);
-            document.removeEventListener('click', onPanelPress, true);
-            document.removeEventListener('pointerdown', onPanelDown, true);
-            document.removeEventListener('keydown', onPanelKey);
-            startedPanels.clear();
-        },
+        detach: down.stop,
     };
+    down.add(() => {
+        attachedPanels.delete(opener);
+        // A panel this button opened passes to the next attached button that names it, so Escape
+        // and its Close, which close a panel only while it has one, close it alike.
+        for (const [id, button] of lastOpener) {
+            if (button !== opener) continue;
+            const next = openersOf(id)[0];
+            if (next) lastOpener.set(id, next);
+            else lastOpener.delete(id);
+        }
+        if (--attachedCount) return;
+        document.removeEventListener('focusin', onPanelFocus, true);
+        document.removeEventListener('click', onPanelPress, true);
+        document.removeEventListener('pointerdown', onPanelDown, true);
+        document.removeEventListener('keydown', onPanelKey);
+        startedPanels.clear();
+    });
     attachedPanels.set(opener, control);
     if (!attachedCount++) {
         document.addEventListener('focusin', onPanelFocus, true);
@@ -1844,8 +1862,12 @@ export const attachPanel = (opener: HTMLButtonElement): PanelControl => {
     // takes the place of the button that opened it.
     const id = panelIdOf(opener);
     const panel = document.getElementById(id);
-    if (startedPanels.has(id) && panel) opener.setAttribute('aria-expanded', String(!panel.hidden));
-    else control.set(opener.getAttribute('aria-expanded') === 'true');
+    if (startedPanels.has(id) && panel) {
+        opener.setAttribute('aria-expanded', String(!panel.hidden));
+        // An open panel no attached button named is the kit's again, so Escape closes it as its
+        // Close does.
+        if (!panel.hidden && !lastOpener.has(id)) lastOpener.set(id, opener);
+    } else control.set(opener.getAttribute('aria-expanded') === 'true');
     startedPanels.add(id);
     return control;
 };
@@ -1914,8 +1936,8 @@ export const attachTable = (element: HTMLElement): (() => void) => {
     return detach;
 };
 
-/** How a form is attached, for the step after a submit it refuses. */
-export type FormOptions = {
+/** How a form is attached, for the step after a submit it refuses, and the signal that takes it down. */
+export type FormOptions = AttachOptions & {
     /** The status line the refusal is said on, such as the screen's own. */
     readonly status?: HTMLElement | null | undefined;
     /** What says the refusal, for a page that has one already, such as React's `useStatus`. */
@@ -2218,18 +2240,80 @@ const attachedForms = new WeakMap<
     { readonly refuse: Refuse; readonly set: (next: FormOptions) => void }
 >();
 
-/** The forms the kit checks, each once however many of its parts are attached. */
-const checkedForms = new WeakSet<HTMLFormElement>();
+/** What checks a form, and clears what its check drew, from an attach in it. */
+type Checker = {
+    readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
+    readonly clear: () => boolean;
+    readonly cleared: () => void;
+};
 
-/** What checks each form, and clears what its check drew, from the attach that checks it. */
-const checkers = new WeakMap<
-    HTMLFormElement,
-    {
-        readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
-        readonly clear: () => boolean;
-        readonly cleared: () => void;
-    }
->();
+/** A form the kit checks, with the attaches in it and the marks they set on fields not in error. */
+type CheckedForm = {
+    readonly checkers: Checker[];
+    readonly marks: Element[];
+    readonly stop: () => void;
+};
+
+/** The forms the kit checks, each once however many of its parts are attached. */
+const checkedForms = new WeakMap<HTMLFormElement, CheckedForm>();
+
+/** Takes off the marks set on fields not in error, where they still say so. */
+const unmark = (marks: readonly Element[]) => {
+    for (const one of marks)
+        if (one.getAttribute('aria-invalid') === 'false') one.removeAttribute('aria-invalid');
+};
+
+/**
+ * Sets up the kit's check of a form, once for every attach in it. The browser's constraints are
+ * checked across the whole form as it is submitted, before the page's own handler in the bubble
+ * phase, which runs only where every field passes, so it can still check what they cannot express.
+ * The form's own attach checks it where there is one, else the first part's, so the form's own goes
+ * first and each part's after it. A reset a page calls off leaves the errors, since the values that
+ * failed stay. One that goes through takes away the errors the kit drew, and where there were any
+ * says so, since they go out of a screen reader's hearing and focus stays on the button. A reset
+ * with none the kit drew, as after a save, says nothing, and errors a page drew are the page's to
+ * clear. The last attach in the form taken down takes the check away, with a reset's timer still
+ * due, and gives the form back its own noValidate, so the browser checks it again.
+ */
+const checkForm = (own: HTMLFormElement): CheckedForm => {
+    const off = new AbortController();
+    const { signal } = off;
+    const was = own.noValidate;
+    const timers = new Set<number>();
+    const checked: CheckedForm = {
+        checkers: [],
+        marks: [],
+        stop: () => {
+            off.abort();
+            for (const timer of timers) window.clearTimeout(timer);
+            own.noValidate = was;
+            unmark(checked.marks);
+            checkedForms.delete(own);
+        },
+    };
+    own.addEventListener(
+        'submit',
+        (event) => {
+            checked.checkers[0]?.check(event, own);
+        },
+        { capture: true, signal }
+    );
+    own.addEventListener(
+        'reset',
+        (event) => {
+            const timer = window.setTimeout(() => {
+                timers.delete(timer);
+                if (event.defaultPrevented) return;
+                const checker = checked.checkers[0];
+                if (checker?.clear()) checker.cleared();
+            });
+            timers.add(timer);
+        },
+        { signal }
+    );
+    checkedForms.set(own, checked);
+    return checked;
+};
 
 /** Whether a control can take focus: enabled, not inert, and in sight. */
 const takesFocus = (control: Element): control is HTMLElement =>
@@ -2333,6 +2417,39 @@ const unreachedWords = (field: Element, words: string, count: number): string =>
 };
 
 /**
+ * Joins an attach to the kit's check of its form, and returns what takes it out again, the form's
+ * check and the marks with the last attach in it.
+ */
+const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
+    // The browser's own check would stop a submit before the page's handler runs, showing its own
+    // bubble, which fades, in place of the kit's errors, so the form takes noValidate from script
+    // and the kit checks the same constraints on submit. A page without script keeps the browser's
+    // check.
+    const own = form instanceof HTMLFormElement ? form : form.closest('form');
+    const checked = own ? (checkedForms.get(own) ?? checkForm(own)) : null;
+    if (own) own.noValidate = true;
+    // A field not in error says so, so a browser does not read an empty required field as invalid
+    // before anything is submitted. The marks are the form's where there is one, since every
+    // attach in it reads them.
+    const marks = checked?.marks ?? [];
+    for (const control of (own ?? form).querySelectorAll('input, select, textarea, fieldset'))
+        if (!control.hasAttribute('aria-invalid')) {
+            control.setAttribute('aria-invalid', 'false');
+            marks.push(control);
+        }
+    if (own === form) checked?.checkers.unshift(checker);
+    else checked?.checkers.push(checker);
+    return () => {
+        if (!checked) {
+            unmark(marks);
+            return;
+        }
+        checked.checkers.splice(checked.checkers.indexOf(checker), 1);
+        if (checked.checkers.length === 0) checked.stop();
+    };
+};
+
+/**
  * Makes a form refuse a submit, and returns what refuses it. The form takes `noValidate` from
  * script, or the form around an attached part of one, and the kit checks the browser's constraints
  * on submit, before the page's own handler, which runs only where every field passes, so a page
@@ -2353,29 +2470,28 @@ const unreachedWords = (field: Element, words: string, count: number): string =>
  * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
  * where there were any, says the form is cleared. Attached again, a form returns what it returned
  * first and takes options given in place of the last.
+ *
+ * Aborting the `signal` it was given takes its listeners off, calls off a refusal and a reset's
+ * timer still due, and takes away the errors it drew, so nothing is said after, and what it
+ * returned does nothing. The form's check and its noValidate go with the last attach in the form.
+ * A signal already aborted leaves the form as the markup drew it.
  */
 export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => {
+    // A signal already aborted does nothing, so even new options for a form already attached are
+    // not taken.
+    if (options?.signal?.aborted) return () => () => undefined;
     const already = attachedForms.get(form);
     if (already) {
         if (options) already.set(options);
         return already.refuse;
     }
+    const down = teardown(options?.signal);
+    if (!down) return () => () => undefined;
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
     // The failures of the last submit the kit refused, said where a page that draws its own errors
     // marks none, so the refusal is still heard.
     let failed: readonly FieldFailure[] = [];
-    // The browser's own check would stop a submit before the page's handler runs, showing its own
-    // bubble, which fades, in place of the kit's errors, so the form takes noValidate from script
-    // and the kit checks the same constraints on submit. A page without script keeps the browser's
-    // check.
-    const own = form instanceof HTMLFormElement ? form : form.closest('form');
-    if (own) own.noValidate = true;
-    const scope = own ?? form;
-    // A field not in error says so, so a browser does not read an empty required field as invalid
-    // before anything is submitted.
-    for (const control of scope.querySelectorAll('input, select, textarea, fieldset'))
-        if (!control.hasAttribute('aria-invalid')) control.setAttribute('aria-invalid', 'false');
     /** What puts back each field the kit drew an error in, as it was before. */
     const drawn = new Map<Element, () => void>();
     const undraw = (field: Element) => {
@@ -2464,13 +2580,11 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         };
         return pending;
     };
-    const refuse: Refuse = (asked) => refuseIn(form, true, asked?.from);
-    // The browser's constraints, checked across the whole form as it is submitted, before the
-    // page's own handler in the bubble phase, which runs only where every field passes, so it can
-    // still check what they cannot express. A form is checked once however many of its parts are
-    // attached, by the form's own attach where there is one, else the first part's. A button marked
-    // formnovalidate submits unchecked, as with the browser's own check, and clears what the kit
-    // drew, which no longer stands.
+    // A refusal asked for after the teardown does nothing.
+    const refuse: Refuse = (asked) =>
+        down.signal.aborted ? () => undefined : refuseIn(form, true, asked?.from);
+    // A button marked formnovalidate submits unchecked, as with the browser's own check, and clears
+    // what the kit drew, which no longer stands.
     const check = (event: SubmitEvent, whole: HTMLFormElement) => {
         const { submitter } = event;
         const failures =
@@ -2497,29 +2611,12 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const field of [...drawn.keys()]) undraw(field);
         return had;
     };
-    if (own && (own === form || !checkers.has(own)))
-        checkers.set(own, { check, clear, cleared: () => speak('Form cleared.') });
-    if (own && !checkedForms.has(own)) {
-        checkedForms.add(own);
-        own.addEventListener(
-            'submit',
-            (event) => {
-                checkers.get(own)?.check(event, own);
-            },
-            { capture: true }
-        );
-        // A reset a page calls off leaves the errors, since the values that failed stay. One that
-        // goes through takes away the errors the kit drew, and where there were any says so, since
-        // they go out of a screen reader's hearing and focus stays on the button. A reset with none
-        // the kit drew, as after a save, says nothing, and errors a page drew are the page's to clear.
-        own.addEventListener('reset', (event) => {
-            window.setTimeout(() => {
-                if (event.defaultPrevented) return;
-                const checker = checkers.get(own);
-                if (checker?.clear()) checker.cleared();
-            });
-        });
-    }
+    down.add(() => {
+        pending?.();
+        clear();
+        attachedForms.delete(form);
+    });
+    down.add(joinForm(form, { check, clear, cleared: () => speak('Form cleared.') }));
     attachedForms.set(form, {
         refuse,
         set: (next) => {

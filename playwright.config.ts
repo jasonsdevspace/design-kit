@@ -23,11 +23,11 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * the keyboard, where focus is after a button is pressed by pointer, which Safari leaves off the
  * button, and how the switch's choices open and close by pointer and tap are what Safari draws or
  * does its own way, and a grid's columns rest on each engine's sums of a share and its clamps. The
- * teardown of the switch and the copy button runs here and in Firefox too, since a signal's abort
- * and what follows it are each engine's own.
+ * teardown of the switch, the copy button, a form's check and a panel's button runs here and in
+ * Firefox too, since a signal's abort and what follows it are each engine's own.
  */
 const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown}.spec.{ts,tsx}';
+    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,teardown-form-panel}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
@@ -38,7 +38,7 @@ const WEBKIT =
  * columns, which rest on each engine's sums of a share and its clamps.
  */
 const FIREFOX =
-    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown}.spec.{ts,tsx}';
+    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,teardown-form-panel}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
