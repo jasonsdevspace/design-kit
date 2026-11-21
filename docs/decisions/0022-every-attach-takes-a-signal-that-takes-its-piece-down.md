@@ -97,20 +97,22 @@ Option E.
   every page keeps working as it is, which makes the contract a patch release, 0.9.3.
 
 One internal helper keeps the contract, `teardown` in `src/teardown.ts`, which no entry exports.
-Given the page's signal, it gives null where that signal is already aborted, so the attach returns
-at once, and otherwise a signal of its own that every listener of the attach takes, `add` for what a
-signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel, and
-`stop`, which the attach returns as its detach. `stop` aborts its own signal and runs what `add`
-kept, once, and the page's signal calls it on abort. An undo given to `add` after the teardown has
-run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
-variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
-once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
-than left to check. The listener on the page's signal comes off with the teardown, so a signal a
-page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
-keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch, the copy button, the status line, the toast, the form, the panels, the stepper, a
-table's frame, a group the arrow keys move through, a busy button, progress, the dialog and
-`moveFocus` keep the contract through it.
+Given the page's signal, it gives a signal of its own that every listener of the attach takes, `add`
+for what a signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel,
+and `stop`, which the attach returns as its detach. Where the page's signal is already aborted, it
+gives a teardown already stopped, whose `add` runs each undo at once, so it never gives null. That
+is no guard, since what an attach registers after its undos would outlive them, so each attach
+checks for a signal already aborted before it sets anything up. `stop` aborts its own signal and
+runs what `add` kept, once, and the page's signal calls it on abort. An undo given to `add` after
+the teardown has run runs at once. Work an attach sets after it is set up follows one of two rules:
+it lives in a variable an undo kept at setup clears, or its callback reads the attach's signal and
+does nothing once it is aborted. Anything that waits longer than one task, a timer or a frame, is
+cleared rather than left to check. The listener on the page's signal comes off with the teardown, so
+a signal a page keeps for longer holds nothing of a piece already taken down. Until then the page's
+signal keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In
+0.9.3 the theme switch, the copy button, the status line, the toast, the form, the panels, the
+stepper, a table's frame, a group the arrow keys move through, a busy button, progress, the dialog
+and `moveFocus` keep the contract through it.
 
 ## Consequences
 
@@ -126,10 +128,10 @@ table's frame, a group the arrow keys move through, a busy button, progress, the
 
 The paths are in `packages/design-kit`.
 
-- `src/teardown.test.ts` finds the helper gives null for a signal already aborted, runs what it
-  keeps once and in order whether the page aborts or the attach detaches first, runs every undo
-  where one throws and reports the error, runs one kept after the teardown at once, and takes its
-  listener off the page's signal once it has run.
+- `src/teardown.test.ts` finds the helper given a signal already aborted is already stopped and runs
+  what it is given at once, runs what it keeps once and in order whether the page aborts or the
+  attach detaches first, runs every undo where one throws and reports the error, runs one kept after
+  the teardown at once, and takes its listener off the page's signal once it has run.
 - `e2e/teardown.spec.tsx` attaches the theme switch and the copy button with a signal already
   aborted and finds them hidden and attached afresh by a later call, a copy button attached again
   with an aborted signal keeping its first source, an abort hiding both and putting the copy

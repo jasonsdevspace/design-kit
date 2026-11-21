@@ -203,6 +203,25 @@ export const useStatus = (): Say => {
     return speak;
 };
 
+/**
+ * The function a hook that speaks hands its attach, the same across renders, which says through the
+ * page's `say` where it gives one, else on the status line of the nearest `StatusProvider`. Both
+ * are kept current in a layout effect, since a form's refusal is made in one and speaks through the
+ * latest. A hook with neither throws, naming itself, since its words would reach no one.
+ */
+const useSpeaker = (name: string, say: Say | undefined): Say => {
+    const speaker = useContext(Speaker);
+    if (!speaker && !say)
+        throw new Error(`${name} needs a StatusProvider above it, or a say of its own`);
+    const latest = useRef(say ?? speaker);
+    useLayoutEffect(() => {
+        latest.current = say ?? speaker;
+    });
+    return useCallback<Say>((words, how) => {
+        latest.current?.(words, how);
+    }, []);
+};
+
 /** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */
 export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => () => void;
 
@@ -438,12 +457,10 @@ export const useFormRefusal = <Form extends HTMLElement>(
         readonly invalid: NonNullable<FormOptions['invalid']>;
     }
 ): readonly [RefCallback<Form>, Refuse] => {
-    const speaker = useContext(Speaker);
-    if (!speaker && !options.say)
-        throw new Error('useFormRefusal needs a StatusProvider above it, or a say of its own');
-    const latest = useRef({ options, speaker });
+    const say = useSpeaker('useFormRefusal', options.say);
+    const latest = useRef(options);
     useLayoutEffect(() => {
-        latest.current = { options, speaker };
+        latest.current = options;
     });
     // What refuses through each form attached now, the newest last, so one ref on two forms keeps
     // refusing through the one left as the other goes.
@@ -472,11 +489,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
             const controller = new AbortController();
             const handle = attachForm(form, {
                 signal: controller.signal,
-                say: (words, settle) => {
-                    const { options: now, speaker: line } = latest.current;
-                    (now.say ?? line)?.(words, settle);
-                },
-                summary: () => latest.current.options.summary?.() ?? null,
+                say,
+                summary: () => latest.current.summary?.() ?? null,
                 // Read as each failure is put in words, so words written inline on every render are
                 // never set again.
                 errorWords: new Proxy(
@@ -484,13 +498,13 @@ export const useFormRefusal = <Form extends HTMLElement>(
                     {
                         get: (_, failure) =>
                             typeof failure === 'string'
-                                ? latest.current.options.errorWords?.[failure as Failure]
+                                ? latest.current.errorWords?.[failure as Failure]
                                 : undefined,
                     }
                 ),
                 // A refusal of its own, made once the errors the page sets are drawn.
                 invalid: (failures) => {
-                    latest.current.options.invalid(failures);
+                    latest.current.invalid(failures);
                     refuseThrough(() => refusers.get(form))();
                 },
             });
@@ -500,7 +514,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
                 refusers.delete(form);
             };
         },
-        [refuseThrough, refusers]
+        [say, refuseThrough, refusers]
     );
     const [ref] = useLiveRef(attachOne);
     return [ref, refuse] as const;
@@ -568,26 +582,17 @@ export const useRoving = <Group extends HTMLElement>(
 export const useBusy = <Busy extends HTMLElement>(
     options: Pick<BusyOptions, 'say'> = {}
 ): RefCallback<Busy> => {
-    const speaker = useContext(Speaker);
-    if (!speaker && !options.say)
-        throw new Error('useBusy needs a StatusProvider above it, or a say of its own');
-    const latest = useRef({ options, speaker });
-    useEffect(() => {
-        latest.current = { options, speaker };
-    });
-    const attachOne = useCallback((button: Busy) => {
-        const controller = new AbortController();
-        attachBusy(button, {
-            say: (words, settle) => {
-                const { options: now, speaker: line } = latest.current;
-                (now.say ?? line)?.(words, settle);
-            },
-            signal: controller.signal,
-        });
-        return () => {
-            controller.abort();
-        };
-    }, []);
+    const say = useSpeaker('useBusy', options.say);
+    const attachOne = useCallback(
+        (button: Busy) => {
+            const controller = new AbortController();
+            attachBusy(button, { say, signal: controller.signal });
+            return () => {
+                controller.abort();
+            };
+        },
+        [say]
+    );
     return useLiveRef(attachOne)[0];
 };
 
@@ -602,24 +607,15 @@ export const useBusy = <Busy extends HTMLElement>(
 export const useProgress = (
     options: Pick<ProgressOptions, 'say' | 'steps' | 'done'> = {}
 ): RefCallback<HTMLProgressElement> => {
-    const speaker = useContext(Speaker);
-    if (!speaker && !options.say)
-        throw new Error('useProgress needs a StatusProvider above it, or a say of its own');
-    const latest = useRef({ options, speaker });
-    useEffect(() => {
-        latest.current = { options, speaker };
-    });
+    const say = useSpeaker('useProgress', options.say);
     const { steps, done } = options;
     const given = useRef({ steps, done });
     const optionsFor = useCallback(
         (next: { steps: number | undefined; done: string | undefined }): ProgressOptions => ({
             ...next,
-            say: (words, how) => {
-                const { options: now, speaker: line } = latest.current;
-                (now.say ?? line)?.(words, how);
-            },
+            say,
         }),
-        []
+        [say]
     );
     const attachOne = useCallback(
         (progress: HTMLProgressElement) => {

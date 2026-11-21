@@ -19,19 +19,24 @@ export type Teardown = {
      * where the teardown has already run.
      */
     readonly add: (undo: () => void) => void;
-    /** Takes everything down once, so calling it again or after the page's abort does nothing. */
+    /**
+     * Takes everything down once, so calling it again, after the page's abort or after the same
+     * element was attached anew, does nothing and leaves that newer attach alone.
+     */
     readonly stop: () => void;
 };
 
 /**
  * The teardown for one attach, run when the page's `signal` aborts or when the attach's detach,
- * which is `stop`, is called, whichever comes first. A signal already aborted gives null, so the
- * attach attaches nothing. The listener on the page's signal comes off with the teardown, so a
- * signal the page keeps for longer holds nothing of a piece already taken down. Until then that
- * signal keeps the piece alive, so a page hands over one that lives no longer than the piece.
+ * which is `stop`, is called, whichever comes first. A signal already aborted gives a teardown
+ * already stopped, whose own signal is aborted and whose `add` runs each undo at once, so the
+ * helper never gives null. It is no guard: each attach checks for a signal already aborted before
+ * it sets anything up, since what it registers after its undos would outlive them. The listener on
+ * the page's signal comes off with the teardown, so a signal the page keeps for longer holds
+ * nothing of a piece already taken down. Until then that signal keeps the piece alive, so a page
+ * hands over one that lives no longer than the piece.
  */
-export const teardown = (given?: AbortSignal): Teardown | null => {
-    if (given?.aborted) return null;
+export const teardown = (given?: AbortSignal): Teardown => {
     const own = new AbortController();
     const { signal } = own;
     const undos: (() => void)[] = [];
@@ -48,7 +53,8 @@ export const teardown = (given?: AbortSignal): Teardown | null => {
             }
         }
     };
-    given?.addEventListener('abort', stop, { signal });
+    if (given?.aborted) stop();
+    else given?.addEventListener('abort', stop, { signal });
     return {
         signal,
         add: (undo) => {

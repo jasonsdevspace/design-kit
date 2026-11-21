@@ -103,7 +103,7 @@ export const servePage = async (
         '/controls.js': [js('controls.ts'), 'text/javascript'],
         // The controls import the theme's names from it.
         '/theme.js': [js('theme.ts'), 'text/javascript'],
-        // The controls keep each status line's state in it.
+        // The controls keep each status line's state and speech in it.
         '/line.js': [js('line.ts'), 'text/javascript'],
         // The controls take each attach down through it.
         '/teardown.js': [js('teardown.ts'), 'text/javascript'],

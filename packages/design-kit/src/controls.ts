@@ -1,4 +1,15 @@
-import { type Line, lineOf, releaseLine } from './line.js';
+import {
+    claimLine,
+    hush,
+    lineOf,
+    releaseLine,
+    SAID_FOR,
+    say,
+    sayOn,
+    speakOn,
+    type Spoken,
+    unsay,
+} from './line.js';
 import { teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
@@ -145,8 +156,8 @@ const land = (
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
     // Aborting calls off a request that has not landed, as the function it returns does, and one
     // already landed is left where it put focus. A signal already aborted asks for nothing.
+    if (options.signal?.aborted) return () => undefined;
     const down = teardown(options.signal);
-    if (!down) return () => undefined;
     const from = options.from === undefined ? activeOf() : options.from;
     const asked = performance.now();
     const frame = window.requestAnimationFrame(() => {
@@ -487,7 +498,6 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     // its choices are drawn shows no empty control and can attach it again once they are.
     if (radios.length === 0) return () => undefined;
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     const { signal } = down;
     const button = group.querySelector<HTMLButtonElement>('.dk-theme-switch-button');
     const choices = group.querySelector<HTMLElement>('.dk-theme-switch-choices');
@@ -585,8 +595,6 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     // Drawn as the switch shows it, so the two agree when a choice was held while no switch was.
     draw(current());
     group.hidden = false;
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     down.add(() => {
         // Closing marks the button closed. The signal has already taken the document's
         // listener off.
@@ -597,138 +605,6 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     });
     attachedSwitches.set(group, down.stop);
     return down.stop;
-};
-
-/** How long a copy button says what it did before it says Copy again, in milliseconds. */
-const SAID_FOR = 2000;
-
-/** A message a status line says: words, or a function that gives them as they are put in. */
-type Spoken = Parameters<Say>[0];
-
-/** Empties a status line, and drops what it was about to say, waiting words among them. */
-const hush = (status: HTMLElement) => {
-    const line = lineOf(status);
-    window.clearTimeout(line.timer);
-    window.clearTimeout(line.settle);
-    Object.assign(line, {
-        current: null,
-        firmNow: false,
-        settling: false,
-        words: null,
-        notice: null,
-    });
-    status.textContent = '';
-};
-
-/** Keeps polite words to say once the line is free, words and a notice each in a place apart. */
-const hold = (line: Line, message: Spoken) => {
-    if (typeof message === 'string') line.words = message;
-    else line.notice = message;
-};
-
-/**
- * Whether polite words go now. They give way to firm words said in the same moment or still
- * settling, so a result said with them is heard in their place. They wait for firm words the line
- * is saying, and polite words given as a function, read as they are put in, such as a busy
- * button's notice, wait for any words, so they never put out the end of a progress and say nothing
- * once no longer true. Words that wait take the place of words of their kind waiting before them.
- */
-const admit = (line: Line, message: Spoken): boolean => {
-    if (line.settling || line.firmNow) return false;
-    const { current } = line;
-    if (current && (!current.polite || typeof message === 'function')) {
-        hold(line, message);
-        return false;
-    }
-    return true;
-};
-
-/**
- * Ends what a line is saying, and says what waits for it once nothing settles: the polite words
- * first, and the notice once those have left too.
- */
-const leave = (status: HTMLElement) => {
-    const line = lineOf(status);
-    line.current = null;
-    status.textContent = '';
-    if (line.settling) return;
-    const next = line.words ?? line.notice;
-    if (next === line.words) line.words = null;
-    else line.notice = null;
-    if (!next) return;
-    say(status, next, false, true);
-    // Said earlier and only held, so not taken for words said in this moment.
-    const said = lineOf(status).current;
-    if (said?.message === next) said.now = false;
-};
-
-/**
- * Says a message on a status line. A message given as a function is read as it is put in, after the
- * moment's wait, so words a page draws from its own state follow the change that prompted them, and
- * one that gives nothing by then is not said. Polite words go, wait or give way as `admit` has it.
- * Firm words drop words still settling, and words that go take the place of the one the line is
- * saying. Polite words not yet put in that firm words take the place of wait for those to leave,
- * unless both were said in the same moment, and a notice waits whatever takes its place. Firm words
- * leave polite words waiting as they are, and polite words that go take the place of the polite
- * words waiting.
- */
-const say = (status: HTMLElement, message: Spoken, keep = false, polite = false) => {
-    const line = lineOf(status);
-    // A line let go of says nothing and sets no timer, until it is attached again.
-    if (line.released) return;
-    if (polite && !admit(line, message)) return;
-    if (polite) line.words = null;
-    const before = line.current;
-    if (
-        before?.polite &&
-        !before.put &&
-        (typeof before.message === 'function' || (!polite && !before.now))
-    )
-        hold(line, before.message);
-    window.clearTimeout(line.timer);
-    window.clearTimeout(line.settle);
-    line.settling = false;
-    status.textContent = '';
-    const current = { message, polite, put: false, now: true };
-    line.current = current;
-    if (!polite) {
-        line.firmNow = true;
-        line.firms += 1;
-    }
-    const firms = line.firms;
-    // The moment ends with the task, whether the words are still on the line or have left it.
-    const moment = window.setTimeout(() => {
-        line.moments.delete(moment);
-        current.now = false;
-        if (!polite && line.firms === firms) line.firmNow = false;
-    });
-    line.moments.add(moment);
-    line.timer = window.setTimeout(() => {
-        const words = typeof message === 'string' ? message : message();
-        // A message that is no longer wanted by the time it would be said is left unsaid.
-        if (words === null) {
-            leave(status);
-            return;
-        }
-        status.textContent = words;
-        current.put = true;
-        if (keep) return;
-        line.timer = window.setTimeout(() => {
-            leave(status);
-        }, SAID_FOR);
-    }, 100);
-};
-
-/**
- * Takes a piece's own message off a page's line before it would leave, freeing it for the next, or
- * out of the wait polite words keep there.
- */
-const unsay = (status: HTMLElement, message: Spoken | null) => {
-    const line = lineOf(status);
-    if (line.words === message) line.words = null;
-    if (message === null || line.current?.message !== message) return;
-    window.clearTimeout(line.timer);
-    leave(status);
 };
 
 /** How a message is said on a status line. */
@@ -761,37 +637,6 @@ export type Say = (message: string | (() => string | null), options?: SayOptions
 const attachedLines = new WeakMap<HTMLElement, readonly [Say, () => void]>();
 
 /**
- * Says a message on a status line, at once or once its words stop changing, without attaching the
- * line. The kit's own pieces speak through it, so none becomes a page's line's first attach, whose
- * signal would then go unheard, and a page that attaches its line with a signal owns it.
- */
-const sayOn = (
-    line: HTMLElement,
-    message: Spoken,
-    { settle = 0, polite = false }: SayOptions = {}
-) => {
-    if (settle <= 0) {
-        say(line, message, false, polite);
-        return;
-    }
-    const state = lineOf(line);
-    if (state.released) return;
-    if (polite && !admit(state, message)) {
-        // Polite words settling before these are dropped, so the last said is the one heard.
-        if (!state.settling) window.clearTimeout(state.settle);
-        return;
-    }
-    // Waits on a timer of its own, so words already said are still put in and leave as ever, and
-    // any message said in the meantime drops these.
-    window.clearTimeout(state.settle);
-    state.settling = !polite;
-    state.settle = window.setTimeout(() => {
-        state.settling = false;
-        say(line, message, false, polite);
-    }, settle);
-};
-
-/**
  * Returns the function that says a message on a status line, which a page draws out of sight and
  * puts on the page from the start, so a screen reader hears each message without focus moving. A
  * message is put in a moment after the line is emptied, so the same words said twice are heard
@@ -815,38 +660,21 @@ export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say =>
     if (options?.signal?.aborted) return () => undefined;
     const already = attachedLines.get(line);
     if (already && !lineOf(line).released) return already[0];
-    // A line let go of as `StatusProvider` unmounts is attached afresh, and its old attach taken
-    // down, so the old attach's signal holds nothing of it.
+    // A line let go of while still attached, as a toast's own line is when the toast is taken down,
+    // is attached afresh, and its old attach taken down, so the old attach's signal holds nothing
+    // of it.
     already?.[1]();
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
-    lineOf(line).released = false;
+    claimLine(line);
     const speak: Say = (message, given) => {
         if (!down.signal.aborted) sayOn(line, message, given);
     };
     down.add(() => {
-        // An attach taken down after a newer one took the line leaves the newer one speaking.
-        if (attachedLines.get(line)?.[0] !== speak) return;
         attachedLines.delete(line);
         releaseLine(line);
     });
     attachedLines.set(line, [speak, down.stop]);
     return speak;
-};
-
-/** Where a piece's words are said: the page's own function, or a status line the page names. */
-type SpeaksOn = {
-    readonly say?: Say | undefined;
-    readonly status?: HTMLElement | null | undefined;
-};
-
-/**
- * Says a piece's words through the page's function where it gives one, else on its line, which a
- * line let go of keeps silent until the page attaches it again.
- */
-const speakOn = (chosen: SpeaksOn, message: Spoken, options?: SayOptions) => {
-    if (chosen.say) chosen.say(message, options);
-    else if (chosen.status) sayOn(chosen.status, message, options);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
@@ -899,7 +727,6 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
         return already.detach;
     }
     const down = teardown(options.signal);
-    if (!down) return () => undefined;
     let { source, status } = options;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
@@ -936,8 +763,6 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     };
     button.addEventListener('click', onClick, { signal: down.signal });
     button.hidden = false;
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     down.add(() => {
         window.clearTimeout(timer);
         showWord(0);
@@ -1030,14 +855,13 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const already = attachedToasts.get(element);
     if (already) return already;
     const down = teardown(options?.signal);
-    if (!down) return () => () => undefined;
     const { signal } = down;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
     // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
     const given = [actionButton, close].filter((button) => !button.hasAttribute('tabindex'));
     for (const button of given) button.tabIndex = 0;
     // The toast's own line, let go of as an earlier attach was taken down, speaks for this one.
-    lineOf(status).released = false;
+    claimLine(status);
     // While a message is shown, the toast is measured again whenever its size or the screen's
     // changes, a turned phone or a new text size among them, so its room never goes stale.
     const remeasure = () => {
@@ -1323,7 +1147,6 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
     if (!parts) return () => undefined;
     const torn = teardown(options?.signal);
-    if (!torn) return () => undefined;
     const { signal } = torn;
     const { input, down, up } = parts;
     const range = field.querySelector<HTMLElement>('.dk-stepper-range');
@@ -1472,8 +1295,8 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             tell(() => (attached() ? words : null));
         }
     };
-    // Once the reset is done, and never once the stepper is let go, since the teardown clears it, as
-    // with focus leaving it.
+    // Once the reset is done, and never once the stepper is let go, since the teardown clears it,
+    // as with focus leaving it.
     let resetting = 0;
     const onReset = () => {
         window.clearTimeout(resetting);
@@ -1519,8 +1342,6 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // draws that state needs no code of its own.
     if (drawnWrong()) report(true);
     else describe();
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     torn.add(() => {
         kept.disconnect();
         window.clearTimeout(settling);
@@ -1656,7 +1477,6 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         return already.open;
     }
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     const { signal } = down;
     let settings: DialogOptions = {};
     const set = (next: DialogOptions) => {
@@ -1961,7 +1781,6 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     if (already) return already;
     if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
     const down = teardown(options?.signal);
-    if (!down) return idle;
     const control: PanelControl = {
         set: (open) => {
             const id = panelIdOf(opener);
@@ -2050,7 +1869,6 @@ export const attachTable = (element: HTMLElement, options?: AttachOptions): (() 
     const already = attachedTables.get(frame);
     if (already) return already;
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     const onFocusIn = ({ target }: FocusEvent) => {
         if (!(target instanceof Element) || !target.matches(':focus-visible')) return;
         // Measured along the way the frame reads, so a start is the smaller figure either way.
@@ -2074,8 +1892,6 @@ export const attachTable = (element: HTMLElement, options?: AttachOptions): (() 
         else if (end > to) frame.scrollLeft += (end - to) * way;
     };
     frame.addEventListener('focusin', onFocusIn, { signal: down.signal });
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     down.add(() => {
         attachedTables.delete(frame);
     });
@@ -2423,21 +2239,17 @@ const unmark = (marks: readonly Element[]) => {
  * due, and gives the form back its own noValidate, so the browser checks it again.
  */
 const checkForm = (own: HTMLFormElement): CheckedForm => {
-    const off = new AbortController();
-    const { signal } = off;
+    const down = teardown();
+    const { signal } = down;
     const was = own.noValidate;
     const timers = new Set<number>();
-    const checked: CheckedForm = {
-        checkers: [],
-        marks: [],
-        stop: () => {
-            off.abort();
-            for (const timer of timers) window.clearTimeout(timer);
-            own.noValidate = was;
-            unmark(checked.marks);
-            checkedForms.delete(own);
-        },
-    };
+    const checked: CheckedForm = { checkers: [], marks: [], stop: down.stop };
+    down.add(() => {
+        for (const timer of timers) window.clearTimeout(timer);
+        own.noValidate = was;
+        unmark(checked.marks);
+        checkedForms.delete(own);
+    });
     own.addEventListener(
         'submit',
         (event) => {
@@ -2637,7 +2449,6 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         return already.refuse;
     }
     const down = teardown(options?.signal);
-    if (!down) return () => () => undefined;
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
     // The failures of the last submit the kit refused, said where a page that draws its own errors
@@ -2929,7 +2740,6 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         return already.detach;
     }
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     const { signal } = down;
     let chosen: RovingOptions = options ?? {};
     let last: HTMLElement | null = null;
@@ -3041,8 +2851,6 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
     const toolbar = group.matches('.dk-button-grid') && (ownRole === null || ownRole === 'group');
     if (toolbar) group.setAttribute('role', 'toolbar');
     place();
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     down.add(() => {
         kept.disconnect();
         drawn.disconnect();
@@ -3121,7 +2929,6 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
         return already.detach;
     }
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     let chosen: BusyOptions = options ?? {};
     let timer = 0;
     let marked = false;
@@ -3167,9 +2974,8 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     };
     button.addEventListener('click', stop, { capture: true, signal: down.signal });
     if (busy()) start();
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone. Ending clears the wait's timer and counts a run, so words already
-    // handed to the line find their run over and are left unsaid.
+    // Ending clears the wait's timer and counts a run, so words already handed to the line find
+    // their run over and are left unsaid.
     down.add(() => {
         kept.disconnect();
         end();
@@ -3247,7 +3053,6 @@ export const attachProgress = (
         return already.detach;
     }
     const down = teardown(options?.signal);
-    if (!down) return () => undefined;
     let chosen: ProgressOptions = options ?? {};
     const known = () => progress.hasAttribute('value');
     const stepOf = () => {
@@ -3301,8 +3106,6 @@ export const attachProgress = (
     };
     const kept = new MutationObserver(check);
     kept.observe(progress, { attributeFilter: ['value', 'max'] });
-    // Run once, so calling the detach again, even after the same element was attached anew, leaves
-    // that newer attach alone.
     down.add(() => {
         kept.disconnect();
         // The last step said is taken off the bar's line, or out of its wait there, so a step
