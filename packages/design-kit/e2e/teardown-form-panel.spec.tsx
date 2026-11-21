@@ -198,18 +198,27 @@ test.describe('a form', () => {
         page,
         browserName,
     }) => {
+        // A still clock holds the second refusal's frame until after the reset, as a busy page
+        // can, so a refusal still due at the reset is seen to be called off.
+        await stillClock(page.clock);
         await opened(page, browserName);
         await page.evaluate(`kit.form(undefined, '#part')`);
         await page.getByRole('button', { name: 'Join' }).click();
+        await page.clock.runFor(500);
         await expect(page.locator('#name-error')).toHaveText('Error: Enter a value.');
         // The form's own attach checks it from now on, and a submit draws each error once.
         await page.evaluate('kit.form()');
         await page.getByRole('button', { name: 'Join' }).click();
         await expect(page.locator('.dk-field-error')).toHaveCount(2);
-        // A reset takes away every error, the part's among them, and says the form is cleared.
+        // A reset takes away every error, the part's among them, calls off the refusal still due
+        // and says the form is cleared.
         await page.evaluate(`document.querySelector('#join').reset()`);
+        await page.clock.runFor(3000);
         await expect(page.locator('.dk-field-error')).toHaveCount(0);
-        await expect.poll(() => heard(page)).toContain('Form cleared.');
+        expect(await heard(page)).toEqual([
+            'Name: Error: Enter a value. 2 fields need attention.',
+            'Form cleared.',
+        ]);
     });
 });
 

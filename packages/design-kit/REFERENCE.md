@@ -750,7 +750,8 @@ its name and the count where it shows no error. VoiceOver on iOS reads a field's
 hint, after a pause, which other speech cuts off and which a visitor who turns hints off never
 hears, and focus moved by script may not land, so the error is always said. A screen reader that
 reads the error as focus lands hears it twice, which slows a visitor less than an error never heard.
-A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
+A reset that goes through calls off a refusal not yet landed, since it would say errors no longer
+shown. A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
 submits again hears it again, and what each refusal returns calls off that refusal alone. Focus a
 visitor moved after the refusal was asked for stays where they put it, and a page that refuses later
 than it was asked passes `{ from }`, where focus was then, as `moveFocus` takes it. In React,

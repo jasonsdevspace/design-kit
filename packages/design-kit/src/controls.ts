@@ -2621,14 +2621,15 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const failure of failures) draw(failure);
         refuseIn(whole, false);
     };
-    // Takes away the errors the kit drew, and says whether there were any.
+    // Takes away the errors the kit drew, and says whether there were any. A refusal still due is
+    // called off with them, since it would say errors no longer shown in place of what follows.
     const clear = () => {
+        pending?.();
         const had = drawn.size > 0;
         for (const field of [...drawn.keys()]) undraw(field);
         return had;
     };
     down.add(() => {
-        pending?.();
         clear();
         attachedForms.delete(form);
     });
