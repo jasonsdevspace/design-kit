@@ -245,7 +245,7 @@ the usual size, and the median a function adds is now 586 bytes, so the rule set
 status line, the toast, the form, the panels and the remaining attaches moving onto the helper took
 the controls to 18,269 bytes together, past the 17.75 KB they held, and the median a function adds
 is now 606 bytes, so the rule sets them at 18.5 KB. Record 23's holders, a control kept through an
-abort and an attach of its element in one task, took the controls to 18,523 bytes together, under
+abort and an attach of its element in one task, took the controls to 18,533 bytes together, under
 the 18.5 KB they held but with less room than a function of the usual size, and the median a
 function adds is now 635 bytes, so the rule sets them at 18.75 KB.
 
