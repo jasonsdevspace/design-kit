@@ -270,6 +270,47 @@ test('hands focus back to the control the visitor came into the toast from, not 
     await expect(page.locator('#share')).toBeFocused();
 });
 
+test('hands focus back where it was as the message came where the control focus came in from no longer takes it', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    await page.locator('#share').evaluate((element) => {
+        (element as HTMLButtonElement).disabled = true;
+    });
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('hands focus back where it was as the message came where focus last came into the toast from nowhere', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    // Focus leaves the toast for nothing, then comes back in with no control it came from, so the
+    // control it came in from the first time no longer counts.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
 test('hands focus back where it was as the message came where focus came into the toast from nowhere', async ({
     page,
 }) => {

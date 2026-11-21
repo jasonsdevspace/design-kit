@@ -866,19 +866,20 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * next message replaces it. One with an action stays until then, since a timer would take the
  * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
- * goes back to the control the visitor came into the toast from, and where focus came into it from
- * nowhere, to the last control outside the toast that had focus when a message arrived. Where there
- * was none, or it no longer takes focus, focus goes to the body of the app's frame, or on a page
- * with no frame to its main content. Focus goes back only where it is in the toast, or where the page has
- * taken the toast away with focus in it so that focus has fallen to the body or to nothing, while
- * focus a visitor has put anywhere else stays. Its Close and its action take a tabindex of 0 where
- * the page set none, so Safari, which focuses a pressed button only where it has one, leaves focus
- * in the toast on a press or a tap and focus can go back as it leaves. Attaching a toast again
- * returns the same function, its message still shown. Taken down by its `signal`, it dismisses its
- * message as its Close does, takes off its listeners, its observer, its listener on the window's
- * size and its timer, takes away the tabindex it added and lets its line go, and the function it
- * returned, and what that returned, do nothing after. A signal already aborted returns a function
- * that shows nothing.
+ * goes to the first of these that takes it: the control focus last came into the toast from, then
+ * the control outside the toast that had focus as the latest message came, then the body of the
+ * app's frame, or on a page with no frame its main content. The first is passed over where focus
+ * last came into the toast from nowhere. Only an HTML control counts as either control, so focus
+ * that came from an SVG link goes on down the list. Focus goes back only where it is in the toast,
+ * or where the page has taken the toast away with focus in it so that focus has fallen to the body
+ * or to nothing, while focus a visitor has put anywhere else stays. Its Close and its action take a
+ * tabindex of 0 where the page set none, so Safari, which focuses a pressed button only where it
+ * has one, leaves focus in the toast on a press or a tap and focus can go back as it leaves.
+ * Attaching a toast again returns the same function, its message still shown. Taken down by its
+ * `signal`, it dismisses its message as its Close does, takes off its listeners, its observer, its
+ * listener on the window's size and its timer, takes away the tabindex it added and lets its line
+ * go, and the function it returned, and what that returned, do nothing after. A signal already
+ * aborted returns a function that shows nothing.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -918,7 +919,12 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     // Whether focus was in the toast as it was taken from the page, read for the handback alone.
     let leftWith = false;
     let onAction: (() => void) | undefined;
-    let returnTo: HTMLElement | undefined;
+    // The control focus came into the toast from, where focus was as the latest message came, and
+    // the element that last lost focus, read inside open shadow roots, which an event's related
+    // target names only by its host.
+    let cameFrom: Element | undefined;
+    let arrivedAt: HTMLElement | undefined;
+    let lost: Element | undefined;
     const wait = () => {
         window.clearTimeout(timer);
         if (shown && !onAction && !hovered && !focused) {
@@ -945,16 +951,16 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         delete element.dataset['rows'];
         delete element.dataset['row'];
         hush(status);
-        // Focus that was in the toast goes back where it came from, and where nothing had focus or
-        // that no longer takes it, to the body of the app's frame or the page's main content rather
-        // than to nowhere.
-        if (hadFocus) handBack(returnTo, homeOf(element));
+        // Focus that was in the toast goes back to the control it came in from, then to where it
+        // was as the message came, then to the body of the app's frame or the page's main content
+        // rather than to nowhere.
+        if (hadFocus) handBack(cameFrom, arrivedAt, homeOf(element));
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         const active = focusedNow();
         if (!active || !element.contains(active))
-            returnTo = active instanceof HTMLElement ? active : undefined;
+            arrivedAt = active instanceof HTMLElement ? active : undefined;
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
@@ -973,11 +979,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // A control that had focus and that the toast now covers is scrolled clear of it, by the
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
-        if (returnTo === active) {
-            const control = returnTo.getBoundingClientRect();
+        if (arrivedAt === active) {
+            const control = arrivedAt.getBoundingClientRect();
             const card = element.getBoundingClientRect();
             if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
-                returnTo.scrollIntoView({ block: 'nearest' });
+                arrivedAt.scrollIntoView({ block: 'nearest' });
         }
         wait();
         return () => {
@@ -1026,10 +1032,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     element.addEventListener(
         'focusin',
-        ({ relatedTarget: from }) => {
-            // Focus goes back where the visitor came into the toast from, and where it came from
-            // nowhere, to where it was as the message came.
-            if (from instanceof HTMLElement && !element.contains(from)) returnTo = from;
+        ({ relatedTarget }) => {
+            // Each entry from outside names the control focus came in from, and one from nowhere
+            // names none, so focus then goes back to where it was as the message came.
+            if (!element.contains(relatedTarget as Node | null))
+                cameFrom = relatedTarget ? lost : undefined;
             focused = true;
             wait();
         },
@@ -1058,6 +1065,13 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     for (const type of ['focusin', 'pointerdown'])
         document.addEventListener(type, forget, { capture: true, signal });
+    document.addEventListener(
+        'focusout',
+        (event) => {
+            lost = event.composedPath()[0] as Element;
+        },
+        { capture: true, signal }
+    );
     // Run once as the signal aborts, since a toast returns what shows a message and no detach.
     down.add(() => {
         dismiss();

@@ -2957,17 +2957,18 @@ next message replaces it. One with an action stays until then, since a timer wou
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
 while the pointer is over it or focus is in it. When a message arrives, what has focus stays in
 view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
-it, focus goes back to the control the visitor came into the toast from, so a keyboard user who
-moved on from where they were as the message came lands where they left off. Where focus came into
-the toast from nowhere, it goes back to the last control outside the toast that had focus when a
-message arrived. Where there was none, or it no longer takes focus, it goes to the body of the app's
-frame, or on a page with no frame to its main content where that takes focus. Its Close and its action carry `tabindex="0"`,
-which `Toast` draws and `attachToast` adds where a page's markup has none, so Safari, which focuses
-a pressed button only where it has a tabindex, leaves focus in the toast on a press and focus goes
-back as the toast leaves. An action runs after the toast has left, so where it takes away what focus
-came from, it moves focus itself. A message with no action replaces one with an action and its way
-back, so a page shows one another only when the first is done with. More than one action is a
-dialog's job.
+it, focus goes to the first of these that takes it: the control focus last came into the toast from,
+then the control outside the toast that had focus as the latest message came, then the body of the
+app's frame, or on a page with no frame its main content where that takes focus. The first is passed
+over where focus last came into the toast from nowhere. So a keyboard user who moved on from where
+they were as the message came lands where they left off. Only an HTML control counts as either
+control, so focus that came from an SVG link goes on down the list. Its Close and its action carry
+`tabindex="0"`, which `Toast` draws and `attachToast` adds where a page's markup has none, so
+Safari, which focuses a pressed button only where it has a tabindex, leaves focus in the toast on a
+press and focus goes back as the toast leaves. An action runs after the toast has left, so where it
+takes away what focus came from, it moves focus itself. A message with no action replaces one with
+an action and its way back, so a page shows one another only when the first is done with. More than
+one action is a dialog's job.
 
 A page that takes a toast down while the toast stays on the page, such as on a screen it draws
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
