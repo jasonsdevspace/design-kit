@@ -328,8 +328,8 @@ test('takes the options it is attached with again, and keeps them when attached 
     await page.locator('#end').click();
     await page.keyboard.press('Escape');
     await expect(endGame(page)).toBeHidden();
-    // Options given replace the last whole, so options that leave out stay, an empty set
-    // among them, do not stay.
+    // Options given replace the last whole, so options that leave out stay do not stay, while an
+    // empty set gives no options and keeps the last.
     for (const given of [{}, { returnTo: true }]) {
         await attachAgain({ stay: true });
         await page.evaluate((options) => {
@@ -350,7 +350,13 @@ test('takes the options it is attached with again, and keeps them when attached 
         }, given);
         await page.locator('#end').click();
         await page.keyboard.press('Escape');
-        await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+        if ('returnTo' in given) {
+            await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+        } else {
+            await expect(endGame(page), JSON.stringify(given)).toBeVisible();
+            await page.getByRole('button', { name: 'Keep playing' }).click();
+            await expect(endGame(page)).toBeHidden();
+        }
     }
 });
 
