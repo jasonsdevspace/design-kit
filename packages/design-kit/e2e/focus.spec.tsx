@@ -1,17 +1,20 @@
 import { expect, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage, stillClock } from './page.js';
+import { servePage, stillClock, tabKey } from './page.js';
 
 /*
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
- * `useArrivalFocus`: an id drawn after the request found, a target gone, hidden, inert or off
- * passed over for its fallbacks, focus a visitor moved since the request left where it is, a
- * control asked for twice focused twice, a request called off, a view's heading focused when its
- * key changes but never as the page first draws, a request asked as its component unmounts landing,
- * one asked after it unmounted leaving focus the visitor moved on to the next screen, one asked
- * from a ref as its component first draws landing, and one asked in a transition called off when
- * an urgent update unmounts its component or an `Activity` hides it first.
+ * `useArrivalFocus`, in Chromium, WebKit and Firefox: an id drawn after the request found, a target
+ * gone, hidden, inert or off passed over for its fallbacks, focus a visitor moved since the request
+ * left where it is, a control asked for twice focused twice, a request called off, and a view's
+ * heading focused when its key changes but never as the page first draws. A request still waiting
+ * as its component unmounts lands, from a row removed at once, after an await, from a timer or in a
+ * transition, from a transition an urgent update overtook, on its fallback where the transition
+ * draws its target, and from a component an `Activity` hides, unless the visitor moved focus first.
+ * One made in a commit before its component goes lands, one asked from a ref as its component first
+ * draws lands, and one asked after its component unmounted leaves focus the visitor moved on to the
+ * next screen, whatever place it names.
  */
 
 const BODY =
@@ -37,6 +40,21 @@ const frames = (page: import('@playwright/test').Page) =>
         for (let frame = 0; frame < 2; frame += 1)
             await new Promise((resolve) => requestAnimationFrame(resolve));
     });
+
+/**
+ * Presses a button by Enter with focus on it, since Safari leaves focus off a button a pointer
+ * presses.
+ */
+const press = async (page: import('@playwright/test').Page, selector: string) => {
+    await page.locator(selector).focus();
+    await page.keyboard.press('Enter');
+};
+
+/** Calls one of the page's functions, in a task of its own. */
+const run = (page: import('@playwright/test').Page, name: string) =>
+    page.evaluate((call) => {
+        (window as unknown as Record<string, () => void>)[call]?.();
+    }, name);
 
 const open = async (page: import('@playwright/test').Page) => {
     await servePage(page, { title: 'Focus', body: BODY, script: SCRIPT });
@@ -144,16 +162,17 @@ test.describe('in React', () => {
 
     test('leaves a button given the ref in the Tab order, and focuses it as its key changes', async ({
         page,
+        browserName,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await expect(page.locator('#change')).not.toHaveAttribute('tabindex', /.*/);
         // The key changes from another button, so focus can only reach this one by the hook.
-        await page.locator('#bump').click();
+        await press(page, '#bump');
         await expect(page.locator('#change')).toHaveText('Change round 2');
         await expect(page.locator('#change')).toBeFocused();
-        await page.keyboard.press('Tab');
+        await page.keyboard.press(tabKey(browserName));
         await expect(page.locator('#after-change')).toBeFocused();
-        await page.keyboard.press('Shift+Tab');
+        await page.keyboard.press(`Shift+${tabKey(browserName)}`);
         await expect(page.locator('#change')).toBeFocused(); // A link with no address takes focus no other way, so it is given a tabindex as a heading is.
         await expect(page.locator('#link-title')).toHaveAttribute('tabindex', '-1');
     });
@@ -226,61 +245,123 @@ test.describe('in React', () => {
 
     test('moves focus to the next row as the row asking for it is removed', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#row-Ann').click();
+        await press(page, '#row-Ann');
         await expect(page.locator('#row-Ann')).toHaveCount(0);
         await expect(page.locator('#row-Ben')).toBeFocused();
-        await page.locator('#row-Cy').click();
+        await press(page, '#row-Cy');
         await expect(page.locator('#row-Ben')).toBeFocused();
     });
+
+    for (const how of ['await', 'timer', 'transition'] as const)
+        test(`moves focus to the next row as the row removed by ${how} asks for it`, async ({
+            page,
+        }) => {
+            await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+            await press(page, `#row-${how}-Ann`);
+            await expect(page.locator(`#row-${how}-Ann`)).toHaveCount(0);
+            await expect(page.locator(`#row-${how}-Ben`)).toBeFocused();
+        });
 
     test('leaves focus on the next screen where a request comes after its component unmounted', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#leave-close').click();
+        await press(page, '#leave-close');
         await page.locator('#next-screen').focus();
-        await page.evaluate(async () => {
+        await page.evaluate(() => {
             (window as unknown as { answerLeave: () => void }).answerLeave();
-            // Two frames, so the request's own has come and gone.
-            for (let frame = 0; frame < 2; frame += 1)
-                await new Promise((resolve) => requestAnimationFrame(resolve));
         });
+        await frames(page);
         await expect(page.locator('#next-screen')).toBeFocused();
+    });
+
+    test('leaves focus on the next screen for a late request that names that field as where focus was', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#named-leave-close');
+        await page.locator('#named-next-screen').focus();
+        await page.evaluate(() => {
+            (window as unknown as { answerNamed: () => void }).answerNamed();
+        });
+        await frames(page);
+        await expect(page.locator('#named-next-screen')).toBeFocused();
     });
 
     test('focuses a field a view asks for from its own ref as a press first draws it', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#open-view').click();
+        await press(page, '#open-view');
         await expect(page.locator('#first-field')).toBeFocused();
     });
 
-    test('calls off a request asked in a transition when an urgent update unmounts its component first', async ({
+    test('lands a request whose transition an urgent update overtook, where focus fell with its component', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#owner-ask').click();
+        await press(page, '#owner-ask');
         // Later, in a task of its own, while the transition still waits.
-        await page.evaluate(() => {
-            (window as unknown as { dropOwner: () => void }).dropOwner();
-        });
+        await run(page, 'dropOwner');
         await expect(page.locator('#owner-ask')).toHaveCount(0);
-        await frames(page);
-        await expect(page.locator('#owner-target')).not.toBeFocused();
+        await expect(page.locator('#owner-target')).toBeFocused();
     });
 
-    test('calls off a request asked in a transition when an Activity hides its component', async ({
+    test('leaves a field the visitor moved to for a request whose transition was overtaken', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#hidden-ask').click();
-        await page.evaluate(() => {
-            (window as unknown as { hideOwner: () => void }).hideOwner();
-        });
+        await press(page, '#owner-ask');
+        await page.locator('#owner-field').focus();
+        await run(page, 'dropOwner');
+        await expect(page.locator('#owner-ask')).toHaveCount(0);
+        await frames(page);
+        await expect(page.locator('#owner-field')).toBeFocused();
+    });
+
+    test('lands an overtaken request before its transition draws the target, on its fallback', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#drawn-ask');
+        await run(page, 'dropOwner');
+        await expect(page.locator('#drawn-ask')).toHaveCount(0);
+        await expect(page.locator('#owner-fallback')).toBeFocused();
+    });
+
+    test('lands a request whose component an Activity hides in the same press', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#hide-ask');
+        await expect(page.locator('#hide-ask')).toBeHidden();
+        await expect(page.locator('#owner-target')).toBeFocused();
+    });
+
+    test('lands a waiting request whose component an Activity hides later, unless focus moved', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#hidden-ask');
+        await run(page, 'hideOwner');
+        await expect(page.locator('#hidden-ask')).toBeHidden();
+        await expect(page.locator('#owner-target')).toBeFocused();
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#hidden-ask');
+        await page.locator('#owner-field').focus();
+        await run(page, 'hideOwner');
         await expect(page.locator('#hidden-ask')).toBeHidden();
         await frames(page);
-        await expect(page.locator('#owner-target')).not.toBeFocused();
+        await expect(page.locator('#owner-field')).toBeFocused();
+    });
+
+    test('lands a request made in one commit whose component the next commit takes away', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#brisk-ask');
+        await expect(page.locator('#brisk-ask')).toHaveCount(0);
+        await expect(page.locator('#brisk-target')).toBeFocused();
     });
 
     test('focuses the last of two requests made in one frame', async ({ page }) => {
@@ -335,9 +416,10 @@ test.describe('in React', () => {
 
     test('leaves focus where Tab put it for a view first drawn after the visitor only tabbed', async ({
         page,
+        browserName,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.keyboard.press('Tab');
+        await page.keyboard.press(tabKey(browserName));
         await expect(page.locator('#remove-Ann')).toBeFocused();
         await page.evaluate(() => {
             (window as unknown as { showLate: () => void }).showLate();
@@ -367,8 +449,7 @@ test.describe('in React', () => {
     }) => {
         await stillClock(page.clock);
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        // Forced, since an off control waits for nothing to turn it on.
-        await page.locator('#off').click({ force: true });
+        await press(page, '#off');
         await page.evaluate(() => {
             (window as unknown as { showLate: () => void }).showLate();
         });
@@ -383,7 +464,7 @@ test.describe('in React', () => {
         await stillClock(page.clock);
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         // The view this press brings leaves at once, so the press is handed back and waits.
-        await page.locator('#show-brief').click();
+        await press(page, '#show-brief');
         await page.clock.runFor(6000);
         await page.evaluate(() => {
             (window as unknown as { showLate: () => void }).showLate();
@@ -420,7 +501,7 @@ test.describe('in React', () => {
 
     test('moves nothing for a view gone in the frame it arrived in', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#show-brief').click();
+        await press(page, '#show-brief');
         await page.waitForTimeout(100);
         await expect(page.locator('#brief')).toHaveCount(0);
         await expect(page.locator('#show-brief')).toBeFocused();

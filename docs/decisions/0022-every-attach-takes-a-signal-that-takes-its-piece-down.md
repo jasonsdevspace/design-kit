@@ -88,9 +88,9 @@ Option E.
   which keeps the first and ignores the second, signal and all. So one part of a page cannot take
   down a piece another part attached, and the piece is attached again only once its first attach
   is taken down.
-- **A focus request still lands when its component unmounts in the moment it asks,** so a row that
-  asks for focus on the next one as it is deleted moves focus there, as record 20 already has a
-  request made after unmount.
+- **A focus request still lands when its component unmounts before the request is drawn,** so a
+  row that asks for focus on the next one as it is deleted moves focus there, as record 20 already
+  has a request made after unmount.
 - **`Symbol.dispose` waits for a stable Safari** and for the kit's floor to reach it, and then
   only on the attaches that return a detach.
 - **Return shapes stay as they are,** so the signal is added beside what each attach takes now and

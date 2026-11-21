@@ -18,6 +18,7 @@ type Page = {
     showLate?: () => void;
     drawAgain?: () => void;
     answerLeave?: () => void;
+    answerNamed?: () => void;
     dropOwner?: () => void;
     hideOwner?: () => void;
 };
@@ -25,19 +26,21 @@ const page = window as unknown as Page;
 
 /*
  * The page focus.spec.tsx draws with React: players each removed by a button that goes with them,
- * focus going to the next player's button or the list's heading, a round whose heading takes
- * focus when the round changes, tabs whose views take focus on their heading as a press draws them,
- * one with a field that takes focus itself, two requests made in one frame, a row of tabs moved
- * along by the arrow keys or chosen by a press, whose views each take focus on arrival, a view
- * first drawn late beside a field, one gone in the frame it arrived in, a view drawn again many
- * times before any press, a view and a section of it brought by one press, a save answered
- * after an await that turns on the control it asks focus for, the same with the control in a
- * sibling and with the save pressed inside a shadow root, a panel that asks for focus on its
- * opener once it is gone, rows that each ask for focus on the next as their own press removes
- * them, a screen that asks for focus late, once it is gone and the visitor is on the next, a view
- * that asks for focus on its first field from that field's ref as a press draws it, and requests
- * asked in a transition held back by a part that never loads, whose owner an urgent update then
- * unmounts or an `Activity` hides.
+ * focus going to the next player's button or the list's heading, a round whose heading takes focus
+ * when the round changes, tabs whose views take focus on their heading as a press draws them, one
+ * with a field that takes focus itself, two requests made in one frame, a row of tabs moved along
+ * by the arrow keys or chosen by a press, whose views each take focus on arrival, a view first
+ * drawn late beside a field, one gone in the frame it arrived in, a view drawn again many times
+ * before any press, a view and a section of it brought by one press, a save answered after an await
+ * that turns on the control it asks focus for, the same with the control in a sibling and with the
+ * save pressed inside a shadow root, a panel that asks for focus on its opener once it is gone,
+ * rows that each ask for focus on the next as their own press removes them, a screen that asks for
+ * focus late, once it is gone and the visitor is on the next, the same naming that field as where
+ * focus was, a view that asks for focus on its first field from that field's ref as a press draws
+ * it, rows removed after an await, from a timer and in a transition, requests asked in a transition
+ * held back by a part that never loads, whose owner an urgent update then unmounts or an `Activity`
+ * hides, a request asked as an `Activity` hides its owner in the same press, and one made in a
+ * commit whose owner the next commit takes away.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -446,67 +449,99 @@ const Panels = () => {
     );
 };
 
-// A row of its own, which asks for focus on the next as its press removes it, so it asks in the
-// moment it unmounts.
+/**
+ * How a row's press removes it and asks for the next: at once, after an await, from a timer or in a
+ * transition.
+ */
+type Removal = 'click' | 'await' | 'timer' | 'transition';
+
+/** Runs a row's removal and its request the way the list says. */
+const removing = (how: Removal, change: () => void) => {
+    if (how === 'click') change();
+    else if (how === 'await')
+        void (async () => {
+            await answered();
+            change();
+        })();
+    else if (how === 'timer') setTimeout(change);
+    else startTransition(change);
+};
+
+// A row of its own, which asks for focus on the next as its press removes it, so it asks before
+// the render that unmounts it is drawn.
 const Row = ({
-    name,
+    id,
     next,
+    how,
     onRemove,
 }: {
-    readonly name: string;
+    readonly id: string;
     readonly next: string | undefined;
-    readonly onRemove: (name: string) => void;
+    readonly how: Removal;
+    readonly onRemove: () => void;
 }) => {
     const focusNext = useFocusAfterDraw();
     return (
         <button
-            id={`row-${name}`}
+            id={id}
             type="button"
             onClick={() => {
-                onRemove(name);
-                focusNext(next ? `row-${next}` : null, { fallbacks: ['rows'] });
+                removing(how, () => {
+                    onRemove();
+                    focusNext(next ?? null, { fallbacks: [`rows-${how}`] });
+                });
             }}
         >
-            Remove row {name}
+            Remove {id}
         </button>
     );
 };
 
-const Rows = () => {
+const Rows = ({ how }: { readonly how: Removal }) => {
     const [rows, setRows] = useState(['Ann', 'Ben', 'Cy']);
+    const idOf = (name: string) => (how === 'click' ? `row-${name}` : `row-${how}-${name}`);
     return (
         <section>
-            <h2 id="rows" tabIndex={-1}>
-                Rows
+            <h2 id={`rows-${how}`} tabIndex={-1}>
+                Rows removed by {how}
             </h2>
-            {rows.map((name, at) => (
-                <Row
-                    key={name}
-                    name={name}
-                    next={rows[at + 1] ?? rows[at - 1]}
-                    onRemove={(gone) => {
-                        setRows((now) => now.filter((one) => one !== gone));
-                    }}
-                />
-            ))}
+            {rows.map((name, at) => {
+                const next = rows[at + 1] ?? rows[at - 1];
+                return (
+                    <Row
+                        key={name}
+                        id={idOf(name)}
+                        next={next ? idOf(next) : undefined}
+                        how={how}
+                        onRemove={() => {
+                            setRows((now) => now.filter((one) => one !== name));
+                        }}
+                    />
+                );
+            })}
         </section>
     );
 };
 
 // A screen whose press takes it away and asks for focus on its opener only once the test answers,
-// after the visitor has moved on to the field the next screen draws.
-const Leaving = ({ onClose }: { readonly onClose: () => void }) => {
+// after the visitor has moved on to the field the next screen draws, naming that field as where
+// focus was where `named` is given.
+const Leaving = ({ named, onClose }: { readonly named: boolean; readonly onClose: () => void }) => {
     const focusBack = useFocusAfterDraw();
+    const prefix = named ? 'named-' : '';
     const close = async () => {
         onClose();
         await new Promise<void>((resolve) => {
-            page.answerLeave = resolve;
+            if (named) page.answerNamed = resolve;
+            else page.answerLeave = resolve;
         });
-        focusBack('leave-open');
+        focusBack(`${prefix}leave-open`, {
+            from: named ? document.getElementById(`${prefix}next-screen`) : undefined,
+        });
     };
     return (
         <button
-            id="leave-close"
+            id={`${prefix}leave-close`}
             type="button"
             onClick={() => {
                 void close();
@@ -517,17 +552,18 @@ const Leaving = ({ onClose }: { readonly onClose: () => void }) => {
     );
 };
 
-const Leave = () => {
+const Leave = ({ named }: { readonly named: boolean }) => {
     const [open, setOpen] = useState(true);
+    const prefix = named ? 'named-' : '';
     return (
         <section>
-            <button id="leave-open" type="button" onClick={() => setOpen(true)}>
+            <button id={`${prefix}leave-open`} type="button" onClick={() => setOpen(true)}>
                 Open the screen
             </button>
             {open ? (
-                <Leaving onClose={() => setOpen(false)} />
+                <Leaving named={named} onClose={() => setOpen(false)} />
             ) : (
-                <input id="next-screen" aria-label="Next screen's field" />
+                <input id={`${prefix}next-screen`} aria-label="Next screen's field" />
             )}
         </section>
     );
@@ -562,21 +598,39 @@ const Opener = () => {
 const never = new Promise<never>(() => undefined);
 const Never = () => use(never);
 
-// A part whose press asks for focus inside a transition that a part never loading holds back.
-const Owner = ({ id, onWait }: { readonly id: string; readonly onWait: () => void }) => {
+// A part whose press asks for focus, inside a transition that a part never loading holds back
+// where `held` is given, or at once and then hidden in the same press by `onPress`.
+const Owner = ({
+    id,
+    target,
+    held,
+    onWait,
+    onPress,
+}: {
+    readonly id: string;
+    readonly target: string;
+    readonly held: boolean;
+    readonly onWait: () => void;
+    readonly onPress?: () => void;
+}) => {
     const focusNext = useFocusAfterDraw();
     return (
         <button
             id={id}
             type="button"
             onClick={() => {
-                startTransition(() => {
-                    onWait();
-                    focusNext('owner-target');
-                });
+                if (held)
+                    startTransition(() => {
+                        onWait();
+                        focusNext(target, { fallbacks: ['owner-fallback'] });
+                    });
+                else {
+                    focusNext(target, { fallbacks: ['owner-fallback'] });
+                    onPress?.();
+                }
             }}
         >
-            Ask in a transition
+            Ask from {id}
         </button>
     );
 };
@@ -597,15 +651,76 @@ const Owners = () => {
     return (
         <section>
             <button id="owner-target" type="button">
-                Target of the transition
+                Target of the request
             </button>
-            <Suspense fallback={<p>Loading</p>}>{waiting ? <Never /> : null}</Suspense>
-            {owned ? <Owner id="owner-ask" onWait={wait} /> : null}
+            <button id="owner-fallback" type="button">
+                Fallback of the request
+            </button>
+            <input id="owner-field" aria-label="Where the visitor went" />
+            <Suspense fallback={<p>Loading</p>}>
+                {waiting ? (
+                    <>
+                        <Never />
+                        <button id="drawn-target" type="button">
+                            Drawn by the transition
+                        </button>
+                    </>
+                ) : null}
+            </Suspense>
+            {owned ? (
+                <>
+                    <Owner id="owner-ask" target="owner-target" held onWait={wait} />
+                    <Owner id="drawn-ask" target="drawn-target" held onWait={wait} />
+                </>
+            ) : null}
             <Activity mode={shown ? 'visible' : 'hidden'}>
                 <section id="hidden-owner">
-                    <Owner id="hidden-ask" onWait={wait} />
+                    <Owner id="hidden-ask" target="owner-target" held onWait={wait} />
+                    <Owner
+                        id="hide-ask"
+                        target="owner-target"
+                        held={false}
+                        onWait={wait}
+                        onPress={() => {
+                            setShown(false);
+                        }}
+                    />
                 </section>
             </Activity>
+        </section>
+    );
+};
+
+// A part whose request is made in the commit its press brings, and which a layout effect of the
+// part above takes away in the next commit, before the request's frame.
+const Brisk = ({ onAsked }: { readonly onAsked: () => void }) => {
+    const focusNext = useFocusAfterDraw();
+    return (
+        <button
+            id="brisk-ask"
+            type="button"
+            onClick={() => {
+                focusNext('brisk-target');
+                onAsked();
+            }}
+        >
+            Ask and go
+        </button>
+    );
+};
+
+const Brisks = () => {
+    const [asked, setAsked] = useState(false);
+    const [shown, setShown] = useState(true);
+    useLayoutEffect(() => {
+        if (asked) setShown(false);
+    }, [asked]);
+    return (
+        <section>
+            <button id="brisk-target" type="button">
+                Target of the brisk request
+            </button>
+            {shown ? <Brisk onAsked={() => setAsked(true)} /> : null}
         </section>
     );
 };
@@ -631,9 +746,14 @@ if (root)
             </section>
             <ShadowSave />
             <Panels />
-            <Rows />
-            <Leave />
+            <Rows how="click" />
+            <Rows how="await" />
+            <Rows how="timer" />
+            <Rows how="transition" />
+            <Leave named={false} />
+            <Leave named />
             <Opener />
             <Owners />
+            <Brisks />
         </main>
     );

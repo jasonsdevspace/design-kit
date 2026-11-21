@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef, useState } from 'react';
+import { StrictMode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import type { Say } from '../src/controls.js';
@@ -23,7 +23,8 @@ import {
  * button, a progress bar and a form whose words the page hears through a `say` of its own, rows
  * that each ask for focus on the next as they are removed, a way to take the pieces away, a way to
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
- * provider afresh.
+ * provider afresh, a part that asks for focus on one field as it first draws and then on another,
+ * and two forms on one ref.
  */
 
 export type Strict = {
@@ -36,9 +37,13 @@ export type Strict = {
     moveForm: () => void;
     speak?: Say;
     remount: () => void;
+    refuseNow: () => void;
+    focusesOnA: number;
+    dropFirstForm: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
+page.focusesOnA = 0;
 page.said = [];
 
 /** Notes each message as it is said, a notice given as a function read as it is said. */
@@ -74,7 +79,7 @@ const Pieces = () => {
     });
     const save = useBusy<HTMLButtonElement>({ say });
     const bar = useProgress({ say, done: 'Imported 40 products.' });
-    const [form] = useFormRefusal<HTMLFormElement>({
+    const [form, refuse] = useFormRefusal<HTMLFormElement>({
         say,
         errorWords: { valueMissing: 'Enter a list name.' },
         invalid: (failures) => {
@@ -82,6 +87,11 @@ const Pieces = () => {
         },
     });
     const heading = useArrivalFocus<HTMLHeadingElement>('pieces');
+    // Draws an error and refuses, which the test does in the same task as taking the pieces away.
+    page.refuseNow = () => {
+        setErrors({ name: 'Enter a list name.' });
+        refuse();
+    };
     // Each ref called with null, as a helper written to merge refs before React 19 calls it.
     page.nullRefs = () => {
         for (const ref of [row, save, bar, form, heading]) ref(null);
@@ -192,6 +202,68 @@ const FormMover = () => {
     );
 };
 
+// A part of the asker that asks in its own layout effect, which runs before the asker's, so a
+// request is asked before the asker is first mounted and again in React's second run.
+const AskFirst = ({ onDraw }: { readonly onDraw: () => void }) => {
+    useLayoutEffect(() => {
+        onDraw();
+    }, [onDraw]);
+    return null;
+};
+
+// A part that asks for focus on its first field as it first draws, through a part of its own, and
+// then on its second from an effect, so the requests React's second run in development makes and
+// remakes each take the place of the one before, and only the last takes focus.
+const AskTwice = () => {
+    const focusNext = useFocusAfterDraw();
+    const first = useCallback(() => {
+        focusNext('ask-a');
+    }, [focusNext]);
+    const counted = useCallback((input: HTMLInputElement | null) => {
+        input?.addEventListener('focus', () => {
+            page.focusesOnA += 1;
+        });
+    }, []);
+    useEffect(() => {
+        focusNext('ask-b');
+    }, [focusNext]);
+    return (
+        <>
+            <AskFirst onDraw={first} />
+            <input id="ask-a" ref={counted} aria-label="First" />
+            <input id="ask-b" aria-label="Second" />
+        </>
+    );
+};
+
+// Two forms on one hook's ref, the first of which the page takes away.
+const TwoForms = () => {
+    const [both, setBoth] = useState(true);
+    const [error, setError] = useState<string | undefined>(undefined);
+    page.dropFirstForm = () => {
+        setBoth(false);
+    };
+    const [form] = useFormRefusal<HTMLFormElement>({
+        say,
+        invalid: (failures) => {
+            setError(failures[0]?.words);
+        },
+    });
+    return (
+        <>
+            {both ? (
+                <form id="pair-one" ref={form} onSubmit={(event) => event.preventDefault()}>
+                    <InputField id="pair-one-name" label="First list" required />
+                </form>
+            ) : null}
+            <form id="pair-two" ref={form} onSubmit={(event) => event.preventDefault()}>
+                <InputField id="pair-two-name" label="Second list" required error={error} />
+                <button type="submit">Make the second list</button>
+            </form>
+        </>
+    );
+};
+
 const App = () => {
     const [shown, setShown] = useState(true);
     const [drawn, setDrawn] = useState(0);
@@ -209,6 +281,8 @@ const App = () => {
                 {shown ? <Pieces /> : null}
                 <Players />
                 <FormMover />
+                <AskTwice />
+                <TwoForms />
             </main>
         </StatusProvider>
     );

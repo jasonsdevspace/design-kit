@@ -162,16 +162,11 @@ export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) =
  */
 type AfterCommit = (request: (late: boolean) => () => void) => () => void;
 
-/**
- * A request owed until its owner commits, what calls it off once it is made, and whether it was
- * asked in the task still running, so the commit that unmounts its owner is the one it was asked
- * in.
- */
+/** A request owed until its owner commits, and what calls it off once it is made. */
 type Owed = {
     readonly make: (late: boolean) => () => void;
     made: boolean;
     cancel: (() => void) | null;
-    now: boolean;
 };
 
 /**
@@ -182,13 +177,18 @@ type Owed = {
  * the page's change, and a layout effect makes the request once that render commits, so it lands
  * in the frame that paints the change. Each request takes the place of one not yet landed, and what
  * it returns calls off that request alone, so a stale one never calls off a newer. The owner is
- * waiting for its first commit, mounted, or gone, and only a request asked once it is gone has no
- * render to wait for and is made at once, told it is late. One asked as the owner first draws, from
- * a ref on its own markup or a child's layout effect, waits for the owner's render like any other.
- * One still waiting as the owner unmounts is made then where `landsAtUnmount` is given and it was
- * asked in the task that unmounts it, since the render it waits for never comes, and called off
- * otherwise, as one asked in a transition an urgent update overtook, or one whose owner an
- * `Activity` hides rather than unmounts. One made but not yet landed is always called off.
+ * waiting for its first commit, mounted, or gone. One asked as the owner first draws, from a ref on
+ * its own markup or a child's layout effect, waits for the owner's render like any other, and only
+ * one asked once the owner is gone has no render to wait for and is made at once, told it is late.
+ *
+ * Where `landsAtUnmount` is given, a request still waiting as the owner unmounts, or as an
+ * `Activity` hides it, is made then, since the render it waits for never comes, and nothing at
+ * unmount calls a request off: only what it returned or a newer request does. React tells a hook
+ * nothing of which update unmounted it, so a request in a transition an urgent update overtook is
+ * made too, before the transition draws, and `moveFocus` leaves a visitor's place alone. The
+ * request stays the latest, so one made in React's second run in development is still the one a
+ * newer request takes the place of. Where it is not given, a request still waiting or not yet
+ * landed as the owner unmounts is called off.
  */
 const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
     const latest = useRef<Owed | null>(null);
@@ -205,25 +205,21 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
         return () => {
             life.current = 'gone';
             const owed = latest.current;
+            if (landsAtUnmount) {
+                if (owed && !owed.made) {
+                    owed.made = true;
+                    owed.cancel = owed.make(false);
+                }
+                return;
+            }
             latest.current = null;
-            if (owed && !owed.made && owed.now && landsAtUnmount) {
-                owed.made = true;
-                owed.cancel = owed.make(false);
-            } else owed?.cancel?.();
+            owed?.cancel?.();
         };
     }, [landsAtUnmount]);
     return useCallback<AfterCommit>((make) => {
         latest.current?.cancel?.();
-        const owed: Owed = { make, made: false, cancel: null, now: true };
+        const owed: Owed = { make, made: false, cancel: null };
         latest.current = owed;
-        // React's scheduler runs the render of a batch in a task it posts the same way before this
-        // one, so a commit that comes before this message is one the request was asked in.
-        const after = new MessageChannel();
-        after.port1.onmessage = () => {
-            owed.now = false;
-            after.port1.close();
-        };
-        after.port2.postMessage(null);
         if (life.current !== 'gone') ask();
         else
             // A cleanup can be followed by the owner's setup in the same commit, as React's second
@@ -256,11 +252,15 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
  * component again. A change made in a transition is asked for inside the same `startTransition`,
  * so the request waits for the render that draws it. A change drawn in another React root is not
  * waited for. Each call is a new request that takes the place of one not yet landed, so the last
- * asked for wins, and returns what calls that request off. A request asked as the component
- * unmounts still lands, so a row that asks for focus on the next one as it is removed moves focus
- * there, and one made but not yet landed when it unmounts is called off. One asked for after it has
- * unmounted is made at once, and lands only where focus has fallen to the page, so a visitor who
- * has moved on to the next screen is left where they are.
+ * asked for wins, and returns what calls that request off, which is all that does: nothing at
+ * unmount calls a request off. One still waiting when the component unmounts, or when an
+ * `Activity` hides it, is made then, with where focus was read as it was asked, so a row that asks
+ * for focus on the next one as it is removed moves focus there, after an await, from a timer or in
+ * a transition too, and `moveFocus` lands it only where focus is still there or has fallen to the
+ * page's body. A request in a transition an urgent update overtook lands before the transition
+ * draws, so it goes to its fallbacks where the transition draws its target. One asked for after
+ * the component has unmounted is made at once and takes focus only from the page's body, whatever
+ * `from` it was given, so a visitor who has moved on to the next screen is left where they are.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
@@ -268,14 +268,11 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
         (target, options) => {
             const from = options?.from === undefined ? activeOf() : options.from;
             // No signal tied to the component goes with the request, since the unmount that makes
-            // a request asked in that moment would abort it too, so it is called off only by what
-            // moveFocus returns. Made late, once the component has gone, where focus stands is no
-            // longer where the change began, so the request takes focus only from the page's body.
+            // a request still waiting would abort it too, so it is called off only by what
+            // moveFocus returns. Made late, once the component has gone, no place it was given
+            // is still where the change began, so the request takes focus only from the body.
             return afterCommit((late) =>
-                moveFocus(target, {
-                    ...options,
-                    from: late && options?.from === undefined ? null : from,
-                })
+                moveFocus(target, { ...options, from: late ? null : from })
             );
         },
         [afterCommit]
@@ -390,7 +387,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
         (form: Form | null) => {
             if (!form) return;
             const controller = new AbortController();
-            refuser.current = attachForm(form, {
+            const handle = attachForm(form, {
                 signal: controller.signal,
                 say: (words, settle) => {
                     const { options: now, speaker: line } = latest.current;
@@ -414,9 +411,11 @@ export const useFormRefusal = <Form extends HTMLElement>(
                     refuse();
                 },
             });
+            refuser.current = handle;
+            // One ref on two forms leaves the other refusing as one of them goes.
             return () => {
                 controller.abort();
-                refuser.current = null;
+                if (refuser.current === handle) refuser.current = null;
             };
         },
         [refuse]

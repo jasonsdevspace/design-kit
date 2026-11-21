@@ -11,8 +11,10 @@ import { type Strict } from './strict-page.js';
  * provider's after it is drawn afresh while the old one stays silent, one arrow key moving one
  * cell, a busy notice, the end of a progress and a refusal each said once, a row removed asking for
  * focus on the next and finding it there, each piece taken down as it leaves, saying nothing late,
- * a ref called with null doing nothing, and a form given back, its check and listeners gone, as the
- * ref moves on.
+ * a ref called with null doing nothing, a form given back, its check and listeners gone, as the
+ * ref moves on, a part's two requests as it first draws leaving only the second to take focus, a
+ * refusal still waiting as its form leaves saying nothing and moving nothing, and one of two forms
+ * on a ref taken away leaving the other refusing.
  */
 
 let app = '';
@@ -187,4 +189,40 @@ test("gives a form back as the hook's ref moves to another", async ({ page, brow
     expect(await state('#move-one')).toEqual({ noValidate: false, marked: 0 });
     expect(await listeners('#move-one')).toBe(bare);
     expect(await listeners('#move-two')).toBe(attached);
+});
+
+test('focuses only the second of two requests a part makes as it first draws', async ({ page }) => {
+    await open(page);
+    await expect(page.locator('#ask-b')).toBeFocused();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#ask-b')).toBeFocused();
+    expect(await page.evaluate(() => (window as unknown as Strict).focusesOnA)).toBe(0);
+});
+
+test('says nothing and moves nothing for a refusal still waiting as its form leaves', async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator('#cell-one').focus();
+    await page.evaluate(() => {
+        (window as unknown as Strict).refuseNow();
+        (window as unknown as Strict).leave();
+    });
+    await expect(page.locator('#form')).toHaveCount(0);
+    await page.waitForTimeout(300);
+    expect(await said(page)).toEqual([]);
+    expect(await page.evaluate(() => document.activeElement?.id ?? '')).toBe('');
+});
+
+test('still refuses through the other form when one of two on a ref is taken away', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).dropFirstForm();
+    });
+    await expect(page.locator('#pair-one')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Make the second list' }).click();
+    await expect(page.locator('#pair-two-name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('Second list: Error: Enter a value.');
 });
