@@ -47,6 +47,10 @@ export type Kept<Handle, Options = AttachOptions> = {
     readonly down: Teardown<Options>;
 };
 
+/** Options that give only a signal are no options, so a call with them leaves the last alone. */
+const optionsIn = <Options>(options?: Options): Options | undefined =>
+    options && Object.keys(options).join() !== 'signal' ? options : undefined;
+
 /**
  * The teardown for one control, held by each signal an attach of its element is given. It runs a
  * microtask after the last holder's signal aborts, unless a later call holds it by then, or at once
@@ -100,10 +104,12 @@ export const teardown = <Options = AttachOptions>(
         queueMicrotask(() => {
             if (!holders.size) stop();
             else if (target === applied) {
-                // Where no holder left gave options, none applies, so no aborted signal is kept.
+                // Where no holder left gave options, none applies, so no aborted signal is kept,
+                // and the control goes back to its defaults, as a first attach that gave none has
+                // them.
                 const next = [...holders].findLast(([, given]) => given);
                 applied = next?.[0];
-                if (next) down.set?.(next[1] as Options);
+                down.set?.((next ? next[1] : {}) as Options);
             }
         });
     };
@@ -133,7 +139,7 @@ export const teardown = <Options = AttachOptions>(
         hold,
     };
     if (given?.aborted) stop();
-    else hold(given, options);
+    else hold(given, optionsIn(options));
     return down;
 };
 
@@ -147,9 +153,7 @@ export const join = <Element extends object, Handle, Options>(
     options?: Options & AttachOptions
 ): Handle | undefined => {
     const kept = registry.get(element);
-    // Options that give only a signal are no options, so a later call leaves the last as they were.
-    const given = options && Object.keys(options).join() !== 'signal';
-    kept?.down.hold(options?.signal, given ? options : undefined);
+    kept?.down.hold(options?.signal, optionsIn(options));
     // A control taken down by now, or being taken down, as an attach made from its own takedown
     // finds it, is attached afresh.
     return kept && !kept.down.signal.aborted ? kept.handle : undefined;

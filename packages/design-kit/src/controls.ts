@@ -786,8 +786,10 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     // another, so it never claims that one copied, and kept where it gives the same. The source is
     // read only while a word is shown, and one that throws, as one reading a ref not yet drawn
     // does, counts as another.
+    // A call that gives no source, as the defaults a holder that gave none goes back to, keeps the
+    // one the button has, since a copy button has no source of its own.
     const set = (next: CopyOptions) => {
-        ({ source, status } = next);
+        ({ source = source, status = status } = next);
         if (!copiedFrom) return;
         try {
             if (source() === copiedFrom) return;

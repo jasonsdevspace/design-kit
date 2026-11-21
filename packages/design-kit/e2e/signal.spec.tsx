@@ -80,6 +80,10 @@ window.kit = {
     form: (signal) =>
         attachForm(document.querySelector('#join'), withSignal(signal, { status: line })),
     focus: (signal) => moveFocus('target', withSignal(signal)),
+    stepperBare: () => attachStepper(document.querySelector('.dk-stepper')),
+    formBare: () => attachForm(document.querySelector('#join')),
+    formWith: (signal, options) =>
+        attachForm(document.querySelector('#join'), withSignal(signal, options)),
     line: () => attachStatus(line),
 };
 /** Every piece attached with the signal given, by name, and what each returned. */
@@ -794,4 +798,55 @@ test('leaves focus the page sets in the task a dialog taken from the page is tak
     })()`);
     await page.evaluate('frames()');
     await expect(page.locator('#target')).toBeFocused();
+});
+
+test("goes back to a form's defaults once the only holder that gave options lets go", async ({
+    page,
+}) => {
+    await opened(page);
+    // A page attaches the form with no options, and a hook joins with its own handler, then goes.
+    await page.evaluate(`(() => {
+        window.dead = 0;
+        kit.formBare();
+        window.hook = new AbortController();
+        kit.formWith(hook.signal, { invalid: () => (window.dead += 1) });
+        hook.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await page.locator('#join button[type="submit"]').click();
+    await expect(page.locator('#name')).toHaveAttribute('aria-invalid', 'true');
+    expect(await page.evaluate('window.dead')).toBe(0);
+});
+
+test("goes back to a stepper's own line once the only holder that gave options lets go", async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.dead = 0;
+        kit.stepperBare();
+        window.hook = new AbortController();
+        kit.stepper(hook.signal, { say: () => (window.dead += 1) });
+        hook.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await page.locator('.dk-stepper-up').click();
+    // Past the moment the stepper says a press.
+    await page.evaluate(() => new Promise((done) => setTimeout(done, 300)));
+    expect(await page.evaluate('window.dead')).toBe(0);
+});
+
+test("drops a dialog's stay once the only holder that gave it lets go, though the first attach gave a signal", async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        kit.dialog(new AbortController().signal);
+        window.stayer = new AbortController();
+        kit.dialog(stayer.signal, { stay: true });
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'none');
+    await page.evaluate('stayer.abort()');
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).not.toHaveAttribute('closedby');
 });

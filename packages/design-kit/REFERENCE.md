@@ -1436,7 +1436,9 @@ microtask later, unless a newer holder has given its own by then. A call with no
 options at once, and they stay with the page where the page holds the control without a signal, and
 elsewhere leave with the newest holder they are filed under. Options that give only a `signal` count
 as none, and a call that gives none keeps its holder's last ones, while any other object replaces
-them, an empty `{}` among them.
+them, an empty `{}` among them. Where no holder left gave options, the control goes back to its
+defaults, as a first attach that gave none has them, though a copy button, which has no source of
+its own, keeps the one it has.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and

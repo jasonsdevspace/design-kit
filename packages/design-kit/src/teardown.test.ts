@@ -399,4 +399,30 @@ describe('a teardown with several holders', () => {
         await Promise.resolve();
         expect(applied).toEqual(['newer']);
     });
+
+    it('goes back to no options once the only holder that gave any lets go', async () => {
+        type Options = { readonly name?: string };
+        // The page holds the control without a signal and without options, and a hook joins.
+        const down = teardown<Options>();
+        const applied: Options[] = [];
+        down.set = (options) => applied.push(options);
+        const hook = new AbortController();
+        down.hold(hook.signal, { name: 'hook' });
+        hook.abort();
+        await Promise.resolve();
+        expect(applied).toEqual([{ name: 'hook' }, {}]);
+    });
+
+    it("takes a first attach's options that give only a signal for none", async () => {
+        type Options = { readonly signal?: AbortSignal; readonly stay?: boolean };
+        const first = new AbortController();
+        const stayer = new AbortController();
+        const down = teardown<Options>(first.signal, { signal: first.signal });
+        const applied: Options[] = [];
+        down.set = (options) => applied.push(options);
+        down.hold(stayer.signal, { signal: stayer.signal, stay: true });
+        stayer.abort();
+        await Promise.resolve();
+        expect(applied).toEqual([{ signal: stayer.signal, stay: true }, {}]);
+    });
 });

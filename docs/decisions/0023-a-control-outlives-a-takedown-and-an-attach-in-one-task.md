@@ -88,7 +88,9 @@ Option C.
   leave with it, or under the page's own hold where the page holds the control without a signal, so
   they stay with the page as hooks come and go. Options that give only a signal count as none, as
   record 13 has a call with none leave them as they were, and a call that gives no options keeps the
-  ones its holder gave before.
+  ones its holder gave before. Where no holder left gave options, the control goes back to its
+  defaults, as a first attach that gave none has them, though a copy button, which has no source of
+  its own, keeps the one it has.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment the
   takedown lands. A focus request's takedown waits the same microtask, which changes nothing for it,
@@ -137,7 +139,7 @@ ever held.
   progress counts its steps again only where their count changes.
 - The controls weigh 18,553 bytes with the holders, against 18,117 before, which leaves less room
   under 18.5 KB than a function of the usual size, so record 13's rule sets them at 18.75 KB. One
-  rule for handing focus back and a toast that forgets focus a visitor moved take them to 18,617
+  rule for handing focus back and a toast that forgets focus a visitor moved take them to 18,638
   bytes, with less room under 18.75 KB than a function of the usual size, so the rule sets them at
   19 KB.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
@@ -155,8 +157,9 @@ The paths are in `packages/design-kit`.
   join and let go, a newer holder joined in the same task keeping its own, an older holder's options
   kept through a call from it that gives none, no options applied after the detach, an attach made
   from inside a takedown getting a control of its own, a page's own options given without a signal
-  applied at once and kept as a hook sharing the element goes, and options that give only a signal
-  taken for none.
+  applied at once and kept as a hook sharing the element goes, options that give only a signal taken
+  for none, a first attach's among them, and no options applied once the only holder that gave any
+  lets go.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, aborts and attaches without a signal in one task and finds each kept and a busy wait
@@ -168,7 +171,9 @@ The paths are in `packages/design-kit`.
   landing, and focus the page sets as a dialog taken from the page is taken down staying. It also
   finds a toast kept shown while focus leaves it and comes back in one task, one moved in the page
   with focus in it starting its wait again in Chromium, a dialog kept staying where a later attach
-  gives it only a signal, and a progress step still heard through a join that gives the same count.
+  gives it only a signal, a progress step still heard through a join that gives the same count, a
+  form and a stepper back on their defaults once the only holder that gave options lets go, and a
+  dialog's `stay` dropped with the holder that gave it, though the first attach gave a signal.
 - `e2e/teardown-form-panel.spec.tsx` opens and closes a panel through `set` in the task its signal
   aborts, and finds it closed.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and

@@ -252,9 +252,9 @@ in one task, took the controls to 18,553 bytes together, from 18,117, under the 
 but with less room than a function of the usual size, and the median a function adds is now 635
 bytes, so the rule sets them at 18.75 KB. One rule for handing focus back, shared by the toast, the
 dialog and the panels, with a focus request asked before a handback still landing, and a toast that
-forgets focus a visitor moved while it is off the page, took the controls to 18,617 bytes together,
+forgets focus a visitor moved while it is off the page, took the controls to 18,638 bytes together,
 under the 18.75 KB they held but with less room than a function of the usual size, and the median a
-function adds is now 635 bytes, so the rule sets them at 19 KB.
+function adds is now 641 bytes, so the rule sets them at 19 KB.
 
 ## The sheets beside other systems
 
