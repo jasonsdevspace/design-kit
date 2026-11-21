@@ -75,6 +75,8 @@ let handedAt = 0;
 /**
  * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
  * where focus is then, so a request asked before it finds that focus free and not the visitor's.
+ * Given no places, it only keeps where focus is, as a dialog does once the browser has handed focus
+ * back as it closes.
  */
 const handBack = (...places: readonly (Element | null | undefined)[]): void => {
     focusFirst(...places);
@@ -1501,8 +1503,10 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * press that opened it landed on, found from the event a page's listener or React's hands over,
  * since a browser that gives a pressed button no focus leaves nothing else, or else what had focus.
  * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says. A
- * `moveFocus` request asked from the press that closes it lands in place of the opener, since the
- * request takes focus the kit hands back after it was asked as free.
+ * `moveFocus` request asked in the task that closes it, takes it away or takes it down lands in
+ * place of the opener, since a request takes focus the kit, or the browser as the dialog closes,
+ * hands back after it was asked as free. One asked in an earlier task finds the page behind inert
+ * in its frame, so focus goes to the opener as the dialog closes.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -1571,6 +1575,17 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         opener = null;
     };
     dialog.addEventListener('close', onClose, { signal });
+    // The browser hands focus back to what had it before the dialog opened as it closes, at once,
+    // while the close event that hands it back here may come after a request's frame. Focus leaving
+    // a dialog no longer open is that handback, kept once the browser has moved focus, so a request
+    // asked before the close finds focus there free.
+    dialog.addEventListener(
+        'focusout',
+        () => {
+            if (!dialog.open) queueMicrotask(handBack);
+        },
+        { signal }
+    );
     const open: OpenDialog = (from) => {
         if (dialog.open || signal.aborted) return;
         opener = openerOf(from);

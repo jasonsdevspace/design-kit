@@ -763,16 +763,23 @@ test('lands a focus request asked in the task a dialog with focus in it is taken
     await expect(page.locator('#target')).toBeFocused();
 });
 
+/** Opens the dialog from its opener with focus on it, as a press or a key on the opener leaves it. */
+const openFromFocusedOpener = (page: Page) =>
+    page.evaluate(`(() => {
+        window.controller = new AbortController();
+        const opener = document.querySelector('#finish');
+        opener.focus();
+        kit.dialog(controller.signal)(opener);
+    })()`);
+
 test('lands a focus request asked from inside an open dialog before it is taken down', async ({
     page,
 }) => {
     await opened(page);
-    await page.evaluate(`(() => {
-        window.controller = new AbortController();
-        kit.dialog(controller.signal)(document.querySelector('#finish'));
-    })()`);
+    await openFromFocusedOpener(page);
     await expect(page.locator('#end-game')).toHaveAttribute('open');
-    // As a Save handler that asks for the next place, then closes the dialog and takes it down.
+    // As a Save handler that asks for the next place, then closes the dialog and takes it down. The
+    // browser hands focus to the opener as the dialog closes, before the takedown lands.
     await page.evaluate(`(() => {
         kit.focus();
         document.querySelector('#end-game').close();
@@ -783,22 +790,44 @@ test('lands a focus request asked from inside an open dialog before it is taken 
     await expect(page.locator('#target')).toBeFocused();
 });
 
+test('lands a focus request asked from inside an open dialog the page then closes', async ({
+    page,
+}) => {
+    await opened(page);
+    await openFromFocusedOpener(page);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    // The close event the kit hands focus back from may come after the request's frame, as it does
+    // in Firefox, so it is held from the dialog here and the request finds only the focus the
+    // browser hands the opener as the dialog closes.
+    await page.evaluate(`(() => {
+        addEventListener('close', (event) => event.stopImmediatePropagation(), {
+            capture: true,
+            once: true,
+        });
+        kit.focus();
+        document.querySelector('#end-game').close();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).not.toHaveAttribute('open');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
 test('lands a focus request asked from inside an open dialog the page then takes away', async ({
     page,
 }) => {
     await opened(page);
-    await page.evaluate(`(() => {
-        window.controller = new AbortController();
-        kit.dialog(controller.signal)(document.querySelector('#finish'));
-    })()`);
+    await openFromFocusedOpener(page);
     await expect(page.locator('#end-game')).toHaveAttribute('open');
     // As a view that asks for the next place and then draws the dialog away, which takes it down.
     await page.evaluate(`(() => {
+        window.gone = document.querySelector('#end-game');
         kit.focus();
-        document.querySelector('#end-game').remove();
+        gone.remove();
         controller.abort();
     })()`);
     await page.evaluate('frames()');
+    // The dialog is out of the page, so it is found by the reference kept to it.
+    expect(await page.evaluate('gone.open')).toBe(false);
     await expect(page.locator('#target')).toBeFocused();
 });
 

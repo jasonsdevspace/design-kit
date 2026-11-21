@@ -101,10 +101,13 @@ Option C.
   the abort's task, so focus the page set in that task, by its own call or by a field the new
   content focuses as it draws, stays. The kit keeps where it last handed focus back, and `moveFocus`
   treats focus there as free where the handback came after the request was asked, so a request asked
-  in the abort's task still lands. That holds for one asked from inside an open dialog before the
-  page closes it, takes it away or takes it down, so a page can send focus somewhere more useful
-  than the opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices
-  allows.
+  in the abort's task still lands. The browser hands focus back to what had it before a dialog
+  opened as the dialog closes, ahead of the close event, so the dialog keeps that as a handback too,
+  once focus leaves it closed. A request asked from inside an open dialog in the task that closes
+  it, takes it away or takes it down lands, so a page can send focus somewhere more useful than the
+  opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices allows. One
+  asked in an earlier task finds the page behind inert in its frame, so focus goes to the opener as
+  the dialog closes.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -171,14 +174,14 @@ The paths are in `packages/design-kit`.
   the page in one task or removed first and taken down in a later task, focus left on a control
   outside a toast taken away as focus moves there and on the body where a visitor moved it after the
   toast left the page, a focus request asked as a dialog or a toast with focus in it is taken down
-  landing, one asked from inside an open dialog that the page then closes or takes away and takes
-  down in the same task landing too, and focus the page sets as a dialog taken from the page is
-  taken down staying. It also
-  finds a toast kept shown while focus leaves it and comes back in one task, one moved in the page
-  with focus in it starting its wait again in Chromium, a dialog kept staying where a later attach
-  gives it only a signal, a progress step still heard through a join that gives the same count, a
-  form and a stepper back on their defaults once the only holder that gave options lets go, and a
-  dialog's `stay` dropped with the holder that gave it, though the first attach gave a signal.
+  landing, one asked from inside an open dialog landing too where the page closes the dialog or
+  takes it from the page and takes it down in the same task, or only closes it, and focus the page
+  sets as a dialog taken from the page is taken down staying. It also finds a toast kept shown while
+  focus leaves it and comes back in one task, one moved in the page with focus in it starting its
+  wait again in Chromium, a dialog kept staying where a later attach gives it only a signal, a
+  progress step still heard through a join that gives the same count, a form and a stepper back on
+  their defaults once the only holder that gave options lets go, and a dialog's `stay` dropped with
+  the holder that gave it, though the first attach gave a signal.
 - `e2e/teardown-form-panel.spec.tsx` opens and closes a panel through `set` in the task its signal
   aborts, and finds it closed.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
