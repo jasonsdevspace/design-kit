@@ -27,7 +27,7 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
  * and what follows it are each engine's own.
  */
 const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,signal}.spec.{ts,tsx}';
+    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,status-teardown,signal}.spec.{ts,tsx}';
 
 /**
  * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
@@ -38,7 +38,7 @@ const WEBKIT =
  * columns, which rest on each engine's sums of a share and its clamps.
  */
 const FIREFOX =
-    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,signal}.spec.{ts,tsx}';
+    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',

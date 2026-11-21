@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { getEventListeners } from 'node:events';
+
+import { describe, expect, it, vi } from 'vitest';
 
 /*
  * The controls as a page's bundler takes them: a module that runs nothing when it is imported but a
@@ -23,5 +25,37 @@ describe('the controls', () => {
         const say = attachStatus(line);
         expect(attachStatus(line)).toBe(say);
         expect(attachStatus({} as HTMLElement)).not.toBe(say);
+    });
+
+    it('takes down the old attach of a line let go of and attached afresh', async () => {
+        const { attachStatus } = await import('./controls.js');
+        const { releaseLine } = await import('./line.js');
+        // Letting a line go clears its timers, which Node keeps on the global object.
+        vi.stubGlobal('window', globalThis);
+        try {
+            const line = {} as HTMLElement;
+            const page = new AbortController();
+            const first = attachStatus(line, { signal: page.signal });
+            expect(getEventListeners(page.signal, 'abort')).toHaveLength(1);
+            // As `StatusProvider` lets its line go and a later one attaches it.
+            releaseLine(line);
+            const again = attachStatus(line);
+            expect(again).not.toBe(first);
+            // The old attach is taken down, so the page's signal holds nothing of it, and its
+            // abort leaves the newer attach in place.
+            expect(getEventListeners(page.signal, 'abort')).toHaveLength(0);
+            page.abort();
+            expect(attachStatus(line)).toBe(again);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it('refuses a toast missing a part even when given a signal already aborted', async () => {
+        const { attachToast } = await import('./controls.js');
+        const empty = { querySelector: () => null } as unknown as HTMLElement;
+        expect(() => attachToast(empty, { signal: AbortSignal.abort() })).toThrow(
+            'a toast needs its message'
+        );
     });
 });

@@ -1,4 +1,4 @@
-import { type Line, lineOf, lines } from './line.js';
+import { type Line, lineOf, releaseLine } from './line.js';
 import { teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
@@ -754,8 +754,42 @@ export type SayOptions = {
  */
 export type Say = (message: string | (() => string | null), options?: SayOptions) => void;
 
-/** The function each attached line says by, kept so attaching it again returns the same one. */
-const attachedLines = new WeakMap<HTMLElement, Say>();
+/**
+ * The function each attached line says by, kept so attaching it again returns the same one, and
+ * what takes that attach down.
+ */
+const attachedLines = new WeakMap<HTMLElement, readonly [Say, () => void]>();
+
+/**
+ * Says a message on a status line, at once or once its words stop changing, without attaching the
+ * line. The kit's own pieces speak through it, so none becomes a page's line's first attach, whose
+ * signal would then go unheard, and a page that attaches its line with a signal owns it.
+ */
+const sayOn = (
+    line: HTMLElement,
+    message: Spoken,
+    { settle = 0, polite = false }: SayOptions = {}
+) => {
+    if (settle <= 0) {
+        say(line, message, false, polite);
+        return;
+    }
+    const state = lineOf(line);
+    if (state.released) return;
+    if (polite && !admit(state, message)) {
+        // Polite words settling before these are dropped, so the last said is the one heard.
+        if (!state.settling) window.clearTimeout(state.settle);
+        return;
+    }
+    // Waits on a timer of its own, so words already said are still put in and leave as ever, and
+    // any message said in the meantime drops these.
+    window.clearTimeout(state.settle);
+    state.settling = !polite;
+    state.settle = window.setTimeout(() => {
+        state.settling = false;
+        say(line, message, false, polite);
+    }, settle);
+};
 
 /**
  * Returns the function that says a message on a status line, which a page draws out of sight and
@@ -768,36 +802,35 @@ const attachedLines = new WeakMap<HTMLElement, Say>();
  * being said, so the last words said are the ones heard. A screen keeps a line of its own for this,
  * as a toast and a stepper keep theirs. It speaks through the same function as the copy button and
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
- * an earlier one. Attached again, a line returns the function it returned first, unless the line
- * was let go of, as `StatusProvider` does when it unmounts, when it returns one afresh.
+ * an earlier one. Attached again, a line returns the function it returned first and leaves the
+ * later call's `signal` unheard, unless the line was let go of, when it returns one afresh and the
+ * old attach is taken down. Aborting the `signal` its first attach took lets the line go, as
+ * `StatusProvider` does when it unmounts, so no piece says anything on it until it is attached
+ * again. The function an attach returned says nothing once that attach is taken down, while a
+ * piece given the line itself speaks on its next attach. A signal already aborted returns a
+ * function that says nothing.
  */
-export const attachStatus = (line: HTMLElement): Say => {
+export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say => {
+    // A signal already aborted does nothing, even to a line already attached.
+    if (options?.signal?.aborted) return () => undefined;
     const already = attachedLines.get(line);
-    // A line let go of, as `StatusProvider` does when it unmounts, is attached afresh.
-    if (already && !lineOf(line).released) return already;
+    if (already && !lineOf(line).released) return already[0];
+    // A line let go of as `StatusProvider` unmounts is attached afresh, and its old attach taken
+    // down, so the old attach's signal holds nothing of it.
+    already?.[1]();
+    const down = teardown(options?.signal);
+    if (!down) return () => undefined;
     lineOf(line).released = false;
-    const speak: Say = (message, { settle = 0, polite = false } = {}) => {
-        if (settle <= 0) {
-            say(line, message, false, polite);
-            return;
-        }
-        const state = lineOf(line);
-        if (state.released) return;
-        if (polite && !admit(state, message)) {
-            // Polite words settling before these are dropped, so the last said is the one heard.
-            if (!state.settling) window.clearTimeout(state.settle);
-            return;
-        }
-        // Waits on a timer of its own, so words already said are still put in and leave as ever,
-        // and any message said in the meantime drops these.
-        window.clearTimeout(state.settle);
-        state.settling = !polite;
-        state.settle = window.setTimeout(() => {
-            state.settling = false;
-            say(line, message, false, polite);
-        }, settle);
+    const speak: Say = (message, given) => {
+        if (!down.signal.aborted) sayOn(line, message, given);
     };
-    attachedLines.set(line, speak);
+    down.add(() => {
+        // An attach taken down after a newer one took the line leaves the newer one speaking.
+        if (attachedLines.get(line)?.[0] !== speak) return;
+        attachedLines.delete(line);
+        releaseLine(line);
+    });
+    attachedLines.set(line, [speak, down.stop]);
     return speak;
 };
 
@@ -807,12 +840,13 @@ type SpeaksOn = {
     readonly status?: HTMLElement | null | undefined;
 };
 
-/** Says a piece's words through the page's function where it gives one, else on its line. */
+/**
+ * Says a piece's words through the page's function where it gives one, else on its line, which a
+ * line let go of keeps silent until the page attaches it again.
+ */
 const speakOn = (chosen: SpeaksOn, message: Spoken, options?: SayOptions) => {
     if (chosen.say) chosen.say(message, options);
-    // A line let go of stays silent for every piece until the page attaches it again.
-    else if (chosen.status && !lines.get(chosen.status)?.released)
-        attachStatus(chosen.status)(message, options);
+    else if (chosen.status) sayOn(chosen.status, message, options);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
@@ -974,12 +1008,13 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * frame to its main content. Its Close and its action take a tabindex of 0 where the page set none,
  * so Safari, which focuses a pressed button only where it has one, leaves focus in the toast on a
  * press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
- * function. Its listeners are
- * on the toast's own elements, so a toast taken from the page takes them with it.
+ * function and leaves the later call's `signal` unheard. Aborting the `signal` its first attach
+ * took dismisses its message as its Close does, focus in it going back where it came from, takes
+ * off its listeners, its observer, its listener on the window's size and its timer, takes away the
+ * tabindex it added and lets its line go, and the function it returned, and what that returned, do
+ * nothing after. A signal already aborted returns a function that shows nothing.
  */
-export const attachToast = (element: HTMLElement): ShowToast => {
-    const already = attachedToasts.get(element);
-    if (already) return already;
+export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
         const found = element.querySelector<T>(`.dk-toast-${name}`);
         if (!found) throw new Error(`a toast needs its ${name}`);
@@ -989,10 +1024,20 @@ export const attachToast = (element: HTMLElement): ShowToast => {
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
+    // Checked after the parts, so markup missing one throws whatever the signal. A signal already
+    // aborted does nothing, even to a toast already attached.
+    if (options?.signal?.aborted) return () => () => undefined;
+    const already = attachedToasts.get(element);
+    if (already) return already;
+    const down = teardown(options?.signal);
+    if (!down) return () => () => undefined;
+    const { signal } = down;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
     // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
-    for (const button of [actionButton, close])
-        if (!button.hasAttribute('tabindex')) button.tabIndex = 0;
+    const given = [actionButton, close].filter((button) => !button.hasAttribute('tabindex'));
+    for (const button of given) button.tabIndex = 0;
+    // The toast's own line, let go of as an earlier attach was taken down, speaks for this one.
+    lineOf(status).released = false;
     // While a message is shown, the toast is measured again whenever its size or the screen's
     // changes, a turned phone or a new text size among them, so its room never goes stale.
     const remeasure = () => {
@@ -1036,6 +1081,7 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         if (hadFocus) focusFirst(returnTo, homeOf(element));
     };
     const show: ShowToast = (words, action) => {
+        if (signal.aborted) return () => undefined;
         const active = focusedNow();
         if (!active || !element.contains(active))
             returnTo = active instanceof HTMLElement ? active : undefined;
@@ -1052,7 +1098,8 @@ export const attachToast = (element: HTMLElement): ShowToast => {
         element.dataset['shown'] = '';
         measureToast(element, close);
         watch.observe(element);
-        window.addEventListener('resize', remeasure);
+        // Added once however many messages are shown, as the DOM ignores the same listener again.
+        window.addEventListener('resize', remeasure, { signal });
         // A control that had focus and that the toast now covers is scrolled clear of it, by the
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
@@ -1067,31 +1114,70 @@ export const attachToast = (element: HTMLElement): ShowToast => {
             if (shown === id) dismiss();
         };
     };
-    actionButton.addEventListener('click', () => {
-        const chosen = onAction;
-        dismiss();
-        chosen?.();
-    });
-    close.addEventListener('click', dismiss);
-    element.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && shown) dismiss();
-    });
+    actionButton.addEventListener(
+        'click',
+        () => {
+            const chosen = onAction;
+            dismiss();
+            chosen?.();
+        },
+        { signal }
+    );
+    close.addEventListener(
+        'click',
+        () => {
+            dismiss();
+        },
+        { signal }
+    );
+    element.addEventListener(
+        'keydown',
+        (event) => {
+            if (event.key === 'Escape' && shown) dismiss();
+        },
+        { signal }
+    );
     // A pointer that rests where a toast was keeps holding the next one, until it moves away.
-    element.addEventListener('pointerenter', () => {
-        hovered = true;
-        wait();
-    });
-    element.addEventListener('pointerleave', () => {
-        hovered = false;
-        wait();
-    });
-    element.addEventListener('focusin', () => {
-        focused = true;
-        wait();
-    });
-    element.addEventListener('focusout', (event) => {
-        focused = event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
-        wait();
+    element.addEventListener(
+        'pointerenter',
+        () => {
+            hovered = true;
+            wait();
+        },
+        { signal }
+    );
+    element.addEventListener(
+        'pointerleave',
+        () => {
+            hovered = false;
+            wait();
+        },
+        { signal }
+    );
+    element.addEventListener(
+        'focusin',
+        () => {
+            focused = true;
+            wait();
+        },
+        { signal }
+    );
+    element.addEventListener(
+        'focusout',
+        (event) => {
+            focused = event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
+            wait();
+        },
+        { signal }
+    );
+    // Run once as the signal aborts, since a toast returns what shows a message and no detach.
+    down.add(() => {
+        dismiss();
+        releaseLine(status);
+        // A tabindex the page has set since is the page's.
+        for (const button of given)
+            if (button.getAttribute('tabindex') === '0') button.removeAttribute('tabindex');
+        attachedToasts.delete(element);
     });
     attachedToasts.set(element, show);
     return show;
