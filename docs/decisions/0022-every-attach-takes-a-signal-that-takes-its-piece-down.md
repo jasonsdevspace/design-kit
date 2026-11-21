@@ -127,10 +127,10 @@ table's frame, a group the arrow keys move through, a busy button, progress, the
 
 The paths are in `packages/design-kit`.
 
-- `src/teardown.test.ts` finds the helper given a signal already aborted is already stopped and
-  runs what it is given at once, runs what it keeps once and in order whether the page aborts or the attach detaches first, runs every undo
-  where one throws and reports the error, runs one kept after the teardown at once, and takes its
-  listener off the page's signal once it has run.
+- `src/teardown.test.ts` finds the helper given a signal already aborted is already stopped and runs
+  what it is given at once, runs what it keeps once and in order whether the page aborts or the
+  attach detaches first, runs every undo where one throws and reports the error, runs one kept after
+  the teardown at once, and takes its listener off the page's signal once it has run.
 - `e2e/teardown.spec.tsx` attaches the theme switch and the copy button with a signal already
   aborted and finds them hidden and attached afresh by a later call, a copy button attached again
   with an aborted signal keeping its first source, an abort hiding both and putting the copy
