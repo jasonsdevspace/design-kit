@@ -39,9 +39,11 @@ import {
     attachRoving,
     attachStatus,
     attachStepper,
+    attachThemeSwitch,
     focusOnArrival,
     moveFocus,
     type ArrivalOptions,
+    type AttachOptions,
     type BusyOptions,
     type CopyOptions,
     type FocusTarget,
@@ -247,6 +249,14 @@ export const setByWord = (set: SetPanel) => set('open');
 const copying: CopyOptions = { source: () => document.body, status: document.body };
 export const copyOf = (button: HTMLButtonElement): (() => void) =>
     attachCopyButton(button, copying);
+
+// A theme switch and a copy button take the signal that takes them down, which may be undefined.
+const until: AttachOptions = { signal: undefined };
+export const switchUntil = (element: HTMLElement, signal: AbortSignal): (() => void) =>
+    attachThemeSwitch(element, { signal });
+export const switchKept = (element: HTMLElement): (() => void) => attachThemeSwitch(element, until);
+export const copyUntil = (button: HTMLButtonElement, signal: AbortSignal): (() => void) =>
+    attachCopyButton(button, { ...copying, signal });
 
 // @ts-expect-error A copy button's status is an element, never its words.
 export const copyingWords: CopyOptions = { source: () => document.body, status: 'Copied.' };

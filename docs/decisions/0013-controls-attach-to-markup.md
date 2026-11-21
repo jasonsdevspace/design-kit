@@ -21,7 +21,10 @@ controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, meas
 less room under each than a function or a piece of the usual size, and for the listener the module
 adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, a
 listener the package marks as a side effect, so a bundler keeps the module where a page imports it
-only for that listener
+only for that listener, and by record 22, under which an attach takes a signal that takes its piece
+down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
+controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
+than a function of the usual size
 
 ## Context
 
@@ -75,14 +78,17 @@ order of its own. Elsewhere the button stays hidden and the group is the row of 
 Every attach function follows one rule for being called again: it attaches the element once and
 returns what it returned the first time. Where it takes options, options given replace the last, so
 a page that means to change them can, and a call with none leaves them as they were, so another part
-of a page that attaches the same element does not undo what the first set. A dialog attached to stay
-therefore still stays when attached again with no options, and a copy button attached again with a
-new source copies from it. A part a control cannot work without, such as a stepper's buttons, a
-toast's status line, its action and its close button, since any message may carry an action, or a
-table's frame, throws an error that names it, so a page that left one out learns of it where it
-attached. A part it can do without, such as a stepper's status line, is skipped. A theme switch with
-no choices yet is the one exception: it is left hidden and returns a function that does nothing, so
-a page that attaches it before its choices are drawn can attach it again once they are.
+of a page that attaches the same element does not undo what the first set. Since 0.9.3 the one
+option a later call does not take is its `signal`, so the first attach owns the piece until it is
+taken down, and a call given a signal already aborted takes nothing and returns a function that does
+nothing, as record 22 has it. A dialog attached to stay therefore still stays when attached again
+with no options, and a copy button attached again with a new source copies from it. A part a control
+cannot work without, such as a stepper's buttons, a toast's status line, its action and its close
+button, since any message may carry an action, or a table's frame, throws an error that names it, so
+a page that left one out learns of it where it attached. A part it can do without, such as a
+stepper's status line, is skipped. A theme switch with no choices yet is the one exception: it is
+left hidden and returns a function that does nothing, so a page that attaches it before its choices
+are drawn can attach it again once they are.
 
 ## Consequences
 
@@ -225,6 +231,12 @@ With every piece of the release landed, the sheets weigh 12,225 bytes sent toget
 than the prototype and with less room under 12 KB than a piece of the usual size, and the median a
 piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB. It is set again here, before
 anything outgrows it, for the same reason as the controls'.
+
+For 0.9.3 the controls were measured with the helper record 22 keeps its contract through, and the
+theme switch and the copy button moved onto it. Every function sent together weighs 17,532 bytes,
+against 17,331 before, 201 more, under the 17.25 KB they held but with less room than a function of
+the usual size, and the median a function adds is now 586 bytes, so the rule sets the controls at
+17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0.
 
 ## The sheets beside other systems
 

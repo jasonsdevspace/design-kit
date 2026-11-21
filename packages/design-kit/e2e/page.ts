@@ -105,6 +105,8 @@ export const servePage = async (
         '/theme.js': [js('theme.ts'), 'text/javascript'],
         // The controls keep each status line's state in it.
         '/line.js': [js('line.ts'), 'text/javascript'],
+        // The controls take each attach down through it.
+        '/teardown.js': [js('teardown.ts'), 'text/javascript'],
         ...(script === undefined ? {} : { '/page.js': [script, 'text/javascript'] as const }),
     };
     const html =

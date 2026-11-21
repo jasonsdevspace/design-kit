@@ -82,3 +82,9 @@ costs, and the test behind it.
     from script so a page without script keeps the browser's check, words for each failure a field
     or a page can replace, the research behind it, and why leaving the check on, leaving the check
     to each page and canceling each `invalid` event were turned down.
+22. [Every attach takes a signal that takes its piece down](0022-every-attach-takes-a-signal-that-takes-its-piece-down.md):
+    `{ signal }` on every attach, nothing attached for a signal already aborted, an abort that does
+    what the detach does, a teardown complete and safe to repeat, calls after it that do nothing,
+    the first attach owning the piece, the internal helper that keeps it, the research behind it,
+    and why a release function for each piece, `Symbol.dispose`, one handle from every attach and
+    calls that throw or warn were turned down.
