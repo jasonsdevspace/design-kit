@@ -105,17 +105,17 @@ and `stop`, which the attach returns as its detach. Where the page's signal is a
 gives a teardown already stopped, whose `add` runs each undo at once, so it never gives null. That
 is no guard, since what an attach registers after its undos would outlive them, so each attach
 checks for a signal already aborted before it sets anything up. `stop` aborts its own signal and
-runs what `add` kept, once, and the page's signal calls it on abort, a microtask later since record
-23, once every signal holding the piece has aborted. An undo given to `add` after the teardown has
-run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
-variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
-once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
-than left to check. The listener on the page's signal comes off with the teardown, so a signal a
-page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
-keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch, the copy button, the status line, the toast, the form, the panels, the stepper, a
-table's frame, a group the arrow keys move through, a busy button, progress, the dialog and
-`moveFocus` keep the contract through it.
+runs what `add` kept, once, and since record 23 it runs a microtask after every signal holding the
+piece has aborted, unless the element is attached again by then. An undo given to `add` after the
+teardown has run runs at once. Work an attach sets after it is set up follows one of two rules: it
+lives in a variable an undo kept at setup clears, or its callback reads the attach's signal and does
+nothing once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared
+rather than left to check. The listener on the page's signal comes off with the teardown, so a
+signal a page keeps for longer holds nothing of a piece already taken down. Until then the page's
+signal keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In
+0.9.3 the theme switch, the copy button, the status line, the toast, the form, the panels, the
+stepper, a table's frame, a group the arrow keys move through, a busy button, progress, the dialog
+and `moveFocus` keep the contract through it.
 
 ## Consequences
 
@@ -165,20 +165,25 @@ The paths are in `packages/design-kit`.
 ## Sources
 
 - WHATWG, DOM Standard, [add an event listener](https://dom.spec.whatwg.org/#add-an-event-listener)
-  and [using AbortController and AbortSignal objects in APIs](https://dom.spec.whatwg.org/#abortcontroller-api-integration),
+  and [using AbortController and AbortSignal objects in
+  APIs](https://dom.spec.whatwg.org/#abortcontroller-api-integration), read 2026-11-20.
+- MDN, [`addEventListener`'s
+  `signal`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#signal),
   read 2026-11-20.
-- MDN, [`addEventListener`'s `signal`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#signal),
-  read 2026-11-20.
-- React, [cleanup functions for refs](https://react.dev/blog/2024/12/05/react-19#cleanup-functions-for-refs),
-  React 19, 2024-12-05.
+- React, [cleanup functions for
+  refs](https://react.dev/blog/2024/12/05/react-19#cleanup-functions-for-refs), React 19,
+  2024-12-05.
 - Floating UI, [autoUpdate](https://floating-ui.com/docs/autoUpdate), read 2026-11-20.
 - Tippy.js, [methods](https://atomiks.github.io/tippyjs/v6/methods/) and
   [createTippy](https://github.com/atomiks/tippyjs/blob/master/src/createTippy.ts), version 6, read
   2026-11-20.
 - focus-trap, [README](https://github.com/focus-trap/focus-trap) and
   [index.js](https://github.com/focus-trap/focus-trap/blob/master/index.js), read 2026-11-20.
-- Headless UI, [disposables](https://github.com/tailwindlabs/headlessui/blob/main/packages/%40headlessui-react/src/utils/disposables.ts),
+- Headless UI,
+  [disposables](https://github.com/tailwindlabs/headlessui/blob/main/packages/%40headlessui-react/src/utils/disposables.ts),
   read 2026-11-20.
-- MDN, [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose)
-  and its [compatibility data](https://github.com/mdn/browser-compat-data/blob/main/javascript/builtins/Symbol.json),
-  read 2026-11-20.
+- MDN,
+  [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose)
+  and its [compatibility
+  data](https://github.com/mdn/browser-compat-data/blob/main/javascript/builtins/Symbol.json), read
+  2026-11-20.

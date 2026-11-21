@@ -79,21 +79,21 @@ ship in the components sheet, and the module's budget rose from 3 KB to 5 KB for
   leaves and a stepper keeps its value on its own line until the next, so each keeps a line of its
   own, and a stepper speaking on a page's line leaves it as any message there does. A message said
   politely, as progress and a busy button's notice are, gives way to firm words said in the same
-  moment or still settling, so a page's own result said with it is heard in its place, and waits
-  for firm words being said, so it is said once they leave, however many follow. A polite message
-  given as a function waits for any words there, and is read as it is put in, so it says nothing
-  once it is no longer true.
-  The function returns what says a message rather than what takes the line away, and keeps record
-  13's rule for being called again: a line attached again returns the function it returned first.
-  A line is let go of once every `signal` that holds it has aborted, which clears its timers and
-  drops its words as `StatusProvider` does when it unmounts, so no piece says anything on it until
-  it is attached again. A line let go of and attached afresh takes its old attach down, so the old
-  attach's signal holds nothing of it. The function an attach returned says nothing once that attach
-  is taken down, as record 22 has calls after teardown do, while a piece given the line itself
-  speaks on its next attach. `StatusProvider` hands its parts a function of its own that calls the
-  line's current attach, so they keep speaking across React's second run in development. The kit's
-  own pieces speak on a page's line without attaching it, so a page that attaches the line with a
-  signal after a stepper or progress has spoken on it still owns it.
+  moment or still settling, so a page's own result said with it is heard in its place, and waits for
+  firm words being said, so it is said once they leave, however many follow. A polite message given
+  as a function waits for any words there, and is read as it is put in, so it says nothing once it
+  is no longer true. The function returns what says a message rather than what takes the line away,
+  and keeps record 13's rule for being called again: a line attached again returns the function it
+  returned first. A line is let go of once every `signal` that holds it has aborted, which clears
+  its timers and drops its words as `StatusProvider` does when it unmounts, so no piece says
+  anything on it until it is attached again. A line let go of and attached afresh takes its old
+  attach down, so the old attach's signal holds nothing of it. The function an attach returned says
+  nothing once that attach is taken down, as record 22 has calls after teardown do, while a piece
+  given the line itself speaks on its next attach. `StatusProvider` hands its parts a function of
+  its own that calls the line's current attach, so they keep speaking across React's second run in
+  development. The kit's own pieces speak on a page's line without attaching it, so none of them
+  holds a page's line, and a line the page attaches with a signal is taken down once every signal
+  holding it has aborted.
 - A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
   closes it and what lets the button go, since a page calls the first from its own code and a
   button can leave the page while its panel stays. It hears its buttons and Closes through one
@@ -125,12 +125,12 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   nothing a visitor must hear lost.
 - `src/controls.test.ts` also finds a line let go of and attached afresh take its old attach down,
   leaving nothing on that attach's signal, and a toast missing a part refused whatever its signal.
-- `e2e/status-teardown.spec.tsx` attaches a status line and a toast with a signal already aborted and
-  finds nothing said or shown, aborts a signal and finds the line emptied and silent for the page's
-  function, a stepper and progress, a line those spoke on first let go of by the page's signal, a
-  toast dismissed with focus on its Close sent back where it came from and a later message unshown,
-  the tabindex it added taken away and one the page set since kept, and a later attach's signal
-  unheard. It counts the timers, observers and listeners running, before attaching and after
-  aborting, and finds them equal, in Chromium, WebKit and Firefox, with the window's size listened
-  to once however many messages are shown and every listener on the toast's elements and on the
-  window off after an abort.
+- `e2e/status-teardown.spec.tsx` attaches a status line and a toast with a signal already aborted
+  and finds nothing said or shown, aborts a signal and finds the line emptied and silent for the
+  page's function, a stepper and progress, a line those spoke on first let go of by the page's
+  signal, a toast dismissed with focus on its Close sent back where it came from and a later message
+  unshown, the tabindex it added taken away and one the page set since kept, and a line and a toast
+  kept until every signal holding them has aborted. It counts the timers, observers and listeners
+  running, before attaching and after aborting, and finds them equal, in Chromium, WebKit and
+  Firefox, with the window's size listened to once however many messages are shown and every
+  listener on the toast's elements and on the window off after an abort.

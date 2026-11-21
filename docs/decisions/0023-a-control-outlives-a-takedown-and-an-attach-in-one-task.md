@@ -1,8 +1,9 @@
-# 23. A control outlives a takedown and an attach of its element in the same task
+# 23. A control outlives a takedown and an attach in one task
 
 **Status:** accepted, amending record 22's rules that a later attach starts afresh and that the
 first attach owns a piece, record 13's rule for an attach called again, record 15's line let go by
-the signal its first attach took, and record 20's hooks, which take their part down at once
+the signal its first attach took, and record 20's hooks, which now take their part down at once
+rather than a microtask after a null call
 
 ## Context
 
@@ -12,10 +13,11 @@ then the new ref whenever the ref itself changes, so a page that writes `ref={(e
 a helper that merges refs and passes the cleanup on, makes a new ref on every render, and every
 render took the control down and attached it afresh. A form's check was set up again on a parent's
 render, a group the arrow keys move through made a new observer each time, and a busy button drawn
-again faster than its wait never said it was busy. The same happens where an element passes from
-one hook's ref to another's in one commit, and where React's second run in development calls each
-ref twice, which `StatusProvider` worked around by keeping its line's controller for a microtask.
-0.9.2 did not have this, since its hooks attached in effects that ran once.
+again faster than its wait never said it was busy. The same happens where an element passes from one
+hook's ref to another's in one commit, and where React's second run in development calls each ref
+twice, which `StatusProvider` worked around by keeping its line's controller for a microtask.
+0.9.2's hooks attached in refs too, and there a ref made afresh attached a busy button, a group and
+a bar afresh on every render, while its form hook never took its form down.
 
 ## Options
 
@@ -43,9 +45,9 @@ alike.
 Option C.
 
 - **Each signal holds the control.** An attach given a signal adds it as a holder, and a call given
-  one already held adds nothing, as `addEventListener` ignores a listener added twice. A call
-  without a signal holds the control until its detach only where nothing else holds it, since it
-  would otherwise attach afresh, and elsewhere joins without holding.
+  one already held adds no second holder, as `addEventListener` ignores a listener added twice. A
+  call without a signal holds the control until its detach only where nothing else holds it, and
+  elsewhere joins without holding, its options going to the newest holder.
 - **The last holder letting go takes the control down a microtask later.** An attach of the same
   element before then cancels the takedown and keeps the control's state, a busy wait, a form's
   check and the errors it drew, a group's observers, an open dialog, a shown toast and a status
@@ -73,7 +75,8 @@ Option C.
 functions beside it, `join` and `keep`, find a control by its element in its kind's map and keep it
 there until it is taken down, so no attach keeps its own registry rule. A holder's listener on its
 signal is added once and taken off as it fires or as the control is taken down, rather than given
-the control's own signal, which would keep a step for every signal it has ever been given.
+the control's own signal, which would leave an entry on the control's signal for every signal it has
+ever held.
 
 ## Consequences
 
@@ -89,8 +92,9 @@ the control's own signal, which would keep a step for every signal it has ever b
   focusout on a toast taken from the page with focus in it while WebKit and Firefox fire none, so
   the toast takes focus to have left only where it is still in the page a microtask after it hears
   focusout.
-- A copy button joined with the same source keeps the word it shows, and progress counts its steps
-  again only where they change, since a join that sets the same options would otherwise undo them.
+- A copy button joined with a source that gives the same element keeps the word it shows, and
+  progress counts its steps again only where they change, since a join that sets the same options
+  would otherwise undo them.
 - The controls weigh 18,317 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.

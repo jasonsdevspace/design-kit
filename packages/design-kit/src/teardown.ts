@@ -4,7 +4,7 @@
  * exports this module, so a page never reaches it.
  */
 
-/** What every attach takes, the signal a page takes it down by. */
+/** What every attach takes, the signal that holds its control. */
 type AttachOptions = { readonly signal?: AbortSignal | undefined };
 
 /**
@@ -29,8 +29,8 @@ export type Teardown<Options = AttachOptions> = {
      */
     readonly stop: () => void;
     /**
-     * Joins a later call to the control: its signal as one more holder, and its options as that
-     * holder's, applied where it is the newest.
+     * Joins a later call to the control: its signal as one more holder, or with no signal the
+     * newest holder's call, and its options as that holder's, applied where it is the newest.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
     /** What applies a holder's options to the control, given by the attach before `keep`. */
@@ -45,14 +45,14 @@ export type Kept<Handle, Options = AttachOptions> = {
 
 /**
  * The teardown for one control, held by each signal an attach of its element is given. It runs a
- * microtask after the last holder's signal aborts, unless the element is attached again by then, or
- * at once on the detach, which is `stop`, whichever comes first. A signal already aborted gives a
- * teardown already stopped, whose own signal is aborted and whose `add` runs each undo at once, so
- * the helper never gives null. It is no guard: each attach checks for a signal already aborted
- * before it sets anything up, since what it registers after its undos would outlive them. The
- * listener on each holder's signal is added once and comes off as it runs or as the teardown runs,
- * so a signal the page keeps for longer holds nothing of a piece already taken down. Until then
- * that signal keeps the piece alive, so a page hands over one that lives no longer than the piece.
+ * microtask after the last holder's signal aborts, unless a later call holds it by then, or at once
+ * on the detach, which is `stop`, whichever comes first. A signal already aborted gives a teardown
+ * already stopped, whose own signal is aborted and whose `add` runs each undo at once, so the
+ * helper never gives null. It is no guard: each attach checks for a signal already aborted before
+ * it sets anything up, since what it registers after its undos would outlive them. The listener on
+ * each holder's signal is added once and comes off as it runs or as the teardown runs, so a signal
+ * the page keeps for longer holds nothing of a piece already taken down. Until then that signal
+ * keeps the piece alive, so a page hands over one that lives no longer than the piece.
  */
 export const teardown = <Options = AttachOptions>(
     given?: AbortSignal,

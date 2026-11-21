@@ -25,9 +25,9 @@ only for that listener, and by record 22, under which an attach takes a signal t
 down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
 controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
 than a function of the usual size, and then at 18.5 KB, once moving the status line, the toast, the
-form, the panels and the remaining attaches onto it took them past 17.75 KB, and by record 23, under
-which each signal that attaches an element holds its control and the control runs on its newest
-holder's options
+form, the panels and the remaining attaches onto it took them past 17.75 KB, and by record 23, which
+ends that rule for a later call's `signal`, under which each signal that attaches an element holds
+its control and the control runs on its newest holder's options
 
 ## Context
 

@@ -1412,15 +1412,16 @@ again returns what its first attach returned, as [decision
 and [decision
 0023](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md)
 set out. Once every signal holding a control has aborted, the control is taken down a microtask
-later, unless the same element is attached again by then, which keeps the control as it was, a busy
-wait, a form's check and its errors, an open dialog and a shown toast among it. So a page that
-aborts and attaches the same element in one task keeps its control, and one that attaches after a
-microtask starts afresh. Until the takedown lands, the control is whole, so a call in the abort's
-own task, such as a panel's `set`, still acts. The function an attach returns takes the control down
-at once, whoever holds it, so a page that means to start afresh within the task calls it. A control
-runs on the options of its newest holder: a new holder's options apply at once, and when the newest
-lets go, the one before it takes over with the options it last gave. A call with no signal holds the
-control only where nothing else does, and elsewhere its options replace the newest holder's.
+later, unless the same element is attached again by then, which keeps the control as it was, with
+its state, such as a busy wait, a form's check and its errors, an open dialog or a shown toast. So a
+page that aborts and attaches the same element in one task keeps its control, and one that attaches
+after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
+abort's own task, such as a panel's `set`, still acts. The function an attach returns takes the
+control down at once, whoever holds it, so a page that means to start afresh within the task calls
+it. A control runs on the options of its newest holder: a new holder's options apply at once, and a
+call from an older holder is kept for when it is the newest again, and when the newest lets go, the
+one before it takes over with the options it last gave. A call with no signal holds the control only
+where nothing else does, and elsewhere its options replace the newest holder's.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
@@ -1597,12 +1598,12 @@ tab shows. Where the browser refuses the clipboard, it selects that text instead
 Copied or Selected for a moment, its three words sharing one cell so it keeps its width, and the
 status line says which to a screen reader, with how to copy a selection with the keys or the
 device's own command. One status line serves every button on a page, and it is on the page from the
-start, since a line added at the moment it speaks may go unheard. Attaching a button again takes its
-new `source` and `status`, so a page that draws it again with a new source copies from that one,
-puts a word shown for the last source back to Copy where the new source gives another element, and
-returns the function it returned the first time. Taking a button down, by that function or by its
-`signal`, as [Taking a control down](#taking-a-control-down) has it, hides it and puts it back to
-Copy.
+start, since a line added at the moment it speaks may go unheard. Attaching a button again, where
+the call is its newest holder, takes its new `source` and `status`, so a page that draws it again
+with a new source copies from that one, puts a word shown for the last source back to Copy where the
+new source gives another element, and returns the function it returned the first time. Taking a
+button down, by that function or by its `signal`, as [Taking a control down](#taking-a-control-down)
+has it, hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -1693,8 +1694,8 @@ line itself as its `status` speaks on the line's next attach, so a page that att
 hands its pieces the new function, or the line. `useStatus` hands out a function of its provider's
 that always calls the line's current attach. A piece's own timers, such as a busy button's wait,
 still come due, and say nothing there. A stepper, a form, a busy button or progress given the line
-speaks on it without attaching it, so a page that attaches the line with a signal after they have
-spoken owns it.
+speaks on it without attaching it, so none of them holds the line, and a line a page attaches with a
+signal is taken down once every signal holding it has aborted.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -2784,7 +2785,7 @@ since focus stays on the button, and that it is the least or the most where a pr
 limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
 or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
-`signal`, as [Taking a control down](#taking-a-control-down) has it.
+`signal`.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -3738,9 +3739,9 @@ focus inside a shadow root too, `focusOnArrival()`, which focuses a view's headi
 press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
 `attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
 and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
-progress at its steps, and the types `AttachOptions`, which carries the `signal` that takes a
-control down, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`,
-`DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`, `FocusTarget`,
+progress at its steps, and the types `AttachOptions`, which carries the `signal` that holds a
+control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`, `DialogOptions`,
+`PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`, `FocusTarget`,
 `MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`, `FormOptions`,
 `Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and `ProgressOptions`.
 

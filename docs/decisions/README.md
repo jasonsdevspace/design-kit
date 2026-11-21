@@ -35,9 +35,9 @@ costs, and the test behind it.
     static pages drawn from the published kit's components under the policy a demo sets, and why
     Storybook, docs frameworks and pages written by hand were turned down.
 12. [The site has a script of its own, from its own path, beside the kit's theme script](0012-the-site-has-a-script-of-its-own.md):
-    a script of the site's own, allowed from its own path alone, that puts the kit's theme switch
-    in the room the strip keeps and copy buttons beside the code, and why React in the browser and
-    a second inline script were turned down.
+    a script of the site's own, allowed from its own path alone, that puts the kit's theme switch in
+    the room the strip keeps and copy buttons beside the code, and why React in the browser and a
+    second inline script were turned down.
 13. [The kit's controls ship their behavior as a module a page attaches to their markup](0013-controls-attach-to-markup.md):
     the theme switch, the copy button, the stepper, the toast, the dialog, the panel and the table
     as markup from a component and a function a page calls on it, from `./controls`, and the
@@ -73,10 +73,11 @@ costs, and the test behind it.
     outside were turned down.
 20. [The kit's React hooks wrap its attach functions](0020-react-hooks-wrap-the-attach-functions.md):
     a hook for each attach a React page needs, a form, a busy button, progress and a group of cells,
-    the status line through `StatusProvider`, and for moving focus, each keeping only its handle, attaching through a
-    callback ref, setting its options again only when one changes, and holding words said before a
-    provider's line is attached, the markup components held free of effects by the lint, and why
-    leaving pages to attach in an effect and behavior written in React were turned down.
+    the status line through `StatusProvider`, and for moving focus, each keeping only its handle,
+    attaching through a callback ref, setting its options again only when one changes, and holding
+    words said before a provider's line is attached, the markup components held free of effects by
+    the lint, and why leaving pages to attach in an effect and behavior written in React were turned
+    down.
 21. [A refused form checks the browser's constraints itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
     the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`
     from script so a page without script keeps the browser's check, words for each failure a field
@@ -85,10 +86,10 @@ costs, and the test behind it.
 22. [Every attach takes a signal that takes its piece down](0022-every-attach-takes-a-signal-that-takes-its-piece-down.md):
     `{ signal }` on every attach, nothing attached for a signal already aborted, an abort that does
     what the detach does, a teardown complete and safe to repeat, calls after it that do nothing,
-    the first attach owning the piece, the internal helper that keeps it, the research behind it,
-    and why a release function for each piece, `Symbol.dispose`, one handle from every attach and
-    calls that throw or warn were turned down.
-23. [A control outlives a takedown and an attach of its element in the same task](0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md):
+    the first attach owning the piece, which record 23 replaced, the internal helper that keeps it,
+    the research behind it, and why a release function for each piece, `Symbol.dispose`, one handle
+    from every attach and calls that throw or warn were turned down.
+23. [A control outlives a takedown and an attach in one task](0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md):
     every signal that attaches an element holding its control, a takedown a microtask after the last
     of them aborts that an attach before then cancels, a detach that still takes it down at once,
     the newest holder's options, the hooks taking their part down at once, and why deferring the

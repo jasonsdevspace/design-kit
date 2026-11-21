@@ -58,8 +58,8 @@ type Held = { readonly signal: AbortSignal; readonly down: () => void };
  * the control a microtask after the last signal holding it aborts, as record 23 has it, so a ref
  * made afresh on every render, which React calls with the same element right after the old ref's
  * cleanup, keeps the control. React 19 never calls with null where the ref returned a cleanup, but
- * a helper written to merge refs before it does, dropping the cleanup, so a null call lets every
- * element go, since it does not say which left.
+ * a helper written to merge refs before it does calls with null, dropping the cleanup, so a null
+ * call lets every element go, since it does not say which left.
  */
 const useLiveRef = <Attached extends Element>(
     attach: (element: Attached, signal: AbortSignal) => (() => void) | undefined
@@ -121,9 +121,9 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const attachLine = useCallback((element: HTMLParagraphElement, signal: AbortSignal) => {
         gone.current = false;
         drawn.current = element;
-        // React's second run in development takes the line down and attaches it again in one
-        // commit, so the attach joins the line's control and returns the same function, its words
-        // kept.
+        // React's second run in development aborts the line's signal and attaches it again in one
+        // commit, so the attach joins the line's control before its takedown lands and returns the
+        // same function, its words kept.
         handle.current = attachStatus(element, { signal });
         const [first, ...rest] = held.current;
         held.current = [];
@@ -505,8 +505,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
  * gives one stop for the Tab key and the arrow keys, Home and End. The page's `current` and
  * `onMove` are read as the keys land, so functions written inline on every render are never set
  * again, and the group is attached again only when its orientation, or whether it names a current
- * cell, changes. A group swapped for another is let go and the new one attached, and the group is
- * let go when the component unmounts.
+ * cell, changes. A group swapped for another is taken down and the new one attached, and the group
+ * is taken down when the component unmounts.
  */
 export const useRoving = <Group extends HTMLElement>(
     options: RovingOptions = {}
@@ -555,7 +555,7 @@ export const useRoving = <Group extends HTMLElement>(
  * A ref for a button that can be busy, which `attachBusy` makes ignore presses while busy and say
  * its busy words once the wait outlasts --dk-wait, on the status line of the nearest
  * `StatusProvider`, or through the `say` given. The `Button` drawn with `busy` marks it. A button
- * swapped for another is let go and the new one attached, and with no provider above it and no
+ * swapped for another is taken down and the new one attached, and with no provider above it and no
  * `say`, it throws, since its words would reach no one.
  */
 export const useBusy = <Busy extends HTMLElement>(
@@ -577,7 +577,7 @@ export const useBusy = <Busy extends HTMLElement>(
  * until a page gives others, and once at the end, or the `done` words in its place, on the status
  * line of the nearest `StatusProvider` or through the `say` given, politely, as the status line's
  * policy has it. New steps or `done` words are passed to the attach only when they change. A bar
- * swapped for another is let go and the new one attached, and with no provider above it and no
+ * swapped for another is taken down and the new one attached, and with no provider above it and no
  * `say`, it throws, since its words would reach no one.
  */
 export const useProgress = (
