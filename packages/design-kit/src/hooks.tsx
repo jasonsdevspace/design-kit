@@ -45,57 +45,96 @@ import {
  * 19 calls as the element leaves in place of calling the ref with null.
  */
 
+/** An element a hook holds, what takes it down, and whether it has been let go. */
+type Held = { readonly undo: () => void; released: boolean };
+
 /**
- * An element a hook holds, what lets it go and takes it down a microtask later unless it comes
- * straight back, and whether it has been let go.
+ * The takedown each element let go of by a hook's ref still waits for, and the elements map of the
+ * hook that let it go, so another hook's ref that lands on the same element in the same commit
+ * takes it down at once and attaches afresh, rather than finding it attached and losing it to the
+ * takedown a microtask later.
  */
-type Held = { readonly release: () => void; released: boolean };
+const waiting = new WeakMap<Element, { readonly owner: object; readonly run: () => void }>();
 
 /**
  * The ref of a hook that attaches to each element it lands on, and the elements attached now, the
  * oldest first. `attach` attaches one element and returns what takes it down. The ref returns a
- * cleanup that lets the element go and takes it down a microtask later, except where the ref has
- * been called with the same element again by then, which keeps it attached as it was. A ref made
- * afresh on every render, written inline or by a helper that merges refs and passes the cleanup
- * on, is cleaned up and called with the same element in each commit, so it attaches once, and so
- * does React's second run in development. React 19 never calls with null where the ref returned a
- * cleanup, but a helper written to merge refs before it does, dropping the cleanup, calls with null
- * and then with the same element again. So a null call lets every element go, since it does not
- * say which left, and takes them down the same way.
+ * cleanup that lets the element go at once, so it leaves the elements attached now, and takes it
+ * down a microtask later, except where the ref has been called with the same element again by then,
+ * which puts it back attached as it was. A ref made afresh on every render, written inline to
+ * return what the ref returns or by a helper that merges refs and passes the cleanup on, is cleaned
+ * up and called with the same element in each commit, so it attaches once, and so does React's
+ * second run in development. An element another hook's ref lands on before the takedown comes is
+ * taken down at once, so that hook attaches it afresh. React 19 never calls with null where the ref
+ * returned a cleanup, but a helper written to merge refs before it does, dropping the cleanup,
+ * calls with null and then with the same element again. So a null call lets every element go, since
+ * it does not say which left, and takes them down the same way.
  */
 const useLiveRef = <Attached extends Element>(
     attach: (element: Attached) => () => void
-): readonly [RefCallback<Attached>, ReadonlyMap<Attached, unknown>] => {
+): readonly [RefCallback<Attached>, ReadonlySet<Attached>] => {
+    // Every element held, those let go of and not yet taken down included, in the order attached.
     const [elements] = useState(() => new Map<Attached, Held>());
+    const [live] = useState(() => new Set<Attached>());
+    // The elements attached now, those let go of left out, in the order they were first attached.
+    const sync = useCallback(() => {
+        live.clear();
+        for (const [element, held] of elements) if (!held.released) live.add(element);
+    }, [elements, live]);
+    const takeDown = useCallback(
+        (element: Attached, held: Held) => {
+            if (!held.released || elements.get(element) !== held) return;
+            elements.delete(element);
+            if (waiting.get(element)?.owner === elements) waiting.delete(element);
+            held.undo();
+        },
+        [elements]
+    );
+    const release = useCallback(
+        (element: Attached) => {
+            const held = elements.get(element);
+            if (!held || held.released) return;
+            held.released = true;
+            sync();
+            waiting.set(element, {
+                owner: elements,
+                run: () => {
+                    takeDown(element, held);
+                },
+            });
+            queueMicrotask(() => {
+                takeDown(element, held);
+            });
+        },
+        [elements, sync, takeDown]
+    );
     const ref = useCallback(
         (element: Attached | null) => {
             if (!element) {
-                for (const held of [...elements.values()]) held.release();
+                for (const one of [...elements.keys()]) release(one);
                 return;
             }
             const already = elements.get(element);
             if (already) {
-                already.released = false;
-                return already.release;
+                if (already.released) {
+                    already.released = false;
+                    waiting.delete(element);
+                    sync();
+                }
+            } else {
+                // Let go of by another hook in this commit, it is taken down first, so this attach
+                // finds nothing attached and owns the control.
+                waiting.get(element)?.run();
+                elements.set(element, { undo: attach(element), released: false });
+                sync();
             }
-            const undo = attach(element);
-            const held: Held = {
-                release: () => {
-                    held.released = true;
-                    queueMicrotask(() => {
-                        if (!held.released || elements.get(element) !== held) return;
-                        elements.delete(element);
-                        undo();
-                    });
-                },
-                released: false,
+            return () => {
+                release(element);
             };
-            elements.set(element, held);
-            return held.release;
         },
-        [attach, elements]
+        [attach, elements, release, sync]
     );
-    return [ref, elements] as const;
+    return [ref, live] as const;
 };
 
 /** What a status provider hands the parts of the page under it. */
@@ -177,7 +216,13 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
             });
         };
     }, []);
-    const [line] = useLiveRef(attachLine);
+    // The line's ref returns the provider's own cleanup rather than going through useLiveRef, so
+    // the provider stops speaking as the line leaves and decides itself what a line that comes back
+    // keeps. Its ref is drawn by the provider alone, never made afresh on a render.
+    const line = useCallback(
+        (element: HTMLParagraphElement | null) => (element ? attachLine(element) : undefined),
+        [attachLine]
+    );
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
         else if (!gone.current) {
@@ -451,8 +496,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
     useLayoutEffect(() => {
         latest.current = { options, speaker };
     });
-    // What refuses through each form attached now, the newest last, so one ref on two forms keeps
-    // refusing through the one left as the other goes.
+    // What refuses through each form attached, so one ref on two forms keeps refusing through the
+    // one left as the other goes.
     const [refusers] = useState(() => new Map<Form, Refuse>());
     // A refusal still waiting as the form's component unmounts is called off, since the form it
     // would point at and speak for is leaving with it.
@@ -466,12 +511,6 @@ export const useFormRefusal = <Form extends HTMLElement>(
                 return afterCommit(() => pick()?.({ from }) ?? (() => undefined));
             },
         [afterCommit]
-    );
-    // The page's own refusal goes through the newest form attached, and each form's own failed
-    // submit through that form.
-    const refuse = useMemo(
-        () => refuseThrough(() => [...refusers.values()].at(-1)),
-        [refuseThrough, refusers]
     );
     const attachOne = useCallback(
         (form: Form) => {
@@ -508,7 +547,18 @@ export const useFormRefusal = <Form extends HTMLElement>(
         },
         [refuseThrough, refusers]
     );
-    const [ref] = useLiveRef(attachOne);
+    const [ref, forms] = useLiveRef(attachOne);
+    // The page's own refusal goes through the newest form attached now, read as it lands, so a form
+    // let go of in the commit that draws the errors is passed over, and each form's own failed
+    // submit through that form.
+    const refuse = useMemo(
+        () =>
+            refuseThrough(() => {
+                const newest = [...forms].at(-1);
+                return newest && refusers.get(newest);
+            }),
+        [refuseThrough, refusers, forms]
+    );
     return [ref, refuse] as const;
 };
 

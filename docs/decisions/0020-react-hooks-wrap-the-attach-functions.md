@@ -18,26 +18,29 @@ each form refuses a failed submit through itself. A ref called with null by a he
 refs and drops the cleanup lets every element go, since it does not say which left. Either way an
 element is taken down a microtask later, except one the ref is called with again by then, so a ref
 made afresh on every render keeps its element attached as it was, whether its wrapper returns the
-hook's cleanup or drops it. `StatusProvider` still waits a microtask before its cleanup lets its
-line go, and keeps the line's controller where the same line comes back, since React's second run in
-development calls the cleanup and the ref again, and an abort at once would let the line go and
-empty it of the words said in the first run. The function `useStatus` hands out is the provider's
-own, which says through whichever attach holds the line, so it keeps speaking after that run and
-says nothing once the provider has gone. A focus request still waiting when its component unmounts,
-or when an `Activity` hides it, is made then, with where focus was read as it was asked. The hook
-does not try to tell which update unmounted it, since React tells a hook nothing of that, and
-`moveFocus`, which lands only where focus is still where it was or has fallen to the page's body,
-keeps a visitor's place. So a request in a transition an urgent update overtook lands before the
-transition draws, and goes to its fallbacks where the transition draws its target. Nothing at
-unmount calls a focus request off, only what it returned or a newer request, while a refusal still
-waiting as its form's component unmounts is called off a microtask later, unless React's second run
-has brought the component back. The hook hands a focus request no signal of the component's, which
-that unmount would abort. A request asked after the cleanup waits a frame. Where the component's
-effects have come back by then, as an `Activity` shown again or React's second run brings them, it
-waits for the component's render as any request does. Otherwise it is made late, taking focus only
-from the page's body, whatever `from` it was given, and only where its target is in sight, so a
-panel that closes and then asks after an await still moves focus back to its opener, and one whose
-target an `Activity` hides with the component is held until the component shows.
+hook's cleanup or drops it. An element let go of leaves the elements the hook works through at once,
+so a refusal asked in the commit that takes a form away goes through the form left, and an element
+another hook's ref lands on in the same commit is taken down at once, so that hook's attach owns it.
+`StatusProvider` gives its line a ref of its own that returns its own cleanup, and still waits a
+microtask before that cleanup lets its line go, and keeps the line's controller where the same line
+comes back, since React's second run in development calls the cleanup and the ref again, and an
+abort at once would let the line go and empty it of the words said in the first run. The function
+`useStatus` hands out is the provider's own, which says through whichever attach holds the line, so
+it keeps speaking after that run and says nothing once the provider has gone. A focus request still
+waiting when its component unmounts, or when an `Activity` hides it, is made then, with where focus
+was read as it was asked. The hook does not try to tell which update unmounted it, since React tells
+a hook nothing of that, and `moveFocus`, which lands only where focus is still where it was or has
+fallen to the page's body, keeps a visitor's place. So a request in a transition an urgent update
+overtook lands before the transition draws, and goes to its fallbacks where the transition draws its
+target. Nothing at unmount calls a focus request off, only what it returned or a newer request,
+while a refusal still waiting as its form's component unmounts is called off a microtask later,
+unless React's second run has brought the component back. The hook hands a focus request no signal
+of the component's, which that unmount would abort. A request asked after the cleanup waits a frame.
+Where the component's effects have come back by then, as an `Activity` shown again or React's second
+run brings them, it waits for the component's render as any request does. Otherwise it is made late,
+taking focus only from the page's body, whatever `from` it was given, and only where its target is
+in sight, so a panel that closes and then asks after an await still moves focus back to its opener,
+and one whose target an `Activity` hides with the component is held until the component shows.
 
 ## Context
 
@@ -111,10 +114,10 @@ exports beside the markup. Each hook follows the same rules.
   that drops an option clears it, rather than leaving it as an attach called with none would.
 - **What it returns stays the same across renders,** so a page can list it in an effect's
   dependencies without running that effect again.
-- **It keeps no state of its own beyond the attach's handle,** so what a page sees is what the
-  attach does, and a page without React gets the same behavior from the same function. The hooks
-  whose request reads what the page draws are the exception below, since when React draws is a
-  React concern a page without React does not have.
+- **It keeps no state of its own beyond the attach's handle and the controller it hands the
+  attach,** so what a page sees is what the attach does, and a page without React gets the same
+  behavior from the same function. The hooks whose request reads what the page draws are the
+  exception below, since when React draws is a React concern a page without React does not have.
 
 Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
 returns the function, the same across renders, and keeps only what calls off a request not yet done,

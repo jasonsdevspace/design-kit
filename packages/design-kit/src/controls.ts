@@ -9,10 +9,10 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
  * classes, and `attachPanel` its panel by the id its button names. The switch, the copy button and
  * the stepper show their control, which the markup keeps hidden so a visitor without script meets
- * no control that does nothing, and return a function that takes it away again, as the table's, the
+ * no control that does nothing, and return a function that takes it down again, as the table's, the
  * group's, the busy button's and progress's do. `attachToast` returns instead the function that
  * shows a message in it, `attachDialog` the function that opens it, `attachPanel` the functions
- * that open or close its panel and let its button go, `attachStatus` the function that says a
+ * that open or close its panel and take its button down, `attachStatus` the function that says a
  * message, `attachForm` the function that refuses its form, and `moveFocus` and `focusOnArrival`
  * what call their request off. Nothing runs when the module is imported but listeners on the
  * document for keys, clicks and submits, in a page, which note whether the visitor's last input was
@@ -886,7 +886,7 @@ const copied = async (text: string): Promise<boolean> => {
  * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
  * that draws the button again with a new source copies from that one, puts a word shown for the
  * last source back to Copy, and returns what it returned the first time. Aborting the `signal` it
- * was first given takes it away as the function it returns does, and a signal already aborted
+ * was first given takes it down as the function it returns does, and a signal already aborted
  * leaves it hidden and unattached.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
@@ -1303,7 +1303,7 @@ const stepperParts = (
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
  * same message, on the page's status line when one is given. It takes the stepper's field or the
  * stepper, attaches each stepper once whichever it is given, takes options given again in place of
- * the last, and returns what takes it away again.
+ * the last, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1641,7 +1641,7 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
  * options replaces them, attaching it again with none leaves them as they were, and either returns
  * the same function. Its listeners are on the dialog, so a dialog taken from the page takes them
- * with it. Aborting the `signal` its first attach was given lets it go: an open dialog closes,
+ * with it. Aborting the `signal` its first attach was given takes it down: an open dialog closes,
  * focus goes back to what opened it, its listeners and the closedby its `stay` set come off, and
  * the function that opens it does nothing.
  */
@@ -1740,7 +1740,7 @@ export type SetPanel = (open: boolean) => void;
 
 /**
  * What attaching a panel's button returns: `set`, which opens or closes the panel from the page's
- * own code, and `detach`, which lets the button go.
+ * own code, and `detach`, which takes the button down.
  */
 export type PanelControl = { readonly set: SetPanel; readonly detach: () => void };
 
@@ -1934,7 +1934,7 @@ const onPanelKey = (event: KeyboardEvent): void => {
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
- * which lets the button go, after which neither does anything. The panel starts as the first
+ * which takes the button down, after which neither does anything. The panel starts as the first
  * button's aria-expanded says, and a button attached later follows the panel as it is. The markup
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
@@ -1943,13 +1943,13 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * visitor's last place was in it, as record 19 has it. The panel is found at each press, so one
  * drawn again keeps working, and a button drawn again works once it is attached. Listeners on the
  * document hear the presses, the focus and the Escape of every panel, and come off once every
- * button is let go. A panel's id must be the only one on the page. Attached again, a button returns
- * what it returned first.
+ * button is taken down. A panel's id must be the only one on the page. Attached again, a button
+ * returns what it returned first.
  *
- * Aborting the `signal` it was given lets the button go as `detach` does, and a signal already
- * aborted attaches nothing. A button let go is marked collapsed. An open panel stays the kit's
- * while an attached button names it, so once the button that opened it is let go, Escape and its
- * Close both still close it, and focus goes back to the first attached button that names it. A
+ * Aborting the `signal` it was given takes the button down as `detach` does, and a signal already
+ * aborted attaches nothing. A button taken down is marked collapsed. An open panel stays the kit's
+ * while an attached button names it, so once the button that opened it is taken down, Escape and
+ * its Close both still close it, and focus goes back to the first attached button that names it. A
  * button attached to it while it is open takes it where no attached button names it. Once none
  * does, neither closes it, and the page holds it as it is.
  */
@@ -2040,7 +2040,7 @@ const attachedTables = new WeakMap<HTMLElement, () => void>();
  * room starts, at the side the frame reads from, and the scroll padding at its end where it ends.
  * Wider than the room, its start meets the room's, so its first words show. Only focus the keyboard
  * brings is followed, so a press of a pointer never moves what it pressed. It takes the frame or
- * anything in it, attaches each frame once, and returns what takes it away again, as aborting the
+ * anything in it, attaches each frame once, and returns what takes it down again, as aborting the
  * `signal` its first attach was given does.
  */
 export const attachTable = (element: HTMLElement, options?: AttachOptions): (() => void) => {
@@ -2900,7 +2900,7 @@ const inPlaceOf = (
 
 /**
  * Gives a group of cells, such as a grid of buttons or a row of tabs, one stop for the Tab key and
- * moves focus among its cells with the arrow keys, Home and End, and returns what takes it away. A
+ * moves focus among its cells with the arrow keys, Home and End, and returns what takes it down. A
  * grid moves up and down to the nearest cell in the row above or below as the cells are drawn, so
  * it holds at any count of columns, and left and right follow the page's reading direction. A row
  * of tabs ignores up and down and wraps from one end to the other. An arrow held with Alt, Control
@@ -2914,10 +2914,10 @@ const inPlaceOf = (
  * `onMove`. The kit moves focus and the page chooses: a page that chooses a tab as focus reaches it
  * does so in `onMove`. A grid of buttons with the group's role, or none, takes the toolbar's, so a
  * screen reader says the arrows move within it. Where the cell that had focus is taken out, focus
- * goes to the next cell still there, or the one before. Let go, by what it returns or by aborting
- * the `signal` its first attach was given, each cell takes back its own tabindex and the grid its
- * own role. Attached again, a group returns what it returned first and takes options given in place
- * of the last.
+ * goes to the next cell still there, or the one before. Taken down, by what it returns or by
+ * aborting the `signal` its first attach was given, each cell takes back its own tabindex and the
+ * grid its own role. Attached again, a group returns what it returned first and takes options given
+ * in place of the last.
  */
 export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a group already attached are
@@ -3099,7 +3099,7 @@ const attachedBusy = new WeakMap<
 
 /**
  * Makes a busy button work, one marked `data-busy` while what its press started runs, and returns
- * what takes it away. While it is busy the attach marks it `aria-disabled` too, where the page has
+ * what takes it down. While it is busy the attach marks it `aria-disabled` too, where the page has
  * not, and takes away only the mark it set when the work is done. A press of a busy button, by a
  * pointer or by Enter or Space, is stopped before the button's own handlers and React's `onClick`
  * hear it, so a submit button submits nothing, though a capture listener further up still hears it.
@@ -3108,8 +3108,9 @@ const attachedBusy = new WeakMap<
  * fast save says nothing. Words not yet on the line when the work is done are dropped, so a result
  * a toast says is never followed by a late "Saving.", and a button made busy again before the last
  * wait ended starts a wait of its own. Attached again, a button returns what it returned first and
- * takes options given in place of the last. Let go, by what it returns or by aborting the `signal`
- * its first attach was given, it takes away the mark it set and says nothing still waiting.
+ * takes options given in place of the last. Taken down, by what it returns or by aborting the
+ * `signal` its first attach was given, it takes away the mark it set and says nothing still
+ * waiting.
  */
 export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a button already attached are
@@ -3220,7 +3221,7 @@ const nameOf = (element: HTMLProgressElement) =>
 
 /**
  * Says how far a `progress` element has come on the status line given, at the steps the page sets,
- * each quarter until it sets others, and once at the end, and returns what takes it away. What is
+ * each quarter until it sets others, and once at the end, and returns what takes it down. What is
  * said is the bar's name and the words that describe it, such as "Importing products, 12 of 40.",
  * read as the step is crossed, or how far it has come in hundredths where it has no words. Each is
  * said at once, with no wait for the amount to stop changing, since a steady import never stops, at
@@ -3231,8 +3232,8 @@ const nameOf = (element: HTMLProgressElement) =>
  * bar first shows, as it is attached or once it is known, is not said, though an amount that
  * becomes known at the end, after the bar is attached, is, and a bar with no amount says nothing.
  * Attached again, a bar returns what it returned first and takes options given in place of the
- * last. Let go, by what it returns or by aborting the `signal` its first attach was given, it says
- * nothing more on its status line, and a step still waiting there is left unsaid.
+ * last. Taken down, by what it returns or by aborting the `signal` its first attach was given, it
+ * says nothing more on its status line, and a step still waiting there is left unsaid.
  */
 export const attachProgress = (
     progress: HTMLProgressElement,

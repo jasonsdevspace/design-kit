@@ -473,10 +473,10 @@ already there and the end of a progress beside them takes their place. `busy` se
 "Saving.", which fits a save alone, so any other action, such as a delete or a send, gives its own
 words. Words not yet said when the work is done are dropped, so a result a toast says is never
 followed by a late "Saving." Taken down, by the function it returns or by its `signal`, as [Taking a
-control down](#taking-a-control-down) has it, it stops holding presses, takes away the mark it set
-and drops words not yet said, as when the work is done. There is no spinner, since words say what is
-happening. A page that sets a transition of its own on a busy button replaces the wait, and the
-button is drawn off at once.
+control down](#taking-a-control-down) has it, it no longer stops a press, takes away the mark it set
+and drops words not yet said. There is no spinner, since words say what is happening. A page that
+sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
+once.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
@@ -1375,11 +1375,14 @@ has it. It sets its options again only when one changes. Its ref makes an `Abort
 element arrives, hands the function its `signal`, and returns a cleanup, which React 19 calls as the
 element leaves. The cleanup aborts the signal a microtask later, so the control is taken down as
 [taking a control down](#taking-a-control-down) has it, a form's check included, unless the ref is
-called with the same element again by then, which keeps it attached as it was. So a ref made afresh
-on every render, as an arrow that returns what the hook's ref returns, such as
-`ref={(el) => refusal(el)}`, or a helper that merges refs and passes the cleanup on, attaches once.
-The hook keeps every element its ref is on, so one ref on several elements keeps those left working
-as one goes, and a form refuses a failed submit through itself. A ref called with null, as a helper
+called with the same element again by then, which keeps it attached as it was. An element let go of
+leaves the elements the hook works through at once, so a refusal asked in the press that takes a
+form away goes through the form left, and an element another hook's ref lands on in the same commit,
+as `ref={editing ? edit : add}` on one form, is taken down at once and attached afresh by that hook.
+So a ref made afresh on every render, as an arrow that returns what the hook's ref returns, such as
+`ref={(el) => form(el)}`, or a helper that merges refs and passes the cleanup on, attaches once. The
+hook keeps every element its ref is on, so one ref on several elements keeps those left working as
+one goes, and a form refuses a failed submit through itself. A ref called with null, as a helper
 written to merge refs before React 19 calls it, dropping the cleanup, takes every element down a
 microtask later in the same way. Under `StrictMode` in development, React runs the cleanup and the
 ref again as the page first draws, and the control stays attached as it was, with nothing doubled or
@@ -1392,18 +1395,19 @@ function on the same markup and gets the same behavior.
 
 The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
 stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
-dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does, and
-`moveFocus` takes one that calls its request off. Aborting it takes the control down as the function
-its attach returned does, and calling that function or aborting the signal again does nothing. The
-status line, the toast and the dialog return what says, shows or opens rather than what takes them
-down, so the signal alone takes them down: the line is let go of, the toast's message is dismissed
-as its Close dismisses it, and an open dialog closes with focus handed back to what opened it, and
-what each returned does nothing after. A signal already aborted does nothing: the control stays as
-the markup drew it, a control already attached keeps the options it had, and what the attach returns
-does nothing. Once a control is taken down, nothing it started acts, such as a copy the clipboard
-answers late. A control attached again before it is taken down returns what its first attach
-returned and does not hear the later call's signal, so the first attach owns it until it is taken
-down, as [decision
+dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. `moveFocus`
+takes one too, which calls off a request not yet landed, as the function `moveFocus` returns does,
+and the rest of this section covers the attaches. Aborting the signal takes the control down as the
+function its attach returned does, and calling that function or aborting the signal again does
+nothing. The status line, the toast, a form's check and the dialog return what says, shows, refuses
+or opens rather than what takes them down, so the signal alone takes them down: the line is let go,
+the toast's message is dismissed as its Close dismisses it, and an open dialog closes with focus
+handed back to what opened it, and what each returned does nothing after. A signal already aborted
+does nothing: the control stays as the markup drew it, a control already attached keeps the options
+it had, and what the attach returns does nothing. Once a control is taken down, nothing it started
+acts, such as a copy the clipboard answers late. A control attached again before it is taken down
+returns what its first attach returned and does not hear the later call's signal, so the first
+attach owns it until it is taken down, as [decision
 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
@@ -1584,7 +1588,8 @@ device's own command. One status line serves every button on a page, and it is o
 start, since a line added at the moment it speaks may go unheard. Attaching a button again takes its
 new `source` and `status`, so a page that draws it again with a new source copies from that one,
 puts a word shown for the last source back to Copy, and returns the function it returned the first
-time. Taking a button down, by that function or by its `signal`, hides it and puts it back to Copy.
+time. Taking a button down, by that function or by its `signal`, as [Taking a control
+down](#taking-a-control-down) has it, hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -1668,14 +1673,15 @@ copy button does, through the same function, so a line a page hands to both keep
 down](#taking-a-control-down) has it, and `StatusProvider` takes its line down the same way as it
 unmounts. Taken down, the line is let go: its timers are cleared and the words said or held for it
 are dropped, so nothing more is said there, by any piece given the line, until it is attached again.
-A line a toast lets go of as it is taken down, while the page has it attached, is attached afresh by
-the page's next `attachStatus`, which takes the old attach down. The function an attach returned
-says nothing once that attach is taken down, while a piece given the line itself as its `status`
-speaks on the line's next attach, so a page that attaches a line again hands its pieces the new
-function, or the line. `useStatus` hands out a function of its provider's that always calls the
-line's current attach. A piece's own timers, such as a busy button's wait, still come due, and say
-nothing there. A stepper, a form, a busy button or progress given the line speaks on it without
-attaching it, so a page that attaches the line with a signal after they have spoken owns it.
+A toast's own line, which the toast lets go as it is taken down, is attached afresh by the page's
+next `attachStatus` where the page had attached it too, and that call takes the old attach down. The
+function an attach returned says nothing once that attach is taken down, while a piece given the
+line itself as its `status` speaks on the line's next attach, so a page that attaches a line again
+hands its pieces the new function, or the line. `useStatus` hands out a function of its provider's
+that always calls the line's current attach. A piece's own timers, such as a busy button's wait,
+still come due, and say nothing there. A stepper, a form, a busy button or progress given the line
+speaks on it without attaching it, so a page that attaches the line with a signal after they have
+spoken owns it.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -1902,9 +1908,12 @@ stop changing, since a steady import never stops, and at least three seconds aft
 one is heard before the next, while the end never waits. Nothing replaces the end until the amount
 goes back for another run. The amount a bar first shows is not said, an amount that becomes known at
 the end, after the bar is attached, aside, so a bar attached already full says nothing, and a bar
-with no amount says nothing. What it says is polite, `say(words, { polite: true })`, so it gives way
-to a page's own result said with it, and waits for firm words already being said, while a busy
-button's words beside it, polite too, give way to it:
+with no amount says nothing. Taken down, by the function it returns or by its `signal`, as [Taking a
+control down](#taking-a-control-down) has it, it says nothing more, and a step not yet heard on the
+`status` line it was given is dropped, while one handed to a page's `say` is the page's. What it
+says is polite, `say(words, { polite: true })`, so it gives way to a page's own result said with it,
+and waits for firm words already being said, while a busy button's words beside it, polite too, give
+way to it:
 
 <!-- source: importing -->
 
@@ -2771,12 +2780,12 @@ says the value and the page's words, "2, the most. Every trick is in.", rather t
 changing at once, which can drop one. A page with a status line of its own gives it as `status`, and
 the stepper says each press there in place of its own line, where it leaves as every message there
 does, and clears only what it said there when the value is typed over, the form is reset or the
-stepper is taken away, so the page's own words stay. A page that has a function for its line
+stepper is taken down, so the page's own words stay. A page that has a function for its line
 already, as React's `useStatus` returns, gives it as `say`, and each press is said through it, and
 is the one used where both are given. Words said through it leave when the line's time for them is
 up, since the stepper cannot take them back from a function. A message still waiting then is not
 said. Options given when the stepper is attached again take the place of the last. A stepper taken
-away and attached again as focus leaves it, as a page that checks a field on leaving and draws it
+down and attached again as focus leaves it, as a page that checks a field on leaving and draws it
 again does, keeps its buttons.
 
 ```js
@@ -2925,12 +2934,12 @@ came from, it moves focus itself. A message with no action replaces one with an 
 back, so a page shows one another only when the first is done with. More than one action is a
 dialog's job.
 
-A page that takes a toast down while it stays on the page, such as on a screen it draws itself,
-attaches it as `attachToast(element, { signal })`, as [Taking a control
+A page that takes a toast down while the toast stays on the page, such as on a screen it draws
+itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
 down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,
-so focus in it goes back where a dismiss sends it rather than to the page's body, takes away a
-tabindex it added that the page has not changed since and lets its line go. A toast missing a part
-is refused even with a signal already aborted.
+takes away a tabindex it added that the page has not changed since and lets its line go. Focus in it
+goes back where a dismiss sends it rather than to the page's body. A toast missing a part is refused
+even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -3618,7 +3627,7 @@ Close closes it and marks the buttons collapsed, with no script of the page's ow
 starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
 returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes the
 panel from the page's own code, as `tips.set(false)`, and `detach`, which takes the button down, as
-a page does when it takes the button away, after which `set` does nothing. The first button attached
+a page does before it removes the button, after which `set` does nothing. The first button attached
 for a panel starts it as its markup says, and a button attached for it later, one drawn again among
 them, marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again

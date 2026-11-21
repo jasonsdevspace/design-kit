@@ -25,8 +25,10 @@ import {
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
  * provider afresh, a part that asks for focus on one field as it first draws and then on another,
  * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
- * refuses as it first draws, a form behind a ref made afresh on every render, and a form and a row
- * of cells behind arrows that return the hook's cleanup, drawn again by the page.
+ * refuses as it first draws, a form behind a ref made afresh on every render, a form and a row of
+ * cells behind arrows that return the hook's cleanup, drawn again by the page, two forms on one ref
+ * whose newer the page takes away as it refuses, and a form and a row of cells that move from one
+ * hook's ref to another's.
  */
 
 export type Strict = {
@@ -47,6 +49,8 @@ export type Strict = {
     showFirstRefusal: () => void;
     churns: number;
     redraw: () => void;
+    dropAndRefuse: () => void;
+    handOff: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -368,7 +372,7 @@ const ChurnForm = () => {
 // A form and a row of cells behind arrows that return what the hook's ref returns, so each render
 // makes a new ref that hands React the hook's cleanup, which React calls before the new ref.
 const Returned = () => {
-    const [, setDrawn] = useState(0);
+    const [drawn, setDrawn] = useState(0);
     const [errors, setErrors] = useState<Record<string, string>>({});
     page.redraw = () => {
         setDrawn((now) => now + 1);
@@ -386,6 +390,7 @@ const Returned = () => {
                 id="returned-row"
                 role="toolbar"
                 aria-label="Returned"
+                data-drawn={drawn}
                 ref={(element) => row(element)}
             >
                 <button type="button" id="returned-a">
@@ -407,6 +412,79 @@ const Returned = () => {
                     error={errors['returned-name']}
                 />
                 <button type="submit">Make the table</button>
+            </form>
+        </>
+    );
+};
+
+// Two forms on one ref, the first with an error drawn, and a way to take the second away and refuse
+// in one press, so the refusal goes through the form left.
+const DropAndRefuse = () => {
+    const [second, setSecond] = useState(true);
+    const [form, refuse] = useFormRefusal<HTMLFormElement>({ say, invalid: () => undefined });
+    page.dropAndRefuse = () => {
+        setSecond(false);
+        refuse();
+    };
+    return (
+        <>
+            <form id="kept" ref={form} onSubmit={(event) => event.preventDefault()}>
+                <InputField id="kept-name" label="Kept name" error="Enter a kept name." />
+            </form>
+            {second ? (
+                <form id="dropped" ref={form} onSubmit={(event) => event.preventDefault()}>
+                    <InputField id="dropped-name" label="Dropped name" />
+                </form>
+            ) : null}
+        </>
+    );
+};
+
+// A form and a row of cells that stay on the page while the page moves each from one hook's ref to
+// another's, as a form that edits or adds by one flag.
+const HandOff = () => {
+    const [editing, setEditing] = useState(false);
+    page.handOff = () => {
+        setEditing(true);
+    };
+    const words =
+        (who: string): Say =>
+        (message) => {
+            const said = typeof message === 'function' ? message() : message;
+            if (said) page.said.push(`${who} ${said}`);
+        };
+    const [adding] = useFormRefusal<HTMLFormElement>({
+        say: words('Adding:'),
+        invalid: () => undefined,
+    });
+    const [edit] = useFormRefusal<HTMLFormElement>({
+        say: words('Editing:'),
+        invalid: () => undefined,
+    });
+    const addRow = useRoving<HTMLDivElement>();
+    const editRow = useRoving<HTMLDivElement>();
+    return (
+        <>
+            <div
+                id="handed-row"
+                role="toolbar"
+                aria-label="Handed"
+                ref={editing ? editRow : addRow}
+            >
+                <button type="button" id="handed-a">
+                    A
+                </button>
+                <button type="button" id="handed-b">
+                    B
+                </button>
+            </div>
+            <form
+                id="handed"
+                ref={editing ? edit : adding}
+                onSubmit={(event) => event.preventDefault()}
+            >
+                <InputField id="handed-name" label="Player name" required />
+                <button type="submit">Save the player</button>
             </form>
         </>
     );
@@ -443,6 +521,8 @@ const App = () => {
                 <FirstRefusals />
                 <ChurnForm />
                 <Returned />
+                <DropAndRefuse />
+                <HandOff />
             </main>
         </StatusProvider>
     );

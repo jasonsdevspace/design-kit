@@ -18,8 +18,10 @@ import { type Strict } from './strict-page.js';
  * asked as its form first draws landing, with one ref on two forms or two rows of cells, the one
  * left still refusing or taking new options whichever is taken away, a failed submit refused
  * through the form submitted, a form behind a ref made afresh on every render keeping its refusal,
- * and a form and a row of cells behind arrows that return the hook's cleanup keeping the errors
- * shown and attaching once as the page draws again.
+ * a form and a row of cells behind arrows that return the hook's cleanup keeping the errors shown
+ * and attaching once as the page draws again, a refusal going through the form left when the newer
+ * of two goes in the same press, and a form and a row of cells kept attached as each moves to
+ * another hook's ref.
  */
 
 let app = '';
@@ -277,21 +279,34 @@ test('keeps a form behind a ref made afresh on every render attached through a f
     expect((await said(page)).filter((words) => words.startsWith('Deck name'))).toHaveLength(1);
 });
 
+/** Waits two frames, so a draw the page asked for and the microtasks after it are done. */
+const frames = (page: Page) =>
+    page.evaluate(
+        () =>
+            new Promise<void>((done) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        done();
+                    });
+                });
+            })
+    );
+
 test("keeps a form, its errors shown, and a row attached once behind arrows that return the hook's cleanup", async ({
     page,
 }) => {
-    // Counts each observer made, which the row makes one of as it is attached, and each time the
+    // Counts each time the row is observed for its size, as its attach does, and each time the
     // form's check sets or gives back its noValidate, as it does as the form is attached or taken
     // down.
     await page.addInitScript(() => {
-        const counted = window as unknown as { observers: number; checks: number };
-        counted.observers = 0;
+        const counted = window as unknown as { observed: number; checks: number };
+        counted.observed = 0;
         counted.checks = 0;
         const Made = window.ResizeObserver;
         window.ResizeObserver = class extends Made {
-            constructor(callback: ResizeObserverCallback) {
-                super(callback);
-                counted.observers += 1;
+            override observe(target: Element, options?: ResizeObserverOptions) {
+                if (target.id === 'returned-row') counted.observed += 1;
+                super.observe(target, options);
             }
         };
         const own = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'noValidate');
@@ -305,23 +320,25 @@ test("keeps a form, its errors shown, and a row attached once behind arrows that
     });
     const counts = () =>
         page.evaluate(() => {
-            const { observers, checks } = window as unknown as {
-                observers: number;
+            const { observed, checks } = window as unknown as {
+                observed: number;
                 checks: number;
             };
-            return { observers, checks };
+            return { observed, checks };
         });
     await open(page);
     await page.getByRole('button', { name: 'Make the table' }).click();
     await expect(page.locator('#returned-name')).toBeFocused();
     await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
-    await page.waitForTimeout(100);
+    await frames(page);
     const made = await counts();
+    expect(made.observed).toBeGreaterThan(0);
     for (let draw = 0; draw < 3; draw += 1)
         await page.evaluate(() => {
             (window as unknown as Strict).redraw();
         });
-    await page.waitForTimeout(100);
+    await expect(page.locator('#returned-row')).toHaveAttribute('data-drawn', '3');
+    await frames(page);
     await expect(page.locator('#returned-name-error')).toHaveText('Error: Enter a value.');
     await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
     expect(
@@ -333,6 +350,41 @@ test("keeps a form, its errors shown, and a row attached once behind arrows that
     await page.locator('#returned-a').focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#returned-b')).toBeFocused();
+});
+
+test('refuses through the form left when the newer of two on a ref goes in the same press', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).dropAndRefuse();
+    });
+    await expect(page.locator('#dropped')).toHaveCount(0);
+    await expect(page.locator('#kept-name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('Kept name: Error: Enter a kept name.');
+});
+
+test("keeps a form and a row attached as each moves from one hook's ref to another's", async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).handOff();
+    });
+    await frames(page);
+    // The row is still attached, with one stop and its arrows.
+    await expect(page.locator('#handed-row [tabindex="0"]')).toHaveCount(1);
+    await page.locator('#handed-a').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#handed-b')).toBeFocused();
+    // The form keeps the kit's check, and refuses through the hook it moved to.
+    expect(
+        await page.locator('#handed').evaluate((form) => (form as HTMLFormElement).noValidate)
+    ).toBe(true);
+    await page.getByRole('button', { name: 'Save the player' }).click();
+    await expect
+        .poll(async () => (await said(page)).filter((words) => words.includes('Player name')))
+        .toEqual(['Editing: Player name: Enter a value.']);
 });
 
 test('lands a refusal asked as its form first draws', async ({ page }) => {
