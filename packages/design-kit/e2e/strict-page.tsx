@@ -24,7 +24,8 @@ import {
  * that each ask for focus on the next as they are removed, a way to take the pieces away, a way to
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
  * provider afresh, a part that asks for focus on one field as it first draws and then on another,
- * and two forms on one ref.
+ * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
+ * refuses as it first draws.
  */
 
 export type Strict = {
@@ -39,7 +40,10 @@ export type Strict = {
     remount: () => void;
     refuseNow: () => void;
     focusesOnA: number;
-    dropFirstForm: () => void;
+    dropForm: (which: 'one' | 'two') => void;
+    dropRow: (which: 'one' | 'two') => void;
+    turnRows: () => void;
+    showFirstRefusal: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -92,7 +96,8 @@ const Pieces = () => {
         setErrors({ name: 'Enter a list name.' });
         refuse();
     };
-    // Each ref called with null, as a helper written to merge refs before React 19 calls it.
+    // Each ref called with null, as a helper written to merge refs before React 19 calls it, dropping
+    // the cleanup.
     page.nullRefs = () => {
         for (const ref of [row, save, bar, form, heading]) ref(null);
     };
@@ -236,32 +241,101 @@ const AskTwice = () => {
     );
 };
 
-// Two forms on one hook's ref, the first of which the page takes away.
+// Two forms on one hook's ref, either of which the page takes away.
 const TwoForms = () => {
-    const [both, setBoth] = useState(true);
-    const [error, setError] = useState<string | undefined>(undefined);
-    page.dropFirstForm = () => {
-        setBoth(false);
+    const [gone, setGone] = useState<'none' | 'one' | 'two'>('none');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    page.dropForm = (which) => {
+        setGone(which);
     };
     const [form] = useFormRefusal<HTMLFormElement>({
         say,
         invalid: (failures) => {
-            setError(failures[0]?.words);
+            setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
         },
     });
     return (
         <>
-            {both ? (
-                <form id="pair-one" ref={form} onSubmit={(event) => event.preventDefault()}>
-                    <InputField id="pair-one-name" label="First list" required />
-                </form>
-            ) : null}
-            <form id="pair-two" ref={form} onSubmit={(event) => event.preventDefault()}>
-                <InputField id="pair-two-name" label="Second list" required error={error} />
-                <button type="submit">Make the second list</button>
-            </form>
+            {['one', 'two']
+                .filter((which) => which !== gone)
+                .map((which) => (
+                    <form
+                        key={which}
+                        id={`pair-${which}`}
+                        ref={form}
+                        onSubmit={(event) => event.preventDefault()}
+                    >
+                        <InputField
+                            id={`pair-${which}-name`}
+                            label={`List ${which}`}
+                            required
+                            error={errors[`pair-${which}-name`]}
+                        />
+                        <button type="submit">Make list {which}</button>
+                    </form>
+                ))}
         </>
     );
+};
+
+// Two rows of cells on one hook's ref, laid out as rows until the page turns them, either of which
+// the page takes away.
+const TwoRows = () => {
+    const [gone, setGone] = useState<'none' | 'one' | 'two'>('none');
+    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+    page.dropRow = (which) => {
+        setGone(which);
+    };
+    page.turnRows = () => {
+        setOrientation('vertical');
+    };
+    const row = useRoving<HTMLDivElement>({ orientation });
+    return (
+        <>
+            {['one', 'two']
+                .filter((which) => which !== gone)
+                .map((which) => (
+                    <div
+                        key={which}
+                        id={`rows-${which}`}
+                        role="toolbar"
+                        aria-label={which}
+                        ref={row}
+                    >
+                        <button type="button" id={`rows-${which}-a`}>
+                            A
+                        </button>
+                        <button type="button" id={`rows-${which}-b`}>
+                            B
+                        </button>
+                    </div>
+                ))}
+        </>
+    );
+};
+
+// A form with an error drawn from the start, which refuses once as it first draws.
+const FirstRefusal = () => {
+    const [form, refuse] = useFormRefusal<HTMLFormElement>({ say, invalid: () => undefined });
+    const asked = useRef(false);
+    useEffect(() => {
+        if (asked.current) return;
+        asked.current = true;
+        refuse();
+    }, [refuse]);
+    return (
+        <form id="first-refusal" ref={form} onSubmit={(event) => event.preventDefault()}>
+            <InputField id="first-refusal-name" label="Board name" error="Enter a board name." />
+        </form>
+    );
+};
+
+const FirstRefusals = () => {
+    const [shown, setShown] = useState(false);
+    page.showFirstRefusal = () => {
+        setShown(true);
+    };
+    return shown ? <FirstRefusal /> : null;
 };
 
 const App = () => {
@@ -283,6 +357,8 @@ const App = () => {
                 <FormMover />
                 <AskTwice />
                 <TwoForms />
+                <TwoRows />
+                <FirstRefusals />
             </main>
         </StatusProvider>
     );

@@ -21,6 +21,8 @@ type Page = {
     answerNamed?: () => void;
     dropOwner?: () => void;
     hideOwner?: () => void;
+    showOwner?: () => void;
+    askHidden?: () => void;
 };
 const page = window as unknown as Page;
 
@@ -39,8 +41,8 @@ const page = window as unknown as Page;
  * focus was, a view that asks for focus on its first field from that field's ref as a press draws
  * it, rows removed after an await, from a timer and in a transition, requests asked in a transition
  * held back by a part that never loads, whose owner an urgent update then unmounts or an `Activity`
- * hides, a request asked as an `Activity` hides its owner in the same press, and one made in a
- * commit whose owner the next commit takes away.
+ * hides, a request asked as an `Activity` hides its owner in the same press, one asked while it
+ * hides it, and one made in a commit whose owner the next commit takes away.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -614,6 +616,11 @@ const Owner = ({
     readonly onPress?: () => void;
 }) => {
     const focusNext = useFocusAfterDraw();
+    // The hidden owner's request, which the test asks while the Activity hides it.
+    if (id === 'hidden-ask')
+        page.askHidden = () => {
+            focusNext(target);
+        };
     return (
         <button
             id={id}
@@ -644,6 +651,9 @@ const Owners = () => {
     };
     page.hideOwner = () => {
         setShown(false);
+    };
+    page.showOwner = () => {
+        setShown(true);
     };
     const wait = () => {
         setWaiting(true);

@@ -11,10 +11,11 @@ import { type Strict } from './strict-page.js';
  * provider's after it is drawn afresh while the old one stays silent, one arrow key moving one
  * cell, a busy notice, the end of a progress and a refusal each said once, a row removed asking for
  * focus on the next and finding it there, each piece taken down as it leaves, saying nothing late,
- * a ref called with null doing nothing, a form given back, its check and listeners gone, as the
- * ref moves on, a part's two requests as it first draws leaving only the second to take focus, a
- * refusal still waiting as its form leaves saying nothing and moving nothing, and one of two forms
- * on a ref taken away leaving the other refusing.
+ * a ref called with null taking each piece down, a form given back, its check and listeners gone,
+ * as the ref moves on, a part's two requests as it first draws leaving only the second to take
+ * focus, a refusal still waiting as its form leaves saying nothing and moving nothing, a refusal
+ * asked as its form first draws landing, and, with one ref on two forms or two rows of cells, the
+ * one left still refusing or taking new options whichever is taken away.
  */
 
 let app = '';
@@ -137,17 +138,25 @@ test('takes each piece down as it leaves, saying nothing late', async ({ page })
     expect(errors).toEqual([]);
 });
 
-test('does nothing for a ref called with null, and leaves each piece working', async ({ page }) => {
+test('takes each piece down for a ref called with null by a helper that drops the cleanup', async ({
+    page,
+}) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await open(page);
+    await expect(page.locator('#cell-one')).toHaveAttribute('tabindex', '0');
     await page.evaluate(() => {
         (window as unknown as Strict).nullRefs();
     });
+    // The row's stop is given back, and the busy button says nothing once its wait is past.
+    await expect(page.locator('#row [tabindex]')).toHaveCount(0);
+    await page.evaluate(() => {
+        (window as unknown as Strict).busy(true);
+    });
+    await expect(page.locator('#save')).toHaveAttribute('data-busy', 'Saving the list.');
+    await page.waitForTimeout(500);
+    expect(await said(page)).toEqual([]);
     expect(errors).toEqual([]);
-    await page.locator('#cell-one').focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(page.locator('#cell-two')).toBeFocused();
 });
 
 test("gives a form back as the hook's ref moves to another", async ({ page, browserName }) => {
@@ -214,15 +223,49 @@ test('says nothing and moves nothing for a refusal still waiting as its form lea
     expect(await page.evaluate(() => document.activeElement?.id ?? '')).toBe('');
 });
 
-test('still refuses through the other form when one of two on a ref is taken away', async ({
-    page,
-}) => {
+for (const which of ['one', 'two'] as const) {
+    const other = which === 'one' ? 'two' : 'one';
+    test(`still refuses through the other form when form ${which} of two on a ref is taken away`, async ({
+        page,
+    }) => {
+        await open(page);
+        await page.evaluate((gone) => {
+            (window as unknown as Strict).dropForm(gone);
+        }, which);
+        await expect(page.locator(`#pair-${which}`)).toHaveCount(0);
+        await page.getByRole('button', { name: `Make list ${other}` }).click();
+        await expect(page.locator(`#pair-${other}-name`)).toBeFocused();
+        await expect.poll(() => said(page)).toContain(`List ${other}: Error: Enter a value.`);
+    });
+
+    test(`gives new options to the other row when row ${which} of two on a ref is taken away`, async ({
+        page,
+    }) => {
+        await open(page);
+        await page.evaluate((gone) => {
+            (window as unknown as Strict).dropRow(gone);
+        }, which);
+        await expect(page.locator(`#rows-${which}`)).toHaveCount(0);
+        await page.evaluate(() => {
+            (window as unknown as Strict).turnRows();
+        });
+        // The new options come with React's draw, in a task of its own, so the key is pressed until
+        // they have.
+        await expect
+            .poll(async () => {
+                await page.locator(`#rows-${other}-a`).focus();
+                await page.keyboard.press('ArrowDown');
+                return page.evaluate(() => document.activeElement?.id);
+            })
+            .toBe(`rows-${other}-b`);
+    });
+}
+
+test('lands a refusal asked as its form first draws', async ({ page }) => {
     await open(page);
     await page.evaluate(() => {
-        (window as unknown as Strict).dropFirstForm();
+        (window as unknown as Strict).showFirstRefusal();
     });
-    await expect(page.locator('#pair-one')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Make the second list' }).click();
-    await expect(page.locator('#pair-two-name')).toBeFocused();
-    await expect.poll(() => said(page)).toContain('Second list: Error: Enter a value.');
+    await expect(page.locator('#first-refusal-name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('Board name: Error: Enter a board name.');
 });

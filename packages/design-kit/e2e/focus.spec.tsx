@@ -13,8 +13,9 @@ import { servePage, stillClock, tabKey } from './page.js';
  * transition, from a transition an urgent update overtook, on its fallback where the transition
  * draws its target, and from a component an `Activity` hides, unless the visitor moved focus first.
  * One made in a commit before its component goes lands, one asked from a ref as its component first
- * draws lands, and one asked after its component unmounted leaves focus the visitor moved on to the
- * next screen, whatever place it names.
+ * draws lands, one asked while an `Activity` hides its component is held until it shows, and one
+ * asked after its component has gone is dropped, after an await and with the visitor on the next
+ * screen, whatever place it names.
  */
 
 const BODY =
@@ -234,13 +235,16 @@ test.describe('in React', () => {
         await expect(page.locator('#shadow-next')).toBeFocused();
     });
 
-    test('moves focus asked for after an await by a component that has since unmounted', async ({
+    test('drops a request asked after an await by a component that has since unmounted', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        await page.locator('#panel-close').click();
+        await press(page, '#panel-close');
         await expect(page.locator('#panel-close')).toHaveCount(0);
-        await expect(page.locator('#panel-open')).toBeFocused();
+        // The panel asks in a task of its own once the await is answered.
+        await page.waitForTimeout(100);
+        await frames(page);
+        await expect(page.locator('#panel-open')).not.toBeFocused();
     });
 
     test('moves focus to the next row as the row asking for it is removed', async ({ page }) => {
@@ -262,7 +266,7 @@ test.describe('in React', () => {
             await expect(page.locator(`#row-${how}-Ben`)).toBeFocused();
         });
 
-    test('leaves focus on the next screen where a request comes after its component unmounted', async ({
+    test('drops a request that comes after its component unmounted, leaving focus on the next screen', async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
@@ -275,7 +279,7 @@ test.describe('in React', () => {
         await expect(page.locator('#next-screen')).toBeFocused();
     });
 
-    test('leaves focus on the next screen for a late request that names that field as where focus was', async ({
+    test("drops a late request that names the next screen's field as where focus was", async ({
         page,
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
@@ -353,6 +357,22 @@ test.describe('in React', () => {
         await expect(page.locator('#hidden-ask')).toBeHidden();
         await frames(page);
         await expect(page.locator('#owner-field')).toBeFocused();
+    });
+
+    test('holds a request asked while an Activity hides its component, and lands it once shown', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await run(page, 'hideOwner');
+        await expect(page.locator('#hidden-ask')).toBeHidden();
+        await run(page, 'askHidden');
+        await page.waitForTimeout(100);
+        await frames(page);
+        await expect(page.locator('#owner-target')).not.toBeFocused();
+        expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+        await run(page, 'showOwner');
+        await expect(page.locator('#hidden-ask')).toBeVisible();
+        await expect(page.locator('#owner-target')).toBeFocused();
     });
 
     test('lands a request made in one commit whose component the next commit takes away', async ({

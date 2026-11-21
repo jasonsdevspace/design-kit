@@ -10,6 +10,7 @@ import {
     useLayoutEffect,
     useReducer,
     useRef,
+    useState,
 } from 'react';
 
 import {
@@ -39,10 +40,40 @@ import {
  * the same across renders. `./react` exports them beside the markup, whose components run
  * no effect. Each ref makes an `AbortController` as its element arrives, hands its attach the
  * signal, as record 22 has every attach take, and returns the cleanup that aborts it, which React
- * 19 calls as the element leaves in place of calling the ref with null. A ref called with null, as
- * a helper written to merge refs before React 19 may still call it, does nothing rather than
- * throw, so such a helper takes nothing down.
+ * 19 calls as the element leaves in place of calling the ref with null.
  */
+
+/**
+ * The ref of a hook that attaches to each element it lands on, and the elements attached now, the
+ * oldest first, each with what takes it down. `attach` attaches one element and returns what takes
+ * it down, which the ref returns as its cleanup. A ref called with null, as a helper written to
+ * merge refs before React 19 calls it, dropping the cleanup, takes every element down, since it
+ * does not say which left. React 19 never calls with null where the ref returned a cleanup.
+ */
+const useLiveRef = <Attached extends Element>(
+    attach: (element: Attached) => () => void
+): readonly [RefCallback<Attached>, ReadonlyMap<Attached, () => void>] => {
+    const [elements] = useState(() => new Map<Attached, () => void>());
+    const ref = useCallback(
+        (element: Attached | null) => {
+            if (!element) {
+                for (const down of [...elements.values()]) down();
+                return;
+            }
+            elements.get(element)?.();
+            const undo = attach(element);
+            const down = () => {
+                if (elements.get(element) !== down) return;
+                elements.delete(element);
+                undo();
+            };
+            elements.set(element, down);
+            return down;
+        },
+        [attach, elements]
+    );
+    return [ref, elements] as const;
+};
 
 /** What a status provider hands the parts of the page under it. */
 const Speaker = createContext<Say | null>(null);
@@ -76,8 +107,7 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
         readonly element: HTMLParagraphElement;
         readonly controller: AbortController;
     } | null>(null);
-    const line = useCallback((element: HTMLParagraphElement | null) => {
-        if (!element) return;
+    const attachLine = useCallback((element: HTMLParagraphElement) => {
         gone.current = false;
         drawn.current = element;
         const kept =
@@ -113,6 +143,8 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
             // first run, so the controller waits a microtask and is kept if the line comes back.
             queueMicrotask(() => {
                 if (drawn.current === element) return;
+                // The provider draws one line, so a line swapped for another hands it the moments
+                // set for held words, and a line gone with none in its place calls them off.
                 if (drawn.current === null) {
                     for (const timer of later.current) window.clearTimeout(timer);
                     later.current = [];
@@ -122,6 +154,7 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
             });
         };
     }, []);
+    const [line] = useLiveRef(attachLine);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
         else if (!gone.current) {
@@ -156,18 +189,11 @@ export const useStatus = (): Say => {
 /** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */
 export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => () => void;
 
-/**
- * Makes a request once the render it was asked in commits, and returns what calls it off. The
- * request is told whether it is made late, once its owner has gone, rather than in a commit.
- */
-type AfterCommit = (request: (late: boolean) => () => void) => () => void;
+/** Makes a request once the render it was asked in commits, and returns what calls it off. */
+type AfterCommit = (request: () => () => void) => () => void;
 
 /** A request owed until its owner commits, and what calls it off once it is made. */
-type Owed = {
-    readonly make: (late: boolean) => () => void;
-    made: boolean;
-    cancel: (() => void) | null;
-};
+type Owed = { readonly make: () => () => void; made: boolean; cancel: (() => void) | null };
 
 /**
  * What makes a request once the render it was asked in commits, the same across renders, for the
@@ -176,29 +202,32 @@ type Owed = {
  * drawn or still off, or a field not yet in error. Asking renders the owner in the same batch as
  * the page's change, and a layout effect makes the request once that render commits, so it lands
  * in the frame that paints the change. Each request takes the place of one not yet landed, and what
- * it returns calls off that request alone, so a stale one never calls off a newer. The owner is
- * waiting for its first commit, mounted, or gone. One asked as the owner first draws, from a ref on
- * its own markup or a child's layout effect, waits for the owner's render like any other, and only
- * one asked once the owner is gone has no render to wait for and is made at once, told it is late.
+ * it returns calls off that request alone, so a stale one never calls off a newer. One asked as the
+ * owner first draws, from a ref on its own markup or a child's layout effect, waits for the owner's
+ * render like any other.
  *
- * Where `landsAtUnmount` is given, a request still waiting as the owner unmounts, or as an
- * `Activity` hides it, is made then, since the render it waits for never comes, and nothing at
- * unmount calls a request off: only what it returned or a newer request does. React tells a hook
- * nothing of which update unmounted it, so a request in a transition an urgent update overtook is
- * made too, before the transition draws, and `moveFocus` leaves a visitor's place alone. The
- * request stays the latest, so one made in React's second run in development is still the one a
- * newer request takes the place of. Where it is not given, a request still waiting or not yet
- * landed as the owner unmounts is called off.
+ * The owner's cleanup runs as it unmounts, as an `Activity` hides it, and in React's second run in
+ * development, and React tells a hook nothing of which. Where `landsAtUnmount` is given, a request
+ * still waiting then is made, since the render it waits for may never come, and nothing at the
+ * cleanup calls a request off: only what it returned or a newer request does. It stays the latest,
+ * so one made in the second run is still the one a newer request takes the place of. Where it is
+ * not given, a request still waiting or not yet landed is called off a microtask later, unless the
+ * owner's setup has run again by then, as the second run brings it. A request asked after the
+ * cleanup is held, and made by the layout effect as the owner's setup runs again, as an Activity
+ * shown again brings it, so one asked while hidden lands once its component shows. One asked after
+ * the owner has truly gone is never made, since nothing tells it apart from one hidden.
  */
 const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
     const latest = useRef<Owed | null>(null);
     const life = useRef<'pending' | 'mounted' | 'gone'>('pending');
     const [asked, ask] = useReducer((count: number) => count + 1, 0);
+    // Runs as each render that asked commits, and again as the owner's effects come back, so a
+    // request held while the owner was hidden is made as it shows.
     useLayoutEffect(() => {
         const owed = latest.current;
         if (!owed || owed.made) return;
         owed.made = true;
-        owed.cancel = owed.make(false);
+        owed.cancel = owed.make();
     }, [asked]);
     useLayoutEffect(() => {
         life.current = 'mounted';
@@ -208,12 +237,16 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
             if (landsAtUnmount) {
                 if (owed && !owed.made) {
                     owed.made = true;
-                    owed.cancel = owed.make(false);
+                    owed.cancel = owed.make();
                 }
                 return;
             }
-            latest.current = null;
-            owed?.cancel?.();
+            queueMicrotask(() => {
+                if (life.current === 'mounted' || !owed) return;
+                if (latest.current === owed) latest.current = null;
+                owed.made = true;
+                owed.cancel?.();
+            });
         };
     }, [landsAtUnmount]);
     return useCallback<AfterCommit>((make) => {
@@ -221,19 +254,6 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
         const owed: Owed = { make, made: false, cancel: null };
         latest.current = owed;
         if (life.current !== 'gone') ask();
-        else
-            // A cleanup can be followed by the owner's setup in the same commit, as React's second
-            // run in development and an Activity shown again bring it, so whether it is gone is
-            // read once that commit is done.
-            queueMicrotask(() => {
-                if (owed.made) return;
-                if (life.current !== 'gone') {
-                    ask();
-                    return;
-                }
-                owed.made = true;
-                owed.cancel = make(true);
-            });
         return () => {
             owed.made = true;
             owed.cancel?.();
@@ -258,9 +278,9 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
  * for focus on the next one as it is removed moves focus there, after an await, from a timer or in
  * a transition too, and `moveFocus` lands it only where focus is still there or has fallen to the
  * page's body. A request in a transition an urgent update overtook lands before the transition
- * draws, so it goes to its fallbacks where the transition draws its target. One asked for after
- * the component has unmounted is made at once and takes focus only from the page's body, whatever
- * `from` it was given, so a visitor who has moved on to the next screen is left where they are.
+ * draws, so it goes to its fallbacks where the transition draws its target. One asked while an
+ * `Activity` hides the component is held and lands once it shows, and one asked after the
+ * component has gone is never made, since React does not say which of the two it is.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
@@ -269,11 +289,8 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
             const from = options?.from === undefined ? activeOf() : options.from;
             // No signal tied to the component goes with the request, since the unmount that makes
             // a request still waiting would abort it too, so it is called off only by what
-            // moveFocus returns. Made late, once the component has gone, no place it was given
-            // is still where the change began, so the request takes focus only from the body.
-            return afterCommit((late) =>
-                moveFocus(target, { ...options, from: late ? null : from })
-            );
+            // moveFocus returns.
+            return afterCommit(() => moveFocus(target, { ...options, from }));
         },
         [afterCommit]
     );
@@ -324,8 +341,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         // focus, and spends the press, so no view drawn later takes it again.
         return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
-    return useCallback((element: Heading | null) => {
-        if (!element) return;
+    const attachHeading = useCallback((element: Heading) => {
         heading.current = element;
         // Only an element that cannot take focus by itself, such as a heading or a link with no
         // address, so a button, a link or a field keeps its place in the Tab order.
@@ -335,6 +351,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
             if (heading.current === element) heading.current = null;
         };
     }, []);
+    return useLiveRef(attachHeading)[0];
 };
 
 /**
@@ -370,7 +387,9 @@ export const useFormRefusal = <Form extends HTMLElement>(
     useLayoutEffect(() => {
         latest.current = { options, speaker };
     });
-    const refuser = useRef<Refuse | null>(null);
+    // What refuses through each form attached now, the newest last, so one ref on two forms keeps
+    // refusing through the one left as the other goes.
+    const [refusers] = useState(() => new Map<Form, Refuse>());
     // A refusal still waiting as the form's component unmounts is called off, since the form it
     // would point at and speak for is leaving with it.
     const afterCommit = useAfterCommit(false);
@@ -379,13 +398,14 @@ export const useFormRefusal = <Form extends HTMLElement>(
     const refuse = useCallback<Refuse>(
         (asked) => {
             const from = asked?.from === undefined ? activeOf() : asked.from;
-            return afterCommit(() => refuser.current?.({ from }) ?? (() => undefined));
+            return afterCommit(
+                () => [...refusers.values()].at(-1)?.({ from }) ?? (() => undefined)
+            );
         },
-        [afterCommit]
+        [afterCommit, refusers]
     );
-    const ref = useCallback(
-        (form: Form | null) => {
-            if (!form) return;
+    const attachOne = useCallback(
+        (form: Form) => {
             const controller = new AbortController();
             const handle = attachForm(form, {
                 signal: controller.signal,
@@ -411,15 +431,15 @@ export const useFormRefusal = <Form extends HTMLElement>(
                     refuse();
                 },
             });
-            refuser.current = handle;
-            // One ref on two forms leaves the other refusing as one of them goes.
+            refusers.set(form, handle);
             return () => {
                 controller.abort();
-                if (refuser.current === handle) refuser.current = null;
+                refusers.delete(form);
             };
         },
-        [refuse]
+        [refuse, refusers]
     );
+    const [ref] = useLiveRef(attachOne);
     return [ref, refuse] as const;
 };
 
@@ -438,7 +458,6 @@ export const useRoving = <Group extends HTMLElement>(
     useEffect(() => {
         latest.current = options;
     });
-    const group = useRef<Group | null>(null);
     const wired = useCallback(
         (): RovingOptions => ({
             orientation: latest.current.orientation,
@@ -453,27 +472,27 @@ export const useRoving = <Group extends HTMLElement>(
     const names = options.current !== undefined;
     // What the group was last attached with, so it is attached again only when that changes.
     const shape = useRef<string | null>(null);
-    useEffect(() => {
-        const now = `${orientation ?? ''}|${String(names)}`;
-        if (!group.current || shape.current === now) return;
-        shape.current = now;
-        attachRoving(group.current, wired());
-    }, [orientation, names, wired]);
-    return useCallback(
-        (element: Group | null) => {
-            if (!element) return;
-            group.current = element;
+    const attachOne = useCallback(
+        (element: Group) => {
             const now = latest.current;
             shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
             const controller = new AbortController();
             attachRoving(element, { ...wired(), signal: controller.signal });
             return () => {
                 controller.abort();
-                if (group.current === element) group.current = null;
             };
         },
         [wired]
     );
+    const [ref, groups] = useLiveRef(attachOne);
+    // Every group attached now takes the new options, so one ref on two groups keeps both.
+    useEffect(() => {
+        const now = `${orientation ?? ''}|${String(names)}`;
+        if (groups.size === 0 || shape.current === now) return;
+        shape.current = now;
+        for (const group of groups.keys()) attachRoving(group, wired());
+    }, [orientation, names, wired, groups]);
+    return ref;
 };
 
 /**
@@ -493,8 +512,7 @@ export const useBusy = <Busy extends HTMLElement>(
     useEffect(() => {
         latest.current = { options, speaker };
     });
-    return useCallback((button: Busy | null) => {
-        if (!button) return;
+    const attachOne = useCallback((button: Busy) => {
         const controller = new AbortController();
         attachBusy(button, {
             say: (words, settle) => {
@@ -507,6 +525,7 @@ export const useBusy = <Busy extends HTMLElement>(
             controller.abort();
         };
     }, []);
+    return useLiveRef(attachOne)[0];
 };
 
 /**
@@ -527,7 +546,6 @@ export const useProgress = (
     useEffect(() => {
         latest.current = { options, speaker };
     });
-    const bar = useRef<HTMLProgressElement | null>(null);
     const { steps, done } = options;
     const given = useRef({ steps, done });
     const optionsFor = useCallback(
@@ -540,22 +558,22 @@ export const useProgress = (
         }),
         []
     );
-    useEffect(() => {
-        if (given.current.steps === steps && given.current.done === done) return;
-        given.current = { steps, done };
-        if (bar.current) attachProgress(bar.current, optionsFor(given.current));
-    }, [steps, done, optionsFor]);
-    return useCallback(
-        (progress: HTMLProgressElement | null) => {
-            if (!progress) return;
-            bar.current = progress;
+    const attachOne = useCallback(
+        (progress: HTMLProgressElement) => {
             const controller = new AbortController();
             attachProgress(progress, { ...optionsFor(given.current), signal: controller.signal });
             return () => {
                 controller.abort();
-                if (bar.current === progress) bar.current = null;
             };
         },
         [optionsFor]
     );
+    const [ref, bars] = useLiveRef(attachOne);
+    // Every bar attached now takes the new steps or words, so one ref on two bars keeps both.
+    useEffect(() => {
+        if (given.current.steps === steps && given.current.done === done) return;
+        given.current = { steps, done };
+        for (const bar of bars.keys()) attachProgress(bar, optionsFor(given.current));
+    }, [steps, done, optionsFor, bars]);
+    return ref;
 };
