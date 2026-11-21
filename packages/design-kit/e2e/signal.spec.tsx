@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { buttonGrid, dialog, pinnedTable, progress, stepper } from '../examples/examples.js';
 import { StatusLine } from '../src/react.js';
+import { countLeaks, listenersOn } from './leaks.js';
 import { servePage, stillClock } from './page.js';
 
 /*
@@ -11,7 +12,7 @@ import { servePage, stillClock } from './page.js';
  * attaches nothing, aborting takes away what the attach set up, as its detach does, a later call's
  * signal goes unheard while the first attach owns the piece, an old signal leaves a newer attach
  * alone, and nothing the piece set going acts after its teardown. The behavior runs in Chromium,
- * WebKit and Firefox, and listeners are counted only in Chromium, through its own tools.
+ * WebKit and Firefox, and so do the counts of listeners, through the counters in leaks.ts.
  */
 
 const BODY = renderToStaticMarkup(
@@ -80,32 +81,15 @@ window.frames = () =>
     new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
 window.ready = true;`;
 
-/**
- * How many listeners sit on each target an expression in the page gives, as Chromium's tools count
- * them, or null in another browser, which has no such tools.
- */
-type Count = (targets: string) => Promise<number | null>;
+/** How many listeners sit on the targets an expression in the page gives, a list of them. */
+type Count = (targets: string) => Promise<number>;
 
 /** The page with its controls loaded and nothing attached yet, and how to count its listeners. */
-const opened = async (page: Page, browserName: string): Promise<Count> => {
+const opened = async (page: Page): Promise<Count> => {
+    await countLeaks(page);
     await servePage(page, { title: 'Signal', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
-    if (browserName !== 'chromium') return () => Promise.resolve(null);
-    const session = await page.context().newCDPSession(page);
-    return async (targets) => {
-        const found = Number(await page.evaluate(`(${targets}).length`));
-        let total = 0;
-        for (let at = 0; at < found; at += 1) {
-            const { result } = await session.send('Runtime.evaluate', {
-                expression: `(${targets})[${String(at)}]`,
-            });
-            const { listeners } = await session.send('DOMDebugger.getEventListeners', {
-                objectId: result.objectId ?? '',
-            });
-            total += listeners.length;
-        }
-        return total;
-    };
+    return (targets) => listenersOn(page, targets);
 };
 
 /** The pieces' own elements. */
@@ -127,8 +111,8 @@ const attached = (page: Page) =>
 const NONE = { stepper: false, roving: false, toolbar: false };
 const ALL = { stepper: true, roving: true, toolbar: true };
 
-test('attaches nothing when given a signal already aborted', async ({ page, browserName }) => {
-    const count = await opened(page, browserName);
+test('attaches nothing when given a signal already aborted', async ({ page }) => {
+    const count = await opened(page);
     const before = await count(PARTS);
     await page.evaluate(`(() => {
         const aborted = AbortSignal.abort();
@@ -159,11 +143,8 @@ test('attaches nothing when given a signal already aborted', async ({ page, brow
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
 });
 
-test('takes nothing from a repeat attach given a signal already aborted', async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test('takes nothing from a repeat attach given a signal already aborted', async ({ page }) => {
+    await opened(page);
     const same = await page.evaluate(`(() => {
         const first = all();
         const repeated = all(AbortSignal.abort());
@@ -176,11 +157,8 @@ test('takes nothing from a repeat attach given a signal already aborted', async 
     expect(await attached(page)).toEqual(ALL);
 });
 
-test('takes each piece down when the signal aborts, as its detach does', async ({
-    page,
-    browserName,
-}) => {
-    const count = await opened(page, browserName);
+test('takes each piece down when the signal aborts, as its detach does', async ({ page }) => {
+    const count = await opened(page);
     const before = await count(PARTS);
     const ownRole = await page.locator('.dk-button-grid').first().getAttribute('role');
     await page.evaluate(`(() => {
@@ -194,7 +172,7 @@ test('takes each piece down when the signal aborts, as its detach does', async (
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
     await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'none');
     await expect(page.locator('#end-game')).toHaveAttribute('open');
-    if (before !== null) expect(await count(PARTS)).toBeGreaterThan(before);
+    expect(await count(PARTS)).toBeGreaterThan(before);
     await page.evaluate('controller.abort()');
     expect(await attached(page)).toEqual(NONE);
     await expect(page.locator('.dk-button-grid').first()).toHaveAttribute('role', ownRole ?? '');
@@ -207,8 +185,8 @@ test('takes each piece down when the signal aborts, as its detach does', async (
     expect(await count(PARTS)).toBe(before);
 });
 
-test('does nothing after its teardown', async ({ page, browserName }) => {
-    await opened(page, browserName);
+test('does nothing after its teardown', async ({ page }) => {
+    await opened(page);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         window.returned = all(controller.signal);
@@ -235,12 +213,9 @@ test('does nothing after its teardown', async ({ page, browserName }) => {
     expect(await page.evaluate(`document.querySelector('.dk-stepper-value').value`)).toBe('4');
 });
 
-test("says nothing of a busy wait that outlasts the button's teardown", async ({
-    page,
-    browserName,
-}) => {
+test("says nothing of a busy wait that outlasts the button's teardown", async ({ page }) => {
     await stillClock(page.clock);
-    await opened(page, browserName);
+    await opened(page);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         kit.busy(controller.signal);
@@ -255,9 +230,8 @@ test("says nothing of a busy wait that outlasts the button's teardown", async ({
 
 test('calls off a focus request on abort, and lets go of the signal once one lands', async ({
     page,
-    browserName,
 }) => {
-    const count = await opened(page, browserName);
+    const count = await opened(page);
     await page.evaluate(`(() => {
         document.querySelector('#start').focus();
         const controller = new AbortController();
@@ -274,16 +248,15 @@ test('calls off a focus request on abort, and lets go of the signal once one lan
     await page.evaluate('frames()');
     await expect(page.locator('#target')).toBeFocused();
     const onSignal = await count('[kept.signal]');
-    if (onSignal !== null) expect(onSignal).toBe(0);
+    expect(onSignal).toBe(0);
     await page.evaluate('kept.abort()');
     await expect(page.locator('#target')).toBeFocused();
 });
 
 test('leaves a newer attach alone when the old detach runs twice and its signal aborts', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     // The dialog returns what opens it rather than a detach, so only its signal takes it down.
     await page.evaluate(`(() => {
         window.controller = new AbortController();
@@ -299,11 +272,8 @@ test('leaves a newer attach alone when the old detach runs twice and its signal 
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
 });
 
-test("hears only the first attach's signal while the piece stays attached", async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test("hears only the first attach's signal while the piece stays attached", async ({ page }) => {
+    await opened(page);
     const same = await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
@@ -318,11 +288,8 @@ test("hears only the first attach's signal while the piece stays attached", asyn
     expect(await attached(page)).toEqual(NONE);
 });
 
-test('hands focus back from a dialog closed and taken down in one task', async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test('hands focus back from a dialog closed and taken down in one task', async ({ page }) => {
+    await opened(page);
     await page.evaluate(`(() => {
         const controller = new AbortController();
         kit.dialog(controller.signal, {
@@ -338,9 +305,8 @@ test('hands focus back from a dialog closed and taken down in one task', async (
 
 test('leaves a dialog attached again as the last is taken down open to its own closings', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     // The close the teardown makes arrives once the new attach listens, which would send focus to
     // its returnTo if it took that closing for its own.
     await page.evaluate(`(() => {
@@ -359,11 +325,8 @@ test('leaves a dialog attached again as the last is taken down open to its own c
     await expect(page.locator('#target')).toBeFocused();
 });
 
-test('leaves a closedby the dialog was not attached to stay with', async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test('leaves a closedby the dialog was not attached to stay with', async ({ page }) => {
+    await opened(page);
     await page.evaluate(`(() => {
         const controller = new AbortController();
         kit.dialog(controller.signal);
@@ -375,9 +338,8 @@ test('leaves a closedby the dialog was not attached to stay with', async ({
 
 test('still refuses a table with no frame when given a signal already aborted', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     const thrown = await page.evaluate(`(async () => {
         const { attachTable } = await import('./controls.js');
         try {
@@ -392,9 +354,8 @@ test('still refuses a table with no frame when given a signal already aborted', 
 
 test('says nothing of a stepper error or a progress step taken down before it is heard', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     // The bar's observer hears the step in a microtask, so the step is said before the abort.
     await page.evaluate(`(async () => {
         const controller = new AbortController();
@@ -414,10 +375,9 @@ test('says nothing of a stepper error or a progress step taken down before it is
 
 test('drops a progress step waiting behind firm words once the bar is taken down', async ({
     page,
-    browserName,
 }) => {
     await stillClock(page.clock);
-    await opened(page, browserName);
+    await opened(page);
     await page.evaluate(`(() => {
         window.controller = new AbortController();
         kit.progress(controller.signal);

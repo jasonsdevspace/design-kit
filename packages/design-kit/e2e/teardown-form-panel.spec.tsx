@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StatusLine } from '../src/react.js';
+import { countLeaks, leaksOf, listenersOn } from './leaks.js';
 import { servePage, stillClock } from './page.js';
 
 /*
@@ -10,8 +11,8 @@ import { servePage, stillClock } from './page.js';
  * timers and frames, and the errors and marks it drew, with nothing said after. A form's check
  * stays while any attach in the form does, and an open panel stays the kit's while an attached
  * button names it, so Escape and its Close close it alike once the button that opened it is let go.
- * The behavior runs in Chromium, WebKit and Firefox, and listeners are counted only in Chromium,
- * through its own tools.
+ * The behavior runs in Chromium, WebKit and Firefox, and so do the counts of listeners, timers and
+ * frames, through the counters in leaks.ts.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -34,30 +35,8 @@ const BODY = `${renderToStaticMarkup(
 <div class="dk-panel" id="round-tips" hidden><h2 class="dk-panel-title">Round tips</h2>${CLOSE}<p><a href="#deal" id="deal">How to deal</a></p></div>
 <div class="dk-panel" id="rules" hidden><p>The lowest score wins.</p></div>`;
 
-/*
- * Every timer and frame the page sets and has not yet run or cleared is kept in `live`, so a test
- * finds what the attach left waiting, and every message the status line puts in is kept in `heard`.
- */
+/* Every message the status line puts in is kept in `heard`. */
 const SCRIPT = `import { attachForm, attachPanel } from './controls.js';
-window.live = new Set();
-const track = (set, clear, kind) => {
-    const setOne = window[set].bind(window);
-    const clearOne = window[clear].bind(window);
-    window[set] = (callback, ...rest) => {
-        const id = setOne((...given) => {
-            window.live.delete(kind + id);
-            if (typeof callback === 'function') callback(...given);
-        }, ...rest);
-        window.live.add(kind + id);
-        return id;
-    };
-    window[clear] = (id) => {
-        window.live.delete(kind + id);
-        clearOne(id);
-    };
-};
-track('setTimeout', 'clearTimeout', 'timer ');
-track('requestAnimationFrame', 'cancelAnimationFrame', 'frame ');
 const form = document.querySelector('#join');
 const line = document.querySelector('.screen-status');
 window.heard = [];
@@ -74,32 +53,15 @@ window.attachShadowButton = () =>
     attachPanel(document.querySelector('#host').shadowRoot.querySelector('button'));
 window.ready = true;`;
 
-/**
- * How many listeners sit on each target an expression in the page gives, as Chromium's tools count
- * them, or null in another browser, which has no such tools.
- */
-type Count = (targets: string) => Promise<number | null>;
+/** How many listeners sit on the targets an expression in the page gives, a list of them. */
+type Count = (targets: string) => Promise<number>;
 
 /** The page with its controls loaded and nothing attached yet, and how to count its listeners. */
-const opened = async (page: Page, browserName: string): Promise<Count> => {
+const opened = async (page: Page): Promise<Count> => {
+    await countLeaks(page);
     await servePage(page, { title: 'Teardown', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
-    if (browserName !== 'chromium') return () => Promise.resolve(null);
-    const session = await page.context().newCDPSession(page);
-    return async (targets) => {
-        const found = Number(await page.evaluate(`(${targets}).length`));
-        let total = 0;
-        for (let at = 0; at < found; at += 1) {
-            const { result } = await session.send('Runtime.evaluate', {
-                expression: `(${targets})[${String(at)}]`,
-            });
-            const { listeners } = await session.send('DOMDebugger.getEventListeners', {
-                objectId: result.objectId ?? '',
-            });
-            total += listeners.length;
-        }
-        return total;
-    };
+    return (targets) => listenersOn(page, targets);
 };
 
 /** The form, its fields and the document, where the form's check puts its listeners. */
@@ -116,16 +78,19 @@ const formState = (page: Page) =>
         errors: form.querySelectorAll('.dk-field-error').length,
     }));
 
-const live = (page: Page) => page.evaluate('window.live.size');
+/** The timers and frames the page has set and not yet run or cleared. */
+const live = async (page: Page) => {
+    const { timers, frames } = await leaksOf(page);
+    return timers + frames;
+};
 const heard = (page: Page) => page.evaluate('window.heard');
 
 test.describe('a form', () => {
     test('takes its check down when its signal aborts, with a refusal and a reset still due', async ({
         page,
-        browserName,
     }) => {
         await stillClock(page.clock);
-        const count = await opened(page, browserName);
+        const count = await opened(page);
         const listeners = await count(FORM);
         const timers = await live(page);
         const markup = await formState(page);
@@ -137,8 +102,8 @@ test.describe('a form', () => {
             document.querySelector('#join').requestSubmit();
             document.querySelector('#join').reset();
         })()`);
-        expect(await live(page)).toBeGreaterThan(timers as number);
-        if (listeners !== null) expect(await count(FORM)).toBeGreaterThan(listeners);
+        expect(await live(page)).toBeGreaterThan(timers);
+        expect(await count(FORM)).toBeGreaterThan(listeners);
         expect((await formState(page)).errors).toBeGreaterThan(0);
         await page.evaluate('controller.abort()');
         expect(await live(page)).toBe(timers);
@@ -153,8 +118,8 @@ test.describe('a form', () => {
         await expect(page.getByLabel('Name')).not.toBeFocused();
     });
 
-    test('attaches nothing when given a signal already aborted', async ({ page, browserName }) => {
-        const count = await opened(page, browserName);
+    test('attaches nothing when given a signal already aborted', async ({ page }) => {
+        const count = await opened(page);
         const listeners = await count(FORM);
         const markup = await formState(page);
         await page.evaluate(`(() => {
@@ -171,11 +136,8 @@ test.describe('a form', () => {
         await expect(page.locator('#name-error')).toHaveText('Error: Enter a value.');
     });
 
-    test('keeps checking the form until the last attach in it is taken down', async ({
-        page,
-        browserName,
-    }) => {
-        const count = await opened(page, browserName);
+    test('keeps checking the form until the last attach in it is taken down', async ({ page }) => {
+        const count = await opened(page);
         const listeners = await count(FORM);
         const markup = await formState(page);
         await page.evaluate(`(() => {
@@ -196,12 +158,11 @@ test.describe('a form', () => {
 
     test("clears the errors a part's attach drew once the form's own attach checks it", async ({
         page,
-        browserName,
     }) => {
         // A still clock holds the second refusal's frame until after the reset, as a busy page
         // can, so a refusal still due at the reset is seen to be called off.
         await stillClock(page.clock);
-        await opened(page, browserName);
+        await opened(page);
         await page.evaluate(`kit.form(undefined, '#part')`);
         await page.getByRole('button', { name: 'Join' }).click();
         await page.clock.runFor(500);
@@ -225,16 +186,15 @@ test.describe('a form', () => {
 test.describe('a panel', () => {
     test("lets its button go when its signal aborts, and the document's listeners with the last", async ({
         page,
-        browserName,
     }) => {
-        const count = await opened(page, browserName);
+        const count = await opened(page);
         const listeners = await count(PANELS);
         await page.evaluate(`(() => {
             window.controller = new AbortController();
             window.tips = kit.panel('#tips-button', controller.signal);
             kit.panel('#rules-button', controller.signal);
         })()`);
-        if (listeners !== null) expect(await count(PANELS)).toBeGreaterThan(listeners);
+        expect(await count(PANELS)).toBeGreaterThan(listeners);
         await page.locator('#tips-button').click();
         await expect(page.locator('#round-tips')).toBeVisible();
         await page.evaluate(`(() => {
@@ -248,8 +208,8 @@ test.describe('a panel', () => {
         await expect(page.locator('#rules')).toBeHidden();
     });
 
-    test('attaches nothing when given a signal already aborted', async ({ page, browserName }) => {
-        const count = await opened(page, browserName);
+    test('attaches nothing when given a signal already aborted', async ({ page }) => {
+        const count = await opened(page);
         const listeners = await count(PANELS);
         await page.evaluate(`(() => {
             const aborted = AbortSignal.abort();
@@ -269,9 +229,8 @@ test.describe('a panel', () => {
     for (const way of ['Escape', 'its Close'] as const) {
         test(`closes by ${way} once the button that opened it is let go, focus going to the next`, async ({
             page,
-            browserName,
         }) => {
-            await opened(page, browserName);
+            await opened(page);
             await page.evaluate(`(() => {
                 window.controller = new AbortController();
                 kit.panel('#tips-button', controller.signal);
@@ -291,11 +250,8 @@ test.describe('a panel', () => {
         });
     }
 
-    test('closes by Escape when its button is drawn again while it is open', async ({
-        page,
-        browserName,
-    }) => {
-        await opened(page, browserName);
+    test('closes by Escape when its button is drawn again while it is open', async ({ page }) => {
+        await opened(page);
         await page.evaluate(`(() => {
             window.first = kit.panel('#tips-button');
             kit.panel('#rules-button');
@@ -316,9 +272,8 @@ test.describe('a panel', () => {
 
     test('keeps its panel open and closes it by Escape when its one button is drawn again', async ({
         page,
-        browserName,
     }) => {
-        await opened(page, browserName);
+        await opened(page);
         await page.evaluate(`window.first = kit.panel('#tips-button')`);
         await page.locator('#tips-button').click();
         // The old button's teardown takes the panels' listeners off with it, as the last let go,
@@ -339,11 +294,8 @@ test.describe('a panel', () => {
         await expect(page.locator('#tips-button')).toBeFocused();
     });
 
-    test('hands its panel to an attached button in a shadow root', async ({
-        page,
-        browserName,
-    }) => {
-        await opened(page, browserName);
+    test('hands its panel to an attached button in a shadow root', async ({ page }) => {
+        await opened(page);
         await page.evaluate(`(() => {
             const host = document.createElement('div');
             host.id = 'host';
@@ -362,8 +314,8 @@ test.describe('a panel', () => {
         await expect(page.getByRole('button', { name: 'Shadow tips' })).toBeFocused();
     });
 
-    test('closes by neither once no attached button names it', async ({ page, browserName }) => {
-        await opened(page, browserName);
+    test('closes by neither once no attached button names it', async ({ page }) => {
+        await opened(page);
         await page.evaluate(`(() => {
             window.controller = new AbortController();
             kit.panel('#tips-button', controller.signal);

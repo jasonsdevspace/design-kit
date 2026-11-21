@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
+import { countLeaks, listenersOn } from './leaks.js';
 import { servePage } from './page.js';
 import { type Strict } from './strict-page.js';
 
@@ -161,38 +162,24 @@ test('takes each piece down for a ref called with null by a helper that drops th
     expect(errors).toEqual([]);
 });
 
-test("gives a form back as the hook's ref moves to another", async ({ page, browserName }) => {
+test("gives a form back as the hook's ref moves to another", async ({ page }) => {
+    await countLeaks(page);
     await open(page);
     const state = (id: string) =>
         page.locator(id).evaluate((form) => ({
             noValidate: (form as HTMLFormElement).noValidate,
             marked: form.querySelectorAll('[aria-invalid]').length,
         }));
-    // The listeners on a form and its fields, where the form's check puts them, counted through
-    // Chromium's own tools. React keeps one of its own on each field, so the form not yet attached
-    // gives the count a form given back returns to.
-    const listeners = async (id: string): Promise<number | null> => {
-        if (browserName !== 'chromium') return null;
-        const session = await page.context().newCDPSession(page);
-        const targets = `[...document.querySelectorAll('${id}, ${id} *')]`;
-        const found = Number(await page.evaluate(`${targets}.length`));
-        let total = 0;
-        for (let at = 0; at < found; at += 1) {
-            const { result } = await session.send('Runtime.evaluate', {
-                expression: `${targets}[${String(at)}]`,
-            });
-            const { listeners: on } = await session.send('DOMDebugger.getEventListeners', {
-                objectId: result.objectId ?? '',
-            });
-            total += on.length;
-        }
-        return total;
-    };
+    // The listeners on a form and its fields, where the form's check puts them. React keeps one of
+    // its own on each field, so the form not yet attached gives the count a form given back
+    // returns to.
+    const listeners = (id: string) =>
+        listenersOn(page, `[...document.querySelectorAll('${id}, ${id} *')]`);
     expect(await state('#move-one')).toEqual({ noValidate: true, marked: 1 });
     expect(await state('#move-two')).toEqual({ noValidate: false, marked: 0 });
     const attached = await listeners('#move-one');
     const bare = await listeners('#move-two');
-    if (attached !== null && bare !== null) expect(attached).toBeGreaterThan(bare);
+    expect(attached).toBeGreaterThan(bare);
     await page.evaluate(() => {
         (window as unknown as Strict).moveForm();
     });

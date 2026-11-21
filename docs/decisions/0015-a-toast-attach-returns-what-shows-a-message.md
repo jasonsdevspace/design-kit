@@ -128,7 +128,7 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   function, a stepper and progress, a line those spoke on first let go of by the page's signal, a
   toast dismissed with focus on its Close sent back where it came from and a later message unshown,
   the tabindex it added taken away and one the page set since kept, and a later attach's signal
-  unheard. It counts the timers and observers running, before attaching and after aborting, and
-  finds them equal, in Chromium, WebKit and Firefox, and in Chromium alone it counts the listeners
-  on the toast's elements and on the window, finding the window's size listened to once however many
-  messages are shown and every listener off after an abort.
+  unheard. It counts the timers, observers and listeners running, before attaching and after
+  aborting, and finds them equal, in Chromium, WebKit and Firefox, with the window's size listened
+  to once however many messages are shown and every listener on the toast's elements and on the
+  window off after an abort.

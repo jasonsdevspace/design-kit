@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Progress, StatusLine, StepperField, Toast } from '../src/react.js';
+import { countLeaks, leaksOf, listenersOn } from './leaks.js';
 import { servePage, stillClock } from './page.js';
 
 /*
@@ -9,9 +10,8 @@ import { servePage, stillClock } from './page.js';
  * does nothing and what the attach returns says or shows nothing, aborting lets the line go so no
  * piece speaks on it until it is attached again, a toast taken down leaves focus where it is and a
  * later message unshown, the first attach owns the piece so a later call's signal is not heard, and
- * a line a stepper or progress spoke on first is still the page's to take down. Timers and
- * observers are counted in every engine on a stand-in clock, and listeners only in Chromium,
- * through its own tools.
+ * a line a stepper or progress spoke on first is still the page's to take down. Timers, observers
+ * and listeners are counted in every engine on a stand-in clock, through the counters in leaks.ts.
  */
 
 // The toast's buttons are written without a tabindex, as a page's own markup may be, so the
@@ -27,46 +27,6 @@ const BODY =
             <StatusLine className="screen-status" />
         </main>
     ) + renderToStaticMarkup(<Toast />).replaceAll(' tabindex="0"', '');
-
-/*
- * Counts what is running: each timer set and not yet run or cleared, and each observer watching,
- * wrapped before the page's own script runs so every one the kit makes is seen.
- */
-const COUNTERS = `(() => {
-    const live = new Set();
-    const set = window.setTimeout;
-    const clear = window.clearTimeout;
-    window.setTimeout = (run, wait, ...rest) => {
-        const id = set((...given) => {
-            live.delete(id);
-            if (typeof run === 'function') run(...given);
-        }, wait, ...rest);
-        live.add(id);
-        return id;
-    };
-    window.clearTimeout = (id) => {
-        live.delete(id);
-        clear(id);
-    };
-    let watching = 0;
-    const counted = (Real) =>
-        class extends Real {
-            on = false;
-            observe(...given) {
-                if (!this.on) watching += 1;
-                this.on = true;
-                super.observe(...given);
-            }
-            disconnect() {
-                if (this.on) watching -= 1;
-                this.on = false;
-                super.disconnect();
-            }
-        };
-    window.ResizeObserver = counted(window.ResizeObserver);
-    window.MutationObserver = counted(window.MutationObserver);
-    window.running = () => ({ timers: live.size, observers: watching });
-})();`;
 
 const SCRIPT = `import { attachProgress, attachStatus, attachStepper, attachToast } from './controls.js';
 const line = document.querySelector('.screen-status');
@@ -86,40 +46,25 @@ window.kit = {
 };
 window.ready = true;`;
 
-/** What is running in the page, as the counters see it. */
+/** The timers set and not yet run or cleared, and the observers watching. */
 type Running = { readonly timers: number; readonly observers: number };
 
-/**
- * How many listeners sit on each target an expression in the page gives, as Chromium's tools count
- * them, or null in another browser, which has no such tools.
- */
-type Count = (targets: string) => Promise<number | null>;
+/** How many listeners sit on the targets an expression in the page gives, a list of them. */
+type Count = (targets: string) => Promise<number>;
 
 /** The page with its controls loaded and nothing attached yet, and how to count its listeners. */
-const opened = async (page: Page, browserName: string): Promise<Count> => {
+const opened = async (page: Page): Promise<Count> => {
     await stillClock(page.clock);
-    await page.addInitScript(COUNTERS);
+    await countLeaks(page);
     await servePage(page, { title: 'Teardown', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
-    if (browserName !== 'chromium') return () => Promise.resolve(null);
-    const session = await page.context().newCDPSession(page);
-    return async (targets) => {
-        const found = Number(await page.evaluate(`(${targets}).length`));
-        let total = 0;
-        for (let at = 0; at < found; at += 1) {
-            const { result } = await session.send('Runtime.evaluate', {
-                expression: `(${targets})[${String(at)}]`,
-            });
-            const { listeners } = await session.send('DOMDebugger.getEventListeners', {
-                objectId: result.objectId ?? '',
-            });
-            total += listeners.length;
-        }
-        return total;
-    };
+    return (targets) => listenersOn(page, targets);
 };
 
-const running = (page: Page): Promise<Running> => page.evaluate('window.running()');
+const running = async (page: Page): Promise<Running> => {
+    const { timers, resizeObservers, mutationObservers } = await leaksOf(page);
+    return { timers, observers: resizeObservers + mutationObservers };
+};
 
 /** The toast and every element in it. */
 const PARTS = `[...document.querySelectorAll('.dk-toast, .dk-toast *')]`;
@@ -127,8 +72,8 @@ const PARTS = `[...document.querySelectorAll('.dk-toast, .dk-toast *')]`;
 const line = (page: Page) => page.locator('.screen-status');
 const toastLine = (page: Page) => page.locator('.dk-toast-status');
 
-test('says nothing on a line given a signal already aborted', async ({ page, browserName }) => {
-    await opened(page, browserName);
+test('says nothing on a line given a signal already aborted', async ({ page }) => {
+    await opened(page);
     const before = await running(page);
     await page.evaluate(`(() => {
         const aborted = AbortSignal.abort();
@@ -149,9 +94,8 @@ test('says nothing on a line given a signal already aborted', async ({ page, bro
 
 test('lets a line go when its signal aborts, so no piece speaks on it until attached again', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     await page.evaluate(`(() => {
         kit.stepper();
         kit.progress();
@@ -198,9 +142,8 @@ test('lets a line go when its signal aborts, so no piece speaks on it until atta
 
 test('lets a line go that a stepper and progress spoke on before the page attached it', async ({
     page,
-    browserName,
 }) => {
-    await opened(page, browserName);
+    await opened(page);
     await page.evaluate(`(() => {
         kit.stepper();
         kit.progress();
@@ -226,11 +169,8 @@ test('lets a line go that a stepper and progress spoke on before the page attach
     await expect(line(page)).toHaveText('');
 });
 
-test("hears only the first attach's signal while a line stays attached", async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test("hears only the first attach's signal while a line stays attached", async ({ page }) => {
+    await opened(page);
     await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
@@ -246,8 +186,8 @@ test("hears only the first attach's signal while a line stays attached", async (
     await expect(line(page)).toHaveText('');
 });
 
-test('shows nothing in a toast given a signal already aborted', async ({ page, browserName }) => {
-    const count = await opened(page, browserName);
+test('shows nothing in a toast given a signal already aborted', async ({ page }) => {
+    const count = await opened(page);
     const parts = await count(PARTS);
     const before = await running(page);
     await page.evaluate(`(() => {
@@ -267,9 +207,8 @@ test('shows nothing in a toast given a signal already aborted', async ({ page, b
 
 test('takes a toast down when its signal aborts, sending focus back as a dismiss does', async ({
     page,
-    browserName,
 }) => {
-    const count = await opened(page, browserName);
+    const count = await opened(page);
     const parts = await count(PARTS);
     const onWindow = await count('[window]');
     const before = await running(page);
@@ -283,7 +222,7 @@ test('takes a toast down when its signal aborts, sending focus back as a dismiss
     await page.clock.runFor(300);
     await expect(toastLine(page)).toHaveText('Round 3 saved.');
     // Shown twice, the toast listens to the window's size once.
-    if (onWindow !== null) expect(await count('[window]')).toBe(onWindow + 1);
+    expect(await count('[window]')).toBe(onWindow + 1);
     expect((await running(page)).observers).toBe(before.observers + 1);
     await page.locator('.dk-toast-close').focus();
     // A tabindex the page sets after the attach is the page's, and stays.
@@ -316,11 +255,8 @@ test('takes a toast down when its signal aborts, sending focus back as a dismiss
     await expect(toastLine(page)).toHaveText('Round 4 saved.');
 });
 
-test("hears only the first attach's signal while a toast stays attached", async ({
-    page,
-    browserName,
-}) => {
-    await opened(page, browserName);
+test("hears only the first attach's signal while a toast stays attached", async ({ page }) => {
+    await opened(page);
     await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
