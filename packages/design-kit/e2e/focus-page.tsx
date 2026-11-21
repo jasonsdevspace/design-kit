@@ -619,7 +619,7 @@ const Owner = ({
     // The hidden owner's request, which the test asks while the Activity hides it.
     if (id === 'hidden-ask')
         page.askHidden = () => {
-            focusNext(target);
+            focusNext('hidden-target');
         };
     return (
         <button
@@ -685,6 +685,9 @@ const Owners = () => {
             ) : null}
             <Activity mode={shown ? 'visible' : 'hidden'}>
                 <section id="hidden-owner">
+                    <button id="hidden-target" type="button">
+                        Target inside the hidden part
+                    </button>
                     <Owner id="hidden-ask" target="owner-target" held onWait={wait} />
                     <Owner
                         id="hide-ask"

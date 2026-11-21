@@ -25,7 +25,7 @@ import {
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
  * provider afresh, a part that asks for focus on one field as it first draws and then on another,
  * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
- * refuses as it first draws.
+ * refuses as it first draws, and a form behind a ref made afresh on every render.
  */
 
 export type Strict = {
@@ -44,10 +44,12 @@ export type Strict = {
     dropRow: (which: 'one' | 'two') => void;
     turnRows: () => void;
     showFirstRefusal: () => void;
+    churns: number;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
 page.focusesOnA = 0;
+page.churns = 0;
 page.said = [];
 
 /** Notes each message as it is said, a notice given as a function read as it is said. */
@@ -330,6 +332,37 @@ const FirstRefusal = () => {
     );
 };
 
+// A form behind a ref made afresh on every render, as a helper that merges refs makes one, which
+// React calls with null and then with the form again each time the page draws.
+const ChurnForm = () => {
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [form] = useFormRefusal<HTMLFormElement>({
+        say,
+        invalid: (failures) => {
+            setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
+        },
+    });
+    page.churns += 1;
+    // Draws again in the commit that draws the errors, before the refusal's frame, as a page that
+    // measures its errors does, so the refusal must outlast a draw that calls the ref again.
+    const [, again] = useState(0);
+    useLayoutEffect(() => {
+        if (Object.keys(errors).length > 0) again((now) => now + 1);
+    }, [errors]);
+    return (
+        <form
+            id="churn"
+            ref={(element) => {
+                form(element);
+            }}
+            onSubmit={(event) => event.preventDefault()}
+        >
+            <InputField id="churn-name" label="Deck name" required error={errors['churn-name']} />
+            <button type="submit">Make the deck</button>
+        </form>
+    );
+};
+
 const FirstRefusals = () => {
     const [shown, setShown] = useState(false);
     page.showFirstRefusal = () => {
@@ -359,6 +392,7 @@ const App = () => {
                 <TwoForms />
                 <TwoRows />
                 <FirstRefusals />
+                <ChurnForm />
             </main>
         </StatusProvider>
     );

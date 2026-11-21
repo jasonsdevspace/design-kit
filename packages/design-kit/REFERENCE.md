@@ -1373,14 +1373,16 @@ has it. It sets its options again only when one changes. Its ref makes an `Abort
 element arrives, hands the function its `signal`, and returns the cleanup that aborts it, which
 React 19 calls as the element leaves, so the control is taken down as [taking a control
 down](#taking-a-control-down) has it, a form's check included. The hook keeps every element its ref
-is on, so one ref on several elements keeps those left working as one goes, and a ref called with
-null, as a helper written to merge refs before React 19 calls it, dropping the cleanup, takes every
-element down. Under `StrictMode` in development, React runs the cleanup and the ref again as the
-page first draws, and the control is taken down and attached afresh, with nothing doubled or
-dropped. `StatusProvider` waits a microtask before it aborts its line's signal, and keeps the line
-attached where the same line comes back, so words said in a first effect are not emptied by that
-second run, and the function `useStatus` returns keeps speaking. A page without React calls the same
-function on the same markup and gets the same behavior.
+is on, so one ref on several elements keeps those left working as one goes, and a form refuses a
+failed submit through itself. A ref called with null, as a helper written to merge refs before React
+19 calls it, dropping the cleanup, takes every element down a microtask later, except one the ref is
+called with again by then, so a ref the helper makes afresh on every render keeps its element
+attached. Under `StrictMode` in development, React runs the cleanup and the ref again as the page
+first draws, and the control is taken down and attached afresh, with nothing doubled or dropped.
+`StatusProvider` waits a microtask before it aborts its line's signal, and keeps the line attached
+where the same line comes back, so words said in a first effect are not emptied by that second run,
+and the function `useStatus` returns keeps speaking. A page without React calls the same function on
+the same markup and gets the same behavior.
 
 ## Theme switch and copy button
 
@@ -1780,10 +1782,11 @@ or in a transition. Nothing at unmount calls a request off, only what it returne
 request, and it lands only where focus is still where it was or has fallen to the page's body, so a
 visitor who moved on keeps their place. React tells the hook nothing of which update unmounted the
 component, so a request in a transition an urgent update overtook lands before the transition draws,
-and goes to its fallbacks where the transition draws its target. One asked while an `Activity` hides
-the component is held and lands once it shows. React does not tell a hidden component from one that
-has gone, so one asked after the component has gone, as a panel that closes itself and then asks
-after an await, is never made, and the panel's own handler moves focus instead.
+and goes to its fallbacks where the transition draws its target. One asked after the component has
+gone, as a panel that closes itself and then asks after an await, waits a frame and is made then,
+taking focus only from the page's body, whatever `from` it was given, and only where its target is
+in sight, so a visitor already on the next screen is left where they are. One whose target an
+`Activity` hides with the component is held until the component shows, and is made then.
 `useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of -1 where
 it has none, and focuses it when the key changes, such as the round on screen, and when the view is
 first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is. A first

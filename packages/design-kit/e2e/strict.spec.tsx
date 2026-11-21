@@ -14,8 +14,10 @@ import { type Strict } from './strict-page.js';
  * a ref called with null taking each piece down, a form given back, its check and listeners gone,
  * as the ref moves on, a part's two requests as it first draws leaving only the second to take
  * focus, a refusal still waiting as its form leaves saying nothing and moving nothing, a refusal
- * asked as its form first draws landing, and, with one ref on two forms or two rows of cells, the
- * one left still refusing or taking new options whichever is taken away.
+ * asked as its form first draws landing, with one ref on two forms or two rows of cells, the one
+ * left still refusing or taking new options whichever is taken away, a failed submit refused
+ * through the form submitted, and a form behind a ref made afresh on every render keeping its
+ * refusal.
  */
 
 let app = '';
@@ -260,6 +262,32 @@ for (const which of ['one', 'two'] as const) {
             .toBe(`rows-${other}-b`);
     });
 }
+
+test('refuses a failed submit through the form submitted, of two on one ref', async ({ page }) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Make list one' }).click();
+    await expect(page.locator('#pair-one-name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('List one: Error: Enter a value.');
+    expect(await said(page)).not.toContain('List two: Error: Enter a value.');
+});
+
+test('keeps a form behind a ref made afresh on every render attached through a failed submit', async ({
+    page,
+}) => {
+    await open(page);
+    const churns = await page.evaluate(() => (window as unknown as Strict).churns);
+    await page.getByRole('button', { name: 'Make the deck' }).click();
+    await expect(page.locator('#churn-name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('Deck name: Error: Enter a value.');
+    // The page drew again for its errors, and the form kept its check through it.
+    expect(await page.evaluate(() => (window as unknown as Strict).churns)).toBeGreaterThan(churns);
+    await expect(page.locator('#churn-name-error')).toHaveText('Error: Enter a value.');
+    expect(
+        await page.locator('#churn').evaluate((form) => (form as HTMLFormElement).noValidate)
+    ).toBe(true);
+    await page.waitForTimeout(300);
+    expect((await said(page)).filter((words) => words.startsWith('Deck name'))).toHaveLength(1);
+});
 
 test('lands a refusal asked as its form first draws', async ({ page }) => {
     await open(page);
