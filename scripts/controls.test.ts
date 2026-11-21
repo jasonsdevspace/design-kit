@@ -26,9 +26,11 @@ import { sentOf } from './parts.mjs';
  * against the browser's constraints took them past 12.75 KB, and again once telling a press that
  * brings a view from a key that moves took them past 15.5 KB, and again once a stepper's own say
  * and the controls finding their parts inside a shadow root left too little room for another, and
- * again for 0.9.3 once the teardown helper of record 22 left too little room for another.
+ * again for 0.9.3 once the teardown helper of record 22 left too little room for another, and
+ * again once the status line, the toast, the form, the panels and the remaining attaches moved onto
+ * it.
  */
-const BUDGET = 17.75 * 1024;
+const BUDGET = 18.5 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;
