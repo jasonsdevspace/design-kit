@@ -29,11 +29,12 @@ export type Teardown = {
 /**
  * The teardown for one attach, run when the page's `signal` aborts or when the attach's detach,
  * which is `stop`, is called, whichever comes first. A signal already aborted gives a teardown
- * already stopped, whose `add` runs each undo at once, so an attach that forgot its own early check
- * takes down what it sets up rather than living on. The listener on the page's signal comes off
- * with the teardown, so a signal the page keeps for longer holds nothing of a piece already taken
- * down. Until then that signal keeps the piece alive, so a page hands over one that lives no longer
- * than the piece.
+ * already stopped, whose own signal is aborted and whose `add` runs each undo at once, so the
+ * helper never gives null. It is no guard: each attach checks for a signal already aborted before
+ * it sets anything up, since what it registers after its undos would outlive them. The listener on
+ * the page's signal comes off with the teardown, so a signal the page keeps for longer holds
+ * nothing of a piece already taken down. Until then that signal keeps the piece alive, so a page
+ * hands over one that lives no longer than the piece.
  */
 export const teardown = (given?: AbortSignal): Teardown => {
     const own = new AbortController();

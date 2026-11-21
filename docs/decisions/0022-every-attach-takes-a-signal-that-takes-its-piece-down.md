@@ -97,21 +97,22 @@ Option E.
   every page keeps working as it is, which makes the contract a patch release, 0.9.3.
 
 One internal helper keeps the contract, `teardown` in `src/teardown.ts`, which no entry exports.
-Given the page's signal, it gives a signal of its own that every listener of the attach takes,
-`add` for what a signal cannot take off, as an observer's disconnect, a timer's clear or a frame's
-cancel, and `stop`, which the attach returns as its detach. Where that signal is already aborted, it
-gives a teardown already stopped, so an attach that forgot its own early check takes down what it
-sets up rather than living on. `stop` aborts its own signal and runs what `add`
-kept, once, and the page's signal calls it on abort. An undo given to `add` after the teardown has
-run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
-variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
-once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
-than left to check. The listener on the page's signal comes off with the teardown, so a signal a
-page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
-keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch, the copy button, the status line, the toast, the form, the panels, the stepper, a
-table's frame, a group the arrow keys move through, a busy button, progress, the dialog and
-`moveFocus` keep the contract through it.
+Given the page's signal, it gives a signal of its own that every listener of the attach takes, `add`
+for what a signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel,
+and `stop`, which the attach returns as its detach. Where the page's signal is already aborted, it
+gives a teardown already stopped, whose `add` runs each undo at once, so it never gives null. That
+is no guard, since what an attach registers after its undos would outlive them, so each attach
+checks for a signal already aborted before it sets anything up. `stop` aborts its own signal and
+runs what `add` kept, once, and the page's signal calls it on abort. An undo given to `add` after
+the teardown has run runs at once. Work an attach sets after it is set up follows one of two rules:
+it lives in a variable an undo kept at setup clears, or its callback reads the attach's signal and
+does nothing once it is aborted. Anything that waits longer than one task, a timer or a frame, is
+cleared rather than left to check. The listener on the page's signal comes off with the teardown, so
+a signal a page keeps for longer holds nothing of a piece already taken down. Until then the page's
+signal keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In
+0.9.3 the theme switch, the copy button, the status line, the toast, the form, the panels, the
+stepper, a table's frame, a group the arrow keys move through, a busy button, progress, the dialog
+and `moveFocus` keep the contract through it.
 
 ## Consequences
 
