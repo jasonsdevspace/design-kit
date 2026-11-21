@@ -30,7 +30,7 @@ import { sentOf } from './parts.mjs';
  * again once the status line, the toast, the form, the panels and the remaining attaches moved onto
  * it.
  */
-const BUDGET = 18.5 * 1024;
+const BUDGET = 18.75 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

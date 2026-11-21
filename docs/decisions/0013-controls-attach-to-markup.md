@@ -27,7 +27,8 @@ controls' budget at 17.75 KB, once the helper record 22 keeps its contract throu
 than a function of the usual size, and then at 18.5 KB, once moving the status line, the toast, the
 form, the panels and the remaining attaches onto it took them past 17.75 KB, and by record 23, which
 ends that rule for a later call's `signal`, under which each signal that attaches an element holds
-its control and the control runs on its newest holder's options
+its control and the control runs on its newest holder's options, which with the holders took the
+controls past what 18.5 KB leaves room for, so the rule set them at 18.75 KB
 
 ## Context
 
@@ -243,7 +244,10 @@ the usual size, and the median a function adds is now 586 bytes, so the rule set
 17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0. The
 status line, the toast, the form, the panels and the remaining attaches moving onto the helper took
 the controls to 18,269 bytes together, past the 17.75 KB they held, and the median a function adds
-is now 606 bytes, so the rule sets them at 18.5 KB.
+is now 606 bytes, so the rule sets them at 18.5 KB. Record 23's holders, a control kept through an
+abort and an attach of its element in one task, took the controls to 18,523 bytes together, under
+the 18.5 KB they held but with less room than a function of the usual size, and the median a
+function adds is now 635 bytes, so the rule sets them at 18.75 KB.
 
 ## The sheets beside other systems
 

@@ -101,7 +101,8 @@ ever held.
 - A copy button joined with a source that gives the element its last press copied keeps the word it
   shows, reading the source only while a word is shown, and progress counts its steps again only
   where their count changes, since a join that sets the same options would otherwise undo them.
-- The controls weigh 18,523 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
+- The controls weigh 18,523 bytes, against 18,117 before, which leaves less room under 18.5 KB than
+  a function of the usual size, so record 13's rule sets them at 18.75 KB.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.
 
