@@ -35,26 +35,33 @@ import {
 } from './controls.js';
 
 /*
- * The kit's React hooks, each a thin wrapper over a function from `./controls`, as decision 20 has
- * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
- * function that acts once keeps only what calls it off, and each returns what the function returns,
- * the same across renders. `./react` exports them beside the markup, whose components run
- * no effect. Each ref makes an `AbortController` as its element arrives, hands its attach the
- * signal, as record 22 has every attach take, and returns the cleanup that aborts it, which React
+ * The kit's React hooks, each a thin wrapper over a function from `./controls`, as record 20 has
+ * it: one over an attach attaches through a ref and keeps only the attach's handle and the
+ * controller it hands the attach, one over a function that acts once keeps only what calls it off,
+ * and each returns what the function returns, the same across renders. `./react` exports them
+ * beside the markup, whose components run no effect. Each ref makes an `AbortController` as its
+ * element arrives, hands its attach the signal, as record 22 has every attach take, and returns a
+ * cleanup that aborts it a microtask later unless the same element comes straight back, which React
  * 19 calls as the element leaves in place of calling the ref with null.
  */
 
-/** An element a hook holds, what takes it down, and whether a null call has let it go. */
-type Held = { readonly down: () => void; released: boolean };
+/**
+ * An element a hook holds, what lets it go and takes it down a microtask later unless it comes
+ * straight back, and whether it has been let go.
+ */
+type Held = { readonly release: () => void; released: boolean };
 
 /**
  * The ref of a hook that attaches to each element it lands on, and the elements attached now, the
- * oldest first. `attach` attaches one element and returns what takes it down, which the ref returns
- * as its cleanup. React 19 never calls with null where the ref returned a cleanup, but a helper
- * written to merge refs before it does, dropping the cleanup, and one that makes a new ref on every
- * render calls with null and then with the same element again. So a null call lets every element
- * go, since it does not say which left, and takes them down a microtask later, except an element
- * the ref has been called with again by then, which stays attached as it was.
+ * oldest first. `attach` attaches one element and returns what takes it down. The ref returns a
+ * cleanup that lets the element go and takes it down a microtask later, except where the ref has
+ * been called with the same element again by then, which keeps it attached as it was. A ref made
+ * afresh on every render, written inline or by a helper that merges refs and passes the cleanup
+ * on, is cleaned up and called with the same element in each commit, so it attaches once, and so
+ * does React's second run in development. React 19 never calls with null where the ref returned a
+ * cleanup, but a helper written to merge refs before it does, dropping the cleanup, calls with null
+ * and then with the same element again. So a null call lets every element go, since it does not
+ * say which left, and takes them down the same way.
  */
 const useLiveRef = <Attached extends Element>(
     attach: (element: Attached) => () => void
@@ -63,29 +70,28 @@ const useLiveRef = <Attached extends Element>(
     const ref = useCallback(
         (element: Attached | null) => {
             if (!element) {
-                const left = [...elements.values()];
-                for (const held of left) held.released = true;
-                queueMicrotask(() => {
-                    for (const held of left) if (held.released) held.down();
-                });
+                for (const held of [...elements.values()]) held.release();
                 return;
             }
             const already = elements.get(element);
             if (already) {
                 already.released = false;
-                return already.down;
+                return already.release;
             }
             const undo = attach(element);
             const held: Held = {
-                down: () => {
-                    if (elements.get(element) !== held) return;
-                    elements.delete(element);
-                    undo();
+                release: () => {
+                    held.released = true;
+                    queueMicrotask(() => {
+                        if (!held.released || elements.get(element) !== held) return;
+                        elements.delete(element);
+                        undo();
+                    });
                 },
                 released: false,
             };
             elements.set(element, held);
-            return held.down;
+            return held.release;
         },
         [attach, elements]
     );

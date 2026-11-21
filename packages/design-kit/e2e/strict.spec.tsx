@@ -17,8 +17,9 @@ import { type Strict } from './strict-page.js';
  * focus, a refusal still waiting as its form leaves saying nothing and moving nothing, a refusal
  * asked as its form first draws landing, with one ref on two forms or two rows of cells, the one
  * left still refusing or taking new options whichever is taken away, a failed submit refused
- * through the form submitted, and a form behind a ref made afresh on every render keeping its
- * refusal.
+ * through the form submitted, a form behind a ref made afresh on every render keeping its refusal,
+ * and a form and a row of cells behind arrows that return the hook's cleanup keeping the errors
+ * shown and attaching once as the page draws again.
  */
 
 let app = '';
@@ -274,6 +275,64 @@ test('keeps a form behind a ref made afresh on every render attached through a f
     ).toBe(true);
     await page.waitForTimeout(300);
     expect((await said(page)).filter((words) => words.startsWith('Deck name'))).toHaveLength(1);
+});
+
+test("keeps a form, its errors shown, and a row attached once behind arrows that return the hook's cleanup", async ({
+    page,
+}) => {
+    // Counts each observer made, which the row makes one of as it is attached, and each time the
+    // form's check sets or gives back its noValidate, as it does as the form is attached or taken
+    // down.
+    await page.addInitScript(() => {
+        const counted = window as unknown as { observers: number; checks: number };
+        counted.observers = 0;
+        counted.checks = 0;
+        const Made = window.ResizeObserver;
+        window.ResizeObserver = class extends Made {
+            constructor(callback: ResizeObserverCallback) {
+                super(callback);
+                counted.observers += 1;
+            }
+        };
+        const own = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'noValidate');
+        Object.defineProperty(HTMLFormElement.prototype, 'noValidate', {
+            ...own,
+            set(this: HTMLFormElement, value: boolean) {
+                if (this.id === 'returned') counted.checks += 1;
+                own?.set?.call(this, value);
+            },
+        });
+    });
+    const counts = () =>
+        page.evaluate(() => {
+            const { observers, checks } = window as unknown as {
+                observers: number;
+                checks: number;
+            };
+            return { observers, checks };
+        });
+    await open(page);
+    await page.getByRole('button', { name: 'Make the table' }).click();
+    await expect(page.locator('#returned-name')).toBeFocused();
+    await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
+    await page.waitForTimeout(100);
+    const made = await counts();
+    for (let draw = 0; draw < 3; draw += 1)
+        await page.evaluate(() => {
+            (window as unknown as Strict).redraw();
+        });
+    await page.waitForTimeout(100);
+    await expect(page.locator('#returned-name-error')).toHaveText('Error: Enter a value.');
+    await expect(page.locator('#returned-name')).toHaveAttribute('aria-invalid', 'true');
+    expect(
+        await page.locator('#returned').evaluate((form) => (form as HTMLFormElement).noValidate)
+    ).toBe(true);
+    expect(await counts()).toEqual(made);
+    // The row keeps one stop and its arrows.
+    await expect(page.locator('#returned-row [tabindex="0"]')).toHaveCount(1);
+    await page.locator('#returned-a').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#returned-b')).toBeFocused();
 });
 
 test('lands a refusal asked as its form first draws', async ({ page }) => {

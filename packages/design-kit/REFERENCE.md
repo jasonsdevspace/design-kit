@@ -472,9 +472,11 @@ has passed, the button's words are said once on the status line, politely, so th
 already there and the end of a progress beside them takes their place. `busy` set to true says
 "Saving.", which fits a save alone, so any other action, such as a delete or a send, gives its own
 words. Words not yet said when the work is done are dropped, so a result a toast says is never
-followed by a late "Saving." There is no spinner, since words say what is happening. A page that
-sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
-once.
+followed by a late "Saving." Taken down, by the function it returns or by its `signal`, as [Taking a
+control down](#taking-a-control-down) has it, it stops holding presses, takes away the mark it set
+and drops words not yet said, as when the work is done. There is no spinner, since words say what is
+happening. A page that sets a transition of its own on a busy button replaces the wait, and the
+button is drawn off at once.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
@@ -766,13 +768,13 @@ throws, since its refusal would reach no one. A form is attached as it is drawn,
 submit handler, since the kit's check and `noValidate` must already be in place when the first
 submit comes.
 
-`attachForm(form, { status, signal })` is taken down by aborting `signal`, as
-[Taking a control down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet
-landed and a reset still waiting are called off, and the errors it drew go, so nothing is said after,
-not even "Form cleared.", and a refusal the page calls after does nothing. The form keeps the kit's
-check, its `noValidate` and the `aria-invalid="false"` marks while any attach in it is still
-attached, and gets back its own `noValidate` and loses the marks once the last is taken down, so
-the browser checks it again. A signal already aborted leaves the form as its markup drew it.
+`attachForm(form, { status, signal })` is taken down by its `signal`, as [Taking a control
+down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet landed and a reset
+still waiting are called off, and the errors it drew go, so nothing is said after, not even "Form
+cleared.", and a refusal the page calls after does nothing. The form keeps the kit's check, its
+`noValidate` and the `aria-invalid="false"` marks while any attach in it is still attached, and gets
+back its own `noValidate` and loses the marks once the last is taken down, so the browser checks it
+again. A signal already aborted leaves the form as its markup drew it.
 
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
@@ -1370,47 +1372,39 @@ the element its ref lands on, and returns what the function returns, the same ac
 [decision
 0020](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0020-react-hooks-wrap-the-attach-functions.md)
 has it. It sets its options again only when one changes. Its ref makes an `AbortController` as the
-element arrives, hands the function its `signal`, and returns the cleanup that aborts it, which
-React 19 calls as the element leaves, so the control is taken down as [taking a control
-down](#taking-a-control-down) has it, a form's check included. The hook keeps every element its ref
-is on, so one ref on several elements keeps those left working as one goes, and a form refuses a
-failed submit through itself. A ref called with null, as a helper written to merge refs before React
-19 calls it, dropping the cleanup, takes every element down a microtask later, except one the ref is
-called with again by then, so a ref the helper makes afresh on every render keeps its element
-attached. Under `StrictMode` in development, React runs the cleanup and the ref again as the page
-first draws, and the control is taken down and attached afresh, with nothing doubled or dropped.
-`StatusProvider` waits a microtask before it aborts its line's signal, and keeps the line attached
-where the same line comes back, so words said in a first effect are not emptied by that second run,
-and the function `useStatus` returns keeps speaking. A page without React calls the same function on
-the same markup and gets the same behavior.
+element arrives, hands the function its `signal`, and returns a cleanup, which React 19 calls as the
+element leaves. The cleanup aborts the signal a microtask later, so the control is taken down as
+[taking a control down](#taking-a-control-down) has it, a form's check included, unless the ref is
+called with the same element again by then, which keeps it attached as it was. So a ref made afresh
+on every render, as an arrow that returns what the hook's ref returns, such as
+`ref={(el) => refusal(el)}`, or a helper that merges refs and passes the cleanup on, attaches once.
+The hook keeps every element its ref is on, so one ref on several elements keeps those left working
+as one goes, and a form refuses a failed submit through itself. A ref called with null, as a helper
+written to merge refs before React 19 calls it, dropping the cleanup, takes every element down a
+microtask later in the same way. Under `StrictMode` in development, React runs the cleanup and the
+ref again as the page first draws, and the control stays attached as it was, with nothing doubled or
+dropped. `StatusProvider` waits a microtask before it aborts its line's signal, and keeps the line
+attached where the same line comes back, so words said in a first effect are not emptied by that
+second run, and the function `useStatus` returns keeps speaking. A page without React calls the same
+function on the same markup and gets the same behavior.
 
-## Theme switch and copy button
-
-Two of the kit's controls that do something in the browser: a switch for the theme a visitor saves,
-and a button that copies a block's text. Each is markup the components draw, or a page writes by
-hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
-returns a function that takes it away again. The markup is hidden until it is attached, so a visitor
-without script meets no control that does nothing, and the functions set no style, so a page's
-policy can refuse every style it did not serve. Nothing runs when the module is imported but
-listeners on the document for keys, clicks and submits, which note the visitor's last press for
-`focusOnArrival`.
-
-### Taking a control down
+## Taking a control down
 
 The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
 stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
-dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. Aborting it
-takes the control down as the function its attach returned does, and calling that function or
-aborting the signal again does nothing. The status line, the toast and the dialog return what says,
-shows or opens rather than what takes them away, so the signal alone takes them down: the line is
-let go of, the toast's message is dismissed as its Close dismisses it, and an open dialog closes
-with focus handed back to what opened it, and what each returned does nothing after. A signal
-already aborted does nothing: the control stays as the markup drew it, a control already attached
-keeps the options it had, and what the attach returns does nothing. Once a control is taken down,
-nothing it started acts, such as a copy the clipboard answers late. A control attached again before
-it is taken down returns what its first attach returned and does not hear the later call's signal,
-so the first attach owns it until it is taken down, as
-[decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
+dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does, and
+`moveFocus` takes one that calls its request off. Aborting it takes the control down as the function
+its attach returned does, and calling that function or aborting the signal again does nothing. The
+status line, the toast and the dialog return what says, shows or opens rather than what takes them
+down, so the signal alone takes them down: the line is let go of, the toast's message is dismissed
+as its Close dismisses it, and an open dialog closes with focus handed back to what opened it, and
+what each returned does nothing after. A signal already aborted does nothing: the control stays as
+the markup drew it, a control already attached keeps the options it had, and what the attach returns
+does nothing. Once a control is taken down, nothing it started acts, such as a copy the clipboard
+answers late. A control attached again before it is taken down returns what its first attach
+returned and does not hear the later call's signal, so the first attach owns it until it is taken
+down, as [decision
+0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
@@ -1436,6 +1430,17 @@ const showScreen = () => {
     });
 };
 ```
+
+## Theme switch and copy button
+
+Two of the kit's controls that do something in the browser: a switch for the theme a visitor saves,
+and a button that copies a block's text. Each is markup the components draw, or a page writes by
+hand, and a function from `@jasonsdevspace/design-kit/controls` that a page calls on it, which
+returns a function that takes it down again. The markup is hidden until it is attached, so a visitor
+without script meets no control that does nothing, and the functions set no style, so a page's
+policy can refuse every style it did not serve. Nothing runs when the module is imported but
+listeners on the document for keys, clicks and submits, which note the visitor's last press for
+`focusOnArrival`.
 
 ### Theme switch
 
@@ -1510,14 +1515,14 @@ beside it leaves it open so a touch can scroll to choices below the screen's edg
 wider, and outside a strip at any width, the button stays hidden and the choices keep their row,
 wrapping as they do outside a strip where the column is narrower.
 
-Attaching one switch again before it is taken away attaches it once, and taking it away, by the
-function it returns or by aborting the `signal` its first attach took, as
-`attachThemeSwitch(element, { signal })`, hides it again. A switch attached after every switch was
-taken away shows, and draws, the choice saved meanwhile, or the one the page holds where the browser
-would not save it. Every switch on a page shows one choice, each with radios named for its own id.
-After the switch the component draws a line inside `noscript`, "With scripts on, a Theme switch sits
-here.", which only a visitor without script sees, and which a page words for itself or turns off
-with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
+`attachThemeSwitch(element, { signal })` attaches a switch once however often it is called before it
+is taken down, and taking it down, by the function it returns or by its `signal`, as [Taking a
+control down](#taking-a-control-down) has it, hides it again. A switch attached after every switch
+was taken down shows, and draws, the choice saved meanwhile, or the one the page holds where the
+browser would not save it. Every switch on a page shows one choice, each with radios named for its
+own id. After the switch the component draws a line inside `noscript`, "With scripts on, a Theme
+switch sits here.", which only a visitor without script sees, and which a page words for itself or
+turns off with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -1579,8 +1584,7 @@ device's own command. One status line serves every button on a page, and it is o
 start, since a line added at the moment it speaks may go unheard. Attaching a button again takes its
 new `source` and `status`, so a page that draws it again with a new source copies from that one,
 puts a word shown for the last source back to Copy, and returns the function it returned the first
-time. Taking a button away, by that function or by aborting the `signal` its first attach took,
-hides it and puts it back to Copy, and a later attach's `signal` is not heard.
+time. Taking a button down, by that function or by its `signal`, hides it and puts it back to Copy.
 
 **`CopyButton` props**
 
@@ -1660,17 +1664,18 @@ puts the message in a tenth of a second later, so the same words said twice are 
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
 copy button does, through the same function, so a line a page hands to both keeps one timer.
-`StatusProvider` lets its line go as it unmounts, as aborting the `signal` the line's first attach
-took does, as `attachStatus(line, { signal })`: the line's timers are cleared and the words said or
-held for it are dropped, so nothing more is said there, by any piece given the line, until it is
-attached again. A line let go of and attached afresh takes its old attach down. The function an
-attach returned says nothing once that attach is taken down, while a piece given the line itself as
-its `status` speaks on the line's next attach, so a page that attaches a line again hands its pieces
-the new function, or the line. `useStatus` hands out a function of its provider's that always calls
-the line's current attach. A piece's own timers, such as a busy button's wait, still come due, and
-say nothing there. A stepper, a form, a busy button or progress given the line speaks on it without
-attaching it, so a page that attaches the line with a signal after they have spoken owns it, and a
-later attach's `signal` is not heard. A signal already aborted returns a function that says nothing.
+`attachStatus(line, { signal })` is taken down by its signal, as [Taking a control
+down](#taking-a-control-down) has it, and `StatusProvider` takes its line down the same way as it
+unmounts. Taken down, the line is let go: its timers are cleared and the words said or held for it
+are dropped, so nothing more is said there, by any piece given the line, until it is attached again.
+A line a toast lets go of as it is taken down, while the page has it attached, is attached afresh by
+the page's next `attachStatus`, which takes the old attach down. The function an attach returned
+says nothing once that attach is taken down, while a piece given the line itself as its `status`
+speaks on the line's next attach, so a page that attaches a line again hands its pieces the new
+function, or the line. `useStatus` hands out a function of its provider's that always calls the
+line's current attach. A piece's own timers, such as a busy button's wait, still come due, and say
+nothing there. A stepper, a form, a busy button or progress given the line speaks on it without
+attaching it, so a page that attaches the line with a signal after they have spoken owns it.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -2324,9 +2329,10 @@ A table whose cells hold a link or a button attaches each frame with `attachTabl
 markup is on the page, passing the frame or anything in it. What the keyboard reaches then comes
 fully into view, clear of a pinned column, where Chromium and Safari would leave one that is partly
 in view cut by the frame's edge. Focus a pointer brings is left to the browser. A frame added later
-is attached on its own, and the function returned lets it go, as aborting the `signal` given as
-`attachTable(element, { signal })` does. Without script the frame keeps a target's room at its end,
-so a link with no more than that showing still comes into view.
+is attached on its own. The function `attachTable(element, { signal })` returns takes it down, and
+so does its `signal`, as [Taking a control down](#taking-a-control-down) has it. Without script the
+frame keeps a target's room at its end, so a link with no more than that showing still comes into
+view.
 
 A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every cell
 of a numeric column, its header included, is `.dk-table-number`. A table is never stacked into cards
@@ -2755,8 +2761,8 @@ players" and "Raise the number of players". A status line out of sight says the 
 since focus stays on the button, and that it is the least or the most where a press lands on a
 limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
-or the stepper is taken away, by the function `attachStepper` returns or by aborting the `signal` it
-was given.
+or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
+`signal`, as [Taking a control down](#taking-a-control-down) has it.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -2815,7 +2821,7 @@ right again, and the attach function adds and takes away only its own error, so 
 the page draws keeps its place. A page that draws the field again, as React does when the page's own
 error comes or goes, rewrites the field's description and its invalid mark, and the attach function
 puts its shown error back in both at once. It takes the stepper or its field, attaches each stepper
-once whichever it is given, and returns what takes it away again.
+once whichever it is given, and returns what takes it down again.
 
 **`StepperField` props**
 
@@ -2919,14 +2925,12 @@ came from, it moves focus itself. A message with no action replaces one with an 
 back, so a page shows one another only when the first is done with. More than one action is a
 dialog's job.
 
-A page that takes a toast away while it stays, such as a screen it draws itself, attaches it as
-`attachToast(element, { signal })`. Aborting the signal dismisses the message as its Close does, so
-focus in the toast goes back where a dismiss sends it rather than to the page's body. It takes off
-the toast's listeners, its observer, its listener on the window's size and its timer, takes away a
-tabindex it added that the page has not changed since and lets its line go. The function it
-returned, and what that returned, do nothing after, and a later attach's `signal` is not heard. A
-signal already aborted returns a function that shows nothing, though a toast missing a part is still
-refused.
+A page that takes a toast down while it stays on the page, such as on a screen it draws itself,
+attaches it as `attachToast(element, { signal })`, as [Taking a control
+down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,
+so focus in it goes back where a dismiss sends it rather than to the page's body, takes away a
+tabindex it added that the page has not changed since and lets its line go. A toast missing a part
+is refused even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -2998,18 +3002,19 @@ grid where only one can be on is a choice field.
 
 A cell marked `aria-disabled` keeps its place in the tab order and still fires its click, so the
 page's handler ignores it, as the kit's `Button` does when it is off. Each cell is a stop for the
-Tab key. A page with many cells gives the group one stop instead with `attachRoving(grid)`, which
-takes a `signal` as the other attaches do, in `./controls`, or `useRoving()` in React, so the arrow
-keys move between cells and Home and End reach the ends. Up and down move to the nearest cell in the
-row above or below as the grid is drawn, so it holds at any count of columns, left and right follow
-the page's reading direction, and an arrow held with Alt, Control or Command is left to the browser.
-A cell marked off keeps its place, a cell that is disabled or out of sight is passed over and never
-the stop, and where the cell that had focus is taken out, focus goes to the next cell still there,
-or the one before. A grid attached while it is drawn at no size, as in a closed `details` or under
+Tab key. A page with many cells gives the group one stop instead with
+`attachRoving(grid, { signal })` in `./controls`, or `useRoving()` in React, so the arrow keys move
+between cells and Home and End reach the ends. Up and down move to the nearest cell in the row above
+or below as the grid is drawn, so it holds at any count of columns, left and right follow the page's
+reading direction, and an arrow held with Alt, Control or Command is left to the browser. A cell
+marked off keeps its place, a cell that is disabled or out of sight is passed over and never the
+stop, and where the cell that had focus is taken out, focus goes to the next cell still there, or
+the one before. A grid attached while it is drawn at no size, as in a closed `details` or under
 `hidden`, places its stop as it comes into sight, and a cell a page's rule hides as it resizes the
 grid hands the stop on. A grid with the group's role, as above, or none takes the toolbar's while
 attached, so a screen reader says the arrows move within it, and keeps its `aria-label`, which a
-toolbar needs. Let go, each cell takes back its own tabindex and the grid its own role.
+toolbar needs. Taken down, as [Taking a control down](#taking-a-control-down) has it, each cell
+takes back its own tabindex and the grid its own role.
 
 The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
 unless it does:
@@ -3499,14 +3504,14 @@ are first, and a press of Enter as the dialog opens changes nothing. A sheet who
 options come before its first control gives its title `tabindex="-1"` and `autofocus`, so it opens
 at its top with its title said, rather than scrolled to a control further down.
 
-`attachDialog(dialog, { signal })` returns the function that opens it, and focus goes back to what
-opened it when the dialog closes, however it is closed. Handed the event of the press that opened
-it, from a listener on the button, on a part of the page that holds it or in React, it finds the
-button the press landed on, since Safari gives a clicked button no focus to remember. Called
-otherwise, it takes the element to return to, or remembers what had focus. Where nothing had focus,
-or what it returns to is gone from the page by the time the dialog closes, focus goes to what
-`returnTo` gives. It also closes the dialog on a tap on the scrim around it, one that starts and
-ends there so a drag out of the dialog closes nothing.
+`attachDialog(dialog, { stay, returnTo, signal })` returns the function that opens it, and focus
+goes back to what opened it when the dialog closes, however it is closed. Handed the event of the
+press that opened it, from a listener on the button, on a part of the page that holds it or in
+React, it finds the button the press landed on, since Safari gives a clicked button no focus to
+remember. Called otherwise, it takes the element to return to, or remembers what had focus. Where
+nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
+goes to what `returnTo` gives. It also closes the dialog on a tap on the scrim around it, one that
+starts and ends there so a drag out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
@@ -3515,6 +3520,8 @@ the dialog on a second Escape or Back, so a page there treats a dialog that must
 that can be dismissed too. Attaching a dialog again with options replaces them, attaching it again
 with none leaves them as they were, so a dialog attached to stay still stays, and either returns the
 same function. Its listeners are on the dialog, so a dialog taken from the page takes them with it.
+Taken down by its `signal`, as [Taking a control down](#taking-a-control-down) has it, an open
+dialog closes with focus handed back to what opened it, and the function that opens it does nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
@@ -3610,30 +3617,34 @@ Then the button opens and closes the panel, every attached button that names it 
 Close closes it and marks the buttons collapsed, with no script of the page's own. A panel that
 starts closed carries `hidden` in its markup, so it never shows before the script runs. What it
 returns, of the type `PanelControl`, holds `set`, of the type `SetPanel`, which opens or closes the
-panel from the page's own code, as `tips.set(false)`, and `detach`, which lets the button go, as a
-page does when it takes the button away, after which `set` does nothing. The first button attached
+panel from the page's own code, as `tips.set(false)`, and `detach`, which takes the button down, as
+a page does when it takes the button away, after which `set` does nothing. The first button attached
 for a panel starts it as its markup says, and a button attached for it later, one drawn again among
 them, marks itself as the panel is and leaves the panel alone. A press of a button that is off, with
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
 returns the same, and one with no `aria-controls` is refused with an error that says so. The button
 and the panel are found at each press, so a panel drawn again keeps working, and listeners on the
-page serve every panel, taken off once every button is let go. Escape with focus in a panel or on
-its button closes the innermost such panel and marks the press handled, so a dialog around the panel
-stays open. It leaves alone an Escape the page has already handled, one that ends typing in a script
-such as Japanese, one on a panel's button that is off, one in a dialog or a popover inside the
-panel, and one on a search with words in it or on a combobox or a button whose list or menu is open.
-A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
+page serve every panel, taken off once every button is taken down. Escape with focus in a panel or
+on its button closes the innermost such panel and marks the press handled, so a dialog around the
+panel stays open. It leaves alone an Escape the page has already handled, one that ends typing in a
+script such as Japanese, one on a panel's button that is off, one in a dialog or a popover inside
+the panel, and one on a search with words in it or on a combobox or a button whose list or menu is
+open. A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
 prefixes or strips the ids in it.
 
-`attachPanel(button, { signal })` lets the button go when `signal` aborts, as `detach` does, and a
-signal already aborted attaches nothing. An open panel stays the kit's while an attached button
-names it. Once the button that opened it is let go, Escape and its Close both still close it, and
-focus goes back to the first attached button in the page that names it, as record 19 has it. A
-button let go, by its signal or `detach`, takes `aria-expanded="false"`, since it no longer follows
-the panel and would otherwise go on saying the panel is open after another button closes it. A button attached
-for it while it is open takes it where no attached button named it, so a button drawn again, the
-only one among them, keeps the panel open whatever its new markup says and closes it by Escape. Once no attached button names it, neither Escape nor its Close closes it, and it stays
-as it is for the page to hide.
+`attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
+as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches
+nothing. A button taken from the page without being taken down stays held by the kit until it is, so
+a page takes a button down before it removes it. An open panel stays the kit's while an attached
+button names it. Once the button that opened it is taken down, Escape and its Close both still close
+it, and focus goes back to the first attached button in the page that names it, as [decision
+0019](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md)
+has it. A button taken down, by its signal or `detach`, takes `aria-expanded="false"`, since it no
+longer follows the panel and would otherwise go on saying the panel is open after another button
+closes it. A button attached for it while it is open takes it where no attached button named it, so
+a button drawn again, the only one among them, keeps the panel open whatever its new markup says and
+closes it by Escape. Once no attached button names it, neither Escape nor its Close closes it, and
+it stays as it is for the page to hide.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
 goes to the button that opened it where focus is in the panel, or where nothing has focus and the

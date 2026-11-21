@@ -462,9 +462,9 @@ const attachedButtons = new WeakMap<
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
  * draws a choice when a visitor makes one. It takes the switch, or an element that holds it.
- * Attaching one switch again before it is taken away attaches it once, and taking it away, by
- * the function it returns or by aborting the `signal` it was given, hides it again. A signal
- * already aborted leaves it hidden and unattached.
+ * Attaching one switch again before it is taken down attaches it once, and taking it down, by the
+ * function it returns or by its `signal`, hides it again. A signal already aborted does nothing,
+ * so a switch not yet attached stays hidden and one already attached stays as it is.
  *
  * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
  * narrower than 20rem, the button names the choice shown and opens the choices under itself, with

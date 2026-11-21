@@ -25,7 +25,8 @@ import {
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
  * provider afresh, a part that asks for focus on one field as it first draws and then on another,
  * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
- * refuses as it first draws, and a form behind a ref made afresh on every render.
+ * refuses as it first draws, a form behind a ref made afresh on every render, and a form and a row
+ * of cells behind arrows that return the hook's cleanup, drawn again by the page.
  */
 
 export type Strict = {
@@ -45,6 +46,7 @@ export type Strict = {
     turnRows: () => void;
     showFirstRefusal: () => void;
     churns: number;
+    redraw: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -363,6 +365,53 @@ const ChurnForm = () => {
     );
 };
 
+// A form and a row of cells behind arrows that return what the hook's ref returns, so each render
+// makes a new ref that hands React the hook's cleanup, which React calls before the new ref.
+const Returned = () => {
+    const [, setDrawn] = useState(0);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    page.redraw = () => {
+        setDrawn((now) => now + 1);
+    };
+    const row = useRoving<HTMLDivElement>();
+    const [form] = useFormRefusal<HTMLFormElement>({
+        say,
+        invalid: (failures) => {
+            setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
+        },
+    });
+    return (
+        <>
+            <div
+                id="returned-row"
+                role="toolbar"
+                aria-label="Returned"
+                ref={(element) => row(element)}
+            >
+                <button type="button" id="returned-a">
+                    A
+                </button>
+                <button type="button" id="returned-b">
+                    B
+                </button>
+            </div>
+            <form
+                id="returned"
+                ref={(element) => form(element)}
+                onSubmit={(event) => event.preventDefault()}
+            >
+                <InputField
+                    id="returned-name"
+                    label="Table name"
+                    required
+                    error={errors['returned-name']}
+                />
+                <button type="submit">Make the table</button>
+            </form>
+        </>
+    );
+};
+
 const FirstRefusals = () => {
     const [shown, setShown] = useState(false);
     page.showFirstRefusal = () => {
@@ -393,6 +442,7 @@ const App = () => {
                 <TwoRows />
                 <FirstRefusals />
                 <ChurnForm />
+                <Returned />
             </main>
         </StatusProvider>
     );
