@@ -657,7 +657,7 @@ export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say =>
     const already = attachedLines.get(line);
     if (already && !lineOf(line).released) {
         already.down.hold(options?.signal);
-        return already.handle;
+        if (!already.down.signal.aborted) return already.handle;
     }
     // A line let go of while still attached, as a toast's own line is when the toast is taken down,
     // is attached afresh, and its old attach taken down, so the old attach's signal holds nothing
@@ -1003,13 +1003,17 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     element.addEventListener(
         'focusout',
-        () => {
+        ({ relatedTarget }) => {
             // Read a microtask later, where focus has settled, so focus that leaves and comes back
             // in one task stays in. Chromium fires focusout as a toast with focus in it is taken
             // from the page, and WebKit and Firefox fire none, so focus that left with the toast
-            // is kept apart for the handback.
+            // is kept apart for the handback, and focus a visitor took to a control outside is not.
             queueMicrotask(() => {
-                if (!element.isConnected) leftWith ||= focused;
+                const outside =
+                    relatedTarget instanceof Element &&
+                    relatedTarget.isConnected &&
+                    !element.contains(relatedTarget);
+                if (!element.isConnected && !outside) leftWith ||= focused;
                 focused = element.isConnected && element.contains(activeOf());
                 wait();
             });

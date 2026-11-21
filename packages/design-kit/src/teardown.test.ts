@@ -131,12 +131,10 @@ describe('a teardown with several holders', () => {
     });
 
     it('is held by a call without a signal only where nothing else holds it', async () => {
-        // Held where the only signal has let go, so the control stays until its detach.
-        const gone = new AbortController();
-        const kept = teardown(gone.signal);
+        // Held where nothing has held it yet, so the control stays until its detach.
+        const kept = teardown();
         let keptRan = 0;
         kept.add(() => (keptRan += 1));
-        gone.abort();
         kept.hold(undefined);
         await Promise.resolve();
         expect(keptRan).toBe(0);
@@ -151,6 +149,59 @@ describe('a teardown with several holders', () => {
         page.abort();
         await Promise.resolve();
         expect(joinedRan).toBe(1);
+    });
+
+    it('lands a waiting takedown at once for a call without a signal, which starts afresh', () => {
+        const gone = new AbortController();
+        const registry = new WeakMap<object, Kept<() => void>>();
+        const element = {};
+        const down = teardown(gone.signal);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        keep(registry, element, down, down.stop);
+        gone.abort();
+        expect(ran).toBe(0);
+        // The page holds the piece for its life now, so the holder's piece is not carried over.
+        expect(join(registry, element)).toBeUndefined();
+        expect(ran).toBe(1);
+        expect(registry.has(element)).toBe(false);
+    });
+
+    it('gives an attach made from inside a takedown a control of its own', () => {
+        const registry = new WeakMap<object, Kept<() => void>>();
+        const element = {};
+        const down = teardown();
+        let during: (() => void) | undefined;
+        let fresh: (() => void) | undefined;
+        // As a dialog's close handler, run by its takedown, attaches it again.
+        down.add(() => {
+            during = join(registry, element);
+            const again = teardown();
+            fresh = keep(registry, element, again, again.stop);
+        });
+        keep(registry, element, down, down.stop);
+        down.stop();
+        expect(during).toBeUndefined();
+        expect(registry.get(element)?.handle).toBe(fresh);
+    });
+
+    it('keeps the options of a newer holder joined in the task its predecessor let go in', async () => {
+        type Options = { readonly name: string };
+        const older = new AbortController();
+        const down = teardown<Options>(older.signal, { name: 'older' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        let newer = new AbortController();
+        down.hold(newer.signal, { name: 'newer' });
+        // A ref made afresh: the newer hook lets go and holds again with its own options.
+        for (let render = 0; render < 3; render += 1) {
+            const next = new AbortController();
+            newer.abort();
+            down.hold(next.signal, { name: 'newer' });
+            newer = next;
+            await Promise.resolve();
+        }
+        expect(applied).toEqual(['newer', 'newer', 'newer', 'newer']);
     });
 
     it('takes the control down at once on the detach, and leaves no listener on any signal', () => {
@@ -188,7 +239,7 @@ describe('a teardown with several holders', () => {
         expect(getEventListeners(held.signal, 'abort')).toHaveLength(0);
     });
 
-    it("runs on its newest holder's options as holders join and let go", () => {
+    it("runs on its newest holder's options as holders join and let go", async () => {
         type Options = { readonly name: string };
         const oldest = new AbortController();
         const middle = new AbortController();
@@ -204,20 +255,23 @@ describe('a teardown with several holders', () => {
         expect(applied).toEqual(['middle', 'newest']);
         // The newest letting go hands the control to the one before it, with its options.
         newest.abort();
+        await Promise.resolve();
         expect(applied).toEqual(['middle', 'newest', 'middle']);
         // A call without a signal replaces the newest holder's options.
         down.hold(undefined, { name: 'unsigned' });
         expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned']);
         middle.abort();
+        await Promise.resolve();
         expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned', 'oldest again']);
         // A holder that gave no options keeps what is current, and its leaving changes nothing.
         const bare = new AbortController();
         down.hold(bare.signal);
         bare.abort();
+        await Promise.resolve();
         expect(applied).toHaveLength(5);
     });
 
-    it('hands the options to the newest holder left that gave any as the one applied lets go', () => {
+    it('hands the options to the newest holder left that gave any as the one applied lets go', async () => {
         type Options = { readonly name: string };
         const oldest = new AbortController();
         const middle = new AbortController();
@@ -229,11 +283,13 @@ describe('a teardown with several holders', () => {
         down.hold(bare.signal);
         // The middle holder's options apply, though it is not the newest, and go as it lets go.
         middle.abort();
+        await Promise.resolve();
         expect(applied).toEqual(['middle', 'oldest']);
         // A call without a signal speaks for the newest holder, so its options leave with it.
         down.hold(undefined, { name: 'unsigned' });
         expect(applied).toEqual(['middle', 'oldest', 'unsigned']);
         bare.abort();
+        await Promise.resolve();
         expect(applied).toEqual(['middle', 'oldest', 'unsigned', 'oldest']);
     });
 

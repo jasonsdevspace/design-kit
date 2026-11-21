@@ -615,3 +615,42 @@ test("starts a toast's wait again once it is moved in the page with focus in it"
     await page.clock.runFor(10_000);
     await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
 });
+
+test('leaves focus on a control outside a toast that is removed and taken down as focus moves there', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#start').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    // As a press on a control outside the toast whose handler takes the toast away.
+    await page.evaluate(`(() => {
+        document.querySelector('#target').focus();
+        document.querySelector('.dk-toast').remove();
+        controller.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('starts a piece afresh where it is attached without a signal in the task its holder let go', async ({
+    page,
+}) => {
+    await opened(page);
+    const same = await page.evaluate(`(() => {
+        const first = new AbortController();
+        const one = all(first.signal);
+        kit.dialog(first.signal)(document.querySelector('#finish'));
+        first.abort();
+        // The page now holds each piece for its life, with nothing of the holder's carried over.
+        const two = all();
+        window.dialogOpen = document.querySelector('#end-game').open;
+        return Object.keys(one).filter((name) => one[name] === two[name]);
+    })()`);
+    expect(same).toEqual([]);
+    expect(await page.evaluate('dialogOpen')).toBe(false);
+    expect(await attached(page)).toEqual(ALL);
+});

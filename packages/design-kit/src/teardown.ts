@@ -30,7 +30,8 @@ export type Teardown<Options = AttachOptions> = {
     readonly stop: () => void;
     /**
      * Joins a later call to the control: its signal as one more holder, or with no signal the
-     * newest holder's call, and its options as that holder's, applied where it is the newest.
+     * newest holder's call, and its options as that holder's, applied where it is the newest. A
+     * call with no signal while the takedown waits lands it at once instead.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
     /** What applies a holder's options to the control, given by the attach before `keep`. */
@@ -84,24 +85,38 @@ export const teardown = <Options = AttachOptions>(
     // The holder whose options apply now, which only a call with options from the newest holder
     // changes.
     let applied: AbortSignal | undefined | null = null;
+    // Whether the last holder has let go and the takedown waits for the next microtask.
+    let waiting = false;
     const release = ({ target }: Event) => {
         holders.delete(target as AbortSignal);
-        // The last holder gone, the control waits a microtask for an attach of its element.
-        if (!holders.size)
-            queueMicrotask(() => {
-                if (!holders.size) stop();
-            });
-        else if (target === applied) {
-            // The newest holder left that gave options takes over with them.
-            const next = [...holders].findLast(([, given]) => given);
-            if (next) {
-                applied = next[0];
-                down.set?.(next[1] as Options);
+        // The last holder gone, the control waits a microtask for an attach of its element. Where
+        // the holder whose options apply goes, the newest one left that gave options takes over in
+        // that same microtask, unless a newer holder has given its own by then, as a ref made
+        // afresh does, so the options do not pass to an older holder and back.
+        waiting = !holders.size;
+        queueMicrotask(() => {
+            if (signal.aborted) return;
+            if (!holders.size) {
+                stop();
+                return;
             }
-        }
+            waiting = false;
+            if (target !== applied) return;
+            const next = [...holders].findLast(([, given]) => given);
+            if (!next) return;
+            applied = next[0];
+            down.set?.(next[1] as Options);
+        });
     };
     const hold = (by: AbortSignal | undefined, next?: Options) => {
         if (signal.aborted) return;
+        // A call without a signal holds the piece for the page's life, so where the takedown the
+        // last holder asked for still waits, it lands at once and the call starts afresh rather
+        // than keeping a piece that holder let go of.
+        if (!by && waiting) {
+            stop();
+            return;
+        }
         // Added once however many calls a signal makes, as the DOM ignores the same listener again.
         by?.addEventListener('abort', release, { once: true });
         // A call without a signal holds the control only where nothing else does, and elsewhere
@@ -138,7 +153,9 @@ export const join = <Element extends object, Handle, Options>(
 ): Handle | undefined => {
     const kept = registry.get(element);
     kept?.down.hold(options?.signal, options);
-    return kept?.handle;
+    // A control taken down by now, or being taken down, as an attach made from its own takedown
+    // finds it, is attached afresh.
+    return kept && !kept.down.signal.aborted ? kept.handle : undefined;
 };
 
 /**
@@ -152,6 +169,9 @@ export const keep = <Element extends object, Handle, Options>(
     handle: Handle
 ): Handle => {
     registry.set(element, { handle, down });
-    down.add(() => registry.delete(element));
+    // Only this control's entry, so an attach made afresh from its own takedown keeps its own.
+    down.add(() => {
+        if (registry.get(element)?.down === down) registry.delete(element);
+    });
     return handle;
 };

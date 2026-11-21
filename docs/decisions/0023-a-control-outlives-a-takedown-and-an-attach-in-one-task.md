@@ -47,7 +47,10 @@ Option C.
 - **Each signal holds the control.** An attach given a signal adds it as a holder, and a call given
   one already held adds no second holder, as `addEventListener` ignores a listener added twice. A
   call without a signal holds the control until its detach only where nothing else holds it, and
-  elsewhere joins without holding, its options going to the newest holder.
+  elsewhere joins without holding, its options going to the newest holder. A call without a signal
+  made while the last holder's takedown waits lands that takedown at once and attaches afresh, since
+  such a call holds the piece for the page's life and nothing of the holder that let go should carry
+  over to it.
 - **The last holder letting go takes the control down a microtask later.** An attach of the same
   element before then cancels the takedown and keeps the control's state, a busy wait, a form's
   check and the errors it drew, a group's observers, an open dialog, a shown toast and a status
@@ -61,8 +64,10 @@ Option C.
 - **A control runs on its newest holder's options.** A new holder's options apply at once. A call
   from the newest holder, or one without a signal, replaces them, and a call from an older holder is
   kept for when that holder is the newest again. When the holder whose options apply lets go, the
-  newest one left that gave options takes over with them. A call without a signal speaks for the
-  newest holder, so its options leave with that holder.
+  newest one left that gave options takes over with them in the microtask a takedown would wait for,
+  unless a newer holder has given its own by then, so a ref made afresh on a hook that shares an
+  element does not hand the control to the older hook's options and back on every render. A call
+  without a signal speaks for the newest holder, so its options leave with that holder.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment
   the takedown lands. A focus request's takedown waits the same microtask, which changes nothing
@@ -96,7 +101,7 @@ ever held.
 - A copy button joined with a source that gives the element its last press copied keeps the word it
   shows, reading the source only while a word is shown, and progress counts its steps again only
   where their count changes, since a join that sets the same options would otherwise undo them.
-- The controls weigh 18,434 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
+- The controls weigh 18,523 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.
 
@@ -107,15 +112,18 @@ The paths are in `packages/design-kit`.
 - `src/teardown.test.ts` finds an abort of the only holder runs nothing until a microtask has
   passed, a signal held before then keeps everything, a call without a signal holding only where
   nothing else does, `stop` running at once whoever holds and leaving no listener on any holder's
-  signal, the listeners on a signal not growing as holders come and go, and the options of the
-  newest holder that gave any applied as holders join and let go.
+  signal, the listeners on a signal not growing as holders come and go, the options of the newest
+  holder that gave any applied as holders join and let go, a newer holder joined in the same task
+  keeping its own, a call without a signal landing a waiting takedown and starting afresh, and an
+  attach made from inside a takedown getting a control of its own.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, and aborts, waits a microtask and attaches and finds each attached afresh. It finds a
-  toast with focus in it taken down and then removed from the page handing focus back, a toast kept
-  shown while focus leaves it and comes back in one task, one moved in the page with focus in it
-  starting its wait again in Chromium, and a progress step still heard through a join that gives the
-  same count.
+  toast with focus in it taken down and then removed from the page handing focus back, a piece
+  attached without a signal in the task its holder let go started afresh, a toast kept shown while
+  focus leaves it and comes back in one task, one moved in the page with focus in it starting its
+  wait again in Chromium, focus left on a control outside a toast taken away as focus moves there,
+  and a progress step still heard through a join that gives the same count.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
   put back to Copy where a source that reads the page's state gives another block, or throws.
 - `e2e/strict.spec.tsx` draws a form, a group and a busy button mid-wait behind refs made afresh on
