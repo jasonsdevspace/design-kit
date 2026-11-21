@@ -1,6 +1,8 @@
+import { getEventListeners } from 'node:events';
+
 import { describe, expect, it, vi } from 'vitest';
 
-import { teardown } from './teardown.js';
+import { join, keep, type Kept, teardown } from './teardown.js';
 
 /*
  * The teardown every attach keeps record 22's contract through, in plain Node, which has the
@@ -32,35 +34,37 @@ describe('a teardown', () => {
         expect(down.signal.aborted).toBe(true);
     });
 
-    it("runs when the page's signal aborts, and not again on the detach", () => {
+    it("runs a microtask after the page's signal aborts, and not again on the detach", async () => {
         const page = new AbortController();
         const down = teardown(page.signal);
         let ran = 0;
         down.add(() => (ran += 1));
         page.abort();
+        expect(ran).toBe(0);
+        expect(down.signal.aborted).toBe(false);
+        await Promise.resolve();
+        expect(ran).toBe(1);
         down.stop();
         expect(ran).toBe(1);
         expect(down.signal.aborted).toBe(true);
     });
 
-    it("takes its listener off the page's signal once it has run", () => {
+    it("takes its listener off the page's signal once it has run", async () => {
         const page = new AbortController();
-        // The listener the teardown adds, and whether its own signal has taken it off again.
-        let added: AbortSignal | undefined;
-        const add = page.signal.addEventListener.bind(page.signal);
-        vi.spyOn(page.signal, 'addEventListener').mockImplementation((type, listener, options) => {
-            if (type === 'abort' && typeof options === 'object') added = options.signal;
-            add(type, listener, options);
-        });
         const down = teardown(page.signal);
-        expect(added?.aborted).toBe(false);
+        expect(getEventListeners(page.signal, 'abort')).toHaveLength(1);
         down.stop();
-        // A listener added with a signal comes off as that signal aborts, as the DOM has it.
-        expect(added?.aborted).toBe(true);
+        expect(getEventListeners(page.signal, 'abort')).toHaveLength(0);
         let ran = 0;
         down.add(() => (ran += 1));
         page.abort();
+        await Promise.resolve();
         expect(ran).toBe(1);
+        // A signal that aborts lets go of the listener as it runs.
+        const other = new AbortController();
+        teardown(other.signal);
+        other.abort();
+        expect(getEventListeners(other.signal, 'abort')).toHaveLength(0);
     });
 
     it('runs every undo where one throws, and reports the error', () => {
@@ -90,5 +94,146 @@ describe('a teardown', () => {
         expect(ran).toBe(1);
         down.stop();
         expect(ran).toBe(1);
+    });
+});
+
+describe('a teardown with several holders', () => {
+    it('keeps the control for a signal held before the microtask after the abort', async () => {
+        const first = new AbortController();
+        const later = new AbortController();
+        const down = teardown(first.signal);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        first.abort();
+        down.hold(later.signal);
+        await Promise.resolve();
+        expect(ran).toBe(0);
+        expect(down.signal.aborted).toBe(false);
+        later.abort();
+        expect(ran).toBe(0);
+        await Promise.resolve();
+        expect(ran).toBe(1);
+    });
+
+    it('takes the control down only once every signal holding it has aborted', async () => {
+        const first = new AbortController();
+        const later = new AbortController();
+        const down = teardown(first.signal);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        down.hold(later.signal);
+        first.abort();
+        await Promise.resolve();
+        expect(ran).toBe(0);
+        later.abort();
+        await Promise.resolve();
+        expect(ran).toBe(1);
+    });
+
+    it('is held by a call without a signal only where nothing else holds it', async () => {
+        // Held where the only signal has let go, so the control stays until its detach.
+        const gone = new AbortController();
+        const kept = teardown(gone.signal);
+        let keptRan = 0;
+        kept.add(() => (keptRan += 1));
+        gone.abort();
+        kept.hold(undefined);
+        await Promise.resolve();
+        expect(keptRan).toBe(0);
+        kept.stop();
+        expect(keptRan).toBe(1);
+        // Joined without holding where a signal holds, so that signal still takes it down.
+        const page = new AbortController();
+        const joined = teardown(page.signal);
+        let joinedRan = 0;
+        joined.add(() => (joinedRan += 1));
+        joined.hold(undefined);
+        page.abort();
+        await Promise.resolve();
+        expect(joinedRan).toBe(1);
+    });
+
+    it('takes the control down at once on the detach, and leaves no listener on any signal', () => {
+        const first = new AbortController();
+        const later = new AbortController();
+        const down = teardown(first.signal);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        down.hold(later.signal);
+        expect(getEventListeners(first.signal, 'abort')).toHaveLength(1);
+        expect(getEventListeners(later.signal, 'abort')).toHaveLength(1);
+        down.stop();
+        expect(ran).toBe(1);
+        expect(getEventListeners(first.signal, 'abort')).toHaveLength(0);
+        expect(getEventListeners(later.signal, 'abort')).toHaveLength(0);
+    });
+
+    it('keeps the listeners on its signals from growing as holders come and go', () => {
+        const down = teardown();
+        const own = getEventListeners(down.signal, 'abort').length;
+        let held = new AbortController();
+        down.hold(held.signal);
+        for (let round = 0; round < 20; round += 1) {
+            const next = new AbortController();
+            held.abort();
+            down.hold(next.signal);
+            // Held twice by the same signal, as a hook that attaches again with its own does.
+            down.hold(next.signal);
+            expect(getEventListeners(held.signal, 'abort')).toHaveLength(0);
+            expect(getEventListeners(next.signal, 'abort')).toHaveLength(1);
+            held = next;
+        }
+        expect(getEventListeners(down.signal, 'abort')).toHaveLength(own);
+        down.stop();
+        expect(getEventListeners(held.signal, 'abort')).toHaveLength(0);
+    });
+
+    it("runs on its newest holder's options as holders join and let go", () => {
+        type Options = { readonly name: string };
+        const oldest = new AbortController();
+        const middle = new AbortController();
+        const newest = new AbortController();
+        const down = teardown<Options>(oldest.signal, { name: 'oldest' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        down.hold(middle.signal, { name: 'middle' });
+        down.hold(newest.signal, { name: 'newest' });
+        expect(applied).toEqual(['middle', 'newest']);
+        // A call from an older holder is kept for it and not applied.
+        down.hold(oldest.signal, { name: 'oldest again' });
+        expect(applied).toEqual(['middle', 'newest']);
+        // The newest letting go hands the control to the one before it, with its options.
+        newest.abort();
+        expect(applied).toEqual(['middle', 'newest', 'middle']);
+        // A call without a signal replaces the newest holder's options.
+        down.hold(undefined, { name: 'unsigned' });
+        expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned']);
+        middle.abort();
+        expect(applied).toEqual(['middle', 'newest', 'middle', 'unsigned', 'oldest again']);
+        // A holder that gave no options keeps what is current, and the one before it takes over
+        // again as it lets go.
+        const bare = new AbortController();
+        down.hold(bare.signal);
+        expect(applied).toHaveLength(5);
+        bare.abort();
+        expect(applied.at(-1)).toBe('oldest again');
+        expect(applied).toHaveLength(6);
+    });
+
+    it('keeps a control by its element until it is taken down, and joins a later call to it', async () => {
+        const registry = new WeakMap<object, Kept<() => void>>();
+        const element = {};
+        const first = new AbortController();
+        expect(join(registry, element, { signal: first.signal })).toBeUndefined();
+        const down = teardown(first.signal);
+        const handle = keep(registry, element, down, down.stop);
+        const later = new AbortController();
+        first.abort();
+        expect(join(registry, element, { signal: later.signal })).toBe(handle);
+        await Promise.resolve();
+        expect(registry.get(element)?.handle).toBe(handle);
+        later.abort();
+        await Promise.resolve();
+        expect(registry.has(element)).toBe(false);
     });
 });

@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { buttonGrid, dialog, pinnedTable, progress, stepper } from '../examples/examples.js';
-import { StatusLine } from '../src/react.js';
+import { InputField, StatusLine, Toast } from '../src/react.js';
 import { countLeaks, listenersOn } from './leaks.js';
 import { servePage, stillClock } from './page.js';
 
@@ -31,18 +31,25 @@ const BODY = renderToStaticMarkup(
         </button>
         {progress}
         {dialog}
+        <form id="join">
+            <InputField id="name" name="name" label="Name" required />
+            <button type="submit">Join</button>
+        </form>
         <StatusLine className="screen-status" />
+        <Toast />
     </main>
 );
 
 const SCRIPT = `import {
     attachBusy,
     attachDialog,
+    attachForm,
     attachProgress,
     attachRoving,
     attachStatus,
     attachStepper,
     attachTable,
+    attachToast,
     moveFocus,
 } from './controls.js';
 const line = document.querySelector('.screen-status');
@@ -67,6 +74,9 @@ window.kit = {
         ),
     dialog: (signal, options) =>
         attachDialog(document.querySelector('#end-game'), withSignal(signal, options)),
+    toast: (signal) => attachToast(document.querySelector('.dk-toast'), withSignal(signal)),
+    form: (signal) =>
+        attachForm(document.querySelector('#join'), withSignal(signal, { status: line })),
     focus: (signal) => moveFocus('target', withSignal(signal)),
     line: () => attachStatus(line),
 };
@@ -391,4 +401,139 @@ test('drops a progress step waiting behind firm words once the bar is taken down
     })()`);
     await page.clock.runFor(5000);
     expect(await page.evaluate('window.heard')).toEqual(['Saved.']);
+});
+
+test('keeps every piece aborted and attached again in one task, with its handle', async ({
+    page,
+}) => {
+    await opened(page);
+    const changed = await page.evaluate(`(() => {
+        const first = new AbortController();
+        const one = { ...all(first.signal), toast: kit.toast(first.signal), form: kit.form(first.signal) };
+        first.abort();
+        window.later = new AbortController();
+        const two = { ...all(later.signal), toast: kit.toast(later.signal), form: kit.form(later.signal) };
+        return Object.keys(one).filter((name) => one[name] !== two[name]);
+    })()`);
+    expect(changed).toEqual([]);
+    expect(await attached(page)).toEqual(ALL);
+    // The later signal holds each piece now, and takes it down.
+    await page.evaluate('later.abort()');
+    expect(await attached(page)).toEqual(NONE);
+});
+
+test('keeps what each piece was doing through an abort and an attach in one task', async ({
+    page,
+}) => {
+    // Counts each observer made for the group and each time the form's check sets its noValidate.
+    await page.addInitScript(() => {
+        const counted = window as unknown as { observers: number; checks: number };
+        counted.observers = 0;
+        counted.checks = 0;
+        const Made = window.ResizeObserver;
+        window.ResizeObserver = class extends Made {
+            override observe(target: Element, options?: ResizeObserverOptions) {
+                if (target.classList.contains('dk-button-grid')) counted.observers += 1;
+                super.observe(target, options);
+            }
+        };
+        const own = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'noValidate');
+        Object.defineProperty(HTMLFormElement.prototype, 'noValidate', {
+            ...own,
+            set(this: HTMLFormElement, value: boolean) {
+                if (this.id === 'join') counted.checks += 1;
+                own?.set?.call(this, value);
+            },
+        });
+    });
+    await stillClock(page.clock);
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.first = new AbortController();
+        kit.busy(first.signal);
+        kit.roving(first.signal);
+        kit.dialog(first.signal)(document.querySelector('#finish'));
+        kit.toast(first.signal)('Round 2 saved.');
+        kit.form(first.signal);
+        document.querySelector('#join').requestSubmit();
+        document.querySelector('#busy').setAttribute('data-busy', 'Saving the rule.');
+    })()`);
+    await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.locator('#name')).toHaveAttribute('aria-invalid', 'true');
+    const before = await page.evaluate(`({ observers, checks })`);
+    await page.evaluate(`(() => {
+        window.marks = 0;
+        new MutationObserver((records) => {
+            marks += records.length;
+        }).observe(document.querySelector('#busy'), { attributeFilter: ['aria-disabled'] });
+        first.abort();
+        window.later = new AbortController();
+        kit.busy(later.signal);
+        kit.roving(later.signal);
+        kit.dialog(later.signal);
+        kit.toast(later.signal);
+        kit.form(later.signal);
+    })()`);
+    await page.clock.runFor(1000);
+    // The busy wait kept its mark and says its words once, the dialog and the toast stay open, the
+    // group was not observed again, and the form kept its errors and its check.
+    expect(await page.evaluate('marks')).toBe(0);
+    await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
+    expect(
+        await page.evaluate('window.heard.filter((words) => words === "Saving the rule.")')
+    ).toEqual(['Saving the rule.']);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown');
+    await expect(page.locator('#name')).toHaveAttribute('aria-invalid', 'true');
+    expect(await page.evaluate(`({ observers, checks })`)).toEqual(before);
+    // The dialog hands focus back to the opener it was opened from.
+    await page.evaluate(`document.querySelector('#end-game').close()`);
+    await expect(page.locator('#finish')).toBeFocused();
+});
+
+test('starts each piece afresh where it is attached a microtask after the abort', async ({
+    page,
+}) => {
+    await opened(page);
+    const same = await page.evaluate(`(async () => {
+        const first = new AbortController();
+        const one = all(first.signal);
+        kit.dialog(first.signal)(document.querySelector('#finish'));
+        document.querySelector('#busy').setAttribute('data-busy', '');
+        // The busy mark goes on as the button's observer hears data-busy.
+        await null;
+        window.marks = 0;
+        new MutationObserver((records) => {
+            marks += records.length;
+        }).observe(document.querySelector('#busy'), { attributeFilter: ['aria-disabled'] });
+        first.abort();
+        await Promise.resolve();
+        window.dialogOpen = document.querySelector('#end-game').open;
+        const two = all(new AbortController().signal);
+        return Object.keys(one).filter((name) => one[name] === two[name]);
+    })()`);
+    expect(same).toEqual([]);
+    expect(await attached(page)).toEqual(ALL);
+    // The busy mark came off with the takedown and went back with the new attach, and the dialog
+    // was closed.
+    expect(await page.evaluate('marks')).toBe(2);
+    await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
+    expect(await page.evaluate('dialogOpen')).toBe(false);
+});
+
+test('hands focus back from a toast taken down and then removed from the page in one task', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#start').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`(() => {
+        controller.abort();
+        document.querySelector('.dk-toast').remove();
+    })()`);
+    await expect(page.locator('#start')).toBeFocused();
 });
