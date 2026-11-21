@@ -1,4 +1,12 @@
-import { StrictMode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+    StrictMode,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 
 import type { Say } from '../src/controls.js';
@@ -25,7 +33,11 @@ import {
  * call each piece's ref with null, two forms the form's ref moves between, and a way to draw the
  * provider afresh, a part that asks for focus on one field as it first draws and then on another,
  * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
- * refuses as it first draws, and a form behind a ref made afresh on every render.
+ * refuses as it first draws, a form behind a ref made afresh on every render, a form, a row of cells
+ * and a busy button behind arrows that return the hook's cleanup, drawn again by the page, two rows
+ * of cells and a busy button another hook joins through refs that merge both, a form and a row of
+ * cells that move from one hook's ref to another's, and a form two hooks share, either of which the
+ * page drops.
  */
 
 export type Strict = {
@@ -35,6 +47,7 @@ export type Strict = {
     move: (done: number) => void;
     leave: () => void;
     nullRefs: () => void;
+    staleCleanup: () => void;
     moveForm: () => void;
     speak?: Say;
     remount: () => void;
@@ -45,11 +58,21 @@ export type Strict = {
     turnRows: () => void;
     showFirstRefusal: () => void;
     churns: number;
+    redraw: () => void;
+    busyAfresh: (on: boolean) => void;
+    joinBusy: (on: boolean) => void;
+    join: () => void;
+    handOff: () => void;
+    dropHook: (which: 'older' | 'newer') => void;
+    invalids: string[];
+    rovedBy: string[];
 };
 const page = window as unknown as Strict;
 page.moves = 0;
 page.focusesOnA = 0;
 page.churns = 0;
+page.invalids = [];
+page.rovedBy = [];
 page.said = [];
 
 /** Notes each message as it is said, a notice given as a function read as it is said. */
@@ -100,6 +123,15 @@ const Pieces = () => {
     };
     // Each ref called with null, as a helper written to merge refs before React 19 calls it, dropping
     // the cleanup.
+    // The form's cleanup kept past a new attach of the same form and called again, as a page that
+    // holds on to an old cleanup does.
+    page.staleCleanup = () => {
+        const element = document.getElementById('form') as HTMLFormElement | null;
+        const stale = form(element);
+        if (typeof stale === 'function') stale();
+        form(element);
+        if (typeof stale === 'function') stale();
+    };
     page.nullRefs = () => {
         for (const ref of [row, save, bar, form, heading]) ref(null);
     };
@@ -363,6 +395,239 @@ const ChurnForm = () => {
     );
 };
 
+/** Errors by field id, from the failures a form's check hands a page. */
+const errorsOf = (failures: readonly { readonly field: Element; readonly words: string }[]) =>
+    Object.fromEntries(failures.map(({ field, words }) => [field.id, words]));
+
+/** A `say` that notes who said each message, so a test finds which hook a refusal went through. */
+const sayAs =
+    (who: string): Say =>
+    (message) => {
+        const said = typeof message === 'function' ? message() : message;
+        if (said) page.said.push(`${who} ${said}`);
+    };
+
+/** One ref that calls each ref given and returns what takes down every one, as a page's helper. */
+const merged =
+    <Element,>(...refs: readonly ((element: Element | null) => (() => void) | void)[]) =>
+    (element: Element | null) => {
+        const cleanups = refs.map((ref) => ref(element));
+        return () => {
+            for (const cleanup of cleanups) cleanup?.();
+        };
+    };
+
+// A form, a row of cells and a busy button behind arrows that return what the hook's ref returns,
+// so each render makes a new ref that hands React the hook's cleanup, which React calls before the
+// new ref.
+const Returned = () => {
+    const [drawn, setDrawn] = useState(0);
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    page.redraw = () => {
+        setDrawn((now) => now + 1);
+    };
+    page.busyAfresh = setBusy;
+    const row = useRoving<HTMLDivElement>();
+    const save = useBusy<HTMLButtonElement>({ say });
+    const [form] = useFormRefusal<HTMLFormElement>({
+        say,
+        invalid: (failures) => {
+            setErrors(errorsOf(failures));
+        },
+    });
+    return (
+        <>
+            <div
+                id="returned-row"
+                role="toolbar"
+                aria-label="Returned"
+                data-drawn={drawn}
+                ref={(element) => row(element)}
+            >
+                <button type="button" id="returned-a">
+                    A
+                </button>
+                <button type="button" id="returned-b">
+                    B
+                </button>
+            </div>
+            <button
+                type="button"
+                id="returned-save"
+                className="dk-button"
+                ref={(element) => save(element)}
+                data-busy={busy ? 'Saving the table.' : undefined}
+            >
+                Save the table
+            </button>
+            <form
+                id="returned"
+                ref={(element) => form(element)}
+                onSubmit={(event) => event.preventDefault()}
+            >
+                <InputField
+                    id="returned-name"
+                    label="Table name"
+                    required
+                    error={errors['returned-name']}
+                />
+                <button type="submit">Make the table</button>
+            </form>
+        </>
+    );
+};
+
+// A busy button written by hand, whose page joins a heading's focus to it later through a ref that
+// merges both and calls the new hook's ref first, and a row of cells two hooks share through a ref
+// that merges both, made afresh on every render.
+const Joined = () => {
+    const [busy, setBusy] = useState(false);
+    const [joined, setJoined] = useState(false);
+    page.joinBusy = setBusy;
+    page.join = () => {
+        setJoined(true);
+    };
+    const save = useBusy<HTMLButtonElement>({ say });
+    const arrival = useArrivalFocus<HTMLButtonElement>('joined');
+    const ref = useMemo(
+        () => (joined ? merged(arrival, save) : merged(save)),
+        [joined, arrival, save]
+    );
+    const first = useRoving<HTMLDivElement>();
+    const second = useRoving<HTMLDivElement>();
+    return (
+        <>
+            <button
+                type="button"
+                id="joined"
+                className="dk-button"
+                ref={ref}
+                data-busy={busy ? 'Saving the deck.' : undefined}
+            >
+                Save the deck
+            </button>
+            <div
+                id="shared-row"
+                role="toolbar"
+                aria-label="Shared"
+                data-joined={String(joined)}
+                ref={merged(first, second)}
+            >
+                <button type="button" id="shared-a">
+                    A
+                </button>
+                <button type="button" id="shared-b">
+                    B
+                </button>
+            </div>
+        </>
+    );
+};
+
+// A form with its errors shown and a row of cells that stay on the page while the page moves each
+// from one hook's ref to another's, as a form that edits or adds by one flag.
+const HandOff = () => {
+    const [editing, setEditing] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    page.handOff = () => {
+        setEditing(true);
+    };
+    const invalidAs = (who: string) => (failures: Parameters<typeof errorsOf>[0]) => {
+        page.invalids.push(who);
+        setErrors(errorsOf(failures));
+    };
+    const [adding] = useFormRefusal<HTMLFormElement>({
+        say: sayAs('Adding:'),
+        invalid: invalidAs('adding'),
+    });
+    const [edit] = useFormRefusal<HTMLFormElement>({
+        say: sayAs('Editing:'),
+        invalid: invalidAs('editing'),
+    });
+    const addRow = useRoving<HTMLDivElement>({
+        onMove: () => {
+            page.rovedBy.push('adding');
+        },
+    });
+    const editRow = useRoving<HTMLDivElement>({
+        onMove: () => {
+            page.rovedBy.push('editing');
+        },
+    });
+    return (
+        <>
+            <div
+                id="handed-row"
+                role="toolbar"
+                aria-label="Handed"
+                data-editing={String(editing)}
+                ref={editing ? editRow : addRow}
+            >
+                <button type="button" id="handed-a">
+                    A
+                </button>
+                <button type="button" id="handed-b">
+                    B
+                </button>
+            </div>
+            <form
+                id="handed"
+                ref={editing ? edit : adding}
+                onSubmit={(event) => event.preventDefault()}
+            >
+                <InputField
+                    id="handed-name"
+                    label="Player name"
+                    required
+                    error={errors['handed-name']}
+                />
+                <button type="submit">Save the player</button>
+            </form>
+        </>
+    );
+};
+
+// A form two hooks share through a ref that merges both, the older called first, either of which
+// the page drops.
+const SharedForm = () => {
+    const [dropped, setDropped] = useState<'none' | 'older' | 'newer'>('none');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    page.dropHook = setDropped;
+    const invalidAs = (who: string) => (failures: Parameters<typeof errorsOf>[0]) => {
+        page.invalids.push(who);
+        setErrors(errorsOf(failures));
+    };
+    const [older] = useFormRefusal<HTMLFormElement>({
+        say: sayAs('Older:'),
+        invalid: invalidAs('older'),
+    });
+    const [newer] = useFormRefusal<HTMLFormElement>({
+        say: sayAs('Newer:'),
+        invalid: invalidAs('newer'),
+    });
+    const ref = useMemo(
+        () =>
+            dropped === 'none'
+                ? merged(older, newer)
+                : dropped === 'older'
+                  ? merged(newer)
+                  : merged(older),
+        [dropped, older, newer]
+    );
+    return (
+        <form
+            id="shared"
+            ref={ref}
+            data-dropped={dropped}
+            onSubmit={(event) => event.preventDefault()}
+        >
+            <InputField id="shared-name" label="Club name" required error={errors['shared-name']} />
+            <button type="submit">Save the club</button>
+        </form>
+    );
+};
+
 const FirstRefusals = () => {
     const [shown, setShown] = useState(false);
     page.showFirstRefusal = () => {
@@ -393,6 +658,10 @@ const App = () => {
                 <TwoRows />
                 <FirstRefusals />
                 <ChurnForm />
+                <Returned />
+                <Joined />
+                <HandOff />
+                <SharedForm />
             </main>
         </StatusProvider>
     );

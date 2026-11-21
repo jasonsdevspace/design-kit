@@ -254,6 +254,13 @@ window.attach = (name) => {
     pieces[name].use(window.handles[name]);
 };
 window.abort = (name) => controllers[name].abort();
+// Aborted and attached again with a fresh controller in one task, as a ref made afresh does.
+window.join = (name) => {
+    const old = controllers[name];
+    window.controllers[name] = new AbortController();
+    old.abort();
+    window.handles[name] = pieces[name].attach(controllers[name].signal);
+};
 window.after = (name) => pieces[name].after(handles[name]);
 // The theme's own listeners, which stay for the page's life, set before anything is counted.
 const once = new AbortController();
@@ -337,6 +344,34 @@ for (const name of PIECES) {
             await page.clock.runFor(10_000);
             await expectBack(page, before, { what: `${what}, after its teardown` });
         }
+    });
+}
+
+for (const name of PIECES.filter((piece) => piece !== 'a focus request')) {
+    test(`keeps ${name} joined seven times over without growing, and leaves nothing once taken down`, async ({
+        page,
+    }) => {
+        await opened(page);
+        const before = await leaksOf(page);
+        await page.evaluate((piece) => {
+            (window as unknown as { attach: (name: string) => void }).attach(piece);
+        }, name);
+        await page.clock.runFor(150);
+        const held = await leaksOf(page);
+        for (let round = 1; round <= ROUNDS; round += 1) {
+            const what = `${name}, joined ${String(round)} times`;
+            await page.evaluate((piece) => {
+                (window as unknown as { join: (name: string) => void }).join(piece);
+            }, name);
+            expect(await leaksOf(page), what).toEqual(held);
+            await expectEngineAgrees(page);
+        }
+        await page.evaluate((piece) => {
+            (window as unknown as { abort: (name: string) => void }).abort(piece);
+        }, name);
+        await expectBack(page, before, { what: `${name}, taken down after its joins` });
+        await page.clock.runFor(10_000);
+        await expectBack(page, before, { what: `${name}, later` });
     });
 }
 

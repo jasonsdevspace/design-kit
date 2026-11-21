@@ -12,31 +12,31 @@ asked for inside the same `startTransition`, and one drawn in another root is no
 Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do, in
 place of being called with null. Each ref makes an `AbortController` as each element arrives and
 hands its attach the signal, as record 22 has every attach take, and the cleanup aborts it, which
-takes the piece down, a form's check included. A hook keeps each element it holds with its cleanup,
-so one ref on two elements keeps the one left working as the other goes, and each form refuses a
-failed submit through itself. A ref called with null by a helper that merges refs and drops the
-cleanup lets every element go, since it does not say which left, and takes them down a microtask
-later, except one the ref is called with again by then, so a ref made afresh on every render keeps
-its element attached as it was. `StatusProvider` still waits a microtask before its cleanup lets its
-line go, and keeps the line's controller where the same line comes back, since React's second run in
-development calls the cleanup and the ref again, and an abort at once would let the line go and
-empty it of the words said in the first run. The function `useStatus` hands out is the provider's
-own, which says through whichever attach holds the line, so it keeps speaking after that run and
-says nothing once the provider has gone. A focus request still waiting when its component unmounts,
-or when an `Activity` hides it, is made then, with where focus was read as it was asked. The hook
-does not try to tell which update unmounted it, since React tells a hook nothing of that, and
-`moveFocus`, which lands only where focus is still where it was or has fallen to the page's body,
-keeps a visitor's place. So a request in a transition an urgent update overtook lands before the
-transition draws, and goes to its fallbacks where the transition draws its target. Nothing at
-unmount calls a focus request off, only what it returned or a newer request, while a refusal still
-waiting as its form's component unmounts is called off a microtask later, unless React's second run
-has brought the component back. The hook hands a focus request no signal of the component's, which
-that unmount would abort. A request asked after the cleanup waits a frame. Where the component's
-effects have come back by then, as an `Activity` shown again or React's second run brings them, it
-waits for the component's render as any request does. Otherwise it is made late, taking focus only
-from the page's body, whatever `from` it was given, and only where its target is in sight, so a
-panel that closes and then asks after an await still moves focus back to its opener, and one whose
-target an `Activity` hides with the component is held until the component shows.
+takes the piece down once no other signal holds it, a form's check included. A hook keeps each
+element it holds with its cleanup, so one ref on two elements keeps the one left working as the
+other goes, and each form refuses a failed submit through itself. The hooks take their part down at
+once, the cleanup aborting the element's signal and dropping the element in one call, and a ref
+called with null by a helper that merges refs and drops the cleanup does so for every element, since
+it does not say which left. The kit keeps the control a microtask after the last signal holding it
+aborts, as record 23 has it, so a ref made afresh on every render, an element passed from one hook's
+ref to another's and React's second run in development keep it as it was, and `StatusProvider` keeps
+no controller of its own. The function `useStatus` hands out is the provider's own, which says
+through whichever attach holds the line, so it keeps speaking after that run and says nothing once
+the provider has gone. A focus request still waiting when its component unmounts, or when an
+`Activity` hides it, is made then, with where focus was read as it was asked. The hook does not try
+to tell which update unmounted it, since React tells a hook nothing of that, and `moveFocus`, which
+lands only where focus is still where it was or has fallen to the page's body, keeps a visitor's
+place. So a request in a transition an urgent update overtook lands before the transition draws, and
+goes to its fallbacks where the transition draws its target. Nothing at unmount calls a focus
+request off, only what it returned or a newer request, while a refusal still waiting as its form's
+component unmounts is called off a microtask later, unless React's second run has brought the
+component back. The hook hands a focus request no signal of the component's, which that unmount
+would abort. A request asked after the cleanup waits a frame. Where the component's effects have
+come back by then, as an `Activity` shown again or React's second run brings them, it waits for the
+component's render as any request does. Otherwise it is made late, taking focus only from the page's
+body, whatever `from` it was given, and only where its target is in sight, so a panel that closes
+and then asks after an await still moves focus back to its opener, and one whose target an
+`Activity` hides with the component is held until the component shows.
 
 ## Context
 
@@ -220,5 +220,10 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   or two rows of cells, it finds the one left still refusing or taking new options whichever is
   taken away, and a failed submit refused through the form submitted. It finds a form behind a ref
   made afresh on every render keeping its check, its errors and its refusal through a failed submit.
+  It finds a form, a row of cells and a busy button mid-wait behind arrows that return the hook's
+  cleanup keeping their check, their observer and their wait as the page draws again, a busy wait
+  and a row of cells kept where another hook joins them through a merged ref, a form and a row of
+  cells passed from one hook's ref to another's kept under that hook's options, and either of two
+  hooks on one form dropped leaving the other's check and refusal.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.

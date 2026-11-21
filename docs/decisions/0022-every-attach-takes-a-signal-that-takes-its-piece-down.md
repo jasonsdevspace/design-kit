@@ -1,6 +1,8 @@
 # 22. Every attach takes a signal that takes its piece down
 
-**Status:** accepted
+**Status:** accepted, amended by record 23, under which every signal that attaches an element holds
+its control, taken down a microtask after the last of them aborts unless the element is attached
+again by then, and the control runs on its newest holder's options
 
 ## Context
 
@@ -20,10 +22,11 @@ differently.
 
 - **The DOM takes a signal.** Section 3.3 of the DOM standard asks an API whose operations can be
   aborted to take an `AbortSignal` through a `signal` member, to act at once on one already aborted,
-  and to treat an abort as its own cancel, and asks an API that returns no promise to follow these
-  as far as it can. `addEventListener` does: a listener given a signal already aborted is not added,
-  and an abort takes it off as `removeEventListener` would. A listener added again with the same
-  type, callback and capture is ignored, its signal with it, so the first add owns the listener.
+  and to treat an abort as its own cancel, which record 23 qualifies by a microtask for a control's
+  takedown, and asks an API that returns no promise to follow these as far as it can.
+  `addEventListener` does: a listener given a signal already aborted is not added, and an abort
+  takes it off as `removeEventListener` would. A listener added again with the same type, callback
+  and capture is ignored, its signal with it, so the first add owns the listener.
 - **React 19 hands a ref its cleanup.** A ref callback may return a cleanup, which React calls when
   the element leaves, in place of calling the ref again with null, which React plans to deprecate. A
   hook can make an `AbortController` in its ref and return what aborts it, so the attach's signal is
@@ -67,7 +70,7 @@ Option E.
   added after the element where it takes none. What it returns is unchanged.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
-  it, so a later attach starts afresh. A piece already attached is left as it is, and the new
+  it, so a later attach finds nothing of it. A piece already attached is left as it is, and the new
   options are not taken. What the attach returns does nothing.
 - **Aborting is the same as detach.** Everything the attach set up comes off: its listeners,
   observers, timers and frames, a listener on the document it added, and what it drew or showed, as
@@ -82,12 +85,9 @@ Option E.
 - **Calls after teardown do nothing, silently.** What an attach returned, such as a status line's
   `say` or a toast's show, does nothing once its piece is taken down, as do a timer or an answer
   that comes late, such as the clipboard's. Nothing throws and nothing warns.
-- **The first attach owns the piece's lifetime.** Attaching a piece again before it is taken down
-  is the call record 13 describes: it returns the first attach's handle, takes any new options, and
-  leaves its own signal unheard. It works as `addEventListener` does with a listener added twice,
-  which keeps the first and ignores the second, signal and all. So one part of a page cannot take
-  down a piece another part attached, and the piece is attached again only once its first attach
-  is taken down.
+- **A later attach joins the piece.** Attaching a piece again before it is taken down is the call
+  record 13 describes, and returns the first attach's handle. Record 23 sets which signals hold the
+  piece and whose options it runs on.
 - **A focus request still lands when its component unmounts before the request is drawn,** so a
   row that asks for focus on the next one as it is deleted moves focus there, as record 20 already
   has a request made after unmount.
@@ -97,20 +97,23 @@ Option E.
   every page keeps working as it is, which makes the contract a patch release, 0.9.3.
 
 One internal helper keeps the contract, `teardown` in `src/teardown.ts`, which no entry exports.
-Given the page's signal, it gives null where that signal is already aborted, so the attach returns
-at once, and otherwise a signal of its own that every listener of the attach takes, `add` for what a
-signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel, and
-`stop`, which the attach returns as its detach. `stop` aborts its own signal and runs what `add`
-kept, once, and the page's signal calls it on abort. An undo given to `add` after the teardown has
-run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
-variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
-once it is aborted. Anything that waits longer than one task, a timer or a frame, is cleared rather
-than left to check. The listener on the page's signal comes off with the teardown, so a signal a
-page keeps for longer holds nothing of a piece already taken down. Until then the page's signal
-keeps the piece alive, so a page hands over a signal that lives no longer than the piece. In 0.9.3
-the theme switch, the copy button, the status line, the toast, the form, the panels, the stepper, a
-table's frame, a group the arrow keys move through, a busy button, progress, the dialog and
-`moveFocus` keep the contract through it.
+Given the page's signal, it gives a signal of its own that every listener of the attach takes, `add`
+for what a signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel,
+and `stop`, which the attach returns as its detach. Where the page's signal is already aborted, it
+gives a teardown already stopped, whose `add` runs each undo at once, so it never gives null. That
+is no guard, since what an attach registers after its undos would outlive them, so each attach
+checks for a signal already aborted before it sets anything up. `stop` aborts its own signal and
+runs what `add` kept, once, at once when the attach's detach calls it, and since record 23 a
+microtask after every signal holding the piece has aborted, unless the element is attached again by
+then. An undo given to `add` after the teardown has run runs at once. Work an attach sets after it
+is set up follows one of two rules: it lives in a variable an undo kept at setup clears, or its
+callback reads the attach's signal and does nothing once it is aborted. Anything that waits longer
+than one task, a timer or a frame, is cleared rather than left to check. The listener on the page's
+signal comes off with the teardown, so a signal a page keeps for longer holds nothing of a piece
+already taken down. Until then the page's signal keeps the piece alive, so a page hands over a
+signal that lives no longer than the piece. In 0.9.3 the theme switch, the copy button, the status
+line, the toast, the form, the panels, the stepper, a table's frame, a group the arrow keys move
+through, a busy button, progress, the dialog and `moveFocus` keep the contract through it.
 
 ## Consequences
 
@@ -126,19 +129,18 @@ table's frame, a group the arrow keys move through, a busy button, progress, the
 
 The paths are in `packages/design-kit`.
 
-- `src/teardown.test.ts` finds the helper gives null for a signal already aborted, runs what it
-  keeps once and in order whether the page aborts or the attach detaches first, runs every undo
-  where one throws and reports the error, runs one kept after the teardown at once, and takes its
-  listener off the page's signal once it has run.
+- `src/teardown.test.ts` finds the helper given a signal already aborted is already stopped and runs
+  what it is given at once, runs what it keeps once and in order whether the page aborts or the
+  attach detaches first, runs every undo where one throws and reports the error, runs one kept after
+  the teardown at once, and takes its listener off the page's signal once it has run.
 - `e2e/teardown.spec.tsx` attaches the theme switch and the copy button with a signal already
   aborted and finds them hidden and attached afresh by a later call, a copy button attached again
   with an aborted signal keeping its first source, an abort hiding both and putting the copy
   button's word back to Copy, a press answered after the abort silent and a theme chosen after it
-  unseen by the switch, an old detach called twice and its signal aborted leaving a newer attach
-  working, and a later attach's signal unheard while the first attach's takes the piece down. It
-  runs in Chromium, WebKit and Firefox, and counts the listeners on the switch's and the button's
-  own elements, finding none added for an aborted signal and every one off after an abort, and the
-  document's, finding the switch's listener there off after an abort with its choices open.
+  unseen by the switch, and an old detach called twice and its signal aborted leaving a newer attach
+  working. It runs in Chromium, WebKit and Firefox, and counts the listeners on the switch's and the
+  button's own elements, finding none added for an aborted signal and every one off after an abort,
+  and the document's, finding the switch's listener there off after an abort with its choices open.
 - `e2e/signal.spec.tsx` holds the stepper, a table's frame, a group the arrow keys move through, a
   busy button, progress, the dialog and `moveFocus` to the same rules in the three engines, with a
   busy wait and a pending focus request called off by an abort. It counts their listeners and finds
@@ -161,20 +163,25 @@ The paths are in `packages/design-kit`.
 ## Sources
 
 - WHATWG, DOM Standard, [add an event listener](https://dom.spec.whatwg.org/#add-an-event-listener)
-  and [using AbortController and AbortSignal objects in APIs](https://dom.spec.whatwg.org/#abortcontroller-api-integration),
+  and [using AbortController and AbortSignal objects in
+  APIs](https://dom.spec.whatwg.org/#abortcontroller-api-integration), read 2026-11-20.
+- MDN, [`addEventListener`'s
+  `signal`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#signal),
   read 2026-11-20.
-- MDN, [`addEventListener`'s `signal`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#signal),
-  read 2026-11-20.
-- React, [cleanup functions for refs](https://react.dev/blog/2024/12/05/react-19#cleanup-functions-for-refs),
-  React 19, 2024-12-05.
+- React, [cleanup functions for
+  refs](https://react.dev/blog/2024/12/05/react-19#cleanup-functions-for-refs), React 19,
+  2024-12-05.
 - Floating UI, [autoUpdate](https://floating-ui.com/docs/autoUpdate), read 2026-11-20.
 - Tippy.js, [methods](https://atomiks.github.io/tippyjs/v6/methods/) and
   [createTippy](https://github.com/atomiks/tippyjs/blob/master/src/createTippy.ts), version 6, read
   2026-11-20.
 - focus-trap, [README](https://github.com/focus-trap/focus-trap) and
   [index.js](https://github.com/focus-trap/focus-trap/blob/master/index.js), read 2026-11-20.
-- Headless UI, [disposables](https://github.com/tailwindlabs/headlessui/blob/main/packages/%40headlessui-react/src/utils/disposables.ts),
+- Headless UI,
+  [disposables](https://github.com/tailwindlabs/headlessui/blob/main/packages/%40headlessui-react/src/utils/disposables.ts),
   read 2026-11-20.
-- MDN, [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose)
-  and its [compatibility data](https://github.com/mdn/browser-compat-data/blob/main/javascript/builtins/Symbol.json),
-  read 2026-11-20.
+- MDN,
+  [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose)
+  and its [compatibility
+  data](https://github.com/mdn/browser-compat-data/blob/main/javascript/builtins/Symbol.json), read
+  2026-11-20.

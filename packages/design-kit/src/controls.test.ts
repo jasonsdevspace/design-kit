@@ -37,7 +37,7 @@ describe('the controls', () => {
             const page = new AbortController();
             const first = attachStatus(line, { signal: page.signal });
             expect(getEventListeners(page.signal, 'abort')).toHaveLength(1);
-            // As `StatusProvider` lets its line go and a later one attaches it.
+            // As a toast's teardown lets its own line go and a later attach takes it.
             releaseLine(line);
             const again = attachStatus(line);
             expect(again).not.toBe(first);

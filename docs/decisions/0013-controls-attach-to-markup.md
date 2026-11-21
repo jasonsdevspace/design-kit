@@ -25,7 +25,12 @@ only for that listener, and by record 22, under which an attach takes a signal t
 down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
 controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
 than a function of the usual size, and then at 18.5 KB, once moving the status line, the toast, the
-form, the panels and the remaining attaches onto it took them past 17.75 KB
+form, the panels and the remaining attaches onto it took them past 17.75 KB, and by record 23, which
+ends that rule for a later call's `signal`, under which each signal that attaches an element holds
+its control and the control runs on its newest holder's options, which left them less room under
+18.5 KB than a function of the usual size, so the rule set them at 18.75 KB, and then at 19 KB, once
+one rule for handing focus back and a toast that forgets focus a visitor moved left less room under
+18.75 KB than a function of the usual size
 
 ## Context
 
@@ -77,19 +82,20 @@ there is above Firefox 120, the kit's floor, so it is positioned under the butto
 order of its own. Elsewhere the button stays hidden and the group is the row of choices.
 
 Every attach function follows one rule for being called again: it attaches the element once and
-returns what it returned the first time. Where it takes options, options given replace the last, so
-a page that means to change them can, and a call with none leaves them as they were, so another part
-of a page that attaches the same element does not undo what the first set. Since 0.9.3 the one
-option a later call does not take is its `signal`, so the first attach owns the piece until it is
-taken down, and a call given a signal already aborted takes nothing and returns a function that does
-nothing, as record 22 has it. A dialog attached to stay therefore still stays when attached again
-with no options, and a copy button attached again with a new source copies from it. A part a control
-cannot work without, such as a stepper's buttons, a toast's status line, its action and its close
-button, since any message may carry an action, or a table's frame, throws an error that names it, so
-a page that left one out learns of it where it attached. A part it can do without, such as a
-stepper's status line, is skipped. A theme switch with no choices yet is the one exception: it is
-left hidden and returns a function that does nothing, so a page that attaches it before its choices
-are drawn can attach it again once they are.
+returns what it returned the first time. Where it takes options, options given replace the last,
+under record 23's rule for which holder's options apply, so a page that means to change them can,
+and a call with none leaves them as they were, so another part of a page that attaches the same
+element does not undo what the first set. Since 0.9.3 each call's `signal` holds the piece, which is
+taken down a microtask after every signal holding it has aborted, and the piece runs on the options
+of its newest holder, as record 23 has it, and a call given a signal already aborted takes nothing
+and returns a function that does nothing, as record 22 has it. A dialog attached to stay therefore
+still stays when attached again with no options, and a copy button attached again with a new source
+copies from it. A part a control cannot work without, such as a stepper's buttons, a toast's status
+line, its action and its close button, since any message may carry an action, or a table's frame,
+throws an error that names it, so a page that left one out learns of it where it attached. A part it
+can do without, such as a stepper's status line, is skipped. A theme switch with no choices yet is
+the one exception: it is left hidden and returns a function that does nothing, so a page that
+attaches it before its choices are drawn can attach it again once they are.
 
 ## Consequences
 
@@ -240,7 +246,15 @@ the usual size, and the median a function adds is now 586 bytes, so the rule set
 17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0. The
 status line, the toast, the form, the panels and the remaining attaches moving onto the helper took
 the controls to 18,269 bytes together, past the 17.75 KB they held, and the median a function adds
-is now 606 bytes, so the rule sets them at 18.5 KB.
+is now 606 bytes, so the rule sets them at 18.5 KB. A later cleanup of the status line brought them
+to 18,117 bytes. Record 23's holders, a control kept through an abort and an attach of its element
+in one task, took the controls to 18,553 bytes together, from 18,117, under the 18.5 KB they held
+but with less room than a function of the usual size, and the median a function adds is now 635
+bytes, so the rule sets them at 18.75 KB. One rule for handing focus back, shared by the toast, the
+dialog and the panels, with a focus request asked before a handback still landing, and a toast that
+forgets focus a visitor moved while it is off the page, took the controls to 18,638 bytes together,
+under the 18.75 KB they held but with less room than a function of the usual size, and the median a
+function adds is now 641 bytes, so the rule sets them at 19 KB.
 
 ## The sheets beside other systems
 
