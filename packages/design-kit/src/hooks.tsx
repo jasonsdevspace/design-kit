@@ -38,8 +38,18 @@ import { releaseLine } from './line.js';
  * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
  * function that acts once keeps only what calls it off, and each returns what the function returns,
  * the same across renders. `./react` exports them beside the markup, whose components run
- * no effect.
+ * no effect. Each ref makes an `AbortController` as its element arrives and returns the cleanup
+ * that aborts it, which React 19 calls as the element leaves in place of calling the ref with null,
+ * so a hook takes its piece down by the signal record 22 has every attach take.
  */
+
+/**
+ * Runs the detach an attach returned once `signal` aborts, for an attach that takes no signal of
+ * its own, so the hook takes it down by its signal all the same.
+ */
+const detachOn = (signal: AbortSignal, detach: () => void) => {
+    signal.addEventListener('abort', detach, { once: true });
+};
 
 /** What a status provider hands the parts of the page under it. */
 const Speaker = createContext<Say | null>(null);
@@ -67,29 +77,24 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
     const drawn = useRef<HTMLParagraphElement | null>(null);
     // The moments set to say held words, called off if the line goes before they come.
     const later = useRef<number[]>([]);
-    const line = useCallback((element: HTMLParagraphElement | null) => {
-        if (!element) {
-            // The line is let go of once this commit is done, so nothing said on it is left running
-            // once the screen goes, unless the same line comes back in it, as React's second run in
-            // development brings it, which keeps its words and the moments set for them.
-            const left = drawn.current;
-            drawn.current = null;
-            if (left)
-                queueMicrotask(() => {
-                    if (drawn.current === left) return;
-                    if (drawn.current === null) {
-                        for (const timer of later.current) window.clearTimeout(timer);
-                        later.current = [];
-                    }
-                    releaseLine(left);
-                });
-            handle.current = null;
-            held.current = [];
-            gone.current = true;
-            return;
-        }
+    // The line attached and the controller its attach was given, kept while the same line comes
+    // back in one commit, so the attach that first heard the controller is the one it takes down.
+    const attached = useRef<{
+        readonly element: HTMLParagraphElement;
+        readonly controller: AbortController;
+    } | null>(null);
+    const line = useCallback((element: HTMLParagraphElement) => {
         gone.current = false;
         drawn.current = element;
+        const kept =
+            attached.current?.element === element
+                ? attached.current
+                : { element, controller: new AbortController() };
+        if (kept !== attached.current)
+            detachOn(kept.controller.signal, () => {
+                releaseLine(element);
+            });
+        attached.current = kept;
         handle.current = attachStatus(element);
         const [first, ...rest] = held.current;
         held.current = [];
@@ -105,6 +110,25 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
                 })
             ),
         ];
+        return () => {
+            drawn.current = null;
+            handle.current = null;
+            held.current = [];
+            gone.current = true;
+            // The line is let go of once this commit is done, so nothing said on it is left running
+            // once the screen goes, unless the same line comes back in it, as React's second run in
+            // development brings it. Aborting at once would empty the line of words said in the
+            // first run, so the controller waits a microtask and is kept if the line comes back.
+            queueMicrotask(() => {
+                if (drawn.current === element) return;
+                if (drawn.current === null) {
+                    for (const timer of later.current) window.clearTimeout(timer);
+                    later.current = [];
+                }
+                if (attached.current === kept) attached.current = null;
+                kept.controller.abort();
+            });
+        };
     }, []);
     const speak = useCallback<Say>((message, options) => {
         if (handle.current) handle.current(message, options);
@@ -154,10 +178,14 @@ type Owed = { readonly make: () => () => void; made: boolean; cancel: (() => voi
  * the page's change, and a layout effect makes the request once that render commits, so it lands
  * in the frame that paints the change. Each request takes the place of one not yet landed, and what
  * it returns calls off that request alone, so a stale one never calls off a newer. A request made
- * once the owner has unmounted has no render to wait for and is made at once, and one not yet
- * landed as the owner unmounts is called off.
+ * once the owner has unmounted has no render to wait for and is made at once. One still waiting for
+ * its render as the owner unmounts, asked in the same moment, is made then where `landsAtUnmount`
+ * is given, since that render never comes, and called off otherwise, as one made but not yet landed
+ * always is. What it returns beside says whether the owner is still mounted.
  */
-const useAfterCommit = (): AfterCommit => {
+const useAfterCommit = (
+    landsAtUnmount: boolean
+): readonly [AfterCommit, { readonly current: boolean }] => {
     const latest = useRef<Owed | null>(null);
     const mounted = useRef(false);
     const [asked, ask] = useReducer((count: number) => count + 1, 0);
@@ -171,11 +199,15 @@ const useAfterCommit = (): AfterCommit => {
         mounted.current = true;
         return () => {
             mounted.current = false;
-            latest.current?.cancel?.();
+            const owed = latest.current;
             latest.current = null;
+            if (owed && !owed.made && landsAtUnmount) {
+                owed.made = true;
+                owed.cancel = owed.make();
+            } else owed?.cancel?.();
         };
-    }, []);
-    return useCallback<AfterCommit>((make) => {
+    }, [landsAtUnmount]);
+    const afterCommit = useCallback<AfterCommit>((make) => {
         latest.current?.cancel?.();
         const owed: Owed = { make, made: false, cancel: null };
         latest.current = owed;
@@ -190,6 +222,7 @@ const useAfterCommit = (): AfterCommit => {
             if (latest.current === owed) latest.current = null;
         };
     }, []);
+    return [afterCommit, mounted] as const;
 };
 
 /**
@@ -202,17 +235,26 @@ const useAfterCommit = (): AfterCommit => {
  * component again. A change made in a transition is asked for inside the same `startTransition`,
  * so the request waits for the render that draws it. A change drawn in another React root is not
  * waited for. Each call is a new request that takes the place of one not yet landed, so the last
- * asked for wins, and returns what calls that request off. A request not yet landed when the
- * component unmounts is called off, and one asked for after it has unmounted is made at once.
+ * asked for wins, and returns what calls that request off. A request asked as the component
+ * unmounts still lands, so a row that asks for focus on the next one as it is removed moves focus
+ * there, and one made but not yet landed when it unmounts is called off. One asked for after it has
+ * unmounted is made at once, and lands only where focus has fallen to the page, so a visitor who
+ * has moved on to the next screen is left where they are.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
-    const afterCommit = useAfterCommit();
+    const [afterCommit, mounted] = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
-            const from = options?.from === undefined ? activeOf() : options.from;
+            // Asked after the component has gone, where focus stands is no longer the place the
+            // change began from, so the request takes focus only from the page's body.
+            const from =
+                options?.from === undefined ? (mounted.current ? activeOf() : null) : options.from;
+            // No signal tied to the component goes with the request, since the unmount that makes
+            // a request asked in that moment would abort it too, so it is called off only by what
+            // moveFocus returns.
             return afterCommit(() => moveFocus(target, { ...options, from }));
         },
-        [afterCommit]
+        [afterCommit, mounted]
     );
 };
 
@@ -261,15 +303,15 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         // focus, and spends the press, so no view drawn later takes it again.
         return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
-    return useCallback((element: Heading | null) => {
+    return useCallback((element: Heading) => {
         heading.current = element;
         // Only an element that cannot take focus by itself, such as a heading or a link with no
         // address, so a button, a link or a field keeps its place in the Tab order.
-        const takes =
-            element !== null &&
-            element.tabIndex >= 0 &&
-            !element.matches('a:not([href]), area:not([href])');
-        if (element && !element.hasAttribute('tabindex') && !takes) element.tabIndex = -1;
+        const takes = element.tabIndex >= 0 && !element.matches('a:not([href]), area:not([href])');
+        if (!element.hasAttribute('tabindex') && !takes) element.tabIndex = -1;
+        return () => {
+            if (heading.current === element) heading.current = null;
+        };
     }, []);
 };
 
@@ -307,7 +349,9 @@ export const useFormRefusal = <Form extends HTMLElement>(
         latest.current = { options, speaker };
     });
     const refuser = useRef<Refuse | null>(null);
-    const afterCommit = useAfterCommit();
+    // A refusal still waiting as the form's component unmounts is called off, since the form it
+    // would point at and speak for is leaving with it.
+    const [afterCommit] = useAfterCommit(false);
     // Where focus was as the refusal was asked for, not as the render that draws the errors
     // commits, so a visitor who moved it since is not pulled back.
     const refuse = useCallback<Refuse>(
@@ -318,32 +362,35 @@ export const useFormRefusal = <Form extends HTMLElement>(
         [afterCommit]
     );
     const ref = useCallback(
-        (form: Form | null) => {
-            refuser.current = form
-                ? attachForm(form, {
-                      say: (words, settle) => {
-                          const { options: now, speaker: line } = latest.current;
-                          (now.say ?? line)?.(words, settle);
-                      },
-                      summary: () => latest.current.options.summary?.() ?? null,
-                      // Read as each failure is put in words, so words written inline on every
-                      // render are never set again.
-                      errorWords: new Proxy(
-                          {},
-                          {
-                              get: (_, failure) =>
-                                  typeof failure === 'string'
-                                      ? latest.current.options.errorWords?.[failure as Failure]
-                                      : undefined,
-                          }
-                      ),
-                      // A refusal of its own, made once the errors the page sets are drawn.
-                      invalid: (failures) => {
-                          latest.current.options.invalid(failures);
-                          refuse();
-                      },
-                  })
-                : null;
+        (form: Form) => {
+            const controller = new AbortController();
+            refuser.current = attachForm(form, {
+                say: (words, settle) => {
+                    const { options: now, speaker: line } = latest.current;
+                    (now.say ?? line)?.(words, settle);
+                },
+                summary: () => latest.current.options.summary?.() ?? null,
+                // Read as each failure is put in words, so words written inline on every render are
+                // never set again.
+                errorWords: new Proxy(
+                    {},
+                    {
+                        get: (_, failure) =>
+                            typeof failure === 'string'
+                                ? latest.current.options.errorWords?.[failure as Failure]
+                                : undefined,
+                    }
+                ),
+                // A refusal of its own, made once the errors the page sets are drawn.
+                invalid: (failures) => {
+                    latest.current.options.invalid(failures);
+                    refuse();
+                },
+            });
+            return () => {
+                controller.abort();
+                refuser.current = null;
+            };
         },
         [refuse]
     );
@@ -366,7 +413,6 @@ export const useRoving = <Group extends HTMLElement>(
         latest.current = options;
     });
     const group = useRef<Group | null>(null);
-    const detach = useRef<(() => void) | null>(null);
     const wired = useCallback(
         (): RovingOptions => ({
             orientation: latest.current.orientation,
@@ -388,15 +434,16 @@ export const useRoving = <Group extends HTMLElement>(
         attachRoving(group.current, wired());
     }, [orientation, names, wired]);
     return useCallback(
-        (element: Group | null) => {
-            if (element === group.current) return;
-            detach.current?.();
-            detach.current = null;
+        (element: Group) => {
             group.current = element;
-            if (!element) return;
             const now = latest.current;
             shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
-            detach.current = attachRoving(element, wired());
+            const controller = new AbortController();
+            detachOn(controller.signal, attachRoving(element, wired()));
+            return () => {
+                controller.abort();
+                if (group.current === element) group.current = null;
+            };
         },
         [wired]
     );
@@ -419,17 +466,20 @@ export const useBusy = <Busy extends HTMLElement>(
     useEffect(() => {
         latest.current = { options, speaker };
     });
-    const detach = useRef<(() => void) | null>(null);
-    return useCallback((button: Busy | null) => {
-        detach.current?.();
-        detach.current = button
-            ? attachBusy(button, {
-                  say: (words, settle) => {
-                      const { options: now, speaker: line } = latest.current;
-                      (now.say ?? line)?.(words, settle);
-                  },
-              })
-            : null;
+    return useCallback((button: Busy) => {
+        const controller = new AbortController();
+        detachOn(
+            controller.signal,
+            attachBusy(button, {
+                say: (words, settle) => {
+                    const { options: now, speaker: line } = latest.current;
+                    (now.say ?? line)?.(words, settle);
+                },
+            })
+        );
+        return () => {
+            controller.abort();
+        };
     }, []);
 };
 
@@ -452,7 +502,6 @@ export const useProgress = (
         latest.current = { options, speaker };
     });
     const bar = useRef<HTMLProgressElement | null>(null);
-    const detach = useRef<(() => void) | null>(null);
     const { steps, done } = options;
     const given = useRef({ steps, done });
     const optionsFor = useCallback(
@@ -471,10 +520,14 @@ export const useProgress = (
         if (bar.current) attachProgress(bar.current, optionsFor(given.current));
     }, [steps, done, optionsFor]);
     return useCallback(
-        (progress: HTMLProgressElement | null) => {
-            detach.current?.();
+        (progress: HTMLProgressElement) => {
             bar.current = progress;
-            detach.current = progress ? attachProgress(progress, optionsFor(given.current)) : null;
+            const controller = new AbortController();
+            detachOn(controller.signal, attachProgress(progress, optionsFor(given.current)));
+            return () => {
+                controller.abort();
+                if (bar.current === progress) bar.current = null;
+            };
         },
         [optionsFor]
     );

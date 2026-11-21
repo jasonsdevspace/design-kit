@@ -4,7 +4,12 @@ import { createRoot } from 'react-dom/client';
 
 import { useArrivalFocus, useFocusAfterDraw, useRoving } from '../src/react.js';
 
-type Page = { focusTwice?: () => void; showLate?: () => void; drawAgain?: () => void };
+type Page = {
+    focusTwice?: () => void;
+    showLate?: () => void;
+    drawAgain?: () => void;
+    answerLeave?: () => void;
+};
 const page = window as unknown as Page;
 
 /*
@@ -16,8 +21,9 @@ const page = window as unknown as Page;
  * first drawn late beside a field, one gone in the frame it arrived in, a view drawn again many
  * times before any press, a view and a section of it brought by one press, a save answered
  * after an await that turns on the control it asks focus for, the same with the control in a
- * sibling and with the save pressed inside a shadow root, and a panel that asks for focus on its
- * opener once it is gone.
+ * sibling and with the save pressed inside a shadow root, a panel that asks for focus on its
+ * opener once it is gone, rows that each ask for focus on the next as their own press removes
+ * them, and a screen that asks for focus late, once it is gone and the visitor is on the next.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -426,6 +432,93 @@ const Panels = () => {
     );
 };
 
+// A row of its own, which asks for focus on the next as its press removes it, so it asks in the
+// moment it unmounts.
+const Row = ({
+    name,
+    next,
+    onRemove,
+}: {
+    readonly name: string;
+    readonly next: string | undefined;
+    readonly onRemove: (name: string) => void;
+}) => {
+    const focusNext = useFocusAfterDraw();
+    return (
+        <button
+            id={`row-${name}`}
+            type="button"
+            onClick={() => {
+                onRemove(name);
+                focusNext(next ? `row-${next}` : null, { fallbacks: ['rows'] });
+            }}
+        >
+            Remove row {name}
+        </button>
+    );
+};
+
+const Rows = () => {
+    const [rows, setRows] = useState(['Ann', 'Ben', 'Cy']);
+    return (
+        <section>
+            <h2 id="rows" tabIndex={-1}>
+                Rows
+            </h2>
+            {rows.map((name, at) => (
+                <Row
+                    key={name}
+                    name={name}
+                    next={rows[at + 1] ?? rows[at - 1]}
+                    onRemove={(gone) => {
+                        setRows((now) => now.filter((one) => one !== gone));
+                    }}
+                />
+            ))}
+        </section>
+    );
+};
+
+// A screen whose press takes it away and asks for focus on its opener only once the test answers,
+// after the visitor has moved on to the field the next screen draws.
+const Leaving = ({ onClose }: { readonly onClose: () => void }) => {
+    const focusBack = useFocusAfterDraw();
+    const close = async () => {
+        onClose();
+        await new Promise<void>((resolve) => {
+            page.answerLeave = resolve;
+        });
+        focusBack('leave-open');
+    };
+    return (
+        <button
+            id="leave-close"
+            type="button"
+            onClick={() => {
+                void close();
+            }}
+        >
+            Close and go on
+        </button>
+    );
+};
+
+const Leave = () => {
+    const [open, setOpen] = useState(true);
+    return (
+        <section>
+            <button id="leave-open" type="button" onClick={() => setOpen(true)}>
+                Open the screen
+            </button>
+            {open ? (
+                <Leaving onClose={() => setOpen(false)} />
+            ) : (
+                <input id="next-screen" aria-label="Next screen's field" />
+            )}
+        </section>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -447,5 +540,7 @@ if (root)
             </section>
             <ShadowSave />
             <Panels />
+            <Rows />
+            <Leave />
         </main>
     );

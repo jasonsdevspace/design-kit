@@ -7,8 +7,9 @@ import { servePage, stillClock } from './page.js';
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
  * `useArrivalFocus`: an id drawn after the request found, a target gone, hidden, inert or off
  * passed over for its fallbacks, focus a visitor moved since the request left where it is, a
- * control asked for twice focused twice, a request called off, and a view's heading focused when
- * its key changes but never as the page first draws.
+ * control asked for twice focused twice, a request called off, a view's heading focused when its
+ * key changes but never as the page first draws, a request asked as its component unmounts landing,
+ * and one asked after it unmounted leaving focus the visitor moved on to the next screen.
  */
 
 const BODY =
@@ -212,6 +213,30 @@ test.describe('in React', () => {
         await page.locator('#panel-close').click();
         await expect(page.locator('#panel-close')).toHaveCount(0);
         await expect(page.locator('#panel-open')).toBeFocused();
+    });
+
+    test('moves focus to the next row as the row asking for it is removed', async ({ page }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#row-Ann').click();
+        await expect(page.locator('#row-Ann')).toHaveCount(0);
+        await expect(page.locator('#row-Ben')).toBeFocused();
+        await page.locator('#row-Cy').click();
+        await expect(page.locator('#row-Ben')).toBeFocused();
+    });
+
+    test('leaves focus on the next screen where a request comes after its component unmounted', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#leave-close').click();
+        await page.locator('#next-screen').focus();
+        await page.evaluate(async () => {
+            (window as unknown as { answerLeave: () => void }).answerLeave();
+            // Two frames, so the request's own has come and gone.
+            for (let frame = 0; frame < 2; frame += 1)
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+        });
+        await expect(page.locator('#next-screen')).toBeFocused();
     });
 
     test('focuses the last of two requests made in one frame', async ({ page }) => {

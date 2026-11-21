@@ -9,6 +9,15 @@ returns, which keep a request owed until their own next commit and a count of re
 them, so the request lands once the page's change is drawn. That holds for a change set in the same
 tick as the request, in the same lane, in the same React root: a change made in a transition is
 asked for inside the same `startTransition`, and one drawn in another root is not waited for.
+Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do,
+in place of being called with null: each makes an `AbortController` as its element arrives, hands
+the attach its signal as record 22 has it, and aborts it in the cleanup. `StatusProvider` still
+waits a microtask before its cleanup lets its line go, and keeps the line's controller where the
+same line comes back, since React's second run in development calls the cleanup and the ref again
+and an abort at once would empty the line of the words said in the first run. A focus request
+asked in the moment its component unmounts still lands, so the hook hands it no signal of the
+component's, which that unmount would abort, and calls it off only by what `moveFocus` returns. One
+asked after the component has unmounted takes focus only from the page's body.
 
 ## Context
 
@@ -46,7 +55,9 @@ Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `us
 exports beside the markup. Each hook follows the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
-  hook sees each element as it arrives. A ref object would not do, since setting its `current`
+  hook sees each element as it arrives. The ref makes an `AbortController`, gives the attach its
+  signal and returns the cleanup that aborts it, so React's second run in development takes the
+  piece down and attaches it afresh, leaving nothing doubled or dropped. A ref object would not do, since setting its `current`
   starts no render and no effect, so a swapped element would never be attached.
 - **It takes the attach away when its element leaves or the component unmounts, where the attach
   returns what does so.** An attach that returns what says or opens, as record 15 has it for the
@@ -77,9 +88,12 @@ component in the same batch as the page's change, and a layout effect makes the 
 render commits, so it lands in the frame that paints the change, whichever component drew it. Where
 focus was is read as the request is asked, followed into a shadow root by `activeOf` from
 `./controls`, so a visitor who moves focus before the commit is not pulled back. Each request takes
-the place of one not yet landed, and what it returns calls off that request alone. A request asked
-for once the component has unmounted has no render to wait for and is made at once, as it was before
-the hook waited. What the hook returns is still the function's, with `from` read as it is asked, and
+the place of one not yet landed, and what it returns calls off that request alone. One asked in the
+moment its component unmounts, as a row asks for the next as its press removes it, never gets its
+render, so it is made as the component unmounts. A request asked for once the component has
+unmounted has no render to wait for and is made at once, as it was before the hook waited, but
+takes focus only from the page's body, since where focus stands then is not where the change began,
+and a visitor already on the next screen is left there. What the hook returns is still the function's, with `from` read as it is asked, and
 it is called in a handler or in an effect with dependencies, never as the component renders nor in
 an effect that runs on every render, since asking renders the component again. A hook that acts when
 a view arrives, as `useArrivalFocus` does, keeps the key it last drew and whether that was its first
@@ -133,6 +147,12 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   whose error is set after an await. They press a save inside a shadow root and find focus moved,
   ask from a component that has since unmounted and find focus moved, call off the first of two
   refusals and find the second lands, and move focus before the error is drawn and find it left
-  there.
+  there. `e2e/focus.spec.tsx` also removes a row that asks for focus on the next one as it goes and
+  finds focus there, and finds focus left on the next screen's field where a request comes after
+  its component unmounted.
+- `e2e/strict.spec.tsx` draws the hooks under `StrictMode` in React's development build, which
+  runs each ref's cleanup and the ref again as the page first draws, and finds words said in a
+  part's first effect kept on the provider's line, one arrow key moving one cell, a busy notice,
+  the end of a progress and a refusal each said once, and nothing said once the pieces leave.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.
