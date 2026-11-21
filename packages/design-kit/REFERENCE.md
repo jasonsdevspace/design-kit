@@ -1419,9 +1419,10 @@ after a microtask starts afresh. Until the takedown lands, the control is whole,
 abort's own task, such as a panel's `set`, still acts. The function an attach returns takes the
 control down at once, whoever holds it, so a page that means to start afresh within the task calls
 it. A control runs on the options of its newest holder: a new holder's options apply at once, and a
-call from an older holder is kept for when it is the newest again, and when the newest lets go, the
-one before it takes over with the options it last gave. A call with no signal holds the control only
-where nothing else does, and elsewhere its options replace the newest holder's.
+call from an older holder is kept for when it is the newest again, and when the holder whose options
+apply lets go, the newest one left that gave options takes over with them. A call with no signal
+holds the control only where nothing else does, and elsewhere speaks for the newest holder, so its
+options replace that holder's and leave with it.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
@@ -1719,9 +1720,9 @@ any words on the line, polite ones too, and are read as they are put in, so they
 end of a progress and say nothing once the work is done.
 
 Attached again, a line returns the function it returned first, with its words, unless it was let go
-of, as `StatusProvider` lets it go once it unmounts, when it returns one afresh. A stepper speaks on
-a line of its own inside its field, and the toast on one of its own, so a page finds its screen's
-line by a class of its own rather than by its role, which those share.
+of, as a toast lets its own line go when the toast is taken down, when it returns one afresh. A
+stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
+finds its screen's line by a class of its own rather than by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
 what happened on its own line and the two would speak over each other. A field's error is never said
@@ -3543,13 +3544,14 @@ A dialog that must be answered is attached with `{ stay: true }`, and then stays
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
 from version 134. Chrome 123 to 133, at the kit's floor, lets a page refuse a close once and closes
 the dialog on a second Escape or Back, so a page there treats a dialog that must be answered as one
-that can be dismissed too. Attaching a dialog again with options replaces them, attaching it again
-with none leaves them as they were, so a dialog attached to stay still stays, and either returns the
-same function, an open dialog staying open. Options given with a signal are that signal's, so a page
-that attaches a dialog through a ref made afresh on every render gives `stay` with every call. Its
-listeners are on the dialog, so a dialog taken from the page takes them with it. Taken down by its
-`signal`, as [Taking a control down](#taking-a-control-down) has it, an open dialog closes with
-focus handed back to what opened it, and the function that opens it does nothing.
+that can be dismissed too. Attaching a dialog again with options replaces them where the call is its
+newest holder, attaching it again with none leaves them as they were, so a dialog attached to stay
+still stays, and either returns the same function, an open dialog staying open. Options given with a
+signal are that signal's, so a page that attaches a dialog through a ref made afresh on every render
+gives `stay` with every call. Its listeners are on the dialog, so a dialog taken from the page takes
+them with it. Taken down by its `signal`, as [Taking a control down](#taking-a-control-down) has it,
+an open dialog closes with focus handed back to what opened it, and the function that opens it does
+nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.

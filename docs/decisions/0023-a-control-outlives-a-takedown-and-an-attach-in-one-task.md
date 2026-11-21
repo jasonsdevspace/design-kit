@@ -60,8 +60,9 @@ Option C.
 - **A later attach returns what the first returned,** as record 13 has it.
 - **A control runs on its newest holder's options.** A new holder's options apply at once. A call
   from the newest holder, or one without a signal, replaces them, and a call from an older holder is
-  kept for when that holder is the newest again. When the newest lets go, the one before it takes
-  over with the options its last call gave.
+  kept for when that holder is the newest again. When the holder whose options apply lets go, the
+  newest one left that gave options takes over with them. A call without a signal speaks for the
+  newest holder, so its options leave with that holder.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment
   the takedown lands. A focus request's takedown waits the same microtask, which changes nothing
@@ -90,12 +91,12 @@ ever held.
 - A takedown that hands focus back runs after React has taken the element away, so the toast reads
   whether focus was in it from the focus it has heard, not from where focus is. Chromium fires
   focusout on a toast taken from the page with focus in it while WebKit and Firefox fire none, so
-  the toast takes focus to have left only where it is still in the page a microtask after it hears
-  focusout.
-- A copy button joined with a source that gives the same element keeps the word it shows, and
-  progress counts its steps again only where they change, since a join that sets the same options
-  would otherwise undo them.
-- The controls weigh 18,317 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
+  the toast reads where focus is a microtask after it hears focusout, and keeps focus that left the
+  page with it apart, for the handback alone.
+- A copy button joined with a source that gives the element its last press copied keeps the word it
+  shows, reading the source only while a word is shown, and progress counts its steps again only
+  where their count changes, since a join that sets the same options would otherwise undo them.
+- The controls weigh 18,434 bytes, against 18,117 before, within the 18.5 KB record 13's rule set.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.
 
@@ -107,11 +108,16 @@ The paths are in `packages/design-kit`.
   passed, a signal held before then keeps everything, a call without a signal holding only where
   nothing else does, `stop` running at once whoever holds and leaving no listener on any holder's
   signal, the listeners on a signal not growing as holders come and go, and the options of the
-  newest holder applied as holders join and let go.
+  newest holder that gave any applied as holders join and let go.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, and aborts, waits a microtask and attaches and finds each attached afresh. It finds a
-  toast with focus in it taken down and then removed from the page handing focus back.
+  toast with focus in it taken down and then removed from the page handing focus back, a toast kept
+  shown while focus leaves it and comes back in one task, one moved in the page with focus in it
+  starting its wait again in Chromium, and a progress step still heard through a join that gives the
+  same count.
+- `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
+  put back to Copy where a source that reads the page's state gives another block, or throws.
 - `e2e/strict.spec.tsx` draws a form, a group and a busy button mid-wait behind refs made afresh on
   every render and finds the form's check set up once and its errors kept, the group observed once
   with one stop, and the busy button's wait kept and its words said once. It finds a busy wait kept
