@@ -101,7 +101,10 @@ Option C.
   the abort's task, so focus the page set in that task, by its own call or by a field the new
   content focuses as it draws, stays. The kit keeps where it last handed focus back, and `moveFocus`
   treats focus there as free where the handback came after the request was asked, so a request asked
-  in the abort's task still lands.
+  in the abort's task still lands. That holds for one asked from inside an open dialog before the
+  page closes it, takes it away or takes it down, so a page can send focus somewhere more useful
+  than the opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices
+  allows.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -168,7 +171,9 @@ The paths are in `packages/design-kit`.
   the page in one task or removed first and taken down in a later task, focus left on a control
   outside a toast taken away as focus moves there and on the body where a visitor moved it after the
   toast left the page, a focus request asked as a dialog or a toast with focus in it is taken down
-  landing, and focus the page sets as a dialog taken from the page is taken down staying. It also
+  landing, one asked from inside an open dialog that the page then closes or takes away and takes
+  down in the same task landing too, and focus the page sets as a dialog taken from the page is
+  taken down staying. It also
   finds a toast kept shown while focus leaves it and comes back in one task, one moved in the page
   with focus in it starting its wait again in Chromium, a dialog kept staying where a later attach
   gives it only a signal, a progress step still heard through a join that gives the same count, a

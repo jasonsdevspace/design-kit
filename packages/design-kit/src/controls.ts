@@ -1500,7 +1500,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * dialog closes nothing, and on close returns focus to what opened it. That is the element the
  * press that opened it landed on, found from the event a page's listener or React's hands over,
  * since a browser that gives a pressed button no focus leaves nothing else, or else what had focus.
- * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says.
+ * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says. A
+ * `moveFocus` request asked from the press that closes it lands in place of the opener, since the
+ * request takes focus the kit hands back after it was asked as free.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how

@@ -3554,8 +3554,11 @@ press that opened it, from a listener on the button, on a part of the page that 
 React, it finds the button the press landed on, since Safari gives a clicked button no focus to
 remember. Called otherwise, it takes the element to return to, or remembers what had focus. Where
 nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
-goes to what `returnTo` gives. It also closes the dialog on a tap on the scrim around it, one that
-starts and ends there so a drag out of the dialog closes nothing.
+goes to what `returnTo` gives. A page that has somewhere more useful for focus, such as the next
+field after a Save, asks for it with `moveFocus` from the press that closes the dialog, and focus
+goes there rather than to the opener, whether the dialog is closed, taken from the page or taken
+down in that task. It also closes the dialog on a tap on the scrim around it, one that starts and
+ends there so a drag out of the dialog closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads

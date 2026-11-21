@@ -763,6 +763,45 @@ test('lands a focus request asked in the task a dialog with focus in it is taken
     await expect(page.locator('#target')).toBeFocused();
 });
 
+test('lands a focus request asked from inside an open dialog before it is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    // As a Save handler that asks for the next place, then closes the dialog and takes it down.
+    await page.evaluate(`(() => {
+        kit.focus();
+        document.querySelector('#end-game').close();
+        controller.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).not.toHaveAttribute('open');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('lands a focus request asked from inside an open dialog the page then takes away', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+    })()`);
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    // As a view that asks for the next place and then draws the dialog away, which takes it down.
+    await page.evaluate(`(() => {
+        kit.focus();
+        document.querySelector('#end-game').remove();
+        controller.abort();
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#target')).toBeFocused();
+});
+
 test('lands a focus request asked in the task a toast with focus in it is taken down', async ({
     page,
 }) => {
