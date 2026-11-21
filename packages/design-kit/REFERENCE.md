@@ -1377,19 +1377,21 @@ element leaves. The cleanup aborts the signal a microtask later, so the control 
 [taking a control down](#taking-a-control-down) has it, a form's check included, unless the ref is
 called with the same element again by then, which keeps it attached as it was. An element let go of
 leaves the elements the hook works through at once, so a refusal asked in the press that takes a
-form away goes through the form left, and an element another hook's ref lands on in the same commit,
-as `ref={editing ? edit : add}` on one form, is taken down at once and attached afresh by that hook.
-So a ref made afresh on every render, as an arrow that returns what the hook's ref returns, such as
-`ref={(el) => form(el)}`, or a helper that merges refs and passes the cleanup on, attaches once. The
-hook keeps every element its ref is on, so one ref on several elements keeps those left working as
-one goes, and a form refuses a failed submit through itself. A ref called with null, as a helper
-written to merge refs before React 19 calls it, dropping the cleanup, takes every element down a
-microtask later in the same way. Under `StrictMode` in development, React runs the cleanup and the
-ref again as the page first draws, and the control stays attached as it was, with nothing doubled or
-dropped. `StatusProvider` waits a microtask before it aborts its line's signal, and keeps the line
-attached where the same line comes back, so words said in a first effect are not emptied by that
-second run, and the function `useStatus` returns keeps speaking. A page without React calls the same
-function on the same markup and gets the same behavior.
+form away goes through the form left, and an element another hook of the same kind lands on in the
+same commit, as `ref={editing ? edit : add}` on one form, is taken down at once and attached afresh
+by that hook, while a hook of another kind joining the element, as through a ref that merges a busy
+button's and a heading's, leaves the first hook's control as it was. So a ref made afresh on every
+render, as an arrow that returns what the hook's ref returns, such as `ref={(el) => form(el)}`, or a
+helper that merges refs and passes the cleanup on, attaches once. The hook keeps every element its
+ref is on, so one ref on several elements keeps those left working as one goes, and a form refuses a
+failed submit through itself. A ref called with null, as a helper written to merge refs before React
+19 calls it, dropping the cleanup, takes every element down a microtask later in the same way. Under
+`StrictMode` in development, React runs the cleanup and the ref again as the page first draws, and
+the control stays attached as it was, with nothing doubled or dropped. `StatusProvider` waits a
+microtask before it aborts its line's signal, and keeps the line attached where the same line comes
+back, so words said in a first effect are not emptied by that second run, and the function
+`useStatus` returns keeps speaking. A page without React calls the same function on the same markup
+and gets the same behavior.
 
 ## Taking a control down
 
@@ -2937,9 +2939,10 @@ dialog's job.
 A page that takes a toast down while the toast stays on the page, such as on a screen it draws
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
 down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,
-takes away a tabindex it added that the page has not changed since and lets its line go. Focus in it
-goes back where a dismiss sends it rather than to the page's body. A toast missing a part is refused
-even with a signal already aborted.
+takes off its listeners, its observer, its listener on the window's size and its timer, takes away a
+tabindex it added that the page has not changed since and lets its line go. Focus in it goes back
+where a dismiss sends it rather than to the page's body. A toast missing a part is refused even with
+a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body

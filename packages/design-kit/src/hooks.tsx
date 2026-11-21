@@ -45,32 +45,56 @@ import {
  * 19 calls as the element leaves in place of calling the ref with null.
  */
 
-/** An element a hook holds, what takes it down, and whether it has been let go. */
-type Held = { readonly undo: () => void; released: boolean };
+/** The kind of control a hook attaches, so a takedown is handed on only to a hook of its kind. */
+type Kind = 'arrival' | 'busy' | 'form' | 'progress' | 'roving';
 
 /**
- * The takedown each element let go of by a hook's ref still waits for, and the elements map of the
- * hook that let it go, so another hook's ref that lands on the same element in the same commit
- * takes it down at once and attaches afresh, rather than finding it attached and losing it to the
- * takedown a microtask later.
+ * An element a hook holds, the attach that attached it, what takes it down, and whether it has been
+ * let go.
  */
-const waiting = new WeakMap<Element, { readonly owner: object; readonly run: () => void }>();
+type Held = {
+    readonly attach: (element: never) => () => void;
+    readonly undo: () => void;
+    released: boolean;
+};
+
+/** A takedown still waiting, the kind of control it takes down, and the hook whose it is. */
+type Waiting = { readonly kind: Kind; readonly owner: object; readonly run: () => void };
+
+/**
+ * The takedowns each element let go of by a hook's ref still waits for, so another hook of the same
+ * kind whose ref lands on it in the same commit takes it down at once and attaches afresh, rather
+ * than finding it attached and losing it to the takedown a microtask later. A hook of another kind
+ * leaves them alone, since its attach keeps controls of its own.
+ */
+const waiting = new WeakMap<Element, Set<Waiting>>();
+
+/** Drops the takedowns a hook has queued for an element. */
+const unwait = (element: Element, owner: object) => {
+    const left = waiting.get(element);
+    if (!left) return;
+    for (const one of left) if (one.owner === owner) left.delete(one);
+    if (left.size === 0) waiting.delete(element);
+};
 
 /**
  * The ref of a hook that attaches to each element it lands on, and the elements attached now, the
- * oldest first. `attach` attaches one element and returns what takes it down. The ref returns a
- * cleanup that lets the element go at once, so it leaves the elements attached now, and takes it
- * down a microtask later, except where the ref has been called with the same element again by then,
- * which puts it back attached as it was. A ref made afresh on every render, written inline to
- * return what the ref returns or by a helper that merges refs and passes the cleanup on, is cleaned
- * up and called with the same element in each commit, so it attaches once, and so does React's
- * second run in development. An element another hook's ref lands on before the takedown comes is
- * taken down at once, so that hook attaches it afresh. React 19 never calls with null where the ref
- * returned a cleanup, but a helper written to merge refs before it does, dropping the cleanup,
- * calls with null and then with the same element again. So a null call lets every element go, since
- * it does not say which left, and takes them down the same way.
+ * oldest first. `attach` attaches one element and returns what takes it down, and `kind` names the
+ * control it attaches. The ref returns a cleanup that lets the element go at once, so it leaves the
+ * elements attached now, and takes it down a microtask later, except where the ref has been called
+ * with the same element again by then, which puts it back attached as it was. A ref made afresh on
+ * every render, written inline to return what the ref returns or by a helper that merges refs and
+ * passes the cleanup on, is cleaned up and called with the same element in each commit, so it
+ * attaches once, and so does React's second run in development. An element a hook of the same kind
+ * lets go of in the commit another's ref lands on it is taken down at once, so the other attaches
+ * it afresh. An element that comes back to a ref whose `attach` has changed is taken down and
+ * attached afresh with the new one. React 19 never calls with null where the ref returned a
+ * cleanup, but a helper written to merge refs before it does, dropping the cleanup, calls with null
+ * and then with the same element again. So a null call lets every element go, since it does not say
+ * which left, and takes them down the same way.
  */
 const useLiveRef = <Attached extends Element>(
+    kind: Kind,
     attach: (element: Attached) => () => void
 ): readonly [RefCallback<Attached>, ReadonlySet<Attached>] => {
     // Every element held, those let go of and not yet taken down included, in the order attached.
@@ -81,11 +105,11 @@ const useLiveRef = <Attached extends Element>(
         live.clear();
         for (const [element, held] of elements) if (!held.released) live.add(element);
     }, [elements, live]);
-    const takeDown = useCallback(
+    const drop = useCallback(
         (element: Attached, held: Held) => {
-            if (!held.released || elements.get(element) !== held) return;
+            if (elements.get(element) !== held) return;
             elements.delete(element);
-            if (waiting.get(element)?.owner === elements) waiting.delete(element);
+            unwait(element, elements);
             held.undo();
         },
         [elements]
@@ -96,17 +120,15 @@ const useLiveRef = <Attached extends Element>(
             if (!held || held.released) return;
             held.released = true;
             sync();
-            waiting.set(element, {
-                owner: elements,
-                run: () => {
-                    takeDown(element, held);
-                },
-            });
-            queueMicrotask(() => {
-                takeDown(element, held);
-            });
+            const run = () => {
+                if (held.released) drop(element, held);
+            };
+            const left = waiting.get(element) ?? new Set<Waiting>();
+            left.add({ kind, owner: elements, run });
+            waiting.set(element, left);
+            queueMicrotask(run);
         },
-        [elements, sync, takeDown]
+        [elements, kind, sync, drop]
     );
     const ref = useCallback(
         (element: Attached | null) => {
@@ -115,24 +137,28 @@ const useLiveRef = <Attached extends Element>(
                 return;
             }
             const already = elements.get(element);
-            if (already) {
-                if (already.released) {
-                    already.released = false;
-                    waiting.delete(element);
+            // Attached by an attach this ref no longer has, it is taken down and attached afresh.
+            if (already && already.attach !== attach) drop(element, already);
+            if (elements.has(element)) {
+                const held = elements.get(element);
+                if (held?.released) {
+                    held.released = false;
+                    unwait(element, elements);
                     sync();
                 }
             } else {
-                // Let go of by another hook in this commit, it is taken down first, so this attach
-                // finds nothing attached and owns the control.
-                waiting.get(element)?.run();
-                elements.set(element, { undo: attach(element), released: false });
+                // Let go of by another hook of this kind in this commit, it is taken down first, so
+                // this attach finds nothing attached and owns the control.
+                for (const one of [...(waiting.get(element) ?? [])])
+                    if (one.kind === kind && one.owner !== elements) one.run();
+                elements.set(element, { attach, undo: attach(element), released: false });
                 sync();
             }
             return () => {
                 release(element);
             };
         },
-        [attach, elements, release, sync]
+        [attach, elements, kind, release, sync, drop]
     );
     return [ref, live] as const;
 };
@@ -460,7 +486,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
             if (heading.current === element) heading.current = null;
         };
     }, []);
-    return useLiveRef(attachHeading)[0];
+    return useLiveRef('arrival', attachHeading)[0];
 };
 
 /**
@@ -547,7 +573,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
         },
         [refuseThrough, refusers]
     );
-    const [ref, forms] = useLiveRef(attachOne);
+    const [ref, forms] = useLiveRef('form', attachOne);
     // The page's own refusal goes through the newest form attached now, read as it lands, so a form
     // let go of in the commit that draws the errors is passed over, and each form's own failed
     // submit through that form.
@@ -603,7 +629,7 @@ export const useRoving = <Group extends HTMLElement>(
         },
         [wired]
     );
-    const [ref, groups] = useLiveRef(attachOne);
+    const [ref, groups] = useLiveRef('roving', attachOne);
     // Every group attached now takes the new options, so one ref on two groups keeps both.
     useEffect(() => {
         const now = `${orientation ?? ''}|${String(names)}`;
@@ -644,7 +670,7 @@ export const useBusy = <Busy extends HTMLElement>(
             controller.abort();
         };
     }, []);
-    return useLiveRef(attachOne)[0];
+    return useLiveRef('busy', attachOne)[0];
 };
 
 /**
@@ -687,7 +713,7 @@ export const useProgress = (
         },
         [optionsFor]
     );
-    const [ref, bars] = useLiveRef(attachOne);
+    const [ref, bars] = useLiveRef('progress', attachOne);
     // Every bar attached now takes the new steps or words, so one ref on two bars keeps both.
     useEffect(() => {
         if (given.current.steps === steps && given.current.done === done) return;

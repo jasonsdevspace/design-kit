@@ -20,8 +20,8 @@ import { type Strict } from './strict-page.js';
  * through the form submitted, a form behind a ref made afresh on every render keeping its refusal,
  * a form and a row of cells behind arrows that return the hook's cleanup keeping the errors shown
  * and attaching once as the page draws again, a refusal going through the form left when the newer
- * of two goes in the same press, and a form and a row of cells kept attached as each moves to
- * another hook's ref.
+ * of two goes in the same press, a form and a row of cells kept attached as each moves to
+ * another hook's ref, and a busy button's wait kept as another hook joins it through a merged ref.
  */
 
 let app = '';
@@ -385,6 +385,32 @@ test("keeps a form and a row attached as each moves from one hook's ref to anoth
     await expect
         .poll(async () => (await said(page)).filter((words) => words.includes('Player name')))
         .toEqual(['Editing: Player name: Enter a value.']);
+});
+
+test('keeps a busy wait as another hook joins its button through a merged ref', async ({
+    page,
+}) => {
+    await open(page, '1s');
+    await page.evaluate(() => {
+        (window as unknown as Strict).joinBusy(true);
+    });
+    await expect(page.locator('#joined')).toHaveAttribute('aria-disabled', 'true');
+    // Each change to the busy mark from here on, which a busy attach taken down and attached
+    // afresh would make.
+    await page.evaluate(() => {
+        const counted = window as unknown as { marks: number };
+        counted.marks = 0;
+        const button = document.querySelector('#joined');
+        if (button)
+            new MutationObserver((records) => {
+                counted.marks += records.length;
+            }).observe(button, { attributeFilter: ['aria-disabled'] });
+        (window as unknown as Strict).join();
+    });
+    await expect.poll(() => said(page)).toContain('Saving the deck.');
+    expect(await page.evaluate(() => (window as unknown as { marks: number }).marks)).toBe(0);
+    await expect(page.locator('#joined')).toHaveAttribute('aria-disabled', 'true');
+    expect((await said(page)).filter((words) => words === 'Saving the deck.')).toHaveLength(1);
 });
 
 test('lands a refusal asked as its form first draws', async ({ page }) => {

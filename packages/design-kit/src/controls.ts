@@ -886,8 +886,8 @@ const copied = async (text: string): Promise<boolean> => {
  * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
  * that draws the button again with a new source copies from that one, puts a word shown for the
  * last source back to Copy, and returns what it returned the first time. Aborting the `signal` it
- * was first given takes it down as the function it returns does, and a signal already aborted
- * leaves it hidden and unattached.
+ * was first given takes it down as the function it returns does. A signal already aborted does
+ * nothing, so a button not yet attached stays hidden and one already attached stays as it is.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a button already attached are

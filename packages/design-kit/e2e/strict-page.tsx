@@ -1,4 +1,12 @@
-import { StrictMode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+    StrictMode,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 
 import type { Say } from '../src/controls.js';
@@ -27,8 +35,8 @@ import {
  * two forms and two rows of cells on one ref, either of which the page takes away, and a form that
  * refuses as it first draws, a form behind a ref made afresh on every render, a form and a row of
  * cells behind arrows that return the hook's cleanup, drawn again by the page, two forms on one ref
- * whose newer the page takes away as it refuses, and a form and a row of cells that move from one
- * hook's ref to another's.
+ * whose newer the page takes away as it refuses, a form and a row of cells that move from one
+ * hook's ref to another's, and a busy button another hook joins through a ref that merges both.
  */
 
 export type Strict = {
@@ -51,6 +59,8 @@ export type Strict = {
     redraw: () => void;
     dropAndRefuse: () => void;
     handOff: () => void;
+    joinBusy: (on: boolean) => void;
+    join: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -490,6 +500,45 @@ const HandOff = () => {
     );
 };
 
+/** One ref that calls each ref given and returns what takes down every one, as a page's helper. */
+const merged =
+    <Element,>(...refs: readonly ((element: Element | null) => (() => void) | void)[]) =>
+    (element: Element | null) => {
+        const cleanups = refs.map((ref) => ref(element));
+        return () => {
+            for (const cleanup of cleanups) cleanup?.();
+        };
+    };
+
+// A busy button written by hand, so the busy attach sets its mark, whose page joins a heading's
+// focus to it later, through a ref that merges both and calls the new hook's ref first, so the busy
+// attach must come through the render untouched.
+const Joined = () => {
+    const [busy, setBusy] = useState(false);
+    const [joined, setJoined] = useState(false);
+    page.joinBusy = setBusy;
+    page.join = () => {
+        setJoined(true);
+    };
+    const save = useBusy<HTMLButtonElement>({ say });
+    const arrival = useArrivalFocus<HTMLButtonElement>('joined');
+    const ref = useMemo(
+        () => (joined ? merged(arrival, save) : merged(save)),
+        [joined, arrival, save]
+    );
+    return (
+        <button
+            type="button"
+            id="joined"
+            className="dk-button"
+            ref={ref}
+            data-busy={busy ? 'Saving the deck.' : undefined}
+        >
+            Save the deck
+        </button>
+    );
+};
+
 const FirstRefusals = () => {
     const [shown, setShown] = useState(false);
     page.showFirstRefusal = () => {
@@ -523,6 +572,7 @@ const App = () => {
                 <Returned />
                 <DropAndRefuse />
                 <HandOff />
+                <Joined />
             </main>
         </StatusProvider>
     );
