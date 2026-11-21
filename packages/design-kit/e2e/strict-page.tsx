@@ -7,6 +7,7 @@ import {
     InputField,
     Progress,
     StatusProvider,
+    useArrivalFocus,
     useBusy,
     useFocusAfterDraw,
     useFormRefusal,
@@ -20,7 +21,8 @@ import {
  * each ref, takes it down and attaches it again as the page first draws, and runs each effect
  * twice: a part that speaks on its provider's line in its first effect, a row of cells, a busy
  * button, a progress bar and a form whose words the page hears through a `say` of its own, rows
- * that each ask for focus on the next as they are removed, and a way to take the pieces away.
+ * that each ask for focus on the next as they are removed, a way to take the pieces away, and a way
+ * to call each piece's ref with null.
  */
 
 export type Strict = {
@@ -29,6 +31,7 @@ export type Strict = {
     busy: (on: boolean) => void;
     move: (done: number) => void;
     leave: () => void;
+    nullRefs: () => void;
 };
 const page = window as unknown as Strict;
 page.moves = 0;
@@ -73,8 +76,16 @@ const Pieces = () => {
             setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
         },
     });
+    const heading = useArrivalFocus<HTMLHeadingElement>('pieces');
+    // Each ref called with null, as a helper written to merge refs before React 19 calls it.
+    page.nullRefs = () => {
+        for (const ref of [row, save, bar, form, heading]) ref(null);
+    };
     return (
         <>
+            <h2 id="pieces" ref={heading}>
+                Pieces
+            </h2>
             <div id="row" role="toolbar" aria-label="Cells" ref={row}>
                 <button type="button" id="cell-one">
                     One

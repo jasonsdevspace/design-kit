@@ -1359,15 +1359,15 @@ attribute, `dangerouslySetInnerHTML` and the live attributes, since the message 
 Where `./react` gives a hook for a control, it attaches that control's function from `./controls`
 to the element its ref lands on, and returns what the function returns, the same across renders, as
 [decision 0020](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0020-react-hooks-wrap-the-attach-functions.md)
-has it. It sets its options again only when one changes. Its ref makes an `AbortController` as the
-element arrives, hands the function its signal, and returns the cleanup that aborts it, which React
-19 calls as the element leaves, so the control is taken down as
-[taking a control down](#taking-a-control-down) has it. Under `StrictMode` in development, React
-runs that cleanup and the ref again as the page first draws, and the control is taken down and
-attached afresh, with nothing doubled or dropped. `StatusProvider` waits a microtask before it lets
-its line go, and keeps it where the same line comes back, so words said in a first effect are not
-emptied by that second run. A page without React calls the same function on the same markup and
-gets the same behavior.
+has it. It sets its options again only when one changes. Its ref returns the cleanup that takes the
+control down, which React 19 calls as the element leaves, and a ref called with null, as a helper
+written to merge refs before React 19 calls it, does nothing. A row of cells, a busy button and
+progress are let go by the cleanup. A form keeps what `attachForm` set on it, and attaching it again
+hands back its first refusal, so its cleanup only stops refusing through it. Under `StrictMode` in
+development, React runs the cleanup and the ref again as the page first draws, and nothing is
+doubled or dropped. `StatusProvider` waits a microtask before it lets its line go, and keeps it
+where the same line comes back, so words said in a first effect are not emptied by that second run.
+A page without React calls the same function on the same markup and gets the same behavior.
 
 ## Theme switch and copy button
 
@@ -1746,25 +1746,28 @@ or in an effect with dependencies, never as the component renders nor in an effe
 every render, since asking renders the component again. A change made in a transition is asked for
 inside the same `startTransition`, and a change drawn in another React root is not waited for. A
 request takes the place of one not yet landed, so the last asked for wins, and what it returns calls
-off that request alone. One asked in the moment the component unmounts, as a row that asks for focus
-on the next as its press removes it, still lands, and one made but not yet landed when it unmounts
-is called off. One asked for after the component has unmounted, as a panel that closes itself and
-then asks after an await, is made at once and takes focus only from the page's body, so a visitor
-already on the next screen is left where they are. `useArrivalFocus(key)` returns a ref for a view's heading, gives
-the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as the
-round on screen, and when the view is first drawn by a visitor's press on a button or a link, or a
-submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key that
-moves or types, such as Tab or an arrow along a row of tabs, after a press on nothing or on a
-control that is off, or more than five seconds after the press, as a view a poll brings. A row of
-tabs' panels take no focus on arrival, since a tab keeps focus as its panel changes, so they leave
-the hook out. Views first drawn by one press land together, and the first in the page takes focus,
-so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
-with autofocus does, is never taken. What decides a first draw is `focusOnArrival(heading, { from
-})` from `./controls`, which a page without React calls as each view draws, and with `changed` as a
-view already drawn changes on a press, which then lands with any view first drawn for that press, so
-the first in the page still takes focus. The key is a string, a number or a boolean, compared by
-value, and changes on a press or a submit, never as a visitor chooses in a list or a set of radios,
-which would move them as they choose, as WCAG 3.2.2 has it.
+off that request alone. One asked as the component first draws, from a ref on its own markup, waits
+for its render as any other does. One asked in the task that unmounts the component, as a row that
+asks for focus on the next as its press removes it, still lands. One asked earlier and still
+waiting, as in a transition an urgent update overtook, or whose component an `Activity` hides, is
+called off, as is one made but not yet landed when the component unmounts. One asked for after the
+component has unmounted, as a panel that closes itself and then asks after an await, is made at once
+and takes focus only from the page's body, so a visitor already on the next screen is left where
+they are. `useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of
+-1 where it has none, and focuses it when the key changes, such as the round on screen, and when the
+view is first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is.
+A first draw takes nothing as the page first draws, after a key that moves or types, such as Tab or
+an arrow along a row of tabs, after a press on nothing or on a control that is off, or more than
+five seconds after the press, as a view a poll brings. A row of tabs' panels take no focus on
+arrival, since a tab keeps focus as its panel changes, so they leave the hook out. Views first drawn
+by one press land together, and the first in the page takes focus, so a view's title is heard before
+a section of it. Focus a view placed itself as it drew, as a field with autofocus does, is never
+taken. What decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a
+page without React calls as each view draws, and with `changed` as a view already drawn changes on a
+press, which then lands with any view first drawn for that press, so the first in the page still
+takes focus. The key is a string, a number or a boolean, compared by value, and changes on a press
+or a submit, never as a visitor chooses in a list or a set of radios, which would move them as they
+choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';

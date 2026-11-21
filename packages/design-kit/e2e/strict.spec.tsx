@@ -5,11 +5,12 @@ import { servePage } from './page.js';
 import { type Strict } from './strict-page.js';
 
 /*
- * The hooks under React's `StrictMode`, in its development build, which attaches each ref, runs its
- * cleanup and attaches it again as the page first draws, as record 20 asks: words a part says in its
- * first effect kept on the provider's line, one arrow key moving one cell, a busy notice, the end
- * of a progress and a refusal each said once, a row removed asking for focus on the next and
- * finding it there, and each piece taken down as it leaves, saying nothing late.
+ * The hooks under React's `StrictMode`, in its development build, which attaches each ref, runs
+ * its cleanup and attaches it again as the page first draws, as record 20 asks: words a part says
+ * in its first effect kept on the provider's line, one arrow key moving one cell, a busy notice,
+ * the end of a progress and a refusal each said once, a row removed asking for focus on the next
+ * and finding it there, each piece taken down as it leaves, saying nothing late, and a ref called
+ * with null doing nothing.
  */
 
 let app = '';
@@ -18,12 +19,12 @@ test.beforeAll(async () => {
     app = await bundle('strict-page.tsx', { development: true });
 });
 
-const open = async (page: Page) => {
+const open = async (page: Page, wait = '200ms') => {
     await servePage(page, {
         title: 'Lists',
         body: '<div id="root"></div>',
         script: app,
-        css: ':root { --dk-wait: 200ms; }',
+        css: `:root { --dk-wait: ${wait}; }`,
     });
     await expect(page.locator('#row')).toBeVisible();
 };
@@ -80,15 +81,32 @@ test('moves focus to the next row as one removes itself', async ({ page }) => {
 test('takes each piece down as it leaves, saying nothing late', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await open(page);
+    // A wait long enough for the button to be drawn busy and taken away before its notice is due.
+    await open(page, '1s');
     await page.evaluate(() => {
         (window as unknown as Strict).busy(true);
+    });
+    await expect(page.locator('#save')).toHaveAttribute('data-busy', 'Saving the list.');
+    await page.evaluate(() => {
         (window as unknown as Strict).leave();
     });
     await expect(page.locator('#row')).toHaveCount(0);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1500);
     expect(await said(page)).toEqual([]);
     // The provider's line stays, with the words said on it.
     await expect(line(page)).toHaveCount(1);
     expect(errors).toEqual([]);
+});
+
+test('does nothing for a ref called with null, and leaves each piece working', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).nullRefs();
+    });
+    expect(errors).toEqual([]);
+    await page.locator('#cell-one').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#cell-two')).toBeFocused();
 });

@@ -38,14 +38,15 @@ import { releaseLine } from './line.js';
  * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
  * function that acts once keeps only what calls it off, and each returns what the function returns,
  * the same across renders. `./react` exports them beside the markup, whose components run
- * no effect. Each ref makes an `AbortController` as its element arrives and returns the cleanup
- * that aborts it, which React 19 calls as the element leaves in place of calling the ref with null,
- * so a hook takes its piece down by the signal record 22 has every attach take.
+ * no effect. Each ref returns the cleanup that takes its piece down, which React 19 calls as the
+ * element leaves in place of calling the ref with null, by aborting a controller made as the
+ * element arrived. A ref called with null, as a helper written to merge refs before React 19 may
+ * still call it, does nothing rather than throw, so such a helper takes nothing down.
  */
 
 /**
  * Runs the detach an attach returned once `signal` aborts, for an attach that takes no signal of
- * its own, so the hook takes it down by its signal all the same.
+ * its own, so the hook takes it down through its controller all the same.
  */
 const detachOn = (signal: AbortSignal, detach: () => void) => {
     signal.addEventListener('abort', detach, { once: true });
@@ -83,7 +84,8 @@ export const StatusProvider = ({ children }: StatusProviderProps) => {
         readonly element: HTMLParagraphElement;
         readonly controller: AbortController;
     } | null>(null);
-    const line = useCallback((element: HTMLParagraphElement) => {
+    const line = useCallback((element: HTMLParagraphElement | null) => {
+        if (!element) return;
         gone.current = false;
         drawn.current = element;
         const kept =
@@ -164,11 +166,23 @@ export const useStatus = (): Say => {
 /** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */
 export type FocusAfterDraw = (target: FocusTarget, options?: MoveFocusOptions) => () => void;
 
-/** Makes a request once the render it was asked in commits, and returns what calls it off. */
-type AfterCommit = (request: () => () => void) => () => void;
+/**
+ * Makes a request once the render it was asked in commits, and returns what calls it off. The
+ * request is told whether it is made late, once its owner has gone, rather than in a commit.
+ */
+type AfterCommit = (request: (late: boolean) => () => void) => () => void;
 
-/** A request owed until its owner commits, and what calls it off once it is made. */
-type Owed = { readonly make: () => () => void; made: boolean; cancel: (() => void) | null };
+/**
+ * A request owed until its owner commits, what calls it off once it is made, and whether it was
+ * asked in the task still running, so the commit that unmounts its owner is the one it was asked
+ * in.
+ */
+type Owed = {
+    readonly make: (late: boolean) => () => void;
+    made: boolean;
+    cancel: (() => void) | null;
+    now: boolean;
+};
 
 /**
  * What makes a request once the render it was asked in commits, the same across renders, for the
@@ -177,52 +191,69 @@ type Owed = { readonly make: () => () => void; made: boolean; cancel: (() => voi
  * drawn or still off, or a field not yet in error. Asking renders the owner in the same batch as
  * the page's change, and a layout effect makes the request once that render commits, so it lands
  * in the frame that paints the change. Each request takes the place of one not yet landed, and what
- * it returns calls off that request alone, so a stale one never calls off a newer. A request made
- * once the owner has unmounted has no render to wait for and is made at once. One still waiting for
- * its render as the owner unmounts, asked in the same moment, is made then where `landsAtUnmount`
- * is given, since that render never comes, and called off otherwise, as one made but not yet landed
- * always is. What it returns beside says whether the owner is still mounted.
+ * it returns calls off that request alone, so a stale one never calls off a newer. The owner is
+ * waiting for its first commit, mounted, or gone, and only a request asked once it is gone has no
+ * render to wait for and is made at once, told it is late. One asked as the owner first draws, from
+ * a ref on its own markup or a child's layout effect, waits for the owner's render like any other.
+ * One still waiting as the owner unmounts is made then where `landsAtUnmount` is given and it was
+ * asked in the task that unmounts it, since the render it waits for never comes, and called off
+ * otherwise, as one asked in a transition an urgent update overtook, or one whose owner an
+ * `Activity` hides rather than unmounts. One made but not yet landed is always called off.
  */
-const useAfterCommit = (
-    landsAtUnmount: boolean
-): readonly [AfterCommit, { readonly current: boolean }] => {
+const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
     const latest = useRef<Owed | null>(null);
-    const mounted = useRef(false);
+    const life = useRef<'pending' | 'mounted' | 'gone'>('pending');
     const [asked, ask] = useReducer((count: number) => count + 1, 0);
     useLayoutEffect(() => {
         const owed = latest.current;
         if (!owed || owed.made) return;
         owed.made = true;
-        owed.cancel = owed.make();
+        owed.cancel = owed.make(false);
     }, [asked]);
     useLayoutEffect(() => {
-        mounted.current = true;
+        life.current = 'mounted';
         return () => {
-            mounted.current = false;
+            life.current = 'gone';
             const owed = latest.current;
             latest.current = null;
-            if (owed && !owed.made && landsAtUnmount) {
+            if (owed && !owed.made && owed.now && landsAtUnmount) {
                 owed.made = true;
-                owed.cancel = owed.make();
+                owed.cancel = owed.make(false);
             } else owed?.cancel?.();
         };
     }, [landsAtUnmount]);
-    const afterCommit = useCallback<AfterCommit>((make) => {
+    return useCallback<AfterCommit>((make) => {
         latest.current?.cancel?.();
-        const owed: Owed = { make, made: false, cancel: null };
+        const owed: Owed = { make, made: false, cancel: null, now: true };
         latest.current = owed;
-        if (mounted.current) ask();
-        else {
-            owed.made = true;
-            owed.cancel = make();
-        }
+        // React's scheduler runs the render of a batch in a task it posts the same way before this
+        // one, so a commit that comes before this message is one the request was asked in.
+        const after = new MessageChannel();
+        after.port1.onmessage = () => {
+            owed.now = false;
+            after.port1.close();
+        };
+        after.port2.postMessage(null);
+        if (life.current !== 'gone') ask();
+        else
+            // A cleanup can be followed by the owner's setup in the same commit, as React's second
+            // run in development and an Activity shown again bring it, so whether it is gone is
+            // read once that commit is done.
+            queueMicrotask(() => {
+                if (owed.made) return;
+                if (life.current !== 'gone') {
+                    ask();
+                    return;
+                }
+                owed.made = true;
+                owed.cancel = make(true);
+            });
         return () => {
             owed.made = true;
             owed.cancel?.();
             if (latest.current === owed) latest.current = null;
         };
     }, []);
-    return [afterCommit, mounted] as const;
 };
 
 /**
@@ -242,19 +273,22 @@ const useAfterCommit = (
  * has moved on to the next screen is left where they are.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
-    const [afterCommit, mounted] = useAfterCommit(true);
+    const afterCommit = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
-            // Asked after the component has gone, where focus stands is no longer the place the
-            // change began from, so the request takes focus only from the page's body.
-            const from =
-                options?.from === undefined ? (mounted.current ? activeOf() : null) : options.from;
+            const from = options?.from === undefined ? activeOf() : options.from;
             // No signal tied to the component goes with the request, since the unmount that makes
             // a request asked in that moment would abort it too, so it is called off only by what
-            // moveFocus returns.
-            return afterCommit(() => moveFocus(target, { ...options, from }));
+            // moveFocus returns. Made late, once the component has gone, where focus stands is no
+            // longer where the change began, so the request takes focus only from the page's body.
+            return afterCommit((late) =>
+                moveFocus(target, {
+                    ...options,
+                    from: late && options?.from === undefined ? null : from,
+                })
+            );
         },
-        [afterCommit, mounted]
+        [afterCommit]
     );
 };
 
@@ -303,7 +337,8 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         // focus, and spends the press, so no view drawn later takes it again.
         return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
-    return useCallback((element: Heading) => {
+    return useCallback((element: Heading | null) => {
+        if (!element) return;
         heading.current = element;
         // Only an element that cannot take focus by itself, such as a heading or a link with no
         // address, so a button, a link or a field keeps its place in the Tab order.
@@ -351,7 +386,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
     const refuser = useRef<Refuse | null>(null);
     // A refusal still waiting as the form's component unmounts is called off, since the form it
     // would point at and speak for is leaving with it.
-    const [afterCommit] = useAfterCommit(false);
+    const afterCommit = useAfterCommit(false);
     // Where focus was as the refusal was asked for, not as the render that draws the errors
     // commits, so a visitor who moved it since is not pulled back.
     const refuse = useCallback<Refuse>(
@@ -362,8 +397,8 @@ export const useFormRefusal = <Form extends HTMLElement>(
         [afterCommit]
     );
     const ref = useCallback(
-        (form: Form) => {
-            const controller = new AbortController();
+        (form: Form | null) => {
+            if (!form) return;
             refuser.current = attachForm(form, {
                 say: (words, settle) => {
                     const { options: now, speaker: line } = latest.current;
@@ -387,8 +422,9 @@ export const useFormRefusal = <Form extends HTMLElement>(
                     refuse();
                 },
             });
+            // The form keeps what attachForm set on it, and attaching it again hands back its first
+            // refusal with these options, so the cleanup only stops refusing through it.
             return () => {
-                controller.abort();
                 refuser.current = null;
             };
         },
@@ -434,7 +470,8 @@ export const useRoving = <Group extends HTMLElement>(
         attachRoving(group.current, wired());
     }, [orientation, names, wired]);
     return useCallback(
-        (element: Group) => {
+        (element: Group | null) => {
+            if (!element) return;
             group.current = element;
             const now = latest.current;
             shape.current = `${now.orientation ?? ''}|${String(now.current !== undefined)}`;
@@ -466,7 +503,8 @@ export const useBusy = <Busy extends HTMLElement>(
     useEffect(() => {
         latest.current = { options, speaker };
     });
-    return useCallback((button: Busy) => {
+    return useCallback((button: Busy | null) => {
+        if (!button) return;
         const controller = new AbortController();
         detachOn(
             controller.signal,
@@ -520,7 +558,8 @@ export const useProgress = (
         if (bar.current) attachProgress(bar.current, optionsFor(given.current));
     }, [steps, done, optionsFor]);
     return useCallback(
-        (progress: HTMLProgressElement) => {
+        (progress: HTMLProgressElement | null) => {
+            if (!progress) return;
             bar.current = progress;
             const controller = new AbortController();
             detachOn(controller.signal, attachProgress(progress, optionsFor(given.current)));

@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import {
+    Activity,
+    startTransition,
+    Suspense,
+    use,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useState,
+} from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
@@ -9,6 +18,8 @@ type Page = {
     showLate?: () => void;
     drawAgain?: () => void;
     answerLeave?: () => void;
+    dropOwner?: () => void;
+    hideOwner?: () => void;
 };
 const page = window as unknown as Page;
 
@@ -23,7 +34,10 @@ const page = window as unknown as Page;
  * after an await that turns on the control it asks focus for, the same with the control in a
  * sibling and with the save pressed inside a shadow root, a panel that asks for focus on its
  * opener once it is gone, rows that each ask for focus on the next as their own press removes
- * them, and a screen that asks for focus late, once it is gone and the visitor is on the next.
+ * them, a screen that asks for focus late, once it is gone and the visitor is on the next, a view
+ * that asks for focus on its first field from that field's ref as a press draws it, and requests
+ * asked in a transition held back by a part that never loads, whose owner an urgent update then
+ * unmounts or an `Activity` hides.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -519,6 +533,83 @@ const Leave = () => {
     );
 };
 
+// A view a press draws, which asks for focus on its first field from the field's own ref, in the
+// commit that first draws it.
+const FirstField = () => {
+    const focusNext = useFocusAfterDraw();
+    const field = useCallback(
+        (input: HTMLInputElement | null) => {
+            if (input) focusNext(input);
+        },
+        [focusNext]
+    );
+    return <input id="first-field" ref={field} aria-label="Name" />;
+};
+
+const Opener = () => {
+    const [open, setOpen] = useState(false);
+    return (
+        <section>
+            <button id="open-view" type="button" onClick={() => setOpen(true)}>
+                Open the view
+            </button>
+            {open ? <FirstField /> : null}
+        </section>
+    );
+};
+
+// A load that never ends, so a transition that waits on it never commits.
+const never = new Promise<never>(() => undefined);
+const Never = () => use(never);
+
+// A part whose press asks for focus inside a transition that a part never loading holds back.
+const Owner = ({ id, onWait }: { readonly id: string; readonly onWait: () => void }) => {
+    const focusNext = useFocusAfterDraw();
+    return (
+        <button
+            id={id}
+            type="button"
+            onClick={() => {
+                startTransition(() => {
+                    onWait();
+                    focusNext('owner-target');
+                });
+            }}
+        >
+            Ask in a transition
+        </button>
+    );
+};
+
+const Owners = () => {
+    const [waiting, setWaiting] = useState(false);
+    const [owned, setOwned] = useState(true);
+    const [shown, setShown] = useState(true);
+    page.dropOwner = () => {
+        setOwned(false);
+    };
+    page.hideOwner = () => {
+        setShown(false);
+    };
+    const wait = () => {
+        setWaiting(true);
+    };
+    return (
+        <section>
+            <button id="owner-target" type="button">
+                Target of the transition
+            </button>
+            <Suspense fallback={<p>Loading</p>}>{waiting ? <Never /> : null}</Suspense>
+            {owned ? <Owner id="owner-ask" onWait={wait} /> : null}
+            <Activity mode={shown ? 'visible' : 'hidden'}>
+                <section id="hidden-owner">
+                    <Owner id="hidden-ask" onWait={wait} />
+                </section>
+            </Activity>
+        </section>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -542,5 +633,7 @@ if (root)
             <Panels />
             <Rows />
             <Leave />
+            <Opener />
+            <Owners />
         </main>
     );

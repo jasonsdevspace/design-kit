@@ -9,7 +9,9 @@ import { servePage, stillClock } from './page.js';
  * passed over for its fallbacks, focus a visitor moved since the request left where it is, a
  * control asked for twice focused twice, a request called off, a view's heading focused when its
  * key changes but never as the page first draws, a request asked as its component unmounts landing,
- * and one asked after it unmounted leaving focus the visitor moved on to the next screen.
+ * one asked after it unmounted leaving focus the visitor moved on to the next screen, one asked
+ * from a ref as its component first draws landing, and one asked in a transition called off when
+ * an urgent update unmounts its component or an `Activity` hides it first.
  */
 
 const BODY =
@@ -28,6 +30,13 @@ type Mover = {
         options?: { fallbacks?: readonly (string | Element | null)[] }
     ) => () => void;
 };
+
+/** Waits two frames, so a request's own frame has come and gone. */
+const frames = (page: import('@playwright/test').Page) =>
+    page.evaluate(async () => {
+        for (let frame = 0; frame < 2; frame += 1)
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
 
 const open = async (page: import('@playwright/test').Page) => {
     await servePage(page, { title: 'Focus', body: BODY, script: SCRIPT });
@@ -237,6 +246,41 @@ test.describe('in React', () => {
                 await new Promise((resolve) => requestAnimationFrame(resolve));
         });
         await expect(page.locator('#next-screen')).toBeFocused();
+    });
+
+    test('focuses a field a view asks for from its own ref as a press first draws it', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#open-view').click();
+        await expect(page.locator('#first-field')).toBeFocused();
+    });
+
+    test('calls off a request asked in a transition when an urgent update unmounts its component first', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#owner-ask').click();
+        // Later, in a task of its own, while the transition still waits.
+        await page.evaluate(() => {
+            (window as unknown as { dropOwner: () => void }).dropOwner();
+        });
+        await expect(page.locator('#owner-ask')).toHaveCount(0);
+        await frames(page);
+        await expect(page.locator('#owner-target')).not.toBeFocused();
+    });
+
+    test('calls off a request asked in a transition when an Activity hides its component', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await page.locator('#hidden-ask').click();
+        await page.evaluate(() => {
+            (window as unknown as { hideOwner: () => void }).hideOwner();
+        });
+        await expect(page.locator('#hidden-ask')).toBeHidden();
+        await frames(page);
+        await expect(page.locator('#owner-target')).not.toBeFocused();
     });
 
     test('focuses the last of two requests made in one frame', async ({ page }) => {
