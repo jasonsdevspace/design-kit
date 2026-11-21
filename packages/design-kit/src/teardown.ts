@@ -30,8 +30,9 @@ export type Teardown<Options = AttachOptions> = {
     readonly stop: () => void;
     /**
      * Joins a later call to the control: its signal as one more holder, or with no signal the
-     * newest holder's call, and its options as that holder's, applied where it is the newest. A
-     * call with no signal while the takedown waits lands it at once instead.
+     * newest holder's call, and its options as that holder's, applied where it is the newest or the
+     * one whose options apply. A call with no signal while the takedown waits, with nothing holding
+     * the control, lands it at once instead.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
     /** What applies a holder's options to the control, given by the attach before `keep`. */
@@ -82,8 +83,8 @@ export const teardown = <Options = AttachOptions>(
             }
         }
     };
-    // The holder whose options apply now, which only a call with options from the newest holder
-    // changes.
+    // The holder whose options apply now, which a call with options from the newest holder takes,
+    // and a call from that holder itself keeps.
     let applied: AbortSignal | undefined | null = null;
     // Whether the last holder has let go and the takedown waits for the next microtask.
     let waiting = false;
@@ -111,9 +112,9 @@ export const teardown = <Options = AttachOptions>(
     const hold = (by: AbortSignal | undefined, next?: Options) => {
         if (signal.aborted) return;
         // A call without a signal holds the piece for the page's life, so where the takedown the
-        // last holder asked for still waits, it lands at once and the call starts afresh rather
-        // than keeping a piece that holder let go of.
-        if (!by && waiting) {
+        // last holder asked for still waits, with no signal joined since, it lands at once and the
+        // call starts afresh rather than keeping a piece that holder let go of.
+        if (!by && waiting && !holders.size) {
             stop();
             return;
         }
@@ -123,7 +124,7 @@ export const teardown = <Options = AttachOptions>(
         // speaks for the newest holder, so its options leave with that holder.
         const key = by ?? (holders.size ? newest() : undefined);
         if (!holders.has(key) || next) holders.set(key, next ?? holders.get(key));
-        if (next && key === newest()) {
+        if (next && (key === newest() || key === applied)) {
             applied = key;
             down.set?.(next);
         }

@@ -79,8 +79,11 @@ const useLiveRef = <Attached extends Element>(
                 signal: controller.signal,
                 down: () => {
                     if (controller.signal.aborted) return;
-                    if (elements.get(element) === held) elements.delete(element);
                     controller.abort();
+                    // Only this element's own attach is undone, so a down kept from an older one
+                    // leaves a newer attach of the element alone.
+                    if (elements.get(element) !== held) return;
+                    elements.delete(element);
                     undo?.();
                 },
             };

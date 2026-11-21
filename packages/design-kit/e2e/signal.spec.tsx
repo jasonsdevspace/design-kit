@@ -654,3 +654,30 @@ test('starts a piece afresh where it is attached without a signal in the task it
     expect(await page.evaluate('dialogOpen')).toBe(false);
     expect(await attached(page)).toEqual(ALL);
 });
+
+test('keeps a busy wait a new signal joined for an attach without a signal in the same task', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.first = new AbortController();
+        window.one = kit.busy(first.signal);
+        document.querySelector('#busy').setAttribute('data-busy', 'Saving the rule.');
+    })()`);
+    await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
+    const same = await page.evaluate(`(() => {
+        window.marks = 0;
+        new MutationObserver((records) => {
+            marks += records.length;
+        }).observe(document.querySelector('#busy'), { attributeFilter: ['aria-disabled'] });
+        first.abort();
+        window.later = new AbortController();
+        const two = kit.busy(later.signal);
+        const three = kit.busy();
+        return one === two && two === three;
+    })()`);
+    expect(same).toBe(true);
+    await page.evaluate('frames()');
+    expect(await page.evaluate('marks')).toBe(0);
+    await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
+});

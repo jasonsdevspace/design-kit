@@ -489,6 +489,18 @@ for (const dropped of ['newer', 'older'] as const) {
     });
 }
 
+test('keeps refusing through a form whose old cleanup is called after a new attach of it', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Strict).staleCleanup();
+    });
+    await page.getByRole('button', { name: 'Make the list' }).click();
+    await expect(page.locator('#name')).toBeFocused();
+    await expect.poll(() => said(page)).toContain('List name: Error: Enter a list name.');
+});
+
 test('lands a refusal asked as its form first draws', async ({ page }) => {
     await open(page);
     await page.evaluate(() => {

@@ -167,6 +167,38 @@ describe('a teardown with several holders', () => {
         expect(registry.has(element)).toBe(false);
     });
 
+    it('keeps a control a new signal joined for a call without a signal in the same task', async () => {
+        const gone = new AbortController();
+        const later = new AbortController();
+        const down = teardown(gone.signal);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        gone.abort();
+        // As an inline ref's new signal, then a call without a signal, in one task.
+        down.hold(later.signal);
+        down.hold(undefined);
+        expect(ran).toBe(0);
+        await Promise.resolve();
+        expect(ran).toBe(0);
+        later.abort();
+        await Promise.resolve();
+        expect(ran).toBe(1);
+    });
+
+    it('applies a call from the holder whose options apply, though it is not the newest', () => {
+        type Options = { readonly name: string };
+        const older = new AbortController();
+        const bare = new AbortController();
+        const down = teardown<Options>(older.signal, { name: 'first' });
+        const applied: string[] = [];
+        down.set = (options) => applied.push(options.name);
+        // A newer holder that gives no options, as a hook of another kind through a merged ref.
+        down.hold(bare.signal);
+        // The older holder changes its options, as a hook does when one of its props changes.
+        down.hold(older.signal, { name: 'second' });
+        expect(applied).toEqual(['second']);
+    });
+
     it('gives an attach made from inside a takedown a control of its own', () => {
         const registry = new WeakMap<object, Kept<() => void>>();
         const element = {};

@@ -47,6 +47,7 @@ export type Strict = {
     move: (done: number) => void;
     leave: () => void;
     nullRefs: () => void;
+    staleCleanup: () => void;
     moveForm: () => void;
     speak?: Say;
     remount: () => void;
@@ -122,6 +123,15 @@ const Pieces = () => {
     };
     // Each ref called with null, as a helper written to merge refs before React 19 calls it, dropping
     // the cleanup.
+    // The form's cleanup kept past a new attach of the same form and called again, as a page that
+    // holds on to an old cleanup does.
+    page.staleCleanup = () => {
+        const element = document.getElementById('form') as HTMLFormElement | null;
+        const stale = form(element);
+        if (typeof stale === 'function') stale();
+        form(element);
+        if (typeof stale === 'function') stale();
+    };
     page.nullRefs = () => {
         for (const ref of [row, save, bar, form, heading]) ref(null);
     };

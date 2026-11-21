@@ -48,9 +48,9 @@ Option C.
   one already held adds no second holder, as `addEventListener` ignores a listener added twice. A
   call without a signal holds the control until its detach only where nothing else holds it, and
   elsewhere joins without holding, its options going to the newest holder. A call without a signal
-  made while the last holder's takedown waits lands that takedown at once and attaches afresh, since
-  such a call holds the piece for the page's life and nothing of the holder that let go should carry
-  over to it.
+  made while the last holder's takedown waits, with no signal joined since, lands that takedown at
+  once and attaches afresh, since such a call holds the piece for the page's life and nothing of the
+  holder that let go should carry over to it.
 - **The last holder letting go takes the control down a microtask later.** An attach of the same
   element before then cancels the takedown and keeps the control's state, a busy wait, a form's
   check and the errors it drew, a group's observers, an open dialog, a shown toast and a status
@@ -62,12 +62,14 @@ Option C.
   every call returns, so a page that means to start afresh within the task calls it.
 - **A later attach returns what the first returned,** as record 13 has it.
 - **A control runs on its newest holder's options.** A new holder's options apply at once. A call
-  from the newest holder, or one without a signal, replaces them, and a call from an older holder is
-  kept for when that holder is the newest again. When the holder whose options apply lets go, the
-  newest one left that gave options takes over with them in the microtask a takedown would wait for,
-  unless a newer holder has given its own by then, so a ref made afresh on a hook that shares an
-  element does not hand the control to the older hook's options and back on every render. A call
-  without a signal speaks for the newest holder, so its options leave with that holder.
+  from the newest holder, or one without a signal, replaces them, and so does a call from the holder
+  whose options apply, as an older hook does when one of its own options changes. A call from
+  another older holder is kept for when that holder is the newest again. When the holder whose
+  options apply lets go, the newest one left that gave options takes over with them in the microtask
+  a takedown would wait for, unless a newer holder has given its own by then, so a ref made afresh
+  on a hook that shares an element does not hand the control to the older hook's options and back on
+  every render. A call without a signal speaks for the newest holder, so its options leave with that
+  holder.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment
   the takedown lands. A focus request's takedown waits the same microtask, which changes nothing
@@ -101,7 +103,7 @@ ever held.
 - A copy button joined with a source that gives the element its last press copied keeps the word it
   shows, reading the source only while a word is shown, and progress counts its steps again only
   where their count changes, since a join that sets the same options would otherwise undo them.
-- The controls weigh 18,523 bytes, against 18,117 before, which leaves less room under 18.5 KB than
+- The controls weigh 18,533 bytes, against 18,117 before, which leaves less room under 18.5 KB than
   a function of the usual size, so record 13's rule sets them at 18.75 KB.
 - Records 13, 15, 20 and 22 say what this record changes, and the reference's section on taking a
   control down says when a takedown lands.

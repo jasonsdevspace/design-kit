@@ -1418,15 +1418,16 @@ page that aborts and attaches the same element in one task keeps its control, an
 after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
 abort's own task, such as a panel's `set`, still acts. The function an attach returns takes the
 control down at once, whoever holds it, so a page that means to start afresh within the task calls
-it. A control runs on the options of its newest holder: a new holder's options apply at once, and a
-call from an older holder is kept for when it is the newest again, and when the holder whose options
-apply lets go, the newest one left that gave options takes over with them a microtask later, unless
-a newer holder has given its own by then. A call with no signal holds the control only where nothing
-else does, and elsewhere speaks for the newest holder, so its options replace that holder's and
-leave with it. A call with no signal made while a takedown waits lands that takedown at once and
-attaches afresh, since it holds the control for the page's life and nothing of the holder that let
-go carries over. An attach made from inside a control's own takedown, as a dialog's close handler
-that attaches it again, gets a control of its own.
+it. A control runs on the options of its newest holder: a new holder's options apply at once, a call
+from the holder whose options apply replaces them, and a call from another older holder is kept for
+when it is the newest again, and when the holder whose options apply lets go, the newest one left
+that gave options takes over with them a microtask later, unless a newer holder has given its own by
+then. A call with no signal holds the control only where nothing else does, and elsewhere speaks for
+the newest holder, so its options replace that holder's and leave with it. A call with no signal
+made while a takedown waits, with no signal joined since, lands that takedown at once and attaches
+afresh, since it holds the control for the page's life and nothing of the holder that let go carries
+over. An attach made from inside a control's own takedown, as a dialog's close handler that attaches
+it again, gets a control of its own.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
