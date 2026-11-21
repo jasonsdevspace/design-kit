@@ -866,9 +866,10 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * next message replaces it. One with an action stays until then, since a timer would take the
  * action away from anyone slower than it. One with no action also leaves after five seconds, a wait
  * held while the pointer is over it or focus is in it. When a toast leaves with focus in it, focus
- * goes back to the last control outside the toast that had focus when a message arrived, and where
- * there was none, or it no longer takes focus, to the body of the app's frame, or on a page with no
- * frame to its main content. Focus goes back only where it is in the toast, or where the page has
+ * goes back to the control the visitor came into the toast from, and where focus came into it from
+ * nowhere, to the last control outside the toast that had focus when a message arrived. Where there
+ * was none, or it no longer takes focus, focus goes to the body of the app's frame, or on a page
+ * with no frame to its main content. Focus goes back only where it is in the toast, or where the page has
  * taken the toast away with focus in it so that focus has fallen to the body or to nothing, while
  * focus a visitor has put anywhere else stays. Its Close and its action take a tabindex of 0 where
  * the page set none, so Safari, which focuses a pressed button only where it has one, leaves focus
@@ -1025,7 +1026,10 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     );
     element.addEventListener(
         'focusin',
-        () => {
+        ({ relatedTarget: from }) => {
+            // Focus goes back where the visitor came into the toast from, and where it came from
+            // nowhere, to where it was as the message came.
+            if (from instanceof HTMLElement && !element.contains(from)) returnTo = from;
             focused = true;
             wait();
         },
