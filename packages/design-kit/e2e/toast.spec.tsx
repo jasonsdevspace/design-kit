@@ -289,6 +289,34 @@ test('hands focus back where it was as the message came where the control focus 
     await expect(page.locator('#save')).toBeFocused();
 });
 
+test('hands focus back to the control focus came into the toast from where the page stops its focusout', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await expect(page.locator('#share')).toBeFocused();
+    // The page stops Share's focusout before it reaches the document, so the control that last
+    // lost focus there is still Save.
+    await page.evaluate(() => {
+        window.addEventListener(
+            'focusout',
+            (event) => {
+                if ((event.target as Element).id === 'share') event.stopPropagation();
+            },
+            true
+        );
+    });
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#share')).toBeFocused();
+});
+
 test('hands focus back where it was as the message came where focus last came into the toast from nowhere', async ({
     page,
     browserName,

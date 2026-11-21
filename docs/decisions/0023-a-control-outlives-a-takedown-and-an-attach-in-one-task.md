@@ -102,8 +102,9 @@ Option C.
   region does for the control focus came from, then where focus was as its latest message came, then
   the body of the app's frame or the page's main content. It reads the control focus came from as
   that control loses focus, inside an open shadow root too, where the event's related target names
-  only the host, and an entry from nowhere names none. A takedown lands after the abort's task, so
-  focus the page set in that task, by its own call or by a field the new content focuses as it
+  only the host, and takes the related target itself where the page stopped that focusout before it
+  reached the document. An entry from nowhere names none. A takedown lands after the abort's task,
+  so focus the page set in that task, by its own call or by a field the new content focuses as it
   draws, stays. The kit keeps where it last handed focus back, and `moveFocus` treats focus there as
   free where the handback came after the request was asked, so a request asked in the abort's task
   still lands.
@@ -146,7 +147,7 @@ ever held.
   under 18.5 KB than a function of the usual size, so record 13's rule sets them at 18.75 KB. One
   rule for handing focus back and a toast that forgets focus a visitor moved take them to 18,638
   bytes, with less room under 18.75 KB than a function of the usual size, so the rule sets them at
-  19 KB. A toast that sends focus back to the control focus came into it from takes them to 18,711.
+  19 KB. A toast that sends focus back to the control focus came into it from takes them to 18,757.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -180,11 +181,12 @@ The paths are in `packages/design-kit`.
   form and a stepper back on their defaults once the only holder that gave options lets go, and a
   dialog's `stay` dropped with the holder that gave it, though the first attach gave a signal.
 - `e2e/toast.spec.tsx` moves from a field to a second control and into a shown toast, dismisses it
-  by its action and by Escape, and finds focus on the second control, and finds focus sent back to
-  where it was as the message came where that control is disabled before the dismiss, where focus
-  last came into the toast from nowhere, and where it only ever came in from nowhere. It runs in
-  Firefox as well as Chromium and WebKit. `e2e/shadow.spec.ts` finds focus sent back to a control
-  inside an open shadow root that focus came into the toast from.
+  by its action and by Escape, and finds focus on the second control, there too where the page stops
+  the second control's focusout, and finds focus sent back to where it was as the message came where
+  that control is disabled before the dismiss, where focus last came into the toast from nowhere,
+  and where it only ever came in from nowhere. It runs in Firefox as well as Chromium and WebKit.
+  `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
+  into the toast from.
 - `e2e/teardown-form-panel.spec.tsx` opens and closes a panel through `set` in the task its signal
   aborts, and finds it closed.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and

@@ -1034,9 +1034,15 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         'focusin',
         ({ relatedTarget }) => {
             // Each entry from outside names the control focus came in from, and one from nowhere
-            // names none, so focus then goes back to where it was as the message came.
-            if (!element.contains(relatedTarget as Node | null))
-                cameFrom = relatedTarget ? lost : undefined;
+            // names none, so focus then goes back to where it was as the message came. The element
+            // that last lost focus stands in only where it is the related target or inside its
+            // shadow trees, since a page that stops a focusout leaves an older one there.
+            if (!element.contains(relatedTarget as Node | null)) {
+                let deep: Node | undefined = lost;
+                while (deep && deep !== relatedTarget)
+                    deep = (deep.getRootNode() as Partial<ShadowRoot>).host;
+                cameFrom = relatedTarget ? ((deep ? lost : relatedTarget) as Element) : undefined;
+            }
             focused = true;
             wait();
         },
