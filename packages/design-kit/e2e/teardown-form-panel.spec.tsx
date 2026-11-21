@@ -197,11 +197,10 @@ test.describe('a panel', () => {
         expect(await count(PANELS)).toBeGreaterThan(listeners);
         await page.locator('#tips-button').click();
         await expect(page.locator('#round-tips')).toBeVisible();
-        await page.evaluate(`(() => {
-            controller.abort();
-            tips.set(false);
-        })()`);
+        await page.evaluate('controller.abort()');
         expect(await count(PANELS)).toBe(listeners);
+        // Called once the takedown has landed, a microtask after the abort, as record 23 has it.
+        await page.evaluate('tips.set(false)');
         // What the attach returned does nothing after the teardown, and a press is the page's.
         await expect(page.locator('#round-tips')).toBeVisible();
         await page.locator('#rules-button').click();

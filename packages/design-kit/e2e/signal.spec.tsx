@@ -9,10 +9,12 @@ import { servePage, stillClock } from './page.js';
 /*
  * The teardown contract of record 22 on the stepper, a table's frame, a group the arrow keys move
  * through, a busy button, progress, the dialog and a focus request: a signal already aborted
- * attaches nothing, aborting takes away what the attach set up, as its detach does, a later call's
- * signal goes unheard while the first attach owns the piece, an old signal leaves a newer attach
- * alone, and nothing the piece set going acts after its teardown. The behavior runs in Chromium,
- * WebKit and Firefox, and so do the counts of listeners, through the counters in leaks.ts.
+ * attaches nothing, aborting takes away what the attach set up a microtask later, as its detach
+ * does at once, each signal that attached the piece holds it until it aborts, an abort and an
+ * attach in one task keep the piece and what it was doing while one a microtask later starts
+ * afresh, an old signal leaves a newer attach alone, and nothing the piece set going acts after its
+ * teardown. The behavior runs in Chromium, WebKit and Firefox, and so do the counts of listeners,
+ * through the counters in leaks.ts.
  */
 
 const BODY = renderToStaticMarkup(
@@ -202,7 +204,10 @@ test('does nothing after its teardown', async ({ page }) => {
         window.returned = all(controller.signal);
         window.show = kit.dialog(controller.signal);
         controller.abort();
-        // Calls after the teardown: detach again, show, a busy mark, a step of progress, a press.
+    })()`);
+    // Calls after the teardown, which lands a microtask after the abort: detach again, show, a busy
+    // mark, a step of progress, a press.
+    await page.evaluate(`(() => {
         for (const detach of Object.values(returned)) detach();
         show();
         document.querySelector('#busy').setAttribute('data-busy', '');
@@ -282,19 +287,19 @@ test('leaves a newer attach alone when the old detach runs twice and its signal 
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
 });
 
-test("hears only the first attach's signal while the piece stays attached", async ({ page }) => {
+test('keeps each piece attached until every signal holding it has aborted', async ({ page }) => {
     await opened(page);
     const same = await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
         const one = all(first.signal);
         const two = all(later.signal);
-        later.abort();
+        first.abort();
         return Object.keys(one).filter((name) => one[name] !== two[name]);
     })()`);
     expect(same).toEqual([]);
     expect(await attached(page)).toEqual(ALL);
-    await page.evaluate('first.abort()');
+    await page.evaluate('later.abort()');
     expect(await attached(page)).toEqual(NONE);
 });
 
@@ -313,16 +318,35 @@ test('hands focus back from a dialog closed and taken down in one task', async (
     await expect(page.locator('#finish')).toBeFocused();
 });
 
+test('keeps a dialog open with its opener when it is aborted and attached again in one task', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        const controller = new AbortController();
+        kit.dialog(controller.signal)(document.querySelector('#finish'));
+        controller.abort();
+        window.later = new AbortController();
+        kit.dialog(later.signal);
+    })()`);
+    await page.evaluate('frames()');
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    await page.evaluate(`document.querySelector('#end-game').close()`);
+    await expect(page.locator('#finish')).toBeFocused();
+});
+
 test('leaves a dialog attached again as the last is taken down open to its own closings', async ({
     page,
 }) => {
     await opened(page);
     // The close the teardown makes arrives once the new attach listens, which would send focus to
-    // its returnTo if it took that closing for its own.
-    await page.evaluate(`(() => {
+    // its returnTo if it took that closing for its own. The new attach comes a microtask after the
+    // abort, once the takedown has landed, since one in the same task would keep the dialog.
+    await page.evaluate(`(async () => {
         const controller = new AbortController();
         kit.dialog(controller.signal)(document.querySelector('#finish'));
         controller.abort();
+        await Promise.resolve();
         window.show = kit.dialog(undefined, { returnTo: () => document.querySelector('#start') });
     })()`);
     await page.evaluate('frames()');
@@ -474,18 +498,19 @@ test('keeps what each piece was doing through an abort and an attach in one task
         kit.toast(later.signal);
         kit.form(later.signal);
     })()`);
-    await page.clock.runFor(1000);
-    // The busy wait kept its mark and says its words once, the dialog and the toast stay open, the
-    // group was not observed again, and the form kept its errors and its check.
+    // The dialog and the toast stay open, the group was not observed again, and the form kept its
+    // errors and its check.
+    await expect(page.locator('#end-game')).toHaveAttribute('open');
+    await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown');
+    await expect(page.locator('#name')).toHaveAttribute('aria-invalid', 'true');
+    expect(await page.evaluate(`({ observers, checks })`)).toEqual(before);
+    // The busy wait kept its mark and says its words once.
+    await page.clock.runFor(5000);
     expect(await page.evaluate('marks')).toBe(0);
     await expect(page.locator('#busy')).toHaveAttribute('aria-disabled', 'true');
     expect(
         await page.evaluate('window.heard.filter((words) => words === "Saving the rule.")')
     ).toEqual(['Saving the rule.']);
-    await expect(page.locator('#end-game')).toHaveAttribute('open');
-    await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown');
-    await expect(page.locator('#name')).toHaveAttribute('aria-invalid', 'true');
-    expect(await page.evaluate(`({ observers, checks })`)).toEqual(before);
     // The dialog hands focus back to the opener it was opened from.
     await page.evaluate(`document.querySelector('#end-game').close()`);
     await expect(page.locator('#finish')).toBeFocused();

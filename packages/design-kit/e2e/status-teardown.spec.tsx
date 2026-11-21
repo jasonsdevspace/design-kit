@@ -9,9 +9,10 @@ import { servePage, stillClock } from './page.js';
  * The teardown contract of record 22 on the status line and the toast: a signal already aborted
  * does nothing and what the attach returns says or shows nothing, aborting lets the line go so no
  * piece speaks on it until it is attached again, a toast taken down leaves focus where it is and a
- * later message unshown, the first attach owns the piece so a later call's signal is not heard, and
- * a line a stepper or progress spoke on first is still the page's to take down. Timers, observers
- * and listeners are counted in every engine on a stand-in clock, through the counters in leaks.ts.
+ * later message unshown, each signal that attached the piece holds it until it aborts, as record 23
+ * has it, and a line a stepper or progress spoke on first is still the page's to take down. Timers,
+ * observers and listeners are counted in every engine on a stand-in clock, through the counters in
+ * leaks.ts.
  */
 
 // The toast's buttons are written without a tabindex, as a page's own markup may be, so the
@@ -169,20 +170,20 @@ test('lets a line go that a stepper and progress spoke on before the page attach
     await expect(line(page)).toHaveText('');
 });
 
-test("hears only the first attach's signal while a line stays attached", async ({ page }) => {
+test('keeps a line attached until every signal holding it has aborted', async ({ page }) => {
     await opened(page);
     await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
         window.say = kit.status(first.signal);
         window.same = say === kit.status(later.signal);
-        later.abort();
+        first.abort();
         say('Saved.');
     })()`);
     expect(await page.evaluate('window.same')).toBe(true);
     await page.clock.runFor(300);
     await expect(line(page)).toHaveText('Saved.');
-    await page.evaluate('first.abort()');
+    await page.evaluate('later.abort()');
     await expect(line(page)).toHaveText('');
 });
 
@@ -255,18 +256,18 @@ test('takes a toast down when its signal aborts, sending focus back as a dismiss
     await expect(toastLine(page)).toHaveText('Round 4 saved.');
 });
 
-test("hears only the first attach's signal while a toast stays attached", async ({ page }) => {
+test('keeps a toast attached until every signal holding it has aborted', async ({ page }) => {
     await opened(page);
     await page.evaluate(`(() => {
         window.first = new AbortController();
         window.later = new AbortController();
         window.show = kit.toast(first.signal);
         window.same = show === kit.toast(later.signal);
-        later.abort();
+        first.abort();
         show('Round 3 saved.');
     })()`);
     expect(await page.evaluate('window.same')).toBe(true);
     await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown', '');
-    await page.evaluate('first.abort()');
+    await page.evaluate('later.abort()');
     await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
 });

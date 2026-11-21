@@ -10,7 +10,7 @@ import {
     type Spoken,
     unsay,
 } from './line.js';
-import { teardown } from './teardown.js';
+import { join, keep, type Kept, teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
 /*
@@ -20,10 +20,10 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
  * components draw or a page writes by hand. Each attach function finds its control's parts by their
  * classes, and `attachPanel` its panel by the id its button names. The switch, the copy button and
  * the stepper show their control, which the markup keeps hidden so a visitor without script meets
- * no control that does nothing, and return a function that takes it away again, as the table's, the
+ * no control that does nothing, and return a function that takes it down again, as the table's, the
  * group's, the busy button's and progress's do. `attachToast` returns instead the function that
  * shows a message in it, `attachDialog` the function that opens it, `attachPanel` the functions
- * that open or close its panel and let its button go, `attachStatus` the function that says a
+ * that open or close its panel and take its button down, `attachStatus` the function that says a
  * message, `attachForm` the function that refuses its form, and `moveFocus` and `focusOnArrival`
  * what call their request off. Nothing runs when the module is imported but listeners on the
  * document for keys, clicks and submits, in a page, which note whether the visitor's last input was
@@ -142,16 +142,17 @@ const land = (
 
 /**
  * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
- * next player's entry, and returns what calls it off before it lands, as aborting the `signal` it
- * is given does. It waits for the next frame, so a page that draws the control in answer to the
- * same press or key has drawn it, and finds an id then. A change React draws later, in a transition
- * or behind a suspense, asks from an effect once it is drawn. Where the target is gone from the
- * page, hidden, inert, disabled or off, focus goes to the first fallback that takes it, and then to
- * the app frame's body or the page's main content, by the walk a closing panel hands focus back by,
- * so it does not fall to the page. Focus a visitor has moved since the request is left where they
- * put it: focus is free only while it is where it was when asked, or on the page's body. A request
- * still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump when
- * the visitor comes back. Each request is new, so a control asked for twice is focused twice.
+ * next player's entry, and returns what calls it off before it lands, as its `signal` does a
+ * microtask after it aborts, which is still before the frame the request waits for. It waits for
+ * the next frame, so a page that draws the control in answer to the same press or key has drawn it,
+ * and finds an id then. A change React draws later, in a transition or behind a suspense, asks from
+ * an effect once it is drawn. Where the target is gone from the page, hidden, inert, disabled or
+ * off, focus goes to the first fallback that takes it, and then to the app frame's body or the
+ * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
+ * page. Focus a visitor has moved since the request is left where they put it: focus is free only
+ * while it is where it was when asked, or on the page's body. A request still waiting a second
+ * later, as in a tab out of sight, is dropped, so focus does not jump when the visitor comes back.
+ * Each request is new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
     // Aborting calls off a request that has not landed, as the function it returns does, and one
@@ -449,33 +450,30 @@ const listen = () => {
  * Each control attached, by its element, one map for each kind so neither answers for the
  * other.
  */
-const attachedSwitches = new WeakMap<HTMLElement, () => void>();
+const attachedSwitches = new WeakMap<HTMLElement, Kept<() => void>>();
 /**
- * How a page takes a piece down with an `AbortSignal`, as record 22 has it. Aborting it does what
- * the piece's detach does, and a signal already aborted does nothing. Attaching the piece again
- * before it is taken down returns the first attach's handle and leaves this signal unheard, as
- * `addEventListener` ignores a listener added twice, signal and all.
+ * How a page takes a piece down with an `AbortSignal`, as records 22 and 23 have it. Each signal an
+ * attach of the element is given holds the piece, and once every one of them has aborted, the piece
+ * is taken down a microtask later, as its detach takes it down at once. An attach of the same
+ * element before then keeps the piece as it was, so a page that aborts and attaches again in one
+ * task, as a ref made afresh on every render does, keeps it, and one that attaches after a
+ * microtask starts afresh. Attached again, a piece returns what its attach returned first and runs
+ * on the options of its newest holder. A signal already aborted does nothing.
  */
 export type AttachOptions = { readonly signal?: AbortSignal | undefined };
-/**
- * What a copy button reads, which attaching it again replaces, and the signal its first attach
- * takes it down by.
- */
+/** What a copy button reads, which attaching it again replaces, and the signal that holds it. */
 export type CopyOptions = AttachOptions & {
     readonly source: () => HTMLElement;
     readonly status: HTMLElement;
 };
-const attachedButtons = new WeakMap<
-    HTMLElement,
-    { readonly detach: () => void; readonly set: (next: CopyOptions) => void }
->();
+const attachedButtons = new WeakMap<HTMLElement, Kept<() => void, CopyOptions>>();
 
 /**
  * Makes a theme switch work: checks the choice the page shows, shows the switch, and saves and
  * draws a choice when a visitor makes one. It takes the switch, or an element that holds it.
- * Attaching one switch again before it is taken away attaches it once, and taking it away, by
- * the function it returns or by aborting the `signal` it was given, hides it again. A signal
- * already aborted leaves it hidden and unattached.
+ * Attaching one switch again before it is taken down attaches it once, and taking it down, by the
+ * function it returns or by its `signal`, hides it again. A signal already aborted does nothing,
+ * so a switch not yet attached stays hidden and one already attached stays as it is.
  *
  * Where the sheet collapses the switch to its name and one button, in a demo's strip on a screen
  * narrower than 20rem, the button names the choice shown and opens the choices under itself, with
@@ -491,7 +489,7 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
         : (element.querySelector<HTMLElement>('.dk-theme-switch') ?? element);
     // A signal already aborted does nothing, even to a switch already attached.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedSwitches.get(group);
+    const already = join(attachedSwitches, group, options);
     if (already) return already;
     const radios = [...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
     // A switch with no choices yet is left hidden and unattached, so a page that attaches it before
@@ -601,10 +599,8 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
         close(false);
         switches.delete(show);
         group.hidden = true;
-        attachedSwitches.delete(group);
     });
-    attachedSwitches.set(group, down.stop);
-    return down.stop;
+    return keep(attachedSwitches, group, down, down.stop);
 };
 
 /** How a message is said on a status line. */
@@ -634,7 +630,7 @@ export type Say = (message: string | (() => string | null), options?: SayOptions
  * The function each attached line says by, kept so attaching it again returns the same one, and
  * what takes that attach down.
  */
-const attachedLines = new WeakMap<HTMLElement, readonly [Say, () => void]>();
+const attachedLines = new WeakMap<HTMLElement, Kept<Say>>();
 
 /**
  * Returns the function that says a message on a status line, which a page draws out of sight and
@@ -647,34 +643,34 @@ const attachedLines = new WeakMap<HTMLElement, readonly [Say, () => void]>();
  * being said, so the last words said are the ones heard. A screen keeps a line of its own for this,
  * as a toast and a stepper keep theirs. It speaks through the same function as the copy button and
  * the stepper, so a line handed to a copy button too keeps one timer, and a later message replaces
- * an earlier one. Attached again, a line returns the function it returned first and leaves the
- * later call's `signal` unheard, unless the line was let go of, when it returns one afresh and the
- * old attach is taken down. Aborting the `signal` its first attach took lets the line go, as
- * `StatusProvider` does when it unmounts, so no piece says anything on it until it is attached
- * again. The function an attach returned says nothing once that attach is taken down, while a
- * piece given the line itself speaks on its next attach. A signal already aborted returns a
- * function that says nothing.
+ * an earlier one. Attached again, a line returns the function it returned first, its `signal` one
+ * more holder, unless the line was let go of, when it returns one afresh and the old attach is
+ * taken down at once. Taken down, by its `signal` as `StatusProvider` takes it as it unmounts, it
+ * lets the line go, so no piece says anything on it until it is attached again. The function an
+ * attach returned says nothing once that attach is taken down, while a piece given the line itself
+ * speaks on its next attach. A signal already aborted returns a function that says nothing.
  */
 export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say => {
     // A signal already aborted does nothing, even to a line already attached.
     if (options?.signal?.aborted) return () => undefined;
     const already = attachedLines.get(line);
-    if (already && !lineOf(line).released) return already[0];
+    if (already && !lineOf(line).released) {
+        already.down.hold(options?.signal);
+        return already.handle;
+    }
     // A line let go of while still attached, as a toast's own line is when the toast is taken down,
     // is attached afresh, and its old attach taken down, so the old attach's signal holds nothing
     // of it.
-    already?.[1]();
+    already?.down.stop();
     const down = teardown(options?.signal);
     claimLine(line);
     const speak: Say = (message, given) => {
         if (!down.signal.aborted) sayOn(line, message, given);
     };
     down.add(() => {
-        attachedLines.delete(line);
         releaseLine(line);
     });
-    attachedLines.set(line, [speak, down.stop]);
-    return speak;
+    return keep(attachedLines, line, down, speak);
 };
 
 /** Selects all of an element's text, for a visitor to copy with their own keys. */
@@ -713,20 +709,18 @@ const copied = async (text: string): Promise<boolean> => {
  * says which on the page's status line. `source` is read at each press, so a button beside tabs
  * copies the block its tab shows. Attaching it again takes the new `source` and `status`, so a page
  * that draws the button again with a new source copies from that one, puts a word shown for the
- * last source back to Copy, and returns what it returned the first time. Aborting the `signal` it
- * was first given takes it away as the function it returns does, and a signal already aborted
- * leaves it hidden and unattached.
+ * last source back to Copy where the new source gives another element, and returns what it
+ * returned the first time. Its `signal` takes it down as the function it returns does. A signal
+ * already aborted does nothing, so a button not yet attached stays hidden and one already attached
+ * stays as it is.
  */
 export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a button already attached are
     // not taken.
     if (options.signal?.aborted) return () => undefined;
-    const already = attachedButtons.get(button);
-    if (already) {
-        already.set(options);
-        return already.detach;
-    }
-    const down = teardown(options.signal);
+    const already = join(attachedButtons, button, options);
+    if (already) return already;
+    const down = teardown(options.signal, options);
     let { source, status } = options;
     const words = [...button.querySelectorAll<HTMLElement>('.dk-copy-words > *')];
     let timer = 0;
@@ -755,9 +749,12 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
             }, SAID_FOR);
         });
     };
-    // A word shown for the last source is put back to Copy, so it never claims the new one copied.
+    // A word shown for the last source is put back to Copy where the new one gives another
+    // element, so it never claims that one copied, and kept where it gives the same.
     const set = (next: CopyOptions) => {
+        const moved = next.source() !== source();
         ({ source, status } = next);
+        if (!moved) return;
         window.clearTimeout(timer);
         showWord(0);
     };
@@ -767,10 +764,9 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
         window.clearTimeout(timer);
         showWord(0);
         button.hidden = true;
-        attachedButtons.delete(button);
     });
-    attachedButtons.set(button, { detach: down.stop, set });
-    return down.stop;
+    down.set = set;
+    return keep(attachedButtons, button, down, down.stop);
 };
 
 /** How long a toast with no action stays while nothing holds it, in milliseconds. */
@@ -782,7 +778,7 @@ export type ToastAction = { readonly label: string; readonly onAction: () => voi
 /** Shows a message in a toast, with one action or none, and returns what dismisses that message. */
 export type ShowToast = (message: string, action?: ToastAction) => () => void;
 
-const attachedToasts = new WeakMap<HTMLElement, ShowToast>();
+const attachedToasts = new WeakMap<HTMLElement, Kept<ShowToast>>();
 
 /**
  * Marks a shown toast with the rows it takes, its content's height over the target's length, which
@@ -833,11 +829,12 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * frame to its main content. Its Close and its action take a tabindex of 0 where the page set none,
  * so Safari, which focuses a pressed button only where it has one, leaves focus in the toast on a
  * press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
- * function and leaves the later call's `signal` unheard. Aborting the `signal` its first attach
- * took dismisses its message as its Close does, focus in it going back where it came from, takes
- * off its listeners, its observer, its listener on the window's size and its timer, takes away the
- * tabindex it added and lets its line go, and the function it returned, and what that returned, do
- * nothing after. A signal already aborted returns a function that shows nothing.
+ * function, its message still shown. Taken down by its `signal`, it dismisses its message as its
+ * Close does, focus in it going back where it came from, even from a toast taken from the page with
+ * focus in it, takes off its listeners, its observer, its listener on the window's size and its
+ * timer, takes away the tabindex it added and lets its line go, and the function it returned, and
+ * what that returned, do nothing after. A signal already aborted returns a function that shows
+ * nothing.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -852,7 +849,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     // Checked after the parts, so markup missing one throws whatever the signal. A signal already
     // aborted does nothing, even to a toast already attached.
     if (options?.signal?.aborted) return () => () => undefined;
-    const already = attachedToasts.get(element);
+    const already = join(attachedToasts, element, options);
     if (already) return already;
     const down = teardown(options?.signal);
     const { signal } = down;
@@ -884,7 +881,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const dismiss = () => {
         window.clearTimeout(timer);
-        const hadFocus = element.contains(activeOf());
+        // A toast taken from the page with focus in it gave that focus up with it, so the focus it
+        // last heard stands for focus it held.
+        const hadFocus = element.contains(activeOf()) || (focused && !element.isConnected);
         shown = 0;
         focused = false;
         onAction = undefined;
@@ -989,8 +988,16 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     element.addEventListener(
         'focusout',
         (event) => {
-            focused = event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
-            wait();
+            const within =
+                event.relatedTarget instanceof Node && element.contains(event.relatedTarget);
+            // Chromium fires focusout as a toast with focus in it is taken from the page, and
+            // WebKit and Firefox fire none, so focus is taken to have left only where the toast
+            // is still in the page a microtask later.
+            queueMicrotask(() => {
+                if (!element.isConnected) return;
+                focused = within;
+                wait();
+            });
         },
         { signal }
     );
@@ -1001,13 +1008,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // A tabindex the page has set since is the page's.
         for (const button of given)
             if (button.getAttribute('tabindex') === '0') button.removeAttribute('tabindex');
-        attachedToasts.delete(element);
     });
-    attachedToasts.set(element, show);
-    return show;
+    return keep(attachedToasts, element, down, show);
 };
 
-/** How a stepper is attached, and the signal its first attach takes it down by. */
+/** How a stepper is attached, and the signal that holds it. */
 export type StepperOptions = AttachOptions & {
     /**
      * A status line to say each press on, such as the page's own, in place of the stepper's line,
@@ -1027,10 +1032,7 @@ export type StepperOptions = AttachOptions & {
     readonly words?: ((value: string) => string) | null | undefined;
 };
 
-const attachedSteppers = new WeakMap<
-    HTMLElement,
-    { readonly detach: () => void; readonly set: (next: StepperOptions) => void }
->();
+const attachedSteppers = new WeakMap<HTMLElement, Kept<() => void, StepperOptions>>();
 
 /**
  * A field's description with a stepper's own parts in their place: the error while it shows, which
@@ -1126,8 +1128,8 @@ const stepperParts = (
  * while the error is shown by the error alone, which names the range itself. A press that lands on
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
  * same message, on the page's status line when one is given. It takes the stepper's field or the
- * stepper, attaches each stepper once whichever it is given, takes options given again in place of
- * the last, and returns what takes it away again.
+ * stepper, attaches each stepper once whichever it is given, runs on the options of its newest
+ * holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1137,16 +1139,13 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // A signal already aborted does nothing, so even new options for a stepper already attached are
     // not taken.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedSteppers.get(stepper);
-    if (already) {
-        if (options) already.set(options);
-        return already.detach;
-    }
+    const already = join(attachedSteppers, stepper, options);
+    if (already) return already;
     let chosen: StepperOptions = options ?? {};
     const parts = stepperParts(field);
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
     if (!parts) return () => undefined;
-    const torn = teardown(options?.signal);
+    const torn = teardown(options?.signal, options);
     const { signal } = torn;
     const { input, down, up } = parts;
     const range = field.querySelector<HTMLElement>('.dk-stepper-range');
@@ -1350,19 +1349,15 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         report(false);
         down.hidden = true;
         up.hidden = true;
-        attachedSteppers.delete(stepper);
     });
-    attachedSteppers.set(stepper, {
-        detach: torn.stop,
-        set: (next) => {
-            // A page that takes the stepper's words to its own line leaves none on the stepper's,
-            // and words left on a line the page no longer gives are taken back from it.
-            if ((next.status || next.say) && status) hush(status);
-            if (saidOn && saidOn !== next.status) unsay(saidOn, lastSaid);
-            chosen = next;
-        },
-    });
-    return torn.stop;
+    torn.set = (next) => {
+        // A page that takes the stepper's words to its own line leaves none on the stepper's,
+        // and words left on a line the page no longer gives are taken back from it.
+        if ((next.status || next.say) && status) hush(status);
+        if (saidOn && saidOn !== next.status) unsay(saidOn, lastSaid);
+        chosen = next;
+    };
+    return keep(attachedSteppers, stepper, torn, torn.stop);
 };
 
 /**
@@ -1375,7 +1370,7 @@ export type DialogOpener =
 /** Opens a dialog as a modal, over the page, remembering where focus goes back to on close. */
 export type OpenDialog = (from?: DialogOpener) => void;
 
-/** How a dialog is attached, and the signal its first attach takes it down by. */
+/** How a dialog is attached, and the signal that holds it. */
 export type DialogOptions = AttachOptions & {
     /**
      * Stays open on Escape, a phone's Back and a tap on the scrim, for a dialog that must be
@@ -1386,10 +1381,7 @@ export type DialogOptions = AttachOptions & {
     readonly returnTo?: (() => HTMLElement | null) | undefined;
 };
 
-const attachedDialogs = new WeakMap<
-    HTMLDialogElement,
-    { readonly open: OpenDialog; readonly set: (options: DialogOptions) => void }
->();
+const attachedDialogs = new WeakMap<HTMLDialogElement, Kept<OpenDialog, DialogOptions>>();
 
 /** What a press can land on that takes focus, so a press inside a button finds the button. */
 const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
@@ -1460,23 +1452,20 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
  * often a page may refuse a close does not hold a refusal past the first. Attaching it again with
- * options replaces them, attaching it again with none leaves them as they were, and either returns
- * the same function. Its listeners are on the dialog, so a dialog taken from the page takes them
- * with it. Aborting the `signal` its first attach was given lets it go: an open dialog closes,
- * focus goes back to what opened it, its listeners and the closedby its `stay` set come off, and
- * the function that opens it does nothing.
+ * options replaces them where it is the newest holder, so a page that attaches it with `stay` gives
+ * `stay` every time, attaching it again with none leaves them as they were, and either returns the
+ * same function, an open dialog staying open. Its listeners are on the dialog, so a dialog taken
+ * from the page takes them with it. Taken down by its `signal`, an open dialog closes, focus goes
+ * back to what opened it, its listeners and the closedby its `stay` set come off, and the function
+ * that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
     // not taken.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedDialogs.get(dialog);
-    if (already) {
-        // Options given replace the last, and none leaves them as they were.
-        if (options) already.set(options);
-        return already.open;
-    }
-    const down = teardown(options?.signal);
+    const already = join(attachedDialogs, dialog, options);
+    if (already) return already;
+    const down = teardown(options?.signal, options);
     const { signal } = down;
     let settings: DialogOptions = {};
     const set = (next: DialogOptions) => {
@@ -1549,10 +1538,9 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
             onClose();
         }
         if (settings.stay) dialog.removeAttribute('closedby');
-        attachedDialogs.delete(dialog);
     });
-    attachedDialogs.set(dialog, { open, set });
-    return open;
+    down.set = set;
+    return keep(attachedDialogs, dialog, down, open);
 };
 
 /** Opens or closes a panel attached by its button, from the page's own code. */
@@ -1560,11 +1548,11 @@ export type SetPanel = (open: boolean) => void;
 
 /**
  * What attaching a panel's button returns: `set`, which opens or closes the panel from the page's
- * own code, and `detach`, which lets the button go.
+ * own code, and `detach`, which takes the button down.
  */
 export type PanelControl = { readonly set: SetPanel; readonly detach: () => void };
 
-const attachedPanels = new WeakMap<HTMLButtonElement, PanelControl>();
+const attachedPanels = new WeakMap<HTMLButtonElement, Kept<PanelControl>>();
 
 /** The id of the panel a button names, the first where its aria-controls names several. */
 const panelIdOf = (button: Element): string =>
@@ -1754,7 +1742,7 @@ const onPanelKey = (event: KeyboardEvent): void => {
 /**
  * Makes a button open and close the panel it names in aria-controls, and the panel's corner Close
  * close it, and returns `set`, which opens or closes it from the page's own code, and `detach`,
- * which lets the button go, after which neither does anything. The panel starts as the first
+ * which takes the button down, after which neither does anything. The panel starts as the first
  * button's aria-expanded says, and a button attached later follows the panel as it is. The markup
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
@@ -1763,21 +1751,22 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * visitor's last place was in it, as record 19 has it. The panel is found at each press, so one
  * drawn again keeps working, and a button drawn again works once it is attached. Listeners on the
  * document hear the presses, the focus and the Escape of every panel, and come off once every
- * button is let go. A panel's id must be the only one on the page. Attached again, a button returns
- * what it returned first.
+ * button is taken down. A panel's id must be the only one on the page. Attached again, a button
+ * returns what it returned first.
  *
- * Aborting the `signal` it was given lets the button go as `detach` does, and a signal already
- * aborted attaches nothing. A button let go is marked collapsed. An open panel stays the kit's
- * while an attached button names it, so once the button that opened it is let go, Escape and its
- * Close both still close it, and focus goes back to the first attached button that names it. A
- * button attached to it while it is open takes it where no attached button names it. Once none
- * does, neither closes it, and the page holds it as it is.
+ * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
+ * nothing. A button taken down is marked collapsed. A button taken from the page without being
+ * taken down stays held, and keeps the document's listeners, until it is. An open panel stays the
+ * kit's while an attached button names it, so once the button that opened it is taken down, Escape
+ * and its Close both still close it, and focus goes back to the first attached button that names
+ * it. A button attached to it while it is open takes it where no attached button names it. Once
+ * none does, neither closes it, and the page holds it as it is.
  */
 export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
     const idle: PanelControl = { set: () => undefined, detach: () => undefined };
     // A signal already aborted does nothing, even to a button already attached.
     if (options?.signal?.aborted) return idle;
-    const already = attachedPanels.get(opener);
+    const already = join(attachedPanels, opener, options);
     if (already) return already;
     if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
     const down = teardown(options?.signal);
@@ -1789,7 +1778,6 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
         detach: down.stop,
     };
     down.add(() => {
-        attachedPanels.delete(opener);
         openers.delete(opener);
         // A button let go no longer follows its panel, so it says it opens nothing rather than a
         // state it no longer keeps.
@@ -1812,7 +1800,7 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
         for (const id of startedPanels)
             if (document.getElementById(id)?.hidden !== false) startedPanels.delete(id);
     });
-    attachedPanels.set(opener, control);
+    keep(attachedPanels, opener, down, control);
     if (!openers.size) {
         document.addEventListener('focusin', onPanelFocus, true);
         document.addEventListener('click', onPanelPress, true);
@@ -1849,7 +1837,7 @@ const pinnedBeside = (frame: Element, reached: Element): Element | undefined => 
         : undefined;
 };
 
-const attachedTables = new WeakMap<HTMLElement, () => void>();
+const attachedTables = new WeakMap<HTMLElement, Kept<() => void>>();
 
 /**
  * Brings what the keyboard reaches in a table's frame fully into view, clear of a pinned column,
@@ -1859,14 +1847,14 @@ const attachedTables = new WeakMap<HTMLElement, () => void>();
  * room starts, at the side the frame reads from, and the scroll padding at its end where it ends.
  * Wider than the room, its start meets the room's, so its first words show. Only focus the keyboard
  * brings is followed, so a press of a pointer never moves what it pressed. It takes the frame or
- * anything in it, attaches each frame once, and returns what takes it away again, as aborting the
- * `signal` its first attach was given does.
+ * anything in it, attaches each frame once, and returns what takes it down again, as its `signal`
+ * does.
  */
 export const attachTable = (element: HTMLElement, options?: AttachOptions): (() => void) => {
     const frame = element.closest<HTMLElement>('.dk-table-scroll');
     if (!frame) throw new Error('a table needs its frame');
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedTables.get(frame);
+    const already = join(attachedTables, frame, options);
     if (already) return already;
     const down = teardown(options?.signal);
     const onFocusIn = ({ target }: FocusEvent) => {
@@ -1892,14 +1880,10 @@ export const attachTable = (element: HTMLElement, options?: AttachOptions): (() 
         else if (end > to) frame.scrollLeft += (end - to) * way;
     };
     frame.addEventListener('focusin', onFocusIn, { signal: down.signal });
-    down.add(() => {
-        attachedTables.delete(frame);
-    });
-    attachedTables.set(frame, down.stop);
-    return down.stop;
+    return keep(attachedTables, frame, down, down.stop);
 };
 
-/** How a form is attached, for the step after a submit it refuses, and the signal that takes it down. */
+/** How a form is attached, for the step after a submit it refuses, and the signal that holds it. */
 export type FormOptions = AttachOptions & {
     /** The status line the refusal is said on, such as the screen's own. */
     readonly status?: HTMLElement | null | undefined;
@@ -2198,10 +2182,7 @@ const errorFor = (
  */
 export type Refuse = (options?: Pick<MoveFocusOptions, 'from'>) => () => void;
 
-const attachedForms = new WeakMap<
-    HTMLElement,
-    { readonly refuse: Refuse; readonly set: (next: FormOptions) => void }
->();
+const attachedForms = new WeakMap<HTMLElement, Kept<Refuse, FormOptions>>();
 
 /** What checks a form, and clears what its check drew, from an attach in it. */
 type Checker = {
@@ -2432,9 +2413,9 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * field's error stays not live. A second refusal calls off one not yet landed, and each refusal
  * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
  * where there were any, says the form is cleared. Attached again, a form returns what it returned
- * first and takes options given in place of the last.
+ * first and runs on the options of its newest holder, its errors and its check kept.
  *
- * Aborting the `signal` it was given takes its listeners off, calls off a refusal and a reset's
+ * Taken down by its `signal`, it takes its listeners off, calls off a refusal and a reset's
  * timer still due, and takes away the errors it drew, so nothing is said after, and what it
  * returned does nothing. The form's check and its noValidate go with the last attach in the form.
  * A signal already aborted leaves the form as the markup drew it.
@@ -2443,12 +2424,9 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     // A signal already aborted does nothing, so even new options for a form already attached are
     // not taken.
     if (options?.signal?.aborted) return () => () => undefined;
-    const already = attachedForms.get(form);
-    if (already) {
-        if (options) already.set(options);
-        return already.refuse;
-    }
-    const down = teardown(options?.signal);
+    const already = join(attachedForms, form, options);
+    if (already) return already;
+    const down = teardown(options?.signal, options);
     let chosen: FormOptions = options ?? {};
     let pending: (() => void) | null = null;
     // The failures of the last submit the kit refused, said where a page that draws its own errors
@@ -2575,24 +2553,18 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const field of [...drawn.keys()]) undraw(field);
         return had;
     };
-    down.add(() => {
-        clear();
-        attachedForms.delete(form);
-    });
+    down.add(clear);
     down.add(joinForm(form, { check, clear, cleared: () => speak('Form cleared.') }));
-    attachedForms.set(form, {
-        refuse,
-        set: (next) => {
-            chosen = next;
-        },
-    });
-    return refuse;
+    down.set = (next) => {
+        chosen = next;
+    };
+    return keep(attachedForms, form, down, refuse);
 };
 
 /** How a group's cells are laid out, which sets the arrow keys that move among them. */
 export type RovingOrientation = 'grid' | 'horizontal' | 'vertical';
 
-/** How a group of cells is attached, and the signal its first attach takes it down by. */
+/** How a group of cells is attached, and the signal that holds it. */
 export type RovingOptions = AttachOptions & {
     /**
      * Grid moves by the arrows each way as the cells are drawn, horizontal by left and right alone,
@@ -2674,10 +2646,7 @@ const rovedTo = (
     return (at + step + cells.length) % cells.length;
 };
 
-const attachedGroups = new WeakMap<
-    HTMLElement,
-    { readonly detach: () => void; readonly set: (next: RovingOptions) => void }
->();
+const attachedGroups = new WeakMap<HTMLElement, Kept<() => void, RovingOptions>>();
 
 const CELLS = ':scope > :is(button, a[href], [role="tab"])';
 
@@ -2711,7 +2680,7 @@ const inPlaceOf = (
 
 /**
  * Gives a group of cells, such as a grid of buttons or a row of tabs, one stop for the Tab key and
- * moves focus among its cells with the arrow keys, Home and End, and returns what takes it away. A
+ * moves focus among its cells with the arrow keys, Home and End, and returns what takes it down. A
  * grid moves up and down to the nearest cell in the row above or below as the cells are drawn, so
  * it holds at any count of columns, and left and right follow the page's reading direction. A row
  * of tabs ignores up and down and wraps from one end to the other. An arrow held with Alt, Control
@@ -2725,21 +2694,18 @@ const inPlaceOf = (
  * `onMove`. The kit moves focus and the page chooses: a page that chooses a tab as focus reaches it
  * does so in `onMove`. A grid of buttons with the group's role, or none, takes the toolbar's, so a
  * screen reader says the arrows move within it. Where the cell that had focus is taken out, focus
- * goes to the next cell still there, or the one before. Let go, by what it returns or by aborting
- * the `signal` its first attach was given, each cell takes back its own tabindex and the grid its
- * own role. Attached again, a group returns what it returned first and takes options given in place
- * of the last.
+ * goes to the next cell still there, or the one before. Taken down, by what it returns or by its
+ * `signal`, each cell takes back its own tabindex and the grid its own role. Attached again, a
+ * group returns what it returned first and runs on the options of its newest holder, its observers
+ * kept.
  */
 export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a group already attached are
     // not taken.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedGroups.get(group);
-    if (already) {
-        if (options) already.set(options);
-        return already.detach;
-    }
-    const down = teardown(options?.signal);
+    const already = join(attachedGroups, group, options);
+    if (already) return already;
+    const down = teardown(options?.signal, options);
     const { signal } = down;
     let chosen: RovingOptions = options ?? {};
     let last: HTMLElement | null = null;
@@ -2865,21 +2831,17 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
             if (ownRole === null) group.removeAttribute('role');
             else group.setAttribute('role', ownRole);
         }
-        attachedGroups.delete(group);
     });
-    attachedGroups.set(group, {
-        detach: down.stop,
-        set: (next) => {
-            chosen = next;
-            place();
-        },
-    });
-    return down.stop;
+    down.set = (next) => {
+        chosen = next;
+        place();
+    };
+    return keep(attachedGroups, group, down, down.stop);
 };
 
 /**
  * How a busy button is attached, for the words it says once a wait is long enough to notice, and
- * the signal its first attach takes it down by.
+ * the signal that holds it.
  */
 export type BusyOptions = AttachOptions & {
     /** The status line the busy words are said on, such as the screen's own. */
@@ -2900,14 +2862,11 @@ const waitOf = (button: Element): number => {
     return first.endsWith('ms') ? amount : amount * 1000;
 };
 
-const attachedBusy = new WeakMap<
-    HTMLElement,
-    { readonly detach: () => void; readonly set: (next: BusyOptions) => void }
->();
+const attachedBusy = new WeakMap<HTMLElement, Kept<() => void, BusyOptions>>();
 
 /**
  * Makes a busy button work, one marked `data-busy` while what its press started runs, and returns
- * what takes it away. While it is busy the attach marks it `aria-disabled` too, where the page has
+ * what takes it down. While it is busy the attach marks it `aria-disabled` too, where the page has
  * not, and takes away only the mark it set when the work is done. A press of a busy button, by a
  * pointer or by Enter or Space, is stopped before the button's own handlers and React's `onClick`
  * hear it, so a submit button submits nothing, though a capture listener further up still hears it.
@@ -2916,19 +2875,16 @@ const attachedBusy = new WeakMap<
  * fast save says nothing. Words not yet on the line when the work is done are dropped, so a result
  * a toast says is never followed by a late "Saving.", and a button made busy again before the last
  * wait ended starts a wait of its own. Attached again, a button returns what it returned first and
- * takes options given in place of the last. Let go, by what it returns or by aborting the `signal`
- * its first attach was given, it takes away the mark it set and says nothing still waiting.
+ * runs on the options of its newest holder, a wait under way kept. Taken down, by what it returns
+ * or by its `signal`, it takes away the mark it set and says nothing still waiting.
  */
 export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => void) => {
     // A signal already aborted does nothing, so even new options for a button already attached are
     // not taken.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedBusy.get(button);
-    if (already) {
-        if (options) already.set(options);
-        return already.detach;
-    }
-    const down = teardown(options?.signal);
+    const already = join(attachedBusy, button, options);
+    if (already) return already;
+    const down = teardown(options?.signal, options);
     let chosen: BusyOptions = options ?? {};
     let timer = 0;
     let marked = false;
@@ -2979,20 +2935,16 @@ export const attachBusy = (button: HTMLElement, options?: BusyOptions): (() => v
     down.add(() => {
         kept.disconnect();
         end();
-        attachedBusy.delete(button);
     });
-    attachedBusy.set(button, {
-        detach: down.stop,
-        set: (next) => {
-            chosen = next;
-        },
-    });
-    return down.stop;
+    down.set = (next) => {
+        chosen = next;
+    };
+    return keep(attachedBusy, button, down, down.stop);
 };
 
 /**
  * How progress is said, for the steps it is said at, where, and what is said at the end, and the
- * signal its first attach takes it down by.
+ * signal that holds it.
  */
 export type ProgressOptions = AttachOptions & {
     /**
@@ -3011,10 +2963,7 @@ export type ProgressOptions = AttachOptions & {
 /** The least time between two steps said, in milliseconds, so one is heard before the next. */
 const STEP_GAP = 3000;
 
-const attachedProgress = new WeakMap<
-    HTMLProgressElement,
-    { readonly detach: () => void; readonly set: (next: ProgressOptions) => void }
->();
+const attachedProgress = new WeakMap<HTMLProgressElement, Kept<() => void, ProgressOptions>>();
 
 /** An element's name as a screen reader reads it: its label, the words it names, or its own. */
 const nameOf = (element: HTMLProgressElement) =>
@@ -3026,7 +2975,7 @@ const nameOf = (element: HTMLProgressElement) =>
 
 /**
  * Says how far a `progress` element has come on the status line given, at the steps the page sets,
- * each quarter until it sets others, and once at the end, and returns what takes it away. What is
+ * each quarter until it sets others, and once at the end, and returns what takes it down. What is
  * said is the bar's name and the words that describe it, such as "Importing products, 12 of 40.",
  * read as the step is crossed, or how far it has come in hundredths where it has no words. Each is
  * said at once, with no wait for the amount to stop changing, since a steady import never stops, at
@@ -3036,9 +2985,10 @@ const nameOf = (element: HTMLProgressElement) =>
  * `done` words in its place, is said once, until the amount goes back for another run. The amount a
  * bar first shows, as it is attached or once it is known, is not said, though an amount that
  * becomes known at the end, after the bar is attached, is, and a bar with no amount says nothing.
- * Attached again, a bar returns what it returned first and takes options given in place of the
- * last. Let go, by what it returns or by aborting the `signal` its first attach was given, it says
- * nothing more on its status line, and a step still waiting there is left unsaid.
+ * Attached again, a bar returns what it returned first and runs on the options of its newest
+ * holder, counting its steps again only where they change. Taken down, by what it returns or by its
+ * `signal`, it says nothing more on its status line, and a step still waiting there is left
+ * unsaid.
  */
 export const attachProgress = (
     progress: HTMLProgressElement,
@@ -3047,12 +2997,9 @@ export const attachProgress = (
     // A signal already aborted does nothing, so even new options for a bar already attached are not
     // taken.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedProgress.get(progress);
-    if (already) {
-        if (options) already.set(options);
-        return already.detach;
-    }
-    const down = teardown(options?.signal);
+    const already = join(attachedProgress, progress, options);
+    if (already) return already;
+    const down = teardown(options?.signal, options);
     let chosen: ProgressOptions = options ?? {};
     const known = () => progress.hasAttribute('value');
     const stepOf = () => {
@@ -3112,15 +3059,13 @@ export const attachProgress = (
         // still to be heard is never said once the bar is let go. A page's own `say` keeps what
         // it was handed.
         if (!chosen.say && chosen.status) unsay(chosen.status, last);
-        attachedProgress.delete(progress);
     });
-    attachedProgress.set(progress, {
-        detach: down.stop,
-        set: (next) => {
-            chosen = next;
-            // Counted again in the new steps, so the next step is one of them.
-            if (known()) reached = stepOf();
-        },
-    });
-    return down.stop;
+    down.set = (next) => {
+        const moved = next.steps !== chosen.steps;
+        chosen = next;
+        // Counted again in new steps, so the next step is one of them. The same steps leave the
+        // count alone, so a step whose record is still to come is still heard.
+        if (moved && known()) reached = stepOf();
+    };
+    return keep(attachedProgress, progress, down, down.stop);
 };
