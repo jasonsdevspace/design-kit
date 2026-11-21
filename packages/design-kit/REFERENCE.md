@@ -1385,13 +1385,13 @@ listeners on the document for keys, clicks and submits, which note the visitor's
 ### Taking a control down
 
 The theme switch, the copy button, a form's check and a panel's button take an `AbortSignal` as
-`signal` in their options, as `addEventListener` does. Aborting it takes the control down as the function its attach returned
-does, and calling that function or aborting the signal again does nothing. A signal already aborted
-does nothing: the control stays hidden, a control already attached keeps the options it had, and
-what the attach returns does nothing. Once a control is taken down, nothing it started acts, such as
-a copy the clipboard answers late. A control attached again before it is taken down returns what
-its first attach returned and does not hear the later call's signal, so the first attach owns it
-until it is taken down, as
+`signal` in their options, as `addEventListener` does. Aborting it takes the control down as the
+function its attach returned does, and calling that function or aborting the signal again does
+nothing. A signal already aborted does nothing: the control stays hidden, a control already attached
+keeps the options it had, and what the attach returns does nothing. Once a control is taken down,
+nothing it started acts, such as a copy the clipboard answers late. A control attached again before
+it is taken down returns what its first attach returned and does not hear the later call's signal,
+so the first attach owns it until it is taken down, as
 [decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
@@ -3580,9 +3580,11 @@ prefixes or strips the ids in it.
 `attachPanel(button, { signal })` lets the button go when `signal` aborts, as `detach` does, and a
 signal already aborted attaches nothing. An open panel stays the kit's while an attached button
 names it. Once the button that opened it is let go, Escape and its Close both still close it, and
-focus goes back to the first attached button that names it, as record 19 has it. A button attached
-for it while it is open takes it where no attached button named it, so a button drawn again works
-as before. Once no attached button names it, neither Escape nor its Close closes it, and it stays
+focus goes back to the first attached button in the page that names it, as record 19 has it. A
+button let go, by its signal or `detach`, takes `aria-expanded="false"`, since it no longer follows
+the panel and would otherwise go on saying the panel is open after another button closes it. A button attached
+for it while it is open takes it where no attached button named it, so a button drawn again, the
+only one among them, keeps the panel open whatever its new markup says and closes it by Escape. Once no attached button names it, neither Escape nor its Close closes it, and it stays
 as it is for the page to hide.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus

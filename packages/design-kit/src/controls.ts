@@ -1615,11 +1615,18 @@ const attachedPanels = new WeakMap<HTMLButtonElement, PanelControl>();
 const panelIdOf = (button: Element): string =>
     (button.getAttribute('aria-controls') ?? '').trim().split(/\s+/)[0] ?? '';
 
+/**
+ * Every attached button not let go, kept apart from the page so one in a shadow root is found too,
+ * and so the panels' listeners come off once it is empty.
+ */
+const openers = new Set<HTMLButtonElement>();
+
 /** Every attached button in the page that names the panel, in the page's order. */
 const openersOf = (id: string): HTMLButtonElement[] =>
-    [...document.querySelectorAll<HTMLButtonElement>('button[aria-controls]')].filter(
-        (button) => attachedPanels.has(button) && panelIdOf(button) === id
-    );
+    [...openers]
+        .filter((button) => button.isConnected && panelIdOf(button) === id)
+        // 2 marks the other button as coming before this one.
+        .sort((one, other) => (one.compareDocumentPosition(other) & 2 ? 1 : -1));
 
 /**
  * Where the visitor's place last was, the path of the last focus that moved or of their last
@@ -1635,9 +1642,6 @@ const lastOpener = new Map<string, HTMLButtonElement>();
 
 /** The panels a button has started, so a button attached later follows the panel as it is. */
 const startedPanels = new Set<string>();
-
-/** How many buttons are attached and not let go, so the one listener comes off with the last. */
-let attachedCount = 0;
 
 /**
  * Gives a panel a tabindex of -1 and its corner Close one of 0, where the page set none, so a press
@@ -1808,11 +1812,11 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * what it returned first.
  *
  * Aborting the `signal` it was given lets the button go as `detach` does, and a signal already
- * aborted attaches nothing. An open panel stays the kit's while an attached button names it, so
- * once the button that opened it is let go, Escape and its Close both still close it, and focus
- * goes back to the first attached button that names it. A button attached to it while it is open
- * takes it where no attached button names it. Once none does, neither closes it, and the page
- * holds it as it is.
+ * aborted attaches nothing. A button let go is marked collapsed. An open panel stays the kit's
+ * while an attached button names it, so once the button that opened it is let go, Escape and its
+ * Close both still close it, and focus goes back to the first attached button that names it. A
+ * button attached to it while it is open takes it where no attached button names it. Once none
+ * does, neither closes it, and the page holds it as it is.
  */
 export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
     const idle: PanelControl = { set: () => undefined, detach: () => undefined };
@@ -1832,7 +1836,11 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     };
     down.add(() => {
         attachedPanels.delete(opener);
-        // A panel this button opened passes to the next attached button that names it, so Escape
+        openers.delete(opener);
+        // A button let go no longer follows its panel, so it says it opens nothing rather than a
+        // state it no longer keeps.
+        opener.setAttribute('aria-expanded', 'false');
+        // A panel this button opened passes to the first attached button that names it, so Escape
         // and its Close, which close a panel only while it has one, close it alike.
         for (const [id, button] of lastOpener) {
             if (button !== opener) continue;
@@ -1840,20 +1848,24 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
             if (next) lastOpener.set(id, next);
             else lastOpener.delete(id);
         }
-        if (--attachedCount) return;
+        if (openers.size) return;
         document.removeEventListener('focusin', onPanelFocus, true);
         document.removeEventListener('click', onPanelPress, true);
         document.removeEventListener('pointerdown', onPanelDown, true);
         document.removeEventListener('keydown', onPanelKey);
-        startedPanels.clear();
+        // An open panel stays started, so its button drawn again finds it open rather than
+        // starting it as the new markup says.
+        for (const id of startedPanels)
+            if (document.getElementById(id)?.hidden !== false) startedPanels.delete(id);
     });
     attachedPanels.set(opener, control);
-    if (!attachedCount++) {
+    if (!openers.size) {
         document.addEventListener('focusin', onPanelFocus, true);
         document.addEventListener('click', onPanelPress, true);
         document.addEventListener('pointerdown', onPanelDown, true);
         document.addEventListener('keydown', onPanelKey);
     }
+    openers.add(opener);
     // Safari focuses a pressed button only where it has a tabindex, so the kit gives one where the
     // page set none, and keeps any the page set, such as a toolbar's that moves among its buttons.
     if (!opener.hasAttribute('tabindex')) opener.tabIndex = 0;
@@ -2294,7 +2306,10 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
     own.addEventListener(
         'submit',
         (event) => {
-            checked.checkers[0]?.check(event, own);
+            // The first attach checks the form, and the errors any other drew no longer stand.
+            const [first, ...rest] = checked.checkers;
+            for (const other of rest) other.clear();
+            first?.check(event, own);
         },
         { capture: true, signal }
     );
@@ -2304,8 +2319,9 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
             const timer = window.setTimeout(() => {
                 timers.delete(timer);
                 if (event.defaultPrevented) return;
-                const checker = checked.checkers[0];
-                if (checker?.clear()) checker.cleared();
+                // Every attach's errors go, and the first attach says so where there were any.
+                if (checked.checkers.map((one) => one.clear()).includes(true))
+                    checked.checkers[0]?.cleared();
             });
             timers.add(timer);
         },

@@ -70,6 +70,8 @@ window.kit = {
     panel: (selector, signal) =>
         attachPanel(document.querySelector(selector), signal ? { signal } : undefined),
 };
+window.attachShadowButton = () =>
+    attachPanel(document.querySelector('#host').shadowRoot.querySelector('button'));
 window.ready = true;`;
 
 /**
@@ -191,6 +193,24 @@ test.describe('a form', () => {
         expect(await count(FORM)).toBe(listeners);
         expect(await formState(page)).toEqual(markup);
     });
+
+    test("clears the errors a part's attach drew once the form's own attach checks it", async ({
+        page,
+        browserName,
+    }) => {
+        await opened(page, browserName);
+        await page.evaluate(`kit.form(undefined, '#part')`);
+        await page.getByRole('button', { name: 'Join' }).click();
+        await expect(page.locator('#name-error')).toHaveText('Error: Enter a value.');
+        // The form's own attach checks it from now on, and a submit draws each error once.
+        await page.evaluate('kit.form()');
+        await page.getByRole('button', { name: 'Join' }).click();
+        await expect(page.locator('.dk-field-error')).toHaveCount(2);
+        // A reset takes away every error, the part's among them, and says the form is cleared.
+        await page.evaluate(`document.querySelector('#join').reset()`);
+        await expect(page.locator('.dk-field-error')).toHaveCount(0);
+        await expect.poll(() => heard(page)).toContain('Form cleared.');
+    });
 });
 
 test.describe('a panel', () => {
@@ -251,6 +271,8 @@ test.describe('a panel', () => {
             await page.locator('#tips-button').click();
             await expect(page.locator('#round-tips')).toBeVisible();
             await page.evaluate('controller.abort()');
+            // The button let go says it opens nothing, since it no longer follows the panel.
+            await expect(page.locator('#tips-button')).toHaveAttribute('aria-expanded', 'false');
             await page.locator('#round-tips h2').click();
             if (way === 'Escape') await page.keyboard.press('Escape');
             else await page.getByRole('button', { name: 'Close round tips' }).click();
@@ -281,6 +303,54 @@ test.describe('a panel', () => {
         await page.keyboard.press('Escape');
         await expect(page.locator('#round-tips')).toBeHidden();
         await expect(page.locator('#tips-button')).toBeFocused();
+    });
+
+    test('keeps its panel open and closes it by Escape when its one button is drawn again', async ({
+        page,
+        browserName,
+    }) => {
+        await opened(page, browserName);
+        await page.evaluate(`window.first = kit.panel('#tips-button')`);
+        await page.locator('#tips-button').click();
+        // The old button's teardown takes the panels' listeners off with it, as the last let go,
+        // and the one drawn in its place says it starts closed, as a remount in React draws it.
+        await page.evaluate(`(() => {
+            first.detach();
+            const old = document.querySelector('#tips-button');
+            const drawn = old.cloneNode(true);
+            drawn.setAttribute('aria-expanded', 'false');
+            old.replaceWith(drawn);
+            kit.panel('#tips-button');
+        })()`);
+        await expect(page.locator('#round-tips')).toBeVisible();
+        await expect(page.locator('#tips-button')).toHaveAttribute('aria-expanded', 'true');
+        await page.locator('#round-tips h2').click();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#round-tips')).toBeHidden();
+        await expect(page.locator('#tips-button')).toBeFocused();
+    });
+
+    test('hands its panel to an attached button in a shadow root', async ({
+        page,
+        browserName,
+    }) => {
+        await opened(page, browserName);
+        await page.evaluate(`(() => {
+            const host = document.createElement('div');
+            host.id = 'host';
+            document.querySelector('#rules').before(host);
+            host.attachShadow({ mode: 'open' }).innerHTML =
+                '<button type="button" aria-expanded="false" aria-controls="round-tips">Shadow tips</button>';
+            window.controller = new AbortController();
+            kit.panel('#tips-button', controller.signal);
+            attachShadowButton();
+        })()`);
+        await page.locator('#tips-button').click();
+        await page.evaluate('controller.abort()');
+        await page.locator('#round-tips h2').click();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#round-tips')).toBeHidden();
+        await expect(page.getByRole('button', { name: 'Shadow tips' })).toBeFocused();
     });
 
     test('closes by neither once no attached button names it', async ({ page, browserName }) => {
