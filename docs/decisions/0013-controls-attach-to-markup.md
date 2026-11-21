@@ -1,36 +1,11 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
-**Status:** accepted, amended by record 15, for the toast and the dialog, whose attach functions
-return what shows or opens them, by record 20, for React pages, which draw the status line with
-`StatusProvider`, which `useStatus` finds, and attach a form, a busy button, progress and a group of
-cells and move focus through a kit hook rather than an effect of their own, in 0.7.0 to set the
-sheets' budget at 9.25 KB by the same rule, once the toast's group of buttons and a table frame's
-shade took the sheets past 9 KB, in 0.8.0 to set it at 10.25 KB, once the pieces planned for it took
-the sheets past 9.25 KB, in 0.8.2 to set it at 10.75 KB, once its corner Close took the sheets past
-10.25 KB, in 0.8.4 to set the controls' budget at 7.5 KB, once `attachPanel` took them past 6.25 KB,
-in 0.8.6 to set the sheets' budget at 11.5 KB, once a grid of buttons dropping to a count that
-divides its cells took the sheets past 10.75 KB, for 0.9.0 to set it at 12 KB, once the pieces
-planned for it took the sheets past 11.5 KB, and to set the controls' budget at 8.75 KB, once a
-stepper's range in words, its limits said and a page's own words and line took them past 7.5 KB,
-then at 11 KB, once moving focus after a change and among a group's cells took them past 8.75 KB,
-and then at 12 KB, once refusing a form and a busy button took them past 11 KB, and then at 12.75
-KB, once saying progress at its steps took them past 12 KB, and then at 15.5 KB, once checking a
-form against the browser's constraints took them past 12.75 KB, and then at 17 KB, once telling a
-press that brings a view from a key that moves took them past 15.5 KB, and in 0.9.0 to set the
-controls' budget at 17.25 KB and the sheets' at 12.25 KB, once the release, measured whole, left
-less room under each than a function or a piece of the usual size, and for the listener the module
-adds to the document as it loads, which notes the visitor's last press for `focusOnArrival`, a
-listener the package marks as a side effect, so a bundler keeps the module where a page imports it
-only for that listener, and by record 22, under which an attach takes a signal that takes its piece
-down and a later call's `signal` is the one option it does not take, and in 0.9.3 to set the
-controls' budget at 17.75 KB, once the helper record 22 keeps its contract through left less room
-than a function of the usual size, and then at 18.5 KB, once moving the status line, the toast, the
-form, the panels and the remaining attaches onto it took them past 17.75 KB, and by record 23, which
-ends that rule for a later call's `signal`, under which each signal that attaches an element holds
-its control and the control runs on its newest holder's options, which left them less room under
-18.5 KB than a function of the usual size, so the rule set them at 18.75 KB, and then at 19 KB, once
-one rule for handing focus back and a toast that forgets focus a visitor moved left less room under
-18.75 KB than a function of the usual size
+**Status:** accepted, amended by record 15 in 0.5.0, for the toast and the dialog, whose attach
+functions return what shows or opens them, by record 20 in 0.9.0, for React pages, which attach
+some controls through a kit hook, in 0.9.0 for the listener the module adds to the document as it
+loads, by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down,
+and by record 23 in 0.9.3, under which each signal that attaches an element holds its control. Its
+budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0 and 0.9.3, as its tables give
 
 ## Context
 
@@ -64,13 +39,12 @@ Option C. `ThemeSwitch`, `CopyButton` and `CopyStatus` draw the markup, and `att
 `chooseTheme` saves and draws a choice from anywhere on the page. The markup is hidden until it is
 attached, so a visitor without script meets no control that does nothing. Nothing runs when the
 module is imported but listeners on the document for keys, clicks and submits, in a page, which note
-whether the visitor's last input was a press for `focusOnArrival`, as the 0.9.0 amendment has it.
-The package's `sideEffects` lets a bundler drop the module, listeners and all, from a page that
-imports nothing from it or only imports it bare, so a page that counts on the first press being
-heard imports something it uses from the module as it starts, and the listeners wait for a document,
-so the module loads in Node. The functions set no style. The choices a switch saves, `system` and
-the two themes, are `THEME_CHOICES` in `./theme`, beside the key the theme script reads, and the
-theme script itself does not change, so its hash holds.
+whether the visitor's last input was a press for `focusOnArrival`, so the press that brings a page's
+first view is heard. The package marks `./controls` as having side effects in its `sideEffects`, so
+a bundler keeps the module and its listeners wherever a page imports it, even bare, and the
+listeners wait for a document, so the module loads in Node. The functions set no style. The choices
+a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the
+theme script reads, and the theme script itself does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -85,10 +59,10 @@ Every attach function follows one rule for being called again: it attaches the e
 returns what it returned the first time. Where it takes options, options given replace the last,
 under record 23's rule for which holder's options apply, so a page that means to change them can,
 and a call with none leaves them as they were, so another part of a page that attaches the same
-element does not undo what the first set. Since 0.9.3 each call's `signal` holds the piece, which is
-taken down a microtask after every signal holding it has aborted, and the piece runs on the options
-of its newest holder, as record 23 has it, and a call given a signal already aborted takes nothing
-and returns a function that does nothing, as record 22 has it. A dialog attached to stay therefore
+element does not undo what the first set. Each call's `signal` holds the piece, which is taken down
+a microtask after every signal holding it has aborted, and the piece runs on the options of its
+newest holder, as record 23 has it, and a call given a signal already aborted takes nothing and
+returns a function that does nothing, as record 22 has it. A dialog attached to stay therefore
 still stays when attached again with no options, and a copy button attached again with a new source
 copies from it. A part a control cannot work without, such as a stepper's buttons, a toast's status
 line, its action and its close button, since any message may carry an action, or a table's frame,
@@ -96,6 +70,13 @@ throws an error that names it, so a page that left one out learns of it where it
 can do without, such as a stepper's status line, is skipped. A theme switch with no choices yet is
 the one exception: it is left hidden and returns a function that does nothing, so a page that
 attaches it before its choices are drawn can attach it again once they are.
+
+What an attach returns is what a page calls next. The switch, the copy button, the stepper, a
+table's frame, a group the arrow keys move through, a busy button and progress return their detach.
+The toast, the dialog and the status line return what shows, opens or says, as record 15 has it, a
+form what refuses it, and a panel's button both what opens or closes the panel and its detach. Each
+is also taken down by its `signal`, which record 22 has every attach take, so a page takes down any
+piece the same way whatever its attach returns.
 
 ## Consequences
 
@@ -105,8 +86,10 @@ attaches it before its choices are drawn can attach it again once they are.
   and a page's own call to `chooseTheme`, show one choice. A choice the browser will not save is
   held there until the page is left, and drawn again after the theme script draws from storage on a
   change of the system's scheme or a page restored by Back.
-- A page attaches a control after it is in the page, in an effect in React, which the markup's
-  hidden state makes safe to do late.
+- A page attaches a control after it is in the page, which the markup's hidden state makes safe to
+  do late. A React page attaches a form, a busy button, progress and a group of cells, says words on
+  the status line through `StatusProvider` and moves focus through a kit hook, as record 20 has it,
+  and attaches the other controls in an effect of its own.
 - The site and the portfolio take the controls from the kit once a version carries them, and their
   own copies go.
 - A page that writes the switch by hand writes the button and the div around the radios as the
@@ -146,115 +129,60 @@ spare a page with no app a little over 2 KB, sent once and then cached, and cost
 second sheet that holds back its first paint, and a module of their own would spare a page nothing,
 since a bundler already sends only the functions a page imports.
 
-The budgets are set from the audit: what the sheets, and the controls as a bundler sends every
-function, weigh after it, with room for one more piece or function of the usual size, the median of
-the costs the record tables, rounded up to the next quarter of a kilobyte. That keeps the sheets at
-9 KB and sets the controls at 6.25 KB, from the 7 KB that counted the theme script, which a bundler
-drops from the controls and a page puts inline in its head, and which is held to 1 KB of its own.
+## The budgets
 
-By the same rule, for 0.8.0 the sheets were measured with every piece planned for it in place. They
-weigh 10,220 bytes sent together, against 9,432 without them, and the median a piece costs is now
-177 bytes, so the rule sets the sheets at 10.25 KB. The package record measures three more parts,
-the site's header, the content page and the icon.
+The budgets are set from the audit by one rule: what the sheets, and the controls as a bundler sends
+every function, weigh, with room for one more piece or function of the usual size, the median of
+the costs the package record tables, rounded up to the next quarter of a kilobyte. The audit kept
+the sheets at 9 KB and set the controls at 6.25 KB, from the 7 KB that counted the theme script,
+which a bundler drops from the controls and a page puts inline in its head, and which is held to
+1 KB of its own.
 
-For 0.8.2 the sheets were measured with its three changes in place, a tile in a panel holding its
-inset, a Close in the corner and a picture drawn at its content's height, the last of which lands
-after the Close. They weigh 10,695 bytes sent together, and the median a piece costs is now 193
-bytes, so the rule sets the sheets at 10.75 KB.
+A budget is set again by the same rule once something takes the sheets or the controls past it,
+and since 0.9.0 also once a release, measured whole as the audit was, leaves less room under it
+than a piece or function of the usual size, so the next one of the usual size fits. Before then a
+budget stayed until something outgrew it, so the sheets at 0.8.4, 10,916 bytes with a median piece
+of 165, and the controls at 0.8.5, 7,661 bytes with a median function of 657, each left less room
+than that and kept their budgets of 10.75 KB and 7.5 KB. For 0.8.0 and 0.9.0 the sheets were
+measured with a prototype of every piece planned for the release, its rules formatted as the sheets
+are, so the budget was raised once for pieces that land one at a time, and a piece that lands
+heavier than its prototype and outgrows that says so with its figures.
 
-For 0.8.4 the controls were measured with `attachPanel` in place, which a page that opens a panel
-with a button attaches so its corner Close needs no script of the page's own, and with the fixes
-that keep an off button from acting and a button attached later from moving the panel. Every
-function sent together weighs 6,898 bytes, past the 6.25 KB the budget held, and the median a
-function adds is now 668 bytes, so the rule sets the controls at 7.5 KB.
+Each row below is a raise. It names what took the budget past it, or left less room under it than
+one more of the usual size where it says too little room was left, and gives what the whole weighed
+then, gzipped as the budget's test measures it, the median piece or function, and the budget set.
+The figures of 0.6.0 and 0.7.0, which the record did not give when those budgets were set, are
+measured from those releases' commits by the budget tests' own functions, with the medians the
+package record gave at each.
 
-The sheets were measured for 0.8.4 too, with its bands, its icon sizes and the app frame's named
-sides in place. They weigh 10,916 bytes sent together, 92 bytes under the 10.75 KB they hold, and
-the median a piece costs is now 165 bytes. A piece of the usual size would take them past the
-budget, and the rule then sets them at 11 KB. The budget stays at 10.75 KB until a piece outgrows
-it, as the rule has it, so the piece that does says so with its figures.
+| Release | What raised it                                                                  | Sheets together | Median piece | Budget set |
+| ------- | ------------------------------------------------------------------------------- | --------------- | ------------ | ---------- |
+| 0.6.0   | The size audit                                                                  | 8,947 bytes     | 186 bytes    | 9 KB       |
+| 0.7.0   | A toast's group of buttons and a table frame's shade                            | 9,235 bytes     | 210 bytes    | 9.25 KB    |
+| 0.8.0   | A prototype of the release's planned pieces, from 9,432 bytes                   | 10,220 bytes    | 177 bytes    | 10.25 KB   |
+| 0.8.2   | A tile's inset in a panel, a corner Close and a picture at its content's height | 10,695 bytes    | 193 bytes    | 10.75 KB   |
+| 0.8.6   | A grid of buttons dropping to a column count that divides its cells             | 11,394 bytes    | 169 bytes    | 11.5 KB    |
+| 0.9.0   | A prototype of the release's planned pieces, from 11,398 bytes                  | 12,112 bytes    | 169 bytes    | 12 KB      |
+| 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 
-For 0.8.5 the controls were measured with a panel's focus on closing settled, as record 19 has it,
-and a toast's buttons given their tabindex. Every function sent together weighs 7,661 bytes, 19
-bytes under the 7.5 KB they hold, and the median a function adds is now 657 bytes. A function of the
-usual size would take them past the budget, and the rule then sets them at 8 KB. The budget stays at
-7.5 KB until a function outgrows it, as the rule has it.
+| Release | What raised it                                                             | Every function | Median function | Budget set |
+| ------- | -------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
+| 0.6.0   | The size audit                                                             | 5,777 bytes    | 600 bytes       | 6.25 KB    |
+| 0.8.4   | `attachPanel`, and the fixes for an off button and a button attached later | 6,898 bytes    | 668 bytes       | 7.5 KB     |
+| 0.9.0   | A stepper's range in words, its limits said, and a page's words and line   | 8,112 bytes    | 655 bytes       | 8.75 KB    |
+| 0.9.0   | `moveFocus`, and `attachRoving` for a group's cells                        | 10,372 bytes   | 650 bytes       | 11 KB      |
+| 0.9.0   | `attachForm`, which refuses a form, and `attachBusy`                       | 11,524 bytes   | 672 bytes       | 12 KB      |
+| 0.9.0   | `attachProgress` and its polite words                                      | 12,340 bytes   | 622 bytes       | 12.75 KB   |
+| 0.9.0   | `attachForm` checking the browser's constraints, as record 21 has it       | 15,034 bytes   | 620 bytes       | 15.5 KB    |
+| 0.9.0   | `focusOnArrival`, which tells a press from a key that moves                | 16,730 bytes   | 608 bytes       | 17 KB      |
+| 0.9.0   | The release measured whole, with too little room left                      | 16,985 bytes   | 622 bytes       | 17.25 KB   |
+| 0.9.3   | Record 22's helper, with the theme switch and the copy button on it        | 17,532 bytes   | 586 bytes       | 17.75 KB   |
+| 0.9.3   | The other attaches moved onto the helper                                   | 18,269 bytes   | 606 bytes       | 18.5 KB    |
+| 0.9.3   | Record 23's holders, with too little room left                             | 18,553 bytes   | 635 bytes       | 18.75 KB   |
+| 0.9.3   | One rule for handing focus back, with too little room left                 | 18,638 bytes   | 641 bytes       | 19 KB      |
 
-For 0.8.6 the sheets were measured with a grid of buttons dropping to a count of columns that
-divides its cells, which works out a column's width at each count from two to six in the sheet,
-since no page media query may do it. They weigh 11,394 bytes sent together, past the 10.75 KB they
-held, and the median a piece costs is now 169 bytes, so the rule sets the sheets at 11.5 KB.
-
-For 0.9.0 the sheets were measured with every piece planned for it in place, as they were for 0.8.0:
-a dock row for a compact action, a busy button, a region that is loading, a mark for a required or
-optional field, the stack's steps, a split row, a note, a large numeral, progress, a read-only
-field, an empty state and a hero beside its picture. Their rules were written as a prototype and
-formatted as the sheets are, since the pieces land one at a time and the budget is raised once for
-them. The sheets weigh 11,398 bytes sent together at 0.8.7 and 12,112 with the prototype in place,
-and the median a piece costs is still 169 bytes, so the rule sets the sheets at 12 KB. A piece that
-lands heavier than its prototype and outgrows that says so with its figures, as the rule has it, and
-the package record measures the pieces as they ship.
-
-For 0.9.0 the controls were measured with a stepper that describes its field by its range in
-words, says when a press lands on a limit, and takes a page's own words to say after the value and
-a page's own status line to say them on. Every function sent together weighs 8,112 bytes, past the
-7.5 KB they held, and the median a function adds is now 655 bytes, so the rule sets the controls at
-8.75 KB.
-
-The controls were measured again with `moveFocus`, which moves focus once a change is drawn, and
-`attachRoving`, which moves among a group's cells by the arrow keys, in place, as 0.9.0
-gives them with its other behaviors. Every function sent together weighs 10,372 bytes, past the 8.75
-KB they held, and the median a function adds is now 650 bytes, so the rule sets the controls at 11
-KB.
-
-The controls were measured again with `attachForm`, which refuses a form, and `attachBusy`, which
-says a busy button's wait, in place. Every function sent together weighs 11,524 bytes, past the 11
-KB they held, and the median a function adds is now 672 bytes, so the rule sets the controls at 12
-KB.
-
-The controls were measured again with `attachProgress`, which says progress at its steps, and the
-polite words it says, in place. Every function sent together weighs 12,340 bytes, past the 12 KB
-they held, and the median a function adds is now 622 bytes, so the rule sets the controls at 12.75
-KB.
-
-The controls were measured again with `attachForm` checking a form against the browser's
-constraints itself, with the words for each way a field fails, as record 21 has it. Every function
-sent together weighs 15,034 bytes, past the 12.75 KB they held, and the median a function adds is
-now 620 bytes, so the rule sets the controls at 15.5 KB.
-
-The controls were measured again with `focusOnArrival`, which tells a press that brings a view from
-a key that moves or typing, in place, beside the form's check. Every function sent together weighs
-16,730 bytes, past the 15.5 KB they held, and the median a function adds is now 608 bytes, so the
-rule sets the controls at 17 KB.
-
-The controls were measured again with every function of the release in place, a stepper's own `say`
-and the lookups that find a piece's parts inside a shadow root among them. Every function sent
-together weighs 16,985 bytes, under the 17 KB they held but with less room than a function of the
-usual size, and the median a function adds is now 622 bytes, so the rule sets the controls at 17.25
-KB. It is set again here, before anything outgrows it, since a release is measured whole, as the
-audit of 0.6.0 was, and leaves room for one more of the usual size.
-
-With every piece of the release landed, the sheets weigh 12,225 bytes sent together, 113 heavier
-than the prototype and with less room under 12 KB than a piece of the usual size, and the median a
-piece costs is now 144 bytes, so the rule sets the sheets at 12.25 KB. It is set again here, before
-anything outgrows it, for the same reason as the controls'.
-
-For 0.9.3 the controls were measured with the helper record 22 keeps its contract through, and the
-theme switch and the copy button moved onto it. Every function sent together weighs 17,532 bytes,
-against 17,331 before, 201 more, under the 17.25 KB they held but with less room than a function of
-the usual size, and the median a function adds is now 586 bytes, so the rule sets the controls at
-17.75 KB. It is set again here, before anything outgrows it, for the same reason as in 0.9.0. The
-status line, the toast, the form, the panels and the remaining attaches moving onto the helper took
-the controls to 18,269 bytes together, past the 17.75 KB they held, and the median a function adds
-is now 606 bytes, so the rule sets them at 18.5 KB. A later cleanup of the status line brought them
-to 18,117 bytes. Record 23's holders, a control kept through an abort and an attach of its element
-in one task, took the controls to 18,553 bytes together, from 18,117, under the 18.5 KB they held
-but with less room than a function of the usual size, and the median a function adds is now 635
-bytes, so the rule sets them at 18.75 KB. One rule for handing focus back, shared by the toast, the
-dialog and the panels, with a focus request asked before a handback still landing, and a toast that
-forgets focus a visitor moved while it is off the page, took the controls to 18,638 bytes together,
-under the 18.75 KB they held but with less room than a function of the usual size, and the median a
-function adds is now 641 bytes, so the rule sets them at 19 KB.
+Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
+bytes to 18,117, which record 23's holders took to 18,553.
 
 ## The sheets beside other systems
 
@@ -264,7 +192,7 @@ was fetched from jsDelivr at the path named, minified by Lightning CSS 1.33.0 an
 9 by Node's zlib, with Web Awesome's sheet first bundled with the sheets it imports. The kit's three
 sheets were joined in the order a page loads them, as a bundler sends them, and measured the same
 way. The budget measures them another way, stripping only comments and blank lines and gzipping at
-the default level, so the 9,579 bytes here and the 11,394 bytes of the 0.8.6 paragraph are the same
+the default level, so the 9,579 bytes here and the 11,394 bytes of the 0.8.6 row are the same
 sheets measured two ways. Sent as three files and each measured alone, the kit's sheets come to
 10,201 bytes. The figures are a snapshot of the versions named, kept so the next raise starts from
 them, and a row is checked again by fetching its file.

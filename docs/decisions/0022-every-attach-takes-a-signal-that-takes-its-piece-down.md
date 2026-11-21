@@ -1,8 +1,8 @@
 # 22. Every attach takes a signal that takes its piece down
 
-**Status:** accepted, amended by record 23, under which every signal that attaches an element holds
-its control, taken down a microtask after the last of them aborts unless the element is attached
-again by then, and the control runs on its newest holder's options
+**Status:** accepted, amended by record 23 in 0.9.3, under which every signal that attaches an
+element holds its control, taken down a microtask after the last of them aborts unless the element
+is attached again by then, and the control runs on its newest holder's options
 
 ## Context
 
@@ -72,16 +72,17 @@ Option E.
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
   it, so a later attach finds nothing of it. A piece already attached is left as it is, and the new
   options are not taken. What the attach returns does nothing.
-- **Aborting is the same as detach.** Everything the attach set up comes off: its listeners,
-  observers, timers and frames, a listener on the document it added, and what it drew or showed, as
-  its detach would. An attach that returns what acts rather than a detach is taken down by its
-  signal alone. The module's own listeners are the exception, as record 13 accepts the one that
-  notes the visitor's last press: the theme's listeners on the window, added once by the first
-  switch or `chooseTheme`, stay for the page's life, so `chooseTheme` follows a choice made in
-  another tab on a page with no switch.
-- **Detach is complete and safe to call twice.** The teardown runs once, whichever comes first,
-  the abort or the detach, and a detach called again, even after the same element was attached
-  anew, leaves that newer attach alone. An undo that throws is reported and the rest still run.
+- **Aborting is the same as detach,** once no other signal holds the piece, as record 23 has it, and
+  a microtask later. Everything the attach set up comes off: its listeners, observers, timers and
+  frames, a listener on the document it added, and what it drew or showed, as its detach would. An
+  attach that returns what acts rather than a detach is taken down by its signal alone. The module's
+  own listeners are the exception, as record 13 accepts the one that notes the visitor's last press:
+  the theme's listeners on the window, added once by the first switch or `chooseTheme`, stay for the
+  page's life, so `chooseTheme` follows a choice made in another tab on a page with no switch.
+- **Detach is complete and safe to call twice.** The teardown runs once, whichever comes first, the
+  takedown the last holder's abort brings or the detach, which takes the piece down at once whoever
+  holds it, and a detach called again, even after the same element was attached anew, leaves that
+  newer attach alone. An undo that throws is reported and the rest still run.
 - **Calls after teardown do nothing, silently.** What an attach returned, such as a status line's
   `say` or a toast's show, does nothing once its piece is taken down, as do a timer or an answer
   that comes late, such as the clipboard's. Nothing throws and nothing warns.
@@ -119,11 +120,13 @@ through, a busy button, progress, the dialog and `moveFocus` keep the contract t
 
 - A page takes down any piece the same way, whatever its attach returns, and a page that attaches
   many pieces for one screen aborts one controller as the screen goes.
-- The flags, lists and checks each attach kept for its own teardown give way to the helper. With the
-  theme switch and the copy button moved onto it, the controls weigh 17,532 bytes against 17,331
-  before, 201 more, which left less room than a function of the usual size, so record 13's rule set
-  their budget at 17.75 KB. The rule sets it again if a function outgrows it.
-- An attach is held to the contract by browser tests as it moves onto the helper.
+- The flags, lists and checks each attach kept for its own teardown give way to the helper. The
+  helper added 201 bytes with the theme switch and the copy button on it, and moving every other
+  attach onto it took the controls past their budget. Record 13's rule set the budget again at each
+  step of 0.9.3, to 19 KB with record 23's holders and its one rule for handing focus back, as
+  record 13's table gives.
+- Every attach and `moveFocus` is held to the contract by browser tests in Chromium, WebKit and
+  Firefox.
 
 ## How it is tested
 

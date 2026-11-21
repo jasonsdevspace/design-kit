@@ -1,14 +1,10 @@
 # 15. A toast's attach function returns what shows a message
 
-**Status:** accepted, amended in 0.8.0 to export the status line's attach function, `attachStatus`,
-which returns what says a message, in 0.8.4 for the panel's, `attachPanel`, which returns what opens
-or closes it and what lets its button go, and in 0.9.0 for words that settle and polite words, which
-give way to firm words said in the same moment or still settling and wait for firm words being said,
-and in 0.9.2 for a line let go of as `StatusProvider` unmounts, so nothing more is said on it by any
-piece until it is attached again, and in 0.9.3 for a `signal` on `attachStatus` and `attachToast`,
-as record 22 has every attach take, whose abort lets the line go and dismisses the toast as its
-Close does, and by record 23, under which the line and the toast are taken down once every signal
-that holds them has aborted
+**Status:** accepted, amended in 0.8.0 for the status line's attach, `attachStatus`, in 0.8.4 for
+the panel's, `attachPanel`, in 0.8.5 for the tabindex on a toast's buttons, in 0.9.0 for words that
+settle and polite words, in 0.9.2 for a line let go of as `StatusProvider` unmounts, in 0.9.3 for a
+`signal` on `attachStatus` and `attachToast`, and by record 23 in 0.9.3, under which the line and
+the toast are taken down once every signal that holds them has aborted
 
 ## Context
 
@@ -50,19 +46,53 @@ A toast with an action stays until its close button, its action, Escape with foc
 message dismisses it, since a timer would take the way back from anyone slower than it. One with no
 action also leaves after five seconds, a wait held while the pointer is over it or focus is in it.
 Focus in a toast that leaves goes back to where it was the last time a message arrived while focus
-was outside the toast. Focus goes back only where it is in the toast, or where the page has taken
-the toast away with focus in it so that focus has fallen to the body or to nothing, while focus a
-visitor has put anywhere else stays. What dismisses a message never dismisses a later one.
+was outside the toast. It goes back only where it is in the toast, or where the page has taken the
+toast away with focus in it so that focus has fallen to the body or to nothing, the rule record 23
+gives the toast, the dialog and the panels alike, while focus a visitor has put anywhere else
+stays. A toast taken from the page forgets it had focus once the visitor moves focus outside it or
+presses while it is off the page, so it never hands focus back over the visitor's own move. What
+dismisses a message never dismisses a later one.
 
 The toast's listeners are on its own elements, so a toast taken from the page takes them with it. A
 page that takes a toast away while the page stays gives `attachToast` a `signal`, as record 22 has
-every attach take. Aborting it dismisses the message as its Close does, so focus in the toast, which
-would drop to the page's body as its buttons hide, goes back where a dismiss sends it. It takes off
-the toast's listeners, its observer, its listener on the window's size and its timer, takes away a
-tabindex the attach added that the page has not changed since and lets its line go, and the function
-the attach returned, and what that returned, do nothing after. Its behavior ships in the controls
-module beside the switch's and the copy button's, rather than in a module of its own, as its rules
-ship in the components sheet, and the module's budget rose from 3 KB to 5 KB for it.
+every attach take, and it is taken down once every signal holding it has aborted, as record 23 has
+it. That dismisses the message as its Close does, so focus in the toast, which would drop to the
+page's body as its buttons hide, goes back where a dismiss sends it. It takes off the toast's
+listeners, its observer, its listener on the window's size and its timer, takes away a tabindex the
+attach added that the page has not changed since and lets its line go, and the function the attach
+returned, and what that returned, do nothing after. Its behavior ships in the controls module beside
+the switch's and the copy button's, rather than in a module of its own, as its rules ship in the
+components sheet, and the module's budget rose from 3 KB to 5 KB for it.
+
+## The status line
+
+`attachStatus` returns what says a message on a page's own status line, for a screen that says a
+change without moving focus, rather than what takes the line away, for the toast's reason, and
+keeps record 13's rule for being called again: a line attached again returns the function it
+returned first. Its messages leave after two seconds, where the toast keeps its own until the toast
+leaves and a stepper keeps its value on its own line until the next, so each keeps a line of its
+own, and a stepper speaking on a page's line leaves it as any message there does. The kit's own
+pieces, the copy button, the stepper, the form, a busy button and progress, speak on a page's line
+without attaching it, so none of them holds it.
+
+A message is said at once, or once it settles where it asks to wait for its words to stop
+changing, and words said in the meantime take its place. A message said politely, as progress and a
+busy button's notice are, gives way to firm words said in the same moment or still settling, so a
+page's own result said with it is heard in its place, and waits for firm words being said, so it
+is said once they leave, however many follow. A polite message given as a function waits for any
+words there, and is read as it is put in, so it says nothing once it is no longer true.
+
+A line is let go of as its attach is taken down, a microtask after every `signal` that holds it has
+aborted unless it is attached again by then, and as `StatusProvider` unmounts. Letting it go clears
+its timers, those that end the moment words were said in among them, drops its words and empties
+it, so no piece says anything on it until it is attached again, and a piece's own timers, such as a
+busy button's wait, come due saying nothing. A line let go of while still attached, as a toast's
+own line is when the toast is taken down, and attached afresh takes its old attach down, so the old
+attach's signal holds nothing of it. The function an attach returned says nothing once that attach
+is taken down, as record 22 has calls after teardown do, while a piece given the line itself speaks
+on its next attach. `StatusProvider` hands its parts a function of its own that calls the line's
+current attach, so they keep speaking across React's second run in development, as record 20 has
+it.
 
 ## Consequences
 
@@ -71,32 +101,12 @@ ship in the components sheet, and the module's budget rose from 3 KB to 5 KB for
 - Record 13 holds for the switch, the copy button and the stepper. The toast's attach function
   returns something other than what takes it away, and the dialog's does the same for the same
   reason: it returns what opens it, since a page calls that each time and the dialog's listeners
-  are on its own element.
+  are on its own element. Each is taken down by its `signal`, as record 22 has every attach.
 - A page that shows a message with no action over one with an action takes that way back away, so
   a page shows one after another only once the first is done with.
 - A page on which every visitor loads the controls loads the toast's behavior too.
-- The function the copy button and the stepper speak through is exported as `attachStatus`, which
-  returns what says a message on a page's own status line, for a screen that says a change without
-  moving focus. Its messages leave after two seconds, where the toast keeps its own until the toast
-  leaves and a stepper keeps its value on its own line until the next, so each keeps a line of its
-  own, and a stepper speaking on a page's line leaves it as any message there does. A message said
-  politely, as progress and a busy button's notice are, gives way to firm words said in the same
-  moment or still settling, so a page's own result said with it is heard in its place, and waits for
-  firm words being said, so it is said once they leave, however many follow. A polite message given
-  as a function waits for any words there, and is read as it is put in, so it says nothing once it
-  is no longer true. The function returns what says a message rather than what takes the line away,
-  and keeps record 13's rule for being called again: a line attached again returns the function it
-  returned first. A line is let go of a microtask after every `signal` that holds it has aborted,
-  unless it is attached again by then. Letting it go clears its timers and drops its words as
-  `StatusProvider` does when it unmounts, so no piece says anything on it until it is attached
-  again. A line let go of while still attached, as a toast's own line is when the toast is taken
-  down, and attached afresh takes its old attach down, so the old attach's signal holds nothing of
-  it. The function an attach returned says nothing once that attach is taken down, as record 22 has
-  calls after teardown do, while a piece given the line itself speaks on its next attach.
-  `StatusProvider` hands its parts a function of its own that calls the line's current attach, so
-  they keep speaking across React's second run in development. The kit's own pieces speak on a
-  page's line without attaching it, so none of them holds a page's line, and a line the page
-  attaches with a signal is taken down once every signal holding it has aborted.
+- The function the copy button and the stepper speak through is exported as `attachStatus`, for a
+  screen that says a change without moving focus, with the rules in the section above.
 - A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
   closes it and what lets the button go, since a page calls the first from its own code and a
   button can leave the page while its panel stays. It hears its buttons and Closes through one
