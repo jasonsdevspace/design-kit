@@ -8,13 +8,18 @@ import { teardown } from './teardown.js';
  */
 
 describe('a teardown', () => {
-    it('reports a signal already aborted, so the attach attaches nothing', () => {
-        expect(teardown(AbortSignal.abort())).toBeNull();
+    it('gives a teardown already stopped for a signal already aborted, whose add runs at once', () => {
+        const down = teardown(AbortSignal.abort());
+        expect(down.signal.aborted).toBe(true);
+        let ran = 0;
+        down.add(() => (ran += 1));
+        expect(ran).toBe(1);
+        down.stop();
+        expect(ran).toBe(1);
     });
 
     it('runs what it keeps once, in the order kept, and aborts its own signal', () => {
         const down = teardown();
-        if (!down) throw new Error('expected a teardown');
         const ran: string[] = [];
         down.add(() => ran.push('observer'));
         down.add(() => ran.push('timer'));
@@ -30,7 +35,6 @@ describe('a teardown', () => {
     it("runs when the page's signal aborts, and not again on the detach", () => {
         const page = new AbortController();
         const down = teardown(page.signal);
-        if (!down) throw new Error('expected a teardown');
         let ran = 0;
         down.add(() => (ran += 1));
         page.abort();
@@ -49,7 +53,6 @@ describe('a teardown', () => {
             add(type, listener, options);
         });
         const down = teardown(page.signal);
-        if (!down) throw new Error('expected a teardown');
         expect(added?.aborted).toBe(false);
         down.stop();
         // A listener added with a signal comes off as that signal aborts, as the DOM has it.
@@ -65,7 +68,6 @@ describe('a teardown', () => {
         vi.stubGlobal('reportError', (error: unknown) => reported.push(error));
         try {
             const down = teardown();
-            if (!down) throw new Error('expected a teardown');
             const failure = new Error('an undo that throws');
             let ran = false;
             down.add(() => {
@@ -82,7 +84,6 @@ describe('a teardown', () => {
 
     it('runs an undo kept after the teardown at once', () => {
         const down = teardown();
-        if (!down) throw new Error('expected a teardown');
         down.stop();
         let ran = 0;
         down.add(() => (ran += 1));

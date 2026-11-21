@@ -97,10 +97,11 @@ Option E.
   every page keeps working as it is, which makes the contract a patch release, 0.9.3.
 
 One internal helper keeps the contract, `teardown` in `src/teardown.ts`, which no entry exports.
-Given the page's signal, it gives null where that signal is already aborted, so the attach returns
-at once, and otherwise a signal of its own that every listener of the attach takes, `add` for what a
-signal cannot take off, as an observer's disconnect, a timer's clear or a frame's cancel, and
-`stop`, which the attach returns as its detach. `stop` aborts its own signal and runs what `add`
+Given the page's signal, it gives a signal of its own that every listener of the attach takes,
+`add` for what a signal cannot take off, as an observer's disconnect, a timer's clear or a frame's
+cancel, and `stop`, which the attach returns as its detach. Where that signal is already aborted, it
+gives a teardown already stopped, so an attach that forgot its own early check takes down what it
+sets up rather than living on. `stop` aborts its own signal and runs what `add`
 kept, once, and the page's signal calls it on abort. An undo given to `add` after the teardown has
 run runs at once. Work an attach sets after it is set up follows one of two rules: it lives in a
 variable an undo kept at setup clears, or its callback reads the attach's signal and does nothing
