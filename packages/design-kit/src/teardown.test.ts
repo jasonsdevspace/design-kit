@@ -228,6 +228,28 @@ describe('a teardown with several holders', () => {
         expect(applied).toEqual([]);
     });
 
+    it('takes options for given only where a key other than signal has a value', () => {
+        type Options = {
+            readonly name?: string | null | undefined;
+            readonly signal?: AbortSignal | undefined;
+        };
+        const registry = new WeakMap<object, Kept<() => void, Options>>();
+        const element = {};
+        const down = teardown<Options>(undefined, { name: 'first' });
+        const applied: Options[] = [];
+        down.set = (options) => applied.push(options);
+        keep(registry, element, down, down.stop);
+        // An empty object and keys left undefined, as a page spreading its own optional props
+        // passes, give nothing, so the options given first stay.
+        join(registry, element, {});
+        join(registry, element, { name: undefined });
+        join(registry, element, { name: undefined, signal: undefined });
+        expect(applied).toEqual([]);
+        // Null is a value, so it is given.
+        join(registry, element, { name: null });
+        expect(applied).toEqual([{ name: null }]);
+    });
+
     it('gives an attach made from inside a takedown a control of its own', () => {
         const registry = new WeakMap<object, Kept<() => void>>();
         const element = {};

@@ -86,11 +86,12 @@ Option C.
   element does not hand the control to the older hook's options and back on every render. A call
   without a signal applies its options at once, and files them under the newest holder, so they
   leave with it, or under the page's own hold where the page holds the control without a signal, so
-  they stay with the page as hooks come and go. Options that give only a signal count as none, as
-  record 13 has a call with none leave them as they were, and a call that gives no options keeps the
-  ones its holder gave before. Where no holder left gave options, the control goes back to its
-  defaults, as a first attach that gave none has them, though a copy button, which has no source of
-  its own, keeps the one it has.
+  they stay with the page as hooks come and go. Options count as given only where a key other than
+  `signal` has a value, so an empty object, a signal alone and keys left undefined, as a page
+  spreading its own optional props passes, count as none, as record 13 has a call with none leave
+  them as they were, and a call that gives no options keeps the ones its holder gave before. Where
+  no holder left gave options, the control goes back to its defaults, as a first attach that gave
+  none has them, though a copy button, which has no source of its own, keeps the one it has.
 - **Until the takedown lands, the control is whole.** Its listeners still hear the page, and what
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment the
   takedown lands. A focus request's takedown waits the same microtask, which changes nothing for it,
@@ -109,10 +110,12 @@ Option C.
 
 `teardown` in `src/teardown.ts` keeps the holders, with `hold` beside `add` and `stop`, and two
 functions beside it, `join` and `keep`, find a control by its element in its kind's map and keep it
-there until it is taken down, so no attach keeps its own registry rule. A holder's listener on its
-signal is added once and taken off as it fires or as the control is taken down, rather than given
-the control's own signal, which would leave an entry on the control's signal for every signal it has
-ever held.
+there until it is taken down, so no attach keeps its own registry rule. `attachStatus` joins through
+`join` too, and first takes down the attach of a line let go of while still attached, as a toast's
+own line is when the toast is taken down, so a later attach of that line starts afresh. A holder's
+listener on its signal is added once and taken off as it fires or as the control is taken down,
+rather than given the control's own signal, which would leave an entry on the control's signal for
+every signal it has ever held.
 
 ## Consequences
 
@@ -141,7 +144,8 @@ ever held.
   under 18.5 KB than a function of the usual size, so record 13's rule sets them at 18.75 KB. One
   rule for handing focus back and a toast that forgets focus a visitor moved take them to 18,638
   bytes, with less room under 18.75 KB than a function of the usual size, so the rule sets them at
-  19 KB.
+  19 KB. The status line joining through `join`, and options read by their values rather than their
+  key names, take them to 18,627 bytes.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -158,8 +162,8 @@ The paths are in `packages/design-kit`.
   kept through a call from it that gives none, no options applied after the detach, an attach made
   from inside a takedown getting a control of its own, a page's own options given without a signal
   applied at once and kept as a hook sharing the element goes, options that give only a signal taken
-  for none, a first attach's among them, and no options applied once the only holder that gave any
-  lets go.
+  for none, a first attach's among them, an empty object and keys left undefined taken for none
+  while `null` is given, and no options applied once the only holder that gave any lets go.
 - `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, aborts and attaches without a signal in one task and finds each kept and a busy wait

@@ -1434,11 +1434,12 @@ older holder is kept and applies once every newer holder that gave options has l
 holder whose options apply lets go, the newest one left that gave options takes over with them a
 microtask later, unless a newer holder has given its own by then. A call with no signal applies its
 options at once, and they stay with the page where the page holds the control without a signal, and
-elsewhere leave with the newest holder they are filed under. Options that give only a `signal` count
-as none, and a call that gives none keeps its holder's last ones, while any other object replaces
-them, an empty `{}` among them. Where no holder left gave options, the control goes back to its
-defaults, as a first attach that gave none has them, though a copy button, which has no source of
-its own, keeps the one it has.
+elsewhere leave with the newest holder they are filed under. Options count as given only where a key
+other than `signal` has a value, `null` and `false` among values, so `{}`, `{ signal }` and options
+whose every other key is `undefined` count as none, and a call that gives none keeps its holder's
+last ones. Where no holder left gave options, the control goes back to its defaults, as a first
+attach that gave none has them, though a copy button, which has no source of its own, keeps the one
+it has.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and

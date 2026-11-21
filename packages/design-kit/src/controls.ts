@@ -682,15 +682,12 @@ const attachedLines = new WeakMap<HTMLElement, Kept<Say>>();
 export const attachStatus = (line: HTMLElement, options?: AttachOptions): Say => {
     // A signal already aborted does nothing, even to a line already attached.
     if (options?.signal?.aborted) return () => undefined;
-    const already = attachedLines.get(line);
-    if (already && !lineOf(line).released) {
-        already.down.hold(options?.signal);
-        if (!already.down.signal.aborted) return already.handle;
-    }
     // A line let go of while still attached, as a toast's own line is when the toast is taken down,
-    // is attached afresh, and its old attach taken down, so the old attach's signal holds nothing
-    // of it.
-    already?.down.stop();
+    // is attached afresh, and its old attach taken down first, which drops it from the map, so the
+    // old attach's signal holds nothing of it and the join below finds none.
+    if (lineOf(line).released) attachedLines.get(line)?.down.stop();
+    const already = join(attachedLines, line, options);
+    if (already) return already;
     const down = teardown(options?.signal);
     claimLine(line);
     const speak: Say = (message, given) => {
