@@ -53,7 +53,7 @@ window.attachShadowButton = () =>
     attachPanel(document.querySelector('#host').shadowRoot.querySelector('button'));
 window.ready = true;`;
 
-/** How many listeners sit on the targets an expression in the page gives, a list of them. */
+/** How many listeners the counters see on the targets in the list an expression in the page gives. */
 type Count = (targets: string) => Promise<number>;
 
 /** The page with its controls loaded and nothing attached yet, and how to count its listeners. */

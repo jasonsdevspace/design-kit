@@ -141,20 +141,21 @@ The paths are in `packages/design-kit`.
   document's, finding the switch's listener there off after an abort with its choices open.
 - `e2e/signal.spec.tsx` holds the stepper, a table's frame, a group the arrow keys move through, a
   busy button, progress, the dialog and `moveFocus` to the same rules in the three engines, with a
-  busy wait and a pending focus request called off by an abort, counts their listeners and finds a
-  focus request that landed holds nothing on the page's signal.
-- `e2e/leaks.spec.tsx` holds every attach to leaving nothing running, in the three engines, on a
-  stand-in clock that moves only by the test's steps. A script loaded before the page's own,
-  `e2e/leaks.ts`, counts the listeners on elements, the document, the window and signals, the
-  ResizeObservers and MutationObservers watching, and the timers and frames still to come, and in
-  Chromium finds its count of listeners equal to the engine's own. With the theme's window
-  listeners set first, as the exception above allows, each attach is attached, used, taken down and
-  called after, seven times in a row, with every count back where it started each time and nothing
-  coming due later, and every attach given a signal already aborted, used and called after starts
-  nothing. A page drawn by React that uses every hook is drawn, used and taken away seven times, in
-  production and under `StrictMode`, with every count back where it was once React's root was in
-  the page, but for the listeners React keeps on the fields it drew. The counts in the specs above
-  come from the same script.
+  busy wait and a pending focus request called off by an abort. It counts their listeners and finds
+  a focus request that landed holds nothing on the page's signal.
+- `e2e/leaks.spec.tsx` holds every attach and `moveFocus` to leaving nothing running, in the three
+  engines, on a stand-in clock that moves only by the test's steps. A script loaded before the
+  page's own, `e2e/leaks.ts`, counts the listeners on elements, the document, the window and
+  signals, the ResizeObservers and MutationObservers watching, and the timers and frames still to
+  come, and in Chromium finds its count of the listeners on the window, the document and its
+  elements equal to the engine's own. With the theme's window listeners set first, as the exception
+  above allows, each piece is attached, used, taken down and called after, seven times in a row,
+  with every count back where it started each time and nothing coming due later, and each piece
+  given a signal already aborted, used and called after starts nothing. A page drawn by React that
+  uses every hook is drawn, used and taken away seven times, in production and under `StrictMode`,
+  with every count back where it was once React's root was in the page, but for React's own
+  listeners on elements, such as the one it keeps on each field it drew. The counts in the specs
+  above come from the same script.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources

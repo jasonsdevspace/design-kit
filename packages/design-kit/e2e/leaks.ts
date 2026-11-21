@@ -9,11 +9,13 @@ import { expect, type Page } from '@playwright/test';
  *
  * A listener is followed as the DOM keeps it: one added again with the same type, callback and
  * capture is ignored, signal and all, one given a signal already aborted is never added, and one
- * comes off as its signal aborts, as `removeEventListener` takes it off, or after it runs where it
- * was added `once`. What the wrappers cannot see is a handler set as a property, such as
- * `onclick`, which no piece of the kit sets, and anything added before the script runs, which is
- * nothing of the page's, only a few markers of Playwright's own, which every count leaves out by
- * their names. In Chromium, `expectEngineAgrees` holds the count to the engine's own.
+ * comes off as its signal aborts, as `removeEventListener` takes it off, or as it runs where it was
+ * added `once`. What the wrappers cannot see is a handler set as a property, such as `onclick`,
+ * which no piece of the kit sets and `listenersOn` reads from the property itself, and anything
+ * added before the script runs, which is nothing of the page's, only a few markers of Playwright's
+ * own, which every count leaves out by their names. In Chromium, `expectEngineAgrees` holds the
+ * count of the listeners on the window, the document and its elements to the engine's own, and so
+ * does every `listenersOn`.
  */
 
 /** What the page has left running, as the counters see it. */
@@ -24,10 +26,11 @@ export type Counts = {
     readonly signalListeners: number;
     readonly otherListeners: number;
     /**
-     * Listeners whose callback is a bound function, as every one React adds is and none of the
-     * kit's is, wherever they sit, so a page drawn by React can set them apart.
+     * Listeners on elements whose callback is a bound function, as every one React adds to the
+     * elements it draws is and none of the kit's is, so a page drawn by React can set them apart.
+     * A bound listener on the window, the document or a signal is counted with the rest there.
      */
-    readonly reactListeners: number;
+    readonly boundElementListeners: number;
     readonly resizeObservers: number;
     readonly mutationObservers: number;
     readonly timers: number;
@@ -37,12 +40,18 @@ export type Counts = {
 /*
  * The counters, as a script the page runs before its own. They live under `window.leaks`, which
  * the page itself never touches. A listener is kept by its target, then by its type and capture,
- * then by its callback, so the same listener added twice is found and ignored. Each one kept has a
- * token of its own, so a signal that aborts after the listener was taken off and added again with
+ * then by its callback, so the same listener added twice is found and ignored. Each one kept has an
+ * entry of its own, so a signal that aborts after the listener was taken off and added again with
  * another signal leaves the newer one counted. The page's own functions are kept aside before they
- * are wrapped, so what the counters add to follow a signal or a `once` is never counted.
+ * are wrapped, so what the counters add to follow a signal is never counted. Whether the timers
+ * wrapped are a stand-in clock's is noted, and a count fails where the page was meant to have one
+ * and does not, or where something replaced the timers after the counters wrapped them, as a clock
+ * installed after them does in Chromium.
  */
-const SCRIPT = `(() => {
+const script = (clock: boolean | undefined): string => `(() => {
+    const wantsClock = ${JSON.stringify(clock ?? null)};
+    // Playwright's stand-in clock keeps itself on the window as it is installed.
+    const clocked = '__pwClock' in window;
     const add = EventTarget.prototype.addEventListener;
     const remove = EventTarget.prototype.removeEventListener;
     const kept = new Map();
@@ -67,26 +76,37 @@ const SCRIPT = `(() => {
         )
             return add.call(this, type, callback, options);
         const slot = slotOf(this, String(type), options);
-        if (slot.has(callback)) return add.call(this, type, callback, options);
-        const token = {};
-        const drop = () => {
-            if (slot.get(callback) === token) slot.delete(callback);
-        };
-        // What follows a listener added once goes ahead of it, so it still runs where that
-        // listener stops the event, as a dialog's teardown does with the close it causes.
+        // The DOM ignores it, and a listener kept as a stand-in for one added once is not the
+        // callback, so the engine would add the callback beside it.
+        if (slot.has(callback)) return;
+        // A listener added once is added as a stand-in that takes itself off the count as it
+        // runs, in its place, so it runs where the callback would and the engine holds one
+        // listener, as it would for the callback.
+        const entry = { native: callback };
         if (given.once)
-            add.call(this, type, drop, {
-                capture: captureOf(options),
-                once: true,
-                signal: given.signal,
-            });
-        add.call(this, type, callback, options);
-        slot.set(callback, token);
-        if (given.signal) add.call(given.signal, 'abort', drop, { once: true });
+            entry.native = function (event) {
+                if (slot.get(callback) === entry) slot.delete(callback);
+                return typeof callback === 'function'
+                    ? callback.call(this, event)
+                    : callback.handleEvent(event);
+            };
+        add.call(this, type, entry.native, options);
+        slot.set(callback, entry);
+        if (given.signal)
+            add.call(
+                given.signal,
+                'abort',
+                () => {
+                    if (slot.get(callback) === entry) slot.delete(callback);
+                },
+                { once: true }
+            );
     };
     EventTarget.prototype.removeEventListener = function (type, callback, options) {
-        remove.call(this, type, callback, options);
-        kept.get(this)?.get(String(captureOf(options)) + ' ' + type)?.delete(callback);
+        const slot = kept.get(this)?.get(String(captureOf(options)) + ' ' + type);
+        const entry = slot?.get(callback);
+        remove.call(this, type, entry ? entry.native : callback, options);
+        slot?.delete(callback);
     };
 
     const watching = { ResizeObserver: new Set(), MutationObserver: new Set() };
@@ -170,20 +190,45 @@ const SCRIPT = `(() => {
                 : target instanceof AbortSignal
                   ? 'signalListeners'
                   : 'otherListeners';
+    const ours = [
+        window.setTimeout,
+        window.clearTimeout,
+        window.requestAnimationFrame,
+        window.cancelAnimationFrame,
+    ];
+    const check = () => {
+        const now = [
+            window.setTimeout,
+            window.clearTimeout,
+            window.requestAnimationFrame,
+            window.cancelAnimationFrame,
+        ];
+        if (now.some((run, at) => run !== ours[at]))
+            throw new Error('the timers were replaced after the counters wrapped them');
+        if (wantsClock === true && !clocked)
+            throw new Error('expected a stand-in clock installed before the counters');
+        if (wantsClock === false && clocked)
+            throw new Error('expected the timers of the browser, not a stand-in clock');
+    };
     window.leaks = {
         counts: () => {
+            check();
             const found = {
                 elementListeners: 0,
                 documentListeners: 0,
                 windowListeners: 0,
                 signalListeners: 0,
                 otherListeners: 0,
-                reactListeners: 0,
+                boundElementListeners: 0,
             };
             for (const [target, byKey] of kept)
                 for (const byCallback of byKey.values())
                     for (const callback of byCallback.keys())
-                        found[bound(callback) ? 'reactListeners' : kindOf(target)] += 1;
+                        found[
+                            bound(callback) && target instanceof Element
+                                ? 'boundElementListeners'
+                                : kindOf(target)
+                        ] += 1;
             return {
                 ...found,
                 resizeObservers: watching.ResizeObserver.size,
@@ -193,6 +238,7 @@ const SCRIPT = `(() => {
             };
         },
         on: (targets) => {
+            check();
             let total = 0;
             for (const target of targets)
                 for (const byCallback of kept.get(target)?.values() ?? []) total += byCallback.size;
@@ -211,22 +257,37 @@ const SCRIPT = `(() => {
 })();`;
 
 /**
- * Loads the counters into every page the test opens from now on. A stand-in clock is installed
- * first, so the counters wrap its timers and frames rather than the browser's.
+ * Loads the counters into every page the test opens from now on. A test on a stand-in clock
+ * installs the clock first, so the counters wrap its timers and frames rather than the browser's,
+ * and says so with `clock`, so a count fails where the clock is missing. A clock installed after
+ * the counters fails every count, whatever `clock` says.
  */
-export const countLeaks = async (page: Page): Promise<void> => {
-    await page.addInitScript(SCRIPT);
+export const countLeaks = async (
+    page: Page,
+    { clock }: { readonly clock?: boolean } = {}
+): Promise<void> => {
+    await page.addInitScript(script(clock));
 };
 
 /** What the page has left running now. */
 export const leaksOf = (page: Page): Promise<Counts> => page.evaluate('window.leaks.counts()');
 
+/** Whether the page runs in Chromium, whose own tools can count its listeners. */
+const inChromium = (page: Page): boolean =>
+    page.context().browser()?.browserType().name() === 'chromium';
+
 /**
- * How many listeners sit on the targets an expression in the page gives, a list of them, as the
- * counters see them, bound callbacks among them.
+ * How many listeners the counters see on the targets in the list an expression in the page gives,
+ * bound callbacks among them, and handlers set as properties, as the engine's tools count them. In
+ * Chromium, every count also finds the counters agree with the engine's own.
  */
-export const listenersOn = (page: Page, targets: string): Promise<number> =>
-    page.evaluate(`window.leaks.on(${targets})`);
+export const listenersOn = async (page: Page, targets: string): Promise<number> => {
+    const seen = Number(
+        await page.evaluate(`window.leaks.on(${targets}) + window.leaks.handlers(${targets})`)
+    );
+    await expectEngineAgrees(page);
+    return seen;
+};
 
 /** The window, the document and every element in it. */
 const EVERYWHERE = '[window, document, ...document.querySelectorAll("*")]';
@@ -235,13 +296,11 @@ const EVERYWHERE = '[window, document, ...document.querySelectorAll("*")]';
  * In Chromium, finds the counters agree with the engine's own tools on every listener on the
  * window, the document and each element in it, so a listener a signal took off, or one the
  * counters could not see, would show as a difference. A handler set as a property is added to the
- * counters' side, read from the property itself, since the engine lists it too. What the counters
- * add to follow a listener added `once` is the engine's to see as well, so they agree once that
- * listener has run, as they do whenever nothing is waiting to be heard. Another engine has no such
- * tools, and the same counters run there unchecked.
+ * counters' side, read from the property itself, since the engine lists it too. Another engine has
+ * no such tools, and the same counters run there unchecked.
  */
-export const expectEngineAgrees = async (page: Page, browserName: string): Promise<void> => {
-    if (browserName !== 'chromium') return;
+export const expectEngineAgrees = async (page: Page): Promise<void> => {
+    if (!inChromium(page)) return;
     const session = await page.context().newCDPSession(page);
     try {
         let engine = 0;

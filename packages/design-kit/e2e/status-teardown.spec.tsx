@@ -49,13 +49,13 @@ window.ready = true;`;
 /** The timers set and not yet run or cleared, and the observers watching. */
 type Running = { readonly timers: number; readonly observers: number };
 
-/** How many listeners sit on the targets an expression in the page gives, a list of them. */
+/** How many listeners the counters see on the targets in the list an expression in the page gives. */
 type Count = (targets: string) => Promise<number>;
 
 /** The page with its controls loaded and nothing attached yet, and how to count its listeners. */
 const opened = async (page: Page): Promise<Count> => {
     await stillClock(page.clock);
-    await countLeaks(page);
+    await countLeaks(page, { clock: true });
     await servePage(page, { title: 'Teardown', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
     return (targets) => listenersOn(page, targets);

@@ -17,15 +17,15 @@ import { type Leaks } from './leaks-page.js';
 import { servePage, stillClock } from './page.js';
 
 /*
- * Record 22's promise that a piece taken down leaves nothing running, held for every attach by
- * counting what the page has running, through the counters in leaks.ts, in Chromium, WebKit and
- * Firefox: each attach, used and taken down, brings every count back to where it started, seven
- * in a row grow none, and one given a signal already aborted, used and called after, starts
- * nothing. Each piece that speaks speaks on the screen's line, attached with the same signal, as a
- * page takes a screen down with one controller, so the line's own timers go with it. The theme's
- * listeners on the window stay for the page's life, as the record has it, so a switch is attached
- * and taken down once before every count starts. The clock is a stand-in that moves only by the
- * test's steps, so a timer still to come at the abort is one the abort has to clear.
+ * Record 22's promise that a piece taken down leaves nothing running, held for every attach and
+ * `moveFocus` by counting what the page has running, through the counters in leaks.ts, in
+ * Chromium, WebKit and Firefox: each piece, used and taken down, brings every count back to where
+ * it started, seven in a row grow none, and one given a signal already aborted, used and called
+ * after, starts nothing. Each piece that speaks speaks on the screen's line, attached with the same
+ * signal, as a page takes a screen down with one controller, so the line's own timers go with it.
+ * The theme's listeners on the window stay for the page's life, as the record has it, so a switch
+ * is attached and taken down once before every count starts. The clock is a stand-in that moves
+ * only by the test's steps, so a timer still to come at the abort is one the abort has to clear.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -283,7 +283,7 @@ const ROUNDS = 7;
 /** The page with its controls loaded, the counters in it and its clock still. */
 const opened = async (page: Page): Promise<void> => {
     await stillClock(page.clock);
-    await countLeaks(page);
+    await countLeaks(page, { clock: true });
     await servePage(page, { title: 'Leaks', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
 };
@@ -298,26 +298,20 @@ const expectBack = async (
     before: Counts,
     {
         what,
-        browserName,
         read = leaksOf,
-    }: {
-        readonly what: string;
-        readonly browserName: string;
-        readonly read?: (page: Page) => Promise<Counts>;
-    }
+    }: { readonly what: string; readonly read?: (page: Page) => Promise<Counts> }
 ) => {
     await expect.poll(() => read(page), { message: what, timeout: 2000 }).toEqual(before);
-    await expectEngineAgrees(page, browserName);
+    await expectEngineAgrees(page);
 };
 
 for (const name of PIECES) {
     test(`leaves nothing running once ${name} is taken down, seven times over`, async ({
         page,
-        browserName,
     }) => {
         await opened(page);
         const before = await leaksOf(page);
-        await expectEngineAgrees(page, browserName);
+        await expectEngineAgrees(page);
         for (let round = 1; round <= ROUNDS; round += 1) {
             const what = `${name}, round ${String(round)}`;
             await page.evaluate((piece) => {
@@ -327,7 +321,7 @@ for (const name of PIECES) {
             // one the teardown brought back.
             if (round === 1) {
                 expect(await leaksOf(page), what).not.toEqual(before);
-                await expectEngineAgrees(page, browserName);
+                await expectEngineAgrees(page);
             }
             // Far enough for its words to be put on the line and its frames to come, and short of
             // the timers that end them.
@@ -335,20 +329,19 @@ for (const name of PIECES) {
             await page.evaluate((piece) => {
                 (window as unknown as { abort: (name: string) => void }).abort(piece);
             }, name);
-            await expectBack(page, before, { what, browserName });
+            await expectBack(page, before, { what });
             // Calls after the teardown start nothing, and nothing comes due later.
             await page.evaluate((piece) => {
                 (window as unknown as { after: (name: string) => void }).after(piece);
             }, name);
             await page.clock.runFor(10_000);
-            await expectBack(page, before, { what: `${what}, after its teardown`, browserName });
+            await expectBack(page, before, { what: `${what}, after its teardown` });
         }
     });
 }
 
 test('starts nothing for any piece given a signal already aborted, used and called after', async ({
     page,
-    browserName,
 }) => {
     await opened(page);
     const before = await leaksOf(page);
@@ -376,20 +369,90 @@ test('starts nothing for any piece given a signal already aborted, used and call
     await page.clock.runFor(10_000);
     await expectBack(page, before, {
         what: 'every piece given a signal already aborted',
-        browserName,
     });
+});
+
+test('counts a listener added once as the engine does, whether it runs or is taken off first', async ({
+    page,
+}) => {
+    await opened(page);
+    const before = await leaksOf(page);
+    // Taken off before it runs, added again, and then run by a press that one before it stops.
+    await page.evaluate(() => {
+        const button = document.querySelector('#start');
+        if (!button) throw new Error('no button');
+        const listener = () => undefined;
+        button.addEventListener('click', listener, { once: true });
+        button.removeEventListener('click', listener);
+        button.addEventListener('click', listener, { once: true });
+    });
+    expect((await leaksOf(page)).elementListeners).toBe(before.elementListeners + 1);
+    await expectEngineAgrees(page);
+    await page.evaluate(() => {
+        const button = document.querySelector('#start');
+        if (!button) throw new Error('no button');
+        const stop = (event: Event) => {
+            event.stopImmediatePropagation();
+        };
+        button.addEventListener('click', stop, { once: true });
+        button.dispatchEvent(new Event('click'));
+        (button as HTMLButtonElement).click();
+    });
+    await expectBack(page, before, { what: 'a listener added once' });
+});
+
+test('counts a bound listener on the window with the window, and one on an element apart', async ({
+    page,
+}) => {
+    await opened(page);
+    const before = await leaksOf(page);
+    await page.evaluate(() => {
+        const listener = () => undefined;
+        window.addEventListener('resize', listener.bind(null));
+        document.querySelector('#start')?.addEventListener('click', listener.bind(null));
+    });
+    expect(await leaksOf(page)).toEqual({
+        ...before,
+        windowListeners: before.windowListeners + 1,
+        boundElementListeners: before.boundElementListeners + 1,
+    });
+    await expectEngineAgrees(page);
+});
+
+test('refuses to count where the stand-in clock is missing or came after the counters', async ({
+    page,
+    browserName,
+}) => {
+    await countLeaks(page, { clock: true });
+    await servePage(page, { title: 'Leaks', body: BODY, script: SCRIPT });
+    await expect(leaksOf(page)).rejects.toThrow('expected a stand-in clock installed before');
+    await stillClock(page.clock);
+    await page.reload();
+    // Chromium runs a clock installed later after the counters, which then find their timers
+    // replaced. WebKit and Firefox run it ahead of every other script, so the counters wrap it.
+    if (browserName === 'chromium') {
+        await expect(leaksOf(page)).rejects.toThrow('the timers were replaced after the counters');
+        return;
+    }
+    await page.evaluate(() => {
+        window.setTimeout(() => undefined, 1000);
+    });
+    expect((await leaksOf(page)).timers).toBe(1);
+    await page.clock.runFor(1000);
+    expect((await leaksOf(page)).timers).toBe(0);
 });
 
 test.describe('the hooks', () => {
     /*
      * React keeps a listener of its own on each field it draws, which it never takes off, so one
-     * stays on a field after the field is taken away. Those are set apart, as listeners with a
-     * bound callback, and every other count is held to where it started once React's root is in
-     * the page with nothing of the kit's drawn.
+     * stays on a field after the field is taken away. Those are set apart, as the listeners on
+     * elements with a bound callback, and every other count, bound listeners on the window, the
+     * document and signals among them, is held to where it started once React's root is in the
+     * page with nothing of the kit's drawn.
      */
     const withoutReact = async (page: Page): Promise<Counts> => ({
         ...(await leaksOf(page)),
-        reactListeners: 0,
+        boundElementListeners: 0,
     });
 
     const apps = { production: '', strict: '' };
@@ -402,10 +465,9 @@ test.describe('the hooks', () => {
     for (const mode of ['production', 'strict'] as const) {
         test(`leave nothing running once a page that uses each is taken away, ${mode === 'strict' ? 'under StrictMode' : 'in production'}, seven times over`, async ({
             page,
-            browserName,
         }) => {
             await stillClock(page.clock);
-            await countLeaks(page);
+            await countLeaks(page, { clock: true });
             await servePage(page, {
                 title: 'Lists',
                 body: '<div id="root"></div>',
@@ -414,7 +476,7 @@ test.describe('the hooks', () => {
             });
             await expect(page.locator('h1')).toHaveText('Lists');
             const before = await withoutReact(page);
-            await expectEngineAgrees(page, browserName);
+            await expectEngineAgrees(page);
             for (let round = 1; round <= ROUNDS; round += 1) {
                 const what = `the hooks, round ${String(round)}`;
                 await page.evaluate(() => {
@@ -425,17 +487,16 @@ test.describe('the hooks', () => {
                 });
                 if (round === 1) {
                     expect(await withoutReact(page), what).not.toEqual(before);
-                    await expectEngineAgrees(page, browserName);
+                    await expectEngineAgrees(page);
                 }
                 await page.clock.runFor(150);
                 await page.evaluate(() => {
                     (window as unknown as Leaks).leave();
                 });
-                await expectBack(page, before, { what, browserName, read: withoutReact });
+                await expectBack(page, before, { what, read: withoutReact });
                 await page.clock.runFor(10_000);
                 await expectBack(page, before, {
                     what: `${what}, later`,
-                    browserName,
                     read: withoutReact,
                 });
             }
