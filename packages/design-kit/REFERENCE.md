@@ -1376,14 +1376,17 @@ listeners on the document for keys, clicks and submits, which note the visitor's
 
 ### Taking a control down
 
-The theme switch and the copy button take an `AbortSignal` as `signal` in their options, as
-`addEventListener` does. Aborting it takes the control down as the function its attach returned
-does, and calling that function or aborting the signal again does nothing. A signal already aborted
-does nothing: the control stays hidden, a control already attached keeps the options it had, and
-what the attach returns does nothing. Once a control is taken down, nothing it started acts, such as
-a copy the clipboard answers late. A control attached again before it is taken down returns what
-its first attach returned and does not hear the later call's signal, so the first attach owns it
-until it is taken down, as
+The theme switch, the copy button, the status line and the toast take an `AbortSignal` as `signal`
+in their options, as `addEventListener` does. Aborting it takes the control down as the function its
+attach returned does, and calling that function or aborting the signal again does nothing. The
+status line and the toast return what says or shows a message rather than what takes them away, so
+the signal alone takes them down: the line is let go of, and the toast's message is dismissed as its
+Close dismisses it, and what each returned does nothing after. A signal already aborted does
+nothing: the control stays hidden, a control already attached keeps the options it had, and what the
+attach returns does nothing. Once a control is taken down, nothing it started acts, such as a copy
+the clipboard answers late. A control attached again before it is taken down returns what its first
+attach returned and does not hear the later call's signal, so the first attach owns it until it is
+taken down, as
 [decision 0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
 sets out.
 
@@ -1634,10 +1637,17 @@ puts the message in a tenth of a second later, so the same words said twice are 
 empties the line again two seconds after, so a visitor reading line by line finds no old words. A
 message said over another replaces it, so only the last of a quick run is heard. It speaks as the
 copy button does, through the same function, so a line a page hands to both keeps one timer.
-`StatusProvider` lets its line go as it unmounts: the line's timers are cleared and the words said
-or held for it are dropped, so nothing more is said there, by any piece given the line, until it is
-attached again. A piece's own timers, such as a busy button's wait, still come due, and say nothing
-there.
+`StatusProvider` lets its line go as it unmounts, as aborting the `signal` the line's first attach
+took does, as `attachStatus(line, { signal })`: the line's timers are cleared and the words said or
+held for it are dropped, so nothing more is said there, by any piece given the line, until it is
+attached again. A line let go of and attached afresh takes its old attach down. The function an
+attach returned says nothing once that attach is taken down, while a piece given the line itself as
+its `status` speaks on the line's next attach, so a page that attaches a line again hands its pieces
+the new function, or the line. `useStatus` hands out a function of its provider's that always calls
+the line's current attach. A piece's own timers, such as a busy button's wait, still come due, and
+say nothing there. A stepper, a form, a busy button or progress given the line speaks on it without
+attaching it, so a page that attaches the line with a signal after they have spoken owns it, and a
+later attach's `signal` is not heard. A signal already aborted returns a function that says nothing.
 
 Every piece that speaks on a line follows one policy. Words are said at once. Words that change with
 each press, such as a count still to enter, ask to settle, as `say(words, { settle: 700 })`, and
@@ -2871,6 +2881,15 @@ back as the toast leaves. An action runs after the toast has left, so where it t
 came from, it moves focus itself. A message with no action replaces one with an action and its way
 back, so a page shows one another only when the first is done with. More than one action is a
 dialog's job.
+
+A page that takes a toast away while it stays, such as a screen it draws itself, attaches it as
+`attachToast(element, { signal })`. Aborting the signal dismisses the message as its Close does, so
+focus in the toast goes back where a dismiss sends it rather than to the page's body. It takes off
+the toast's listeners, its observer, its listener on the window's size and its timer, takes away a
+tabindex it added that the page has not changed since and lets its line go. The function it
+returned, and what that returned, do nothing after, and a later attach's `signal` is not heard. A
+signal already aborted returns a function that shows nothing, though a toast missing a part is still
+refused.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
