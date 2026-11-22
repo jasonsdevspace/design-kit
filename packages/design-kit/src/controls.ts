@@ -896,11 +896,13 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * go, and the function it returned, and what that returned, do nothing after. A signal already
  * aborted returns a function that shows nothing.
  *
- * Focus leaves the toast before it goes back, so where nothing on the list takes it, it falls to
- * the page's body rather than staying on the toast's hidden button. Focus events name only the
- * frame where focus comes from inside one, so focus that was inside a frame as the latest message
- * came goes back to the control inside it that had it, where the frame is of the page's own origin,
- * and onto the frame itself where it is of another, which is as near as a page can reach.
+ * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
+ * than staying on the toast's hidden button. A page sees focus inside a frame only as the frame,
+ * and focus that comes into the toast from inside a frame as coming from nowhere. Where focus goes
+ * back to a frame that had it as the latest message came, it goes on to the control inside that
+ * last had focus there, where the frame is of the page's own origin, and stays on the frame where
+ * it is of another. Firefox does not focus a frame of another origin while a key is being pressed,
+ * so a dismiss by keyboard there goes on down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -946,9 +948,21 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let cameFrom: Element | undefined;
     let arrivedAt: HTMLElement | undefined;
     let lost: Element | undefined;
-    // What had focus inside a frame of the page's own origin that had it as the latest message
-    // came, since focus events name only the frame.
-    let inFrame: Element | null | undefined;
+    // The control that last lost focus inside the frame that had focus as the latest message came,
+    // where it is of the page's own origin, since the page sees focus inside a frame only as the
+    // frame. Read inside an open shadow root too.
+    let inFrame: Element | undefined;
+    const noteFrame = (event: Event) => {
+        if (event.currentTarget === (arrivedAt as HTMLIFrameElement | undefined)?.contentDocument)
+            inFrame = event.composedPath()[0] as Element;
+    };
+    const watchFrame = (frame: Element) => {
+        inFrame = undefined;
+        (frame as HTMLIFrameElement).contentDocument?.addEventListener('focusout', noteFrame, {
+            capture: true,
+            signal,
+        });
+    };
     const wait = () => {
         window.clearTimeout(timer);
         if (shown && !onAction && !hovered && !focused) {
@@ -964,6 +978,18 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         focused = false;
         leftWith = false;
         onAction = undefined;
+        // Focus that was in the toast goes back to the control it came in from, then to where it
+        // was as the message came, on to the control inside it where that is a frame of the page's
+        // own origin, then to the body of the app's frame or the page's main content. It goes
+        // before the toast hides its buttons, so no engine moves focus off a hidden button ahead
+        // of it, and where nothing takes it, it leaves the toast for the page's body rather than
+        // staying on a hidden button, as WebKit and Firefox would leave it.
+        if (hadFocus) {
+            handBack(cameFrom, arrivedAt, homeOf(element));
+            const now = activeOf();
+            if (now === arrivedAt) (inFrame as HTMLElement | undefined)?.focus();
+            else if (element.contains(now)) (now as HTMLElement).blur();
+        }
         message.textContent = '';
         actionButton.textContent = '';
         actionButton.hidden = true;
@@ -975,21 +1001,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         delete element.dataset['rows'];
         delete element.dataset['row'];
         hush(status);
-        // Focus that was in the toast goes back to the control it came in from, then to where it
-        // was as the message came, inside its frame where that is a frame of the page's own
-        // origin, then to the body of the app's frame or the page's main content. It leaves the
-        // toast first, so where none of them takes it, it falls to the page's body rather than
-        // staying on a hidden button, as WebKit and Firefox would leave it.
-        if (hadFocus) {
-            (activeOf() as HTMLElement | null)?.blur();
-            handBack(cameFrom, arrivedAt, homeOf(element));
-            if (activeOf() === arrivedAt) (inFrame as HTMLElement | null | undefined)?.focus();
-        }
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         const active = focusedNow();
-        if (!element.contains(active))
+        if (!active || !element.contains(active))
             arrivedAt = active instanceof HTMLElement ? active : undefined;
         const id = (shown = count += 1);
         message.textContent = words;
@@ -1010,7 +1026,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
         if (arrivedAt === active) {
-            inFrame = (active as HTMLIFrameElement).contentDocument?.activeElement;
+            watchFrame(active);
             const control = arrivedAt.getBoundingClientRect();
             const card = element.getBoundingClientRect();
             if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
