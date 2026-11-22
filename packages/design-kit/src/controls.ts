@@ -1722,16 +1722,16 @@ const takeFocus = (panel: HTMLElement): void => {
 };
 
 /**
- * The place on this page outside the panel that a link in it sends the visitor to, where that link
- * was their last press, since following it moved the keyboard's start there. It is given a
- * tabindex of -1 where it takes no focus, so focus can follow.
- */
-/**
  * An SVG link, told apart by its name rather than by its class, which jsdom, where many pages run
  * their unit tests, does not have.
  */
 type SVGLink = SVGElement & { readonly href: SVGAnimatedString };
 
+/**
+ * The place on this page outside the panel that a link in it sends the visitor to, where that link
+ * was their last press, since following it moved the keyboard's start there. It is given a
+ * tabindex of -1 where it takes no focus, so focus can follow.
+ */
 const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
     const pressed = lastWasPress
         ? lastPath.find(
