@@ -1427,7 +1427,9 @@ signal it never aborts on every call keeps each one as a holder, so it aborts wh
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
 it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
 where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
-the abort's own task stays, and a `moveFocus` asked in that task still lands.
+the abort's own task stays, and a `moveFocus` asked in that task still lands. Each place a piece
+hands focus back to can be any element that takes focus, an HTML control or an SVG one such as a
+link in an inline chart, and one that is hidden, inert or disabled is passed over for the next.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an

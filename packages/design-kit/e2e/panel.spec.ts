@@ -4,15 +4,16 @@ import { expect, type Page, test } from '@playwright/test';
 import { servePage, tabKey } from './page.js';
 
 /*
- * A panel a button opens, attached by its button: the panel starting as the button says, the
- * button opening and closing it by pointer and by keyboard, the corner Close and Escape closing it,
- * the set returned opening and closing it from the page's code, the detach letting the button go,
- * and a button attached twice returning the same. However the panel closes, focus goes to its
- * button where focus is in the panel, or where nothing has focus and the visitor's last place, the
- * last focus that moved or their last press, was in it, and stays anywhere else, as record 19 has
- * it. Every press is a real one, since Safari's way of focusing what a pointer presses is what the
- * rule is built around, and WebKit, which the config runs this spec in, does it as Safari does.
- * Where focus is meant to stay, a test waits two frames first, so a late move of focus would show.
+ * A panel a button opens, attached by its button: the panel starting as the button says, the button
+ * opening and closing it by pointer and by keyboard, the corner Close and Escape closing it, the
+ * set returned opening and closing it from the page's code, the detach letting the button go, and a
+ * button attached twice returning the same. However the panel closes, focus goes to its button
+ * where focus is in the panel, or where nothing has focus and the visitor's last place, the last
+ * focus that moved or their last press, was in it, and stays anywhere else, as record 19 has it.
+ * Every press is a real one, since Safari's way of focusing what a pointer presses is what the rule
+ * is built around, and WebKit, which the config runs this spec in with Firefox, does it as Safari
+ * does. A link inside an inline svg after the panel takes focus as any control does. Where focus is
+ * meant to stay, a test waits two frames first, so a late move of focus would show.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -462,6 +463,10 @@ test.describe("the page's code", () => {
         page,
         browserName,
     }) => {
+        test.skip(
+            browserName === 'firefox',
+            "Firefox sends Shift and Tab from a panel a press focused to the page's body"
+        );
         await open(page);
         await button(page).click();
         // A press on the rules' text puts focus on that panel, the one after the tips.
@@ -1147,6 +1152,25 @@ test.describe('where focus goes', () => {
         await expect(panel(page)).toBeHidden();
         // Past the open rules panel, whose tabindex of -1 keeps it off the keyboard's way.
         await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
+    });
+
+    test('moves focus to a link inside an inline svg that follows the panel', async ({ page }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            for (const id of ['#tips-button', '#tips-again']) document.querySelector(id)?.remove();
+            // A chart drawn as an inline svg, whose link is an SVG element rather than an HTML one.
+            document
+                .querySelector('#after-panels')
+                ?.insertAdjacentHTML(
+                    'beforebegin',
+                    '<svg width="160" height="40"><a href="#after" id="chart">' +
+                        '<text x="0" y="24">Round 3 chart</text></a></svg>'
+                );
+        });
+        await close(page).click();
+        await expect(panel(page)).toBeHidden();
+        await expect(page.locator('#chart')).toBeFocused();
     });
 
     test("moves focus to the page's main content where nothing after the panel takes it", async ({

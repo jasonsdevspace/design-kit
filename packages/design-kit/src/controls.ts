@@ -45,12 +45,17 @@ const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
 
 /**
- * Focuses the first of the elements given that takes focus, one that is hidden, off or gone from
- * the page being passed over, so focus never falls to nowhere while a place for it is named.
+ * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as
+ * a link in an inline chart, one that is hidden, inert, disabled, off or gone from the page being
+ * passed over, so focus never falls to nowhere while a place for it is named.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
-        if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
+        if (
+            !(place instanceof HTMLElement || place instanceof SVGElement) ||
+            !place.isConnected ||
+            place === document.body
+        )
             continue;
         place.focus({ preventScroll: place.matches('.dk-app-body') });
         if (activeOf() === place) return true;
@@ -1469,8 +1474,11 @@ export type DialogOptions = AttachOptions & {
      * answered.
      */
     readonly stay?: boolean | undefined;
-    /** Where focus goes when what opened the dialog is no longer on the page. */
-    readonly returnTo?: (() => HTMLElement | null) | undefined;
+    /**
+     * Where focus goes when what opened the dialog is no longer on the page: any element that takes
+     * focus, an SVG link among them.
+     */
+    readonly returnTo?: (() => Element | null) | undefined;
 };
 
 const attachedDialogs = new WeakMap<HTMLDialogElement, Kept<OpenDialog, DialogOptions>>();

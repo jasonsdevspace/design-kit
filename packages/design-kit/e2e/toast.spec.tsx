@@ -270,6 +270,31 @@ test('hands focus back to the control the visitor came into the toast from, not 
     await expect(page.locator('#share')).toBeFocused();
 });
 
+// A chart drawn as an inline svg, whose link is an SVG element rather than an HTML one.
+const CHART = PAGE.replace(
+    '</button>',
+    '</button><svg width="160" height="40"><a href="#last" id="chart">' +
+        '<text x="0" y="24">Round 3 chart</text></a></svg>'
+);
+
+test('hands focus back to a link inside an inline svg that focus came into the toast from', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: CHART });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await expect(page.locator('#chart')).toBeFocused();
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(closeButton(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#chart')).toBeFocused();
+});
+
 test('hands focus back where it was as the message came where the control focus came in from no longer takes it', async ({
     page,
     browserName,

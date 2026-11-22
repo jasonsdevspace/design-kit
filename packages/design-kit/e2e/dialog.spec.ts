@@ -6,13 +6,14 @@ import { footRoom } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
- * A dialog as a page attaches it, in Chromium and in WebKit: opened over a scrim in the kit's scrim
- * color on the raised ground, named by its heading, focus moved in on open and back to what opened
- * it on close however it closes, closed by Escape and by a tap on the scrim but not by a drag out
- * of it, kept open on both when asked to stay, the page behind it still, the sheet at the bottom
- * edge clear of the home indicator and scrolling inside itself, rising into place unless less
- * motion is asked for, a solid edge in forced colors, its actions stacked inside it on a 320px
- * phone at twice the text size, and no audit findings in either theme.
+ * A dialog as a page attaches it, in Chromium, WebKit and Firefox: opened over a scrim in the kit's
+ * scrim color on the raised ground, named by its heading, focus moved in on open and back to what
+ * opened it on close however it closes, a link inside an inline svg among what opens it, closed by
+ * Escape and by a tap on the scrim but not by a drag out of it, kept open on both when asked to
+ * stay, the page behind it still, the sheet at the bottom edge clear of the home indicator and
+ * scrolling inside itself, rising into place unless less motion is asked for, a solid edge in
+ * forced colors, its actions stacked inside it on a 320px phone at twice the text size, and no
+ * audit findings in either theme.
  */
 
 const OPTIONS = Array.from(
@@ -32,6 +33,8 @@ const BODY = `<main><h1>Round 3</h1>
 <div id="toolbar"><button type="button" class="dk-button" id="held"><span>Delegated</span></button></div>
 <p><button type="button" class="dk-button" id="gone">Opens and goes</button>
 <button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
+<svg width="160" height="40"><a href="#end-game-text" id="chart">
+<text x="0" y="24">Round 3 chart</text></a></svg>
 ${'<p>The page behind the dialog.</p>'.repeat(40)}</main>
 <dialog class="dk-dialog" id="end-game" aria-labelledby="end-game-title" aria-describedby="end-game-text">
 <h2 class="dk-dialog-title" id="end-game-title">End the game now?</h2>
@@ -90,6 +93,10 @@ wire('#noting', '#notes');
 wire('#naming', '#name');
 wire('#waiting', '#wait');
 wire('#seating', '#seat');
+// A link inside an inline svg, an SVG element rather than an HTML one, whose press keeps its
+// focus where it was, as a chart that stops a press from selecting its words does.
+wire('#chart', '#end-game');
+document.querySelector('#chart').addEventListener('mousedown', (event) => event.preventDefault());
 // Attached again with other options, which the same function then follows.
 window.kit = { attachDialog };
 // A listener on a part of the page that holds the button, as a page that delegates its clicks has.
@@ -239,6 +246,26 @@ test('finds the button a press landed on from a listener on the page or an event
     await expect(endGame(page)).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.locator('#options')).toBeFocused();
+});
+
+test('returns focus to a link inside an inline svg that opened it', async ({ page }) => {
+    await open(page);
+    const chart = page.locator('#chart');
+    // Reached by the keyboard and opened by Enter.
+    await chart.focus();
+    await page.keyboard.press('Enter');
+    await expect(endGame(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(endGame(page)).toBeHidden();
+    await expect(chart).toBeFocused();
+    // Pressed by pointer while another control keeps focus, which the browser hands focus back to
+    // as the dialog closes, before the kit hands it on to the link.
+    await page.locator('#end').focus();
+    await chart.click();
+    await expect(endGame(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(endGame(page)).toBeHidden();
+    await expect(chart).toBeFocused();
 });
 
 test('sends focus where it is told when what opened the dialog has gone', async ({ page }) => {

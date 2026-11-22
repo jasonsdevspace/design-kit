@@ -120,14 +120,16 @@ it and the drop-in rule has the kit do it.
 
 The path is in `packages/design-kit`.
 
-- `e2e/panel.spec.ts`, in Chromium and WebKit, holds each case of the rule: the Close by key,
-  pointer and touch, a Done of the page's own that closes at once, waits, turns itself off or is
-  drawn away, a link or a router that moves focus before or after the close, a link to a place
+- `e2e/panel.spec.ts`, in Chromium, WebKit and Firefox, holds each case of the rule: the Close by
+  key, pointer and touch, a Done of the page's own that closes at once, waits, turns itself off or
+  is drawn away, a link or a router that moves focus before or after the close, a link to a place
   outside the panel, focus the keyboard took out of the panel, a press in one panel that closes
   another, an outer and an inner panel closed by one press, Escape in a panel, on its button, in a
   field, after the page's own handler and in a dialog, the tabindexes the kit writes and those a
   page set, and, in WebKit, a press on a button of the page's own outside any panel leaving it
-  unfocused, so the tests above test Safari's way.
+  unfocused, so the tests above test Safari's way. Firefox skips the case where the keyboard goes
+  back into the panel after a press outside, since it sends Shift and Tab from a panel a press
+  focused to the page's body.
 - `e2e/teardown.spec.tsx`, in Chromium, WebKit and Firefox, closes a panel by Escape and by its
   Close alike once the button that opened it is let go, with focus on the first attached button and
   the button let go marked collapsed, by Escape once its button is drawn again, the only one among
