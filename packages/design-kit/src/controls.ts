@@ -44,11 +44,18 @@ const focusedNow = (): Element | null => {
 const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
 
-/** Whether a node is the place or inside it, through the shadow trees it holds. */
+/**
+ * Whether a node is the place or inside it, through the shadow trees it holds and the slots a node
+ * is drawn in, so a control slotted into a piece drawn inside a shadow root counts as in it.
+ */
 const holds = (place: Element, node: Node | null): boolean => {
     let inside = node;
-    while (inside && !place.contains(inside))
-        inside = (inside.getRootNode() as Partial<ShadowRoot>).host ?? null;
+    while (inside && inside !== place)
+        inside =
+            (inside as Partial<Element>).assignedSlot ??
+            inside.parentNode ??
+            (inside as Partial<ShadowRoot>).host ??
+            null;
     return !!inside;
 };
 
@@ -1114,7 +1121,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // names none, so focus then goes back to where it was as the message came. The element
             // that last lost focus stands in only where it is the related target or inside its
             // shadow trees, since a page that stops a focusout leaves an older one there.
-            if (!element.contains(relatedTarget as Node | null)) {
+            if (!holds(element, relatedTarget as Node | null)) {
                 let deep: Node | undefined = lost;
                 while (deep && deep !== relatedTarget)
                     deep = (deep.getRootNode() as Partial<ShadowRoot>).host;
@@ -1143,7 +1150,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     // Focus a visitor moves outside the toast, or a press while it is off the page, is theirs, so a
     // toast held off the page forgets it had focus and hands nothing back over their move.
     const forget = ({ type, target }: Event) => {
-        if (type === 'focusin' ? !element.contains(target as Node) : !element.isConnected)
+        if (type === 'focusin' ? !holds(element, target as Node) : !element.isConnected)
             focused = leftWith = false;
     };
     for (const type of ['focusin', 'pointerdown'])
@@ -1913,17 +1920,21 @@ const ownsEscape = (target: Element): boolean =>
  * press handled, so a dialog around the panel stays open. It leaves alone an Escape the page has
  * already handled, one that ends typing in a script such as Japanese, which Safari marks by the key
  * code 229, one in a dialog or a popover inside the panel, and one on a search with words in it or
- * on a combobox or a button whose list or menu is open, where Escape means something of its own. A
- * panel's button that is off does not close its own panel, and Escape goes on to a panel around it.
+ * on a combobox or a button whose list or menu is open, where Escape means something of its own,
+ * inside a shadow tree within the panel too. A panel's button that is off does not close its own
+ * panel, and Escape goes on to a panel around it.
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
+    // The path from the element the key was pressed in, inside a page's component too, where the
+    // event's target names only the component's host.
+    const path = event.composedPath();
     // Safari ends composing with an Escape whose keydown carries the key code 229 instead.
     const composing = event.isComposing || event.keyCode === 229;
     if (event.key !== 'Escape' || event.defaultPrevented || composing) return;
-    if (!(target instanceof Element) || ownsEscape(target)) return;
+    if (!(target instanceof Element) || ownsEscape(path[0] as Element)) return;
     const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
-    for (let place: Element | null = target; place; place = place.parentElement) {
+    for (const place of path.filter((node) => node instanceof Element)) {
         // A dialog or a popover inside the panel takes its own Escape.
         if (place instanceof HTMLDialogElement || place.hasAttribute('popover')) return;
         // A panel's button that is off does nothing for its own panel, by Escape as by a press, and

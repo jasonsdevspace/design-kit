@@ -3,15 +3,18 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Toast } from '../src/react.js';
-import { servePage, stillClock, tabKey } from './page.js';
+import { frames, servePage, stillClock, tabKey } from './page.js';
 
 /*
  * The controls inside an open shadow root, as a widget drawn into a host page draws them: a refused
  * form whose field's error is found and said there, focus moved by an id there, and progress named
  * by a label there, with elements of the host page sharing those ids never reached, a toast that
- * hands focus back to a control there that focus came into it from, and a dialog, a panel and a
- * toast that count focus on a button inside a shadow tree within them as focus in them, so each
- * hands focus back from it.
+ * hands focus back to a control there that focus came into it from, a dialog and a panel that hand
+ * focus back from a button inside a shadow tree within them, and a toast that takes focus off one
+ * where nothing on its list takes it, holds past its wait while focus is on one, and keeps where
+ * focus was before its first message as a second comes while focus is on one. A toast drawn inside
+ * a shadow root takes focus off a button slotted into it from the light DOM, and a panel leaves an
+ * Escape that clears a search field inside a shadow tree within it to that field and stays open.
  */
 
 const BODY = `<main><h1>Shop</h1><h2 id="title" tabindex="-1">The host's own title</h2>
@@ -225,11 +228,38 @@ window.ready = true;`,
     await expect(page.locator('#opener')).toBeFocused();
 });
 
-test('takes focus out of a toast dismissed from a button inside a shadow tree in it where nothing on its list takes focus', async ({
-    page,
-}) => {
-    // The page hides its own button with the toast, and main takes no focus, so focus has nowhere
-    // on the toast's list to go.
+/** Shows a message on the toast a page has attached, with no action. */
+const showToast = (page: Page, words: string) =>
+    page.evaluate((said) => {
+        (window as unknown as { show: (words: string) => void }).show(said);
+    }, words);
+
+/**
+ * Notes where focus is as the next key is handled, followed into shadow roots, since an engine
+ * moves focus off a hidden button on its own only some frames later, if at all.
+ */
+const noteFocusOnKey = (page: Page) =>
+    page.evaluate(() => {
+        const seen = window as unknown as { left?: string | undefined };
+        window.addEventListener(
+            'keydown',
+            () => {
+                let active = document.activeElement;
+                while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+                seen.left = active?.localName;
+            },
+            { once: true }
+        );
+    });
+
+const focusOnKey = (page: Page) =>
+    page.evaluate(() => (window as unknown as { left?: string }).left);
+
+/**
+ * A toast whose buttons hold a page's own button component, which the page hides with the toast,
+ * on a still clock, and a main that takes no focus.
+ */
+const openShadowToast = async (page: Page) => {
     await stillClock(page.clock);
     await servePage(page, {
         title: 'Shop',
@@ -246,30 +276,116 @@ window.show = attachToast(document.querySelector('.dk-toast'));
 window.ready = true;`,
     });
     await page.waitForFunction(() => 'ready' in window);
+};
+
+test('takes focus out of a toast dismissed from a button inside a shadow tree in it where nothing on its list takes focus', async ({
+    page,
+}) => {
+    await openShadowToast(page);
     await page.locator('#save').focus();
+    await showToast(page, 'Your list is saved.');
+    await page.evaluate(() => document.querySelector('#save')?.remove());
+    const share = page.locator('kit-button button');
+    await share.focus();
+    await expect(share).toBeFocused();
+    await noteFocusOnKey(page);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.dk-toast-message')).toHaveText('');
+    expect(await focusOnKey(page)).toBe('body');
+    await expect(page.locator('body')).toBeFocused();
+});
+
+test('holds a toast with no action past its wait while focus is on a button inside a shadow tree in it', async ({
+    page,
+}) => {
+    await openShadowToast(page);
+    await showToast(page, 'Your list is saved.');
+    // From the toast's own Close, so focus leaves a control of the toast's for the one inside it.
+    await page.locator('.dk-toast-close').focus();
+    const share = page.locator('kit-button button');
+    await share.focus();
+    await expect(share).toBeFocused();
+    await page.clock.runFor(6000);
+    await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown', '');
+    await expect(page.locator('.dk-toast-message')).toHaveText('Your list is saved.');
+});
+
+test('hands focus back to where it was before the first message where a second comes while focus is on a button inside a shadow tree in the toast', async ({
+    page,
+}) => {
+    await openShadowToast(page);
+    await page.locator('#save').focus();
+    await showToast(page, 'Your list is saved.');
+    // Focus comes into the toast from nowhere, so it goes back to where it was as a message came.
     await page.evaluate(() => {
-        (window as unknown as { show: (words: string) => void }).show('Your list is saved.');
-        document.querySelector('#save')?.remove();
+        (document.activeElement as HTMLElement | null)?.blur();
     });
     const share = page.locator('kit-button button');
     await share.focus();
     await expect(share).toBeFocused();
-    // Where focus is as the key is handled, since an engine moves focus off a hidden button on its
-    // own only some frames later, if at all.
-    await page.evaluate(() => {
-        const seen = window as unknown as { left?: string | undefined };
-        window.addEventListener(
-            'keydown',
-            () => {
-                let active = document.activeElement;
-                while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-                seen.left = active?.localName;
-            },
-            { once: true }
-        );
-    });
+    await showToast(page, 'Your list is shared.');
     await page.keyboard.press('Escape');
     await expect(page.locator('.dk-toast-message')).toHaveText('');
-    expect(await page.evaluate(() => (window as unknown as { left?: string }).left)).toBe('body');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('takes focus out of a toast inside a shadow root dismissed from a button slotted into it from the light DOM', async ({
+    page,
+}) => {
+    // The widget draws the toast in its shadow root and the page slots its own button into the
+    // toast's buttons, and the widget has nothing else that takes focus.
+    await stillClock(page.clock);
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"><button type="button" slot="more">Share</button></div></main>',
+        script: `import { attachToast } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = ${JSON.stringify(renderToStaticMarkup(createElement(Toast)))};
+root.querySelector('.dk-toast-buttons')
+    .append(Object.assign(document.createElement('slot'), { name: 'more' }));
+window.show = attachToast(root.querySelector('.dk-toast'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await showToast(page, 'Your list is saved.');
+    const share = page.getByRole('button', { name: 'Share' });
+    await share.focus();
+    await expect(share).toBeFocused();
+    await noteFocusOnKey(page);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#widget .dk-toast-message')).toHaveText('');
+    expect(await focusOnKey(page)).toBe('body');
     await expect(page.locator('body')).toBeFocused();
+});
+
+test('leaves a panel open on Escape that clears a search field inside a shadow tree in it', async ({
+    page,
+    browserName,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1>
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="find">Find</button>
+<div class="dk-panel" id="find" hidden><h2 class="dk-panel-title">Find a list</h2>
+<kit-search></kit-search></div></main>`,
+        script: `import { attachPanel } from './controls.js';
+customElements.define('kit-search', class extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<input type="search" aria-label="Search">';
+    }
+});
+attachPanel(document.querySelector('#opener'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#opener').click();
+    const search = page.locator('kit-search input');
+    await search.fill('weekly');
+    await page.keyboard.press('Escape');
+    // The WebKit the tests run in leaves a search field's words on Escape, as the field's own way.
+    if (browserName !== 'webkit') await expect(search).toHaveValue('');
+    await frames(page);
+    await expect(page.locator('#find')).toBeVisible();
+    await expect(search).toBeFocused();
 });
