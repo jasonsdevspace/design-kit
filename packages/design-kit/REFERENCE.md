@@ -1431,7 +1431,17 @@ the abort's own task stays, and a `moveFocus` asked in that task still lands. Ea
 hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
 chart, and one that is hidden, inert or disabled is passed over for the next. A control marked off
 with `aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a
-panel does for its buttons. The toast and the dialog hand focus to it.
+panel does for its buttons. The toast and the dialog hand focus to it, though a toast does not
+follow a frame on to a control marked off inside it.
+
+As the kit hands focus back, it tries each place in turn and counts one as taken where focus moves
+onto it or inside it, in a shadow tree it holds too, as a host that delegates focus hands it on, or
+where it has focus already. One that refuses focus is passed over though focus is inside it, as a
+section with no tabindex is. Where a page's own listener moves focus elsewhere as one is tried, it
+goes no further and that focus stays. A walk that focuses nothing is not taken for a handback, so a
+`moveFocus` asked before it leaves alone what the page focused. A dialog lists what the browser
+handed focus to as it closed last, so where its opener has gone and nothing else takes focus, a
+`moveFocus` asked in the task that closed it still lands.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an
@@ -2969,15 +2979,29 @@ while the pointer is over it or focus is in it. When a message arrives, what has
 view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
 it, focus goes to the first of these that takes it: the control focus last came into the toast from,
 then the control outside the toast that had focus as the latest message came, then the body of the
-app's frame, or on a page with no frame its main content where that takes focus. The first is passed
-over where focus last came into the toast from nowhere. So a keyboard user who moved on from where
-they were as the message came lands where they left off. Its Close and its action carry
-`tabindex="0"`, which `Toast` draws and `attachToast` adds where a page's markup has none, so
-Safari, which focuses a pressed button only where it has a tabindex, leaves focus in the toast on a
-press and focus goes back as the toast leaves. An action runs after the toast has left, so where it
-takes away what focus came from, it moves focus itself. A message with no action replaces one with
-an action and its way back, so a page shows one another only when the first is done with. More than
-one action is a dialog's job.
+app's frame, or on a page with no frame its main content where that takes focus, as the
+`tabindex="-1"` the skip link's markup puts on it lets it. The first is passed over where focus last
+came into the toast from nowhere. So a keyboard user who moved on from where they were as the
+message came lands where they left off. Its Close and its action carry `tabindex="0"`, which `Toast`
+draws and `attachToast` adds where a page's markup has none, so Safari, which focuses a pressed
+button only where it has a tabindex, leaves focus in the toast on a press and focus goes back as the
+toast leaves. An action runs after the toast has left, so where it takes away what focus came from,
+it moves focus itself. A message with no action replaces one with an action and its way back, so a
+page shows one another only when the first is done with. More than one action is a dialog's job.
+
+Focus leaves the toast where nothing on that list takes it, so it falls to the page's body in every
+engine rather than staying on the toast's hidden button. The toast takes off its shown state before
+it hands focus back, so the room the sheet keeps under a shown toast does not scroll the control
+focus goes to. Where a page's own listener moves focus elsewhere as the toast hands it back, the
+toast goes no further down the list and that focus stays. A page sees focus inside a frame only as
+the frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where the
+toast's handback focuses a frame of the page's own origin, it goes on to the control that had focus
+there as the latest message came, which the toast reads as the message comes. It stays on the frame
+where that control is gone, marked off, on a page the frame has since replaced, and on a frame of
+another origin, whose controls a page cannot reach. A frame inside that frame is not followed, so
+focus goes back to the inner frame rather than to the control inside it. Firefox does not focus a
+frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on down
+the list, to the body of the app's frame or the main content.
 
 A page that takes a toast down while the toast stays on the page, such as on a screen it draws
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control

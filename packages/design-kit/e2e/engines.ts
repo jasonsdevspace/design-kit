@@ -58,7 +58,7 @@ export const FIREFOX: Engine = {
     teardown: "A signal's abort and what follows it, the dialog's close event among them.",
     focus: "Where focus falls as a control leaves, which is each engine's own.",
     leaks: 'What a piece leaves running once taken down, counted in every engine.',
-    toast: 'Focus handed back by where it came into the toast from, an event each engine fires.',
+    toast: 'Focus handed back by where it came from, and by a key past a frame of another origin.',
     strict: "The hooks under StrictMode, whose second run meets each engine's focus and events.",
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     dialog: "Focus handed back to the dialog's opener, an SVG link too, by each engine's focus.",
