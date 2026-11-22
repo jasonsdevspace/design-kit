@@ -920,14 +920,31 @@ test('holds a toast that appears under a pointer resting where the last one was'
 test('rises into place each time it is shown', async ({ page }) => {
     await open(page);
     for (const words of ['Round 3 saved.', 'Round 4 saved.']) {
-        await show(page, words, 'Undo');
-        expect(
-            await toast(page).evaluate((element) =>
-                element
-                    .getAnimations()
-                    .map((animation) => (animation as CSSAnimation).animationName)
-            )
-        ).toEqual(['dk-toast-rise']);
+        // Shown and read in one task, with the entrance held at its start, since a slow run reading
+        // it later can find it already over.
+        const entrance = await page.evaluate((message) => {
+            const kit = (window as unknown as { kit: Kit }).kit;
+            kit.last = kit.show(message);
+            const element = document.querySelector('.dk-toast') as HTMLElement;
+            const animations = element.getAnimations() as CSSAnimation[];
+            for (const animation of animations) {
+                animation.pause();
+                animation.currentTime = 0;
+            }
+            const { opacity, translate } = getComputedStyle(element);
+            for (const animation of animations) animation.finish();
+            const rest = getComputedStyle(element);
+            return {
+                names: animations.map((animation) => animation.animationName),
+                from: { opacity, translate },
+                to: { opacity: rest.opacity, translate: rest.translate },
+            };
+        }, words);
+        expect(entrance).toEqual({
+            names: ['dk-toast-rise'],
+            from: { opacity: '0', translate: '0px 8px' },
+            to: { opacity: '1', translate: 'none' },
+        });
         await page.locator('.dk-toast-close').click();
     }
 });
