@@ -1425,8 +1425,9 @@ the newest holder without holding. An attach made from inside a control's own ta
 dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
 signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
-it, or where focus is on the body or nowhere and the piece had it as it left, so focus a page sets
-in the abort's own task stays, and a `moveFocus` asked in that task still lands.
+it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
+where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
+the abort's own task stays, and a `moveFocus` asked in that task still lands.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an

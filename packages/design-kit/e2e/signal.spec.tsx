@@ -80,6 +80,7 @@ window.kit = {
     form: (signal) =>
         attachForm(document.querySelector('#join'), withSignal(signal, { status: line })),
     focus: (signal) => moveFocus('target', withSignal(signal)),
+    focusOn: (id) => moveFocus(id),
     stepperBare: () => attachStepper(document.querySelector('.dk-stepper')),
     formBare: () => attachForm(document.querySelector('#join')),
     formWith: (signal, options) =>
@@ -920,6 +921,48 @@ test('lands a focus request asked from inside an open dialog the page then takes
     await page.evaluate('frames()');
     // The dialog is out of the page, so it is found by the reference kept to it.
     expect(await page.evaluate('gone.open')).toBe(false);
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+for (const late of [false, true]) {
+    test(`lands a focus request asked from inside a dialog whose pressed control is taken away as it is pressed${late ? ', its close event coming late' : ''}`, async ({
+        page,
+    }) => {
+        await opened(page);
+        await openFromFocusedOpener(page);
+        await expect(page.locator('#end-game')).toHaveAttribute('open');
+        if (late) await page.evaluate(LATE_CLOSE);
+        // As a Save that takes itself away as it is pressed, so focus falls to the body inside the
+        // dialog before the request is asked and the dialog closes.
+        await page.evaluate(`(() => {
+            const save = document.querySelector('#end-game [value="end"]');
+            save.focus();
+            save.remove();
+            kit.focus();
+            document.querySelector('#end-game').close();
+        })()`);
+        await page.evaluate('frames()');
+        if (late) await page.waitForFunction('heardClose');
+        await expect(page.locator('#target')).toBeFocused();
+    });
+}
+
+test('lands the later of two focus requests asked as a toast with focus in it is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`(() => {
+        window.controller = new AbortController();
+        document.querySelector('#start').focus();
+        kit.toast(controller.signal)('Round 2 saved.');
+    })()`);
+    await page.locator('.dk-toast-close').focus();
+    await page.evaluate(`(() => {
+        kit.focusOn('start');
+        kit.focus();
+        controller.abort();
+    })()`);
+    await page.evaluate('frames()');
     await expect(page.locator('#target')).toBeFocused();
 });
 
