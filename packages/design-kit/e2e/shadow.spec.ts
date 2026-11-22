@@ -1,11 +1,15 @@
 import { expect, type Page, test } from '@playwright/test';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
-import { servePage, stillClock } from './page.js';
+import { Toast } from '../src/react.js';
+import { servePage, stillClock, tabKey } from './page.js';
 
 /*
  * The controls inside an open shadow root, as a widget drawn into a host page draws them: a refused
  * form whose field's error is found and said there, focus moved by an id there, and progress named
- * by a label there, with elements of the host page sharing those ids never reached.
+ * by a label there, with elements of the host page sharing those ids never reached, and a toast
+ * that hands focus back to a control there that focus came into it from.
  */
 
 const BODY = `<main><h1>Shop</h1><h2 id="title" tabindex="-1">The host's own title</h2>
@@ -124,4 +128,32 @@ test("falls back to the widget's own main content where a request's target is go
     expect(await page.evaluate(() => (window as unknown as Shadowed).root.activeElement?.id)).toBe(
         'home'
     );
+});
+
+test('hands focus back from a toast to the control inside a shadow root that focus came in from', async ({
+    page,
+    browserName,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1><div id="widget"></div></main>${renderToStaticMarkup(createElement(Toast))}`,
+        script: `import { attachToast } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = '<button type="button" id="first">First</button><button type="button" id="inner">Inner</button>';
+window.show = attachToast(document.querySelector('.dk-toast'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inner = page.locator('#widget #inner');
+    await inner.focus();
+    await page.evaluate(() => {
+        const { show } = window as unknown as {
+            show: (words: string, action: { label: string; onAction: () => void }) => void;
+        };
+        show('Your list is saved.', { label: 'Undo', onAction: () => undefined });
+    });
+    await page.keyboard.press(tabKey(browserName));
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(inner).toBeFocused();
 });
