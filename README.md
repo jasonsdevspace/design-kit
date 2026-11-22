@@ -371,8 +371,8 @@ options rejected, what the choice costs, and the test behind it.
     browser's bubble, at the cost of a page's own checks running only once the constraints pass.
 22. [Every attach takes a signal that takes its piece down](docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md).
     A page takes down any piece by aborting one signal, whatever its attach returns, with nothing
-    left running and calls after it doing nothing, at the cost of a signal a page keeps for longer
-    than the piece holding the piece alive until it aborts.
+    left running and calls after it doing nothing, at the cost of the piece staying alive until its
+    signal aborts, so a page hands over a signal that lives no longer than the piece.
 23. [A control outlives a takedown and an attach in one task](docs/decisions/0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md).
     A hook's ref made afresh on every render, a merged ref and React's second run keep a control and
     its state, at the cost of a takedown landing a microtask after its abort, so a page that means
