@@ -2975,6 +2975,15 @@ takes away what focus came from, it moves focus itself. A message with no action
 an action and its way back, so a page shows one another only when the first is done with. More than
 one action is a dialog's job.
 
+Focus leaves the toast before it goes back, so where nothing on that list takes it, it falls to the
+page's body in every engine rather than staying on the toast's hidden button, and the next Tab
+starts from the top of the page or the place the browser keeps for it. Focus that a page or an
+action moves elsewhere in the same task stays there. Focus events name only the frame where focus
+comes from inside one, so where focus was inside a frame as the latest message came, the toast reads
+the control that had it there. In a frame of the page's own origin, focus goes back to that control.
+In a frame of another origin, whose controls a page cannot read, focus goes back to the frame
+itself, which is as near as a page can reach.
+
 A page that takes a toast down while the toast stays on the page, such as on a screen it draws
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
 down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,

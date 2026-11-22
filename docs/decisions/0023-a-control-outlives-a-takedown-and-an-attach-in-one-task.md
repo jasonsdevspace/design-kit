@@ -112,7 +112,13 @@ Option C.
   the body of the app's frame or the page's main content. It reads the control focus came from as
   that control loses focus, inside an open shadow root too, where the event's related target names
   only the host, and takes the related target itself where the page stopped that focusout before it
-  reached the document. An entry from nowhere names none. A takedown lands after the abort's task,
+  reached the document. An entry from nowhere names none. Focus events name only the frame where
+  focus comes from inside one, so the toast reads, as a message comes, the control that has focus
+  inside a frame of the page's own origin, and hands focus back to it where focus goes back to the
+  frame. A frame of another origin keeps its controls from the page, so focus goes back to the frame
+  itself. Focus leaves the toast before it goes back, so where nothing takes it, it falls to the
+  page's body in every engine, where WebKit and Firefox would leave it on the toast's hidden button
+  for some frames. A takedown lands after the abort's task,
   so focus the page set in that task, by its own call or by a field the new content focuses as it
   draws, stays. The kit keeps where it last handed focus back, and `moveFocus` treats focus there as
   free where the handback came after the request was asked, so a request asked in the abort's task
@@ -177,7 +183,9 @@ every signal it has ever held.
   19 KB. A toast that sends focus back to the control focus came into it from takes them to 18,757,
   and the status line joining through `join`, with options read by their values rather than their
   key names, brings them to 18,751. A dialog whose close leaves focus free for a focus request asked
-  in the task that closes it brings them to 18,907.
+  in the task that closes it brings them to 18,907. A toast whose focus leaves it for the page's
+  body where nothing takes it, and goes back to the control inside a frame of the page's own origin,
+  brings them to 18,945.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -227,7 +235,11 @@ The paths are in `packages/design-kit`.
   by its action and by Escape, and finds focus on the second control, there too where the page stops
   the second control's focusout, and finds focus sent back to where it was as the message came where
   that control is disabled before the dismiss, where focus last came into the toast from nowhere,
-  and where it only ever came in from nowhere. It runs in Firefox as well as Chromium and WebKit.
+  and where it only ever came in from nowhere. It finds focus on the page's body as a press on its
+  action is handled where nothing it would hand focus to takes it, with focus the action moves
+  elsewhere staying, focus sent back to a button inside a frame of the page's own origin, and focus
+  on the frame itself where the frame is of another origin. It runs in Firefox as well as Chromium
+  and WebKit.
   `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
   into the toast from.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal

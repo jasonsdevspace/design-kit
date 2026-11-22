@@ -22,8 +22,8 @@ import { textSize } from './text-size.js';
  * moving and with no element added, its action and its close button reached by the keyboard and
  * dismissing it, a toast with an action staying and one without leaving after its time, that wait
  * held while it is hovered or focused, on a stand-in clock, a second message replacing the first
- * and the same words heard again, focus returned to where it was, a long message wrapping with its
- * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
+ * and the same words heard again, focus returned to where it was, inside a frame too, or left on
+ * the page's body where nothing else takes it, a long message wrapping with its action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
  * message as far from either edge there, its buttons kept together in their group, or as they were
  * without it, its place above an app's dock or at the foot of a page, nothing drawn before a
  * message or printed, the same function returned when attached again, a solid edge in forced
@@ -353,6 +353,91 @@ test('hands focus back where it was as the message came where focus came into th
     await page.keyboard.press('Enter');
     await expect(message(page)).toHaveText('');
     await expect(page.locator('#save')).toBeFocused();
+});
+
+test("lets focus fall to the page's body where nothing it would hand focus to takes it", async ({
+    page,
+    browserName,
+}) => {
+    // The page's main content takes no focus, and the page is drawn with no app frame.
+    await open(page);
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await page.keyboard.press(tabKey(browserName));
+    await expect(undo(page)).toBeFocused();
+    // Where focus is as the press is handled, since WebKit and Firefox move focus off a hidden
+    // button on their own only some frames later.
+    await page.evaluate(() => {
+        document.querySelector('#save')?.remove();
+        const seen = window as unknown as { pressed?: boolean };
+        window.addEventListener(
+            'click',
+            () => {
+                seen.pressed = document.activeElement === document.body;
+            },
+            { once: true }
+        );
+    });
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    expect(await page.evaluate(() => (window as unknown as { pressed?: boolean }).pressed)).toBe(
+        true
+    );
+    await expect(page.locator('body')).toBeFocused();
+
+    // Focus an action moves elsewhere as it runs, in the task that dismisses the toast, stays.
+    await page.evaluate(() => {
+        const heading = document.querySelector('h1');
+        heading?.setAttribute('tabindex', '-1');
+        const kit = (window as unknown as { kit: Kit }).kit;
+        kit.last = kit.show('Round 4 saved.', { label: 'Undo', onAction: () => heading?.focus() });
+    });
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('h1')).toBeFocused();
+});
+
+/** The page with a frame after Save holding a button, from the page's origin or the one given. */
+const framed = (source = 'srcdoc="<button type=button id=inner>Inside</button>"'): string =>
+    PAGE.replace('</button>', `</button><iframe title="Notes" ${source}></iframe>`);
+
+test("hands focus back to the control inside a frame of the page's own origin that had it", async ({
+    page,
+    browserName,
+}) => {
+    await open(page, { body: framed() });
+    const inner = page.frameLocator('iframe').locator('#inner');
+    await inner.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await page.keyboard.press(tabKey(browserName));
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(inner).toBeFocused();
+});
+
+test('hands focus back to a frame of another origin, as near as the page can reach', async ({
+    page,
+    browserName,
+}) => {
+    await page.route('https://other.test/**', (route) =>
+        route.fulfill({
+            body: '<button type="button" id="far">Far</button>',
+            contentType: 'text/html',
+        })
+    );
+    await open(page, { body: framed('src="https://other.test/"') });
+    await page.frameLocator('iframe').locator('#far').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await page.keyboard.press(tabKey(browserName));
+    await expect(undo(page)).toBeFocused();
+    // Pressed by pointer, since Firefox leaves a frame of another origin unfocused where a focus
+    // call asks for it while a key is being pressed.
+    await undo(page).click();
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
 });
 
 test("gives a hand-written toast's buttons a tabindex, and keeps one the page set", async ({
