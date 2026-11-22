@@ -268,6 +268,37 @@ test('returns focus to a link inside an inline svg that opened it', async ({ pag
     await expect(chart).toBeFocused();
 });
 
+test('lands a focus request asked as it closes, where its opener has gone and the browser handed focus elsewhere', async ({
+    page,
+}) => {
+    await open(page);
+    // Opened from Leave while Notes keeps focus, as a pointer's press that gives no focus leaves
+    // it, so the browser hands focus back to Notes as the dialog closes.
+    await page.evaluate(() => {
+        const kit = (
+            window as unknown as {
+                kit: { attachDialog: (d: Element | null) => (from?: Element | null) => void };
+            }
+        ).kit;
+        document.querySelector<HTMLElement>('#noting')?.focus();
+        kit.attachDialog(document.querySelector('#end-game'))(document.querySelector('#leaving'));
+    });
+    await expect(endGame(page)).toBeVisible();
+    // The opener goes while the dialog is open, then a request for the fallback is asked from
+    // inside the dialog in the task that closes it.
+    await page.evaluate(async () => {
+        document.querySelector('#leaving')?.remove();
+        const controls = '/controls.js';
+        const { moveFocus } = (await import(controls)) as {
+            moveFocus: (target: string) => () => void;
+        };
+        moveFocus('fallback');
+        document.querySelector<HTMLDialogElement>('#end-game')?.close();
+    });
+    await expect(endGame(page)).toBeHidden();
+    await expect(page.locator('#fallback')).toBeFocused();
+});
+
 test('sends focus where it is told when what opened the dialog has gone', async ({ page }) => {
     await open(page);
     await page.locator('#gone').click();

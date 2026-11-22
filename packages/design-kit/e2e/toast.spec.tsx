@@ -29,13 +29,14 @@ import { textSize } from './text-size.js';
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
  * focus goes back to a control in view, focus sent on to the control inside a frame of the page's
  * own origin that had focus as the message came and left on the frame where that control is marked
- * off, gone or on a page since loaded, and to a frame of another origin by pointer or past it by a
- * key in Firefox, a long message wrapping with its action in reach and its buttons wrapped inside
- * it on a 320px phone at twice the text size, its message as far from either edge there, its
- * buttons kept together in their group, or as they were without it, its place above an app's dock
- * or at the foot of a page, nothing drawn before a message or printed, the same function returned
- * when attached again, a solid edge in forced colors outside WebKit, which draws none, and no audit
- * findings in either theme.
+ * off, gone or on a page since loaded, left in the frame where a page's listener moves it there in
+ * Firefox, and to a frame of another origin by pointer or past it by a key in Firefox, a long
+ * message wrapping with its action in reach and its buttons wrapped inside it on a 320px phone at
+ * twice the text size, its message as far from either edge there, its buttons kept together in
+ * their group, or as they were without it, its place above an app's dock or at the foot of a page,
+ * nothing drawn before a message or printed, the same function returned when attached again, a
+ * solid edge in forced colors outside WebKit, which draws none, and no audit findings in either
+ * theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -657,6 +658,39 @@ test("hands focus back to the control inside a frame of the page's own origin th
     await expect(message(page)).toHaveText('');
     await expect(page.locator('iframe')).toBeFocused();
     await expect(inner).toBeFocused();
+});
+
+test("leaves focus where a page's listener moves it into the frame focus came back to", async ({
+    page,
+    browserName,
+}) => {
+    // Chromium and WebKit finish the focus call that fired the listener over a move into a frame,
+    // so only Firefox leaves focus where the listener put it.
+    test.skip(browserName !== 'firefox', 'Firefox alone keeps a move into a frame from a focusout');
+    await open(page, { body: framed() });
+    const inner = page.frameLocator('iframe').locator('#inner');
+    await inner.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    // Focus comes into the toast from Save, and the page moves it to the frame's next button as
+    // it leaves the action, while the toast tries Save.
+    await page.locator('#save').focus();
+    await undo(page).focus();
+    await page.evaluate(() => {
+        document.querySelector('.dk-toast-action')?.addEventListener(
+            'focusout',
+            () => {
+                document
+                    .querySelector('iframe')
+                    ?.contentDocument?.querySelector<HTMLElement>('#next')
+                    ?.focus();
+            },
+            { once: true }
+        );
+    });
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(page.frameLocator('iframe').locator('#next')).toBeFocused();
 });
 
 test('hands focus back to the control inside a frame after a click on its empty space', async ({

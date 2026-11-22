@@ -58,9 +58,10 @@ const holds = (place: Element, node: Node | null): boolean => {
  * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
  * refuses it focus. A control marked off is left out only where a caller checks for it, as a panel
  * does for its buttons and a focus request for its target, so the toast and the dialog hand focus to
- * one. Focus that lands on a place or inside it, in a shadow tree it holds too, as a host that
- * delegates focus or a widget that forwards it, counts as taken. Where a page's own listener moves
- * focus elsewhere as one is tried, the walk stops and that focus stays.
+ * one. Focus that moves onto a place or inside it, in a shadow tree it holds too, as a host that
+ * delegates focus or a widget that forwards it, counts as taken, as does a place that has focus
+ * already, while a place that refuses focus is passed over though focus is inside it. Where a
+ * page's own listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
@@ -73,7 +74,7 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
         const before = focusedNow();
         place.focus({ preventScroll: place.matches('.dk-app-body') });
         const now = focusedNow();
-        if (holds(place, now)) return true;
+        if (holds(place, now) && (now !== before || place === before)) return true;
         if (now && now !== before) return false;
     }
     return false;
@@ -105,11 +106,13 @@ const restoring = new Map<HTMLDialogElement, Element>();
  * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
  * the place it focused, so a request asked before it finds that focus free and not the visitor's.
  * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
+ * Returns whether it focused a place.
  */
-const handBack = (...places: readonly (Element | null | undefined)[]): void => {
-    if (!focusFirst(...places)) return;
+const handBack = (...places: readonly (Element | null | undefined)[]): boolean => {
+    if (!focusFirst(...places)) return false;
     handedTo = activeOf();
     handedAt = performance.now();
+    return true;
 };
 
 /** Where focus is asked to go: an element, an element's id, one found as focus moves, or nothing. */
@@ -922,13 +925,13 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * focus back, so the room the sheet keeps under a shown toast does not scroll the control focus
  * goes to. Where a page's own listener moves focus elsewhere as the toast hands it back, the toast
  * goes no further down the list and that focus stays. A page sees focus inside a frame only as the
- * frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where
- * focus goes back to a frame of the page's own origin, it goes on to the control that had focus
- * there as the latest message came, read as the message came, and stays on the frame where that
- * control is gone, marked off, on a page the frame has since replaced, and on a frame of another
- * origin. A frame inside that frame is not followed, so focus goes back to the inner frame itself.
- * Firefox does not focus a frame of another origin while a key is being pressed, so a dismiss by
- * keyboard there goes on down the list.
+ * frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where its
+ * handback focuses a frame of the page's own origin, it goes on to the control that had focus there
+ * as the latest message came, read as the message came, and stays on the frame where that control
+ * is gone, marked off, on a page the frame has since replaced, and on a frame of another origin. A
+ * frame inside that frame is not followed, so focus goes back to the inner frame itself. Firefox
+ * does not focus a frame of another origin while a key is being pressed, so a dismiss by keyboard
+ * there goes on down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -1012,10 +1015,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         delete element.dataset['rows'];
         delete element.dataset['row'];
         if (hadFocus) {
-            handBack(cameFrom, arrivedAt, homeOf(element));
+            const handed = handBack(cameFrom, arrivedAt, homeOf(element));
             const now = activeOf();
-            if (now === arrivedAt && inFrame && !isOff(inFrame)) (inFrame as HTMLElement).focus();
-            else if (element.contains(now)) (now as HTMLElement).blur();
+            if (handed && now === arrivedAt && inFrame && !isOff(inFrame))
+                (inFrame as HTMLElement).focus();
+            else if (holds(element, now)) (now as HTMLElement).blur();
         }
         inFrame = undefined;
         message.textContent = '';
@@ -1679,7 +1683,10 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
         if (dialog.open) return;
-        if (back) handBack(opener, settings.returnTo?.());
+        // What the browser handed focus to as the dialog closed comes last, so where the opener
+        // has gone and nothing else takes focus, that place counts as handed back, and a request
+        // asked in the task that closed the dialog still lands.
+        if (back) handBack(opener, settings.returnTo?.(), restoring.get(dialog));
         opener = null;
         restoring.delete(dialog);
     };

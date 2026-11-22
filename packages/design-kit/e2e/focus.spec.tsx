@@ -65,6 +65,23 @@ const open = async (page: Page) => {
     await page.locator('#pressed').focus();
 };
 
+test('goes on to a fallback where the target holds focus already but refuses it', async ({
+    page,
+}) => {
+    await open(page);
+    // A section with no tabindex, which takes no focus, holding the button that has it.
+    await page.evaluate(() => {
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<section id="results"><button type="button" id="inside">Inside</button></section>' +
+                '<h2 id="found" tabindex="-1">Results</h2>'
+        );
+        document.querySelector<HTMLElement>('#inside')?.focus();
+        (window as unknown as Mover).moveFocus('results', { fallbacks: ['found'] });
+    });
+    await expect(page.locator('#found')).toBeFocused();
+});
+
 test('focuses a control drawn after the request, by its id, once the change is drawn', async ({
     page,
 }) => {
