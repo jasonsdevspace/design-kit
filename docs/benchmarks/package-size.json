@@ -1,13 +1,13 @@
 {
     "recorded": {
-        "date": "2026-11-20",
-        "commit": "1401468",
+        "date": "2026-11-22",
+        "commit": "5909b7d",
         "machine": "AMD EPYC 7763 64-Core Processor, 4 cores",
         "node": "v24.22.3"
     },
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.9.2",
-    "size": 118720,
+    "version": "0.9.3",
+    "size": 135648,
     "sheets": 12250,
     "files": [
         {
@@ -24,33 +24,33 @@
         },
         {
             "path": "dist/controls.d.ts",
-            "size": 28247,
-            "gzip": 8851
+            "size": 36573,
+            "gzip": 11141
         },
         {
             "path": "dist/controls.js",
-            "size": 122079,
-            "gzip": 34222
+            "size": 144976,
+            "gzip": 40710
         },
         {
             "path": "dist/hooks.d.ts",
-            "size": 8177,
-            "gzip": 2838
+            "size": 8990,
+            "gzip": 3116
         },
         {
             "path": "dist/hooks.js",
-            "size": 19720,
-            "gzip": 5607
+            "size": 25801,
+            "gzip": 7544
         },
         {
             "path": "dist/line.d.ts",
-            "size": 2027,
-            "gzip": 913
+            "size": 4615,
+            "gzip": 1714
         },
         {
             "path": "dist/line.js",
-            "size": 1472,
-            "gzip": 618
+            "size": 8476,
+            "gzip": 2656
         },
         {
             "path": "dist/react.d.ts",
@@ -61,6 +61,16 @@
             "path": "dist/react.js",
             "size": 26048,
             "gzip": 7694
+        },
+        {
+            "path": "dist/teardown.d.ts",
+            "size": 3993,
+            "gzip": 1465
+        },
+        {
+            "path": "dist/teardown.js",
+            "size": 6339,
+            "gzip": 2296
         },
         {
             "path": "dist/theme.d.ts",
@@ -329,90 +339,90 @@
     "functions": [
         {
             "name": "attachForm",
-            "alone": 6138,
-            "added": 3668
+            "alone": 7220,
+            "added": 3933
         },
         {
             "name": "attachStepper",
-            "alone": 3683,
-            "added": 1954
-        },
-        {
-            "name": "attachRoving",
-            "alone": 2733,
-            "added": 1711
-        },
-        {
-            "name": "attachPanel",
-            "alone": 2595,
-            "added": 1478
+            "alone": 4352,
+            "added": 2008
         },
         {
             "name": "attachToast",
-            "alone": 2920,
-            "added": 1099
+            "alone": 4607,
+            "added": 1803
+        },
+        {
+            "name": "attachRoving",
+            "alone": 3350,
+            "added": 1683
+        },
+        {
+            "name": "attachPanel",
+            "alone": 3701,
+            "added": 1630
         },
         {
             "name": "attachDialog",
-            "alone": 1813,
-            "added": 746
+            "alone": 2853,
+            "added": 840
         },
         {
             "name": "attachThemeSwitch",
-            "alone": 2346,
-            "added": 700
+            "alone": 3086,
+            "added": 663
         },
         {
             "name": "attachCopyButton",
-            "alone": 2091,
-            "added": 621
+            "alone": 2787,
+            "added": 653
         },
         {
             "name": "attachProgress",
-            "alone": 2512,
-            "added": 547
-        },
-        {
-            "name": "attachTable",
-            "alone": 1299,
-            "added": 510
-        },
-        {
-            "name": "attachBusy",
-            "alone": 2287,
-            "added": 461
+            "alone": 3202,
+            "added": 613
         },
         {
             "name": "focusOnArrival",
-            "alone": 1722,
-            "added": 456
+            "alone": 1978,
+            "added": 443
+        },
+        {
+            "name": "attachBusy",
+            "alone": 2828,
+            "added": 430
+        },
+        {
+            "name": "attachTable",
+            "alone": 1966,
+            "added": 407
         },
         {
             "name": "attachStatus",
-            "alone": 1555,
-            "added": 5
+            "alone": 2399,
+            "added": 109
         },
         {
             "name": "chooseTheme",
-            "alone": 1403,
+            "alone": 1406,
             "added": 5
         },
         {
             "name": "activeOf",
-            "alone": 727,
-            "added": 2
+            "alone": 729,
+            "added": 3
         },
         {
             "name": "moveFocus",
-            "alone": 1276,
+            "alone": 2122,
             "added": 2
         }
     ],
     "since": {
         "date": "2026-11-20",
-        "commit": "d54ff06",
-        "version": "0.9.1",
-        "size": 119292,
+        "commit": "1401468",
+        "version": "0.9.2",
+        "size": 118720,
         "sheets": 12250
     }
 }
