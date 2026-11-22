@@ -17,13 +17,17 @@ hook's ref to another's keep their control and its state. The React hooks take t
 through ref cleanups, and under `StrictMode` in development each control is kept with nothing
 doubled or dropped, and a focus request asked as its component unmounts still lands. The toast, the
 dialog and the panels hand focus back by one rule, so focus a page or a visitor moves elsewhere
-stays. A stepper drawn past its limits shows its error at once, a group the arrow keys move through
-places its Tab stop as it comes into sight from no size, and Escape closes an open panel once the
-button that opened it is let go. Upgrading names the code a page can now take away for the stepper
-and the group. Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers
-and frames on a page and find every attach and hook leaves none of its own once it is taken down,
-and the tests on a stand-in clock move time only by their own steps, so a slow runner no longer
-makes a message leave early. No token is added or renamed and the theme script is unchanged, so
+stays. A toast sends focus back to the control the visitor came into it from, and a focus request
+asked from inside an open dialog lands where the page asked as the dialog closes. Options count as
+given only where a key other than `signal` has a value, so an attach called again with `{}` keeps
+the options it had. A stepper drawn past its limits shows its error at once, a group the arrow keys
+move through places its Tab stop as it comes into sight from no size, and Escape closes an open
+panel once the button that opened it is let go. Upgrading names the code a page can now take away
+for the stepper and the group, and how a page now puts a piece's options back to their defaults.
+Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers and frames on a
+page and find every attach and hook leaves none of its own once it is taken down, and the tests on a
+stand-in clock move time only by their own steps, so a slow runner no longer makes a message leave
+early. No token is added or renamed and the theme script is unchanged, so
 `themeScriptHash` is the same. The sheets stay within their budget, and the controls' budget is set
 at 19 KB under record 13's rule.
 
@@ -31,7 +35,11 @@ at 19 KB under record 13's rule.
   value past its limits can take that code away, since the attach now shows it, and a refusal the
   page sets with `setCustomValidity` no longer shows the stepper's error once the value is changed.
   A page that waits for a closed `details`, a hidden panel or a dialog to show before it attaches a
-  group the arrow keys move through can attach the group at once.
+  group the arrow keys move through can attach the group at once. A page that attached a piece again
+  with `{}`, or with every key but `signal` undefined, to put its options back to their defaults now
+  keeps the options it had. It gives one option the value it has by default instead, as
+  `{ stay: false }` for a dialog attached to stay, and the options it gives replace the last whole,
+  so every key it leaves out goes back to its default too.
 - **Controls.** `attachThemeSwitch(element, { signal })` and
   `attachCopyButton(button, { source, status, signal })` take an `AbortSignal`, and aborting it
   takes the control down as the function they return does, a microtask later and once no other
@@ -134,7 +142,25 @@ at 19 KB under record 13's rule.
   in the page with focus in it starts its wait again. A copy button joined with a source that gives
   the element its last press copied keeps the word it shows, reads the source only while a word is
   shown and takes one that throws for another element, and progress counts its steps again only
-  where their count changes.
+  where their count changes. `attachToast` hands focus to the first of these that takes it: the
+  control focus last came into the toast from, then the control that had focus as the latest message
+  came, then the body of the app's frame or the page's main content. A keyboard user who moved on
+  from where they were as the message came lands where they left off. Focus that last came into the
+  toast from nowhere passes over the first, and a control inside an open shadow root counts as
+  itself rather than as its host. A dialog attached by `attachDialog` keeps what had focus as it
+  opened, which the browser hands focus back to as the dialog closes. A `moveFocus` request treats
+  focus there as free while the dialog is closed and its close not yet handled. A request that lands
+  while focus is there takes that place from the dialog. The dialog's close event and its takedown
+  hand focus back by one test, where focus is still on that element or by the rule every piece hands
+  it back by. So a request asked in the task that closes the dialog, takes it from the page or takes
+  it down lands on its target, whenever the close event comes. This holds when an answer's form
+  closes the dialog, when the pressed control is taken away as it is pressed and when the opener is
+  not what had focus. Focus the page moves elsewhere in that task stays. A dialog closed and taken
+  down in one task hands focus to its opener as a plain close does. An attach called again with an
+  empty object, or with options whose every key but `signal` is undefined, as a page spreading its
+  own optional props passes, keeps its holder's last options rather than replacing them, while
+  `null` and `false` still count as values, and only the options' own keys are read. `attachStatus`
+  joins a later attach the way every other attach does, and a status line behaves as it did.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
@@ -192,7 +218,14 @@ at 19 KB under record 13's rule.
   control down names `moveFocus`, says when a takedown lands, how options follow the newest holder
   and when the kit hands focus back, and each attach's section links it. The doc comments on
   `./controls` and the hooks say what the code does now. A panel's button taken from the page
-  without being taken down is said to stay held until it is.
+  without being taken down is said to stay held until it is. The reference, the toast's doc comment
+  and record 23 give that order. The reference's dialog, its section on taking a control down and
+  record 23 say that a `moveFocus` request asked in the task that closes a dialog sends focus to its
+  target rather than to the opener, whether that task closes the dialog, takes it from the page or
+  takes it down. One asked in an earlier task lands only where its frame comes after the dialog
+  closes, so a page that awaits before closing asks again just before it closes. The reference's
+  section on taking a control down and its section on the dialog, the dialog's doc comment and
+  record 23 say which options count as given.
 - **Tests.** Browser tests in Chromium, WebKit and Firefox attach the theme switch and the copy
   button with a signal already aborted and find nothing attached and a repeat attach's new source
   not taken, abort a signal and find both hidden, find a late clipboard answer and a theme chosen
@@ -301,7 +334,25 @@ at 19 KB under record 13's rule.
   in the page with focus in it starts its wait again. Under `StrictMode`, a form, a row of cells and
   a busy button behind refs made afresh keep their check, their observer and their wait, a busy wait
   and a shared row keep through a merged ref, a form and a row passed between hooks take the new
-  hook's options, and either of two form hooks dropped leaves the other's check and refusal.
+  hook's options, and either of two form hooks dropped leaves the other's check and refusal. Browser
+  tests move from a field to a second control and into a shown toast, dismiss it by its action and
+  by Escape and find focus on the second control, there too where the page stops its focusout, and
+  find focus sent back to where it was as the message came where that control is disabled first,
+  where focus last came in from nowhere and where it only ever came in from nowhere. Another finds
+  focus sent back to a control inside an open shadow root. The toast's browser tests run in Firefox
+  too. Browser tests open a dialog from an opener with focus on it and ask `moveFocus` from inside
+  it. They close it and take it down, take it from the page and take it down, close it with its
+  close event coming after the request's frame, press an answer whose form closes it, or take away
+  the pressed control as it is pressed and close it, and find focus on the element asked for. Focus
+  the page sets in the closing task stays. Others open it from an opener that is not what had focus,
+  and find a request for what had focus landing there through a late close event, and focus going to
+  the opener from a dialog closed and taken down in one task. Another asks as a toast with focus in
+  it is taken down for the control the toast hands focus back to and then for another place, and
+  finds focus on the later one. All run in Chromium, WebKit and Firefox. A unit test finds an empty
+  object, keys left undefined and keys only inherited taken for no options, and `null` and `false`
+  taken for options given, and a browser test finds a dialog attached to stay still staying once
+  attached again with `{}`, and no longer staying once attached again with `{ stay: false }` or with
+  options that leave `stay` out.
 
 ## 0.9.2
 
