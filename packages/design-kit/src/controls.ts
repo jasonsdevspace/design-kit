@@ -81,13 +81,14 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
 };
 
 /**
- * Whether a piece closing or leaving may hand focus back: where focus is in it, or where focus is
- * on the body or nowhere and the piece had focus as it left, so focus a visitor or the page has put
- * anywhere else stays. The toast, the dialog and the panels hand focus back by this one rule.
+ * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
+ * tree within it too, or where focus is on the body or nowhere and the piece had focus as it left,
+ * so focus a visitor or the page has put anywhere else stays. The toast, the dialog and the panels
+ * hand focus back by this one rule.
  */
 const mayHandBack = (piece: Element, had: boolean): boolean => {
     const active = focusedNow();
-    return active ? piece.contains(active) : had;
+    return active ? holds(piece, active) : had;
 };
 
 /** The element the kit last handed focus back to as a piece closed or left, and when. */
@@ -909,16 +910,16 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * goes to the first of these that takes it: the control focus last came into the toast from, then
  * the control outside the toast that had focus as the latest message came, then the body of the
  * app's frame, or on a page with no frame its main content. The first is passed over where focus
- * last came into the toast from nowhere. Focus goes back only where it is in the toast, or where
- * the page has taken the toast away with focus in it so that focus has fallen to the body or to
- * nothing, while focus a visitor has put anywhere else stays. Its Close and its action take a
- * tabindex of 0 where the page set none, so Safari, which focuses a pressed button only where it
- * has one, leaves focus in the toast on a press or a tap and focus can go back as it leaves.
- * Attaching a toast again returns the same function, its message still shown. Taken down by its
- * `signal`, it dismisses its message as its Close does, takes off its listeners, its observer, its
- * listener on the window's size and its timer, takes away the tabindex it added and lets its line
- * go, and the function it returned, and what that returned, do nothing after. A signal already
- * aborted returns a function that shows nothing.
+ * last came into the toast from nowhere. Focus goes back only where it is in the toast, inside a
+ * shadow tree within it too, or where the page has taken the toast away with focus in it so that
+ * focus has fallen to the body or to nothing, while focus a visitor has put anywhere else stays.
+ * Its Close and its action take a tabindex of 0 where the page set none, so Safari, which focuses a
+ * pressed button only where it has one, leaves focus in the toast on a press or a tap and focus can
+ * go back as it leaves. Attaching a toast again returns the same function, its message still shown.
+ * Taken down by its `signal`, it dismisses its message as its Close does, takes off its listeners,
+ * its observer, its listener on the window's size and its timer, takes away the tabindex it added
+ * and lets its line go, and the function it returned, and what that returned, do nothing after. A
+ * signal already aborted returns a function that shows nothing.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
@@ -1033,7 +1034,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         const active = focusedNow();
-        if (!active || !element.contains(active)) {
+        if (!holds(element, active)) {
             arrivedAt = active ?? undefined;
             inFrame = insideOf(active);
         }
@@ -1133,7 +1134,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // is kept apart for the handback.
             queueMicrotask(() => {
                 if (!element.isConnected) leftWith ||= focused;
-                focused = element.isConnected && element.contains(activeOf());
+                focused = element.isConnected && holds(element, activeOf());
                 wait();
             });
         },
@@ -1622,9 +1623,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * `{ stay: undefined }`, leaves them as they were, and either returns the same function, an open
  * dialog staying open. Its listeners are on the dialog, so a dialog taken from the page takes them
  * with it. Taken down by its `signal`, an open dialog closes, focus goes back to what opened it
- * where focus is in the dialog, has fallen to the body or is still where the browser handed it as
- * the dialog closed, its listeners and the closedby its `stay` set come off, and the function that
- * opens it does nothing.
+ * where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
+ * still where the browser handed it as the dialog closed, its listeners and the closedby its `stay`
+ * set come off, and the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1831,13 +1832,13 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  * Shows or hides a panel and marks every attached button that names it to match, as record 19 has
  * it. The panel and its corner Close take a tabindex here where the page set none, as a button does
  * as it is attached, so a press in the panel leaves focus in it and Safari focuses a pressed Close.
- * As the panel closes, focus goes to its button where focus is in the panel, or where nothing has
- * focus and the visitor's last place, the path of the last focus that moved or of their last press,
- * was in it, and stays anywhere else. Where it goes back and that last press was a link in the
- * panel to a place on this page outside it, it goes there instead. Otherwise it goes to the button
- * given, the one pressed or the one that opened the panel, else the first attached button that
- * names it and takes focus, else the first thing after the panel the keyboard reaches by Tab, else
- * the body of the app's frame or the page's main content.
+ * As the panel closes, focus goes to its button where focus is in the panel, inside a shadow tree
+ * within it too, or where nothing has focus and the visitor's last place, the path of the last
+ * focus that moved or of their last press, was in it, and stays anywhere else. Where it goes back
+ * and that last press was a link in the panel to a place on this page outside it, it goes there
+ * instead. Otherwise it goes to the button given, the one pressed or the one that opened the panel,
+ * else the first attached button that names it and takes focus, else the first thing after the
+ * panel the keyboard reaches by Tab, else the body of the app's frame or the page's main content.
  */
 const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
@@ -1943,12 +1944,12 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * writes hidden on a panel that starts closed, so it never shows before the script runs. A press of
  * the button turns it the other way, unless the button is off, and every attached button that names
  * the panel follows. However the panel closes, by its button, its Close, Escape or `set`, focus
- * goes to the button that opened it where focus is in the panel, or where nothing has focus and the
- * visitor's last place was in it, as record 19 has it. The panel is found at each press, so one
- * drawn again keeps working, and a button drawn again works once it is attached. Listeners on the
- * document hear the presses, the focus and the Escape of every panel, and come off once every
- * button is taken down. A panel's id must be the only one on the page. Attached again, a button
- * returns what it returned first.
+ * goes to the button that opened it where focus is in the panel, inside a shadow tree within it
+ * too, or where nothing has focus and the visitor's last place was in it, as record 19 has it. The
+ * panel is found at each press, so one drawn again keeps working, and a button drawn again works
+ * once it is attached. Listeners on the document hear the presses, the focus and the Escape of
+ * every panel, and come off once every button is taken down. A panel's id must be the only one on
+ * the page. Attached again, a button returns what it returned first.
  *
  * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
  * nothing. A button taken down is marked collapsed. A button taken from the page without being

@@ -8,8 +8,10 @@ import { servePage, stillClock, tabKey } from './page.js';
 /*
  * The controls inside an open shadow root, as a widget drawn into a host page draws them: a refused
  * form whose field's error is found and said there, focus moved by an id there, and progress named
- * by a label there, with elements of the host page sharing those ids never reached, and a toast
- * that hands focus back to a control there that focus came into it from.
+ * by a label there, with elements of the host page sharing those ids never reached, a toast that
+ * hands focus back to a control there that focus came into it from, and a dialog, a panel and a
+ * toast that count focus on a button inside a shadow tree within them as focus in them, so each
+ * hands focus back from it.
  */
 
 const BODY = `<main><h1>Shop</h1><h2 id="title" tabindex="-1">The host's own title</h2>
@@ -156,4 +158,118 @@ window.ready = true;`,
     await expect(page.getByRole('button', { name: 'Undo' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(inner).toBeFocused();
+});
+
+/** A custom element whose open shadow root holds a button, as a page's own button component. */
+const SHADOW_BUTTON = `customElements.define('kit-button', class extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = '<button type="button"><slot></slot></button>';
+    }
+});`;
+
+test('hands focus back from a dialog taken down with focus on a button inside a shadow tree in it', async ({
+    page,
+    browserName,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1><button type="button" id="opener">Share the list</button></main>
+<dialog class="dk-dialog" aria-labelledby="share-title"><h2 id="share-title">Share the list</h2>
+<input aria-label="Email" autofocus><kit-button>Send</kit-button></dialog>`,
+        script: `import { attachDialog } from './controls.js';
+${SHADOW_BUTTON}
+const down = new AbortController();
+const open = attachDialog(document.querySelector('dialog'), { signal: down.signal });
+const opener = document.querySelector('#opener');
+// A press that gives the button no focus, as Safari's does, so the browser's own close hands focus
+// nowhere and focus goes back to the opener only as the kit hands it.
+opener.addEventListener('mousedown', (event) => event.preventDefault());
+opener.addEventListener('click', (event) => open(event));
+window.takeDown = () => down.abort();
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#opener').click();
+    await expect(page.getByRole('textbox', { name: 'Email' })).toBeFocused();
+    await page.keyboard.press(tabKey(browserName));
+    await expect(page.locator('kit-button button')).toBeFocused();
+    await page.evaluate(() => {
+        (window as unknown as { takeDown: () => void }).takeDown();
+    });
+    await expect(page.locator('#opener')).toBeFocused();
+});
+
+test('hands focus back from a panel closed by Escape with focus on a button inside a shadow tree in it', async ({
+    page,
+    browserName,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1>
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="share">Share</button>
+<div class="dk-panel" id="share" hidden><h2 class="dk-panel-title">Share the list</h2>
+<kit-button>Send</kit-button></div></main>`,
+        script: `import { attachPanel } from './controls.js';
+${SHADOW_BUTTON}
+attachPanel(document.querySelector('#opener'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#opener').click();
+    await expect(page.locator('#share')).toBeVisible();
+    await page.keyboard.press(tabKey(browserName));
+    await expect(page.locator('kit-button button')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#share')).toBeHidden();
+    await expect(page.locator('#opener')).toBeFocused();
+});
+
+test('takes focus out of a toast dismissed from a button inside a shadow tree in it where nothing on its list takes focus', async ({
+    page,
+}) => {
+    // The page hides its own button with the toast, and main takes no focus, so focus has nowhere
+    // on the toast's list to go.
+    await stillClock(page.clock);
+    await servePage(page, {
+        title: 'Shop',
+        css: '.dk-toast:not([data-shown]) kit-button { display: none; }',
+        body: `<main><h1>Shop</h1><button type="button" id="save">Save</button></main>${renderToStaticMarkup(
+            createElement(Toast)
+        )}`,
+        script: `import { attachToast } from './controls.js';
+${SHADOW_BUTTON}
+document
+    .querySelector('.dk-toast-buttons')
+    .append(Object.assign(document.createElement('kit-button'), { textContent: 'Share' }));
+window.show = attachToast(document.querySelector('.dk-toast'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#save').focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: (words: string) => void }).show('Your list is saved.');
+        document.querySelector('#save')?.remove();
+    });
+    const share = page.locator('kit-button button');
+    await share.focus();
+    await expect(share).toBeFocused();
+    // Where focus is as the key is handled, since an engine moves focus off a hidden button on its
+    // own only some frames later, if at all.
+    await page.evaluate(() => {
+        const seen = window as unknown as { left?: string | undefined };
+        window.addEventListener(
+            'keydown',
+            () => {
+                let active = document.activeElement;
+                while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+                seen.left = active?.localName;
+            },
+            { once: true }
+        );
+    });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.dk-toast-message')).toHaveText('');
+    expect(await page.evaluate(() => (window as unknown as { left?: string }).left)).toBe('body');
+    await expect(page.locator('body')).toBeFocused();
 });

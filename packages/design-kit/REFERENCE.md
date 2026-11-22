@@ -1425,7 +1425,8 @@ the newest holder without holding. An attach made from inside a control's own ta
 dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
 signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
-it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
+it, a shadow tree within it included, such as a page's own button component in a toast or a dialog's
+form, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
 where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
 the abort's own task stays, and a `moveFocus` asked in that task still lands. Each place a piece
 hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
