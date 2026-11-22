@@ -126,9 +126,9 @@ Option C.
   send focus somewhere more useful than the opener as the dialog closes, as the dialog pattern of
   the ARIA Authoring Practices allows. One asked in an earlier task lands only where its frame comes
   after the dialog closes, and otherwise finds the page behind inert, so a page that awaits before
-  closing asks again just before it closes. Each place a piece hands focus back to can be any
-  element that takes focus, an HTML control or an SVG one such as a link in an inline chart, and one
-  that is hidden, inert or disabled is passed over for the next.
+  closing asks again just before it closes. Each place a piece hands focus back to can be any HTML
+  or SVG element that takes focus, such as a link in an inline chart, and one that is hidden, inert
+  or disabled is passed over for the next.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -180,7 +180,7 @@ every signal it has ever held.
   and the status line joining through `join`, with options read by their values rather than their
   key names, brings them to 18,751. A dialog whose close leaves focus free for a focus request asked
   in the task that closes it brings them to 18,907, and a handback that takes an SVG element as
-  well as an HTML one brings them to 18,914.
+  well as an HTML one, a panel's link to a place on the page among them, brings them to 18,969.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -233,9 +233,11 @@ The paths are in `packages/design-kit`.
   and where it only ever came in from nowhere. It runs in Firefox as well as Chromium and WebKit.
   `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
   into the toast from. `e2e/toast.spec.tsx` finds focus sent back to a link inside an inline svg
-  that focus came into the toast from, `e2e/dialog.spec.ts` to one that opened the dialog, and
-  `e2e/panel.spec.ts` sends focus to one that follows a panel with no button left, each in Chromium,
-  WebKit and Firefox.
+  that focus came into the toast from, and to one that had focus as the message came where focus
+  then came into the toast from nowhere. `e2e/dialog.spec.ts` finds it sent back to one that opened
+  the dialog, and `e2e/panel.spec.ts` finds focus sent to one that follows a panel whose buttons are
+  gone, there too where the link's address is written with `xlink:href`, and to the place on the
+  page that one pressed inside a panel goes to, each in Chromium, WebKit and Firefox.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
   aborts and finds it closed, and finds a copy button's word kept for the block its last press
   copied and put back to Copy where a source that reads the page's state gives another block, or

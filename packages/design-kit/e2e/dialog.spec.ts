@@ -12,8 +12,8 @@ import { textSize } from './text-size.js';
  * Escape and by a tap on the scrim but not by a drag out of it, kept open on both when asked to
  * stay, the page behind it still, the sheet at the bottom edge clear of the home indicator and
  * scrolling inside itself, rising into place unless less motion is asked for, a solid edge in
- * forced colors, its actions stacked inside it on a 320px phone at twice the text size, and no
- * audit findings in either theme.
+ * forced colors outside WebKit, which draws none, its actions stacked inside it on a 320px phone at
+ * twice the text size, and no audit findings in either theme.
  */
 
 const OPTIONS = Array.from(
@@ -288,7 +288,7 @@ test('sends focus where it is told when the dialog opens with nothing focused', 
                 kit: {
                     attachDialog: (
                         d: Element | null,
-                        o: { returnTo: () => HTMLElement | null }
+                        o: { returnTo: () => Element | null }
                     ) => () => void;
                 };
             }
@@ -314,7 +314,7 @@ test("sends focus where it is told when the event that opened it names the page'
                 kit: {
                     attachDialog: (
                         d: Element | null,
-                        o: { returnTo: () => HTMLElement | null }
+                        o: { returnTo: () => Element | null }
                     ) => (from: { target: EventTarget; currentTarget: EventTarget }) => void;
                 };
             }
@@ -365,7 +365,7 @@ test('takes the options it is attached with again, and keeps them when attached 
                     kit: {
                         attachDialog: (
                             d: Element | null,
-                            o?: { returnTo?: () => HTMLElement | null; stay?: boolean }
+                            o?: { returnTo?: () => Element | null; stay?: boolean }
                         ) => unknown;
                     };
                 }

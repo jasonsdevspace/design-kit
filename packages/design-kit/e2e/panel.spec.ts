@@ -11,9 +11,9 @@ import { servePage, tabKey } from './page.js';
  * where focus is in the panel, or where nothing has focus and the visitor's last place, the last
  * focus that moved or their last press, was in it, and stays anywhere else, as record 19 has it.
  * Every press is a real one, since Safari's way of focusing what a pointer presses is what the rule
- * is built around, and WebKit, which the config runs this spec in with Firefox, does it as Safari
- * does. A link inside an inline svg after the panel takes focus as any control does. Where focus is
- * meant to stay, a test waits two frames first, so a late move of focus would show.
+ * is built around, and WebKit, which the config runs this spec in beside Chromium and Firefox, does
+ * it as Safari does. A link inside an inline svg after the panel takes focus as any control does.
+ * Where focus is meant to stay, a test waits two frames first, so a late move of focus would show.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -463,16 +463,22 @@ test.describe("the page's code", () => {
         page,
         browserName,
     }) => {
-        test.skip(
-            browserName === 'firefox',
-            "Firefox sends Shift and Tab from a panel a press focused to the page's body"
-        );
         await open(page);
         await button(page).click();
         // A press on the rules' text puts focus on that panel, the one after the tips.
         await page.getByText('The lowest score wins.').click();
         await expect(page.locator('#rules')).toBeFocused();
         await tab(page, browserName, 1, true);
+        if (browserName === 'firefox') {
+            // Firefox sends Shift and Tab from a panel a press focused to the page's body, so the
+            // visitor never went back into the tips, and focus stays on nothing as the rule has it.
+            expect(await focusOnNothing(page)).toBe(true);
+            await closeTips(page);
+            await expect(panel(page)).toBeHidden();
+            await twoFrames(page);
+            expect(await focusOnNothing(page)).toBe(true);
+            return;
+        }
         await expect(page.locator('#deal')).toBeFocused();
         await closeTips(page);
         await expect(panel(page)).toBeHidden();
@@ -841,6 +847,30 @@ test.describe('a link in the panel', () => {
         await expect(page.locator('#outside')).toHaveAttribute('tabindex', '-1');
     });
 
+    test('sends focus to a place on the page outside the panel that a link inside an inline svg goes to', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            document
+                .querySelector('#round-tips')
+                ?.insertAdjacentHTML(
+                    'beforeend',
+                    '<svg width="160" height="40"><a href="#outside" id="to-outside">' +
+                        '<text x="0" y="24">Where scores are kept</text></a></svg>'
+                );
+            document.querySelector('#to-outside')?.addEventListener('click', () => {
+                (window as unknown as Kit).setTips(false);
+            });
+        });
+        await page.locator('#to-outside text').click();
+        await expect(panel(page)).toBeHidden();
+        await twoFrames(page);
+        await expect(page.locator('#outside')).toBeFocused();
+        await expect(page.locator('#outside')).toHaveAttribute('tabindex', '-1');
+    });
+
     test('sends focus to a place whose id is written encoded in the link', async ({ page }) => {
         await open(page);
         await button(page).click();
@@ -1165,6 +1195,27 @@ test.describe('where focus goes', () => {
                 ?.insertAdjacentHTML(
                     'beforebegin',
                     '<svg width="160" height="40"><a href="#after" id="chart">' +
+                        '<text x="0" y="24">Round 3 chart</text></a></svg>'
+                );
+        });
+        await close(page).click();
+        await expect(panel(page)).toBeHidden();
+        await expect(page.locator('#chart')).toBeFocused();
+    });
+
+    test('moves focus to a link inside an inline svg written with xlink:href that follows the panel', async ({
+        page,
+    }) => {
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            for (const id of ['#tips-button', '#tips-again']) document.querySelector(id)?.remove();
+            // The older way of writing an SVG link's address, which many chart libraries still use.
+            document
+                .querySelector('#after-panels')
+                ?.insertAdjacentHTML(
+                    'beforebegin',
+                    '<svg width="160" height="40"><a xlink:href="#after" id="chart">' +
                         '<text x="0" y="24">Round 3 chart</text></a></svg>'
                 );
         });
