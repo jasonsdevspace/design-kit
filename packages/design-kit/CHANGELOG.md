@@ -20,20 +20,22 @@ and under `StrictMode` in development each control is kept with nothing doubled 
 focus request asked as its component unmounts still lands. The toast, the dialog and the panels hand
 focus back by one rule, so focus a page or a visitor moves elsewhere stays, during a handback too.
 That handback can land on any HTML or SVG element that takes focus, such as a link in an inline
-chart. A toast sends focus back to the control the visitor came into it from, on into a frame of the
-page's own origin where focus was inside one, and to the page's body in every engine where nothing
-else takes it. A focus request asked in the task that closes a dialog lands where the page asked
-rather than on the opener. A stepper drawn past its limits shows its error at once, a group the
-arrow keys move through places its Tab stop as it comes into sight from no size, and Escape closes
-an open panel once the button that opened it is let go. Upgrading names the code a page can now take
-away for the stepper and the group, and how a page now puts a piece's options back to their
-defaults. Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers and
-frames on a page and find every attach and hook leaves none of its own once it is taken down, and
-the tests on a stand-in clock move time only by their own steps, so a slow runner no longer makes a
-message leave early. Each teardown behavior is tested in one place, with no test that passes with
-the code it guards taken out, and no kit spec waits on real time for what a still clock can step. No
-token is added or renamed and the theme script is unchanged, so `themeScriptHash` is the same. The
-sheets stay within their budget, and the controls' budget is set at 19.5 KB under record 13's rule.
+chart, and each piece counts focus inside a shadow tree within it, or on a control slotted into it,
+as focus in it. A toast sends focus back to the control the visitor came into it from, on into a
+frame of the page's own origin where focus was inside one, and to the page's body in every engine
+where nothing else takes it. A focus request asked in the task that closes a dialog lands where the
+page asked rather than on the opener. A stepper drawn past its limits shows its error at once, a
+group the arrow keys move through places its Tab stop as it comes into sight from no size, and
+Escape closes an open panel once the button that opened it is let go. Upgrading names the code a
+page can now take away for the stepper and the group, and how a page now puts a piece's options back
+to their defaults. Browser tests in Chromium, WebKit and Firefox count the listeners, observers,
+timers and frames on a page and find every attach and hook leaves none of its own once it is taken
+down, and the tests on a stand-in clock move time only by their own steps, so a slow runner no
+longer makes a message leave early. Each teardown behavior is tested in one place, with no test that
+passes with the code it guards taken out, and no kit spec waits on real time for what a still clock
+can step. No token is added or renamed and the theme script is unchanged, so
+`themeScriptHash` is the same. The sheets stay within their budget, and the controls' budget is set
+at 19.5 KB under record 13's rule.
 
 - **Upgrading.** A page that draws a stepper's error itself when the stepper is attached with a
   value past its limits can take that code away, since the attach now shows it, and a refusal the
@@ -189,7 +191,19 @@ sheets stay within their budget, and the controls' budget is set at 19.5 KB unde
   stays on the frame where that control is gone, marked off, or on a page the frame has since
   replaced. A frame of another origin keeps focus itself, as near as a page can reach, though
   Firefox does not focus such a frame while a key is being pressed, so a dismiss by keyboard there
-  goes on to the body of the app's frame or the main content.
+  goes on to the body of the app's frame or the main content. The rule the toast, the dialog and the
+  panels share for handing focus back counts focus inside a shadow tree within a piece or on a
+  control slotted into it as focus in it, by walking out through each slot a node is drawn in and
+  each shadow root's host, so focus on a page's own button component in a dialog's form, a panel or
+  among a toast's buttons is handed back as the piece closes or leaves. The toast reads focus there
+  as focus in it too, so its wait holds while focus is there and a message shown then keeps where
+  focus was before. A panel reads an Escape where the key was pressed, inside a page's own component
+  where the component's shadow root is open, so an Escape that clears a search field or closes a
+  list there, or on a component whose host is marked as an open combobox, is left to the component
+  and the panel stays open. A closed root's nodes are not on the event's path, so there the panel
+  still takes the Escape. An element inside a component's shadow tree that shares a panel's id
+  closes nothing, and only an open dialog or an open popover inside a panel keeps its Escape from
+  the panel.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
@@ -244,31 +258,35 @@ sheets stay within their budget, and the controls' budget is set at 19.5 KB unde
   why deferring the takedown in the hooks was turned down, and records 13, 15, 19, 20 and 22 say
   what it changes. Record 13 sets the controls' budget at 19.5 KB, from 17.25 KB. The helper with
   every attach moved onto it, record 23's holders, the one rule for handing focus back, a handback
-  that takes SVG elements and a toast that hands focus to the page's body or into a frame took the
-  controls to 19,222 bytes, with a median function of 624 bytes, and record 23 gives the weight at
-  each step. The reference's section on taking a control down names `moveFocus`, says when a
-  takedown lands, how options follow the newest holder and when the kit hands focus back, and each
-  attach's section links it. The doc comments on `./controls` and the hooks say what the code does
-  now. A panel's button taken from the page without being taken down is said to stay held until it
-  is. The reference, the toast's doc comment and record 23 give the order a toast hands focus back
-  in. The reference's dialog, its section on taking a control down and record 23 say that a
-  `moveFocus` request asked in the task that closes a dialog sends focus to its target rather than
-  to the opener, whether that task closes the dialog, takes it from the page or takes it down. One
-  asked in an earlier task lands only where its frame comes after the dialog closes, so a page that
-  awaits before closing asks again just before it closes. The reference's section on taking a
-  control down and its section on the dialog, the dialog's doc comment and record 23 say which
-  options count as given. Records 15, 19, 21, 22 and 23 name the one teardown spec and say what each
-  spec now counts, record 3 says the browser tests run in WebKit and Firefox too for the specs
-  `e2e/engines.ts` names, and the README describes the browser jobs and where the engine lists live.
-  The reference's sections on taking a control down, on moving focus after a change and on the
-  toast, and record 23, say a handback can land on any HTML or SVG element that takes focus, such as
-  a link in an inline chart. Record 19 says the panel spec runs in Firefox too, where the case that
-  goes back into the panel after a press outside reaches the link by focusing it, since Firefox
-  sends Shift and Tab from a panel a press focused to the page's body. The reference's toast section
-  and its section on taking a control down say where focus goes where nothing takes it, where a page
-  moves it during a handback and where it goes back to a frame, of the page's own origin or another.
-  The reference says the main content takes focus by the `tabindex="-1"` the skip link's markup puts
-  on it.
+  that takes SVG elements and a toast that hands focus to the page's body or into a frame, and
+  pieces that count focus inside a shadow tree within them took the controls to 19,288 bytes, with a
+  median function of 626 bytes, and record 23 gives the weight at each step. The reference's section
+  on taking a control down names `moveFocus`, says when a takedown lands, how options follow the
+  newest holder and when the kit hands focus back, and each attach's section links it. The doc
+  comments on `./controls` and the hooks say what the code does now. A panel's button taken from the
+  page without being taken down is said to stay held until it is. The reference, the toast's doc
+  comment and record 23 give the order a toast hands focus back in. The reference's dialog, its
+  section on taking a control down and record 23 say that a `moveFocus` request asked in the task
+  that closes a dialog sends focus to its target rather than to the opener, whether that task closes
+  the dialog, takes it from the page or takes it down. One asked in an earlier task lands only where
+  its frame comes after the dialog closes, so a page that awaits before closing asks again just
+  before it closes. The reference's section on taking a control down and its section on the dialog,
+  the dialog's doc comment and record 23 say which options count as given. Records 15, 19, 21, 22
+  and 23 name the one teardown spec and say what each spec now counts, record 3 says the browser
+  tests run in WebKit and Firefox too for the specs `e2e/engines.ts` names, and the README describes
+  the browser jobs and where the engine lists live. The reference's sections on taking a control
+  down, on moving focus after a change and on the toast, and record 23, say a handback can land on
+  any HTML or SVG element that takes focus, such as a link in an inline chart. Record 19 says the
+  panel spec runs in Firefox too, where the case that goes back into the panel after a press outside
+  reaches the link by focusing it, since Firefox sends Shift and Tab from a panel a press focused to
+  the page's body. The reference's toast section and its section on taking a control down say where
+  focus goes where nothing takes it, where a page moves it during a handback and where it goes back
+  to a frame, of the page's own origin or another. The reference says the main content takes focus
+  by the `tabindex="-1"` the skip link's markup puts on it. The reference's sections on taking a
+  control down, the toast, the dialog and the panel, and record 23, say focus inside a shadow tree
+  within a piece counts as focus in it. The reference says a control slotted into a piece drawn
+  inside a shadow root counts as in it, and its panel section says the panel reads an Escape where
+  the key was pressed, inside a page's own component where the component's shadow root is open.
 - **Tests.** Browser tests in Chromium, WebKit and Firefox attach the theme switch and the copy
   button with a signal already aborted and find nothing attached and a repeat attach's new source
   not taken, abort a signal and find both hidden, find a late clipboard answer and a theme chosen
@@ -398,12 +416,12 @@ sheets stay within their budget, and the controls' budget is set at 19.5 KB unde
   their own beside a twin left attached. The kit specs step a still clock or wait for frames where
   they waited a fixed time. The engine lists live in `e2e/engines.ts` with a reason beside each
   spec, and a unit test matches them through the pattern the config builds. The browser tests in
-  Chromium and in WebKit run in two shards each, and a gate named Browser tests passes only where
-  the Chromium shards and the site's tests over the commit's kit pass. Browser tests in Chromium,
-  WebKit and Firefox find focus back on a link inside an inline svg that focus came into a toast
-  from once Escape on its Close dismisses it, on one that had focus as the message came where focus
-  then came into the toast from nowhere, and on one that opened a dialog once the dialog closes.
-  They find focus sent to one that follows a panel whose buttons are gone, one written with
+  Chromium, WebKit and Firefox run in two shards each, and a gate named Browser tests passes only
+  where the Chromium shards and the site's tests over the commit's kit pass. Browser tests in
+  Chromium, WebKit and Firefox find focus back on a link inside an inline svg that focus came into a
+  toast from once Escape on its Close dismisses it, on one that had focus as the message came where
+  focus then came into the toast from nowhere, and on one that opened a dialog once the dialog
+  closes. They find focus sent to one that follows a panel whose buttons are gone, one written with
   `xlink:href` among them, and to the place on the page that one pressed inside a panel goes to, a
   panel closing without an error in a window with no class for an SVG link, and a late
   `useFocusAfterDraw` request landing on one. The dialog and panel specs run in Firefox too. Browser
@@ -420,7 +438,16 @@ sheets stay within their budget, and the controls' budget is set at 19.5 KB unde
   where that frame cannot take it, and focus left on the frame's other button where a page's
   listener moves it there during the handback. In every engine, a focus request goes on to its
   fallback where its target holds focus but refuses it, and one asked in the task that closes a
-  dialog lands where its opener has gone and the browser handed focus elsewhere.
+  dialog lands where its opener has gone and the browser handed focus elsewhere. Browser tests in
+  Chromium, WebKit and Firefox find focus back on the opener once a dialog is taken down and once a
+  panel is closed by Escape with focus on a button inside a shadow tree within them, and focus taken
+  out of a toast dismissed from one where nothing on its list takes focus. They find a toast with no
+  action held past its wait while focus is on such a button, focus sent back to where it was before
+  the first message where a second comes while focus is there, focus taken out of a toast drawn
+  inside a shadow root dismissed from a button slotted into it from the light DOM, and a panel left
+  open by an Escape that clears a search field inside a shadow tree within it, by one in a component
+  whose shadow tree shares the panel's id, and by one in a component in the panel that marks its
+  host as an open combobox.
 
 ## 0.9.2
 
