@@ -123,8 +123,8 @@ through, a busy button, progress, the dialog and `moveFocus` keep the contract t
 - The flags, lists and checks each attach kept for its own teardown give way to the helper. The
   helper added 201 bytes with the theme switch and the copy button on it, and moving every other
   attach onto it took the controls past their budget. Record 13's rule set the budget again at each
-  step of 0.9.3, to 19 KB with record 23's holders and its one rule for handing focus back, as
-  record 13's table gives.
+  step of 0.9.3, to 19.5 KB with record 23's holders, its one rule for handing focus back and the
+  handbacks that take SVG elements and follow focus into a frame, as record 13's table gives.
 - Every attach and `moveFocus` is held to the contract by browser tests in Chromium, WebKit and
   Firefox.
 

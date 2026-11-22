@@ -273,10 +273,10 @@ follow by area.
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 12.25 KB, and the theme script goes inline in the page's head. A page that attaches a
-  control loads the controls too, which a test holds, as a bundler sends every function, to 19 KB
-  gzipped without their comments, and the theme script to 1 KB of its own. The package npm publishes
-  is 116 KB packed, the sheets and modules a page loads together with the README, the types and the
-  tokens in the design tokens format, which it never does. [The
+  control loads the controls too, which a test holds, as a bundler sends every function, to
+  19.5 KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
+  publishes is 116 KB packed, the sheets and modules a page loads together with the README, the
+  types and the tokens in the design tokens format, which it never does. [The
   record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
   comments, and from 0.6.0 what each piece of the sheets and each function of the controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
