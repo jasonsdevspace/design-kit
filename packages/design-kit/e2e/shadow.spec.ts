@@ -14,7 +14,9 @@ import { frames, servePage, stillClock, tabKey } from './page.js';
  * where nothing on its list takes it, holds past its wait while focus is on one, and keeps where
  * focus was before its first message as a second comes while focus is on one. A toast drawn inside
  * a shadow root takes focus off a button slotted into it from the light DOM, and a panel leaves an
- * Escape that clears a search field inside a shadow tree within it to that field and stays open.
+ * Escape that clears a search field inside a shadow tree within it to that field and stays open, as
+ * it does on an Escape in a component whose shadow tree shares its id and in one in it that marks
+ * its host as an open combobox.
  */
 
 const BODY = `<main><h1>Shop</h1><h2 id="title" tabindex="-1">The host's own title</h2>
@@ -388,4 +390,61 @@ window.ready = true;`,
     await frames(page);
     await expect(page.locator('#find')).toBeVisible();
     await expect(search).toBeFocused();
+});
+
+/** An open panel, with a component of the page's own whose open shadow root holds what is given. */
+const openPanelBeside = async (page: Page, component: string, inside: string, host: string) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1>
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="share">Share</button>
+<div class="dk-panel" id="share" hidden><h2 class="dk-panel-title">Share the list</h2>${inside}</div>
+${host}</main>`,
+        script: `import { attachPanel } from './controls.js';
+customElements.define('kit-field', class extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' }).innerHTML = ${JSON.stringify(component)};
+    }
+});
+attachPanel(document.querySelector('#opener'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#opener').click();
+    await expect(page.locator('main > #share')).toBeVisible();
+};
+
+test("leaves a panel open on Escape in a component whose shadow tree shares the panel's id", async ({
+    page,
+}) => {
+    await openPanelBeside(
+        page,
+        '<div id="share"><input aria-label="Note"></div>',
+        '<p>Send it to a friend.</p>',
+        '<kit-field></kit-field>'
+    );
+    const note = page.locator('kit-field input');
+    await note.focus();
+    await page.keyboard.press('Escape');
+    await frames(page);
+    await expect(page.locator('main > #share')).toBeVisible();
+    await expect(note).toBeFocused();
+});
+
+test('leaves a panel open on Escape in a component in it that marks its host as an open combobox', async ({
+    page,
+}) => {
+    await openPanelBeside(
+        page,
+        '<input aria-label="Friend">',
+        '<kit-field role="combobox" aria-expanded="true" aria-label="Friend"></kit-field>',
+        ''
+    );
+    const friend = page.locator('kit-field input');
+    await friend.focus();
+    await page.keyboard.press('Escape');
+    await frames(page);
+    await expect(page.locator('main > #share')).toBeVisible();
+    await expect(friend).toBeFocused();
 });
