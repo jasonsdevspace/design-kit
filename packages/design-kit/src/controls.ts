@@ -46,14 +46,18 @@ const isOff = (control: Element | undefined): boolean =>
 
 /**
  * Focuses the first of the elements given that takes focus, one that is hidden, off or gone from
- * the page being passed over, so focus never falls to nowhere while a place for it is named.
+ * the page being passed over, so focus never falls to nowhere while a place for it is named. Where
+ * a page's own listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
         if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
             continue;
+        const before = focusedNow();
         place.focus({ preventScroll: place.matches('.dk-app-body') });
-        if (activeOf() === place) return true;
+        const now = focusedNow();
+        if (now === place) return true;
+        if (now && now !== before) return false;
     }
     return false;
 };
@@ -82,10 +86,11 @@ const restoring = new Map<HTMLDialogElement, Element>();
 
 /**
  * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
- * where focus is then, so a request asked before it finds that focus free and not the visitor's.
+ * the place it focused, so a request asked before it finds that focus free and not the visitor's.
+ * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
  */
 const handBack = (...places: readonly (Element | null | undefined)[]): void => {
-    focusFirst(...places);
+    if (!focusFirst(...places)) return;
     handedTo = activeOf();
     handedAt = performance.now();
 };
@@ -897,12 +902,16 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * aborted returns a function that shows nothing.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
- * than staying on the toast's hidden button. A page sees focus inside a frame only as the frame,
- * and focus that comes into the toast from inside a frame as coming from nowhere. Where focus goes
- * back to a frame that had it as the latest message came, it goes on to the control inside that
- * last had focus there, where the frame is of the page's own origin, and stays on the frame where
- * it is of another. Firefox does not focus a frame of another origin while a key is being pressed,
- * so a dismiss by keyboard there goes on down the list.
+ * than staying on the toast's hidden button. Where a page's own listener moves focus elsewhere as
+ * the toast hands it back, the toast goes no further down the list and that focus stays. A page
+ * sees focus inside a frame only as the frame, and focus that comes into the toast from inside a
+ * frame as coming from nowhere. Where focus goes back to a frame that had it as the latest message
+ * came, it goes on to the control inside that last had focus there, where the frame is of the
+ * page's own origin, and stays on the frame where it is of another, or where that control is gone,
+ * off, from a page the frame has loaded since, or left for the frame's empty space. A frame inside
+ * that frame is not followed, so focus goes back to the inner frame itself. Firefox does not focus
+ * a frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on
+ * down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -949,12 +958,21 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let arrivedAt: HTMLElement | undefined;
     let lost: Element | undefined;
     // The control that last lost focus inside the frame that had focus as the latest message came,
-    // where it is of the page's own origin, since the page sees focus inside a frame only as the
-    // frame. Read inside an open shadow root too.
+    // where it is of the page's own origin. The page sees focus inside a frame only as the frame,
+    // and the frame's document drops its focus to its body once focus leaves, so it is read as
+    // focus leaves, inside an open shadow root too, and let go where focus stays in the frame on
+    // its body. A listener left on an earlier frame's document until takedown reads nothing, since
+    // only the current frame's document counts.
     let inFrame: Element | undefined;
     const noteFrame = (event: Event) => {
-        if (event.currentTarget === (arrivedAt as HTMLIFrameElement | undefined)?.contentDocument)
-            inFrame = event.composedPath()[0] as Element;
+        const frame = event.currentTarget as Document;
+        if (frame !== (arrivedAt as HTMLIFrameElement | undefined)?.contentDocument) return;
+        inFrame = event.composedPath()[0] as Element;
+        // Focus still in the frame a task later and on its body, as a click on its empty space
+        // leaves it, leaves no control to go back to.
+        window.setTimeout(() => {
+            if (frame.hasFocus() && frame.activeElement === frame.body) inFrame = undefined;
+        });
     };
     const watchFrame = (frame: Element) => {
         inFrame = undefined;
@@ -987,7 +1005,13 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         if (hadFocus) {
             handBack(cameFrom, arrivedAt, homeOf(element));
             const now = activeOf();
-            if (now === arrivedAt) (inFrame as HTMLElement | undefined)?.focus();
+            if (
+                now === arrivedAt &&
+                inFrame?.isConnected &&
+                inFrame.ownerDocument === (now as HTMLIFrameElement).contentDocument &&
+                !isOff(inFrame)
+            )
+                (inFrame as HTMLElement).focus();
             else if (element.contains(now)) (now as HTMLElement).blur();
         }
         message.textContent = '';

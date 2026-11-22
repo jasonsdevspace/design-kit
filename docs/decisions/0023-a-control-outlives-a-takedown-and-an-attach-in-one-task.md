@@ -115,12 +115,18 @@ Option C.
   reached the document. An entry from nowhere names none. A page sees focus inside a frame only as
   the frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where
   focus goes back to a frame that had it as the latest message came, the toast goes on to the
-  control inside that last had focus there, read as that control lost focus, where the frame is of
-  the page's own origin, and leaves focus on the frame where it is of another. Firefox does not
+  control inside that last had focus there, read as that control lost focus, since a frame's
+  document drops its focus to its body once focus leaves, where the frame is of the page's own
+  origin, and leaves focus on the frame where it is of another, or where that control is gone, off,
+  from a page the frame has loaded since, or left for the frame's empty space. Firefox does not
   focus a frame of another origin while a key is being pressed, so a dismiss by keyboard there goes
-  on down the list. The toast hands focus back before it hides its buttons, and where nothing takes
-  focus, it blurs what still has focus in it, so focus falls to the page's body in every engine,
-  where WebKit and Firefox would leave it on the toast's hidden button for some rendering frames. A
+  on down the list. A frame inside that frame is not followed, so focus goes back to the inner frame
+  itself. The toast hands focus back before it hides its buttons, and where nothing takes focus, it
+  blurs what still has focus in it, so focus falls to the page's body in every engine, where WebKit
+  and Firefox would leave it on the toast's hidden button until a later rendering update. Each piece
+  tries its places in turn, and where a page's own listener moves focus elsewhere as one is tried,
+  it goes no further and that focus stays. The kit keeps a handback only where the walk focused a
+  place, so a request asked before a walk that focused nothing leaves what the page focused alone. A
   takedown lands after the abort's task, so focus the page set in that task, by its own call or by a
   field the new content focuses as it draws, stays. The kit keeps where it last handed focus back,
   and `moveFocus` treats focus there as free where the handback came after the request was asked, so
@@ -187,7 +193,7 @@ every signal it has ever held.
   key names, brings them to 18,751. A dialog whose close leaves focus free for a focus request asked
   in the task that closes it brings them to 18,907. A toast that lets focus fall to the page's body
   where nothing takes it, and sends it on to the control inside a frame of the page's own origin,
-  brings them to 19,020.
+  with a handback that stops where the page moves focus during it, brings them to 19,115.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -238,13 +244,16 @@ The paths are in `packages/design-kit`.
   the second control's focusout, and finds focus sent back to where it was as the message came where
   that control is disabled before the dismiss, where focus last came into the toast from nowhere,
   and where it only ever came in from nowhere. It finds focus on the page's body as a press on its
-  action is handled where nothing it would hand focus to takes it, focus left where a page's
-  listener on the action moves it as focus leaves the action, focus sent back to the button inside a
-  frame of the page's own origin that last had focus there, focus on a frame of another origin where
-  a press by pointer dismisses the toast, and, in Firefox, focus on the main content where a dismiss
-  by Enter cannot focus that frame. It runs in Firefox as well as Chromium and WebKit.
-  `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
-  into the toast from.
+  action is handled where nothing it would hand focus to takes it, and focus left where a page's
+  listener on the action moves it as focus leaves the action, where nothing later on the list takes
+  focus and where the main content takes it, since the walk stops there, with a focus request asked
+  before the dismiss leaving that field alone. It finds focus sent back to the button inside a frame
+  of the page's own origin that last had focus there, focus left on the frame where that control is
+  marked off, where the frame loads its page again and where a click on the frame's empty space took
+  focus off it, focus on a frame of another origin where a press by pointer dismisses the toast,
+  and, in Firefox, focus on the main content where a dismiss by Enter cannot focus that frame. It
+  runs in Firefox as well as Chromium and WebKit. `e2e/shadow.spec.ts` finds focus sent back to a
+  control inside an open shadow root that focus came into the toast from.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
   aborts and finds it closed, and finds a copy button's word kept for the block its last press
   copied and put back to Copy where a source that reads the page's state gives another block, or
