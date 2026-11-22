@@ -29,8 +29,8 @@ import { sentOf } from './parts.mjs';
  * once the teardown helper of record 22 left too little room for another, and again once the status
  * line, the toast, the form, the panels and the remaining attaches moved onto it, and again once
  * record 23's holders left too little room for another, again once its one rule for handing focus
- * back did, again once a handback that takes an SVG element did, and again once a toast's handback
- * to the body and into a frame did.
+ * back did, again once a handback that takes an SVG element did, and again once focus falling to
+ * the body and followed into a frame did.
  */
 const BUDGET = 19.5 * 1024;
 

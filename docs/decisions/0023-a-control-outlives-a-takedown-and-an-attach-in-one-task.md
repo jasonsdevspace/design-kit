@@ -114,35 +114,39 @@ Option C.
   only the host, and takes the related target itself where the page stopped that focusout before it
   reached the document. An entry from nowhere names none. A page sees focus inside a frame only as
   the frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where
-  focus goes back to a frame that had it as the latest message came, the toast goes on to the
-  control inside that last had focus there, read as that control lost focus, since a frame's
-  document drops its focus to its body once focus leaves, where the frame is of the page's own
-  origin, and leaves focus on the frame where it is of another, or where that control is gone, off,
-  from a page the frame has loaded since, or left for the frame's empty space. Firefox does not
-  focus a frame of another origin while a key is being pressed, so a dismiss by keyboard there goes
-  on down the list. A frame inside that frame is not followed, so focus goes back to the inner frame
-  itself. The toast hands focus back before it hides its buttons, and where nothing takes focus, it
-  blurs what still has focus in it, so focus falls to the page's body in every engine, where WebKit
-  and Firefox would leave it on the toast's hidden button until a later rendering update. Each piece
-  tries its places in turn, and where a page's own listener moves focus elsewhere as one is tried,
-  it goes no further and that focus stays. The kit keeps a handback only where the walk focused a
-  place, so a request asked before a walk that focused nothing leaves what the page focused alone. A
-  takedown lands after the abort's task, so focus the page set in that task, by its own call or by a
-  field the new content focuses as it draws, stays. The kit keeps where it last handed focus back,
-  and `moveFocus` treats focus there as free where the handback came after the request was asked, so
-  a request asked in the abort's task still lands. The browser hands focus back to what had focus
-  before a dialog opened as the dialog closes, ahead of the close event. So a request treats focus
-  there as free while the dialog is closed and its close not yet handled, and a request that lands
-  while focus is there takes that place from the dialog. The dialog's close event and its takedown
-  hand focus back where focus is still there, or by the rule every piece hands it back by, so a
-  request that landed first or focus the page moved elsewhere in that task stays. A request asked
-  from inside an open dialog lands where the task it is asked in closes the dialog, takes it away or
-  takes it down, so a page can send focus somewhere more useful than the opener as the dialog
-  closes, as the dialog pattern of the ARIA Authoring Practices allows. One asked in an earlier task
-  lands only where its frame comes after the dialog closes, and otherwise finds the page behind
-  inert, so a page that awaits before closing asks again just before it closes. Each place a piece
-  hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
-  chart, and one that is hidden, inert or disabled is passed over for the next.
+  focus goes back to a frame of the page's own origin, the toast goes on to the control that had
+  focus there as the latest message came, read as it came, since a frame's document drops its focus
+  to its body once focus leaves. Focus stays on the frame where that control is gone, marked off, on
+  a page the frame has since replaced, and on a frame of another origin. Following the latest
+  control inside the frame instead was rejected, since it bets on the order each engine fires focus
+  events in, costs about 96 more bytes, and no consumer draws a frame. Firefox does not focus a
+  frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on down
+  the list. A frame inside that frame is not followed, so focus goes back to the inner frame itself.
+  The toast takes off its shown state before it hands focus back, so the room the sheet keeps under
+  a shown toast does not scroll the control focus goes to, and hides its buttons after, and where
+  nothing takes focus, it blurs what still has focus in it, so focus falls to the page's body in
+  every engine, where WebKit and Firefox would leave it on the toast's hidden button until a later
+  rendering update. Each piece tries its places in turn and counts a place as taken where focus
+  lands on it or inside it, its shadow tree included, and where a page's own listener moves focus
+  elsewhere as one is tried, it goes no further and that focus stays. A takedown lands after the
+  abort's task, so focus the page set in that task, by its own call or by a field the new content
+  focuses as it draws, stays. The kit keeps where it last handed focus back, and `moveFocus` treats
+  focus there as free where the handback came after the request was asked, so a request asked in the
+  abort's task still lands. It keeps a handback only where the walk focused a place, so a request
+  asked before a walk that focused nothing leaves what the page focused alone. The browser hands
+  focus back to what had focus before a dialog opened as the dialog closes, ahead of the close
+  event. So a request treats focus there as free while the dialog is closed and its close not yet
+  handled, and a request that lands while focus is there takes that place from the dialog. The
+  dialog's close event and its takedown hand focus back where focus is still there, or by the rule
+  every piece hands it back by, so a request that landed first or focus the page moved elsewhere in
+  that task stays. A request asked from inside an open dialog lands where the task it is asked in
+  closes the dialog, takes it away or takes it down, so a page can send focus somewhere more useful
+  than the opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices
+  allows. One asked in an earlier task lands only where its frame comes after the dialog closes, and
+  otherwise finds the page behind inert, so a page that awaits before closing asks again just before
+  it closes. Each place a piece hands focus back to can be any HTML or SVG element that takes focus,
+  such as a link in an inline chart, and one that is hidden, inert or disabled is passed over for
+  the next.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -198,7 +202,7 @@ every signal it has ever held.
   18,975, with less room under 19 KB than a function of the usual size, so the rule sets them at
   19.25 KB. A toast that lets focus fall to the page's body where nothing takes it, and sends it on
   to the control inside a frame of the page's own origin, with a handback that stops where the page
-  moves focus during it, brings them to 19,180, with less room under 19.25 KB than a function of the
+  moves focus during it, brings them to 19,196, with less room under 19.25 KB than a function of the
   usual size, so the rule sets them at 19.5 KB.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
@@ -253,21 +257,23 @@ The paths are in `packages/design-kit`.
   action is handled where nothing it would hand focus to takes it, and focus left where a page's
   listener on the action moves it as focus leaves the action, where nothing later on the list takes
   focus and where the main content takes it, since the walk stops there, with a focus request asked
-  before the dismiss leaving that field alone. It finds focus sent back to the button inside a frame
-  of the page's own origin that last had focus there, focus left on the frame where that control is
-  marked off, where the frame loads its page again and where a click on the frame's empty space took
-  focus off it, focus on a frame of another origin where a press by pointer dismisses the toast,
-  and, in Firefox, focus on the main content where a dismiss by Enter cannot focus that frame. It
-  also finds focus sent back to a link inside an inline svg that focus came into the toast from, and
-  to one that had focus as the message came where focus then came into the toast from nowhere. It
-  runs in Firefox as well as Chromium and WebKit. `e2e/dialog.spec.ts` finds it sent back to one
-  that opened the dialog, and `e2e/panel.spec.ts` finds focus sent to one that follows a panel whose
-  buttons are gone, there too where the link's address is written with `xlink:href`, and to the
-  place on the page that one pressed inside a panel goes to, and finds a panel closing without
-  throwing in a window with no class for an SVG link, as jsdom has none. `e2e/focus.spec.tsx` finds
-  a late request from a component since gone land on one. Each runs in Chromium, WebKit and Firefox.
-  `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
-  into the toast from.
+  before the dismiss leaving that field alone. It finds a host that hands focus to its shadow tree
+  taken as handed back, so a focus request asked before the dismiss lands, and the scroll left where
+  it was as focus goes back to a control in view, on a page and in an app's frame. It finds focus
+  sent back to the button inside a frame of the page's own origin that had focus as the message
+  came, there too after a click on the frame's empty space, focus left on the frame where that
+  control is marked off, gone, or on a page the frame has since loaded, focus on a frame of another
+  origin where a press by pointer dismisses the toast, and, in Firefox, focus on the main content
+  where a dismiss by Enter cannot focus that frame. It also finds focus sent back to a link inside
+  an inline svg that focus came into the toast from, and to one that had focus as the message came
+  where focus then came into the toast from nowhere. It runs in Firefox as well as Chromium and
+  WebKit. `e2e/dialog.spec.ts` finds it sent back to one that opened the dialog, and
+  `e2e/panel.spec.ts` finds focus sent to one that follows a panel whose buttons are gone, there too
+  where the link's address is written with `xlink:href`, and to the place on the page that one
+  pressed inside a panel goes to, and finds a panel closing without throwing in a window with no
+  class for an SVG link, as jsdom has none. `e2e/focus.spec.tsx` finds a late request from a
+  component since gone land on one. Each runs in Chromium, WebKit and Firefox. `e2e/shadow.spec.ts`
+  finds focus sent back to a control inside an open shadow root that focus came into the toast from.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
   aborts and finds it closed, and finds a copy button's word kept for the block its last press
   copied and put back to Copy where a source that reads the page's state gives another block, or

@@ -23,17 +23,19 @@ import { textSize } from './text-size.js';
  * focus moving and with no element added, its action and its close button reached by the keyboard
  * and dismissing it, a toast with an action staying and one without leaving after its time, that
  * wait held while it is hovered or focused, on a stand-in clock, a second message replacing the
- * first and the same words heard again, focus returned to where it was, a link inside an inline svg
- * among the places, left on the page's body where nothing else takes it, left where a page's
- * listener moves it as it leaves the toast, with the walk stopping there and a focus request asked
- * before it leaving it be, sent on to the control inside a frame of the page's own origin that last
- * had focus there and left on the frame where that control is off, reloaded or left for empty
- * space, and to a frame of another origin by pointer or past it by a key in Firefox, a long message
- * wrapping with its action in reach and its buttons wrapped inside it on a 320px phone at twice the
- * text size, its message as far from either edge there, its buttons kept together in their group,
- * or as they were without it, its place above an app's dock or at the foot of a page, nothing drawn
- * before a message or printed, the same function returned when attached again, a solid edge in
- * forced colors outside WebKit, which draws none, and no audit findings in either theme.
+ * first and the same words heard again, focus returned to where it was, to a link inside an inline
+ * svg, focus left on the page's body where nothing else takes it, left where a page's listener
+ * moves it as it leaves the toast, with the walk stopping there and a focus request asked before it
+ * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
+ * focus goes back to a control in view, focus sent on to the control inside a frame of the page's
+ * own origin that had focus as the message came and left on the frame where that control is marked
+ * off, gone or on a page since loaded, and to a frame of another origin by pointer or past it by a
+ * key in Firefox, a long message wrapping with its action in reach and its buttons wrapped inside
+ * it on a 320px phone at twice the text size, its message as far from either edge there, its
+ * buttons kept together in their group, or as they were without it, its place above an app's dock
+ * or at the foot of a page, nothing drawn before a message or printed, the same function returned
+ * when attached again, a solid edge in forced colors outside WebKit, which draws none, and no audit
+ * findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -433,7 +435,7 @@ test("lets focus fall to the page's body where nothing it would hand focus to ta
     await expect(page.locator('body')).toBeFocused();
 });
 
-/** A field after the toast, so the keyboard passes no field on its way in, and a page's listener. */
+/** A field after the toast, so the keyboard meets no field on its way in. */
 const NOTED = `${TWO}<input id="note" aria-label="Note">`;
 
 /** Has the page move focus to its field as focus next leaves the toast's action. */
@@ -500,13 +502,144 @@ test("keeps a focus request asked before the dismiss off the field a page's list
     await expect(page.locator('#note')).toBeFocused();
 });
 
+test('counts focus a host hands to its shadow tree as handed back, so a focus request asked before still lands', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        body: NOTED.replace('Share</button>', 'Share</button><dk-picker id="picker"></dk-picker>'),
+    });
+    // A custom element that hands its focus to the button in its shadow tree.
+    await page.evaluate(() => {
+        customElements.define(
+            'dk-picker',
+            class extends HTMLElement {
+                constructor() {
+                    super();
+                    this.attachShadow({ mode: 'open', delegatesFocus: true }).innerHTML =
+                        '<button type="button">Pick</button>';
+                }
+            }
+        );
+    });
+    await page.locator('#picker').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    // The page stops the picker's focusout before it reaches the document, so the control focus
+    // came into the toast from is the host, which hands focus on to its button.
+    await page.evaluate(() => {
+        window.addEventListener(
+            'focusout',
+            (event) => {
+                if ((event.target as Element).id === 'picker') event.stopPropagation();
+            },
+            true
+        );
+    });
+    await page.keyboard.press(tabKey(browserName));
+    await expect(undo(page)).toBeFocused();
+    // A request for the field asked, then the toast dismissed, in one task. The handback to the
+    // host counts, so the request asked before it is free to land.
+    await page.evaluate(async () => {
+        const controls = '/controls.js';
+        const { moveFocus } = (await import(controls)) as {
+            moveFocus: (target: string) => () => void;
+        };
+        moveFocus('note');
+        document.querySelector<HTMLElement>('.dk-toast-action')?.click();
+    });
+    await frames(page, 3);
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#note')).toBeFocused();
+});
+
+for (const [where, body, scroller] of [
+    [
+        'on a page',
+        PAGE.replace(
+            '<p id="last">',
+            '<button type="button" class="dk-button" id="b">B</button><p id="last">'
+        ),
+        'html',
+    ],
+    [
+        "in an app's frame",
+        FRAME.replace(
+            '<p id="last">',
+            '<button type="button" class="dk-button" id="b">B</button><p id="last">'
+        ),
+        '.dk-app-body',
+    ],
+] as const)
+    test(`leaves the scroll where it is as focus goes back to a control in view, ${where}`, async ({
+        page,
+        browserName,
+    }) => {
+        await open(page, { body });
+        const b = page.locator('#b');
+        await b.focus();
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settled(page);
+        // The page scrolled back so B is in view near the foot of the screen, where the room the
+        // sheet keeps under a shown toast would take it.
+        await page.evaluate((selector) => {
+            const target = document.querySelector('#b')!.getBoundingClientRect();
+            const box = document.querySelector(selector)!;
+            const bottom =
+                selector === 'html' ? window.innerHeight : box.getBoundingClientRect().bottom;
+            const by = target.bottom - bottom + 8;
+            if (selector === 'html') window.scrollBy(0, by);
+            else box.scrollTop += by;
+        }, scroller);
+        const at = (): Promise<number> =>
+            page.evaluate(
+                (selector) =>
+                    selector === 'html'
+                        ? window.scrollY
+                        : document.querySelector(selector)!.scrollTop,
+                scroller
+            );
+        await page.keyboard.press(tabKey(browserName));
+        await expect(undo(page)).toBeFocused();
+        const before = await at();
+        await page.keyboard.press('Enter');
+        await expect(message(page)).toHaveText('');
+        await expect(b).toBeFocused();
+        expect(Math.abs((await at()) - before)).toBeLessThanOrEqual(1);
+    });
+
 /** The page with a frame after Save holding buttons, from the page's origin or the one given. */
 const framed = (
     source = 'srcdoc="<button type=button id=inner>Inside</button>' +
         '<button type=button id=next>Next</button>"'
 ): string => PAGE.replace('</button>', `</button><iframe title="Notes" ${source}></iframe>`);
 
-test("hands focus back to the control inside a frame of the page's own origin that last had focus there", async ({
+/** Opens the framed page with focus on the frame's first button, a message shown, and Undo. */
+const intoToastFromFrame = async (page: Page): Promise<Locator> => {
+    await open(page, { body: framed() });
+    const inner = page.frameLocator('iframe').locator('#inner');
+    await inner.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).focus();
+    return inner;
+};
+
+/** Dismisses by Enter and finds focus on the frame, not on its first button, with no error. */
+const dismissToFrame = async (page: Page, inner: Locator, errors: Error[]): Promise<void> => {
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(inner).not.toBeFocused();
+    expect(errors).toEqual([]);
+};
+
+/** The errors a page throws from here on. */
+const errorsOf = (page: Page): Error[] => {
+    const errors: Error[] = [];
+    page.on('pageerror', (error) => errors.push(error));
+    return errors;
+};
+
+test("hands focus back to the control inside a frame of the page's own origin that had it as the message came", async ({
     page,
     browserName,
 }) => {
@@ -514,59 +647,58 @@ test("hands focus back to the control inside a frame of the page's own origin th
     const inner = page.frameLocator('iframe').locator('#inner');
     await inner.focus();
     await show(page, 'Round 3 saved.', 'Undo');
-    // The visitor moves on to the frame's next button after the message came, then into the toast.
+    // The visitor moves on to the frame's next button after the message came, then into the
+    // toast. Focus that comes in from inside a frame counts as coming from nowhere, so it goes
+    // back by the page's rule for that, to where it was as the message came.
     await page.keyboard.press(tabKey(browserName));
     await page.keyboard.press(tabKey(browserName));
     await expect(undo(page)).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(message(page)).toHaveText('');
     await expect(page.locator('iframe')).toBeFocused();
-    await expect(page.frameLocator('iframe').locator('#next')).toBeFocused();
+    await expect(inner).toBeFocused();
 });
 
-test('leaves focus on a frame whose control is off, or whose page is drawn again, as it dismisses', async ({
-    page,
-}) => {
-    const errors: Error[] = [];
-    page.on('pageerror', (error) => errors.push(error));
-    await open(page, { body: framed() });
-    const inner = page.frameLocator('iframe').locator('#inner');
-    for (const change of ['off', 'drawn again'] as const) {
-        await inner.focus();
-        await show(page, 'Round 3 saved.', 'Undo');
-        await undo(page).focus();
-        if (change === 'off')
-            await inner.evaluate((button) => button.setAttribute('aria-disabled', 'true'));
-        else {
-            // The frame loads a page of its own again while focus is in the toast.
-            await page.locator('iframe').evaluate((frame) => {
-                (frame as HTMLIFrameElement).srcdoc =
-                    '<button type=button id=inner>Inside</button>';
-            });
-            await expect(inner).not.toHaveAttribute('aria-disabled');
-        }
-        await page.keyboard.press('Enter');
-        await expect(message(page)).toHaveText('');
-        await expect(page.locator('iframe')).toBeFocused();
-        await expect(inner).not.toBeFocused();
-    }
-    expect(errors).toEqual([]);
-});
-
-test('leaves focus on the frame where a click on its empty space took focus off its control', async ({
+test('hands focus back to the control inside a frame after a click on its empty space', async ({
     page,
 }) => {
     await open(page, { body: framed() });
     const inner = page.frameLocator('iframe').locator('#inner');
     await inner.focus();
     await show(page, 'Round 3 saved.', 'Undo');
-    // A click on the frame's empty space leaves focus on the frame's body, with no control.
+    // A click on the frame's empty space, then on the toast's action.
     const frame = await box(page.locator('iframe'));
     await page.mouse.click(frame.x + frame.width - 10, frame.y + frame.height - 10);
     await undo(page).click();
     await expect(message(page)).toHaveText('');
     await expect(page.locator('iframe')).toBeFocused();
-    await expect(inner).not.toBeFocused();
+    await expect(inner).toBeFocused();
+});
+
+test('leaves focus on a frame whose control is marked off as it dismisses', async ({ page }) => {
+    const errors = errorsOf(page);
+    const inner = await intoToastFromFrame(page);
+    await inner.evaluate((button) => button.setAttribute('aria-disabled', 'true'));
+    await dismissToFrame(page, inner, errors);
+});
+
+test('leaves focus on a frame whose control is gone as it dismisses', async ({ page }) => {
+    const errors = errorsOf(page);
+    const inner = await intoToastFromFrame(page);
+    await inner.evaluate((button) => button.remove());
+    await dismissToFrame(page, page.frameLocator('iframe').locator('#next'), errors);
+});
+
+test('leaves focus on a frame that has loaded its page again as it dismisses', async ({ page }) => {
+    const errors = errorsOf(page);
+    const inner = await intoToastFromFrame(page);
+    // The frame loads a page of its own again while focus is in the toast, with a button of the
+    // same id, which is not the control that had focus.
+    await page.locator('iframe').evaluate((frame) => {
+        (frame as HTMLIFrameElement).srcdoc = '<button type=button id=inner>Inside</button>';
+    });
+    await expect(page.frameLocator('iframe').locator('#next')).toHaveCount(0);
+    await dismissToFrame(page, inner, errors);
 });
 
 test('hands focus back to a frame of another origin, as near as the page can reach', async ({

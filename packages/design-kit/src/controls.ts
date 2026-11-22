@@ -44,12 +44,23 @@ const focusedNow = (): Element | null => {
 const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
 
+/** Whether a node is the place or inside it, through the shadow trees it holds. */
+const holds = (place: Element, node: Node | null): boolean => {
+    let inside = node;
+    while (inside && !place.contains(inside))
+        inside = (inside.getRootNode() as Partial<ShadowRoot>).host ?? null;
+    return !!inside;
+};
+
 /**
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
  * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
- * refuses it focus. Each caller leaves out a control marked off before it calls. Where a page's own
- * listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
+ * refuses it focus. A control marked off is left out only where a caller checks for it, as a panel
+ * does for its buttons and a focus request for its target, so the toast and the dialog hand focus to
+ * one. Focus that lands on a place or inside it, in a shadow tree it holds too, as a host that
+ * delegates focus or a widget that forwards it, counts as taken. Where a page's own listener moves
+ * focus elsewhere as one is tried, the walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
@@ -62,7 +73,7 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
         const before = focusedNow();
         place.focus({ preventScroll: place.matches('.dk-app-body') });
         const now = focusedNow();
-        if (now === place) return true;
+        if (holds(place, now)) return true;
         if (now && now !== before) return false;
     }
     return false;
@@ -907,16 +918,17 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * aborted returns a function that shows nothing.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
- * than staying on the toast's hidden button. Where a page's own listener moves focus elsewhere as
- * the toast hands it back, the toast goes no further down the list and that focus stays. A page
- * sees focus inside a frame only as the frame, and focus that comes into the toast from inside a
- * frame as coming from nowhere. Where focus goes back to a frame that had it as the latest message
- * came, it goes on to the control inside that last had focus there, where the frame is of the
- * page's own origin, and stays on the frame where it is of another, or where that control is gone,
- * off, from a page the frame has loaded since, or left for the frame's empty space. A frame inside
- * that frame is not followed, so focus goes back to the inner frame itself. Firefox does not focus
- * a frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on
- * down the list.
+ * than staying on the toast's hidden button. The toast takes off its shown state before it hands
+ * focus back, so the room the sheet keeps under a shown toast does not scroll the control focus
+ * goes to. Where a page's own listener moves focus elsewhere as the toast hands it back, the toast
+ * goes no further down the list and that focus stays. A page sees focus inside a frame only as the
+ * frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where
+ * focus goes back to a frame of the page's own origin, it goes on to the control that had focus
+ * there as the latest message came, read as the message came, and stays on the frame where that
+ * control is gone, marked off, on a page the frame has since replaced, and on a frame of another
+ * origin. A frame inside that frame is not followed, so focus goes back to the inner frame itself.
+ * Firefox does not focus a frame of another origin while a key is being pressed, so a dismiss by
+ * keyboard there goes on down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const part = <T extends HTMLElement>(name: string) => {
@@ -962,29 +974,15 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let cameFrom: Element | undefined;
     let arrivedAt: Element | undefined;
     let lost: Element | undefined;
-    // The control that last lost focus inside the frame that had focus as the latest message came,
-    // where it is of the page's own origin. The page sees focus inside a frame only as the frame,
-    // and the frame's document drops its focus to its body once focus leaves, so it is read as
-    // focus leaves, inside an open shadow root too, and let go where focus stays in the frame on
-    // its body. A listener left on an earlier frame's document until takedown reads nothing, since
-    // only the current frame's document counts.
-    let inFrame: Element | undefined;
-    const noteFrame = (event: Event) => {
-        const frame = event.currentTarget as Document;
-        if (frame !== (arrivedAt as HTMLIFrameElement | undefined)?.contentDocument) return;
-        inFrame = event.composedPath()[0] as Element;
-        // Focus still in the frame a task later and on its body, as a click on its empty space
-        // leaves it, leaves no control to go back to.
-        window.setTimeout(() => {
-            if (frame.hasFocus() && frame.activeElement === frame.body) inFrame = undefined;
-        });
-    };
-    const watchFrame = (frame: Element) => {
-        inFrame = undefined;
-        (frame as HTMLIFrameElement).contentDocument?.addEventListener('focusout', noteFrame, {
-            capture: true,
-            signal,
-        });
+    // The control that had focus inside a frame of the page's own origin as the latest message
+    // came, read then, inside an open shadow root too, since the page sees focus inside a frame
+    // only as the frame and the frame's document drops its focus to its body once focus leaves.
+    let inFrame: Element | null | undefined;
+    const insideOf = (frame: Element | null) => {
+        const inner = (frame as HTMLIFrameElement | null)?.contentDocument;
+        let held = inner?.activeElement;
+        while (held?.shadowRoot?.activeElement) held = held.shadowRoot.activeElement;
+        return held === inner?.body ? undefined : held;
     };
     const wait = () => {
         window.clearTimeout(timer);
@@ -1003,38 +1001,38 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         onAction = undefined;
         // Focus that was in the toast goes back to the control it came in from, then to where it
         // was as the message came, on to the control inside it where that is a frame of the page's
-        // own origin, then to the body of the app's frame or the page's main content. It goes
-        // before the toast hides its buttons, so no engine moves focus off a hidden button ahead
-        // of it, and where nothing takes it, it leaves the toast for the page's body rather than
+        // own origin, then to the body of the app's frame or the page's main content. The shown
+        // state comes off first, so the room the sheet keeps under a shown toast is gone and the
+        // control focus goes to is not scrolled clear of a toast that is leaving. The buttons stay
+        // drawn until after, so no engine moves focus off a hidden button ahead of the handback,
+        // and where nothing takes focus, it leaves the toast for the page's body rather than
         // staying on a hidden button, as WebKit and Firefox would leave it.
+        element.classList.remove('dk-toast-shown');
+        delete element.dataset['shown'];
+        delete element.dataset['rows'];
+        delete element.dataset['row'];
         if (hadFocus) {
             handBack(cameFrom, arrivedAt, homeOf(element));
             const now = activeOf();
-            if (
-                now === arrivedAt &&
-                inFrame?.isConnected &&
-                inFrame.ownerDocument === (now as HTMLIFrameElement).contentDocument &&
-                !isOff(inFrame)
-            )
-                (inFrame as HTMLElement).focus();
+            if (now === arrivedAt && inFrame && !isOff(inFrame)) (inFrame as HTMLElement).focus();
             else if (element.contains(now)) (now as HTMLElement).blur();
         }
+        inFrame = undefined;
         message.textContent = '';
         actionButton.textContent = '';
         actionButton.hidden = true;
         close.hidden = true;
-        element.classList.remove('dk-toast-shown');
-        delete element.dataset['shown'];
         watch.disconnect();
         window.removeEventListener('resize', remeasure);
-        delete element.dataset['rows'];
-        delete element.dataset['row'];
         hush(status);
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         const active = focusedNow();
-        if (!active || !element.contains(active)) arrivedAt = active ?? undefined;
+        if (!active || !element.contains(active)) {
+            arrivedAt = active ?? undefined;
+            inFrame = insideOf(active);
+        }
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
@@ -1054,7 +1052,6 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
         // taller than the room above the toast, such as the frame's body, stays where it is.
         if (arrivedAt === active) {
-            watchFrame(active);
             const control = arrivedAt.getBoundingClientRect();
             const card = element.getBoundingClientRect();
             if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
