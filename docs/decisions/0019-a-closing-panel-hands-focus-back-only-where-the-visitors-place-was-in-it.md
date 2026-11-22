@@ -1,10 +1,8 @@
 # 19. A closing panel hands focus to its button only where the visitor's place was in it
 
-**Status:** accepted, amended in 0.9.0 for `moveFocus`, which moves focus once a change is drawn by
-the same walk through a target and its fallbacks that a closing panel hands focus back by, so a
-panel and a page fall back alike, and in 0.9.3 for a button let go while its panel is open, after
-which the panel stays the kit's while an attached button names it, and by record 23, under which the
-toast and a dialog taken down by its signal hand focus back by this same rule
+**Status:** accepted, amended in 0.9.0 for `moveFocus`, which falls back by the same walk, in 0.9.3
+for a button let go while its panel is open, and by record 23 in 0.9.3, under which the toast and a
+dialog taken down by its signal hand focus back by this rule
 
 ## Context
 
@@ -57,19 +55,26 @@ path of the last focus or press as evidence that the visitor's place was in the 
 ## Decision
 
 Option C. When a panel closes, however it closes, the kit hands focus to its button where focus is
-in the panel, or where nothing has focus and the visitor's last place was in the panel, and leaves
-focus anywhere else where it is. The visitor's last place is the path, from what it reached up, of
-the last focus that moved, by the visitor or by a page's code, or of the visitor's last press. A
-path rather than an element, so a Done the page draws away or turns off while it waits still counts
-as the panel's. A press by a page's script is not the visitor's and is not kept. The button focus
-goes to is the one pressed or the one that opened the panel, else the first attached button that
-names it and takes focus, else the first thing after the panel the keyboard reaches by Tab, else the
-app frame's body or the page's main content. Where focus goes back and the visitor's last press was
-a link in the panel to a place on the same page outside it, one that opens no new tab and downloads
-nothing, focus goes to that place instead, since following the link moved the keyboard's starting
-point there. The toast and a dialog taken down by its signal hand focus back by the same rule, focus
-in the piece, or on the body or nowhere where the piece had it as it left, which the kit states
-once, as record 23 has it.
+in the panel, or where focus is on the body or nowhere and the visitor's last place was in the
+panel, and leaves focus anywhere else where it is. The visitor's last place is the path, from what
+it reached up, of the last focus that moved, by the visitor or by a page's code, or of the visitor's
+last press. A path rather than an element, so a Done the page draws away or turns off while it waits
+still counts as the panel's. A press by a page's script is not the visitor's and is not kept. The
+button focus goes to is the one pressed or the one that opened the panel, else the first attached
+button that names it and takes focus, else the first thing after the panel the keyboard reaches by
+Tab, else the app frame's body or the page's main content. Where focus goes back and the visitor's
+last press was a link in the panel to a place on the same page outside it, one that opens no new tab
+and downloads nothing, focus goes to that place instead, since following the link moved the
+keyboard's starting point there. The toast and a dialog taken down by its signal hand focus back by
+the same rule, focus in the piece, or on the body or nowhere where the piece had it as it left,
+which the kit states once, as record 23 has it.
+
+`moveFocus`, which moves focus once a change is drawn, falls back by the same walk: where its target
+is gone, hidden, inert, disabled or off, focus goes to the first of its fallbacks that takes it and
+then to the app frame's body or the page's main content, so a panel and a page fall back alike and
+focus never falls to the page. Focus the kit has handed back since a request was asked counts as
+free for it, so a request asked as a panel, a toast or a dialog closes still lands, as record 23
+has it.
 
 The kit writes `tabindex="0"` on an attached button as it is attached, `tabindex="0"` on a panel's
 corner Close and `tabindex="-1"` on the panel as the panel opens or closes and as a press in it

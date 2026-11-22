@@ -1,12 +1,7 @@
 # 21. A refused form checks the browser's constraints itself
 
-**Status:** accepted, amended in 0.9.1 for what a refusal says, the name and error of the field
-focus is on, with how many fields need attention where more are wrong, since a device check with
-VoiceOver on an iPhone heard no error where the kit left it to the field's description, which iOS
-reads only as a hint. A screen reader that reads the error as focus lands hears it twice. A reset
-that takes away the errors the kit drew says "Form cleared." Amended in 0.9.3 for record 22's
-teardown, after which the form gets back its own `noValidate` once the last attach in it is taken
-down, so the browser checks it again.
+**Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, and in 0.9.3 for record
+22's teardown, which gives a form back its own `noValidate` once the last attach in it is taken down
 
 ## Context
 
@@ -104,8 +99,15 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   mark a stepper has since taken away stays away. **In React the failures go to `invalid`,** which
   the hook asks for, since the markup belongs to the page's state, and the hook refuses after the
   render that draws them.
+- **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
+  attention where more are wrong, nothing where focus moves to an error summary, which reads its own
+  words, and the summary's words where focus was already on it. A device check with VoiceOver on an
+  iPhone heard no error where the kit left it to the field's description, which iOS reads only as a
+  hint, and focus moved by script may not land.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
+- **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
+  none to take away says nothing.
 - **Fields not in error are marked `aria-invalid="false"`** as the form is attached, so an empty
   required field is not read as invalid before anything is submitted. Only the fields drawn by then
   are marked, and in React a field whose error clears loses its mark. `required` stays, since the
@@ -122,6 +124,8 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - The controls carry the words and the check, and record 13 raises their budget by its rule.
 - `attachForm` keeps a submit and a reset listener on its form, one of each however many of its
   parts are attached, which leave with the form, where it kept none.
+- A screen reader that reads a field's error as focus lands on it hears the error twice, which slows
+  a visitor less than an error never heard.
 - A page that fills a field from script gets no length check on it, since the browser counts
   length only after a visitor's edit, so its own handler checks that.
 - A page that already handles the browser's check itself sees no bubble now, and its own handler
