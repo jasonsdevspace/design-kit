@@ -3,9 +3,9 @@ import type { ReactElement } from 'react';
 import type { Control, Kit, State } from './states.js';
 
 /*
- * The page chrome and an explainer's pieces, named, with the attribute that draws each, for a page
- * that shows them one by one, as `states.tsx` holds the controls. The chrome is drawn by the
- * components passed in, and the explainer's pieces, which no component draws, are written as a
+ * The page chrome, an app's pieces, the layouts and an explainer's pieces, named, with the attribute
+ * that draws each, for a page that shows them one by one, as `states.tsx` holds the controls. The
+ * chrome is drawn by the components passed in, and the pieces no component draws are written as a
  * page writes them by hand. The reference's blocks for the steps, the panel, the table and the code
  * block are drawn from here too, so the two never differ.
  */
@@ -92,44 +92,6 @@ export const CHROME: readonly Control[] = [
 />`,
                 draw: ({ DemoFooter }) => (
                     <DemoFooter name="Example" about={ABOUT} source={SOURCE} current="about" />
-                ),
-            },
-        ],
-    },
-    {
-        name: 'Bands',
-        pictured: true,
-        states: [
-            {
-                name: 'A landing page in bands, a group of sections in the second',
-                attribute: 'class="dk-band"',
-                // A div rather than main, and a picture, since the page it is shown on has its own
-                // main content and its own h1.
-                draw: () => (
-                    <div>
-                        <section className="dk-band">
-                            <div className="dk-stack">
-                                <p className="dk-eyebrow">For game night</p>
-                                <h1>Scorekeeper</h1>
-                                <p className="dk-lead">
-                                    Keep score for any card game on one phone.
-                                </p>
-                            </div>
-                        </section>
-                        <section className="dk-band site-ground-band">
-                            <h2>Install it</h2>
-                            <div className="dk-sections">
-                                <section>
-                                    <h3>On an iPhone</h3>
-                                    <p>Open it in Safari, then Add to Home Screen.</p>
-                                </section>
-                                <section>
-                                    <h3>On an Android phone</h3>
-                                    <p>Open it in Chrome, then Install app.</p>
-                                </section>
-                            </div>
-                        </section>
-                    </div>
                 ),
             },
         ],
@@ -310,8 +272,9 @@ const tabBar = (className: string, current = 'Play') => (
 );
 
 /**
- * A screen in an app's frame, its toast's place holding what `toast` draws there and its body what
- * `content` draws, a line of the game's standing unless a screen says otherwise.
+ * A screen in an app's frame, its toast's place holding what `toast` draws there, its body what
+ * `content` draws, a line of the game's standing unless a screen says otherwise, and its dock what
+ * `dock` draws, the main action alone unless a screen says otherwise.
  */
 const screen = (
     { Button }: Kit,
@@ -320,7 +283,17 @@ const screen = (
         body,
         toast,
         content = <p>Ana leads by twelve points, with two rounds to play.</p>,
-    }: { readonly body: string; readonly toast: ReactElement; readonly content?: ReactElement }
+        dock = (
+            <Button accent tall>
+                Save the round
+            </Button>
+        ),
+    }: {
+        readonly body: string;
+        readonly toast: ReactElement;
+        readonly content?: ReactElement;
+        readonly dock?: ReactElement;
+    }
 ) => (
     <div className="dk-app">
         <header className="dk-app-bar">
@@ -332,9 +305,7 @@ const screen = (
         </main>
         <div className="dk-app-toast">{toast}</div>
         <section className="dk-app-dock" aria-label="Actions">
-            <Button accent tall>
-                Save the round
-            </Button>
+            {dock}
         </section>
         {tabBar('dk-app-tabs dk-tabbar')}
     </div>
@@ -486,6 +457,23 @@ export const APP: readonly Control[] = [
                                         <span className="dk-visually-hidden">Close</span>
                                     </button>
                                 </div>
+                            </div>
+                        ),
+                    }),
+            },
+            {
+                name: 'A screen with a compact action beside its main one',
+                attribute: 'class="dk-app-dock-inline"',
+                draw: (kit, id) =>
+                    screen(kit, id, {
+                        body: 'round-3-undo',
+                        toast: <kit.Toast />,
+                        dock: (
+                            <div className="dk-app-dock-inline">
+                                <kit.Button tall>Undo</kit.Button>
+                                <kit.Button accent tall>
+                                    Save the round
+                                </kit.Button>
                             </div>
                         ),
                     }),
@@ -655,6 +643,20 @@ export const APP: readonly Control[] = [
                 attribute: 'class="dk-rows dk-rows-tall"',
                 draw: (kit) => playerRows('dk-rows dk-rows-tall', kit),
             },
+            {
+                name: 'A list with nothing in it yet',
+                attribute: 'class="dk-empty"',
+                react: `<div className="dk-empty">
+    <p>No players yet.</p>
+    <Button>Add a player</Button>
+</div>`,
+                draw: ({ Button }) => (
+                    <div className="dk-empty">
+                        <p>No players yet.</p>
+                        <Button>Add a player</Button>
+                    </div>
+                ),
+            },
         ],
     },
     {
@@ -715,6 +717,167 @@ export const APP: readonly Control[] = [
                             </table>
                         </div>
                     </>
+                ),
+            },
+        ],
+    },
+];
+
+/**
+ * A page's layouts: a content page, a landing page in bands with a hero and a group of sections,
+ * as pictures, since a live copy would give the page a second h1, and the stacks, the split row,
+ * the note and the numeral that work inside any of them, live.
+ */
+export const LAYOUTS: readonly Control[] = [
+    {
+        name: 'Content page',
+        pictured: true,
+        states: [
+            {
+                name: 'A title, its lead, its one action and its sections',
+                attribute: 'class="dk-page"',
+                // A div rather than main, since the page it is shown on has its own main content.
+                draw: () => (
+                    <div className="dk-page">
+                        <h1>Scorekeeper</h1>
+                        <p className="dk-lead">
+                            Keep score for any card game on one phone passed around the table.
+                        </p>
+                        <p>
+                            <a className="dk-button dk-button-accent" href="../">
+                                Start a game
+                            </a>
+                        </p>
+                        <section>
+                            <h2>How it works</h2>
+                            <p>Each player adds their points as the round ends.</p>
+                        </section>
+                        <section>
+                            <h2>The games it knows</h2>
+                            <ul>
+                                <li>Flip 7</li>
+                                <li>Skyjo</li>
+                                <li>Wizard</li>
+                            </ul>
+                        </section>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Bands and a hero',
+        pictured: true,
+        states: [
+            {
+                name: 'A hero band over a band on a ground of its own',
+                attribute: 'class="dk-band-hero"',
+                // A div rather than main, since the page it is shown on has its own main content
+                // and its own h1. The picture only sets a mood beside words that say what the page
+                // is, so it says nothing.
+                draw: () => (
+                    <div>
+                        <section className="dk-band">
+                            <div className="dk-band-hero">
+                                <div className="dk-stack">
+                                    <p className="dk-eyebrow">For game night</p>
+                                    <h1>Scorekeeper</h1>
+                                    <p className="dk-lead">
+                                        Keep score for any card game on one phone.
+                                    </p>
+                                </div>
+                                <img src="/game-night.svg" width="880" height="1008" alt="" />
+                            </div>
+                        </section>
+                        <section className="dk-band site-ground-band">
+                            <h2>Pass it round</h2>
+                            <p>One phone keeps the whole table&rsquo;s score.</p>
+                        </section>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Groups of sections',
+        pictured: true,
+        states: [
+            {
+                name: 'Two ways to do one thing, side by side',
+                attribute: 'class="dk-sections"',
+                draw: () => (
+                    <div>
+                        <section className="dk-band">
+                            <h2>Install it</h2>
+                            <div className="dk-sections">
+                                <section>
+                                    <h3>On an iPhone</h3>
+                                    <p>Open it in Safari, then Add to Home Screen.</p>
+                                </section>
+                                <section>
+                                    <h3>On an Android phone</h3>
+                                    <p>Open it in Chrome, then Install app.</p>
+                                </section>
+                            </div>
+                        </section>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Stacks',
+        laidOut: true,
+        states: [
+            {
+                name: 'A label over its value',
+                attribute: 'class="dk-stack dk-stack-pair"',
+                draw: () => (
+                    <div className="dk-stack dk-stack-pair">
+                        <p>Next to play</p>
+                        <p>Ana</p>
+                    </div>
+                ),
+            },
+            {
+                name: 'A heading over the list it heads',
+                attribute: 'class="dk-stack dk-stack-heading"',
+                draw: () => (
+                    <div className="dk-stack dk-stack-heading">
+                        <h4>Round 3</h4>
+                        <ul className="dk-stack" role="list">
+                            <li>Ana, 42 points</li>
+                            <li>Ben, 37 points</li>
+                        </ul>
+                    </div>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Split rows, notes and numerals',
+        laidOut: true,
+        states: [
+            {
+                name: 'A name with a note at the end of its line',
+                attribute: 'class="dk-split"',
+                draw: () => (
+                    <div className="dk-split">
+                        <h4>Ana</h4>
+                        <p className="dk-note">Round 4 of 10</p>
+                    </div>
+                ),
+            },
+            {
+                name: 'A score read from across the table',
+                attribute: 'class="dk-numeral"',
+                draw: () => (
+                    <div className="dk-stack dk-stack-pair">
+                        <p className="dk-numeral">
+                            212<span className="dk-visually-hidden"> points</span>
+                        </p>
+                        <p className="dk-note">The first to 300 points wins.</p>
+                    </div>
                 ),
             },
         ],

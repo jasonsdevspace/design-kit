@@ -492,7 +492,7 @@ test.describe('the landing page', () => {
         }
     });
 
-    test("stands every tile on one line on a laptop's screen, and in one column on a phone", async ({
+    test("stands the tiles in full rows on a laptop's screen, and in one column on a phone", async ({
         page,
     }) => {
         await page.goto(BASE);
@@ -507,34 +507,43 @@ test.describe('the landing page', () => {
                     all.map((card) => Math.round(card.getBoundingClientRect().left))
                 )
             );
-            // On a laptop's screen all five stand on one line, none left alone under the rest.
-            if (many) expect(lefts.size, String(width)).toBe(await cards.count());
-            else expect(lefts.size, String(width)).toBe(1);
+            // On a laptop's screen they stand in full rows of more than one, none left alone
+            // under the rest.
+            if (many) {
+                expect(lefts.size, String(width)).toBeGreaterThan(1);
+                expect((await cards.count()) % lefts.size, String(width)).toBe(0);
+            } else expect(lefts.size, String(width)).toBe(1);
         }
-        // On a wide screen, tiles on one line start their previews and titles level, a short one
-        // beside one whose line runs longer, which at least one line holds.
-        await page.setViewportSize({ width: 1280, height: 900 });
-        const lines = await cards.evaluateAll((all) => {
-            const box = (card: Element, selector: string) => {
-                const found = card.querySelector(selector);
-                if (found === null) throw new Error(`a tile holds no ${selector}`);
-                return found.getBoundingClientRect();
-            };
-            const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
-            for (const card of all) {
-                const line = Math.round(card.getBoundingClientRect().top);
-                const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
-                held.starts.add(
-                    `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
-                );
-                held.details.add(Math.round(box(card, '.dk-row-detail').height));
-                byLine.set(line, held);
-            }
-            return [...byLine.values()].map(({ starts, details }) => ({
-                starts: starts.size,
-                details: details.size,
-            }));
-        });
+        // On a laptop's screen and a narrower one, tiles on one line start their previews and
+        // titles level, a short one beside one whose line runs longer, which at least one line
+        // holds at one of the widths.
+        const lines: { starts: number; details: number }[] = [];
+        for (const width of [1280, 1024, 900]) {
+            await page.setViewportSize({ width, height: 900 });
+            lines.push(
+                ...(await cards.evaluateAll((all) => {
+                    const box = (card: Element, selector: string) => {
+                        const found = card.querySelector(selector);
+                        if (found === null) throw new Error(`a tile holds no ${selector}`);
+                        return found.getBoundingClientRect();
+                    };
+                    const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
+                    for (const card of all) {
+                        const line = Math.round(card.getBoundingClientRect().top);
+                        const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
+                        held.starts.add(
+                            `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
+                        );
+                        held.details.add(Math.round(box(card, '.dk-row-detail').height));
+                        byLine.set(line, held);
+                    }
+                    return [...byLine.values()].map(({ starts, details }) => ({
+                        starts: starts.size,
+                        details: details.size,
+                    }));
+                }))
+            );
+        }
         expect(lines.some(({ details }) => details > 1)).toBe(true);
         for (const { starts } of lines) expect(starts).toBe(1);
     });
@@ -1101,10 +1110,16 @@ test.describe('the controls page, with the pieces the script attaches', () => {
         page,
     }) => {
         await page.goto('/design-kit/controls/');
-        const steppers = page.locator('.site-copy .dk-stepper');
+        // A read-only stepper shows its value alone, its buttons hidden while it is read only.
+        const steppers = page.locator('.site-copy .dk-stepper:not(:has([readonly]))');
         expect(await steppers.count()).toBeGreaterThan(0);
         for (const stepper of await steppers.all()) {
             await expect(stepper.locator('.dk-stepper-up')).toBeVisible();
+        }
+        const readOnly = page.locator('.site-copy .dk-stepper:has([readonly])');
+        expect(await readOnly.count()).toBeGreaterThan(0);
+        for (const stepper of await readOnly.all()) {
+            await expect(stepper.locator('.dk-stepper-up')).toBeHidden();
         }
         const past = page
             .locator('.site-state')
@@ -1135,7 +1150,7 @@ test.describe('the app pieces page', () => {
         await page.goto('/design-kit/app-pieces/');
         const live = page.locator('.site-copy:not([inert])');
         await expect(live.locator('.dk-app, .dk-tabbar')).toHaveCount(0);
-        await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(6);
+        await expect(page.locator('.site-copy[inert] .dk-app')).toHaveCount(8);
         // The raised panel links into an app, so it is a picture, alone and in a screen above tiles.
         await expect(live.locator('.dk-panel-raised')).toHaveCount(0);
         await expect(
@@ -3311,7 +3326,7 @@ test.describe('the pieces together', () => {
         );
         await expect(
             stack.locator('.dk-rows-columns > li > a.dk-row > .dk-row-picture')
-        ).toHaveCount(5);
+        ).toHaveCount(ROUTES.filter((route) => 'card' in route).length);
         await expect(stack.locator('.site-masthead button .dk-icon')).toHaveCount(1);
         // The grounds' Close is in the dialog's corner, after its title, and none among answers.
         await expect(stack.locator('dialog > .dk-dialog-title + .dk-close > button')).toHaveCount(

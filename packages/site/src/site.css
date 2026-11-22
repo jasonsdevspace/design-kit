@@ -185,11 +185,11 @@ body > .dk-strip {
 }
 
 /*
- * The landing page's five tiles take a narrower least width than the kit's, so on a laptop's screen
- * all five stand on one line rather than four with one left alone under them.
+ * The landing page's six tiles take a wider least width than the kit's, so on a laptop's screen
+ * they stand in two rows of three rather than four with two left under them.
  */
 .site-pages {
-    --dk-tile-least: 13.25rem;
+    --dk-tile-least: 18rem;
 }
 
 /*
@@ -284,6 +284,44 @@ body > .dk-strip {
 
 .site-preview-foot {
     width: 60%;
+}
+
+/* A page laid out: a hero's words beside its picture, over a group of two sections. */
+.site-preview-layout {
+    display: grid;
+    gap: var(--dk-space-2);
+    width: 80%;
+}
+
+.site-preview-hero {
+    display: grid;
+    grid-template-columns: 1fr 40%;
+    align-items: center;
+    gap: var(--dk-space-2);
+}
+
+.site-preview-hero-words {
+    height: 0.5rem;
+    border-radius: var(--dk-radius-pill);
+    background: var(--dk-fg);
+}
+
+.site-preview-hero-picture {
+    height: 1.75rem;
+    border-radius: var(--dk-radius-small);
+    background: var(--dk-accent);
+}
+
+.site-preview-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--dk-space-2);
+}
+
+.site-preview-line {
+    height: 0.375rem;
+    border-radius: var(--dk-radius-pill);
+    background: var(--dk-control);
 }
 
 /* A phone held upright: its bar at the top, and the one action its screen is for under the thumb. */
@@ -717,6 +755,68 @@ body > .dk-strip {
     stroke: var(--dk-fg);
     stroke-width: 2;
     vector-effect: non-scaling-stroke;
+}
+
+/*
+ * Each step of the type scale, words at its size over its name and value, each step's size from its
+ * own token by a class, as the page's policy allows.
+ */
+.site-type {
+    display: grid;
+    gap: var(--dk-space-4);
+    padding: 0;
+    list-style: none;
+}
+
+.site-type > li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--dk-space-1) var(--dk-space-3);
+    font-size: var(--dk-text-small);
+}
+
+.site-type-room {
+    flex-basis: 100%;
+    font-size: var(--dk-text-body);
+    line-height: var(--dk-leading-tight);
+}
+
+.site-type-value {
+    color: var(--dk-muted);
+}
+
+.site-text-caption {
+    font-size: var(--dk-text-caption);
+}
+
+.site-text-small {
+    font-size: var(--dk-text-small);
+}
+
+.site-text-body {
+    font-size: var(--dk-text-body);
+}
+
+.site-text-lead {
+    font-size: var(--dk-text-lead);
+}
+
+.site-text-title {
+    font-size: var(--dk-text-title);
+}
+
+.site-text-heading {
+    font-size: var(--dk-text-heading);
+}
+
+.site-text-display {
+    font-size: var(--dk-text-display);
+}
+
+.site-text-numeral {
+    font-size: var(--dk-text-numeral);
+    line-height: 1;
 }
 
 /* Each step of the spacing scale, a square the step wide over its name and value. */

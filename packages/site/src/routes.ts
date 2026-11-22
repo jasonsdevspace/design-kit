@@ -31,27 +31,36 @@ export const ROUTES = [
         path: `${BASE}tokens/`,
         title: 'Tokens and theme · The design kit · Jason Poteet',
         nav: 'Tokens',
-        card: 'Colors, their contrast, sizes and how the theme is chosen.',
+        card: 'Colors, contrast, type, sizes, waits and the theme.',
         description:
-            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its scale, and how the theme is chosen.',
+            'The design kit’s color roles in both themes, the contrast of every pairing they are meant for, its type drawn at each size, its radius, motion, waits and sizes, and how the theme is chosen.',
     },
     {
         file: 'controls/index.html',
         path: `${BASE}controls/`,
         title: 'Controls · The design kit · Jason Poteet',
         nav: 'Controls',
-        card: 'Buttons, fields, steppers and dialogs in every state, and a toast.',
+        card: 'Buttons, fields, waits, progress and dialogs in every state.',
         description:
-            'Each state of the design kit’s buttons, fields, steppers, callouts and dialogs in both themes, with the code behind it, and its toast.',
+            'Each state of the design kit’s buttons, busy buttons, marked and read-only fields, steppers, callouts with Try again, loading lines, progress and dialogs in both themes, with the code behind it, and its toast.',
     },
     {
         file: 'app-pieces/index.html',
         path: `${BASE}app-pieces/`,
         title: 'App pieces · The design kit · Jason Poteet',
         nav: 'App pieces',
-        card: 'The frame, tab bar, grids, rows and tables of a phone app.',
+        card: 'The frame, dock, tab bar, grids, rows and empty lists of an app.',
         description:
-            'The frame, tab bar, button grids, rows and pinned table the design kit gives a phone app, in both themes, with the code behind each.',
+            'The frame, dock with a compact action, tab bar, button grids, rows, empty lists, tiles and pinned table the design kit gives a phone app, in both themes, with the code behind each.',
+    },
+    {
+        file: 'layouts/index.html',
+        path: `${BASE}layouts/`,
+        title: 'Layouts · The design kit · Jason Poteet',
+        nav: 'Layouts',
+        card: 'Content pages, bands, a hero, stacks and split rows.',
+        description:
+            'The content page, bands with a hero, groups of sections, stacks, split rows, notes and numerals the design kit lays a page out with, in both themes, with the code behind each.',
     },
     {
         file: 'page-chrome/index.html',

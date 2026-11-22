@@ -6,17 +6,19 @@ import { describe, expect, it } from 'vitest';
 
 import * as kit from '../src/react.js';
 import { elementOf } from './elements.js';
-import { APP, asWritten, CHROME, EXPLAINER } from './pieces.js';
+import { APP, asWritten, CHROME, EXPLAINER, LAYOUTS } from './pieces.js';
 import { CONTROLS } from './states.js';
 
 /*
- * The states a page shows, of the controls, the page chrome and an explainer's pieces, drawn from
- * the kit's sources: each one draws the attribute the page prints under it, and the modules take
- * their components rather than importing them, so a page can draw the states from the version of
- * the kit it pins.
+ * The states a page shows, of the controls, an app's pieces, the layouts, the page chrome and an
+ * explainer's pieces, drawn from the kit's sources: each one draws the attribute the page prints
+ * under it, and the modules take their components rather than importing them, so a page can draw
+ * the states from the version of the kit it pins.
  */
 
-const states = [...CONTROLS, ...APP, ...CHROME, ...EXPLAINER].flatMap((control) => control.states);
+const states = [...CONTROLS, ...APP, ...LAYOUTS, ...CHROME, ...EXPLAINER].flatMap(
+    (control) => control.states
+);
 
 describe('the states a page shows', () => {
     it('each draw the attribute printed under them', () => {
@@ -24,10 +26,11 @@ describe('the states a page shows', () => {
         for (const state of states) {
             const markup = renderToStaticMarkup(state.draw(kit, asWritten));
             // An attribute with a value is found whole, its closing quote included, and one with
-            // none by its own name, not as the end of another such as aria-disabled.
+            // none by its own name, not as the end of another such as aria-disabled, whatever its
+            // case, since React writes readOnly as it is spelled in JSX and HTML reads either.
             const drawn = state.attribute.includes('=')
                 ? markup.includes(` ${state.attribute}`)
-                : new RegExp(`(?<![-\\w])${state.attribute}(=""|[\\s/>])`).test(markup);
+                : new RegExp(`(?<![-\\w])${state.attribute}(=""|[\\s/>])`, 'i').test(markup);
             expect(drawn, `${state.name}: ${state.attribute}`).toBe(true);
         }
     });
