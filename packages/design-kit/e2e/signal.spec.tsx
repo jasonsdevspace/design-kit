@@ -947,7 +947,7 @@ for (const late of [false, true]) {
     });
 }
 
-test('lands the later of two focus requests asked as a toast with focus in it is taken down', async ({
+test('lands a later focus request where an earlier one asks for where a toast taken down hands focus back', async ({
     page,
 }) => {
     await opened(page);

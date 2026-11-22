@@ -74,8 +74,9 @@ let handedAt = 0;
 
 /**
  * For each attached dialog, what had focus as it opened, which the browser hands focus back to as
- * the dialog closes, ahead of the close event. Kept until the dialog's close is handled, or until a
- * request lands while focus is there, or until the dialog leaves the page.
+ * the dialog closes, ahead of the close event. Kept until the dialog's close is handled or it is
+ * taken down, until a request lands while focus is there, or until a request finds the dialog gone
+ * from the page.
  */
 const restoring = new Map<HTMLDialogElement, Element>();
 
@@ -1543,8 +1544,10 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says. A
  * `moveFocus` request asked in the task that closes it, takes it away or takes it down lands in
  * place of the opener, since a request takes focus the kit, or the browser as the dialog closes,
- * hands back after it was asked as free. One asked in an earlier task finds the page behind inert
- * in its frame, so focus goes to the opener as the dialog closes.
+ * hands back after it was asked as free. Focus the page moves elsewhere in that task stays, while
+ * focus it puts back on what had focus as the dialog opened counts as the browser's handback. One
+ * asked in an earlier task lands only where its frame comes after the close, so a page that awaits
+ * before closing asks again just before it closes.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -1573,7 +1576,6 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     };
     set(options ?? {});
     let opener: Element | null = null;
-    // What had focus as the dialog opened, which the browser hands focus back to as it closes.
     let startedOutside = false;
     const outside = (event: MouseEvent) => {
         if (event.target !== dialog) return false;
@@ -1648,6 +1650,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
             dialog.close();
             onClose(back);
         }
+        restoring.delete(dialog);
         if (settings.stay) dialog.removeAttribute('closedby');
     });
     down.set = set;
