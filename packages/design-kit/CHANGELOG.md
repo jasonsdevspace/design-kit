@@ -18,18 +18,22 @@ other than `signal` has a value, so an attach called again with `{}`, or with it
 undefined, keeps the options it had. The React hooks take their controls down through ref cleanups,
 and under `StrictMode` in development each control is kept with nothing doubled or dropped, and a
 focus request asked as its component unmounts still lands. The toast, the dialog and the panels hand
-focus back by one rule, so focus a page or a visitor moves elsewhere stays. A toast sends focus back
-to the control the visitor came into it from, and a focus request asked in the task that closes a
-dialog lands where the page asked rather than on the opener. A stepper drawn past its limits shows
-its error at once, a group the arrow keys move through places its Tab stop as it comes into sight
-from no size, and Escape closes an open panel once the button that opened it is let go. Upgrading
-names the code a page can now take away for the stepper and the group, and how a page now puts a
-piece's options back to their defaults. Browser tests in Chromium, WebKit and Firefox count the
-listeners, observers, timers and frames on a page and find every attach and hook leaves none of its
-own once it is taken down, and the tests on a stand-in clock move time only by their own steps, so a
-slow runner no longer makes a message leave early. No token is added or renamed and the theme script
-is unchanged, so `themeScriptHash` is the same. The sheets stay within their budget, and the
-controls' budget is set at 19 KB under record 13's rule.
+focus back by one rule, so focus a page or a visitor moves elsewhere stays, there too where a page
+moves it during a handback, and a handback lands on any HTML or SVG element that takes focus. A
+toast sends focus back to the control the visitor came into it from, and a focus request asked in
+the task that closes a dialog lands where the page asked rather than on the opener. Where nothing
+else takes focus, a toast lets it fall to the page in every engine, and it follows focus into a
+frame of the page's own origin. A stepper drawn past its limits shows its error at once, a group the
+arrow keys move through places its Tab stop as it comes into sight from no size, and Escape closes
+an open panel once the button that opened it is let go. Upgrading names the code a page can now take
+away for the stepper and the group, and how a page now puts a piece's options back to their
+defaults. Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers and
+frames on a page and find every attach and hook leaves none of its own once it is taken down, and
+the tests on a stand-in clock move time only by their own steps, so a slow runner no longer makes a
+message leave early. Each teardown behavior is tested in one place, and no kit spec waits on real
+time for what a still clock can step. No token is added or renamed and the theme script is
+unchanged, so `themeScriptHash` is the same. The sheets stay within their budget, and the controls'
+budget is set at 19.5 KB under record 13's rule.
 
 - **Upgrading.** A page that draws a stepper's error itself when the stepper is attached with a
   value past its limits can take that code away, since the attach now shows it, and a refusal the
@@ -160,7 +164,32 @@ controls' budget is set at 19 KB under record 13's rule.
   pressed and when the opener is not what had focus. Focus the page moves elsewhere in that task
   stays. A dialog closed and taken down in one task hands focus to its opener as a plain close does.
   `attachStatus` joins a later attach the way every other attach does, and a status line behaves as
-  it did.
+  it did. The handback the toast, the dialog and the panels share focuses an SVG element as it does
+  an HTML one. Focus that came into a toast from a link inside an inline svg, or was on one as the
+  message came, goes back there, a dialog opened from one returns focus to it, and a closing panel
+  can hand focus to one that follows it, its address written with `href` or `xlink:href`, or to the
+  place on the page that one pressed inside the panel goes to. The panel tells an SVG link by its
+  name rather than its class, so a page's unit tests in jsdom, which has no class for an SVG link,
+  close a panel without an error. A press on a link written with `xlink:href` counts as a press for
+  `focusOnArrival`. A dialog's `returnTo` may give any HTML or SVG element that takes focus.
+  `moveFocus` and `focusOnArrival` land through the same helper, so an SVG target or fallback takes
+  focus too. `attachToast` takes off a message's shown state, then hands focus back, then hides its
+  buttons, so the control focus goes to is not scrolled clear of a toast that is leaving, and where
+  nothing it tries takes focus, it moves focus off the toast, so focus falls to the page's body in
+  WebKit and Firefox as it does in Chromium, rather than staying on the toast's hidden button. Where
+  a page's own listener moves focus elsewhere as the toast, a dialog or a panel hands it back, the
+  handback goes no further down its list and that focus stays, and a `moveFocus` asked before a
+  handback that focused nothing leaves the page's focus alone. Focus a place hands on to its shadow
+  tree, as a host that delegates focus does, counts as handed back, while a place that refuses focus
+  is passed over though focus is inside it, so a `moveFocus` whose target is a section with no
+  tabindex goes on to its fallbacks. A dialog lists what the browser handed focus to as it closed
+  last, so where its opener has gone, a `moveFocus` asked in the task that closed it still lands.
+  Where the handback focuses a frame of the page's own origin that had focus as the latest message
+  came, it goes on to the control inside that had focus there then, and stays on the frame where
+  that control is gone, marked off, on a page the frame has since replaced. A frame of another
+  origin keeps focus itself, as near as a page can reach, though Firefox does not focus such a frame
+  while a key is being pressed, so a dismiss by keyboard there goes on to the body of the app's
+  frame or the main content.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
@@ -190,7 +219,8 @@ controls' budget is set at 19 KB under record 13's rule.
   line current, so a busy button and progress now speak through the `say` of the render that changed
   them, as the form's refusal already did. `useRoving` and `useProgress` pass their new options with
   the element's own signal, so where two hooks share an element each one's options apply to its own
-  hold.
+  hold. A request `useFocusAfterDraw` makes late, once its component has gone, lands on an SVG
+  target in sight rather than waiting for it.
 - **Docs.** Record 22 states the teardown contract, with the research and the options weighed, and
   record 13 is amended for it. The reference says how a control is taken down, with a screen's
   controller aborted before the next screen attaches, and gives the two attaches their `signal`.
@@ -212,20 +242,32 @@ controls' budget is set at 19 KB under record 13's rule.
   `attachRoving`'s comment, say the stop is placed as the group comes into sight from no size.
   Record 22 says what the helper gives for a signal already aborted. Record 23 states the rule and
   why deferring the takedown in the hooks was turned down, and records 13, 15, 19, 20 and 22 say
-  what it changes. Record 13 sets the controls' budget at 19 KB, from 17.25 KB, once the helper with
-  every attach moved onto it, record 23's holders and the one rule for handing focus back took the
-  controls to 18,638 bytes, with a median function of 641 bytes. The reference's section on taking a
-  control down names `moveFocus`, says when a takedown lands, how options follow the newest holder
-  and when the kit hands focus back, and each attach's section links it. The doc comments on
-  `./controls` and the hooks say what the code does now. A panel's button taken from the page
-  without being taken down is said to stay held until it is. The reference, the toast's doc comment
-  and record 23 give the order a toast hands focus back in. The reference's dialog, its section on
-  taking a control down and record 23 say that a `moveFocus` request asked in the task that closes a
-  dialog sends focus to its target rather than to the opener, whether that task closes the dialog,
-  takes it from the page or takes it down. One asked in an earlier task lands only where its frame
-  comes after the dialog closes, so a page that awaits before closing asks again just before it
-  closes. The reference's section on taking a control down and its section on the dialog, the
-  dialog's doc comment and record 23 say which options count as given.
+  what it changes. Record 13 sets the controls' budget at 19.5 KB, from 17.25 KB, once the helper
+  with every attach moved onto it, record 23's holders, the one rule for handing focus back, a
+  handback that takes SVG elements and a toast that lets focus fall to the page and follows it into
+  a frame took the controls to 19,222 bytes, with a median function of 624 bytes. The reference's
+  section on taking a control down names `moveFocus`, says when a takedown lands, how options follow
+  the newest holder and when the kit hands focus back, and each attach's section links it. The doc
+  comments on `./controls` and the hooks say what the code does now. A panel's button taken from the
+  page without being taken down is said to stay held until it is. The reference, the toast's doc
+  comment and record 23 give the order a toast hands focus back in. The reference's dialog, its
+  section on taking a control down and record 23 say that a `moveFocus` request asked in the task
+  that closes a dialog sends focus to its target rather than to the opener, whether that task closes
+  the dialog, takes it from the page or takes it down. One asked in an earlier task lands only where
+  its frame comes after the dialog closes, so a page that awaits before closing asks again just
+  before it closes. The reference's section on taking a control down and its section on the dialog,
+  the dialog's doc comment and record 23 say which options count as given. Records 15, 19, 21, 22
+  and 23 name the one teardown spec and say what each spec now counts, record 3 says the browser
+  tests run in WebKit and Firefox too for the specs `e2e/engines.ts` names, and the README describes
+  the browser jobs and where the engine lists live. The reference's sections on taking a control
+  down, on moving focus after a change and on the toast, and record 23, say a handback can land on
+  any HTML or SVG element that takes focus, such as a link in an inline chart. Record 19 says the
+  panel spec runs in Firefox too, where the case that goes back into the panel after a press outside
+  reaches the link by focusing it, since Firefox sends Shift and Tab from a panel a press focused to
+  the page's body. The reference's toast section and its section on taking a control down say where
+  focus goes where nothing takes it, where a page moves it during a handback and where it goes back
+  to a frame, of the page's own origin or another. The reference says the main content takes focus
+  by the `tabindex="-1"` the skip link's markup puts on it.
 - **Tests.** Browser tests in Chromium, WebKit and Firefox attach the theme switch and the copy
   button with a signal already aborted and find nothing attached and a repeat attach's new source
   not taken, abort a signal and find both hidden, find a late clipboard answer and a theme chosen
@@ -289,31 +331,31 @@ controls' budget is set at 19 KB under record 13's rule.
   ResizeObservers and MutationObservers watching, and the timers and frames still to come, in
   Chromium, WebKit and Firefox, and in Chromium finds its count of the listeners on the window, the
   document and its elements equal to the engine's own. Each attach and `moveFocus` is attached,
-  used, taken down and called after, seven times in a row, with every count back where it started
-  each time, and each given a signal already aborted starts nothing. A page drawn by React that uses
-  every hook is drawn, used and taken away seven times, in production and under `StrictMode`, with
-  every count but React's own listeners on elements back where it was before. The teardown tests
-  that counted listeners through Chromium's own tools, or timers through counters of their own,
-  count through the same script, which in Chromium is still held to the engine's own count, and
-  those that run in WebKit and Firefox count listeners there too. Browser tests attach a stepper
-  past its limit and find the error shown, the field described by it and marked invalid, and its
-  status line empty, then find the error cleared by a right value, by taking the stepper away and by
-  a form's reset, and find a field attached blank with no error. Others find the error back once a
-  reset brings back a value drawn past the limit, none on a disabled or read-only field, none for a
-  refusal the page sets, and the page's own error alone where it shows one. Browser tests attach a
-  row of tabs in a closed `details`, open it and reach the chosen tab by Tab, attach a grid in a
-  hidden panel whose first cell is hidden on its own, show the panel and reach the first cell in
-  sight by Tab, and attach a row of tabs in a dialog, open it with `showModal()` and reach the
-  chosen tab by Tab, each finding the stop placed before Tab is pressed. Another hides a cell that
-  had focus by a class outside its group and finds the stop on the next cell, and a React test opens
-  a details around a row given `useRoving` and reaches its chosen tab by Tab. Every kit browser test
-  that steps a stand-in clock installs it stopped, through one helper, since a clock left running
-  keeps pace with real time between steps as well. The helper's unit test finds a signal already
-  aborted gives a teardown already stopped, whose `add` runs at once. The helper's unit tests find
-  an abort's takedown waits a microtask, a signal held before then keeps the control, a call with no
-  signal holding only where nothing else does and joining as the page's own hold in the abort's
-  task, the detach taking it down at once with no listener left on any signal, the options of the
-  newest holder that gave any applied as holders come and go, a newer holder joined in the same task
+  used, taken down and called after, twice in a row, with every count back where it started each
+  time, and each given a signal already aborted starts nothing. A page drawn by React that uses
+  every hook is drawn, used and taken away twice, in production and under `StrictMode`, with every
+  count but React's own listeners on elements back where it was before. The teardown tests that
+  counted listeners through Chromium's own tools, or timers through counters of their own, count
+  through the same script, which in Chromium is still held to the engine's own count, and those that
+  run in WebKit and Firefox count listeners there too. Browser tests attach a stepper past its limit
+  and find the error shown, the field described by it and marked invalid, and its status line empty,
+  then find the error cleared by a right value, by taking the stepper away and by a form's reset,
+  and find a field attached blank with no error. Others find the error back once a reset brings back
+  a value drawn past the limit, none on a disabled or read-only field, none for a refusal the page
+  sets, and the page's own error alone where it shows one. Browser tests attach a row of tabs in a
+  closed `details`, open it and reach the chosen tab by Tab, attach a grid in a hidden panel whose
+  first cell is hidden on its own, show the panel and reach the first cell in sight by Tab, and
+  attach a row of tabs in a dialog, open it with `showModal()` and reach the chosen tab by Tab, each
+  finding the stop placed before Tab is pressed. Another hides a cell that had focus by a class
+  outside its group and finds the stop on the next cell, and a React test opens a details around a
+  row given `useRoving` and reaches its chosen tab by Tab. Every kit browser test that steps a
+  stand-in clock installs it stopped, through one helper, since a clock left running keeps pace with
+  real time between steps as well. The helper's unit test finds a signal already aborted gives a
+  teardown already stopped, whose `add` runs at once. The helper's unit tests find an abort's
+  takedown waits a microtask, a signal held before then keeps the control, a call with no signal
+  holding only where nothing else does and joining as the page's own hold in the abort's task, the
+  detach taking it down at once with no listener left on any signal, the options of the newest
+  holder that gave any applied as holders come and go, a newer holder joined in the same task
   keeping its own, an older holder's options kept through a call from it that gives none, no options
   applied after the detach, defaults applied once the only holder that gave options lets go, a first
   attach's options that give only a signal taken for none, and an attach from inside a takedown
@@ -353,7 +395,36 @@ controls' budget is set at 19 KB under record 13's rule.
   left undefined and keys only inherited taken for no options, and `null` and `false` taken for
   options given, and a browser test finds a dialog attached to stay still staying once attached
   again with `{}`, and no longer staying once attached again with `{ stay: false }` or with options
-  that leave `stay` out.
+  that leave `stay` out. The teardown, signal, status teardown and form and panel teardown specs
+  become one spec whose rules run over a table of pieces the leak spec opens too, with each piece's
+  own cases in a block of its own. Every round of the leak loops holds what the attach sets running
+  to the first round's, so a re-attach that attaches nothing fails. A progress step and a stepper
+  error taken down before they are said each have a test of their own beside a twin left attached.
+  The kit specs step a still clock or wait for frames where they waited a fixed time. The engine
+  lists live in `e2e/engines.ts` with a reason beside each spec, and a unit test matches them
+  through the pattern the config builds. The browser tests in Chromium and in WebKit run in two
+  shards each, and a gate named Browser tests passes only where the Chromium shards and the site's
+  tests over the commit's kit pass. Browser tests in Chromium, WebKit and Firefox find focus back on
+  a link inside an inline svg that focus came into a toast from once Escape on its Close dismisses
+  it, on one that had focus as the message came where focus then came into the toast from nowhere,
+  and on one that opened a dialog once the dialog closes. They find focus sent to one that follows a
+  panel whose buttons are gone, one written with `xlink:href` among them, and to the place on the
+  page that one pressed inside a panel goes to, a panel closing without an error in a window with no
+  class for an SVG link, and a late `useFocusAfterDraw` request landing on one. The dialog and panel
+  specs run in Firefox too. Browser tests in Chromium, WebKit and Firefox find focus on the page's
+  body as a press on a toast's action is handled where nothing it would hand focus to takes it, and
+  focus left where a page's listener moves it as focus leaves the action, with the main content able
+  to take focus or not, and a focus request asked before the dismiss leaving it there. They find a
+  host that delegates focus taken as handed back, so a request asked before the dismiss lands, and
+  the scroll left where it was as focus goes back to a control in view, on a page and in an app's
+  frame. They find focus sent on to the button inside a frame of the page's own origin that had
+  focus as the message came, there too after a click on the frame's empty space, focus left on the
+  frame where that control is marked off, gone, or on a page the frame has since loaded, and focus
+  on a frame of another origin after a press by pointer. In Firefox, tests find a dismiss by Enter
+  sending focus to the main content where that frame cannot take it, and focus left on the frame's
+  other button where a page's listener moves it there during the handback. In every engine, a focus
+  request goes on to its fallback where its target holds focus but refuses it, and one asked in the
+  task that closes a dialog lands where its opener has gone and the browser handed focus elsewhere.
 
 ## 0.9.2
 
