@@ -6,9 +6,9 @@ What a demo installs when it adds the kit, measured from the tarball `npm pack` 
 
 | Recorded   | Commit    | Machine                                  | Node     |
 | ---------- | --------- | ---------------------------------------- | -------- |
-| 2026-11-20 | `1401468` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.3 |
+| 2026-11-22 | `5909b7d` | AMD EPYC 7763 64-Core Processor, 4 cores | v24.22.3 |
 
-`@jasonsdevspace/design-kit@0.9.2`, 115.9 KB packed. The sheets a page loads come to 12.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.9.1 on 2026-11-20 at `d54ff06`, it packs 115.9 KB where it packed 116.5 KB, and the sheets together came to 12.0 KB.
+`@jasonsdevspace/design-kit@0.9.3`, 132.5 KB packed. The sheets a page loads come to 12.0 KB gzipped together without their comments, the figure their budget holds. Since the record of version 0.9.2 on 2026-11-20 at `1401468`, it packs 132.5 KB where it packed 115.9 KB, and the sheets together came to 12.0 KB.
 
 The sheets a page loads:
 
@@ -22,10 +22,11 @@ The modules a page's build imports:
 
 | File             | Raw      | Gzipped |
 | ---------------- | -------- | ------- |
-| dist/controls.js | 119.2 KB | 33.4 KB |
-| dist/hooks.js    | 19.3 KB  | 5.5 KB  |
-| dist/line.js     | 1.4 KB   | 0.6 KB  |
+| dist/controls.js | 141.6 KB | 39.8 KB |
+| dist/hooks.js    | 25.2 KB  | 7.4 KB  |
+| dist/line.js     | 8.3 KB   | 2.6 KB  |
 | dist/react.js    | 25.4 KB  | 7.5 KB  |
+| dist/teardown.js | 6.2 KB   | 2.2 KB  |
 | dist/theme.js    | 4.7 KB   | 1.7 KB  |
 | dist/vite.js     | 2.9 KB   | 1.3 KB  |
 
@@ -33,10 +34,11 @@ Every other file the package carries, which a page never loads:
 
 | File                      | Raw     | Gzipped |
 | ------------------------- | ------- | ------- |
-| dist/controls.d.ts        | 27.6 KB | 8.6 KB  |
-| dist/hooks.d.ts           | 8.0 KB  | 2.8 KB  |
-| dist/line.d.ts            | 2.0 KB  | 0.9 KB  |
+| dist/controls.d.ts        | 35.7 KB | 10.9 KB |
+| dist/hooks.d.ts           | 8.8 KB  | 3.0 KB  |
+| dist/line.d.ts            | 4.5 KB  | 1.7 KB  |
 | dist/react.d.ts           | 24.2 KB | 6.9 KB  |
+| dist/teardown.d.ts        | 3.9 KB  | 1.4 KB  |
 | dist/theme.d.ts           | 2.5 KB  | 1.0 KB  |
 | dist/tokens.resolver.json | 31.1 KB | 2.0 KB  |
 | dist/vite.d.ts            | 2.2 KB  | 1.0 KB  |
@@ -96,19 +98,19 @@ What each function of the controls costs a page, as its bundler takes them witho
 
 | Function            | Alone  | Added  |
 | ------------------- | ------ | ------ |
-| `attachForm`        | 6138 B | 3668 B |
-| `attachStepper`     | 3683 B | 1954 B |
-| `attachRoving`      | 2733 B | 1711 B |
-| `attachPanel`       | 2595 B | 1478 B |
-| `attachToast`       | 2920 B | 1099 B |
-| `attachDialog`      | 1813 B | 746 B  |
-| `attachThemeSwitch` | 2346 B | 700 B  |
-| `attachCopyButton`  | 2091 B | 621 B  |
-| `attachProgress`    | 2512 B | 547 B  |
-| `attachTable`       | 1299 B | 510 B  |
-| `attachBusy`        | 2287 B | 461 B  |
-| `focusOnArrival`    | 1722 B | 456 B  |
-| `attachStatus`      | 1555 B | 5 B    |
-| `chooseTheme`       | 1403 B | 5 B    |
-| `activeOf`          | 727 B  | 2 B    |
-| `moveFocus`         | 1276 B | 2 B    |
+| `attachForm`        | 7220 B | 3933 B |
+| `attachStepper`     | 4352 B | 2008 B |
+| `attachToast`       | 4607 B | 1803 B |
+| `attachRoving`      | 3350 B | 1683 B |
+| `attachPanel`       | 3701 B | 1630 B |
+| `attachDialog`      | 2853 B | 840 B  |
+| `attachThemeSwitch` | 3086 B | 663 B  |
+| `attachCopyButton`  | 2787 B | 653 B  |
+| `attachProgress`    | 3202 B | 613 B  |
+| `focusOnArrival`    | 1978 B | 443 B  |
+| `attachBusy`        | 2828 B | 430 B  |
+| `attachTable`       | 1966 B | 407 B  |
+| `attachStatus`      | 2399 B | 109 B  |
+| `chooseTheme`       | 1406 B | 5 B    |
+| `activeOf`          | 729 B  | 3 B    |
+| `moveFocus`         | 2122 B | 2 B    |
