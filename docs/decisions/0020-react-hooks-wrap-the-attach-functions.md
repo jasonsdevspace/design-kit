@@ -1,42 +1,9 @@
 # 20. The kit's React hooks wrap its attach functions
 
-**Status:** accepted, amended in 0.9.0 for hooks over a function that acts once, such as
-`moveFocus`, which keep only what calls a request off, and one that acts on a view's arrival, which
-keeps the key it last drew and whether that was its first draw, while whether a visitor's press
-brought the view is decided by `focusOnArrival` in `./controls`, and amended in 0.9.1 for the hooks
-whose request reads what the page draws, `useFocusAfterDraw` and the refusal `useFormRefusal`
-returns, which keep a request owed until their own next commit and a count of requests that renders
-them, so the request lands once the page's change is drawn. That holds for a change set in the same
-tick as the request, in the same lane, in the same React root: a change made in a transition is
-asked for inside the same `startTransition`, and one drawn in another root is not waited for.
-Amended again for the hooks' refs, which return their cleanup as React 19 lets a ref callback do, in
-place of being called with null. Each ref makes an `AbortController` as each element arrives and
-hands its attach the signal, as record 22 has every attach take, and the cleanup aborts it, which
-takes the piece down once no other signal holds it, a form's check included. A hook keeps each
-element it holds with its cleanup, so one ref on two elements keeps the one left working as the
-other goes, and each form refuses a failed submit through itself. The hooks take their part down at
-once, the cleanup aborting the element's signal and dropping the element in one call, and a ref
-called with null by a helper that merges refs and drops the cleanup does so for every element, since
-it does not say which left. The kit keeps the control a microtask after the last signal holding it
-aborts, as record 23 has it, so a ref made afresh on every render, an element passed from one hook's
-ref to another's and React's second run in development keep it as it was, and `StatusProvider` keeps
-no controller of its own. The function `useStatus` hands out is the provider's own, which says
-through whichever attach holds the line, so it keeps speaking after that run and says nothing once
-the provider has gone. A focus request still waiting when its component unmounts, or when an
-`Activity` hides it, is made then, with where focus was read as it was asked. The hook does not try
-to tell which update unmounted it, since React tells a hook nothing of that, and `moveFocus`, which
-lands only where focus is still where it was or has fallen to the page's body, keeps a visitor's
-place. So a request in a transition an urgent update overtook lands before the transition draws, and
-goes to its fallbacks where the transition draws its target. Nothing at unmount calls a focus
-request off, only what it returned or a newer request, while a refusal still waiting as its form's
-component unmounts is called off a microtask later, unless React's second run has brought the
-component back. The hook hands a focus request no signal of the component's, which that unmount
-would abort. A request asked after the cleanup waits a frame. Where the component's effects have
-come back by then, as an `Activity` shown again or React's second run brings them, it waits for the
-component's render as any request does. Otherwise it is made late, taking focus only from the page's
-body, whatever `from` it was given, and only where its target is in sight, so a panel that closes
-and then asks after an await still moves focus back to its opener, and one whose target an
-`Activity` hides with the component is held until the component shows.
+**Status:** accepted, amended in 0.9.0 for hooks over a function that acts once and one that acts on
+a view's arrival, in 0.9.1 for the hooks whose request reads what the page draws, in 0.9.3 for refs
+that return their cleanup and the focus requests around an unmount, and by record 23 in 0.9.3,
+under which the hooks take their part down at once and the kit keeps the control
 
 ## Context
 
@@ -86,32 +53,39 @@ page.
 
 Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `useRoving` for
 `attachRoving`, or for the part a page calls where the attach does more, `useFormRefusal` for
-`attachForm`, and lives in `hooks.tsx`, which `./react`
-exports beside the markup. Each hook follows the same rules.
+`attachForm`, and lives in `hooks.tsx`, which `./react` exports beside the markup. Each hook follows
+the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
-  hook sees each element as it arrives. The ref returns the cleanup that takes the piece down, so
-  React's second run in development leaves nothing doubled or dropped, and the hook keeps every
-  element attached now, so one ref on several elements keeps those left working and a null call from
-  an older helper takes them all down. A ref object would not do, since setting its `current` starts
-  no render and no effect, so a swapped element would never be attached.
-- **It takes the attach away when its element leaves or the component unmounts, where the attach
-  returns what does so.** An attach that returns what says or opens, as record 15 has it for the
-  status line, the toast and the dialog, keeps its listeners on its own element, so they leave with
-  it, and attaching the same element again after a remount returns the first handle, as record 13
-  has it, so nothing is attached twice.
+  hook sees each element as it arrives. The ref makes an `AbortController` as each element arrives,
+  hands its attach the signal, as record 22 has every attach take, and returns the cleanup that
+  aborts it, which React 19 calls as the element leaves in place of calling the ref with null. The
+  hook keeps each element it holds with its controller, so one ref on several elements keeps those
+  left working as one goes, and each form refuses a failed submit through itself. A ref object
+  would not do, since setting its `current` starts no render and no effect, so a swapped element
+  would never be attached.
+- **It takes its part down at once when its element leaves or the component unmounts.** The
+  cleanup aborts the element's signal and drops the element from the hook's own map in one call,
+  and a ref called with null, as a helper that merges refs and drops the cleanup calls it, does so
+  for every element the hook holds, since it does not say which left. The kit keeps the control a
+  microtask after the last signal holding it aborts, as record 23 has it, so a ref made afresh on
+  every render, an element passed from one hook's ref to another's in one commit and React's second
+  run in development keep the control and its state, and two hooks on one element each hold it. The
+  abort takes down an attach that returns what says or refuses as it takes down one that returns
+  its detach, so no hook needs a release of its own.
 - **It passes its options to the attach again only when one of them has changed,** compared one by
-  one, and reads a function among them through a ref, so a page that writes its options inline on
-  every render does not set them again. Setting them again can reset what a control is showing, as
-  a copy button's word goes back to Copy.
+  one, with the element's own signal, so where two hooks share an element each one's options apply
+  to its own hold, and reads a function among them through a ref, so a page that writes its options
+  inline on every render does not set them again. Setting them again can reset what a control is
+  showing, as a copy button's word goes back to Copy.
 - **It passes every option each time, each at its default when the page leaves it out,** so a page
   that drops an option clears it, rather than leaving it as an attach called with none would.
 - **What it returns stays the same across renders,** so a page can list it in an effect's
   dependencies without running that effect again.
-- **It keeps no state of its own beyond the attach's handle,** so what a page sees is what the
-  attach does, and a page without React gets the same behavior from the same function. The hooks
-  whose request reads what the page draws are the exception below, since when React draws is a
-  React concern a page without React does not have.
+- **It keeps no state of its own beyond the attach's handle and each element's controller,** so what
+  a page sees is what the attach does, and a page without React gets the same behavior from the same
+  function. The hooks whose request reads what the page draws are the exception below, since when
+  React draws is a React concern a page without React does not have.
 
 Where a function acts once rather than attaching to an element, as `moveFocus` does, its hook
 returns the function, the same across renders, and keeps only what calls off a request not yet done,
@@ -121,43 +95,57 @@ own component next commits. React draws state set after an await in a task of it
 can come before, so a request made at once found the control not yet drawn or still off, or no field
 in error. The hook keeps the request owed and a count it raises as it is asked, which renders its
 component in the same batch as the page's change, and a layout effect makes the request as that
-render commits, so it lands in the frame that paints the change, whichever component drew it. Where
-focus was is read as the request is asked, followed into a shadow root by `activeOf` from
-`./controls`, so a visitor who moves focus before the commit is not pulled back. Each request takes
-the place of one not yet landed, and what it returns calls off that request alone. A request asked
-as the component first draws, from a ref on its own markup or a child's layout effect, waits for the
-component's render as any other does. A request still waiting when its component unmounts, or when
-an `Activity` hides it, never gets its render, so it is made then, with where focus was read as it
-was asked. React tells a hook nothing of which update unmounted it, so the hook does not try to
-tell, and `moveFocus` keeps a visitor's place, landing only where focus is still where it was or has
-fallen to the page's body. A request in a transition an urgent update overtook therefore lands
-before the transition draws, and goes to its fallbacks where the transition draws its target.
-Nothing at unmount calls a focus request off, only what it returned or a newer request, and a
-request made in React's second run in development stays the one a newer request takes the place of.
-A refusal still waiting as its form's component unmounts is called off a microtask later, since its
-form leaves too, unless React's second run in development has brought the component back. A request
-asked once the cleanup has run waits a frame. Where the component's effects have come back by then,
-as an `Activity` shown again brings them, it waits for the component's render as any request does.
-Otherwise it has no render to wait for and is made late, as it was made before the hook waited, but
-takes focus only from the page's body, whatever `from` it was given, since where focus stands then
-is not where the change began, and only where its target is in sight, so a visitor already on the
-next screen is left there, and a request whose target an `Activity` hides with the component is held
-until the component shows. What the hook returns is still the function's, with `from` read as it is
-asked, and it is called in a handler or in an effect with dependencies, never as the component
-renders nor in an effect that runs on every render, since asking renders the component again. A hook
-that acts when a view arrives, as `useArrivalFocus` does, keeps the key it last drew and whether
-that was its first draw, so it reads where focus was as each arrival begins and asks once for each
-key, since its effect runs again only when the key changes. A key that changes asks through
-`focusOnArrival` with `changed`, so it takes focus whatever the last input was, lands with any view
-first drawn for the same press and spends the press. Whether a press brought a view's first draw,
-rather than a key that moves or typing, is decided by `focusOnArrival` in `./controls`, which notes
-on the document whether the visitor's last input was a recent press, so a page without React gets
-the same arrival from the same function. A request the effect calls off as it is cleaned up hands
-its press back, so React's second run in development asks again, as a first draw still.
+render commits, so it lands in the frame that paints the change, whichever component drew it. That
+holds for a change set in the same tick as the request, in the same lane and the same React root, so
+a change made in a transition is asked for inside the same `startTransition`, and one drawn in
+another root is not waited for. Where focus was is read as the request is asked, followed into a
+shadow root by `activeOf` from `./controls`, so a visitor who moves focus before the commit is not
+pulled back. Each request takes the place of one not yet landed, and what it returns calls off that
+request alone. A request asked as the component first draws, from a ref on its own markup or a
+child's layout effect, waits for the component's render as any other does. A request still waiting
+when its component unmounts, or when an `Activity` hides it, never gets its render, so it is made
+then, with where focus was read as it was asked. React tells a hook nothing of which update
+unmounted it, so the hook does not try to tell, and `moveFocus` keeps a visitor's place, landing
+only where focus is still where it was, has fallen to the page's body or is where the kit has handed
+it back since, as record 23 has it. A request in a transition an urgent update overtook therefore
+lands before the transition draws, and goes to its fallbacks where the transition draws its target.
+Nothing at unmount calls a focus request off, only what it returned or a newer request, so the hook
+hands a request no signal of the component's, which that unmount would abort, and a request made in
+React's second run in development stays the one a newer request takes the place of. A refusal still
+waiting as its form's component unmounts is called off a microtask later, since its form leaves too,
+unless React's second run in development has brought the component back. A request asked once the
+cleanup has run waits a frame. Where the component's effects have come back by then, as an
+`Activity` shown again or React's second run in development brings them, it waits for the
+component's render as any request does. Otherwise it has no render to wait for and is made late, as
+it was made before the hook waited, but takes focus only from the page's body, whatever `from` it
+was given, since where focus stands then is not where the change began, and only where its target is
+in sight, so a panel that closes itself and asks after an await still moves focus back to its
+opener, a visitor already on the next screen is left there, and a request whose target an `Activity`
+hides with the component is held until the component shows. What the hook returns is still the
+function's, with `from` read as it is asked, and it is called in a handler or in an effect with
+dependencies, never as the component renders nor in an effect that runs on every render, since
+asking renders the component again. A hook that acts when a view arrives, as `useArrivalFocus` does,
+keeps the key it last drew and whether that was its first draw, so it reads where focus was as each
+arrival begins and asks once for each key, since its effect runs again only when the key changes. A
+key that changes asks through `focusOnArrival` with `changed`, so it takes focus whatever the last
+input was, lands with any view first drawn for the same press and spends the press. Whether a press
+brought a view's first draw, rather than a key that moves or typing, is decided by `focusOnArrival`
+in `./controls`, which notes on the document whether the visitor's last input was a recent press, so
+a page without React gets the same arrival from the same function. A request the effect calls off as
+it is cleaned up hands its press back, so React's second run in development asks again, as a first
+draw still.
 
 Where a piece needs one line for a whole page, as the status line does, a provider draws it and a
-hook finds it through context. The line is attached as it lands, before the effects of the parts
-under the provider run, and words said before it is in the page are held and said once it is.
+hook finds it through context. `StatusProvider` attaches its line through a ref as the line lands,
+before the effects of the parts under it run, with the signal its ref makes, as every hook's ref
+does, and keeps no controller of its own. Words said before the line is in the page are held, the
+last firm and the last polite, and said once it is. The provider waits a microtask only to call off
+the moments it set to say held words, where no line is drawn by then. The function `useStatus` hands
+out is the provider's own, the same across renders, which says through whichever attach holds the
+line, so it keeps speaking after React's second run in development and says nothing once the
+provider has gone. `useFormRefusal`, `useBusy` and `useProgress` speak through the page's own `say`
+where it gives one, else through the provider's, whichever the latest render gave, kept current in a
+layout effect since a form's refusal is made in one.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.
@@ -169,10 +157,10 @@ components still render on a server and draw the same markup a page writes by ha
   the piece that adds it raises by record 13's rule where it must.
 - Record 5 is amended: `./react` exports hooks that attach some of the controls, while its markup
   components still carry no stylesheet, set no style and run no effect.
-- Record 13 is amended: a React page draws the status line with `StatusProvider`, which
-  `useStatus` finds, attaches a form, a busy button, progress and a group of cells and moves focus
-  through a kit hook, and the other controls in an effect of its own, and the
-  attach functions are the contract both kinds of page share.
+- Record 13 is amended: a React page draws the status line with `StatusProvider`, which `useStatus`
+  finds, attaches a form, a busy button, progress and a group of cells and moves focus through a kit
+  hook, and the other controls in an effect of its own, and the attach functions are the contract
+  both kinds of page share.
 - Record 14 is amended: a hook may run a piece's keys or move its focus, while the state a page
   owns, such as the chosen tab, stays the page's, passed to the hook as an option and read back
   through a callback.

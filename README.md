@@ -273,13 +273,12 @@ follow by area.
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 12.25 KB, and the theme script goes inline in the page's head. A page that attaches a
-  control loads the controls too, which a test holds, as a bundler sends every function, to 17.25
-  KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
-  publishes is 116 KB packed, the sheets and modules a page loads together with the README, the
-  types and the tokens in the design tokens format, which it never does.
-  [The record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet
-  without its comments, and from 0.6.0 what each piece of the sheets and each function of the
-  controls costs.
+  control loads the controls too, which a test holds, as a bundler sends every function, to 19 KB
+  gzipped without their comments, and the theme script to 1 KB of its own. The package npm publishes
+  is 116 KB packed, the sheets and modules a page loads together with the README, the types and the
+  tokens in the design tokens format, which it never does. [The
+  record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
+  comments, and from 0.6.0 what each piece of the sheets and each function of the controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
   processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
   shows its main content in under a second with nothing jumping as it loads, and downloads 24.4 to
@@ -370,6 +369,14 @@ options rejected, what the choice costs, and the test behind it.
 21. [A refused form checks the browser's constraints itself](docs/decisions/0021-a-refused-form-checks-the-browsers-constraints-itself.md).
     A form's native constraints are kept and its errors drawn in the kit's look and words, never the
     browser's bubble, at the cost of a page's own checks running only once the constraints pass.
+22. [Every attach takes a signal that takes its piece down](docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md).
+    A page takes down any piece by aborting one signal, whatever its attach returns, with nothing
+    left running and calls after it doing nothing, at the cost of the piece staying alive until its
+    signal aborts, so a page hands over a signal that lives no longer than the piece.
+23. [A control outlives a takedown and an attach in one task](docs/decisions/0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md).
+    A hook's ref made afresh on every render, a merged ref and React's second run keep a control and
+    its state, at the cost of a takedown landing a microtask after its abort, so a page that means
+    to start afresh within the task calls the detach.
 
 </details>
 

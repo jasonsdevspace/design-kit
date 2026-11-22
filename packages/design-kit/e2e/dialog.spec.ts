@@ -328,9 +328,9 @@ test('takes the options it is attached with again, and keeps them when attached 
     await page.locator('#end').click();
     await page.keyboard.press('Escape');
     await expect(endGame(page)).toBeHidden();
-    // Options given replace the last whole, so options that leave out stay, an empty set
-    // among them, do not stay.
-    for (const given of [{}, { returnTo: true }]) {
+    // Options given replace the last whole, so options that leave out stay or set it false do not
+    // stay, while an empty set gives no options and keeps the last.
+    for (const given of [{}, { returnTo: true }, { stay: false }]) {
         await attachAgain({ stay: true });
         await page.evaluate((options) => {
             const kit = (
@@ -338,19 +338,25 @@ test('takes the options it is attached with again, and keeps them when attached 
                     kit: {
                         attachDialog: (
                             d: Element | null,
-                            o?: { returnTo?: () => HTMLElement | null }
+                            o?: { returnTo?: () => HTMLElement | null; stay?: boolean }
                         ) => unknown;
                     };
                 }
             ).kit;
             kit.attachDialog(
                 document.querySelector('#end-game'),
-                'returnTo' in options ? { returnTo: () => document.querySelector('main') } : {}
+                'returnTo' in options ? { returnTo: () => document.querySelector('main') } : options
             );
         }, given);
         await page.locator('#end').click();
         await page.keyboard.press('Escape');
-        await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+        if (Object.keys(given).length) {
+            await expect(endGame(page), JSON.stringify(given)).toBeHidden();
+        } else {
+            await expect(endGame(page), JSON.stringify(given)).toBeVisible();
+            await page.getByRole('button', { name: 'Keep playing' }).click();
+            await expect(endGame(page)).toBeHidden();
+        }
     }
 });
 
