@@ -128,42 +128,42 @@ Option C.
   origin clear of itself as a message shows, read as the handback reads it and with no listener on
   the frame's document, measuring it where the frame places it, past the frame's border and padding,
   scaled across and down as the frame is drawn and cut to what the frame shows inside its
-  scrollbars, so a tall frame does not hide it, while a frame of another origin is measured whole. A
-  control inside a tall frame of another origin can stay under the toast, since the page cannot read
-  it and the frame is left where it is. A frame rotated or skewed is measured by its bounding box.
-  WebKit 27.2 lays out the document of a frame scaled by `zoom` larger than it draws it, so a
-  control there can sit past what the frame shows and be left where it is. The toast is measured
-  where it comes to rest rather than where its entrance starts, and a control counts as covered only
-  where it meets the toast across as well as down, so one beside a narrow toast on a wide screen
-  stays where it is. A control taller than the room above the toast is left where it is. The toast
-  takes off its shown state before it hands focus back, so the room the sheet keeps under a shown
-  toast does not scroll the control focus goes to, and hides its buttons after, and where nothing
-  takes focus, it blurs what still has focus in it, so focus falls to the page's body in every
-  engine, where WebKit and Firefox would leave it on the toast's hidden button until a later
-  rendering update. Each piece tries its places in turn and counts a place as taken where focus
-  moves onto it or inside it, its shadow tree included, or where it has focus already, passing over
-  one that refuses focus though focus is inside it, and where a page's own listener moves focus
-  elsewhere as one is tried, it goes no further and that focus stays. A takedown lands after the
-  abort's task, so focus the page set in that task, by its own call or by a field the new content
-  focuses as it draws, stays. The kit keeps where it last handed focus back, and `moveFocus` treats
-  focus there as free where the handback came after the request was asked, so a request asked in the
-  abort's task still lands. It keeps a handback only where the walk focused a place, so a request
-  asked before a walk that focused nothing leaves what the page focused alone. The browser hands
-  focus back to what had focus before a dialog opened as the dialog closes, ahead of the close
-  event. So a request treats focus there as free while the dialog is closed and its close not yet
-  handled, and a request that lands while focus is there takes that place from the dialog. The
-  dialog's close event and its takedown hand focus back where focus is still there, or by the rule
-  every piece hands it back by, so a request that landed first or focus the page moved elsewhere in
-  that task stays. The dialog lists what the browser handed focus to last, so where the opener has
-  gone and nothing else takes focus, that place counts as handed back, and a request asked in the
-  task that closed the dialog still lands. A request asked from inside an open dialog lands where
-  the task it is asked in closes the dialog, takes it away or takes it down, so a page can send
-  focus somewhere more useful than the opener as the dialog closes, as the dialog pattern of the
-  ARIA Authoring Practices allows. One asked in an earlier task lands only where its frame comes
-  after the dialog closes, and otherwise finds the page behind inert, so a page that awaits before
-  closing asks again just before it closes. Each place a piece hands focus back to can be any HTML
-  or SVG element that takes focus, such as a link in an inline chart, and one that is hidden, inert
-  or disabled is passed over for the next.
+  scrollbars, so a tall frame does not hide it, while a frame of another origin, or one where only
+  its body has focus, is measured whole. A control inside a tall frame of another origin can stay
+  under the toast, since the page cannot read it and the frame is left where it is. A frame rotated
+  or skewed is measured by its bounding box. WebKit 27.2 lays out the document of a frame scaled by
+  `zoom` larger than it draws it, so a control there can sit past what the frame shows and be left
+  where it is. The toast is measured where it comes to rest rather than where its entrance starts,
+  and a control counts as covered only where it meets the toast across as well as down, so one
+  beside a narrow toast on a wide screen stays where it is. A control taller than the room above the
+  toast is left where it is. The toast takes off its shown state before it hands focus back, so the
+  room the sheet keeps under a shown toast does not scroll the control focus goes to, and hides its
+  buttons after, and where nothing takes focus, it blurs what still has focus in it, so focus falls
+  to the page's body in every engine, where WebKit and Firefox would leave it on the toast's hidden
+  button until a later rendering update. Each piece tries its places in turn and counts a place as
+  taken where focus moves onto it or inside it, its shadow tree included, or where it has focus
+  already, passing over one that refuses focus though focus is inside it, and where a page's own
+  listener moves focus elsewhere as one is tried, it goes no further and that focus stays. A
+  takedown lands after the abort's task, so focus the page set in that task, by its own call or by a
+  field the new content focuses as it draws, stays. The kit keeps where it last handed focus back,
+  and `moveFocus` treats focus there as free where the handback came after the request was asked, so
+  a request asked in the abort's task still lands. It keeps a handback only where the walk focused a
+  place, so a request asked before a walk that focused nothing leaves what the page focused alone.
+  The browser hands focus back to what had focus before a dialog opened as the dialog closes, ahead
+  of the close event. So a request treats focus there as free while the dialog is closed and its
+  close not yet handled, and a request that lands while focus is there takes that place from the
+  dialog. The dialog's close event and its takedown hand focus back where focus is still there, or
+  by the rule every piece hands it back by, so a request that landed first or focus the page moved
+  elsewhere in that task stays. The dialog lists what the browser handed focus to last, so where the
+  opener has gone and nothing else takes focus, that place counts as handed back, and a request
+  asked in the task that closed the dialog still lands. A request asked from inside an open dialog
+  lands where the task it is asked in closes the dialog, takes it away or takes it down, so a page
+  can send focus somewhere more useful than the opener as the dialog closes, as the dialog pattern
+  of the ARIA Authoring Practices allows. One asked in an earlier task lands only where its frame
+  comes after the dialog closes, and otherwise finds the page behind inert, so a page that awaits
+  before closing asks again just before it closes. Each place a piece hands focus back to can be any
+  HTML or SVG element that takes focus, such as a link in an inline chart, and one that is hidden,
+  inert or disabled is passed over for the next.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -326,10 +326,10 @@ The paths are in `packages/design-kit`.
   with a border and padding, focused where the toast draws, ending clear of the toast once a message
   shows, on a page and in an app's frame. It finds kept clear a button the frame's padding puts a
   few pixels under the toast's edge, in a frame drawn smaller too, one in a frame drawn wider than
-  laid out, a link on the page the toast covers by less than the rise it enters on, and a frame
-  scaled by `zoom` in Chromium and Firefox. It finds the page and the frame left where they are
-  where the button inside a frame is clear of the toast though the frame reaches under it, where a
-  short frame above the toast has scrolled its button out of sight, where a frame scaled by `zoom`
+  laid out, a link on the page the toast covers by less than the rise it enters on, and one in a
+  frame scaled by `zoom` in Chromium and Firefox. It finds the page and the frame left where they
+  are where the button inside a frame is clear of the toast though the frame reaches under it, where
+  a short frame above the toast has scrolled its button out of sight, where a frame scaled by `zoom`
   in WebKit lays its button past what it shows, where a control inside a frame is taller than the
   room above the toast, and, in WebKit, where the button sits behind the frame's scrollbar, and the
   page left where it is where a control on the page or inside a frame sits beside a toast narrower

@@ -960,8 +960,8 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * measured where it comes to rest, would cover it across as well as down. With focus inside a frame
  * of the page's own origin, that is the control that has focus there, read as the message comes and
  * measured where the frame places it, past the frame's border and padding, scaled across and down
- * as it is drawn and cut to what it shows, so a tall frame does not hide it. A frame of another
- * origin, or one where only its body has focus, is measured whole.
+ * as the frame is drawn and cut to what the frame shows inside its scrollbars, so a tall frame does
+ * not hide it. A frame of another origin, or one where only its body has focus, is measured whole.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
