@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StepperField } from '../src/react.js';
-import { box, servePage, sideways, style, tabKey } from './page.js';
+import { box, servePage, sideways, stillClock, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -870,6 +870,7 @@ test("clears only its own words from a page's line, and says nothing once typed 
     page,
     browserName,
 }) => {
+    await stillClock(page.clock);
     await open(page);
     await page.evaluate(() => {
         const { attachStepper } = window as unknown as {
@@ -885,6 +886,7 @@ test("clears only its own words from a page's line, and says nothing once typed 
     });
     const own = page.locator('#page-status');
     await press(lower(page), browserName);
+    await page.clock.runFor(150);
     await expect(own).toHaveText('8');
     // Typed over, the stepper's words go from the page's line.
     await bid(page).fill('5');
@@ -906,6 +908,6 @@ test("clears only its own words from a page's line, and says nothing once typed 
     });
     // The press empties the line at once, as every line is emptied before its next words, and the
     // words it would have said are never put in.
-    await page.waitForTimeout(300);
+    await page.clock.runFor(300);
     await expect(own).toHaveText('');
 });

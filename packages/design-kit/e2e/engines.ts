@@ -63,6 +63,9 @@ export const FIREFOX: Engine = {
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
 };
 
-/** The pattern that matches the specs an engine names, and nothing else. */
-export const specsOf = (engine: Engine): string =>
-    `*/e2e/{${Object.keys(engine).join(',')}}.spec.{ts,tsx}`;
+/**
+ * The patterns that match the specs an engine names, one for each, since a brace of one name
+ * matches nothing where a brace of several matches each.
+ */
+export const specsOf = (engine: Engine): string[] =>
+    Object.keys(engine).map((name) => `*/e2e/${name}.spec.{ts,tsx}`);

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ChoiceField, InputField, StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * A refused submit by `attachForm` and React's `useFormRefusal`: focus on the first field in error,
@@ -80,7 +80,9 @@ type Form = {
     summarised: boolean;
 };
 
-const open = async (page: Page) => {
+/** The page with its controls loaded, on a clock that stands still where `clock` is set. */
+const open = async (page: Page, { clock = false }: { readonly clock?: boolean } = {}) => {
+    if (clock) await stillClock(page.clock);
     await servePage(page, { title: 'Form', body: FORM, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
 };
@@ -175,7 +177,7 @@ test('passes over a control marked off at the head of a set in error', async ({ 
 });
 
 test('keeps focus and says the error where no field in error can take focus', async ({ page }) => {
-    await open(page);
+    await open(page, { clock: true });
     await page.getByRole('button', { name: 'Save rule' }).focus();
     await page.evaluate(() => {
         // The whole set is marked off on its fieldset, so none of its choices can take focus.
@@ -184,7 +186,8 @@ test('keeps focus and says the error where no field in error can take focus', as
             box.setAttribute('aria-invalid', 'true');
     });
     await refuse(page, []);
-    await page.waitForTimeout(300);
+    // Past the refusal's frame and the moment the line puts words in.
+    await page.clock.runFor(300);
     await expect(page.getByRole('button', { name: 'Save rule' })).toBeFocused();
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
@@ -285,33 +288,38 @@ test("says the form is cleared where a reset takes away the kit's errors", async
 });
 
 test("says nothing on a reset with none of the kit's errors to take away", async ({ page }) => {
-    await open(page);
+    await open(page, { clock: true });
     await withReset(page);
     // A reset with nothing wrong, as after a save, says nothing.
     await page.getByRole('button', { name: 'Start over' }).click();
+    // Past the task the reset waits, which would call off a refusal asked before it comes.
+    await page.clock.runFor(100);
     // An error the page drew is the page's to clear, so the kit does not say the form is cleared.
     await refuse(page, [['name', 'Give the rule a name.']]);
-    await expect
-        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['Rule name: Error: Give the rule a name.']);
+    await page.clock.runFor(300);
+    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
+        'Rule name: Error: Give the rule a name.',
+    ]);
     await page.getByRole('button', { name: 'Start over' }).click();
-    await page.waitForTimeout(500);
+    // Past the task a reset waits and the moment the line would put words in.
+    await page.clock.runFor(500);
     expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
         'Rule name: Error: Give the rule a name.',
     ]);
 });
 
 test('leaves focus where it is when nothing is wrong', async ({ page }) => {
-    await open(page);
+    await open(page, { clock: true });
     await page.getByRole('button', { name: 'Save rule' }).focus();
     await refuse(page, []);
-    await page.waitForTimeout(100);
+    // Past the refusal's frame and the moment the line would put words in.
+    await page.clock.runFor(300);
     await expect(page.getByRole('button', { name: 'Save rule' })).toBeFocused();
     await expect(page.locator('.screen-status')).toHaveText('');
 });
 
 test("focuses a radio set's checked radio, and a summary the page names", async ({ page }) => {
-    await open(page);
+    await open(page, { clock: true });
     await page.getByRole('button', { name: 'Save rule' }).focus();
     // Marked as `ChoiceField` draws a set's error, on the fieldset and on each choice, and its
     // name and error are said all the same, since VoiceOver on iOS reads a description only as a
@@ -321,9 +329,10 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
             radio.setAttribute('aria-describedby', 'match-error');
     });
     await refuse(page, [['match', 'Choose how rules match.']]);
+    await page.clock.runFor(100);
     await expect(page.getByRole('radio', { name: 'Any' })).toBeFocused();
     // A second refusal calls off words not yet said, so the first is given time to speak.
-    await page.waitForTimeout(1000);
+    await page.clock.runFor(1000);
     await page.getByRole('button', { name: 'Save rule' }).focus();
     await page.evaluate(() => {
         const summary = document.querySelector<HTMLElement>('#summary');
@@ -331,10 +340,12 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
         (window as unknown as Form).summarised = true;
     });
     await refuse(page, []);
+    await page.clock.runFor(100);
     await expect(page.locator('#summary')).toBeFocused();
     // Moving focus reads the summary, so the line says nothing over it, and refused again from
     // the summary, the line says the summary's words, since focus that stays reads nothing.
     await refuse(page, []);
+    await page.clock.runFor(300);
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
         .toEqual(['Match: Error: Choose how rules match.', 'Two fields need attention.']);
@@ -387,6 +398,7 @@ test.describe('in React', () => {
     });
 
     test('leaves focus where the visitor moved it before the error was drawn', async ({ page }) => {
+        await stillClock(page.clock);
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
         await page.evaluate(() => {
             (window as unknown as { refuseAndMove: () => void }).refuseAndMove();
@@ -395,7 +407,8 @@ test.describe('in React', () => {
             'aria-invalid',
             'true'
         );
-        await page.waitForTimeout(100);
+        // Past the frame the refusal waits to move focus.
+        await page.clock.runFor(100);
         await expect(page.locator('#elsewhere')).toBeFocused();
     });
 });

@@ -37,6 +37,14 @@ type Mover = {
 };
 
 /**
+ * Waits for what a late move of focus would take to land, before a check that focus stayed: React's
+ * draw, a transition's among them, the frame `useFocusAfterDraw` waits for once its component has
+ * gone and the frame of the `moveFocus` it calls, with frames to spare, all on the page's frames
+ * rather than a fixed time.
+ */
+const settled = (page: Page) => frames(page, 6);
+
+/**
  * Presses a button by Enter with focus on it, since Safari leaves focus off a button a pointer
  * presses.
  */
@@ -99,13 +107,13 @@ test('leaves focus a visitor moved since the request, and calls a request off', 
         (window as unknown as Mover).moveFocus('heading');
         document.querySelector<HTMLElement>('#other')?.focus();
     });
-    await frames(page);
+    await settled(page);
     await expect(page.locator('#other')).toBeFocused();
     await page.evaluate(() => {
         const cancel = (window as unknown as Mover).moveFocus('heading');
         cancel();
     });
-    await frames(page);
+    await settled(page);
     await expect(page.locator('#other')).toBeFocused();
     // Focus that fell to the page's body is free, as a removed control leaves it.
     await page.evaluate(() => {
@@ -177,7 +185,7 @@ test.describe('in React', () => {
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await expect(page.locator('#round')).toHaveAttribute('tabindex', '-1');
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#round')).not.toBeFocused();
         await page.locator('#next').click();
         await expect(page.locator('#round')).toHaveText('Round 2');
@@ -389,7 +397,7 @@ test.describe('in React', () => {
         await page.locator('#show-scores').click();
         await expect(page.locator('#scores')).toBeFocused();
         await page.locator('#show-search').click();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#query')).toBeFocused();
     });
 
@@ -402,11 +410,11 @@ test.describe('in React', () => {
         await page.locator('#mode-number').focus();
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('#view-cards')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#mode-cards')).toBeFocused();
         await page.keyboard.press('ArrowLeft');
         await expect(page.locator('#view-number')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#mode-number')).toBeFocused();
     });
 
@@ -414,12 +422,12 @@ test.describe('in React', () => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#mode-cards').click();
         await expect(page.locator('#view-cards')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#mode-cards')).toBeFocused();
         await page.locator('#mode-number').focus();
         await page.keyboard.press('Enter');
         await expect(page.locator('#view-number')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#mode-number')).toBeFocused();
     });
 
@@ -434,7 +442,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#remove-Ann')).toBeFocused();
     });
 
@@ -449,7 +457,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#late-query')).toBeFocused();
     });
 
@@ -494,7 +502,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#round')).toBeFocused();
     });
 
@@ -511,7 +519,7 @@ test.describe('in React', () => {
     test('moves nothing for a view gone in the frame it arrived in', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await press(page, '#show-brief');
-        await frames(page);
+        await settled(page);
         await expect(page.locator('#brief')).toHaveCount(0);
         await expect(page.locator('#show-brief')).toBeFocused();
     });

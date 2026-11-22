@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, InputField, StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { forceColors, servePage, style } from './page.js';
+import { forceColors, servePage, stillClock, style } from './page.js';
 
 /*
  * A busy button, as `Button` draws it with `busy` and `attachBusy` makes it work: marked off at
@@ -85,6 +85,7 @@ test('marks a busy button off and ignores a press by pointer, Enter, Space or a 
 });
 
 test('holds its look and says nothing for a fast save', async ({ page }) => {
+    await stillClock(page.clock);
     await open(page, '10s');
     const before = await look(page, 'background-color');
     await save(page).click();
@@ -92,13 +93,15 @@ test('holds its look and says nothing for a fast save', async ({ page }) => {
     await page.evaluate(() => {
         (window as unknown as Busy).done();
     });
-    await page.waitForTimeout(300);
+    // Past the wait, where a notice the save's end did not call off would be said.
+    await page.clock.runFor(11_000);
     expect(await heard(page)).toEqual([]);
 });
 
 test('drops its words where the work ends after the wait but before they are said', async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await open(page, '150ms');
     await page.evaluate(() => {
         document.querySelector<HTMLButtonElement>('#save')?.click();
@@ -107,7 +110,7 @@ test('drops its words where the work ends after the wait but before they are sai
             (window as unknown as Busy).done();
         }, 200);
     });
-    await page.waitForTimeout(500);
+    await page.clock.runFor(500);
     expect(await heard(page)).toEqual([]);
 });
 
@@ -165,9 +168,11 @@ test.describe('in React', () => {
     });
 
     test('says nothing late for a save that ends just after the wait', async ({ page }) => {
+        await stillClock(page.clock);
         await servePage(page, { title: 'Busy', body: '<div id="root"></div>', script: app });
         await page.getByRole('button', { name: 'Save the scores' }).click();
-        await page.waitForTimeout(800);
+        // Past the save's end and the moment the line would have put words in.
+        await page.clock.runFor(800);
         expect(await page.evaluate(() => (window as unknown as { heard: string[] }).heard)).toEqual(
             []
         );

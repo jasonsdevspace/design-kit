@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { ORIGIN, servePage, stillClock, tabKey, themeOf } from './page.js';
+import { frames, ORIGIN, servePage, stillClock, tabKey, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -791,7 +791,8 @@ test('keeps a choice the browser will not save drawn over one another tab saves'
     await expect
         .poll(() => opened.evaluate((key) => localStorage.getItem(key), THEME_KEY))
         .toBe('light');
-    await opened.evaluate(() => new Promise((done) => setTimeout(done, 50)));
+    // Frames for the redraw that follows the save, which comes by an event and no timer.
+    await frames(opened);
     expect(await themeOf(opened)).toBe('dark');
     await context.close();
 });
@@ -826,6 +827,7 @@ test('leaves a copy button taken away mid-press hidden, at Copy, and silent once
     browser,
 }) => {
     const context = await browser.newContext();
+    await stillClock(context.clock);
     const opened = await tab(context);
     await holdClipboard(opened);
     const button = opened.locator('.dk-copy');
@@ -836,7 +838,7 @@ test('leaves a copy button taken away mid-press hidden, at Copy, and silent once
     await release(opened, true);
     // Past the moment the status line says a message, where a guard left out would show Copied and
     // say it.
-    await opened.evaluate(() => new Promise((done) => setTimeout(done, 300)));
+    await opened.clock.runFor(300);
     await expect(button).toBeHidden();
     expect(
         await button.evaluate((element) =>

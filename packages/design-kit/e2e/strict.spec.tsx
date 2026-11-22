@@ -115,6 +115,8 @@ test('says a busy notice, the end of a progress and a refusal once each', async 
     await page.evaluate(() => {
         (window as unknown as Strict).busy(true);
     });
+    // React draws the mark in a task of its own, and the wait starts from it.
+    await expect(page.locator('#save')).toHaveAttribute('data-busy', 'Saving the list.');
     // Past the button's wait of 200ms.
     await page.clock.runFor(300);
     expect(await said(page)).toEqual(['Saving the list.']);

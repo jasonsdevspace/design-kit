@@ -200,10 +200,10 @@ The paths are in `packages/design-kit`.
 - `e2e/dialog.spec.ts` finds a dialog attached to stay still staying once attached again with `{}`,
   and no longer staying once attached again with `{ stay: false }` or with options that leave
   `stay` out.
-- `e2e/teardown.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
-  its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
-  and check, aborts and attaches without a signal in one task and finds each kept and a busy wait
-  still marked, and aborts, waits a microtask and attaches and finds each attached afresh. For
+- `e2e/teardown.spec.tsx` aborts and attaches every piece again in one task and finds each kept,
+  with its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's
+  errors and check, aborts and attaches without a signal in one task and finds each kept and a busy
+  wait still marked, and aborts, waits a microtask and attaches and finds each attached afresh. For
   focus, it finds a toast with focus in it hand focus back where it is taken down and removed from
   the page in one task or removed first and taken down in a later task, focus left on a control
   outside a toast taken away as focus moves there and on the body where a visitor moved it after the
@@ -231,10 +231,9 @@ The paths are in `packages/design-kit`.
   `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
   into the toast from.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
-  aborts, and finds it closed.
-- `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
-  put back to Copy where a source that reads the page's state gives another block, or throws, and
-  its source read on a join only while a word is shown.
+  aborts and finds it closed, and finds a copy button's word kept for the block its last press
+  copied and put back to Copy where a source that reads the page's state gives another block, or
+  throws, and its source read on a join only while a word is shown.
 - `e2e/strict.spec.tsx` draws a form, a group and a busy button mid-wait behind refs made afresh on
   every render and finds the form's check set up once and its errors kept, the group observed once
   with one stop, and the busy button's wait kept and its words said once, on a clock that stands
@@ -242,7 +241,7 @@ The paths are in `packages/design-kit`.
   hooks share through a merged ref observed once, a form passed from one hook's ref to another's in
   one commit keeping its errors and refusing through the hook it went to, and either of two form
   hooks on one form dropped leaving the other's check and refusal.
-- `e2e/leaks.spec.tsx` joins each piece again and again with a new signal and finds nothing growing
+- `e2e/leaks.spec.tsx` joins each piece twice with a new signal and finds nothing growing
   as it is joined and nothing left once it is taken down, listeners on signals included.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 

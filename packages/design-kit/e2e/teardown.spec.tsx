@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { leaksOf, listenersOn, openCounted } from './leaks.js';
+import { framesIn } from './page.js';
 import { BODY, KEPT, script } from './teardown-pieces.js';
 
 /*
@@ -18,13 +19,12 @@ import { BODY, KEPT, script } from './teardown-pieces.js';
 
 /*
  * What the tests here add to the page: options with a signal only where one is given, a panel's
- * button attached by its selector, and a wait for two frames, for a page on the browser's own
- * clock.
+ * button attached by its selector, and the shared wait for two frames, for a page on the browser's
+ * own clock, which a page's own script calls where it waits for frames in the middle of a test.
  */
 const MORE = `window.withSignal = (signal, options = {}) => (signal ? { ...options, signal } : options);
 window.panel = (selector, signal) => kit.attachPanel($(selector), withSignal(signal));
-window.frames = () =>
-    new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));`;
+window.frames = () => (${framesIn.toString()})(2);`;
 
 /**
  * The page with its controls loaded, nothing of the table attached, and the counters in it, on a
@@ -269,11 +269,18 @@ test.describe('every piece', () => {
         page,
     }) => {
         await opened(page);
+        // The line is the page's, attached without the signal, so only each piece's own teardown
+        // keeps its words off it. The status line itself is left out, since the page holds it
+        // here, and its own teardown is the status line's block's. Each piece is used before the
+        // abort, so a wait or a timer of its own is due as the teardown lands.
         await page.evaluate(`(async () => {
+            kit.attachStatus(line);
             const controller = new AbortController();
             const handles = {};
-            for (const name of ${JSON.stringify(KEPT)})
+            for (const name of ${JSON.stringify(KEPT.filter((name) => name !== 'the status line'))}) {
                 handles[name] = pieces[name].attach(controller.signal);
+                pieces[name].use(handles[name]);
+            }
             controller.abort();
             await Promise.resolve();
             for (const name of Object.keys(handles)) pieces[name].after(handles[name]);
@@ -282,12 +289,16 @@ test.describe('every piece', () => {
         expect(await heard(page)).toEqual([]);
         await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
         await expect(page.locator('#end-game')).not.toHaveAttribute('open');
-        await expect(page.locator('#round-tips')).toBeHidden();
+        // The panel its button opened is the page's once the button is let go, and a press on the
+        // button no longer closes it.
+        await expect(page.locator('#round-tips')).toBeVisible();
         await expect(page.locator('#busy')).not.toHaveAttribute('aria-disabled');
         await expect(page.locator('.dk-theme-switch-button')).not.toHaveAttribute(
             'aria-expanded',
             'true'
         );
+        // The reset puts back the markup's value, and the press after it raises nothing.
+        await expect(page.locator('.dk-stepper-value')).toHaveValue('4');
     });
 
     test('keeps what each piece was doing through an abort and an attach in one task', async ({
@@ -479,6 +490,26 @@ test.describe('the copy button', () => {
         await page.evaluate('controller.abort()');
         await expect(page.locator('.dk-copy')).toBeHidden();
         expect(await wordOf(page)).toBe(0);
+    });
+
+    test('shows Copied and says so for a press the clipboard answers while it stays attached', async ({
+        page,
+    }) => {
+        await opened(page);
+        await page.evaluate(`(() => {
+            kit.attachStatus(line);
+            kit.attachCopyButton($('.dk-copy'), {
+                source: () => $('#code'),
+                status: line,
+                signal: new AbortController().signal,
+            });
+            window.hold = true;
+        })()`);
+        await page.locator('.dk-copy').click();
+        await page.evaluate('window.release()');
+        await page.clock.runFor(300);
+        expect(await wordOf(page)).toBe(1);
+        expect(await heard(page)).toHaveLength(1);
     });
 
     test('says nothing of a press the clipboard answers after its teardown', async ({ page }) => {
@@ -689,6 +720,27 @@ test.describe('the status line', () => {
         await page.clock.runFor(1000);
         await expect(shown(page)).toHaveText('');
     });
+
+    test('keeps speaking while a later signal holds it, and goes quiet once that one aborts', async ({
+        page,
+    }) => {
+        await opened(page);
+        await page.evaluate(`(() => {
+            window.first = new AbortController();
+            window.later = new AbortController();
+            window.say = kit.attachStatus(line, { signal: first.signal });
+            kit.attachStatus(line, { signal: later.signal });
+            first.abort();
+        })()`);
+        await page.evaluate(`say('Saved.')`);
+        await page.clock.runFor(300);
+        await expect(shown(page)).toHaveText('Saved.');
+        await page.evaluate('later.abort()');
+        await expect(shown(page)).toHaveText('');
+        await page.evaluate(`say('Not said.')`);
+        await page.clock.runFor(300);
+        await expect(shown(page)).toHaveText('');
+    });
 });
 
 test.describe('the toast', () => {
@@ -752,6 +804,26 @@ test.describe('the toast', () => {
         await page.evaluate(`kit.attachToast($('.dk-toast'))('Round 4 saved.')`);
         await page.clock.runFor(300);
         await expect(toastLine(page)).toHaveText('Round 4 saved.');
+    });
+
+    test('shows a message while a later signal holds it, and none once that one aborts', async ({
+        page,
+    }) => {
+        await opened(page);
+        await page.evaluate(`(() => {
+            window.first = new AbortController();
+            window.later = new AbortController();
+            window.show = kit.attachToast($('.dk-toast'), { signal: first.signal });
+            kit.attachToast($('.dk-toast'), { signal: later.signal });
+            first.abort();
+        })()`);
+        await page.evaluate(`show('Round 3 saved.')`);
+        await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown', '');
+        await page.evaluate('later.abort()');
+        await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
+        await page.evaluate(`show('Round 4 saved.')`);
+        await page.clock.runFor(300);
+        await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
     });
 
     test('keeps a toast shown while focus leaves it and comes back in one task', async ({
@@ -931,6 +1003,28 @@ test.describe('the form', () => {
         await expect(page.getByLabel('Name')).not.toBeFocused();
     });
 
+    test('draws nothing through what a form or a part given a signal already aborted returns', async ({
+        page,
+    }) => {
+        await opened(page);
+        const markup = await formState(page);
+        await page.evaluate(`(() => {
+            const aborted = AbortSignal.abort();
+            kit.attachForm($('#join'), { status: line, signal: aborted })();
+            kit.attachForm($('#part'), { status: line, signal: aborted })();
+            $('#join').requestSubmit();
+        })()`);
+        await page.clock.runFor(1000);
+        expect(await formState(page)).toEqual(markup);
+        expect(await heard(page)).toEqual([]);
+        // Nothing was kept, so attaching without a signal attaches the form afresh.
+        await page.evaluate(`kit.attachForm($('#join'), { status: line })`);
+        await page.getByRole('button', { name: 'Join' }).click();
+        await page.clock.runFor(100);
+        await expect(page.getByLabel('Name')).toBeFocused();
+        await expect(page.locator('#name-error')).toHaveText('Error: Enter a value.');
+    });
+
     test('keeps checking the form until the last attach in it is taken down', async ({ page }) => {
         await opened(page);
         const listeners = await count(page, FORM);
@@ -1000,6 +1094,22 @@ test.describe('the form', () => {
 test.describe('a panel', () => {
     /** The panels' buttons and the document, where every panel's listeners sit. */
     const PANELS = `[document, ...document.querySelectorAll('button[aria-controls]')]`;
+
+    test('opens nothing and marks nothing given a signal already aborted, and attaches afresh after', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            const control = panel('#tips-button', AbortSignal.abort());
+            control.set(true);
+            control.detach();
+        })()`);
+        await expect(page.locator('#round-tips')).toBeHidden();
+        await expect(page.locator('#tips-button')).not.toHaveAttribute('tabindex');
+        await page.evaluate(`panel('#tips-button')`);
+        await page.locator('#tips-button').click();
+        await expect(page.locator('#round-tips')).toBeVisible();
+    });
 
     test('opens and closes through set in the task its signal aborts', async ({ page }) => {
         await opened(page, { clock: false });
@@ -1157,6 +1267,21 @@ test.describe('the stepper', () => {
         expect(await heard(page)).toEqual([]);
     });
 
+    test('says an error out of range while it stays attached', async ({ page }) => {
+        await opened(page);
+        await page.evaluate(`(() => {
+            kit.attachStepper($('.dk-stepper'), {
+                signal: new AbortController().signal,
+                say: kit.attachStatus(line),
+            });
+            const input = $('.dk-stepper-value');
+            input.value = '99';
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        })()`);
+        await page.clock.runFor(1000);
+        expect(await heard(page)).toHaveLength(1);
+    });
+
     test('goes back to its own line once the only holder that gave options lets go', async ({
         page,
     }) => {
@@ -1198,6 +1323,9 @@ test.describe('a group the arrow keys move through', () => {
     }) => {
         await opened(page);
         const grid = page.locator('.dk-button-grid').first();
+        // The table marks the group attached by the tabindex its cells take, so the markup gives
+        // them none.
+        await expect(grid.locator('[tabindex]')).toHaveCount(0);
         const ownRole = await grid.getAttribute('role');
         await page.evaluate(`(() => {
             window.controller = new AbortController();

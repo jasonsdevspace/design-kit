@@ -116,8 +116,7 @@ window.pieces = {
             group.querySelector('.dk-theme-switch-button').click();
             group.querySelectorAll('input[type="radio"]')[2].click();
         },
-        after: (handle) => {
-            handle();
+        after: () => {
             kit.chooseTheme('light');
             group.querySelector('.dk-theme-switch-button').click();
         },
@@ -134,8 +133,7 @@ window.pieces = {
             });
         },
         use: () => $('.dk-copy').click(),
-        after: (handle) => {
-            handle();
+        after: () => {
             $('.dk-copy').click();
         },
         detach,
@@ -182,7 +180,6 @@ window.pieces = {
         use: () => $('#tips-button').click(),
         after: (control) => {
             control.set(true);
-            control.detach();
             $('#tips-button').click();
         },
         detach: (control) => control.detach(),
@@ -198,10 +195,10 @@ window.pieces = {
             $('#counts').reset();
             steps.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
         },
-        after: (handle) => {
-            handle();
-            steps.querySelector('.dk-stepper-up').click();
+        // A reset and then a press, so a stepper still attached would leave the value raised.
+        after: () => {
             $('#counts').reset();
+            steps.querySelector('.dk-stepper-up').click();
         },
         detach,
         shows: () => !steps.querySelector('.dk-stepper-up').hidden,
@@ -209,8 +206,7 @@ window.pieces = {
     "a table's frame": {
         attach: (signal) => kit.attachTable($('.dk-table-scroll'), { signal }),
         use: () => $('.dk-table-scroll').focus(),
-        after: (handle) => {
-            handle();
+        after: () => {
             $('#start').focus();
             $('.dk-table-scroll').focus();
         },
@@ -222,12 +218,13 @@ window.pieces = {
             cell.focus();
             key(cell, 'ArrowRight');
         },
-        after: (handle) => {
-            handle();
+        after: () => {
             key(cell, 'ArrowRight');
         },
         detach,
-        shows: () => grid.getAttribute('role') === 'toolbar',
+        // The markup gives the cells no tabindex, so any is the attach's.
+        shows: () =>
+            grid.getAttribute('role') === 'toolbar' && grid.querySelector('[tabindex]') !== null,
     },
     'a busy button': {
         attach: (signal) => {
@@ -239,8 +236,7 @@ window.pieces = {
             busy.removeAttribute('data-busy');
             busy.setAttribute('data-busy', 'Saving the rule.');
         },
-        after: (handle) => {
-            handle();
+        after: () => {
             busy.removeAttribute('data-busy');
             busy.setAttribute('data-busy', 'Saving the rule.');
         },
@@ -255,8 +251,7 @@ window.pieces = {
         use: () => {
             bar.value = bar.value >= 20 ? 10 : 30;
         },
-        after: (handle) => {
-            handle();
+        after: () => {
             bar.value = bar.max;
         },
         detach,

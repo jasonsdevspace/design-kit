@@ -12,7 +12,8 @@ import { BODY, KEPT, type Piece, PIECES, script } from './teardown-pieces.js';
  * Chromium, WebKit and Firefox: each piece in the table teardown-pieces.tsx shares with
  * teardown.spec.tsx, used and taken down, brings every count back to where it started, joined again
  * and again grows none, and one given a signal already aborted, used and called after, starts
- * nothing. This spec makes every count after an attach, so the teardown spec makes none of them.
+ * nothing. This spec makes every count of what a piece leaves running after an attach, and the
+ * teardown spec counts only what this one does not.
  * The theme's listeners on the window stay for the page's life, as the record has it, so the table
  * attaches a switch and takes it down once before every count starts. The clock is a stand-in that
  * moves only by the test's steps, so a timer still to come at the abort is one the abort has to
@@ -21,7 +22,8 @@ import { BODY, KEPT, type Piece, PIECES, script } from './teardown-pieces.js';
 
 /*
  * What the leak tests call on a piece: attached and used with a fresh controller, aborted, joined
- * by an abort and a fresh attach in one task, as a ref made afresh does, and called after.
+ * by an abort and a fresh attach in one task, as a ref made afresh does, and called after, its
+ * detach first where what the attach returned is one.
  */
 const LEAKS = `window.handles = {};
 window.controllers = {};
@@ -38,12 +40,16 @@ window.join = (name) => {
     old.abort();
     window.handles[name] = pieces[name].attach(controllers[name].signal);
 };
-window.after = (name) => pieces[name].after(handles[name]);`;
+window.after = (name) => {
+    pieces[name].detach?.(handles[name]);
+    pieces[name].after(handles[name]);
+};`;
 
 /**
  * How many times each piece is attached and taken down in a row: the first proves the teardown,
- * and the second proves an attach made on an element already taken down starts everything again
- * and is taken down in turn. A round after those repeats what the second proves.
+ * and the second proves an attach made again starts all the first did and is taken down in turn,
+ * on the element already taken down for a piece and on elements drawn afresh for the hooks. A
+ * round after those repeats what the second proves.
  */
 const ROUNDS = 2;
 
@@ -58,10 +64,18 @@ const opened = (page: Page): Promise<void> =>
 const call = (page: Page, what: 'attach' | 'abort' | 'join' | 'after', name: string) =>
     page.evaluate(
         ([fn, piece]) => {
-            (window as unknown as Record<string, (name: string) => void>)[fn]?.(piece);
+            const run = (window as unknown as Record<string, (name: string) => void>)[fn];
+            if (!run) throw new Error(`the page has no ${fn}`);
+            run(piece);
         },
         [what, name] as const
     );
+
+/**
+ * What a count shows of what is attached, every count but the timers and frames, which come and go
+ * as a piece waits, so every round of attaching makes the same.
+ */
+const attachedIn = (counts: Counts): Counts => ({ ...counts, timers: 0, frames: 0 });
 
 /**
  * Finds the page back where it started. Polled, since a dialog closed by its teardown hears its
@@ -85,13 +99,17 @@ for (const name of PIECES) {
         await opened(page);
         const before = await leaksOf(page);
         await expectEngineAgrees(page);
+        let first: Counts | undefined;
         for (let round = 1; round <= ROUNDS; round += 1) {
             const what = `${name}, round ${String(round)}`;
             await call(page, 'attach', name);
-            // Something is running once it is attached and used, in every round, so the count
-            // that comes back is one the teardown brought back, and an attach again that started
-            // nothing would fail here.
-            expect(await leaksOf(page), what).not.toEqual(before);
+            // Something is running once it is attached and used, so the count that comes back is
+            // one the teardown brought back, and each later round attaches all the first did, so
+            // an attach again that started less, beside a line attached with it, fails here.
+            const attached = await leaksOf(page);
+            expect(attached, what).not.toEqual(before);
+            first ??= attachedIn(attached);
+            expect(attachedIn(attached), what).toEqual(first);
             await expectEngineAgrees(page);
             // Far enough for its words to be put on the line and its frames to come, and short of
             // the timers that end them.
@@ -142,6 +160,7 @@ test('starts nothing for any piece given a signal already aborted, used and call
             if (!piece) throw new Error(`no piece named ${name}`);
             const handle = piece.attach(aborted);
             piece.use(handle);
+            piece.detach?.(handle);
             piece.after(handle);
         }
     }, PIECES);
@@ -257,6 +276,7 @@ test.describe('the hooks', () => {
             await expect(page.locator('h1')).toHaveText('Lists');
             const before = await withoutReact(page);
             await expectEngineAgrees(page);
+            let first: Counts | undefined;
             for (let round = 1; round <= ROUNDS; round += 1) {
                 const what = `the hooks, round ${String(round)}`;
                 await page.evaluate(() => {
@@ -265,8 +285,12 @@ test.describe('the hooks', () => {
                 await page.evaluate(() => {
                     (window as unknown as Leaks).use();
                 });
-                // In every round, so a page drawn again that attached nothing fails here.
-                expect(await withoutReact(page), what).not.toEqual(before);
+                // Something is running, and as much as in the first round, so a hook that attached
+                // less to the elements drawn afresh fails here.
+                const attached = await withoutReact(page);
+                expect(attached, what).not.toEqual(before);
+                first ??= attachedIn(attached);
+                expect(attachedIn(attached), what).toEqual(first);
                 await expectEngineAgrees(page);
                 await page.clock.runFor(150);
                 await page.evaluate(() => {

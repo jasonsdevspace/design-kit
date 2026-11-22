@@ -1,7 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 
 import { THEME_KEY, themeScript } from '../src/theme.js';
-import { ORIGIN, themeOf } from './page.js';
+import { frames, ORIGIN, themeOf } from './page.js';
 
 /*
  * The theme script as a visitor's browser runs it: the theme the portfolio saved, or the system's
@@ -134,7 +134,8 @@ test('leaves alone a meta with another query, and both where the page names no c
     const pair = await tab(context, BAR_PAGE);
     expect(await barOf(pair)).toEqual([GROUNDS.dark, GROUNDS.dark]);
     await pair.evaluate(() => document.documentElement.setAttribute('data-theme', 'constructor'));
-    await pair.evaluate(() => new Promise((resolve) => setTimeout(resolve, 50)));
+    // Frames for the theme script to hear the change, which it hears by an observer, not a timer.
+    await frames(pair);
     expect(await barOf(pair)).toEqual([GROUNDS.dark, GROUNDS.dark]);
     const one = await tab(
         context,

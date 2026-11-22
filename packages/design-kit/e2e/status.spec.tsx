@@ -209,6 +209,7 @@ test('says words already said at once even when words that settle follow straigh
 });
 
 test('drops words still waiting to settle when another message is said', async ({ page }) => {
+    await stillClock(page.clock);
     await servePage(page, { title: 'Status', body: LINE, script: VANILLA });
     await page.waitForFunction(() => 'ready' in window);
     await page.evaluate(() => {
@@ -216,8 +217,10 @@ test('drops words still waiting to settle when another message is said', async (
         say('4 still to enter.', { settle: 300 });
         say('Round saved.');
     });
+    await page.clock.runFor(150);
     await expect(page.locator('#line')).toHaveText('Round saved.');
-    await page.waitForTimeout(500);
+    // Past the settle the dropped words waited for.
+    await page.clock.runFor(500);
     expect(await page.evaluate(() => (window as unknown as Heard).heard)).toEqual(['Round saved.']);
 });
 
@@ -231,6 +234,14 @@ test.beforeAll(async () => {
 
 const draw = async (page: import('@playwright/test').Page) => {
     await servePage(page, { title: 'Status', body: '<div id="root"></div>', script: app });
+    await expect(page.locator('#outer > p[role="status"]')).toHaveText('Loaded.');
+};
+
+/** The page drawn on a clock that stands still, stepped until its first words are put in. */
+const drawStill = async (page: import('@playwright/test').Page) => {
+    await stillClock(page.clock);
+    await servePage(page, { title: 'Status', body: '<div id="root"></div>', script: app });
+    await page.clock.runFor(150);
     await expect(page.locator('#outer > p[role="status"]')).toHaveText('Loaded.');
 };
 
@@ -258,7 +269,7 @@ test('takes the calls under a provider inside another on its own line', async ({
 test('lets its line go as the provider unmounts, so words said just before are never put in', async ({
     page,
 }) => {
-    await draw(page);
+    await drawStill(page);
     await page.evaluate(() => {
         const line = document.querySelector('#dialog [role="status"]');
         (window as unknown as { kept: Element | null }).kept = line;
@@ -267,7 +278,8 @@ test('lets its line go as the provider unmounts, so words said just before are n
         document.querySelector<HTMLButtonElement>('#leave')?.click();
     });
     await expect(page.locator('#outer')).toHaveCount(0);
-    await page.waitForTimeout(500);
+    // Past the moment the words would have been put in.
+    await page.clock.runFor(500);
     expect(
         await page.evaluate(() => (window as unknown as { kept: Element | null }).kept?.textContent)
     ).toBe('');
@@ -278,12 +290,12 @@ test('says nothing and throws nothing for a call made after its provider has gon
 }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await draw(page);
+    await drawStill(page);
     await page.locator('#leave').click();
     await expect(page.locator('#outer')).toHaveCount(0);
     await page.evaluate(() => {
         (window as unknown as Drawn).late?.();
     });
-    await page.waitForTimeout(300);
+    await page.clock.runFor(300);
     expect(errors).toEqual([]);
 });

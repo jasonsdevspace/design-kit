@@ -152,11 +152,16 @@ jobs:
     # The pieces Safari draws its own way, such as a bar that stays put, a height that follows the
     # browser's own bars, a number field's inner room and what a table's frame scrolls to, drawn in
     # its engine too. On a Mac, where WebKit runs on what the image already has: on Ubuntu it needs
-    # system packages from a mirror that has been slow enough to run a job out of time.
+    # system packages from a mirror that has been slow enough to run a job out of time. In two
+    # shards, each on a runner of its own, since the whole run came close to the time limit.
     webkit:
-        name: Browser tests in WebKit
+        name: Browser tests in WebKit, shard ${{ matrix.shard }} of 2
         runs-on: macos-26
         timeout-minutes: 10
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -181,12 +186,14 @@ jobs:
                   node -e "require('@playwright/test').webkit.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             - name: Browser tests in WebKit
+              env:
+                  SHARD: ${{ matrix.shard }}
               run: |
                   rm -f playwright-results.json
                   status=0
-                  npm run e2e -- --project webkit || status=$?
+                  npm run e2e -- --project webkit --shard "$SHARD/2" || status=$?
                   if [ -f playwright-results.json ]; then
-                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in WebKit" "$status" ||
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in WebKit, shard $SHARD of 2" "$status" ||
                           echo "The summary of the browser tests could not be written."
                   fi
                   exit "$status"
@@ -195,7 +202,7 @@ jobs:
               if: failure()
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
-                  name: playwright-report-webkit
+                  name: playwright-report-webkit-${{ matrix.shard }}
                   path: playwright-report
                   retention-days: 7
 
