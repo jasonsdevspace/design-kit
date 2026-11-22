@@ -2978,26 +2978,31 @@ A toast leaves when its close button, its action, or Escape with focus in it dis
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
 while the pointer is over it or focus is in it. When a message arrives, what has focus stays in
-view, scrolled clear of the toast where the toast would cover it, measured against where the toast
-comes to rest, so a control beside a narrow toast on a wide screen stays where it is. With focus
-inside a frame of the page's own origin, that is the control that has focus there, which the toast
-reads as the message comes and measures where the frame places it, past its border and padding and
-scaled as the frame is drawn, so a tall frame does not hide it. A control the frame has scrolled out
-of its own sight is left where it is. In Safari, a frame scaled by `zoom` is measured unscaled,
-which one scaled by `transform` is not. A frame of another origin, whose controls a page cannot
-reach, or one where only its body has focus, is measured whole, and one taller than the room above
-the toast is left where it is. When a toast leaves with focus in it, focus goes to the first of
-these that takes it: the control focus last came into the toast from, then the control outside the
-toast that had focus as the latest message came, then the body of the app's frame, or on a page with
-no frame its main content where that takes focus, as the `tabindex="-1"` the skip link's markup puts
-on it lets it. The first is passed over where focus last came into the toast from nowhere. So a
-keyboard user who moved on from where they were as the message came lands where they left off. Its
-Close and its action carry `tabindex="0"`, which `Toast` draws and `attachToast` adds where a page's
-markup has none, so Safari, which focuses a pressed button only where it has a tabindex, leaves
-focus in the toast on a press and focus goes back as the toast leaves. An action runs after the
-toast has left, so where it takes away what focus came from, it moves focus itself. A message with
-no action replaces one with an action and its way back, so a page shows one another only when the
-first is done with. More than one action is a dialog's job.
+view, scrolled clear of the toast where the toast, measured where it comes to rest, would cover it.
+A control counts as covered only where it meets the toast across as well as down, so one beside a
+narrow toast on a wide screen stays where it is. With focus inside a frame of the page's own origin,
+that is the control that has focus there, which the toast reads as the message comes and measures
+where the frame places it, past the frame's border and padding, scaled across and down as the frame
+is drawn and cut to what the frame shows inside its scrollbars, so a tall frame does not hide it. A
+control the frame has scrolled out of its own sight is left where it is, and a frame rotated or
+skewed is measured by its bounding box. Where a control taller than the room above the toast is
+mostly scrolled out of a frame, Chromium scrolls its part in sight clear, while WebKit and Firefox
+scroll only the frame. WebKit lays out the document of a frame scaled by `zoom` larger than it draws
+it, so there a control in such a frame can sit past what the frame shows and be left where it is. A
+frame of another origin, whose controls a page cannot reach, or one where only its body has focus,
+is measured whole, and one taller than the room above the toast is left where it is. When a toast
+leaves with focus in it, focus goes to the first of these that takes it: the control focus last came
+into the toast from, then the control outside the toast that had focus as the latest message came,
+then the body of the app's frame, or on a page with no frame its main content where that takes
+focus, as the `tabindex="-1"` the skip link's markup puts on it lets it. The first is passed over
+where focus last came into the toast from nowhere. So a keyboard user who moved on from where they
+were as the message came lands where they left off. Its Close and its action carry `tabindex="0"`,
+which `Toast` draws and `attachToast` adds where a page's markup has none, so Safari, which focuses
+a pressed button only where it has a tabindex, leaves focus in the toast on a press and focus goes
+back as the toast leaves. An action runs after the toast has left, so where it takes away what focus
+came from, it moves focus itself. A message with no action replaces one with an action and its way
+back, so a page shows one another only when the first is done with. More than one action is a
+dialog's job.
 
 Focus leaves the toast where nothing on that list takes it, so it falls to the page's body in every
 engine rather than staying on the toast's hidden button. The toast takes off its shown state before

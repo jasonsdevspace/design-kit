@@ -127,14 +127,19 @@ Option C.
   back to the inner frame itself. The toast keeps the control inside a frame of the page's own
   origin clear of itself as a message shows, read as the handback reads it and with no listener on
   the frame's document, measuring it where the frame places it, past the frame's border and padding,
-  scaled as the frame is drawn and cut to what the frame shows, so a tall frame does not hide it,
-  while a frame of another origin is measured whole. A control inside a tall frame of another origin
-  can stay under the toast, since the page cannot read it and the frame is left where it is. The
-  toast is measured where it comes to rest rather than where its entrance starts, and a control
-  counts as covered only where it meets the toast across as well as down, so one beside a narrow
-  toast on a wide screen stays where it is. The toast takes off its shown state before it hands
-  focus back, so
-  the room the sheet keeps under a shown toast does not scroll the control focus goes to, and hides
+  scaled across and down as the frame is drawn and cut to what the frame shows inside its
+  scrollbars, so a tall frame does not hide it, while a frame of another origin is measured whole. A
+  control inside a tall frame of another origin can stay under the toast, since the page cannot read
+  it and the frame is left where it is. A frame rotated or skewed is measured by its bounding box.
+  WebKit 27.2 lays out the document of a frame scaled by `zoom` larger than it draws it, so a
+  control there can sit past what the frame shows and be left where it is. The toast is measured
+  where it comes to rest rather than where its entrance starts, and a control counts as covered only
+  where it meets the toast across as well as down, so one beside a narrow toast on a wide screen
+  stays where it is. A control whose part in sight is taller than the room above the toast is left
+  where it is. Where both ends of a taller control lie past the page's room, WebKit and Firefox
+  scroll only the frame, as the CSSOM View standard asks of `scrollIntoView`, and Chromium scrolls
+  the page too. The toast takes off its shown state before it hands focus back, so the room the
+  sheet keeps under a shown toast does not scroll the control focus goes to, and hides
   its buttons after, and where nothing takes focus, it blurs what still has focus in it, so focus
   falls to the page's body in every engine, where WebKit and Firefox would leave it on the toast's
   hidden button until a later rendering update. Each piece tries its places in turn and counts a
@@ -220,11 +225,9 @@ every signal it has ever held.
   usual size, so the rule sets them at 19.5 KB. A piece that counts focus inside a shadow tree
   within it, or on a control slotted into it, as focus in it, with a panel that reads an Escape from
   where the key was pressed and finds a panel only among the page's own elements, brings them to
-  19,288. A toast that keeps the control inside a frame of the page's own origin clear of it as a
-  message shows, measured past the frame's border and padding, scaled as the frame is drawn and cut
-  to what it shows, against the toast where it comes to rest and across as well as down, brings them
-  to 19,551, with less room under 19.5 KB than a function of the usual size, so the rule sets them
-  at 19.75 KB.
+  19,288. A toast that keeps the control inside a frame of the page's own origin clear of itself as
+  a message shows, and measures the toast at rest and across as well as down, brings them to 19,601,
+  with less room under 19.5 KB than a function of the usual size, so the rule sets them at 20 KB.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -323,13 +326,16 @@ The paths are in `packages/design-kit`.
   included.
 - `e2e/toast.spec.tsx` also finds a button near the foot of a tall frame of the page's own origin,
   with a border and padding, focused where the toast draws, ending clear of the toast once a
-  message shows, on a page and in an app's frame, a button the frame's padding puts a few pixels
-  under the toast's edge kept clear, in a frame drawn smaller too, and a link on the page the
-  toast covers by less than the rise it enters on kept clear. It finds the page and the frame left
-  where they are where the button inside a frame is clear of the toast though the frame reaches
-  under it, and where a short frame above the toast has scrolled its button out of sight, and the
-  page left where it is where a control on the page or inside a frame sits beside a toast narrower
-  than the screen.
+  message shows, on a page and in an app's frame. It finds kept clear a button the frame's padding
+  puts a few pixels under the toast's edge, in a frame drawn smaller too, one in a frame drawn
+  wider than laid out, a link on the page the toast covers by less than the rise it enters on, and
+  a frame scaled by `zoom` in Chromium and Firefox, and, in Chromium, a tall control mostly
+  scrolled out of a frame with its part in sight under the toast. It finds the page and the frame
+  left where they are where the button inside a frame is clear of the toast though the frame
+  reaches under it, where a short frame above the toast has scrolled its button out of sight,
+  where a frame scaled by `zoom` in WebKit lays its button past what it shows, and, in WebKit,
+  where the button sits behind the frame's scrollbar, and the page left where it is where a
+  control on the page or inside a frame sits beside a toast narrower than the screen.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources

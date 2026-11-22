@@ -28,19 +28,19 @@ import { textSize } from './text-size.js';
  * moves it as it leaves the toast, with the walk stopping there and a focus request asked before it
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
  * focus goes back to a control in view, a control that has focus as a message shows kept clear of
- * the toast, inside a tall frame of the page's own origin too, past the frame's padding and in a
- * frame drawn smaller, and where the toast covers it by less than the rise it enters on, and left
- * where it is where the toast leaves it alone, where the frame has scrolled it out of sight or
- * where it sits beside a narrow toast, focus sent on to the control inside a frame of the page's
- * own origin that had focus as the message came and left on the frame where that control is marked
- * off, gone or on a page since loaded, left in the frame where a page's listener moves it there in
- * Firefox, and to a frame of another origin by pointer or past it by a key in Firefox, a long
- * message wrapping with its action in reach and its buttons wrapped inside it on a 320px phone at
- * twice the text size, its message as far from either edge there, its buttons kept together in
- * their group, or as they were without it, its place above an app's dock or at the foot of a page,
- * nothing drawn before a message or printed, the same function returned when attached again, a
- * solid edge in forced colors outside WebKit, which draws none, and no audit findings in either
- * theme.
+ * the toast, inside a tall frame of the page's own origin too, past the frame's padding, in a frame
+ * drawn smaller, wider or by zoom, and mostly scrolled out of a frame, and where the toast covers
+ * it by less than the rise it enters on, and left where it is where the toast leaves it alone,
+ * where the frame has scrolled it out of sight or behind its scrollbar, or where it sits beside a
+ * narrow toast, focus sent on to the control inside a frame of the page's own origin that had focus
+ * as the message came and left on the frame where that control is marked off, gone or on a page
+ * since loaded, left in the frame where a page's listener moves it there in Firefox, and to a frame
+ * of another origin by pointer or past it by a key in Firefox, a long message wrapping with its
+ * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
+ * message as far from either edge there, its buttons kept together in their group, or as they were
+ * without it, its place above an app's dock or at the foot of a page, nothing drawn before a
+ * message or printed, the same function returned when attached again, a solid edge in forced colors
+ * outside WebKit, which draws none, and no audit findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -1213,13 +1213,21 @@ test('keeps what had focus in view, clear of the toast, as it shows on a page', 
 
 /**
  * A frame of the page's own origin, with a border and padding, the height given and set down by
- * its own height, holding a button the depth given, with the style given added.
+ * its own height, holding the content given, with the style given added.
  */
-const padded = (height: number, depth: number, style = ''): string =>
+const frameOf = (height: number, content: string, style = ''): string =>
     `<iframe title="Notes" style="display: block; height: ${String(height)}px; ` +
     `margin-top: ${String(height)}px; border: 5px solid; padding: 12px; ${style}" ` +
-    `srcdoc="<body style='margin: 0'><div style='height: ${String(depth)}px'></div>` +
-    "<button type=button id=low>Low</button><div style='height: 600px'></div>\"></iframe>";
+    `srcdoc="<body style='margin: 0'>${content}"></iframe>`;
+
+/** A frame from `frameOf`, holding a button the depth given, with room under it. */
+const padded = (height: number, depth: number, style = ''): string =>
+    frameOf(
+        height,
+        `<div style='height: ${String(depth)}px'></div>` +
+            "<button type=button id=low>Low</button><div style='height: 600px'></div>",
+        style
+    );
 
 const low = (page: Page): Locator => page.frameLocator('iframe').locator('#low');
 
@@ -1317,6 +1325,99 @@ for (const [how, style] of [
         await focusStill(low(page));
         await showClear(page, low(page));
     });
+
+test('keeps a control inside a frame drawn wider than laid out clear of the toast', async ({
+    page,
+}) => {
+    // Drawn three times as wide as laid out and as tall, so the frame's padding puts its button
+    // under the toast, where a scale taken from its height alone would put it beside the toast.
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${padded(100, 0, 'margin-top: 0; width: 300px; padding-left: 150px; transform: scale(3, 1); transform-origin: 0 0')}<p>Round 15 `
+        ),
+        width: 1280,
+    });
+    await expect(low(page)).toBeAttached();
+    const card = await resting(page);
+    await scrollEnd(page, low(page), card.y + 20);
+    expect((await box(low(page), 'the button')).x).toBeGreaterThan(card.x);
+    await focusStill(low(page));
+    await showClear(page, low(page));
+});
+
+test('keeps a tall control mostly scrolled out of a frame clear of the toast where the part in sight is under it', async ({
+    page,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'chromium',
+        'WebKit and Firefox scroll nothing on the page for a control whose ends both lie past its room'
+    );
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${frameOf(80, "<div id=low tabindex=0 style='height: 1000px'></div><div style='height: 20px'></div>")}<p>Round 15 `
+        ),
+    });
+    await expect(low(page)).toBeAttached();
+    // The frame shows the control's last 30 pixels, at the foot of the screen.
+    await page.locator('iframe').evaluate((frame) => {
+        (frame as HTMLIFrameElement).contentWindow!.scrollTo(0, 970);
+    });
+    await scrollEnd(page, page.locator('iframe'), (await foot(page)) - 4);
+    await focusStill(low(page));
+    await showClear(page, low(page));
+});
+
+test("leaves the page and the frame where they are when the control inside a frame sits behind the frame's scrollbar", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'webkit',
+        "Chromium and Firefox draw a frame's scrollbars over its document here, taking no room"
+    );
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${frameOf(
+                200,
+                '<style>::-webkit-scrollbar { width: 15px; height: 15px }</style>' +
+                    "<div style='height: 154px'></div>" +
+                    "<button type=button id=low style='display: block; height: 10px; padding: 0'></button>" +
+                    "<div style='width: 900px; height: 600px'></div>"
+            )}<p>Round 15 `
+        ),
+    });
+    await expect(low(page)).toBeAttached();
+    // The button lies in the strip the frame's lower scrollbar covers, at the foot of the screen.
+    await scrollEnd(page, page.locator('iframe'), (await foot(page)) - 4);
+    await focusStill(low(page));
+    await showStill(page);
+});
+
+test('keeps a control inside a frame scaled by zoom clear of the toast, as each engine lays the frame out', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        body: PAGE.replace('</button>', `</button>${padded(1200, 1100, 'zoom: 0.6')}`),
+    });
+    await expect(low(page)).toBeAttached();
+    const { y: top } = await resting(page);
+    await scrollEnd(page, low(page), top + 6);
+    await focusStill(low(page));
+    if (browserName === 'webkit') {
+        // WebKit 27.2 lays the document of a frame scaled by zoom out larger than it draws it, so
+        // the button sits past what the frame shows, and the toast leaves the page and the frame
+        // be.
+        expect(
+            await low(page).evaluate((element) => element.getBoundingClientRect().top)
+        ).toBeGreaterThan(1100 / 0.6 - 2);
+        await showStill(page);
+    } else await showClear(page, low(page));
+});
 
 test('keeps a control on the page clear of the toast that covers it by less than the rise it enters on', async ({
     page,
