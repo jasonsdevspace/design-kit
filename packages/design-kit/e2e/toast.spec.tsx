@@ -235,6 +235,126 @@ test('hands focus back where it was when its action is pressed by pointer, Safar
     await expect(page.locator('#save')).toBeFocused();
 });
 
+/** The page with a second control after Save, which the keyboard passes on its way to the toast. */
+const TWO = PAGE.replace(
+    '</button>',
+    '</button><button type="button" class="dk-button" id="share">Share</button>'
+);
+
+test('hands focus back to the control the visitor came into the toast from, not where it was as the message came', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await expect(page.locator('#share')).toBeFocused();
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#share')).toBeFocused();
+
+    // The same where Escape dismisses it from its close button.
+    await page.keyboard.press(`Shift+${tab}`);
+    await expect(page.locator('#save')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(closeButton(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#share')).toBeFocused();
+});
+
+test('hands focus back where it was as the message came where the control focus came in from no longer takes it', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    await page.locator('#share').evaluate((element) => {
+        (element as HTMLButtonElement).disabled = true;
+    });
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('hands focus back to the control focus came into the toast from where the page stops its focusout', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await expect(page.locator('#share')).toBeFocused();
+    // The page stops Share's focusout before it reaches the document, so the control that last
+    // lost focus there is still Save.
+    await page.evaluate(() => {
+        window.addEventListener(
+            'focusout',
+            (event) => {
+                if ((event.target as Element).id === 'share') event.stopPropagation();
+            },
+            true
+        );
+    });
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#share')).toBeFocused();
+});
+
+test('hands focus back where it was as the message came where focus last came into the toast from nowhere', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(undo(page)).toBeFocused();
+    // Focus leaves the toast for nothing, then comes back in with no control it came from, so the
+    // control it came in from the first time no longer counts.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('hands focus back where it was as the message came where focus came into the toast from nowhere', async ({
+    page,
+}) => {
+    await open(page, { body: TWO });
+    await page.locator('#save').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    // Focus falls to nothing, then comes into the toast with no control it came from.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
 test("gives a hand-written toast's buttons a tabindex, and keeps one the page set", async ({
     page,
 }) => {

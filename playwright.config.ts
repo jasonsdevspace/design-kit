@@ -36,11 +36,12 @@ const WEBKIT =
  * lengths Firefox rounds to a sixty-fourth of a pixel, and a table's frame, whose shade a browser
  * draws only where it ties an animation to a scroll, in the current Firefox Playwright brings
  * rather than the kit's floor, an icon, whose stroke each engine draws its own way, a grid's
- * columns, which rest on each engine's sums of a share and its clamps, and the teardown and focus
- * moved after a change that run in WebKit too.
+ * columns, which rest on each engine's sums of a share and its clamps, the teardown and focus moved
+ * after a change that run in WebKit too, and the toast, which hands focus back by where focus came
+ * into it from, an event each engine fires its own way.
  */
 const FIREFOX =
-    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus,leaks}.spec.{ts,tsx}';
+    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus,leaks,toast}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
