@@ -246,6 +246,15 @@ test.describe('in React', () => {
         await expect(page.locator('#panel-open')).toBeFocused();
     });
 
+    test('moves focus asked for after an await by a component since gone to a link inside an inline svg', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#chart-close');
+        await expect(page.locator('#chart-close')).toHaveCount(0);
+        await expect(page.locator('#chart-open')).toBeFocused();
+    });
+
     test('moves focus to the next row as the row asking for it is removed', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await press(page, '#row-Ann');

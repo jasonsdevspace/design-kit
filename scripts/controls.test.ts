@@ -19,19 +19,19 @@ import { sentOf } from './parts.mjs';
  * Set in 0.6.0 from the size audit of record 13: what a page's bundler sends for every function,
  * with room for one more of the usual size, the median a function adds, rounded up to the next
  * quarter of a kilobyte. Set again by the same rule for 0.8.4, with attachPanel and its fixes in
- * place, for 0.9.0 once a stepper's range in words, its limits said and a page's own words and
- * line took them past 7.5 KB, and again once moving focus after a change and among a group's cells
- * took them past 8.75 KB, and again once refusing a form and a busy button took them past 11 KB,
- * again once saying progress at its steps took them past 12 KB, again once checking a form
- * against the browser's constraints took them past 12.75 KB, and again once telling a press that
- * brings a view from a key that moves took them past 15.5 KB, and again once a stepper's own say
- * and the controls finding their parts inside a shadow root left too little room for another, and
- * again for 0.9.3 once the teardown helper of record 22 left too little room for another, and
- * again once the status line, the toast, the form, the panels and the remaining attaches moved onto
- * it, and again once record 23's holders left too little room for another, and again once its one
- * rule for handing focus back did.
+ * place, for 0.9.0 once a stepper's range in words, its limits said and a page's own words and line
+ * took them past 7.5 KB, and again once moving focus after a change and among a group's cells took
+ * them past 8.75 KB, and again once refusing a form and a busy button took them past 11 KB, again
+ * once saying progress at its steps took them past 12 KB, again once checking a form against the
+ * browser's constraints took them past 12.75 KB, and again once telling a press that brings a view
+ * from a key that moves took them past 15.5 KB, and again once a stepper's own say and the controls
+ * finding their parts inside a shadow root left too little room for another, and again for 0.9.3
+ * once the teardown helper of record 22 left too little room for another, and again once the status
+ * line, the toast, the form, the panels and the remaining attaches moved onto it, and again once
+ * record 23's holders left too little room for another, again once its one rule for handing focus
+ * back did, and again once a handback that takes an SVG element did.
  */
-const BUDGET = 19 * 1024;
+const BUDGET = 19.25 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

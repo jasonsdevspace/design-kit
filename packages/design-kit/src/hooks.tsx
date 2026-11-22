@@ -355,7 +355,7 @@ const inSight = (target: FocusTarget): boolean => {
             : typeof target === 'function'
               ? target()
               : target;
-    return place instanceof HTMLElement && place.isConnected && place.checkVisibility();
+    return place instanceof Element && place.isConnected && place.checkVisibility();
 };
 
 /** What a view's arrival is told apart by, compared by value, such as a round's number. */

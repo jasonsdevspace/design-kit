@@ -18,16 +18,17 @@ import {
 import { textSize } from './text-size.js';
 
 /*
- * A toast as a page attaches it, in Chromium and in WebKit: a message drawn and heard without focus
- * moving and with no element added, its action and its close button reached by the keyboard and
- * dismissing it, a toast with an action staying and one without leaving after its time, that wait
- * held while it is hovered or focused, on a stand-in clock, a second message replacing the first
- * and the same words heard again, focus returned to where it was, a long message wrapping with its
- * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
- * message as far from either edge there, its buttons kept together in their group, or as they were
- * without it, its place above an app's dock or at the foot of a page, nothing drawn before a
- * message or printed, the same function returned when attached again, a solid edge in forced
- * colors, and no audit findings in either theme.
+ * A toast as a page attaches it, in Chromium, WebKit and Firefox: a message drawn and heard without
+ * focus moving and with no element added, its action and its close button reached by the keyboard
+ * and dismissing it, a toast with an action staying and one without leaving after its time, that
+ * wait held while it is hovered or focused, on a stand-in clock, a second message replacing the
+ * first and the same words heard again, focus returned to where it was, a link inside an inline svg
+ * among the places, a long message wrapping with its action in reach and its buttons wrapped inside
+ * it on a 320px phone at twice the text size, its message as far from either edge there, its
+ * buttons kept together in their group, or as they were without it, its place above an app's dock
+ * or at the foot of a page, nothing drawn before a message or printed, the same function returned
+ * when attached again, a solid edge in forced colors outside WebKit, which draws none, and no audit
+ * findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -268,6 +269,47 @@ test('hands focus back to the control the visitor came into the toast from, not 
     await page.keyboard.press('Escape');
     await expect(message(page)).toHaveText('');
     await expect(page.locator('#share')).toBeFocused();
+});
+
+// A chart drawn as an inline svg, whose link is an SVG element rather than an HTML one.
+const CHART = PAGE.replace(
+    '</button>',
+    '</button><svg width="160" height="40"><a href="#last" id="chart">' +
+        '<text x="0" y="24">Round 3 chart</text></a></svg>'
+);
+
+test('hands focus back to a link inside an inline svg that focus came into the toast from', async ({
+    page,
+    browserName,
+}) => {
+    const tab = tabKey(browserName);
+    await open(page, { body: CHART });
+    await page.locator('#save').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press(tab);
+    await expect(page.locator('#chart')).toBeFocused();
+    await page.keyboard.press(tab);
+    await page.keyboard.press(tab);
+    await expect(closeButton(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#chart')).toBeFocused();
+});
+
+test('hands focus back to a link inside an inline svg that had focus as the message came', async ({
+    page,
+}) => {
+    await open(page, { body: CHART });
+    await page.locator('#chart').focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    // Focus falls to nothing, then comes into the toast with no control it came from.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await closeButton(page).focus();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#chart')).toBeFocused();
 });
 
 test('hands focus back where it was as the message came where the control focus came in from no longer takes it', async ({

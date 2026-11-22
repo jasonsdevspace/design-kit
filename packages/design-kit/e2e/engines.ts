@@ -61,6 +61,8 @@ export const FIREFOX: Engine = {
     toast: 'Focus handed back by where it came into the toast from, an event each engine fires.',
     strict: "The hooks under StrictMode, whose second run meets each engine's focus and events.",
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
+    dialog: "Focus handed back to the dialog's opener, an SVG link too, by each engine's focus.",
+    panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
 };
 
 /**

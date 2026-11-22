@@ -181,6 +181,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.3   | The other attaches moved onto the helper                                                 | 18,269 bytes   | 606 bytes       | 18.5 KB    |
 | 0.9.3   | Record 23's holders, with too little room left                                           | 18,553 bytes   | 635 bytes       | 18.75 KB   |
 | 0.9.3   | One rule for handing focus back, with too little room left                               | 18,638 bytes   | 641 bytes       | 19 KB      |
+| 0.9.3   | A handback that takes an SVG element as well as an HTML one, with too little room left   | 18,975 bytes   | 636 bytes       | 19.25 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331

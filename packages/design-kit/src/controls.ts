@@ -45,12 +45,18 @@ const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
 
 /**
- * Focuses the first of the elements given that takes focus, one that is hidden, off or gone from
- * the page being passed over, so focus never falls to nowhere while a place for it is named.
+ * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
+ * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
+ * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
+ * refuses it focus. Each caller leaves out a control marked off before it calls.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
-        if (!(place instanceof HTMLElement) || !place.isConnected || place === document.body)
+        if (
+            !(place instanceof HTMLElement || place instanceof SVGElement) ||
+            !place.isConnected ||
+            place === document.body
+        )
             continue;
         place.focus({ preventScroll: place.matches('.dk-app-body') });
         if (activeOf() === place) return true;
@@ -124,7 +130,7 @@ const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
  * The element an id names in the root a node lives in, so a piece inside a shadow root finds its
  * own parts and never an element of the page around it that shares the id.
  */
-const byId = (near: Node | null | undefined, id: string): HTMLElement | null =>
+const byId = (near: Node | null | undefined, id: string): Element | null =>
     rootOf(near).getElementById(id);
 
 /**
@@ -223,7 +229,7 @@ const ROLE_ACTIVATOR = '[role="button"], [role="link"], [role="menuitem"]';
 /** What a press is made on: a button or a link, native or by its role. */
 const ACTIVATOR = [
     'button',
-    'a[href]',
+    'a[*|href]',
     'input[type="button"]',
     'input[type="submit"]',
     'input[type="reset"]',
@@ -884,10 +890,9 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * goes to the first of these that takes it: the control focus last came into the toast from, then
  * the control outside the toast that had focus as the latest message came, then the body of the
  * app's frame, or on a page with no frame its main content. The first is passed over where focus
- * last came into the toast from nowhere. Only an HTML control counts as either control, so focus
- * that came from an SVG link goes on down the list. Focus goes back only where it is in the toast,
- * or where the page has taken the toast away with focus in it so that focus has fallen to the body
- * or to nothing, while focus a visitor has put anywhere else stays. Its Close and its action take a
+ * last came into the toast from nowhere. Focus goes back only where it is in the toast, or where
+ * the page has taken the toast away with focus in it so that focus has fallen to the body or to
+ * nothing, while focus a visitor has put anywhere else stays. Its Close and its action take a
  * tabindex of 0 where the page set none, so Safari, which focuses a pressed button only where it
  * has one, leaves focus in the toast on a press or a tap and focus can go back as it leaves.
  * Attaching a toast again returns the same function, its message still shown. Taken down by its
@@ -938,7 +943,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     // the element that last lost focus, read inside open shadow roots, which an event's related
     // target names only by its host.
     let cameFrom: Element | undefined;
-    let arrivedAt: HTMLElement | undefined;
+    let arrivedAt: Element | undefined;
     let lost: Element | undefined;
     const wait = () => {
         window.clearTimeout(timer);
@@ -974,8 +979,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         const active = focusedNow();
-        if (!active || !element.contains(active))
-            arrivedAt = active instanceof HTMLElement ? active : undefined;
+        if (!active || !element.contains(active)) arrivedAt = active ?? undefined;
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
@@ -1469,14 +1473,20 @@ export type DialogOptions = AttachOptions & {
      * answered.
      */
     readonly stay?: boolean | undefined;
-    /** Where focus goes when what opened the dialog is no longer on the page. */
-    readonly returnTo?: (() => HTMLElement | null) | undefined;
+    /**
+     * Where focus goes when nothing had focus as the dialog opened or what opened it no longer
+     * takes focus. It may give any HTML or SVG element that takes focus, an SVG link among them.
+     */
+    readonly returnTo?: (() => Element | null) | undefined;
 };
 
 const attachedDialogs = new WeakMap<HTMLDialogElement, Kept<OpenDialog, DialogOptions>>();
 
-/** What a press can land on that takes focus, so a press inside a button finds the button. */
-const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
+/**
+ * What a press can land on that takes focus, so a press inside a button finds the button, with
+ * `*|href` matching an SVG link's `xlink:href` too.
+ */
+const FOCUSABLE = 'a[*|href], button, input, select, textarea, summary, [tabindex]';
 
 /**
  * Moves focus off a dialog's corner Close as it opens, to the first field or answer after it that
@@ -1712,28 +1722,41 @@ const takeFocus = (panel: HTMLElement): void => {
 };
 
 /**
+ * An SVG link, told apart by its name rather than by its class, which jsdom, where many pages run
+ * their unit tests, does not have.
+ */
+type SVGLink = SVGElement & { readonly href: SVGAnimatedString };
+
+/**
  * The place on this page outside the panel that a link in it sends the visitor to, where that link
  * was their last press, since following it moved the keyboard's start there. It is given a
  * tabindex of -1 where it takes no focus, so focus can follow.
  */
-const jumpFrom = (panel: HTMLElement): HTMLElement | null => {
-    const link = lastWasPress
+const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
+    const pressed = lastWasPress
         ? lastPath.find(
-              (node): node is HTMLAnchorElement =>
-                  node instanceof HTMLAnchorElement &&
+              (node): node is HTMLAnchorElement | SVGLink =>
+                  (node instanceof HTMLAnchorElement ||
+                      (node instanceof SVGElement && node.localName === 'a')) &&
                   panel.contains(node) &&
-                  node.hash !== '' &&
-                  !node.target &&
+                  // An SVG link's target is an object, so the attribute is read for both kinds of
+                  // link.
+                  !node.getAttribute('target') &&
                   !node.hasAttribute('download')
           )
         : undefined;
+    // An SVG link's address is read through an HTML link, which resolves it as the browser does.
+    const link =
+        pressed instanceof SVGElement
+            ? Object.assign(document.createElement('a'), { href: pressed.href.baseVal })
+            : pressed;
     let id = link?.hash.slice(1) ?? '';
     try {
         id = decodeURIComponent(id);
     } catch {
         // A fragment that is not encoded as a whole is looked for as written.
     }
-    const jump =
+    const jump: HTMLElement | SVGElement | null =
         link?.origin === location.origin &&
         link.pathname === location.pathname &&
         link.search === location.search
@@ -1770,7 +1793,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     handBack(
         jumpFrom(panel),
         ...[by, ...openers].filter((button) => !isOff(button)),
-        ...[...document.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+        ...[...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
             (next) =>
                 next.tabIndex >= 0 &&
                 panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
@@ -2246,10 +2269,13 @@ const errorFor = (
 ): { readonly error: HTMLElement; readonly takeAway: () => void } => {
     const range = idsOf(control, 'aria-describedby')
         .map((id) => byId(control, id))
-        .find((part) => part?.matches('.dk-stepper-range') && !part.hidden);
+        .find(
+            (part): part is HTMLElement =>
+                part instanceof HTMLElement && part.matches('.dk-stepper-range') && !part.hidden
+        );
     if (range) return { error: range, takeAway: () => undefined };
     const page = field.id ? byId(field, `${field.id}-error`) : null;
-    if (page?.matches('.dk-field-error')) {
+    if (page instanceof HTMLElement && page.matches('.dk-field-error')) {
         const kept = [...page.childNodes];
         const hidden = page.hidden;
         page.replaceChildren(errorStart(), words);
@@ -2413,7 +2439,10 @@ const namedText = (
 ): string =>
     idsOf(element, attribute)
         .map((id) => byId(element, id))
-        .filter((part): part is HTMLElement => part !== null && !part.hidden && wanted(part))
+        .filter(
+            (part): part is HTMLElement =>
+                part instanceof HTMLElement && !part.hidden && wanted(part)
+        )
         .map((part) => part.textContent.trim())
         .join(' ');
 
