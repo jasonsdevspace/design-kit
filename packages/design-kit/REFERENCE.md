@@ -1438,12 +1438,10 @@ elsewhere leave with the newest holder they are filed under. Options count as gi
 other than `signal` has a value, `null` and `false` among values, so `{}`, `{ signal }` and options
 whose every other key is `undefined` count as none, and a call that gives none keeps its holder's
 last ones. Options that count as given replace the holder's last ones whole, so a key left out goes
-back to its default. Where no value names an option's default, as for a group's `orientation`, a
-dialog's `returnTo` or progress's `steps`, a page puts the defaults back by taking the control down
-and attaching it again, with the function its attach returned, or for a dialog, whose attach returns
-what opens it, by aborting the signals that hold it and attaching it a microtask later. Where no
-holder left gave options, the control goes back to its defaults, as a first attach that gave none
-has them, though a copy button keeps the source and status line it has.
+back to its default, and a page puts every default back by giving one option the value it has by
+default, as `{ stay: false }` for a dialog, which puts back its `returnTo` too. Where no holder left
+gave options, the control goes back to its defaults, as a first attach that gave none has them,
+though a copy button keeps the source and status line it has.
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
