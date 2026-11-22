@@ -1425,23 +1425,25 @@ the newest holder without holding. An attach made from inside a control's own ta
 dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
 signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
-it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
-where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
-the abort's own task stays, and a `moveFocus` asked in that task still lands. Each place a piece
-hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
-chart, and one that is hidden, inert or disabled is passed over for the next. A control marked off
-with `aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a
-panel does for its buttons. The toast and the dialog hand focus to it, though a toast does not
-follow a frame on to a control marked off inside it.
+it, inside a shadow tree within it too, such as on a page's own button component in a toast or a
+dialog's form, or where focus is on the body or nowhere and the piece had it as it left, and a
+dialog also where focus is still on what the browser handed it to as the dialog closed, so focus a
+page sets in the abort's own task stays, and a `moveFocus` asked in that task still lands. A control
+slotted into a piece drawn inside a shadow root counts as in the piece. Each place a piece hands
+focus back to can be any HTML or SVG element that takes focus, such as a link in an inline chart,
+and one that is hidden, inert or disabled is passed over for the next. A control marked off with
+`aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a panel
+does for its buttons. The toast and the dialog hand focus to it, though a toast does not follow a
+frame on to a control marked off inside it.
 
 As the kit hands focus back, it tries each place in turn and counts one as taken where focus moves
-onto it or inside it, in a shadow tree it holds too, as a host that delegates focus hands it on, or
-where it has focus already. One that refuses focus is passed over though focus is inside it, as a
-section with no tabindex is. Where a page's own listener moves focus elsewhere as one is tried, it
-goes no further and that focus stays. A walk that focuses nothing is not taken for a handback, so a
-`moveFocus` asked before it leaves alone what the page focused. A dialog lists what the browser
-handed focus to as it closed last, so where its opener has gone and nothing else takes focus, a
-`moveFocus` asked in the task that closed it still lands.
+onto it or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
+delegates focus hands it on, or where it has focus already. One that refuses focus is passed over
+though focus is inside it, as a section with no tabindex is. Where a page's own listener moves focus
+elsewhere as one is tried, it goes no further and that focus stays. A walk that focuses nothing is
+not taken for a handback, so a `moveFocus` asked before it leaves alone what the page focused. A
+dialog lists what the browser handed focus to as it closed last, so where its opener has gone and
+nothing else takes focus, a `moveFocus` asked in the task that closed it still lands.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an
@@ -3008,9 +3010,10 @@ itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
 down](#taking-a-control-down) has it. Taken down, the toast dismisses its message as its Close does,
 takes off its listeners, its observer, its listener on the window's size and its timer, takes away a
 tabindex it added that the page has not changed since and lets its line go. Focus goes back where a
-dismiss sends it only where it is in the toast, or where the page has taken the toast away with
-focus in it so that focus has fallen to the body or to nothing, while focus a visitor has put
-anywhere else stays. A toast missing a part is refused even with a signal already aborted.
+dismiss sends it only where it is in the toast, inside a shadow tree within it or on a control
+slotted into it too, or where the page has taken the toast away with focus in it so that focus has
+fallen to the body or to nothing, while focus a visitor has put anywhere else stays. A toast missing
+a part is refused even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
@@ -3613,8 +3616,8 @@ render, or with props that leave `stay` undefined, keeps `stay`, and a page that
 dismissed again attaches it with `{ stay: false }`. Its listeners are on the dialog, so a dialog
 taken from the page takes them with it. Taken down by its `signal`, as [Taking a control
 down](#taking-a-control-down) has it, an open dialog closes, with focus handed back to what opened
-it where focus is in the dialog, has fallen to the body or is still where the browser handed it as
-the dialog closed, and the function that opens it does nothing.
+it where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
+still where the browser handed it as the dialog closed, and the function that opens it does nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
@@ -3720,10 +3723,14 @@ and the panel are found at each press, so a panel drawn again keeps working, and
 page serve every panel, taken off once every button is taken down. Escape with focus in a panel or
 on its button closes the innermost such panel and marks the press handled, so a dialog around the
 panel stays open. It leaves alone an Escape the page has already handled, one that ends typing in a
-script such as Japanese, one on a panel's button that is off, one in a dialog or a popover inside
-the panel, and one on a search with words in it or on a combobox or a button whose list or menu is
-open. A panel's id must be the only one on the page, so a page that shows markup its visitors wrote
-prefixes or strips the ids in it.
+script such as Japanese, one on a panel's button that is off, one in an open dialog or an open
+popover inside the panel, and one on a search with words in it or on a combobox or a button whose
+list or menu is open. Those checks read where the key was pressed, inside a page's own component
+where the component's shadow root is open, and the component's host among them, so a component that
+marks its host as an open combobox keeps its Escape. Inside a closed shadow root the panel sees only
+the host. An element inside a component's shadow tree that shares a panel's id closes nothing, since
+only the page's own elements name a panel. A panel's id must be the only one on the page, so a page
+that shows markup its visitors wrote prefixes or strips the ids in it.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
 as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches
@@ -3740,8 +3747,9 @@ closes it by Escape. Once no attached button names it, neither Escape nor its Cl
 it stays as it is for the page to hide.
 
 However a panel closes, by its button, its Close, Escape, a Done of the page's own or `set`, focus
-goes to the button that opened it where focus is in the panel, or where nothing has focus and the
-visitor's last place, the last focus that moved or their last press, was in it, as [decision
+goes to the button that opened it where focus is in the panel, inside a shadow tree within it too,
+or where nothing has focus and the visitor's last place, the last focus that moved or their last
+press, was in it, as [decision
 0019](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0019-a-closing-panel-hands-focus-back-only-where-the-visitors-place-was-in-it.md)
 sets out. Focus anywhere else, where the visitor or the page put it, stays where it is, so a Done or
 a link that moves focus to what it shows keeps it there, before or after it closes the panel, and a
