@@ -424,14 +424,14 @@ build in one job. Another packs the package, checks its manifest with publint, a
 an empty project on the lowest Node its engines field admits, with install scripts off and no Vite,
 where each sheet must resolve and each module load by the name a demo imports it by, then
 type-checks a page's use of it as Node and as a bundler resolve it. The browser tests run in
-Chromium in two jobs that split them, and in WebKit and in Firefox in two more each on a Mac.
-The site's tests run again over each commit's own packed kit in a job of their own, so a change that
-would break the site fails before it is released. A gate named Browser tests, the check the ruleset
-requires, passes only where the Chromium jobs and that run all passed. The Lighthouse audit runs in
-a job of its own. Once every job passes on main, a job with read access alone builds the site, and a
-job that runs only GitHub's Pages actions deploys it. Each job runs on a named image, Ubuntu but for
-the WebKit and Firefox jobs, within a time limit, which a test holds, and each check writes what it
-found to its run's page on GitHub, from `scripts/summary.mjs`.
+Chromium in two jobs that split them, in WebKit in two more on a Mac, and in Firefox in two more on
+a Mac. The site's tests run again over each commit's own packed kit in a job of their own, so a
+change that would break the site fails before it is released. A gate named Browser tests, the check
+the ruleset requires, passes only where the Chromium jobs and that run all passed. The Lighthouse
+audit runs in a job of its own. Once every job passes on main, a job with read access alone builds
+the site, and a job that runs only GitHub's Pages actions deploys it. Each job runs on a named
+image, Ubuntu but for the WebKit and Firefox jobs, within a time limit, which a test holds, and each
+check writes what it found to its run's page on GitHub, from `scripts/summary.mjs`.
 
 </details>
 
