@@ -274,7 +274,9 @@ test("says the form is cleared where a reset takes away the kit's errors", async
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
         .toEqual(['Rule name: Error: Enter a value.']);
-    await page.getByRole('button', { name: 'Start over' }).click();
+    // By Enter, since Safari leaves a button a pointer presses without focus.
+    await page.getByRole('button', { name: 'Start over' }).focus();
+    await page.keyboard.press('Enter');
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
         .toEqual(['Rule name: Error: Enter a value.', 'Form cleared.']);

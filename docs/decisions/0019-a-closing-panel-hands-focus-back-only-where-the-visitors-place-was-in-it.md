@@ -128,7 +128,7 @@ The path is in `packages/design-kit`.
   field, after the page's own handler and in a dialog, the tabindexes the kit writes and those a
   page set, and, in WebKit, a press on a button of the page's own outside any panel leaving it
   unfocused, so the tests above test Safari's way.
-- `e2e/teardown-form-panel.spec.tsx`, in Chromium, WebKit and Firefox, closes a panel by Escape and
+- `e2e/teardown.spec.tsx`, in Chromium, WebKit and Firefox, closes a panel by Escape and
   by its Close alike once the button that opened it is let go, with focus on the first attached
   button and the button let go marked collapsed, by Escape once its button is drawn again, the only
   one among them too, hands it to a button in a shadow root, and closes it by neither once no

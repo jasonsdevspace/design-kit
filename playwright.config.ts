@@ -1,47 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { FIREFOX, specsOf, WEBKIT } from './packages/design-kit/e2e/engines.js';
+
 /*
  * The sheets, the theme script and the components in a real browser, since only a browser resolves
  * light-dark(), draws the focus ring, gives a page its storage and attaches a ref. The theme
  * script's tests serve their page from a test origin, from memory, and the kit's other tests write
- * it into the browser. An app's frame, tab bar and toast, the dialog, the stepper, a table's frame,
- * an icon, the rows and tiles, a panel, the theme switch, the copy button, the pieces and the
- * columns a grid of buttons draws are drawn in WebKit too, and the stepper, the controls, the
- * pieces, a table's frame, an icon and a grid's columns in Firefox. The site's tests open the
- * built site, which the config builds and serves under the path GitHub Pages gives it.
+ * it into the browser. The specs that run in WebKit and Firefox as well are named in engines.ts,
+ * each with its reason. The site's tests open the built site, which the config builds and serves
+ * under the path GitHub Pages gives it.
  */
 /** The preview's port, and the origin the site's policy is written for, so its scripts load. */
 const PORT = 4180;
 const ORIGIN = `http://localhost:${String(PORT)}`;
-
-/**
- * The specs that run in WebKit as well: an app's frame, its tab bar, its toast, the dialog, the
- * stepper, a table's frame, an icon, the rows and tiles, a panel, the theme switch and the copy
- * button, the pieces, and the columns a grid of buttons draws, where what stays put, a height that
- * follows the browser's own bars, the native dialog, a number field's inner room, what a frame
- * scrolls to, how an svg's stroke is drawn, how a phone's list of rows is pressed and reached by
- * the keyboard, where focus is after a button is pressed by pointer, which Safari leaves off the
- * button, and how the switch's choices open and close by pointer and tap are what Safari draws or
- * does its own way, and a grid's columns rest on each engine's sums of a share and its clamps. The
- * teardown of each piece a signal takes down runs here and in Firefox too, since a signal's abort
- * and what follows it are each engine's own, and so does focus moved after a change, since where
- * focus falls as a control leaves is each engine's own.
- */
-const WEBKIT =
-    '*/e2e/{app,tabbar,toast,dialog,close,stepper,stepper-say,table,icon,rows,panel,attach,pieces,buttongrid-columns,roving,dock,try-again,stack,split,empty,hero,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus,leaks}.spec.{ts,tsx}';
-
-/**
- * The specs that run in Firefox as well: the stepper, whose number field keeps its spin buttons
- * there unless `appearance: textfield` takes them away, the controls and the pieces, whose
- * lengths Firefox rounds to a sixty-fourth of a pixel, and a table's frame, whose shade a browser
- * draws only where it ties an animation to a scroll, in the current Firefox Playwright brings
- * rather than the kit's floor, an icon, whose stroke each engine draws its own way, a grid's
- * columns, which rest on each engine's sums of a share and its clamps, the teardown and focus moved
- * after a change that run in WebKit too, and the toast, which hands focus back by where focus came
- * into it from, an event each engine fires its own way.
- */
-const FIREFOX =
-    '*/e2e/{stepper,stepper-say,controls,pieces,table,icon,buttongrid-columns,progress,checked,shadow,teardown,status-teardown,signal,teardown-form-panel,focus,leaks,toast}.spec.{ts,tsx}';
 
 export default defineConfig({
     testDir: 'packages',
@@ -72,8 +43,8 @@ export default defineConfig({
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
         // The pieces Safari draws its own way, in its engine too.
-        { name: 'webkit', testMatch: WEBKIT, use: { ...devices['Desktop Safari'] } },
+        { name: 'webkit', testMatch: specsOf(WEBKIT), use: { ...devices['Desktop Safari'] } },
         // The pieces Firefox draws its own way, in its engine too.
-        { name: 'firefox', testMatch: FIREFOX, use: { ...devices['Desktop Firefox'] } },
+        { name: 'firefox', testMatch: specsOf(FIREFOX), use: { ...devices['Desktop Firefox'] } },
     ],
 });

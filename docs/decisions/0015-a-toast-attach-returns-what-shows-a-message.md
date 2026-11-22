@@ -138,12 +138,11 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   nothing a visitor must hear lost.
 - `src/controls.test.ts` also finds a line let go of and attached afresh take its old attach down,
   leaving nothing on that attach's signal, and a toast missing a part refused whatever its signal.
-- `e2e/status-teardown.spec.tsx` attaches a status line and a toast with a signal already aborted
-  and finds nothing said or shown, aborts a signal and finds the line emptied and silent for the
-  page's function, a stepper and progress, a line those spoke on first let go of by the page's
-  signal, a toast dismissed with focus on its Close sent back where it came from and a later message
-  unshown, the tabindex it added taken away and one the page set since kept, and a line and a toast
-  kept until every signal holding them has aborted. It counts the timers, observers and listeners
-  running, before attaching and after aborting, and finds them equal, in Chromium, WebKit and
-  Firefox, with the window's size listened to once however many messages are shown and every
-  listener on the toast's elements and on the window off after an abort.
+- `e2e/teardown.spec.tsx` attaches a status line and a toast with a signal already aborted and
+  finds nothing said or shown, aborts a signal and finds the line emptied and silent for the page's
+  function, a stepper and progress, a line those spoke on first let go of by the page's signal, a
+  toast dismissed with focus on its Close sent back where it came from and a later message unshown,
+  the tabindex it added taken away and one the page set since kept, and a line and a toast kept
+  until every signal holding them has aborted. It finds the window's size listened to once however
+  many messages are shown, in Chromium, WebKit and Firefox, and `e2e/leaks.spec.tsx` finds the
+  timers, observers and listeners a line and a toast set going all gone after an abort.

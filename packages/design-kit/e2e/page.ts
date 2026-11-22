@@ -27,6 +27,22 @@ export const stillClock = async (clock: Clock): Promise<void> => {
     await clock.pauseAt(time + 1000);
 };
 
+/**
+ * Waits two frames, so a request's own frame has come and gone, and a draw the page asked for and
+ * the microtasks after it are done. A page on a still clock steps its frames by the clock instead.
+ */
+export const frames = (page: Page): Promise<void> =>
+    page.evaluate(
+        () =>
+            new Promise<void>((done) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        done();
+                    });
+                });
+            })
+    );
+
 /** A module of the kit's, as a browser loads it, built from the source with its imports kept. */
 export const js = (file: string): string =>
     ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {

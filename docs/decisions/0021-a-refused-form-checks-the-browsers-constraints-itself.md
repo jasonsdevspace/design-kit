@@ -157,7 +157,7 @@ The paths are in `packages/design-kit`.
   focus moves to or was already on, a set's where its choice does not read the error, and a field's
   name with the count where it is marked in error with none drawn, and says "Form cleared." after a
   reset that takes away the kit's errors and nothing after one with none to take away.
-- `e2e/teardown-form-panel.spec.tsx` takes a form's check down by its signal with a refusal and a
+- `e2e/teardown.spec.tsx` takes a form's check down by its signal with a refusal and a
   reset still due and finds nothing said after, its errors, marks and `noValidate` as the markup
   drew them, and the check kept until the last attach in the form is taken down.
 - `smoke/types.ts` types the failures, the words and the options, and refuses a failure misnamed.

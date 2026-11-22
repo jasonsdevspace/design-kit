@@ -200,7 +200,7 @@ The paths are in `packages/design-kit`.
 - `e2e/dialog.spec.ts` finds a dialog attached to stay still staying once attached again with `{}`,
   and no longer staying once attached again with `{ stay: false }` or with options that leave
   `stay` out.
-- `e2e/signal.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
+- `e2e/teardown.spec.tsx` aborts and attaches every piece again in one task and finds each kept, with
   its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's errors
   and check, aborts and attaches without a signal in one task and finds each kept and a busy wait
   still marked, and aborts, waits a microtask and attaches and finds each attached afresh. For
@@ -230,7 +230,7 @@ The paths are in `packages/design-kit`.
   and where it only ever came in from nowhere. It runs in Firefox as well as Chromium and WebKit.
   `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
   into the toast from.
-- `e2e/teardown-form-panel.spec.tsx` opens and closes a panel through `set` in the task its signal
+- `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
   aborts, and finds it closed.
 - `e2e/teardown.spec.tsx` finds a copy button's word kept for the block its last press copied and
   put back to Copy where a source that reads the page's state gives another block, or throws, and

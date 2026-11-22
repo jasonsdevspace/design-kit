@@ -1,8 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { countLeaks, listenersOn } from './leaks.js';
-import { servePage, stillClock } from './page.js';
+import { listenersOn, openCounted } from './leaks.js';
+import { frames, servePage, stillClock } from './page.js';
 import { type Strict } from './strict-page.js';
 
 /*
@@ -41,6 +41,16 @@ const open = async (page: Page, wait = '200ms') => {
     await expect(page.locator('#row')).toBeVisible();
 };
 
+/**
+ * The page on a clock that stands still, stepped past the frame the requests made as it first draws
+ * land in, so a later step brings only what the test set going.
+ */
+const openStill = async (page: Page, wait?: string) => {
+    await stillClock(page.clock);
+    await open(page, wait);
+    await page.clock.runFor(100);
+};
+
 const said = (page: Page) => page.evaluate(() => (window as unknown as Strict).said);
 const line = (page: Page) => page.locator('main').locator('..').locator('p[role="status"]');
 
@@ -54,11 +64,13 @@ test("keeps words said in a part's first effect on the provider's line through t
 test("speaks through the provider's function after the second run, and after the provider is drawn afresh", async ({
     page,
 }) => {
-    await open(page);
+    await openStill(page);
+    await page.clock.runFor(100);
     await expect(line(page)).toHaveText('Lists ready.');
     await page.evaluate(() => {
         (window as unknown as Strict).speak?.('Saved.');
     });
+    await page.clock.runFor(150);
     await expect(line(page)).toHaveText('Saved.');
     // The function the first provider handed out, kept past the provider drawn afresh.
     await page.evaluate(() => {
@@ -74,15 +86,18 @@ test("speaks through the provider's function after the second run, and after the
             })
         )
         .toBe(true);
+    await page.clock.runFor(150);
     await expect(line(page)).toHaveText('Lists ready.');
     await page.evaluate(() => {
         (window as unknown as Strict & { old?: Strict['speak'] }).old?.('Said too late.');
     });
-    await page.waitForTimeout(300);
+    // Past the moment the line puts words in, and short of the time they stay.
+    await page.clock.runFor(300);
     await expect(line(page)).toHaveText('Lists ready.');
     await page.evaluate(() => {
         (window as unknown as Strict).speak?.('Saved again.');
     });
+    await page.clock.runFor(150);
     await expect(line(page)).toHaveText('Saved again.');
 });
 
@@ -96,21 +111,24 @@ test('moves one cell for one arrow key, with one stop in the row', async ({ page
 });
 
 test('says a busy notice, the end of a progress and a refusal once each', async ({ page }) => {
-    await open(page);
+    await openStill(page);
     await page.evaluate(() => {
         (window as unknown as Strict).busy(true);
     });
-    await expect.poll(() => said(page)).toContain('Saving the list.');
+    // Past the button's wait of 200ms.
+    await page.clock.runFor(300);
+    expect(await said(page)).toEqual(['Saving the list.']);
     await page.evaluate(() => {
         (window as unknown as Strict).busy(false);
         (window as unknown as Strict).move(40);
     });
     await expect.poll(() => said(page)).toContain('Imported 40 products.');
     await page.getByRole('button', { name: 'Make the list' }).click();
+    // The refusal moves focus and speaks a frame later.
+    await page.clock.runFor(100);
     await expect(page.locator('#name')).toBeFocused();
-    await expect.poll(() => said(page)).toContain('List name: Error: Enter a list name.');
     // Long enough for a second attach's wait or timer to come due.
-    await page.waitForTimeout(500);
+    await page.clock.runFor(500);
     expect(await said(page)).toEqual([
         'Saving the list.',
         'Imported 40 products.',
@@ -129,7 +147,7 @@ test('takes each piece down as it leaves, saying nothing late', async ({ page })
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     // A wait long enough for the button to be drawn busy and taken away before its notice is due.
-    await open(page, '1s');
+    await openStill(page, '1s');
     await page.evaluate(() => {
         (window as unknown as Strict).busy(true);
     });
@@ -138,7 +156,8 @@ test('takes each piece down as it leaves, saying nothing late', async ({ page })
         (window as unknown as Strict).leave();
     });
     await expect(page.locator('#row')).toHaveCount(0);
-    await page.waitForTimeout(1500);
+    // Past the button's wait of a second.
+    await page.clock.runFor(1500);
     expect(await said(page)).toEqual([]);
     // The provider's line stays, with the words said on it.
     await expect(line(page)).toHaveCount(1);
@@ -150,7 +169,7 @@ test('takes each piece down for a ref called with null by a helper that drops th
 }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await open(page);
+    await openStill(page);
     await expect(page.locator('#cell-one')).toHaveAttribute('tabindex', '0');
     await page.evaluate(() => {
         (window as unknown as Strict).nullRefs();
@@ -161,14 +180,22 @@ test('takes each piece down for a ref called with null by a helper that drops th
         (window as unknown as Strict).busy(true);
     });
     await expect(page.locator('#save')).toHaveAttribute('data-busy', 'Saving the list.');
-    await page.waitForTimeout(500);
+    // Past the button's wait of 200ms.
+    await page.clock.runFor(500);
     expect(await said(page)).toEqual([]);
     expect(errors).toEqual([]);
 });
 
 test("gives a form back as the hook's ref moves to another", async ({ page }) => {
-    await countLeaks(page);
-    await open(page);
+    await openCounted(page, {
+        clock: false,
+        ready: false,
+        title: 'Lists',
+        body: '<div id="root"></div>',
+        script: app,
+        css: ':root { --dk-wait: 200ms; }',
+    });
+    await expect(page.locator('#row')).toBeVisible();
     const state = (id: string) =>
         page.locator(id).evaluate((form) => ({
             noValidate: (form as HTMLFormElement).noValidate,
@@ -196,7 +223,7 @@ test("gives a form back as the hook's ref moves to another", async ({ page }) =>
 test('focuses only the second of two requests a part makes as it first draws', async ({ page }) => {
     await open(page);
     await expect(page.locator('#ask-b')).toBeFocused();
-    await page.waitForTimeout(100);
+    await frames(page);
     await expect(page.locator('#ask-b')).toBeFocused();
     expect(await page.evaluate(() => (window as unknown as Strict).focusesOnA)).toBe(0);
 });
@@ -204,14 +231,15 @@ test('focuses only the second of two requests a part makes as it first draws', a
 test('says nothing and moves nothing for a refusal still waiting as its form leaves', async ({
     page,
 }) => {
-    await open(page);
+    await openStill(page);
     await page.locator('#cell-one').focus();
     await page.evaluate(() => {
         (window as unknown as Strict).refuseNow();
         (window as unknown as Strict).leave();
     });
     await expect(page.locator('#form')).toHaveCount(0);
-    await page.waitForTimeout(300);
+    // Past the refusal's frame.
+    await page.clock.runFor(300);
     expect(await said(page)).toEqual([]);
     expect(await page.evaluate(() => document.activeElement?.id ?? '')).toBe('');
 });
@@ -265,18 +293,21 @@ test('refuses a failed submit through the form submitted, of two on one ref', as
 test('keeps a form behind a ref made afresh on every render attached through a failed submit', async ({
     page,
 }) => {
-    await open(page);
+    await openStill(page);
     const churns = await page.evaluate(() => (window as unknown as Strict).churns);
     await page.getByRole('button', { name: 'Make the deck' }).click();
+    // The refusal moves focus and speaks a frame later.
+    await page.clock.runFor(100);
     await expect(page.locator('#churn-name')).toBeFocused();
-    await expect.poll(() => said(page)).toContain('Deck name: Error: Enter a value.');
+    expect(await said(page)).toContain('Deck name: Error: Enter a value.');
     // The page drew again for its errors, and the form kept its check through it.
     expect(await page.evaluate(() => (window as unknown as Strict).churns)).toBeGreaterThan(churns);
     await expect(page.locator('#churn-name-error')).toHaveText('Error: Enter a value.');
     expect(
         await page.locator('#churn').evaluate((form) => (form as HTMLFormElement).noValidate)
     ).toBe(true);
-    await page.waitForTimeout(300);
+    // Long enough for a second refusal's frame to come.
+    await page.clock.runFor(300);
     expect((await said(page)).filter((words) => words.startsWith('Deck name'))).toHaveLength(1);
 });
 
@@ -333,19 +364,6 @@ const watchMarks = (page: Page, id: string) =>
 
 const marks = (page: Page) => page.evaluate(() => (window as unknown as { marks: number }).marks);
 
-/** Waits two frames, so a draw the page asked for and the microtasks after it are done. */
-const frames = (page: Page) =>
-    page.evaluate(
-        () =>
-            new Promise<void>((done) => {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        done();
-                    });
-                });
-            })
-    );
-
 /** Presses the arrow key from a group's first cell, and finds focus on its second. */
 const expectArrows = async (page: Page, group: string) => {
     await expect(page.locator(`#${group}-row [tabindex="0"]`)).toHaveCount(1);
@@ -400,8 +418,7 @@ test("keeps a form, a row and a busy wait behind arrows that return the hook's c
 test('keeps a busy wait as another hook joins its button through a merged ref', async ({
     page,
 }) => {
-    await stillClock(page.clock);
-    await open(page, '1s');
+    await openStill(page, '1s');
     await page.evaluate(() => {
         (window as unknown as Strict).joinBusy(true);
     });
