@@ -195,8 +195,9 @@ const land = (
  * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
  * page. Focus a visitor has moved since the request is left where they put it: focus is free only
  * while it is where it was when asked, on the page's body, or where the kit has handed it back
- * since, as a toast, a dialog or a panel does as it closes. A request still waiting a second
- * later, as in a tab out of sight, is dropped, so focus does not jump when the visitor comes back.
+ * since, as a toast, a dialog or a panel does as it closes, or on what the browser hands it to as
+ * a dialog closes, until the dialog's close is handled. A request still waiting a second later, as
+ * in a tab out of sight, is dropped, so focus does not jump when the visitor comes back.
  * Each request is new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
