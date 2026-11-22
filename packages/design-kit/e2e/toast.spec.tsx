@@ -27,7 +27,13 @@ import { textSize } from './text-size.js';
  * svg, focus left on the page's body where nothing else takes it, left where a page's listener
  * moves it as it leaves the toast, with the walk stopping there and a focus request asked before it
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
- * focus goes back to a control in view, focus sent on to the control inside a frame of the page's
+ * focus goes back to a control in view, a control that has focus as a message shows kept clear of
+ * the toast, inside a tall frame of the page's own origin too, past the frame's border and padding,
+ * in a frame drawn smaller, wider or, outside WebKit, by zoom, and where the toast covers it by
+ * less than the rise it enters on, and left where it is where the toast leaves it alone, where the
+ * frame has scrolled it out of sight or behind its scrollbar, where WebKit lays a zoomed frame's
+ * document out past what the frame shows, where it is taller than the room above the toast, or
+ * where it sits beside a narrow toast, focus sent on to the control inside a frame of the page's
  * own origin that had focus as the message came and left on the frame where that control is marked
  * off, gone or on a page since loaded, left in the frame where a page's listener moves it there in
  * Firefox, and to a frame of another origin by pointer or past it by a key in Firefox, a long
@@ -1206,6 +1212,270 @@ test('keeps what had focus in view, clear of the toast, as it shows on a page', 
         (await box(toast(page), 'the toast')).y + 1
     );
 });
+
+/**
+ * A frame of the page's own origin, with a border and padding, the height given and set down by
+ * its own height, holding the content given, with the style given added.
+ */
+const frameOf = (height: number, content: string, style = ''): string =>
+    `<iframe title="Notes" style="display: block; height: ${String(height)}px; ` +
+    `margin-top: ${String(height)}px; border: 5px solid; padding: 12px; ${style}" ` +
+    `srcdoc="<body style='margin: 0'>${content}"></iframe>`;
+
+/** A frame from `frameOf`, holding a button the depth given, with room under it. */
+const padded = (height: number, depth: number, style = ''): string =>
+    frameOf(
+        height,
+        `<div style='height: ${String(depth)}px'></div>` +
+            "<button type=button id=low>Low</button><div style='height: 600px'></div>",
+        style
+    );
+
+const low = (page: Page): Locator => page.frameLocator('iframe').locator('#low');
+
+/** Where the foot of the screen is, or of the body of the page's app frame. */
+const foot = (page: Page): Promise<number> =>
+    page.evaluate(
+        () =>
+            document.querySelector('.dk-app-body')?.getBoundingClientRect().bottom ??
+            window.innerHeight
+    );
+
+/** Scrolls the page, or the body of its app frame, so the element given ends where given. */
+const scrollEnd = async (page: Page, locator: Locator, at: number): Promise<void> => {
+    const by = bottom(await box(locator)) - at;
+    await page.evaluate((y) => {
+        (document.querySelector('.dk-app-body') ?? window).scrollBy(0, y);
+    }, by);
+};
+
+/** Focuses the element given without scrolling. */
+const focusStill = async (locator: Locator): Promise<void> => {
+    await locator.evaluate((element) => {
+        (element as HTMLElement).focus({ preventScroll: true });
+    });
+    await expect(locator).toBeFocused();
+};
+
+/** Where the toast rests once shown, found by showing a message and dismissing it. */
+const resting = async (
+    page: Page
+): Promise<{ x: number; y: number; width: number; height: number }> => {
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    const drawn = await box(toast(page), 'the toast');
+    await page.evaluate(() => (window as unknown as { kit: Kit }).kit.last?.());
+    await expect(message(page)).toHaveText('');
+    return drawn;
+};
+
+/** How far the page, or the body of its app frame, and the frame's own document are scrolled. */
+const scrolls = (page: Page): Promise<readonly number[]> =>
+    page.evaluate(() => [
+        document.querySelector('.dk-app-body')?.scrollTop ?? window.scrollY,
+        document.querySelector('iframe')?.contentWindow?.scrollY ?? 0,
+    ]);
+
+/** Shows a message, waits for the toast to rest and finds the button's end clear of it. */
+const showClear = async (page: Page, control: Locator): Promise<void> => {
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    expect(bottom(await box(control, 'the control'))).toBeLessThanOrEqual(
+        (await box(toast(page), 'the toast')).y + 1
+    );
+};
+
+/** Shows a message, waits for the toast to rest and finds nothing scrolled. */
+const showStill = async (page: Page): Promise<void> => {
+    const before = await scrolls(page);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    expect(await scrolls(page)).toEqual(before);
+};
+
+for (const [where, body] of [
+    ['on a page', PAGE.replace('</button>', `</button>${padded(1200, 1100)}`)],
+    ["in an app's frame", FRAME.replace('<p id="last">', `${padded(1200, 1100)}<p id="last">`)],
+] as const)
+    test(`keeps the control inside a tall frame of the page's own origin clear of the toast as it shows, ${where}`, async ({
+        page,
+    }) => {
+        await open(page, { body });
+        await expect(low(page)).toBeAttached();
+        // The frame's button at the foot of the screen or of the frame's body, where the toast
+        // is about to come.
+        await scrollEnd(page, low(page), (await foot(page)) - 4);
+        await focusStill(low(page));
+        await showClear(page, low(page));
+    });
+
+for (const [how, style] of [
+    ['', ''],
+    [', in a frame drawn smaller', 'transform: scale(0.6); transform-origin: 0 0'],
+] as const)
+    test(`keeps a control inside a frame clear of the toast where the frame's padding puts it under the toast's edge${how}`, async ({
+        page,
+    }) => {
+        await open(page, {
+            body: PAGE.replace('</button>', `</button>${padded(1200, 1100, style)}`),
+        });
+        await expect(low(page)).toBeAttached();
+        const { y: top } = await resting(page);
+        // The button reaches a few pixels under where the toast rests, less than the frame's
+        // padding, so a measure that leaves the padding out finds it clear.
+        await scrollEnd(page, low(page), top + 6);
+        await focusStill(low(page));
+        await showClear(page, low(page));
+    });
+
+test('keeps a control inside a frame drawn wider than laid out clear of the toast', async ({
+    page,
+}) => {
+    // Drawn three times as wide as laid out and as tall, so the frame's padding puts its button
+    // under the toast, where a scale taken from its height alone would put it beside the toast.
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${padded(100, 0, 'margin-top: 0; width: 300px; padding-left: 150px; transform: scale(3, 1); transform-origin: 0 0')}<p>Round 15 `
+        ),
+        width: 1280,
+    });
+    await expect(low(page)).toBeAttached();
+    const card = await resting(page);
+    await scrollEnd(page, low(page), card.y + 20);
+    expect((await box(low(page), 'the button')).x).toBeGreaterThan(card.x);
+    await focusStill(low(page));
+    await showClear(page, low(page));
+});
+
+test('leaves the page and the frame where they are when the control inside a frame is taller than the room above the toast', async ({
+    page,
+}) => {
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${frameOf(80, "<div id=low tabindex=0 style='height: 1000px'></div><div style='height: 20px'></div>")}<p>Round 15 `
+        ),
+    });
+    await expect(low(page)).toBeAttached();
+    // The frame shows the control's last 30 pixels, at the foot of the screen, under the toast.
+    await page.locator('iframe').evaluate((frame) => {
+        (frame as HTMLIFrameElement).contentWindow!.scrollTo(0, 970);
+    });
+    await scrollEnd(page, page.locator('iframe'), (await foot(page)) - 4);
+    await focusStill(low(page));
+    await showStill(page);
+});
+
+test("leaves the page and the frame where they are when the control inside a frame sits behind the frame's scrollbar", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'webkit',
+        "Chromium and Firefox draw a frame's scrollbars over its document here, taking no room"
+    );
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            `${frameOf(
+                200,
+                '<style>::-webkit-scrollbar { width: 15px; height: 15px }</style>' +
+                    "<div style='height: 154px'></div>" +
+                    "<button type=button id=low style='display: block; height: 10px; padding: 0'></button>" +
+                    "<div style='width: 900px; height: 600px'></div>"
+            )}<p>Round 15 `
+        ),
+    });
+    await expect(low(page)).toBeAttached();
+    // The button lies in the strip the frame's lower scrollbar covers, at the foot of the screen.
+    await scrollEnd(page, page.locator('iframe'), (await foot(page)) - 4);
+    await focusStill(low(page));
+    await showStill(page);
+});
+
+test('keeps a control inside a frame scaled by zoom clear of the toast, as each engine lays the frame out', async ({
+    page,
+    browserName,
+}) => {
+    await open(page, {
+        body: PAGE.replace('</button>', `</button>${padded(1200, 1100, 'zoom: 0.6')}`),
+    });
+    await expect(low(page)).toBeAttached();
+    const { y: top } = await resting(page);
+    await scrollEnd(page, low(page), top + 6);
+    await focusStill(low(page));
+    if (browserName === 'webkit') {
+        // WebKit 27.2 lays the document of a frame scaled by zoom out larger than it draws it, so
+        // the button sits past what the frame shows, and the toast leaves the page and the frame
+        // be.
+        expect(
+            await low(page).evaluate((element) => element.getBoundingClientRect().top)
+        ).toBeGreaterThan(1100 / 0.6 - 2);
+        await showStill(page);
+    } else await showClear(page, low(page));
+});
+
+test('keeps a control on the page clear of the toast that covers it by less than the rise it enters on', async ({
+    page,
+}) => {
+    await open(page, {
+        body: PAGE.replace(
+            '<p>Round 15 ',
+            '<p><a href="#more" id="foot">More rounds</a></p><p>Round 15 '
+        ),
+    });
+    const link = page.locator('#foot');
+    const { y: top } = await resting(page);
+    await scrollEnd(page, link, top + 4);
+    await focusStill(link);
+    await showClear(page, link);
+});
+
+test('leaves the page and the frame where they are when the control inside a frame is clear of the toast, though the frame is not', async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('</button>', `</button>${padded(400, 0)}`) });
+    // The frame ends at the foot of the screen, under the toast, with its button at its top.
+    await scrollEnd(page, page.locator('iframe'), await foot(page));
+    await focusStill(low(page));
+    await showStill(page);
+});
+
+test('leaves the page and the frame where they are when the frame has scrolled its control out of sight above the toast', async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('</button>', `</button>${padded(200, 600)}`) });
+    const { y: top } = await resting(page);
+    // The frame sits above the toast, and the button it holds, below what the frame shows, would
+    // sit under the toast were the frame tall enough to show it.
+    await scrollEnd(page, low(page), top + 40);
+    expect(bottom(await box(page.locator('iframe')))).toBeLessThan(top);
+    await focusStill(low(page));
+    await showStill(page);
+});
+
+for (const [where, side] of [
+    ['on the page', '<p><a href="#more" id="side">More rounds</a></p>'],
+    ['inside a frame', padded(100, 0, 'width: 120px; margin-top: 0')],
+] as const)
+    test(`leaves the page where it is when a control ${where} sits beside a toast narrower than the screen`, async ({
+        page,
+    }) => {
+        await open(page, {
+            body: PAGE.replace('<p>Round 15 ', `${side}<p>Round 15 `),
+            width: 1280,
+        });
+        const control = where === 'on the page' ? page.locator('#side') : low(page);
+        await expect(control).toBeAttached();
+        const card = await resting(page);
+        // The control level with the toast, at its side.
+        await scrollEnd(page, control, card.y + 34);
+        const drawn = await box(control, 'the control');
+        expect(drawn.x + drawn.width).toBeLessThan(card.x);
+        await focusStill(control);
+        await showStill(page);
+    });
 
 test('puts its buttons together on a row under its message on a phone at a large text size', async ({
     page,
