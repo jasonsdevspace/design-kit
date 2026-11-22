@@ -76,10 +76,17 @@ jobs:
             - name: Build
               run: npm run build
 
-    browser:
-        name: Browser tests
+    # The kit's and the site's tests in Chromium, in two shards on runners of their own, since the
+    # whole run came close to the time limit. The required check is the gate below, so the shards
+    # can be named for what they run.
+    chromium:
+        name: Browser tests in Chromium, shard ${{ matrix.shard }} of 2
         runs-on: ubuntu-26.04
         timeout-minutes: 10
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -109,16 +116,56 @@ jobs:
             # The summary reports the tests and never decides them, so the step ends with their
             # status whether or not it could be written. Chromium alone here: the specs that run in
             # WebKit or Firefox as well run there in jobs of their own.
-            - name: Browser tests
+            - name: Browser tests in Chromium
+              env:
+                  SHARD: ${{ matrix.shard }}
               run: |
                   rm -f playwright-results.json
                   status=0
-                  npm run e2e -- --project chromium || status=$?
+                  npm run e2e -- --project chromium --shard "$SHARD/2" || status=$?
                   if [ -f playwright-results.json ]; then
-                      node scripts/summary.mjs playwright playwright-results.json "Browser tests" "$status" ||
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in Chromium, shard $SHARD of 2" "$status" ||
                           echo "The summary of the browser tests could not be written."
                   fi
                   exit "$status"
+
+            - name: Keep the report of a failed run
+              if: failure()
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: playwright-report-chromium-${{ matrix.shard }}
+                  path: playwright-report
+                  retention-days: 7
+
+    # A job of its own, beside the Chromium shards, so it adds nothing to their time.
+    site-kit:
+        name: Site tests over this commit's kit
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            # Only the browser is downloaded, not the system libraries, within a time of its own,
+            # and started once so a library the runner image lacks fails this step rather than a
+            # test.
+            - name: Install Chromium
+              timeout-minutes: 3
+              run: |
+                  npx playwright install chromium
+                  node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             # The site draws the version of the kit it pins, so a change to the kit is not on the
             # site until it is released. The site's tests run again over this commit's kit, packed
@@ -145,9 +192,29 @@ jobs:
               if: failure()
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
-                  name: playwright-report
+                  name: playwright-report-site-kit
                   path: playwright-report
                   retention-days: 7
+
+    # The check the ruleset requires and the site's build waits on, under the name it always had.
+    # It runs whatever the jobs it needs did, and passes only where each of them passed, so a shard
+    # that failed, was canceled or was skipped fails it, as does a needed job it heard nothing from.
+    browser:
+        name: Browser tests
+        needs: [chromium, site-kit]
+        if: always()
+        runs-on: ubuntu-26.04
+        timeout-minutes: 2
+        steps:
+            - name: Every browser job passed
+              env:
+                  RESULTS: ${{ join(needs.*.result, ' ') }}
+              run: |
+                  echo "The needed jobs ended as: $RESULTS"
+                  [ -n "$RESULTS" ] || exit 1
+                  for result in $RESULTS; do
+                      [ "$result" = success ] || exit 1
+                  done
 
     # The pieces Safari draws its own way, such as a bar that stays put, a height that follows the
     # browser's own bars, a number field's inner room and what a table's frame scrolls to, drawn in
