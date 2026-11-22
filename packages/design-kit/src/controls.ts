@@ -902,18 +902,43 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
 };
 
 /**
- * Scrolls the control that had focus as a message came clear of a shown toast that covers it, by
- * the scroll padding the sheet keeps under a shown toast. Where focus was in a frame of the page's
- * own origin, it measures the control read inside the frame, offset by the frame's place, and that
- * control's own scroll into view moves the frame's document and the page. One the toast leaves
- * alone, or one taller than the room above the toast, such as the frame's body, stays where it is.
+ * Scrolls the control that had focus as a message came, where a shown toast covers it, clear of the
+ * toast by the scroll padding the sheet keeps under it. The toast is measured where it comes to
+ * rest, without the rise it starts its entrance on. Where focus was in a frame of the page's own
+ * origin, it measures the control read inside the frame, placed past the frame's border and
+ * padding, scaled as the frame is drawn, and cut to what the frame shows, so a control the frame
+ * has scrolled out of sight counts as covered nowhere. That control's own scroll into view moves
+ * the frame's document and the page. One the toast leaves alone, beside it or above it, or one
+ * taller than the room above the toast, such as the body of the app's frame, stays where it is.
  */
 const clearOf = (element: HTMLElement, active: Element, inner: Element | null | undefined) => {
     const control = inner ?? active;
-    const top = inner ? active.getBoundingClientRect().top + active.clientTop : 0;
-    const drawn = control.getBoundingClientRect();
     const card = element.getBoundingClientRect();
-    if (drawn.bottom + top > card.top && drawn.top + top < card.bottom && drawn.height < card.top)
+    const rise = parseFloat(getComputedStyle(element).translate.split(' ')[1] ?? '') || 0;
+    let { top, right, bottom, left, height } = control.getBoundingClientRect();
+    if (inner) {
+        const frame = active as HTMLElement;
+        const place = frame.getBoundingClientRect();
+        const edges = getComputedStyle(frame);
+        const scale = place.height / frame.offsetHeight;
+        const x = place.left + (frame.clientLeft + parseFloat(edges.paddingLeft)) * scale;
+        const y = place.top + (frame.clientTop + parseFloat(edges.paddingTop)) * scale;
+        const view = inner.ownerDocument.defaultView!;
+        [top, right, bottom, left, height] = [
+            y + Math.max(top, 0) * scale,
+            x + Math.min(right, view.innerWidth) * scale,
+            y + Math.min(bottom, view.innerHeight) * scale,
+            x + Math.max(left, 0) * scale,
+            height * scale,
+        ];
+    }
+    if (
+        bottom > Math.max(top, card.top - rise) &&
+        top < card.bottom - rise &&
+        right > Math.max(left, card.left) &&
+        left < card.right &&
+        height < card.top - rise
+    )
         control.scrollIntoView({ block: 'nearest' });
 };
 
@@ -926,10 +951,12 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * are heard twice. A shown toast is marked by its data-shown attribute, which a page that draws it
  * again, as React does with its class, leaves alone. The dk-toast-shown class is set beside it for
  * a page that reads it, though such a redraw takes the class away while the toast stays shown. As a
- * message shows, the control that has focus is scrolled clear of the toast where the toast would
- * cover it. With focus inside a frame of the page's own origin, that is the control that has focus
- * there, read as the message comes and measured where the frame places it, so a tall frame does not
- * hide it, while a frame of another origin is measured whole.
+ * message shows, the control that has focus is scrolled clear of the toast where the toast,
+ * measured where it comes to rest, would cover it. With focus inside a frame of the page's own
+ * origin, that is the control that has focus there, read as the message comes and measured where
+ * the frame places it, past its border and padding, scaled as it is drawn and cut to what it shows,
+ * so a tall frame does not hide it. A frame of another origin, or one where only its body has
+ * focus, is measured whole.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
@@ -1082,8 +1109,8 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         watch.observe(element);
         // Added once however many messages are shown, as the DOM ignores the same listener again.
         window.addEventListener('resize', remeasure, { signal });
-        // A control that had focus and that the toast now covers is scrolled clear of it, the one
-        // inside a frame of the page's own origin where focus was there.
+        // Only where focus was outside the toast as the message came, since focus in it needs no
+        // room.
         if (arrivedAt === active) clearOf(element, arrivedAt, inFrame);
         wait();
         return () => {

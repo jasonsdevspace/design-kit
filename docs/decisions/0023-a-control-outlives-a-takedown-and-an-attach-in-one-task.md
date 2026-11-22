@@ -124,7 +124,16 @@ Option C.
   on the order each engine fires focus events in, costs about 96 more bytes, and no consumer draws a
   frame. Firefox does not focus a frame of another origin while a key is being pressed, so a dismiss
   by keyboard there goes on down the list. A frame inside that frame is not followed, so focus goes
-  back to the inner frame itself. The toast takes off its shown state before it hands focus back, so
+  back to the inner frame itself. The toast keeps the control inside a frame of the page's own
+  origin clear of itself as a message shows, read as the handback reads it and with no listener on
+  the frame's document, measuring it where the frame places it, past the frame's border and padding,
+  scaled as the frame is drawn and cut to what the frame shows, so a tall frame does not hide it,
+  while a frame of another origin is measured whole. A control inside a tall frame of another origin
+  can stay under the toast, since the page cannot read it and the frame is left where it is. The
+  toast is measured where it comes to rest rather than where its entrance starts, and a control
+  counts as covered only where it meets the toast across as well as down, so one beside a narrow
+  toast on a wide screen stays where it is. The toast takes off its shown state before it hands
+  focus back, so
   the room the sheet keeps under a shown toast does not scroll the control focus goes to, and hides
   its buttons after, and where nothing takes focus, it blurs what still has focus in it, so focus
   falls to the page's body in every engine, where WebKit and Firefox would leave it on the toast's
@@ -211,7 +220,11 @@ every signal it has ever held.
   usual size, so the rule sets them at 19.5 KB. A piece that counts focus inside a shadow tree
   within it, or on a control slotted into it, as focus in it, with a panel that reads an Escape from
   where the key was pressed and finds a panel only among the page's own elements, brings them to
-  19,288.
+  19,288. A toast that keeps the control inside a frame of the page's own origin clear of it as a
+  message shows, measured past the frame's border and padding, scaled as the frame is drawn and cut
+  to what it shows, against the toast where it comes to rest and across as well as down, brings them
+  to 19,551, with less room under 19.5 KB than a function of the usual size, so the rule sets them
+  at 19.75 KB.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -308,6 +321,15 @@ The paths are in `packages/design-kit`.
 - `e2e/leaks.spec.tsx` joins every piece but a focus request twice with a new signal and finds
   nothing growing as it is joined and nothing left once it is taken down, listeners on signals
   included.
+- `e2e/toast.spec.tsx` also finds a button near the foot of a tall frame of the page's own origin,
+  with a border and padding, focused where the toast draws, ending clear of the toast once a
+  message shows, on a page and in an app's frame, a button the frame's padding puts a few pixels
+  under the toast's edge kept clear, in a frame drawn smaller too, and a link on the page the
+  toast covers by less than the rise it enters on kept clear. It finds the page and the frame left
+  where they are where the button inside a frame is clear of the toast though the frame reaches
+  under it, and where a short frame above the toast has scrolled its button out of sight, and the
+  page left where it is where a control on the page or inside a frame sits beside a toast narrower
+  than the screen.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources
