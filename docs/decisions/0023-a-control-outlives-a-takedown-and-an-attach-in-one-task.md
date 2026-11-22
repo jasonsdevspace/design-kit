@@ -102,12 +102,14 @@ Option C.
   content focuses as it draws, stays. The kit keeps where it last handed focus back, and `moveFocus`
   treats focus there as free where the handback came after the request was asked, so a request asked
   in the abort's task still lands. The browser hands focus back to what had it before a dialog
-  opened as the dialog closes, ahead of the close event, so the dialog keeps that as a handback too,
-  once focus leaves it closed. A request asked from inside an open dialog in the task that closes
-  it, takes it away or takes it down lands, so a page can send focus somewhere more useful than the
-  opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices allows. One
-  asked in an earlier task finds the page behind inert in its frame, so focus goes to the opener as
-  the dialog closes.
+  opened as the dialog closes, ahead of the close event, so the dialog keeps that element as a
+  handback the moment focus leaves it closed, and its close event hands focus back only where focus
+  is still on that element, in the dialog or on the body, so a request that landed first or focus
+  the page moved in that task stays. A request asked from inside an open dialog in the task that
+  closes it, takes it away or takes it down lands, so a page can send focus somewhere more useful
+  than the opener as the dialog closes, as the dialog pattern of the ARIA Authoring Practices
+  allows. One asked in an earlier task finds the page behind inert in its frame, so focus goes to
+  the opener as the dialog closes.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -174,8 +176,10 @@ The paths are in `packages/design-kit`.
   the page in one task or removed first and taken down in a later task, focus left on a control
   outside a toast taken away as focus moves there and on the body where a visitor moved it after the
   toast left the page, a focus request asked as a dialog or a toast with focus in it is taken down
-  landing, one asked from inside an open dialog landing too where the page closes the dialog or
-  takes it from the page and takes it down in the same task, or only closes it, and focus the page
+  landing, one asked from inside an open dialog opened from a focused opener landing too where the
+  page closes the dialog or takes it from the page and takes it down in the same task, where it only
+  closes it and the close event comes after the request's frame, and where a press on an answer
+  closes it, focus the page sets in the task that closes such a dialog staying, and focus the page
   sets as a dialog taken from the page is taken down staying. It also finds a toast kept shown while
   focus leaves it and comes back in one task, one moved in the page with focus in it starting its
   wait again in Chromium, a dialog kept staying where a later attach gives it only a signal, a
