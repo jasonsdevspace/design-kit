@@ -919,33 +919,55 @@ test('holds a toast that appears under a pointer resting where the last one was'
 
 test('rises into place each time it is shown', async ({ page }) => {
     await open(page);
-    for (const words of ['Round 3 saved.', 'Round 4 saved.']) {
+    for (const [words, action] of [
+        ['Round 3 saved.', 'Undo'],
+        ['Round 4 saved.', 'Undo'],
+        ['Players saved.', undefined],
+    ] as const) {
         // Shown and read in one task, with the entrance held at its start, since a slow run reading
-        // it later can find it already over.
-        const entrance = await page.evaluate((message) => {
-            const kit = (window as unknown as { kit: Kit }).kit;
-            kit.last = kit.show(message);
-            const element = document.querySelector('.dk-toast') as HTMLElement;
-            const animations = element.getAnimations() as CSSAnimation[];
-            for (const animation of animations) {
-                animation.pause();
-                animation.currentTime = 0;
-            }
-            const { opacity, translate } = getComputedStyle(element);
-            for (const animation of animations) animation.finish();
-            const rest = getComputedStyle(element);
-            return {
-                names: animations.map((animation) => animation.animationName),
-                from: { opacity, translate },
-                to: { opacity: rest.opacity, translate: rest.translate },
-            };
-        }, words);
+        // it later can find it already over. The show waits two frames, so the toast is drawn
+        // hidden between messages and the sheet starts its entrance again, as a page's would.
+        const entrance = await page.evaluate(
+            async ([message, label]) => {
+                for (const frame of [1, 2])
+                    await new Promise((done) => requestAnimationFrame(() => done(frame)));
+                const kit = (window as unknown as { kit: Kit }).kit;
+                kit.last = kit.show(
+                    message,
+                    label === undefined ? undefined : { label, onAction: () => undefined }
+                );
+                const element = document.querySelector('.dk-toast') as HTMLElement;
+                const animations = element
+                    .getAnimations()
+                    .filter((animation) => animation instanceof CSSAnimation);
+                for (const animation of animations) {
+                    animation.pause();
+                    animation.currentTime = 0;
+                }
+                const { opacity, translate } = getComputedStyle(element);
+                for (const animation of animations) animation.finish();
+                const rest = getComputedStyle(element);
+                const step = document.body.appendChild(document.createElement('div'));
+                step.style.width = 'var(--dk-space-2)';
+                const space = getComputedStyle(step).width;
+                step.remove();
+                return {
+                    names: animations.map((animation) => animation.animationName),
+                    from: { opacity, translate },
+                    to: { opacity: rest.opacity, translate: rest.translate },
+                    step: `0px ${space}`,
+                };
+            },
+            [words, action] as const
+        );
         expect(entrance).toEqual({
             names: ['dk-toast-rise'],
-            from: { opacity: '0', translate: '0px 8px' },
+            from: { opacity: '0', translate: entrance.step },
             to: { opacity: '1', translate: 'none' },
+            step: expect.stringMatching(/^0px [1-9]/),
         });
-        await page.locator('.dk-toast-close').click();
+        await closeButton(page).click();
+        await expect(toast(page)).not.toHaveAttribute('data-shown');
     }
 });
 
