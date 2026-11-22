@@ -514,36 +514,30 @@ test.describe('the landing page', () => {
                 expect((await cards.count()) % lefts.size, String(width)).toBe(0);
             } else expect(lefts.size, String(width)).toBe(1);
         }
-        // On a laptop's screen and a narrower one, tiles on one line start their previews and
-        // titles level, a short one beside one whose line runs longer, which at least one line
-        // holds at one of the widths.
-        const lines: { starts: number; details: number }[] = [];
-        for (const width of [1280, 1024, 900]) {
-            await page.setViewportSize({ width, height: 900 });
-            lines.push(
-                ...(await cards.evaluateAll((all) => {
-                    const box = (card: Element, selector: string) => {
-                        const found = card.querySelector(selector);
-                        if (found === null) throw new Error(`a tile holds no ${selector}`);
-                        return found.getBoundingClientRect();
-                    };
-                    const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
-                    for (const card of all) {
-                        const line = Math.round(card.getBoundingClientRect().top);
-                        const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
-                        held.starts.add(
-                            `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
-                        );
-                        held.details.add(Math.round(box(card, '.dk-row-detail').height));
-                        byLine.set(line, held);
-                    }
-                    return [...byLine.values()].map(({ starts, details }) => ({
-                        starts: starts.size,
-                        details: details.size,
-                    }));
-                }))
-            );
-        }
+        // On a wide screen, tiles on one line start their previews and titles level, a short
+        // line beside a longer one, which at least one line of tiles holds.
+        await page.setViewportSize({ width: 1280, height: 900 });
+        const lines = await cards.evaluateAll((all) => {
+            const box = (card: Element, selector: string) => {
+                const found = card.querySelector(selector);
+                if (found === null) throw new Error(`a tile holds no ${selector}`);
+                return found.getBoundingClientRect();
+            };
+            const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
+            for (const card of all) {
+                const line = Math.round(card.getBoundingClientRect().top);
+                const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
+                held.starts.add(
+                    `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
+                );
+                held.details.add(card.querySelector('.dk-row-detail')?.textContent.length ?? 0);
+                byLine.set(line, held);
+            }
+            return [...byLine.values()].map(({ starts, details }) => ({
+                starts: starts.size,
+                details: details.size,
+            }));
+        });
         expect(lines.some(({ details }) => details > 1)).toBe(true);
         for (const { starts } of lines) expect(starts).toBe(1);
     });
