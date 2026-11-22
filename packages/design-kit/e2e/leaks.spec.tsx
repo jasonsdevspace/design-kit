@@ -10,8 +10,8 @@ import { BODY, KEPT, type Piece, PIECES, script } from './teardown-pieces.js';
  * Record 22's promise that a piece taken down leaves nothing running, held for every attach and
  * `moveFocus` by counting what the page has running, through the counters in leaks.ts, in
  * Chromium, WebKit and Firefox: each piece in the table teardown-pieces.tsx shares with
- * teardown.spec.tsx, used and taken down, brings every count back to where it started, joined again
- * and again grows none, and one given a signal already aborted, used and called after, starts
+ * teardown.spec.tsx, used and taken down, brings every count back to where it started, joined twice
+ * grows none, and one given a signal already aborted, used and called after, starts
  * nothing. This spec makes every count of what a piece leaves running after an attach, and the
  * teardown spec counts only what this one does not.
  * The theme's listeners on the window stay for the page's life, as the record has it, so the table

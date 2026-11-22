@@ -159,7 +159,7 @@ The paths are in `packages/design-kit`.
   reset that takes away the kit's errors and nothing after one with none to take away.
 - `e2e/teardown.spec.tsx` takes a form's check down by its signal with a refusal and a reset still
   due and finds nothing said after, its errors, marks and `noValidate` as the markup drew them, and
-  the check kept until the last attach in the form is taken down, and finds nothing drawn through
+  the check kept until the last attach in the form is taken down. It finds nothing drawn through
   what a form or a part of one given a signal already aborted returns.
 - `smoke/types.ts` types the failures, the words and the options, and refuses a failure misnamed.
 - `scripts/controls.test.ts` holds the controls to the budget record 13 sets.

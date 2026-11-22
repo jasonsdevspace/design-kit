@@ -200,29 +200,29 @@ The paths are in `packages/design-kit`.
 - `e2e/dialog.spec.ts` finds a dialog attached to stay still staying once attached again with `{}`,
   and no longer staying once attached again with `{ stay: false }` or with options that leave
   `stay` out.
-- `e2e/teardown.spec.tsx` aborts and attaches every piece again in one task and finds each kept,
-  with its handle, a busy wait, an open dialog, a shown toast, a group's observers and a form's
-  errors and check, aborts and attaches without a signal in one task and finds each kept and a busy
-  wait still marked, and aborts, waits a microtask and attaches and finds each attached afresh. For
-  focus, it finds a toast with focus in it hand focus back where it is taken down and removed from
-  the page in one task or removed first and taken down in a later task, focus left on a control
-  outside a toast taken away as focus moves there and on the body where a visitor moved it after the
-  toast left the page, a focus request asked as a dialog or a toast with focus in it is taken down
-  landing, one asked from inside an open dialog opened from a focused opener landing too where the
-  page closes the dialog or takes it from the page and takes it down in the same task, where it only
-  closes it and the close event comes after the request's frame, where a press on an answer closes
-  it, and where the opener is not what had focus as it opened, focus the page sets in the task that
-  closes such a dialog staying, focus going to the opener from one closed and taken down in one task
-  where something else had focus as it opened, a request asked from inside a dialog whose pressed
-  control is taken away as it is pressed landing, with its close event coming in time or late, the
-  later of two requests asked as a toast with focus in it is taken down landing where the first asks
-  for the control focus goes back to, and focus the page sets as a dialog taken from the page is
-  taken down staying. It also finds a toast kept shown while focus leaves it and comes back in one
-  task, one moved in the page with focus in it starting its wait again in Chromium, a dialog kept
-  staying where a later attach gives it only a signal, a progress step still heard through a join
-  that gives the same count, a form and a stepper back on their defaults once the only holder that
-  gave options lets go, and a dialog's `stay` dropped with the holder that gave it, though the first
-  attach gave a signal.
+- `e2e/teardown.spec.tsx` aborts and attaches every piece an attach keeps again in one task and
+  finds each kept, with its handle, a busy wait, an open dialog, a shown toast, a group's observers
+  and a form's errors and check, aborts and attaches without a signal in one task and finds each
+  kept and a busy wait still marked, and aborts, waits a microtask and attaches and finds each
+  attached afresh. For focus, it finds a toast with focus in it hand focus back where it is taken
+  down and removed from the page in one task or removed first and taken down in a later task, focus
+  left on a control outside a toast taken away as focus moves there and on the body where a visitor
+  moved it after the toast left the page, a focus request asked as a dialog or a toast with focus in
+  it is taken down landing, one asked from inside an open dialog opened from a focused opener
+  landing too where the page closes the dialog or takes it from the page and takes it down in the
+  same task, where it only closes it and the close event comes after the request's frame, where a
+  press on an answer closes it, and where the opener is not what had focus as it opened, focus the
+  page sets in the task that closes such a dialog staying, focus going to the opener from one closed
+  and taken down in one task where something else had focus as it opened, a request asked from
+  inside a dialog whose pressed control is taken away as it is pressed landing, with its close event
+  coming in time or late, the later of two requests asked as a toast with focus in it is taken down
+  landing where the first asks for the control focus goes back to, and focus the page sets as a
+  dialog taken from the page is taken down staying. It also finds a toast kept shown while focus
+  leaves it and comes back in one task, one moved in the page with focus in it starting its wait
+  again in Chromium, a dialog kept staying where a later attach gives it only a signal, a progress
+  step said once through a join that gives the same count, a form and a stepper back on their
+  defaults once the only holder that gave options lets go, and a dialog's `stay` dropped with the
+  holder that gave it, though the first attach gave a signal.
 - `e2e/toast.spec.tsx` moves from a field to a second control and into a shown toast, dismisses it
   by its action and by Escape, and finds focus on the second control, there too where the page stops
   the second control's focusout, and finds focus sent back to where it was as the message came where
@@ -241,8 +241,9 @@ The paths are in `packages/design-kit`.
   hooks share through a merged ref observed once, a form passed from one hook's ref to another's in
   one commit keeping its errors and refusing through the hook it went to, and either of two form
   hooks on one form dropped leaving the other's check and refusal.
-- `e2e/leaks.spec.tsx` joins each piece twice with a new signal and finds nothing growing
-  as it is joined and nothing left once it is taken down, listeners on signals included.
+- `e2e/leaks.spec.tsx` joins every piece but a focus request twice with a new signal and finds
+  nothing growing as it is joined and nothing left once it is taken down, listeners on signals
+  included.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources

@@ -16,7 +16,9 @@ import { InputField, StatusLine, Toast } from '../src/react.js';
  * leaks.spec.tsx both open: the markup, and a table naming each piece with how it is attached with
  * a signal, what a visitor or the page does with it, and what is called once it is taken down. A
  * piece added here is held by both specs. Each piece that speaks speaks on the screen's line,
- * attached with the same signal, as a page takes a screen down with one controller.
+ * attached with the same signal, as a page takes a screen down with one controller. The status line
+ * itself is a line of its own, so a test of the status line is not passed by another piece holding
+ * the screen's line.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -54,6 +56,7 @@ export const BODY = `${renderToStaticMarkup(
         {progress}
         {dialog}
         <StatusLine className="screen-status" />
+        <StatusLine className="piece-status" />
     </main>
 )}
 <p><button type="button" id="tips-button" aria-expanded="false" aria-controls="round-tips">Tips</button>
@@ -139,8 +142,9 @@ window.pieces = {
         detach,
         shows: () => !$('.dk-copy').hidden,
     },
+    // A line of its own, which no other piece speaks on, so only its own holders keep it.
     'the status line': {
-        attach: (signal) => screen(signal),
+        attach: (signal) => kit.attachStatus($('.piece-status'), { signal }),
         use: (say) => {
             say('Saved.');
             say('3 still to enter.', { settle: 700 });

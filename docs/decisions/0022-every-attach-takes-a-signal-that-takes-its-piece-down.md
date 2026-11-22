@@ -141,16 +141,16 @@ The paths are in `packages/design-kit`.
   already aborted attaching nothing and keeping nothing, an abort taking the piece down a microtask
   later, each signal that attached it holding it until it aborts, and, where the attach returns a
   detach, the detach taking it down at once and an old detach called twice and its signal aborted
-  leaving a newer attach working. Each is read from the handle a later attach returns and from the
-  mark the page draws of the piece attached. Each piece used and taken down with a wait or a timer
-  still due says and shows nothing for what is called on it after. Each piece's own cases follow in
-  a block of its own, among them a copy button attached again with an aborted signal keeping its
-  first source, its word put back to Copy as it is taken down, a press answered after the abort
-  silent where one answered while it stays attached is heard, a theme chosen after the abort unseen
-  by the switch, the switch's listener on the document off after an abort with its choices open, a
-  busy wait, a progress step and a stepper's error said by none once taken down where a step and an
-  error left attached are heard, and a focus request called off by an abort and holding nothing on
-  the page's signal once it lands.
+  leaving a newer attach working. Each is read from the handle a later attach returns and, where the
+  page draws one, from its mark of the piece attached. Each piece used and taken down with a wait or
+  a timer still due says and shows nothing for what is called on it after. Each piece's own cases
+  follow in a block of its own, among them a copy button attached again with an aborted signal
+  keeping its first source, its word put back to Copy as it is taken down, a press answered after
+  the abort silent where one answered while it stays attached is heard, a theme chosen after the
+  abort unseen by the switch, the switch's listener on the document off after an abort with its
+  choices open, a busy wait, a progress step and a stepper's error said by none once taken down
+  where a step and an error left attached are heard, and a focus request called off by an abort and
+  holding nothing on the page's signal once it lands.
 - `e2e/leaks.spec.tsx` holds every attach and `moveFocus` to leaving nothing running, in the three
   engines, on a stand-in clock that moves only by the test's steps. A script loaded before the
   page's own, `e2e/leaks.ts`, counts the listeners on elements, the document, the window and

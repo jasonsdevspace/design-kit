@@ -1,6 +1,8 @@
 # 3. Each color holds both themes in one light-dark()
 
-**Status:** accepted
+**Status:** accepted, amended in 0.5.0, under which the browser tests also run in WebKit, and in
+0.6.0, under which they run in Firefox too, each for the specs `packages/design-kit/e2e/engines.ts`
+names
 
 ## Context
 
