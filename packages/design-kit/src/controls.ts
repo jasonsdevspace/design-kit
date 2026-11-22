@@ -910,9 +910,8 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * across and down as the frame is drawn, and cut to what the frame shows inside its scrollbars, so
  * a control the frame has scrolled out of sight counts as covered nowhere. A frame rotated or
  * skewed is measured by its bounding box. That control's own scroll into view moves the frame's
- * document and the page. One the toast leaves alone, beside it or above it, or one whose part in
- * sight is taller than the room above the toast, such as the body of the app's frame, stays where
- * it is.
+ * document and the page. One the toast leaves alone, beside it or above it, or one taller than the
+ * room above the toast, such as the body of the app's frame, stays where it is.
  */
 const clearOf = (element: HTMLElement, active: Element, inner: Element | null | undefined) => {
     const control = inner ?? active;
@@ -920,7 +919,7 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
     const rise = Number(
         /^\S+ (-?[\d.]+)px/.exec(String(getComputedStyle(element).translate))?.[1] ?? 0
     );
-    let { top, right, bottom, left } = control.getBoundingClientRect();
+    let { top, right, bottom, left, height } = control.getBoundingClientRect();
     if (inner) {
         const frame = active as HTMLElement;
         const place = frame.getBoundingClientRect();
@@ -930,11 +929,12 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
         const x = place.left + (frame.clientLeft + parseFloat(edges.paddingLeft)) * across;
         const y = place.top + (frame.clientTop + parseFloat(edges.paddingTop)) * down;
         const view = inner.ownerDocument.scrollingElement ?? inner.ownerDocument.documentElement;
-        [top, right, bottom, left] = [
+        [top, right, bottom, left, height] = [
             y + Math.max(top, 0) * down,
             x + Math.min(right, view.clientWidth) * across,
             y + Math.min(bottom, view.clientHeight) * down,
             x + Math.max(left, 0) * across,
+            height * down,
         ];
     }
     if (
@@ -942,7 +942,7 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
         top < card.bottom - rise &&
         right > Math.max(left, card.left) &&
         left < card.right &&
-        bottom - top < card.top - rise
+        height < card.top - rise
     )
         control.scrollIntoView({ block: 'nearest' });
 };

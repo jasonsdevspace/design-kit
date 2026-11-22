@@ -29,16 +29,16 @@ import { textSize } from './text-size.js';
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
  * focus goes back to a control in view, a control that has focus as a message shows kept clear of
  * the toast, inside a tall frame of the page's own origin too, past the frame's padding, in a frame
- * drawn smaller, wider or by zoom, and mostly scrolled out of a frame, and where the toast covers
- * it by less than the rise it enters on, and left where it is where the toast leaves it alone,
- * where the frame has scrolled it out of sight or behind its scrollbar, or where it sits beside a
- * narrow toast, focus sent on to the control inside a frame of the page's own origin that had focus
- * as the message came and left on the frame where that control is marked off, gone or on a page
- * since loaded, left in the frame where a page's listener moves it there in Firefox, and to a frame
- * of another origin by pointer or past it by a key in Firefox, a long message wrapping with its
- * action in reach and its buttons wrapped inside it on a 320px phone at twice the text size, its
- * message as far from either edge there, its buttons kept together in their group, or as they were
- * without it, its place above an app's dock or at the foot of a page, nothing drawn before a
+ * drawn smaller, wider or by zoom, and where the toast covers it by less than the rise it enters
+ * on, and left where it is where the toast leaves it alone, where the frame has scrolled it out of
+ * sight or behind its scrollbar, where it is taller than the room above the toast, or where it sits
+ * beside a narrow toast, focus sent on to the control inside a frame of the page's own origin that
+ * had focus as the message came and left on the frame where that control is marked off, gone or on
+ * a page since loaded, left in the frame where a page's listener moves it there in Firefox, and to
+ * a frame of another origin by pointer or past it by a key in Firefox, a long message wrapping with
+ * its action in reach and its buttons wrapped inside it on a 320px phone at twice the text size,
+ * its message as far from either edge there, its buttons kept together in their group, or as they
+ * were without it, its place above an app's dock or at the foot of a page, nothing drawn before a
  * message or printed, the same function returned when attached again, a solid edge in forced colors
  * outside WebKit, which draws none, and no audit findings in either theme.
  */
@@ -1346,14 +1346,9 @@ test('keeps a control inside a frame drawn wider than laid out clear of the toas
     await showClear(page, low(page));
 });
 
-test('keeps a tall control mostly scrolled out of a frame clear of the toast where the part in sight is under it', async ({
+test('leaves the page and the frame where they are when the control inside a frame is taller than the room above the toast', async ({
     page,
-    browserName,
 }) => {
-    test.skip(
-        browserName !== 'chromium',
-        'WebKit and Firefox scroll nothing on the page for a control whose ends both lie past its room'
-    );
     await open(page, {
         body: PAGE.replace(
             '<p>Round 15 ',
@@ -1361,13 +1356,13 @@ test('keeps a tall control mostly scrolled out of a frame clear of the toast whe
         ),
     });
     await expect(low(page)).toBeAttached();
-    // The frame shows the control's last 30 pixels, at the foot of the screen.
+    // The frame shows the control's last 30 pixels, at the foot of the screen, under the toast.
     await page.locator('iframe').evaluate((frame) => {
         (frame as HTMLIFrameElement).contentWindow!.scrollTo(0, 970);
     });
     await scrollEnd(page, page.locator('iframe'), (await foot(page)) - 4);
     await focusStill(low(page));
-    await showClear(page, low(page));
+    await showStill(page);
 });
 
 test("leaves the page and the frame where they are when the control inside a frame sits behind the frame's scrollbar", async ({
