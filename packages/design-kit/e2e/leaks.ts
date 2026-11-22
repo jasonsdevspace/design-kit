@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
+import { servePage, stillClock } from './page.js';
+
 /*
  * What a page has left running, counted the same way in Chromium, WebKit and Firefox, so a test
  * finds what an attach leaves behind once it is taken down: the listeners on elements, the
@@ -267,6 +269,26 @@ export const countLeaks = async (
     { clock }: { readonly clock?: boolean } = {}
 ): Promise<void> => {
     await page.addInitScript(script(clock));
+};
+
+/**
+ * Opens a page as `servePage` serves it with the counters in it, and waits for its script to set
+ * `window.ready`, unless `ready` is false, as for a page React draws, which a test waits on by what
+ * it draws. Given `clock`, the page is put on a still clock first, and either way the counters are
+ * told, so a count fails on a page whose clock is not the one the test meant.
+ */
+export const openCounted = async (
+    page: Page,
+    {
+        clock,
+        ready = true,
+        ...served
+    }: { readonly clock: boolean; readonly ready?: boolean } & Parameters<typeof servePage>[1]
+): Promise<void> => {
+    if (clock) await stillClock(page.clock);
+    await countLeaks(page, { clock });
+    await servePage(page, served);
+    if (ready) await page.waitForFunction(() => 'ready' in window);
 };
 
 /** What the page has left running now. */

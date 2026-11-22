@@ -9,10 +9,12 @@ import {
     colorOf,
     contrast,
     forceColors,
+    frames,
     height,
     KIT,
     pixels,
     ringByKeyboard,
+    settle,
     sideways,
     style,
     writePage,
@@ -135,7 +137,10 @@ test('turns the edge to the focus color under a pointer, and underlines the acce
     expect((await style(accent, 'text-decoration-line'))['text-decoration-line']).toBe('underline');
     // Off takes no hover, so it never looks as though a press would do something.
     await page.getByRole('button', { name: 'Previous' }).hover();
-    await page.waitForTimeout(300);
+    // A frame for the hover to be styled, and any transition it started run out, so an edge that
+    // eased in would be read where it ends.
+    await frames(page);
+    await settle(page.getByRole('button', { name: 'Previous' }));
     expect(await edge('Previous')()).toBe('rgb(217, 217, 217)');
 });
 
@@ -153,7 +158,9 @@ test("leaves a toggle's edge as it was after a tap on a touch screen, where no p
         const toggle = page.getByRole('button', { name: 'Guest', pressed: false });
         const resting = await style(toggle, 'border-top-color', 'box-shadow');
         await toggle.tap();
-        await page.waitForTimeout(300);
+        // A frame for the tap to be styled, and any transition it started run out.
+        await frames(page);
+        await settle(toggle);
         expect(await style(toggle, 'border-top-color', 'box-shadow')).toEqual(resting);
         expect(resting['border-top-color']).toBe('rgb(133, 133, 133)');
     } finally {
@@ -380,7 +387,9 @@ test("draws a text button as a link, at the button's height, with its states", a
     const none = page.getByRole('button', { name: 'No markup' });
     await expect(none).toBeDisabled();
     await none.hover();
-    await page.waitForTimeout(300);
+    // A frame for the hover to be styled, and any transition it started run out.
+    await frames(page);
+    await settle(none);
     expect(
         await style(
             none,

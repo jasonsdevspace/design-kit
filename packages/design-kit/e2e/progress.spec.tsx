@@ -8,6 +8,7 @@ import { bundle } from './bundle.js';
 import {
     colorOf,
     forceColors,
+    frames,
     lengthOf,
     servePage,
     sideways,
@@ -171,7 +172,8 @@ test('draws a short track in the line color on pill corners, filled in the accen
 test('draws an empty track with no fill for a bar with no value', async ({ page }) => {
     await draw(page, { body: EXAMPLE.replace(' value="12"', '') });
     const track = await opaque(page, 'var(--dk-line)');
-    await page.waitForTimeout(300);
+    // A paint is a frame away, and the bar has no transition to wait out.
+    await frames(page);
     expect(await drawnAt(page, 0.1, 0.5, 0.9)).toEqual([track, track, track]);
 });
 
@@ -188,7 +190,8 @@ test('fills in the highlight on an edged canvas track in forced colors', async (
     await page.evaluate(() => {
         document.querySelector('.dk-progress')?.removeAttribute('value');
     });
-    await page.waitForTimeout(300);
+    // A paint is a frame away, and the bar has no transition to wait out.
+    await frames(page);
     expect(await drawnAt(page, 0.1, 0.8)).toEqual([track, track]);
 });
 

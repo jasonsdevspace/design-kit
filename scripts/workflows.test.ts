@@ -9,7 +9,8 @@ import { repositoryFiles } from './repository.mjs';
  * What the workflows promise that only reading them can hold: a browser installed without the
  * system packages the runner already has, and within a time of its own, dependencies installed
  * without their install scripts, and the token that can publish or deploy held by the deploy job
- * alone in CI.
+ * alone in CI, and the required Browser tests kept as a gate that passes only where every browser
+ * job it waits on passed.
  */
 
 const workflows = repositoryFiles(import.meta.url, (path) =>
@@ -60,6 +61,37 @@ const jobsOf = (text: string) => {
             id: block.slice(0, block.indexOf(':')),
             body: `\n${block.slice(block.indexOf('\n') + 1)}`,
         }));
+};
+
+/**
+ * What keeps CI's Browser tests from standing for every browser job in Chromium: the gate missing,
+ * renamed or skipped where a job it needs fails, a job that runs Chromium's or the site's tests
+ * left out of its needs, or a step that does not hold every needed job's result to success.
+ */
+const gateProblems = (text: string): string[] => {
+    const jobs = jobsOf(text);
+    const gate = jobs.find(({ id }) => id === 'browser');
+    if (!gate) return ['no browser job'];
+    const problems: string[] = [];
+    if (!/^ {8}name: Browser tests\s*$/m.test(gate.body)) problems.push('not named Browser tests');
+    if (!/^ {8}if: always\(\)\s*$/m.test(gate.body))
+        problems.push('not run whatever its needs did');
+    const needs = /^ {8}needs: \[([^\]]*)\]/m
+        .exec(gate.body)?.[1]
+        ?.split(',')
+        .map((id) => id.trim());
+    for (const { id, body } of jobs)
+        if (
+            id !== 'browser' &&
+            /--project chromium|playwright test packages\/site/.test(body) &&
+            !needs?.includes(id)
+        )
+            problems.push(`does not need ${id}`);
+    if (!/\$\{\{ join\(needs\.\*\.result, ' '\) \}\}/.test(gate.body))
+        problems.push("does not read every needed job's result");
+    if (!/\[ "\$result" = success \] \|\| exit 1/.test(gate.body))
+        problems.push('does not hold each result to success');
+    return problems;
 };
 
 /** The shell's own words and the commands a job holding a token may run. */
@@ -593,6 +625,23 @@ describe('the workflows', () => {
         );
         expect([...workflows.keys()].length).toBeGreaterThan(0);
         expect(unready).toEqual([]);
+    });
+
+    it('keep the required Browser tests as a gate on every browser job in Chromium', () => {
+        expect(gateProblems(workflows.get('.github/workflows/ci.yml') ?? '')).toEqual([]);
+    });
+
+    it('find a gate that stops checking a job it needs', () => {
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        expect(
+            gateProblems(ci.replace('needs: [chromium, site-kit]', 'needs: [chromium]'))
+        ).toEqual(['does not need site-kit']);
+        expect(
+            gateProblems(ci.replace('join(needs.*.result', 'join(needs.chromium.result'))
+        ).toEqual(["does not read every needed job's result"]);
+        expect(gateProblems(ci.replace('        if: always()\n', ''))).toEqual([
+            'not run whatever its needs did',
+        ]);
     });
 
     it("read a workflow's jobs by their ids, each with its own lines", () => {

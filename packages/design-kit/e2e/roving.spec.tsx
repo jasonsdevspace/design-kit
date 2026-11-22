@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage } from './page.js';
+import { frames, servePage } from './page.js';
 
 /*
  * A group of cells moved among by the arrow keys with one stop for the Tab key, by `attachRoving`
@@ -171,7 +171,8 @@ test('leaves focus where the visitor moved it when a cell they left is taken out
     await page.locator('#n5').focus();
     await page.mouse.click(600, 600);
     await page.evaluate(() => document.querySelector('#n5')?.remove());
-    await page.waitForTimeout(100);
+    // Frames to spare, so a late move of focus back into the group would land before the check.
+    await frames(page, 6);
     await expect(page.locator('#grid button:focus')).toHaveCount(0);
 });
 

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StatusLine, StepperField } from '../src/react.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * A stepper speaking through a page's own `say`, as React's `useStatus` hands one, and a stepper
@@ -51,18 +51,12 @@ type Page = {
     say: unknown;
 };
 
-/** Lets the timers a blur or a reset sets run, and a frame after them. */
-const settle = (page: import('@playwright/test').Page) =>
-    page.evaluate(
-        () =>
-            new Promise((done) => {
-                window.setTimeout(() => {
-                    window.requestAnimationFrame(() => done(null));
-                }, 50);
-            })
-    );
+/** Lets the timers a blur or a reset sets run, and a frame after them, on the still clock. */
+const settle = (page: import('@playwright/test').Page) => page.clock.runFor(100);
 
+/** The page with its stepper attached, on a clock that stands still. */
 const open = async (page: import('@playwright/test').Page) => {
+    await stillClock(page.clock);
     await servePage(page, { title: 'Bid', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
 };
@@ -72,8 +66,9 @@ test("says a press through the page's own say, on the page's line and not the st
 }) => {
     await open(page);
     await page.getByRole('button', { name: /^Raise/ }).click();
-    await expect.poll(() => page.evaluate(() => (window as unknown as Page).heard)).toEqual(['6']);
-    await page.waitForTimeout(300);
+    // Past the moment a line puts words in.
+    await page.clock.runFor(300);
+    expect(await page.evaluate(() => (window as unknown as Page).heard)).toEqual(['6']);
     await expect(page.locator('.dk-stepper-status')).toHaveText('');
 });
 
@@ -98,6 +93,7 @@ test("takes its words back from a page's line it no longer speaks on", async ({ 
         shown.attachStepper(shown.stepper, { status: shown.line });
     });
     await page.getByRole('button', { name: /^Raise/ }).click();
+    await page.clock.runFor(150);
     await expect(page.locator('.screen-status')).toHaveText('6');
     await page.evaluate(() => {
         const shown = window as unknown as Page;
@@ -109,6 +105,7 @@ test("takes its words back from a page's line it no longer speaks on", async ({ 
 test('keeps its buttons where it is attached again just after its form is reset', async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await servePage(page, {
         title: 'Bid',
         body: `<main><h1>Bid</h1><form>${BODY}<button type="reset">Clear</button></form></main>`,

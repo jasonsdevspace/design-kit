@@ -125,11 +125,11 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
 - `src/controls.test.ts` imports the module in plain Node and finds no export but its functions,
   and `scripts/controls.test.ts` holds what a page's bundler sends of it to its budget.
 - `e2e/toast.spec.tsx` serves the toast's markup and the module from an origin of its own, in
-  Chromium and in WebKit, and finds a message drawn and said with its action's name without focus
-  moving and with no element added, the same words said again, a toast with an action staying and
-  one without leaving on a stand-in clock, that wait held while hovered or focused, focus returned
-  where it was, each dismiss kept to its own message, its place above an app's dock and at the foot
-  of a page, and no audit findings in either theme.
+  Chromium, WebKit and Firefox, and finds a message drawn and said with its action's name without
+  focus moving and with no element added, the same words said again, a toast with an action staying
+  and one without leaving on a stand-in clock, that wait held while hovered or focused, focus
+  returned where it was, each dismiss kept to its own message, its place above an app's dock and at
+  the foot of a page, and no audit findings in either theme.
 - `e2e/attach.spec.tsx` serves a screen's own status line and finds each message said on it with no
   element added, the same words said twice reaching it twice, and the line empty once a message has
   been held its time.
@@ -138,12 +138,12 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   nothing a visitor must hear lost.
 - `src/controls.test.ts` also finds a line let go of and attached afresh take its old attach down,
   leaving nothing on that attach's signal, and a toast missing a part refused whatever its signal.
-- `e2e/status-teardown.spec.tsx` attaches a status line and a toast with a signal already aborted
-  and finds nothing said or shown, aborts a signal and finds the line emptied and silent for the
-  page's function, a stepper and progress, a line those spoke on first let go of by the page's
-  signal, a toast dismissed with focus on its Close sent back where it came from and a later message
-  unshown, the tabindex it added taken away and one the page set since kept, and a line and a toast
-  kept until every signal holding them has aborted. It counts the timers, observers and listeners
-  running, before attaching and after aborting, and finds them equal, in Chromium, WebKit and
-  Firefox, with the window's size listened to once however many messages are shown and every
-  listener on the toast's elements and on the window off after an abort.
+- `e2e/teardown.spec.tsx`, in Chromium, WebKit and Firefox, attaches a status line and a toast with
+  a signal already aborted and finds nothing said or shown, aborts a signal and finds the line
+  emptied and silent for the page's function, a stepper and progress, a line those spoke on first
+  let go of by the page's signal, a toast taken down with focus on its Close sending focus back
+  where it came from and a later message unshown, the tabindex it added taken away and one the page
+  set since kept, and a line and a toast kept speaking and showing while a later signal holds them
+  and silent once that one aborts. It finds the window's size listened to once for two messages
+  shown, and `e2e/leaks.spec.tsx` finds the timers, observers and listeners a line and a toast set
+  going all gone after an abort.

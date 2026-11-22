@@ -136,31 +136,36 @@ The paths are in `packages/design-kit`.
   what it is given at once, runs what it keeps once and in order whether the page aborts or the
   attach detaches first, runs every undo where one throws and reports the error, runs one kept after
   the teardown at once, and takes its listener off the page's signal once it has run.
-- `e2e/teardown.spec.tsx` attaches the theme switch and the copy button with a signal already
-  aborted and finds them hidden and attached afresh by a later call, a copy button attached again
-  with an aborted signal keeping its first source, an abort hiding both and putting the copy
-  button's word back to Copy, a press answered after the abort silent and a theme chosen after it
-  unseen by the switch, and an old detach called twice and its signal aborted leaving a newer attach
-  working. It runs in Chromium, WebKit and Firefox, and counts the listeners on the switch's and the
-  button's own elements, finding none added for an aborted signal and every one off after an abort,
-  and the document's, finding the switch's listener there off after an abort with its choices open.
-- `e2e/signal.spec.tsx` holds the stepper, a table's frame, a group the arrow keys move through, a
-  busy button, progress, the dialog and `moveFocus` to the same rules in the three engines, with a
-  busy wait and a pending focus request called off by an abort. It counts their listeners and finds
-  a focus request that landed holds nothing on the page's signal.
+- `e2e/teardown.spec.tsx` holds to the contract every piece in the table `e2e/teardown-pieces.tsx`
+  names but a focus request, which no later attach joins, in Chromium, WebKit and Firefox: a signal
+  already aborted attaching nothing and keeping nothing, an abort taking the piece down a microtask
+  later, each signal that attached it holding it until it aborts, and, where the attach returns a
+  detach, the detach taking it down at once and an old detach called twice and its signal aborted
+  leaving a newer attach working. Each is read from the handle a later attach returns and, where the
+  page draws one, from its mark of the piece attached. Each piece used and taken down with a wait or
+  a timer still due says and shows nothing for what is called on it after. Each piece's own cases
+  follow in a block of its own, among them a copy button attached again with an aborted signal
+  keeping its first source, its word put back to Copy as it is taken down, a press answered after
+  the abort silent where one answered while it stays attached is heard, a theme chosen after the
+  abort unseen by the switch, the switch's listener on the document off after an abort with its
+  choices open, a busy wait, a progress step and a stepper's error said by none once taken down
+  where a step and an error left attached are heard, and a focus request called off by an abort and
+  holding nothing on the page's signal once it lands.
 - `e2e/leaks.spec.tsx` holds every attach and `moveFocus` to leaving nothing running, in the three
   engines, on a stand-in clock that moves only by the test's steps. A script loaded before the
   page's own, `e2e/leaks.ts`, counts the listeners on elements, the document, the window and
   signals, the ResizeObservers and MutationObservers watching, and the timers and frames still to
   come, and in Chromium finds its count of the listeners on the window, the document and its
   elements equal to the engine's own. With the theme's window listeners set first, as the exception
-  above allows, each piece is attached, used, taken down and called after, seven times in a row,
-  with every count back where it started each time and nothing coming due later, and each piece
-  given a signal already aborted, used and called after starts nothing. A page drawn by React that
-  uses every hook is drawn, used and taken away seven times, in production and under `StrictMode`,
-  with every count back where it was once React's root was in the page, but for React's own
-  listeners on elements, such as the one it keeps on each field it drew. The counts in the specs
-  above come from the same script.
+  above allows, each piece in the same table is attached, used, taken down and called after twice
+  in a row, the second round attaching all the first did, every count back where it started each
+  time and nothing coming due later, and each piece given a signal already aborted, used and called
+  after starts nothing. A page drawn by React that uses every hook is drawn, used and taken away
+  twice, in production and under `StrictMode`, the second drawing attaching all the first did, with
+  every count back where it was once React's root was in the page, but for React's own listeners on
+  elements, such as the one it keeps on each field it drew. The leak spec makes every count of what
+  a piece leaves running after an attach, and the teardown spec reads the listeners and the toast's
+  observer it counts from the same script.
 - `scripts/controls.test.ts` holds the controls, the helper with them, to the budget record 13 sets.
 
 ## Sources

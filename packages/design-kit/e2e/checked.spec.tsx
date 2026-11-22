@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StatusLine, StepperField } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { servePage } from './page.js';
+import { servePage, stillClock } from './page.js';
 
 /*
  * A form whose fields the browser's constraints check, refused by the kit rather than the browser:
@@ -361,6 +361,7 @@ test("counts a page's own set of boxes of different names once", async ({ page }
 test('clears the errors it drew on a formnovalidate submit, and keeps them through a reset called off', async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await openWith(
         page,
         `<form><label for="n">Name</label><input id="n" required>
@@ -378,7 +379,8 @@ test('clears the errors it drew on a formnovalidate submit, and keeps them throu
         (form as HTMLFormElement).dataset['keep'] = 'yes';
     });
     await page.getByRole('button', { name: 'Clear' }).click();
-    await page.waitForTimeout(100);
+    // Past the task a reset waits before it takes the errors away.
+    await page.clock.runFor(100);
     await expect(page.locator('#n-error')).toBeVisible();
     await page.getByRole('button', { name: 'Save a draft' }).click();
     await expect(page.locator('#n-error')).toHaveCount(0);

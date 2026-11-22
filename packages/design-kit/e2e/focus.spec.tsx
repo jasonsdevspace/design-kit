@@ -1,7 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage, stillClock, tabKey } from './page.js';
+import { listenersOn, openCounted } from './leaks.js';
+import { frames, servePage, stillClock, tabKey } from './page.js';
 
 /*
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
@@ -35,29 +36,30 @@ type Mover = {
     ) => () => void;
 };
 
-/** Waits two frames, so a request's own frame has come and gone. */
-const frames = (page: import('@playwright/test').Page) =>
-    page.evaluate(async () => {
-        for (let frame = 0; frame < 2; frame += 1)
-            await new Promise((resolve) => requestAnimationFrame(resolve));
-    });
+/**
+ * Waits for what a late move of focus would take to land, before a check that focus stayed: React's
+ * draw, a transition's among them, the frame `useFocusAfterDraw` waits for once its component has
+ * gone and the frame of the `moveFocus` it calls, with frames to spare, all on the page's frames
+ * rather than a fixed time.
+ */
+const settled = (page: Page) => frames(page, 6);
 
 /**
  * Presses a button by Enter with focus on it, since Safari leaves focus off a button a pointer
  * presses.
  */
-const press = async (page: import('@playwright/test').Page, selector: string) => {
+const press = async (page: Page, selector: string) => {
     await page.locator(selector).focus();
     await page.keyboard.press('Enter');
 };
 
 /** Calls one of the page's functions, in a task of its own. */
-const run = (page: import('@playwright/test').Page, name: string) =>
+const run = (page: Page, name: string) =>
     page.evaluate((call) => {
         (window as unknown as Record<string, () => void>)[call]?.();
     }, name);
 
-const open = async (page: import('@playwright/test').Page) => {
+const open = async (page: Page) => {
     await servePage(page, { title: 'Focus', body: BODY, script: SCRIPT });
     await page.waitForFunction(() => 'ready' in window);
     await page.locator('#pressed').focus();
@@ -105,13 +107,13 @@ test('leaves focus a visitor moved since the request, and calls a request off', 
         (window as unknown as Mover).moveFocus('heading');
         document.querySelector<HTMLElement>('#other')?.focus();
     });
-    await page.waitForTimeout(100);
+    await settled(page);
     await expect(page.locator('#other')).toBeFocused();
     await page.evaluate(() => {
         const cancel = (window as unknown as Mover).moveFocus('heading');
         cancel();
     });
-    await page.waitForTimeout(100);
+    await settled(page);
     await expect(page.locator('#other')).toBeFocused();
     // Focus that fell to the page's body is free, as a removed control leaves it.
     await page.evaluate(() => {
@@ -183,7 +185,7 @@ test.describe('in React', () => {
     }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await expect(page.locator('#round')).toHaveAttribute('tabindex', '-1');
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#round')).not.toBeFocused();
         await page.locator('#next').click();
         await expect(page.locator('#round')).toHaveText('Round 2');
@@ -363,7 +365,6 @@ test.describe('in React', () => {
         await run(page, 'hideOwner');
         await expect(page.locator('#hidden-ask')).toBeHidden();
         await run(page, 'askHidden');
-        await page.waitForTimeout(100);
         await frames(page);
         expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
         await run(page, 'showOwner');
@@ -396,7 +397,7 @@ test.describe('in React', () => {
         await page.locator('#show-scores').click();
         await expect(page.locator('#scores')).toBeFocused();
         await page.locator('#show-search').click();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#query')).toBeFocused();
     });
 
@@ -409,11 +410,11 @@ test.describe('in React', () => {
         await page.locator('#mode-number').focus();
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('#view-cards')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#mode-cards')).toBeFocused();
         await page.keyboard.press('ArrowLeft');
         await expect(page.locator('#view-number')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#mode-number')).toBeFocused();
     });
 
@@ -421,12 +422,12 @@ test.describe('in React', () => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await page.locator('#mode-cards').click();
         await expect(page.locator('#view-cards')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#mode-cards')).toBeFocused();
         await page.locator('#mode-number').focus();
         await page.keyboard.press('Enter');
         await expect(page.locator('#view-number')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#mode-number')).toBeFocused();
     });
 
@@ -441,7 +442,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#remove-Ann')).toBeFocused();
     });
 
@@ -456,7 +457,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#late-query')).toBeFocused();
     });
 
@@ -501,7 +502,7 @@ test.describe('in React', () => {
             (window as unknown as { showLate: () => void }).showLate();
         });
         await expect(page.locator('#late')).toBeVisible();
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#round')).toBeFocused();
     });
 
@@ -518,7 +519,7 @@ test.describe('in React', () => {
     test('moves nothing for a view gone in the frame it arrived in', async ({ page }) => {
         await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
         await press(page, '#show-brief');
-        await page.waitForTimeout(100);
+        await settled(page);
         await expect(page.locator('#brief')).toHaveCount(0);
         await expect(page.locator('#show-brief')).toBeFocused();
     });
@@ -531,28 +532,21 @@ test.describe('in React', () => {
         await expect(page.locator('#game')).toBeFocused();
     });
 
-    test('adds no listener however often a view is drawn before any press', async ({
-        page,
-        browserName,
-    }) => {
-        test.skip(
-            browserName !== 'chromium',
-            "Listeners are counted through Chromium's own tools."
-        );
-        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
-        const session = await page.context().newCDPSession(page);
-        const counted = async () => {
-            const { result } = await session.send('Runtime.evaluate', { expression: 'document' });
-            const { listeners } = await session.send('DOMDebugger.getEventListeners', {
-                objectId: result.objectId ?? '',
-            });
-            return listeners.length;
-        };
-        const before = await counted();
+    test('adds no listener however often a view is drawn before any press', async ({ page }) => {
+        await openCounted(page, {
+            clock: false,
+            ready: false,
+            title: 'Focus',
+            body: '<div id="root"></div>',
+            script: app,
+        });
+        await expect(page.locator('#again')).toHaveAttribute('data-count', '0');
+        const everywhere = '[window, document, ...document.querySelectorAll("*")]';
+        const before = await listenersOn(page, everywhere);
         await page.evaluate(() => {
             (window as unknown as { drawAgain: () => void }).drawAgain();
         });
         await expect(page.locator('#again')).toHaveAttribute('data-count', '20');
-        expect(await counted()).toBe(before);
+        expect(await listenersOn(page, everywhere)).toBe(before);
     });
 });
