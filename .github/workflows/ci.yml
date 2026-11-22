@@ -280,11 +280,16 @@ jobs:
     # The stepper, the controls and the pieces in Firefox too, since its number field keeps its spin
     # buttons unless `appearance: textfield` takes them away and it rounds lengths its own way, in
     # the current Firefox Playwright brings rather than the kit's floor. On a Mac, as WebKit is,
-    # where Firefox runs on what the image already has.
+    # where Firefox runs on what the image already has. In shards, each on a runner of its own, as
+    # many as the matrix lists, since the whole run came close to the time limit.
     firefox:
-        name: Browser tests in Firefox
+        name: Browser tests in Firefox, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
         timeout-minutes: 10
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -309,12 +314,15 @@ jobs:
                   node -e "require('@playwright/test').firefox.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             - name: Browser tests in Firefox
+              env:
+                  SHARD: ${{ matrix.shard }}
+                  SHARDS: ${{ strategy.job-total }}
               run: |
                   rm -f playwright-results.json
                   status=0
-                  npm run e2e -- --project firefox || status=$?
+                  npm run e2e -- --project firefox --shard "$SHARD/$SHARDS" || status=$?
                   if [ -f playwright-results.json ]; then
-                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in Firefox" "$status" ||
+                      node scripts/summary.mjs playwright playwright-results.json "Browser tests in Firefox, shard $SHARD of $SHARDS" "$status" ||
                           echo "The summary of the browser tests could not be written."
                   fi
                   exit "$status"
@@ -323,7 +331,7 @@ jobs:
               if: failure()
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
-                  name: playwright-report-firefox
+                  name: playwright-report-firefox-${{ matrix.shard }}
                   path: playwright-report
                   retention-days: 7
 
