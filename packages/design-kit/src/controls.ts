@@ -46,9 +46,9 @@ const isOff = (control: Element | undefined): boolean =>
 
 /**
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
- * link in an inline chart, one that is hidden, inert, disabled or gone from the page being passed
- * over as the browser refuses it focus, so focus never falls to nowhere while a place for it is
- * named. A caller passes over a control marked off itself.
+ * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
+ * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
+ * refuses it focus. Each caller leaves out a control marked off before it calls.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
@@ -229,7 +229,7 @@ const ROLE_ACTIVATOR = '[role="button"], [role="link"], [role="menuitem"]';
 /** What a press is made on: a button or a link, native or by its role. */
 const ACTIVATOR = [
     'button',
-    'a[href]',
+    'a[*|href]',
     'input[type="button"]',
     'input[type="submit"]',
     'input[type="reset"]',
@@ -1474,15 +1474,18 @@ export type DialogOptions = AttachOptions & {
      */
     readonly stay?: boolean | undefined;
     /**
-     * Where focus goes when nothing had focus as the dialog opened, or what opened it no longer
-     * takes focus, any element that takes focus, an SVG link among them.
+     * Where focus goes when nothing had focus as the dialog opened or what opened it no longer
+     * takes focus. It may give any HTML or SVG element that takes focus, an SVG link among them.
      */
     readonly returnTo?: (() => Element | null) | undefined;
 };
 
 const attachedDialogs = new WeakMap<HTMLDialogElement, Kept<OpenDialog, DialogOptions>>();
 
-/** What a press can land on that takes focus, so a press inside a button finds the button. */
+/**
+ * What a press can land on that takes focus, so a press inside a button finds the button, with
+ * `*|href` matching an SVG link's `xlink:href` too.
+ */
 const FOCUSABLE = 'a[*|href], button, input, select, textarea, summary, [tabindex]';
 
 /**
@@ -1723,19 +1726,28 @@ const takeFocus = (panel: HTMLElement): void => {
  * was their last press, since following it moved the keyboard's start there. It is given a
  * tabindex of -1 where it takes no focus, so focus can follow.
  */
+/**
+ * An SVG link, told apart by its name rather than by its class, which jsdom, where many pages run
+ * their unit tests, does not have.
+ */
+type SVGLink = SVGElement & { readonly href: SVGAnimatedString };
+
 const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
     const pressed = lastWasPress
         ? lastPath.find(
-              (node): node is HTMLAnchorElement | SVGAElement =>
-                  (node instanceof HTMLAnchorElement || node instanceof SVGAElement) &&
+              (node): node is HTMLAnchorElement | SVGLink =>
+                  (node instanceof HTMLAnchorElement ||
+                      (node instanceof SVGElement && node.localName === 'a')) &&
                   panel.contains(node) &&
+                  // An SVG link's target is an object, so the attribute is read for both kinds of
+                  // link.
                   !node.getAttribute('target') &&
                   !node.hasAttribute('download')
           )
         : undefined;
     // An SVG link's address is read through an HTML link, which resolves it as the browser does.
     const link =
-        pressed instanceof SVGAElement
+        pressed instanceof SVGElement
             ? Object.assign(document.createElement('a'), { href: pressed.href.baseVal })
             : pressed;
     let id = link?.hash.slice(1) ?? '';

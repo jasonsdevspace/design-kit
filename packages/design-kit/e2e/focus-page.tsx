@@ -419,16 +419,24 @@ const ShadowSave = () => {
 
 // A panel closed by its own press, which asks for focus on its opener after an await, once it is
 // gone.
-const Panel = ({ onClose }: { readonly onClose: () => void }) => {
+const Panel = ({
+    onClose,
+    id = 'panel-close',
+    to = 'panel-open',
+}: {
+    readonly onClose: () => void;
+    readonly id?: string;
+    readonly to?: string;
+}) => {
     const focusBack = useFocusAfterDraw();
     const close = async () => {
         onClose();
         await answered();
-        focusBack(() => document.getElementById('panel-open'));
+        focusBack(() => document.getElementById(to));
     };
     return (
         <button
-            id="panel-close"
+            id={id}
             type="button"
             onClick={() => {
                 void close();
@@ -447,6 +455,26 @@ const Panels = () => {
                 Open the panel
             </button>
             {open ? <Panel onClose={() => setOpen(false)} /> : null}
+        </section>
+    );
+};
+
+// The same, asking for focus on a link inside an inline svg, an SVG element and not an HTML
+// one.
+const ChartPanels = () => {
+    const [open, setOpen] = useState(true);
+    return (
+        <section>
+            <svg width="160" height="40">
+                <a href="#chart-panel" id="chart-open">
+                    <text x="0" y="24">
+                        Round 3 chart
+                    </text>
+                </a>
+            </svg>
+            {open ? (
+                <Panel onClose={() => setOpen(false)} id="chart-close" to="chart-open" />
+            ) : null}
         </section>
     );
 };
@@ -759,6 +787,7 @@ if (root)
             </section>
             <ShadowSave />
             <Panels />
+            <ChartPanels />
             <Rows how="click" />
             <Rows how="await" />
             <Rows how="timer" />

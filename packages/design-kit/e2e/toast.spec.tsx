@@ -27,7 +27,8 @@ import { textSize } from './text-size.js';
  * it on a 320px phone at twice the text size, its message as far from either edge there, its
  * buttons kept together in their group, or as they were without it, its place above an app's dock
  * or at the foot of a page, nothing drawn before a message or printed, the same function returned
- * when attached again, a solid edge in forced colors, and no audit findings in either theme.
+ * when attached again, a solid edge in forced colors outside WebKit, which draws none, and no audit
+ * findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);

@@ -1429,7 +1429,9 @@ it, or where focus is on the body or nowhere and the piece had it as it left, an
 where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
 the abort's own task stays, and a `moveFocus` asked in that task still lands. Each place a piece
 hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
-chart, and one that is hidden, inert or disabled is passed over for the next.
+chart, and one that is hidden, inert or disabled is passed over for the next. A control marked off
+with `aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a
+panel does for its buttons. The toast and the dialog hand focus to it.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an

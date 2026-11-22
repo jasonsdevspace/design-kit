@@ -12,8 +12,9 @@ import { servePage, tabKey } from './page.js';
  * focus that moved or their last press, was in it, and stays anywhere else, as record 19 has it.
  * Every press is a real one, since Safari's way of focusing what a pointer presses is what the rule
  * is built around, and WebKit, which the config runs this spec in beside Chromium and Firefox, does
- * it as Safari does. A link inside an inline svg after the panel takes focus as any control does.
- * Where focus is meant to stay, a test waits two frames first, so a late move of focus would show.
+ * it as Safari does. A link inside an inline svg counts as any link does, as what follows the panel
+ * and as a link in it to a place on the page. Where focus is meant to stay, a test waits two frames
+ * first, so a late move of focus would show.
  */
 
 const CLOSE = `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close round tips</span></button></div>`;
@@ -468,17 +469,10 @@ test.describe("the page's code", () => {
         // A press on the rules' text puts focus on that panel, the one after the tips.
         await page.getByText('The lowest score wins.').click();
         await expect(page.locator('#rules')).toBeFocused();
-        await tab(page, browserName, 1, true);
-        if (browserName === 'firefox') {
-            // Firefox sends Shift and Tab from a panel a press focused to the page's body, so the
-            // visitor never went back into the tips, and focus stays on nothing as the rule has it.
-            expect(await focusOnNothing(page)).toBe(true);
-            await closeTips(page);
-            await expect(panel(page)).toBeHidden();
-            await twoFrames(page);
-            expect(await focusOnNothing(page)).toBe(true);
-            return;
-        }
+        // Firefox sends Shift and Tab from a panel a press focused to the page's body, so there the
+        // visitor's way back into the tips is focus moved to the link itself.
+        if (browserName === 'firefox') await page.locator('#deal').focus();
+        else await tab(page, browserName, 1, true);
         await expect(page.locator('#deal')).toBeFocused();
         await closeTips(page);
         await expect(panel(page)).toBeHidden();
@@ -1222,6 +1216,24 @@ test.describe('where focus goes', () => {
         await close(page).click();
         await expect(panel(page)).toBeHidden();
         await expect(page.locator('#chart')).toBeFocused();
+    });
+
+    test('closes the panel and hands focus back in a window with no class for an SVG link', async ({
+        page,
+        browserName,
+    }) => {
+        // jsdom, which many pages' unit tests run in, has SVGElement but no SVGAElement.
+        await page.addInitScript(() => {
+            delete (window as { SVGAElement?: unknown }).SVGAElement;
+        });
+        const errors: string[] = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        await open(page);
+        await tabIntoTips(page, browserName);
+        await page.keyboard.press('Escape');
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+        expect(errors).toEqual([]);
     });
 
     test("moves focus to the page's main content where nothing after the panel takes it", async ({
