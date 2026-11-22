@@ -1792,10 +1792,11 @@ that takes it, and then to the app frame's body or the page's main content, by t
 panel hands focus back by. Focus a visitor has moved since the request is left where they put it:
 focus is free only while it is where it was when asked, or on the page's body, as it is once the
 control that had it is removed, or where the kit has handed it back since, as a toast, a dialog or a
-panel does as it closes. A request still waiting a second later, as in a tab out of sight, is
-dropped, so focus does not jump when the visitor comes back. Each request is new, so the same
-control asked for twice is focused twice, and the function `moveFocus` returns calls a request off
-before it lands, as aborting the `signal` it is given does. A request asked as its component
+panel does as it closes, or on what the browser hands it to as a dialog closes, until the dialog's
+close is handled. A request still waiting a second later, as in a tab out of sight, is dropped, so
+focus does not jump when the visitor comes back. Each request is new, so the same control asked for
+twice is focused twice, and the function `moveFocus` returns calls a request off before it lands, as
+aborting the `signal` it is given does. A request asked as its component
 unmounts is given no signal that unmount aborts, so it still lands. An id is looked for in the root
 where focus was when the request was made, so a widget drawn inside a shadow root finds its own
 control, never an element of the page around it that shares the id, and the form's refusal, a
@@ -3584,8 +3585,8 @@ render, or with props that leave `stay` undefined, keeps `stay`, and a page that
 dismissed again attaches it with `{ stay: false }`. Its listeners are on the dialog, so a dialog
 taken from the page takes them with it. Taken down by its `signal`, as [Taking a control
 down](#taking-a-control-down) has it, an open dialog closes, with focus handed back to what opened
-it where focus is in the dialog or has fallen to the body, and the function that opens it does
-nothing.
+it where focus is in the dialog, has fallen to the body or is still where the browser handed it as
+the dialog closed, and the function that opens it does nothing.
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
