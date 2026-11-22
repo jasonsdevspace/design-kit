@@ -275,27 +275,13 @@ for (const opener of document.querySelectorAll<HTMLButtonElement>(
 
 /*
  * Every stepper, the previews among them, since the kit hides a stepper's buttons until it is
- * attached and a preview without them would be a bare number field. A preview given a number past
- * its limit is told so, as the live copy is once the number is changed, so the preview shows the
- * error. The live copy shows its error and is described by it without a word said as the page
- * loads, so it is the state it names to a screen reader too, and the kit takes the error away once
- * the number is right.
+ * attached and a preview without them would be a bare number field. The kit shows the error of a
+ * stepper given a number past its limit as it attaches it, with nothing said, describes the field
+ * by it and marks it invalid, so the live copy and its previews show the state they name, and it
+ * takes the error away once the number is right.
  */
 for (const stepper of document.querySelectorAll<HTMLElement>('main .site-copy .dk-stepper')) {
     attachStepper(stepper);
-    const field = stepper.closest('.dk-field');
-    const input = field?.querySelector<HTMLInputElement>('.dk-stepper-value');
-    if (stepper.closest('[inert]')) input?.dispatchEvent(new Event('change', { bubbles: true }));
-    else {
-        // The live copy shows its error with nothing said as the page loads, which the kit's
-        // change would say, so the page shows it and the kit, watching the description, marks it.
-        const range = field?.querySelector<HTMLElement>('.dk-stepper-range');
-        if (input && range && !input.validity.valid) {
-            range.hidden = false;
-            const ids = (input.getAttribute('aria-describedby') ?? '').split(/\s+/);
-            input.setAttribute('aria-describedby', [...ids, range.id].filter(Boolean).join(' '));
-        }
-    }
 }
 
 /*
