@@ -23,20 +23,21 @@ That handback can land on any HTML or SVG element that takes focus, such as a li
 chart, and each piece counts focus inside a shadow tree within it, or on a control slotted into it,
 as focus in it. A toast sends focus back to the control the visitor came into it from, on into a
 frame of the page's own origin where focus was inside one, and to the page's body in every engine
-where nothing else takes it. As a message shows, it keeps the control that has focus clear of
-itself, inside a frame of the page's own origin too. A focus request asked in the task that closes a
-dialog lands where the page asked rather than on the opener. A stepper drawn past its limits shows
-its error at once, a group the arrow keys move through places its Tab stop as it comes into sight
-from no size, and Escape closes an open panel once the button that opened it is let go. Upgrading
-names the code a page can now take away for the stepper and the group, and how a page now puts a
-piece's options back to their defaults. Browser tests in Chromium, WebKit and Firefox count the
-listeners, observers, timers and frames on a page and find every attach and hook leaves none of its
-own once it is taken down, and the tests on a stand-in clock move time only by their own steps, so a
-slow runner no longer makes a message leave early. Each teardown behavior is tested in one place,
-with no test that passes with the code it guards taken out, and no kit spec waits on real time for
-what a still clock can step. No token is added or renamed and the theme script is unchanged, so
-`themeScriptHash` is the same. The sheets stay within their budget, and the controls' budget is set
-at 20 KB under record 13's rule.
+where nothing else takes it. As a message shows, it now keeps the control that has focus inside a
+frame of the page's own origin clear of itself, as it did a control on the page. A focus request
+asked in the task that closes a dialog lands where the page asked rather than on the opener. A
+stepper drawn past its limits shows its error at once, a group the arrow keys move through places
+its Tab stop as it comes into sight from no size, and Escape closes an open panel once the button
+that opened it is let go, while an Escape that clears a search field or closes a list inside a
+page's own component in the panel is left to the component. Upgrading names the code a page can now
+take away for the stepper and the group, and how a page now puts a piece's options back to their
+defaults. Browser tests in Chromium, WebKit and Firefox count the listeners, observers, timers and
+frames on a page and find every attach and hook leaves none of its own once it is taken down, and
+the tests on a stand-in clock move time only by their own steps, so a slow runner no longer makes a
+message leave early. Each teardown behavior is tested in one place, with no test that passes with
+the code it guards taken out, and no kit spec waits on real time for what a still clock can step. No
+token is added or renamed and the theme script is unchanged, so `themeScriptHash` is the same. The
+sheets stay within their budget, and the controls' budget is set at 20 KB under record 13's rule.
 
 - **Upgrading.** A page that draws a stepper's error itself when the stepper is attached with a
   value past its limits can take that code away, since the attach now shows it, and a refusal the
@@ -155,8 +156,8 @@ at 20 KB under record 13's rule.
   it: the control focus last came into the toast from, then the control outside the toast that had
   focus as the latest message came, then the body of the app's frame or the page's main content. A
   keyboard user who moved on from where they were as the message came lands where they left off.
-  Focus that last came into the toast from nowhere passes over the first, and a control inside an
-  open shadow root counts as itself rather than as its host. A dialog attached by `attachDialog`
+  Focus that last came into the toast from nowhere passes over the first, and focus goes back to a
+  control inside an open shadow root rather than to its host. A dialog attached by `attachDialog`
   keeps what had focus as it opened, which the browser hands focus back to as the dialog closes. A
   `moveFocus` request treats focus there as free while the dialog is closed and its close not yet
   handled. A request that lands while focus is there takes that place from the dialog. The dialog's
@@ -203,19 +204,20 @@ at 20 KB under record 13's rule.
   list there, or on a component whose host is marked as an open combobox, is left to the component
   and the panel stays open. A closed root's nodes are not on the event's path, so there the panel
   still takes the Escape. An element inside a component's shadow tree that shares a panel's id
-  closes nothing, and only an open dialog or an open popover inside a panel keeps its Escape from
-  the panel. As a message shows with focus inside a frame of the page's own origin, the toast
-  measures the control that has focus there, read as the message comes, where the frame places it on
-  the page, past the frame's border and padding and scaled across and down as the frame is drawn,
-  rather than the whole frame. Where the toast would cover that control, it scrolls the control into
-  view through the frame and the page, by the room the sheet keeps under a shown toast, so a tall
-  frame no longer hides it. A control there that the toast does not cover stays where it is, though
-  the frame reaches under the toast, and so does one the frame has scrolled out of its own sight or
-  behind its scrollbars. A frame of another origin is measured whole, as before. For a control on
-  the page or in a frame, the toast is now measured where it comes to rest rather than where its
-  entrance starts, so a control it covers by a few pixels is scrolled clear too, and a control
-  counts as covered only where it meets the toast across as well as down, so one beside a narrow
-  toast on a wide screen no longer scrolls.
+  closes nothing, and an open dialog or an open popover inside such a tree keeps its Escape from the
+  panel, as one in the panel's own markup does. As a message shows with focus inside a frame of the
+  page's own origin, the toast measures the control that has focus there, read as the message comes,
+  where the frame places it on the page, past the frame's border and padding and scaled across and
+  down as the frame is drawn, rather than the whole frame. Where the toast would cover that control,
+  it scrolls the control into view through the frame and the page, by the room the sheet keeps under
+  a shown toast, so a tall frame no longer hides it. A control there that the toast does not cover
+  stays where it is, though the frame reaches under the toast, and so does one the frame has
+  scrolled out of its own sight or behind its scrollbars, or one taller than the room above the
+  toast. A frame of another origin is measured whole, as before. For a control on the page or in a
+  frame, the toast is now measured where it comes to rest rather than where its entrance starts, so
+  a control it covers by a few pixels is scrolled clear too, and a control counts as covered only
+  where it meets the toast across as well as down, so one beside a narrow toast on a wide screen no
+  longer scrolls.
 - **React.** Each hook's ref makes an `AbortController` as its element arrives, hands its attach the
   `signal` and returns the cleanup that aborts it, which React 19 calls in place of calling the ref
   with null, so a row of cells, a busy button, progress, a form's check and a provider's line are
