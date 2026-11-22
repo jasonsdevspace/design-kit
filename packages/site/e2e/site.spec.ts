@@ -1100,6 +1100,17 @@ test.describe('the controls page, with the pieces the script attaches', () => {
     test("shows every stepper's buttons, and the error in both copies past its limit", async ({
         page,
     }) => {
+        // Whatever any stepper's status line says from the start, so words said and gone before
+        // the line is read are still caught.
+        await page.addInitScript(() => {
+            const said: string[] = [];
+            Object.assign(window, { stepperWords: said });
+            new MutationObserver(() => {
+                for (const line of document.querySelectorAll('.dk-stepper-status')) {
+                    if (line.textContent) said.push(line.textContent);
+                }
+            }).observe(document, { childList: true, characterData: true, subtree: true });
+        });
         await page.goto('/design-kit/controls/');
         const steppers = page.locator('.site-copy .dk-stepper');
         expect(await steppers.count()).toBeGreaterThan(0);
@@ -1109,7 +1120,18 @@ test.describe('the controls page, with the pieces the script attaches', () => {
         const past = page
             .locator('.site-state')
             .filter({ hasText: 'A stepper given a number past its limit' });
-        await expect(past.locator('.site-other .dk-stepper-range')).toBeVisible();
+        // The preview shows its error, is described by it and marked invalid by the kit too.
+        const preview = past.locator('.site-other');
+        const previewError = preview.locator('.dk-stepper-range');
+        const previewField = preview.locator('.dk-stepper-value');
+        await expect(previewError).toBeVisible();
+        const previewId = await previewError.getAttribute('id');
+        expect(previewId).toBeTruthy();
+        await expect(previewField).toHaveAttribute(
+            'aria-describedby',
+            new RegExp(`(^|\\s)${previewId}(\\s|$)`)
+        );
+        await expect(previewField).toHaveAttribute('aria-invalid', 'true');
         // The live copy shows its error, is described by it and marked invalid, with nothing said
         // as the page loads, all by the kit as it attaches the stepper, and the error goes once
         // the number is right.
@@ -1122,6 +1144,19 @@ test.describe('the controls page, with the pieces the script attaches', () => {
         await expect(field).toHaveAttribute('aria-describedby', new RegExp(`(^|\\s)${id}(\\s|$)`));
         await expect(field).toHaveAccessibleDescription(/Enter a number from 0 to 10/);
         await expect(field).toHaveAttribute('aria-invalid', 'true');
+        // Past two frames and the moment the kit waits before it puts words on a line, any words
+        // said as the page loaded would have been put there.
+        await page.evaluate(
+            () =>
+                new Promise((done) =>
+                    requestAnimationFrame(() =>
+                        requestAnimationFrame(() => window.setTimeout(done, 300))
+                    )
+                )
+        );
+        expect(
+            await page.evaluate(() => (window as { stepperWords?: string[] }).stepperWords)
+        ).toEqual([]);
         await expect(live.locator('.dk-stepper-status')).toHaveText('');
         await live.locator('.dk-stepper-down').click();
         await expect(error).toBeHidden();
@@ -2191,17 +2226,17 @@ test.describe('the code of each state', () => {
                  * attached them.
                  */
                 const steppersAsWritten = (copy: HTMLElement) => {
-                    // A stepper's button at a limit, which the script marks off as it attaches the
+                    // A stepper's button at a limit, which the kit marks off as it attaches the
                     // stepper, is read as the markup draws it.
                     for (const off of copy.querySelectorAll('.dk-stepper > [aria-disabled]'))
                         off.removeAttribute('aria-disabled');
+                    // The range in words, which the kit writes as it attaches the stepper and adds
+                    // to the field's description, is read as the markup draws it, empty.
+                    for (const limits of copy.querySelectorAll('.dk-stepper-limits'))
+                        limits.textContent = '';
                     // A stepper's error, which the kit shows on a copy past its limit as it
                     // attaches the stepper, describes the field and marks it invalid only once
                     // shown, so the field is read as the markup draws it.
-                    // The range in words, which the script writes as it attaches the stepper and
-                    // adds to the field's description, is read as the markup draws it, empty.
-                    for (const limits of copy.querySelectorAll('.dk-stepper-limits'))
-                        limits.textContent = '';
                     for (const value of copy.querySelectorAll('.dk-stepper-value')) {
                         const range = value
                             .closest('.dk-field')
