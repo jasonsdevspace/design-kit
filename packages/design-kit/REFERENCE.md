@@ -1425,8 +1425,9 @@ the newest holder without holding. An attach made from inside a control's own ta
 dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
 signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
-it, or where focus is on the body or nowhere and the piece had it as it left, so focus a page sets
-in the abort's own task stays, and a `moveFocus` asked in that task still lands.
+it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
+where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
+the abort's own task stays, and a `moveFocus` asked in that task still lands.
 
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an
@@ -3560,8 +3561,15 @@ press that opened it, from a listener on the button, on a part of the page that 
 React, it finds the button the press landed on, since Safari gives a clicked button no focus to
 remember. Called otherwise, it takes the element to return to, or remembers what had focus. Where
 nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
-goes to what `returnTo` gives. It also closes the dialog on a tap on the scrim around it, one that
-starts and ends there so a drag out of the dialog closes nothing.
+goes to what `returnTo` gives. A page that has somewhere more useful for focus, such as the next
+field after a Save, asks for it with `moveFocus` in the task that closes the dialog, whether that
+task closes it, takes it from the page or takes it down, and focus goes there rather than to the
+opener. Focus the page moves elsewhere in that task stays where it put it, while focus it puts back
+on what had focus as the dialog opened counts as the browser's handing it back. A request asked in
+an earlier task, such as before an awaited save, lands only where its frame comes after the dialog
+closes, so a page that awaits before closing asks again just before it closes. It also closes the
+dialog on a tap on the scrim around it, one that starts and ends there so a drag out of the dialog
+closes nothing.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads

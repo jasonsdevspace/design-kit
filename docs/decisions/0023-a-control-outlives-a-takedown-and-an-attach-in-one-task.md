@@ -54,6 +54,14 @@ attach of the same element before then joins it. The kit already keeps who owns 
 map for each kind of control, so the rule lives there once, for React pages and pages without React
 alike.
 
+**D. Keep the browser's restore as a handback by the events around a dialog's close.** The dialog
+would record what focus went to as it left the closed dialog, as the kit records its own handbacks.
+Rejected. No event marks the restore in every engine: focus already on the body inside the dialog,
+as where a pressed Save is taken away, leaves the dialog with no focusout as it closes, and in
+Firefox a dialog its form closes lets focus fall to the body before the browser moves it on, so
+focus read as it leaves is the body. Each order needed a rule of its own, so the kit reads instead
+where focus is against what had focus as the dialog opened.
+
 ## Decision
 
 Option C.
@@ -108,7 +116,17 @@ Option C.
   so focus the page set in that task, by its own call or by a field the new content focuses as it
   draws, stays. The kit keeps where it last handed focus back, and `moveFocus` treats focus there as
   free where the handback came after the request was asked, so a request asked in the abort's task
-  still lands.
+  still lands. The browser hands focus back to what had focus before a dialog opened as the dialog
+  closes, ahead of the close event. So a request treats focus there as free while the dialog is
+  closed and its close not yet handled, and a request that lands while focus is there takes that
+  place from the dialog. The dialog's close event and its takedown hand focus back where focus is
+  still there, or by the rule every piece hands it back by, so a request that landed first or focus
+  the page moved elsewhere in that task stays. A request asked from inside an open dialog lands
+  where the task it is asked in closes the dialog, takes it away or takes it down, so a page can
+  send focus somewhere more useful than the opener as the dialog closes, as the dialog pattern of
+  the ARIA Authoring Practices allows. One asked in an earlier task lands only where its frame comes
+  after the dialog closes, and otherwise finds the page behind inert, so a page that awaits before
+  closing asks again just before it closes.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -146,13 +164,20 @@ every signal it has ever held.
   control as it was where nothing changed. A copy button given a source that gives the element its
   last press copied keeps the word it shows, reading the source only while a word is shown, and
   progress counts its steps again only where their count changes.
+- A page that itself focuses what had focus as a dialog opened, in the task that closes the dialog,
+  is read as the browser's restore, so the dialog's close event still hands focus to its opener
+  where that is another element.
+- Each attached dialog keeps what had focus as it opened until its close is handled or it is taken
+  down, or a request lands with focus there, so a dialog taken from the page with no takedown lets
+  go of that element at the next request.
 - The controls weigh 18,553 bytes with the holders, against 18,117 before, which leaves less room
   under 18.5 KB than a function of the usual size, so record 13's rule sets them at 18.75 KB. One
   rule for handing focus back and a toast that forgets focus a visitor moved take them to 18,638
   bytes, with less room under 18.75 KB than a function of the usual size, so the rule sets them at
   19 KB. A toast that sends focus back to the control focus came into it from takes them to 18,757,
   and the status line joining through `join`, with options read by their values rather than their
-  key names, brings them to 18,751.
+  key names, brings them to 18,751. A dialog whose close leaves focus free for a focus request asked
+  in the task that closes it brings them to 18,907.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -183,12 +208,21 @@ The paths are in `packages/design-kit`.
   the page in one task or removed first and taken down in a later task, focus left on a control
   outside a toast taken away as focus moves there and on the body where a visitor moved it after the
   toast left the page, a focus request asked as a dialog or a toast with focus in it is taken down
-  landing, and focus the page sets as a dialog taken from the page is taken down staying. It also
-  finds a toast kept shown while focus leaves it and comes back in one task, one moved in the page
-  with focus in it starting its wait again in Chromium, a dialog kept staying where a later attach
-  gives it only a signal, a progress step still heard through a join that gives the same count, a
-  form and a stepper back on their defaults once the only holder that gave options lets go, and a
-  dialog's `stay` dropped with the holder that gave it, though the first attach gave a signal.
+  landing, one asked from inside an open dialog opened from a focused opener landing too where the
+  page closes the dialog or takes it from the page and takes it down in the same task, where it only
+  closes it and the close event comes after the request's frame, where a press on an answer closes
+  it, and where the opener is not what had focus as it opened, focus the page sets in the task that
+  closes such a dialog staying, focus going to the opener from one closed and taken down in one task
+  where something else had focus as it opened, a request asked from inside a dialog whose pressed
+  control is taken away as it is pressed landing, with its close event coming in time or late, the
+  later of two requests asked as a toast with focus in it is taken down landing where the first asks
+  for the control focus goes back to, and focus the page sets as a dialog taken from the page is
+  taken down staying. It also finds a toast kept shown while focus leaves it and comes back in one
+  task, one moved in the page with focus in it starting its wait again in Chromium, a dialog kept
+  staying where a later attach gives it only a signal, a progress step still heard through a join
+  that gives the same count, a form and a stepper back on their defaults once the only holder that
+  gave options lets go, and a dialog's `stay` dropped with the holder that gave it, though the first
+  attach gave a signal.
 - `e2e/toast.spec.tsx` moves from a field to a second control and into a shown toast, dismisses it
   by its action and by Escape, and finds focus on the second control, there too where the page stops
   the second control's focusout, and finds focus sent back to where it was as the message came where

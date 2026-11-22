@@ -73,6 +73,14 @@ let handedTo: Element | null = null;
 let handedAt = 0;
 
 /**
+ * For each attached dialog, what had focus as it opened, which the browser hands focus back to as
+ * the dialog closes, ahead of the close event. Kept until the dialog's close is handled or it is
+ * taken down, until a request lands while focus is there, or until a request finds the dialog gone
+ * from the page.
+ */
+const restoring = new Map<HTMLDialogElement, Element>();
+
+/**
  * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
  * where focus is then, so a request asked before it finds that focus free and not the visitor's.
  */
@@ -158,13 +166,22 @@ const land = (
 ) => {
     if (performance.now() - asked > STALE) return;
     const now = focusedNow();
-    if (now && now !== from && (now !== handedTo || handedAt < asked)) return;
+    // A dialog taken from the page with no takedown hands nothing back, so its place goes.
+    for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
+    // Focus on what had it as a dialog opened is free while that dialog is closed and its close
+    // not yet handled, since the browser put it there as the dialog closed. A request that lands
+    // takes that place from the dialog, so its close event leaves focus where the request put it.
+    const restored = [...restoring].filter(([dialog, to]) => to === now && !dialog.open);
+    if (now && now !== from && (now !== handedTo || handedAt < asked) && !restored[0]) return;
     const place = placeOf(target, from);
-    focusFirst(
-        place,
-        ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
-        homeOf(place ?? from ?? document.body)
-    );
+    if (
+        focusFirst(
+            place,
+            ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
+            homeOf(place ?? from ?? document.body)
+        )
+    )
+        for (const [dialog] of restored) restoring.delete(dialog);
 };
 
 /**
@@ -1521,7 +1538,13 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * dialog closes nothing, and on close returns focus to what opened it. That is the element the
  * press that opened it landed on, found from the event a page's listener or React's hands over,
  * since a browser that gives a pressed button no focus leaves nothing else, or else what had focus.
- * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says.
+ * Where nothing had focus, or that no longer takes focus, focus goes where `returnTo` says. A
+ * `moveFocus` request asked in the task that closes it, takes it away or takes it down lands in
+ * place of the opener, since a request takes focus the kit, or the browser as the dialog closes,
+ * hands back after it was asked as free. Focus the page moves elsewhere in that task stays, while
+ * focus it puts back on what had focus as the dialog opened counts as the browser's handback. One
+ * asked in an earlier task lands only where its frame comes after the close, so a page that awaits
+ * before closing asks again just before it closes.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -1531,8 +1554,9 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * `{ stay: undefined }`, leaves them as they were, and either returns the same function, an open
  * dialog staying open. Its listeners are on the dialog, so a dialog taken from the page takes them
  * with it. Taken down by its `signal`, an open dialog closes, focus goes back to what opened it
- * where focus is in the dialog or has fallen to the body, its listeners and the closedby its `stay`
- * set come off, and the function that opens it does nothing.
+ * where focus is in the dialog, has fallen to the body or is still where the browser handed it as
+ * the dialog closed, its listeners and the closedby its `stay` set come off, and the function that
+ * opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1583,17 +1607,26 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         },
         { signal }
     );
-    const onClose = () => {
+    // Whether focus is the kit's to hand back, read the same way by the close event and the
+    // takedown: still on what the browser handed it to as the dialog closed, or by the rule every
+    // piece hands it back by. Focus a request or the page has put anywhere else stays.
+    const handsBack = () => restoring.get(dialog) === focusedNow() || mayHandBack(dialog, true);
+    const onClose = (back: boolean) => {
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
         if (dialog.open) return;
-        handBack(opener, settings.returnTo?.());
+        if (back) handBack(opener, settings.returnTo?.());
         opener = null;
+        restoring.delete(dialog);
     };
-    dialog.addEventListener('close', onClose, { signal });
+    dialog.addEventListener('close', () => onClose(handsBack()), { signal });
     const open: OpenDialog = (from) => {
         if (dialog.open || signal.aborted) return;
         opener = openerOf(from);
+        // Where nothing had focus, the browser hands it nowhere as the dialog closes.
+        const before = focusedNow();
+        if (before) restoring.set(dialog, before);
+        else restoring.delete(dialog);
         dialog.showModal();
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
         // in the dialog asks for focus, as when React's autoFocus writes no attribute.
@@ -1602,19 +1635,20 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     };
     // A dialog let go while open closes, so the page behind is no longer inert, and focus goes back
     // at once, open or closed in the same task, since the close event that would hand it back comes
-    // after its listener is off. It goes back by the rule every piece hands it back by, read before
-    // the close moves it, so focus the page set in the abort's task stays. That event is stopped
-    // where it lands, so an attach made since never takes it for a closing of its own and sends
-    // focus to its returnTo.
+    // after its listener is off. It goes back by the same rule as that event, read before the close
+    // moves it, so focus the page set in the abort's task stays. That event is stopped where it
+    // lands, so an attach made since never takes it for a closing of its own and sends focus to its
+    // returnTo.
     down.add(() => {
         if (dialog.open || opener) {
-            const back = mayHandBack(dialog, true);
+            const back = handsBack();
             dialog.addEventListener('close', (event) => event.stopImmediatePropagation(), {
                 once: true,
             });
             dialog.close();
-            if (back) onClose();
+            onClose(back);
         }
+        restoring.delete(dialog);
         if (settings.stay) dialog.removeAttribute('closedby');
     });
     down.set = set;
