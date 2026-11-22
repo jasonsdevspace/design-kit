@@ -40,11 +40,12 @@ Option C. `ThemeSwitch`, `CopyButton` and `CopyStatus` draw the markup, and `att
 attached, so a visitor without script meets no control that does nothing. Nothing runs when the
 module is imported but listeners on the document for keys, clicks and submits, in a page, which note
 whether the visitor's last input was a press for `focusOnArrival`, so the press that brings a page's
-first view is heard. The package marks `./controls` as having side effects in its `sideEffects`, so
-a bundler keeps the module and its listeners wherever a page imports it, even bare, and the
-listeners wait for a document, so the module loads in Node. The functions set no style. The choices
-a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the
-theme script reads, and the theme script itself does not change, so its hash holds.
+first view is heard. The package marks `dist/controls.js`, the file `./controls` resolves to, as
+having side effects in its `sideEffects`, so a bundler keeps the module and its listeners wherever a
+page imports it, even bare, and the listeners wait for a document, so the module loads in Node. The
+functions set no style. The choices a switch saves, `system` and the two themes, are `THEME_CHOICES`
+in `./theme`, beside the key the theme script reads, and the theme script itself does not change, so
+its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -87,9 +88,9 @@ piece the same way whatever its attach returns.
   held there until the page is left, and drawn again after the theme script draws from storage on a
   change of the system's scheme or a page restored by Back.
 - A page attaches a control after it is in the page, which the markup's hidden state makes safe to
-  do late. A React page attaches a form, a busy button, progress and a group of cells, says words on
-  the status line through `StatusProvider` and moves focus through a kit hook, as record 20 has it,
-  and attaches the other controls in an effect of its own.
+  do late. A React page attaches a form, a busy button, progress and a group of cells, draws the
+  status line with `StatusProvider`, which `useStatus` finds, and moves focus through a kit hook, as
+  record 20 has it, and attaches the other controls in an effect of its own.
 - The site and the portfolio take the controls from the kit once a version carries them, and their
   own copies go.
 - A page that writes the switch by hand writes the button and the div around the radios as the
@@ -138,22 +139,22 @@ the sheets at 9 KB and set the controls at 6.25 KB, from the 7 KB that counted t
 which a bundler drops from the controls and a page puts inline in its head, and which is held to
 1 KB of its own.
 
-A budget is set again by the same rule once something takes the sheets or the controls past it,
-and since 0.9.0 also once a release, measured whole as the audit was, leaves less room under it
-than a piece or function of the usual size, so the next one of the usual size fits. Before then a
-budget stayed until something outgrew it, so the sheets at 0.8.4, 10,916 bytes with a median piece
-of 165, and the controls at 0.8.5, 7,661 bytes with a median function of 657, each left less room
-than that and kept their budgets of 10.75 KB and 7.5 KB. For 0.8.0 and 0.9.0 the sheets were
-measured with a prototype of every piece planned for the release, its rules formatted as the sheets
-are, so the budget was raised once for pieces that land one at a time, and a piece that lands
+A budget is set again by the same rule once something takes the sheets or the controls past it, and
+since 0.9.0 also once a release measured whole, as the audit was, or a change within one leaves less
+room under it than a piece or function of the usual size, so the next one of the usual size fits.
+Before then a budget stayed until something outgrew it, so the sheets at 0.8.4, 10,916 bytes with a
+median piece of 165, and the controls at 0.8.5, 7,661 bytes with a median function of 657, each left
+less room than that and kept their budgets of 10.75 KB and 7.5 KB. For 0.8.0 and 0.9.0 the sheets
+were measured with a prototype of every piece planned for the release, its rules formatted as the
+sheets are, so the budget was raised once for pieces that land one at a time, and a piece that lands
 heavier than its prototype and outgrows that says so with its figures.
 
-Each row below is a raise. It names what took the budget past it, or left less room under it than
-one more of the usual size where it says too little room was left, and gives what the whole weighed
-then, gzipped as the budget's test measures it, the median piece or function, and the budget set.
-The figures of 0.6.0 and 0.7.0, which the record did not give when those budgets were set, are
-measured from those releases' commits by the budget tests' own functions, with the medians the
-package record gave at each.
+Each row below sets a budget, the audit's first and each raise after it. It names what took the
+budget past it, or left less room under it than one more of the usual size where it says too little
+room was left, and gives what the whole weighed then, gzipped as the budget's test measures it, the
+median piece or function, and the budget set. The figures of 0.6.0 and 0.7.0, which the record did
+not give when those budgets were set, are measured from those releases' commits by the budget tests'
+own functions, with the medians the package record gave at each.
 
 | Release | What raised it                                                                  | Sheets together | Median piece | Budget set |
 | ------- | ------------------------------------------------------------------------------- | --------------- | ------------ | ---------- |
@@ -165,24 +166,37 @@ package record gave at each.
 | 0.9.0   | A prototype of the release's planned pieces, from 11,398 bytes                  | 12,112 bytes    | 169 bytes    | 12 KB      |
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 
-| Release | What raised it                                                             | Every function | Median function | Budget set |
-| ------- | -------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
-| 0.6.0   | The size audit                                                             | 5,777 bytes    | 600 bytes       | 6.25 KB    |
-| 0.8.4   | `attachPanel`, and the fixes for an off button and a button attached later | 6,898 bytes    | 668 bytes       | 7.5 KB     |
-| 0.9.0   | A stepper's range in words, its limits said, and a page's words and line   | 8,112 bytes    | 655 bytes       | 8.75 KB    |
-| 0.9.0   | `moveFocus`, and `attachRoving` for a group's cells                        | 10,372 bytes   | 650 bytes       | 11 KB      |
-| 0.9.0   | `attachForm`, which refuses a form, and `attachBusy`                       | 11,524 bytes   | 672 bytes       | 12 KB      |
-| 0.9.0   | `attachProgress` and its polite words                                      | 12,340 bytes   | 622 bytes       | 12.75 KB   |
-| 0.9.0   | `attachForm` checking the browser's constraints, as record 21 has it       | 15,034 bytes   | 620 bytes       | 15.5 KB    |
-| 0.9.0   | `focusOnArrival`, which tells a press from a key that moves                | 16,730 bytes   | 608 bytes       | 17 KB      |
-| 0.9.0   | The release measured whole, with too little room left                      | 16,985 bytes   | 622 bytes       | 17.25 KB   |
-| 0.9.3   | Record 22's helper, with the theme switch and the copy button on it        | 17,532 bytes   | 586 bytes       | 17.75 KB   |
-| 0.9.3   | The other attaches moved onto the helper                                   | 18,269 bytes   | 606 bytes       | 18.5 KB    |
-| 0.9.3   | Record 23's holders, with too little room left                             | 18,553 bytes   | 635 bytes       | 18.75 KB   |
-| 0.9.3   | One rule for handing focus back, with too little room left                 | 18,638 bytes   | 641 bytes       | 19 KB      |
+| Release | What raised it                                                                           | Every function | Median function | Budget set |
+| ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
+| 0.6.0   | The size audit                                                                           | 5,777 bytes    | 600 bytes       | 6.25 KB    |
+| 0.8.4   | `attachPanel`, and the fixes for an off button and a button attached later               | 6,898 bytes    | 668 bytes       | 7.5 KB     |
+| 0.9.0   | A stepper's range in words, its limits said, and a page's words and line                 | 8,112 bytes    | 655 bytes       | 8.75 KB    |
+| 0.9.0   | `moveFocus`, and `attachRoving` for a group's cells                                      | 10,372 bytes   | 650 bytes       | 11 KB      |
+| 0.9.0   | `attachForm`, which refuses a form, and `attachBusy`                                     | 11,524 bytes   | 672 bytes       | 12 KB      |
+| 0.9.0   | `attachProgress` and its polite words                                                    | 12,340 bytes   | 622 bytes       | 12.75 KB   |
+| 0.9.0   | `attachForm` checking the browser's constraints, as record 21 has it                     | 15,034 bytes   | 620 bytes       | 15.5 KB    |
+| 0.9.0   | `focusOnArrival`, which tells a press from a key that moves                              | 16,730 bytes   | 608 bytes       | 17 KB      |
+| 0.9.0   | The release measured whole, with too little room left                                    | 16,985 bytes   | 622 bytes       | 17.25 KB   |
+| 0.9.3   | Record 22's helper under the theme switch and the copy button, with too little room left | 17,532 bytes   | 586 bytes       | 17.75 KB   |
+| 0.9.3   | The other attaches moved onto the helper                                                 | 18,269 bytes   | 606 bytes       | 18.5 KB    |
+| 0.9.3   | Record 23's holders, with too little room left                                           | 18,553 bytes   | 635 bytes       | 18.75 KB   |
+| 0.9.3   | One rule for handing focus back, with too little room left                               | 18,638 bytes   | 641 bytes       | 19 KB      |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
-bytes to 18,117, which record 23's holders took to 18,553.
+bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
+bytes. The sheets at 0.8.4 held its bands, its icon sizes and the app frame's named sides, and the
+controls at 0.8.5 held a panel's focus on closing, as record 19 has it, and a toast's buttons given
+their tabindex. The raise of 0.8.0 also brought three parts into the package record, the site's
+header, the content page and the icon. The grid of 0.8.6 works out a column's width at each count
+from two to six in the sheet, since no page media query may do it. The prototype of 0.9.0 held a
+dock row for a compact action, a busy button, a region that is loading, a mark for a required or
+optional field, the stack's steps, a split row, a note, a large numeral, progress, a read-only
+field, an empty state and a hero beside its picture, and the package record measures the pieces as
+they ship. The controls measured whole for 0.9.0 held a stepper's own `say` and the lookups that
+find a piece's parts inside a shadow root. The other attaches moved onto record 22's helper in 0.9.3
+were the status line, the toast, the form, the panels and the rest, and the one rule for handing
+focus back, shared by the toast, the dialog and the panels, came with a focus request asked before a
+handback still landing and a toast that forgets focus a visitor moved while it is off the page.
 
 ## The sheets beside other systems
 

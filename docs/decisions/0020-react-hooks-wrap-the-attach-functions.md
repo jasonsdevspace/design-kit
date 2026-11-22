@@ -106,22 +106,24 @@ child's layout effect, waits for the component's render as any other does. A req
 when its component unmounts, or when an `Activity` hides it, never gets its render, so it is made
 then, with where focus was read as it was asked. React tells a hook nothing of which update
 unmounted it, so the hook does not try to tell, and `moveFocus` keeps a visitor's place, landing
-only where focus is still where it was or has fallen to the page's body. A request in a transition
-an urgent update overtook therefore lands before the transition draws, and goes to its fallbacks
-where the transition draws its target. Nothing at unmount calls a focus request off, only what it
-returned or a newer request, so the hook hands a request no signal of the component's, which that
-unmount would abort, and a request made in React's second run in development stays the one a newer
-request takes the place of. A refusal still waiting as its form's component unmounts is called off a
-microtask later, since its form leaves too, unless React's second run in development has brought the
-component back. A request asked once the cleanup has run waits a frame. Where the component's
-effects have come back by then, as an `Activity` shown again brings them, it waits for the
+only where focus is still where it was, has fallen to the page's body or is where the kit has handed
+it back since, as record 23 has it. A request in a transition an urgent update overtook therefore
+lands before the transition draws, and goes to its fallbacks where the transition draws its target.
+Nothing at unmount calls a focus request off, only what it returned or a newer request, so the hook
+hands a request no signal of the component's, which that unmount would abort, and a request made in
+React's second run in development stays the one a newer request takes the place of. A refusal still
+waiting as its form's component unmounts is called off a microtask later, since its form leaves too,
+unless React's second run in development has brought the component back. A request asked once the
+cleanup has run waits a frame. Where the component's effects have come back by then, as an
+`Activity` shown again or React's second run in development brings them, it waits for the
 component's render as any request does. Otherwise it has no render to wait for and is made late, as
 it was made before the hook waited, but takes focus only from the page's body, whatever `from` it
 was given, since where focus stands then is not where the change began, and only where its target is
-in sight, so a visitor already on the next screen is left there, and a request whose target an
-`Activity` hides with the component is held until the component shows. What the hook returns is
-still the function's, with `from` read as it is asked, and it is called in a handler or in an effect
-with dependencies, never as the component renders nor in an effect that runs on every render, since
+in sight, so a panel that closes itself and asks after an await still moves focus back to its
+opener, a visitor already on the next screen is left there, and a request whose target an `Activity`
+hides with the component is held until the component shows. What the hook returns is still the
+function's, with `from` read as it is asked, and it is called in a handler or in an effect with
+dependencies, never as the component renders nor in an effect that runs on every render, since
 asking renders the component again. A hook that acts when a view arrives, as `useArrivalFocus` does,
 keeps the key it last drew and whether that was its first draw, so it reads where focus was as each
 arrival begins and asks once for each key, since its effect runs again only when the key changes. A
@@ -137,13 +139,13 @@ Where a piece needs one line for a whole page, as the status line does, a provid
 hook finds it through context. `StatusProvider` attaches its line through a ref as the line lands,
 before the effects of the parts under it run, with the signal its ref makes, as every hook's ref
 does, and keeps no controller of its own. Words said before the line is in the page are held, the
-last firm and the last polite, and said once it is. The provider waits a microtask only to call
-off the moments it set to say held words, where no line is drawn by then. The function `useStatus`
-hands out is the provider's own, the same across renders, which says through whichever attach
-holds the line, so it keeps speaking after React's second run in development and says nothing once
-the provider has gone. `useFormRefusal`, `useBusy` and `useProgress` speak through the page's own
-`say` where it gives one, else through the provider's, and through the one of the render that
-changed them.
+last firm and the last polite, and said once it is. The provider waits a microtask only to call off
+the moments it set to say held words, where no line is drawn by then. The function `useStatus` hands
+out is the provider's own, the same across renders, which says through whichever attach holds the
+line, so it keeps speaking after React's second run in development and says nothing once the
+provider has gone. `useFormRefusal`, `useBusy` and `useProgress` speak through the page's own `say`
+where it gives one, else through the provider's, whichever the latest render gave, kept current in a
+layout effect since a form's refusal is made in one.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.
@@ -155,10 +157,10 @@ components still render on a server and draw the same markup a page writes by ha
   the piece that adds it raises by record 13's rule where it must.
 - Record 5 is amended: `./react` exports hooks that attach some of the controls, while its markup
   components still carry no stylesheet, set no style and run no effect.
-- Record 13 is amended: a React page draws the status line with `StatusProvider`, which
-  `useStatus` finds, attaches a form, a busy button, progress and a group of cells and moves focus
-  through a kit hook, and the other controls in an effect of its own, and the
-  attach functions are the contract both kinds of page share.
+- Record 13 is amended: a React page draws the status line with `StatusProvider`, which `useStatus`
+  finds, attaches a form, a busy button, progress and a group of cells and moves focus through a kit
+  hook, and the other controls in an effect of its own, and the attach functions are the contract
+  both kinds of page share.
 - Record 14 is amended: a hook may run a piece's keys or move its focus, while the state a page
   owns, such as the chosen tab, stays the page's, passed to the hook as an option and read back
   through a callback.

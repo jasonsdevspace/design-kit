@@ -105,8 +105,8 @@ it.
 - A page that shows a message with no action over one with an action takes that way back away, so
   a page shows one after another only once the first is done with.
 - A page on which every visitor loads the controls loads the toast's behavior too.
-- The function the copy button and the stepper speak through is exported as `attachStatus`, for a
-  screen that says a change without moving focus, with the rules in the section above.
+- `attachStatus` is exported for a page's own status line, the line the copy button and the stepper
+  speak on without attaching it, with the rules in the section above.
 - A panel a button opens is attached by its button, and `attachPanel` returns both what opens or
   closes it and what lets the button go, since a page calls the first from its own code and a
   button can leave the page while its panel stays. It hears its buttons and Closes through one

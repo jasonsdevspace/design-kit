@@ -100,9 +100,10 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   the hook asks for, since the markup belongs to the page's state, and the hook refuses after the
   render that draws them.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
-  attention where more are wrong, and nothing where focus moves to an error summary, which reads its
-  own words. A device check with VoiceOver on an iPhone heard no error where the kit left it to the
-  field's description, which iOS reads only as a hint, and focus moved by script may not land.
+  attention where more are wrong, nothing where focus moves to an error summary, which reads its own
+  words, and the summary's words where focus was already on it. A device check with VoiceOver on an
+  iPhone heard no error where the kit left it to the field's description, which iOS reads only as a
+  hint, and focus moved by script may not land.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
 - **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
