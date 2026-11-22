@@ -27,16 +27,17 @@ import { textSize } from './text-size.js';
  * svg, focus left on the page's body where nothing else takes it, left where a page's listener
  * moves it as it leaves the toast, with the walk stopping there and a focus request asked before it
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
- * focus goes back to a control in view, focus sent on to the control inside a frame of the page's
- * own origin that had focus as the message came and left on the frame where that control is marked
- * off, gone or on a page since loaded, left in the frame where a page's listener moves it there in
- * Firefox, and to a frame of another origin by pointer or past it by a key in Firefox, a long
- * message wrapping with its action in reach and its buttons wrapped inside it on a 320px phone at
- * twice the text size, its message as far from either edge there, its buttons kept together in
- * their group, or as they were without it, its place above an app's dock or at the foot of a page,
- * nothing drawn before a message or printed, the same function returned when attached again, a
- * solid edge in forced colors outside WebKit, which draws none, and no audit findings in either
- * theme.
+ * focus goes back to a control in view, a control that has focus as a message shows kept clear of
+ * the toast, inside a tall frame of the page's own origin too, and left where it is where the toast
+ * leaves it alone, focus sent on to the control inside a frame of the page's own origin that had
+ * focus as the message came and left on the frame where that control is marked off, gone or on a
+ * page since loaded, left in the frame where a page's listener moves it there in Firefox, and to a
+ * frame of another origin by pointer or past it by a key in Firefox, a long message wrapping with
+ * its action in reach and its buttons wrapped inside it on a 320px phone at twice the text size,
+ * its message as far from either edge there, its buttons kept together in their group, or as they
+ * were without it, its place above an app's dock or at the foot of a page, nothing drawn before a
+ * message or printed, the same function returned when attached again, a solid edge in forced colors
+ * outside WebKit, which draws none, and no audit findings in either theme.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -1205,6 +1206,76 @@ test('keeps what had focus in view, clear of the toast, as it shows on a page', 
     expect(bottom(await box(page.locator('#foot'), 'the link'))).toBeLessThanOrEqual(
         (await box(toast(page), 'the toast')).y + 1
     );
+});
+
+/**
+ * A frame of the page's own origin the height given, set down by its own height, holding a button
+ * the depth given.
+ */
+const tallFrame = (height: number, depth: number): string =>
+    `<iframe title="Notes" style="display: block; height: ${String(height)}px; ` +
+    `margin-top: ${String(height)}px" srcdoc="<body style='margin: 0'>` +
+    `<div style='height: ${String(depth)}px'></div>` +
+    '<button type=button id=low>Low</button>"></iframe>';
+
+/**
+ * Scrolls the page, or the body of its app's frame, so the frame or the button inside it ends the
+ * distance given above the foot of the screen or of that body, and focuses that button without
+ * scrolling.
+ */
+const focusInFrame = async (page: Page, lift: number, of: 'frame' | 'button'): Promise<void> => {
+    const low = page.frameLocator('iframe').locator('#low');
+    await expect(low).toBeAttached();
+    await page.locator('iframe').evaluate(
+        (frame, [by, which]) => {
+            const inner = (frame as HTMLIFrameElement).contentDocument!;
+            const button = inner.querySelector('#low')!;
+            const body = document.querySelector('.dk-app-body');
+            const end =
+                which === 'frame'
+                    ? frame.getBoundingClientRect().bottom
+                    : frame.getBoundingClientRect().top +
+                      frame.clientTop +
+                      button.getBoundingClientRect().bottom;
+            (body ?? window).scrollBy(
+                0,
+                end - (body?.getBoundingClientRect().bottom ?? window.innerHeight) + by
+            );
+            (button as HTMLElement).focus({ preventScroll: true });
+        },
+        [lift, of] as const
+    );
+    await expect(low).toBeFocused();
+};
+
+for (const [where, body] of [
+    ['on a page', PAGE.replace('</button>', `</button>${tallFrame(1200, 1100)}`)],
+    ["in an app's frame", FRAME.replace('<p id="last">', `${tallFrame(1200, 1100)}<p id="last">`)],
+] as const)
+    test(`keeps the control inside a tall frame of the page's own origin clear of the toast as it shows, ${where}`, async ({
+        page,
+    }) => {
+        await open(page, { body });
+        // The frame's button at the foot of the screen or of the frame's body, where the toast
+        // is about to come.
+        await focusInFrame(page, 4, 'button');
+        await show(page, 'Round 3 saved.', 'Undo');
+        await settled(page);
+        expect(
+            bottom(await box(page.frameLocator('iframe').locator('#low'), 'the button'))
+        ).toBeLessThanOrEqual((await box(toast(page), 'the toast')).y + 1);
+    });
+
+test('leaves the page where it is when the control inside a frame is clear of the toast, though the frame is not', async ({
+    page,
+}) => {
+    await open(page, { body: PAGE.replace('</button>', `</button>${tallFrame(400, 0)}`) });
+    // The frame ends at the foot of the screen, under the toast, with its button at its top.
+    await focusInFrame(page, 0, 'frame');
+    const before = await page.evaluate(() => window.scrollY);
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
 });
 
 test('puts its buttons together on a row under its message on a phone at a large text size', async ({

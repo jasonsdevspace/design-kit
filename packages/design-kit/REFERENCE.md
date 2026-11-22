@@ -2976,8 +2976,11 @@ A toast leaves when its close button, its action, or Escape with focus in it dis
 next message replaces it. One with an action stays until then, since a timer would take the action
 away from anyone slower than it. One with no action also leaves after five seconds, a wait held
 while the pointer is over it or focus is in it. When a message arrives, what has focus stays in
-view, scrolled clear of the toast where the toast would cover it. When a toast leaves with focus in
-it, focus goes to the first of these that takes it: the control focus last came into the toast from,
+view, scrolled clear of the toast where the toast would cover it. With focus inside a frame of the
+page's own origin, that is the control that has focus there, which the toast reads as the message
+comes and measures where the frame places it, so a tall frame does not hide it. A frame of another
+origin, whose controls a page cannot reach, is measured whole. When a toast leaves with focus in it,
+focus goes to the first of these that takes it: the control focus last came into the toast from,
 then the control outside the toast that had focus as the latest message came, then the body of the
 app's frame, or on a page with no frame its main content where that takes focus, as the
 `tabindex="-1"` the skip link's markup puts on it lets it. The first is passed over where focus last

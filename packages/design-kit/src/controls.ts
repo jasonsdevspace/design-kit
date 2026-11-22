@@ -893,6 +893,22 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
 };
 
 /**
+ * Scrolls the control that had focus as a message came clear of a shown toast that covers it, by
+ * the scroll padding the sheet keeps under a shown toast. Where focus was in a frame of the page's
+ * own origin, it measures the control read inside the frame, offset by the frame's place, and that
+ * control's own scroll into view moves the frame's document and the page. One the toast leaves
+ * alone, or one taller than the room above the toast, such as the frame's body, stays where it is.
+ */
+const clearOf = (element: HTMLElement, active: Element, inner: Element | null | undefined) => {
+    const control = inner ?? active;
+    const top = inner ? active.getBoundingClientRect().top + active.clientTop : 0;
+    const drawn = control.getBoundingClientRect();
+    const card = element.getBoundingClientRect();
+    if (drawn.bottom + top > card.top && drawn.top + top < card.bottom && drawn.height < card.top)
+        control.scrollIntoView({ block: 'nearest' });
+};
+
+/**
  * Makes a toast work, and returns the function that shows a message in it. The message is drawn in
  * the toast and said on its status line, which is on the page from the start, so a screen reader
  * hears it without focus moving, with the action's name when it has one, so a visitor who cannot
@@ -900,7 +916,11 @@ const measureToast = (element: HTMLElement, close: HTMLElement) => {
  * reader reads in the toast, since the words drawn are hidden from it. The same words shown twice
  * are heard twice. A shown toast is marked by its data-shown attribute, which a page that draws it
  * again, as React does with its class, leaves alone. The dk-toast-shown class is set beside it for
- * a page that reads it, though such a redraw takes the class away while the toast stays shown.
+ * a page that reads it, though such a redraw takes the class away while the toast stays shown. As a
+ * message shows, the control that has focus is scrolled clear of the toast where the toast would
+ * cover it. With focus inside a frame of the page's own origin, that is the control that has focus
+ * there, read as the message comes and measured where the frame places it, so a tall frame does not
+ * hide it, while a frame of another origin is measured whole.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
@@ -1052,15 +1072,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         watch.observe(element);
         // Added once however many messages are shown, as the DOM ignores the same listener again.
         window.addEventListener('resize', remeasure, { signal });
-        // A control that had focus and that the toast now covers is scrolled clear of it, by the
-        // scroll padding the sheet keeps under a shown toast. One the toast leaves alone, or one
-        // taller than the room above the toast, such as the frame's body, stays where it is.
-        if (arrivedAt === active) {
-            const control = arrivedAt.getBoundingClientRect();
-            const card = element.getBoundingClientRect();
-            if (control.bottom > card.top && control.top < card.bottom && control.height < card.top)
-                arrivedAt.scrollIntoView({ block: 'nearest' });
-        }
+        // A control that had focus and that the toast now covers is scrolled clear of it, the one
+        // inside a frame of the page's own origin where focus was there.
+        if (arrivedAt === active) clearOf(element, arrivedAt, inFrame);
         wait();
         return () => {
             if (shown === id) dismiss();
