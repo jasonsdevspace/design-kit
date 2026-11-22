@@ -140,7 +140,9 @@ Option C.
   takes it down, so a page can send focus somewhere more useful than the opener as the dialog
   closes, as the dialog pattern of the ARIA Authoring Practices allows. One asked in an earlier task
   lands only where its frame comes after the dialog closes, and otherwise finds the page behind
-  inert, so a page that awaits before closing asks again just before it closes.
+  inert, so a page that awaits before closing asks again just before it closes. Each place a piece
+  hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
+  chart, and one that is hidden, inert or disabled is passed over for the next.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -191,9 +193,13 @@ every signal it has ever held.
   19 KB. A toast that sends focus back to the control focus came into it from takes them to 18,757,
   and the status line joining through `join`, with options read by their values rather than their
   key names, brings them to 18,751. A dialog whose close leaves focus free for a focus request asked
-  in the task that closes it brings them to 18,907. A toast that lets focus fall to the page's body
-  where nothing takes it, and sends it on to the control inside a frame of the page's own origin,
-  with a handback that stops where the page moves focus during it, brings them to 19,115.
+  in the task that closes it brings them to 18,907, and a handback that takes an SVG element as well
+  as an HTML one, with a panel that follows an SVG link to a place on the page, brings them to
+  18,975, with less room under 19 KB than a function of the usual size, so the rule sets them at
+  19.25 KB. A toast that lets focus fall to the page's body where nothing takes it, and sends it on
+  to the control inside a frame of the page's own origin, with a handback that stops where the page
+  moves focus during it, brings them to 19,180, with less room under 19.25 KB than a function of the
+  usual size, so the rule sets them at 19.5 KB.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -252,8 +258,16 @@ The paths are in `packages/design-kit`.
   marked off, where the frame loads its page again and where a click on the frame's empty space took
   focus off it, focus on a frame of another origin where a press by pointer dismisses the toast,
   and, in Firefox, focus on the main content where a dismiss by Enter cannot focus that frame. It
-  runs in Firefox as well as Chromium and WebKit. `e2e/shadow.spec.ts` finds focus sent back to a
-  control inside an open shadow root that focus came into the toast from.
+  also finds focus sent back to a link inside an inline svg that focus came into the toast from, and
+  to one that had focus as the message came where focus then came into the toast from nowhere. It
+  runs in Firefox as well as Chromium and WebKit. `e2e/dialog.spec.ts` finds it sent back to one
+  that opened the dialog, and `e2e/panel.spec.ts` finds focus sent to one that follows a panel whose
+  buttons are gone, there too where the link's address is written with `xlink:href`, and to the
+  place on the page that one pressed inside a panel goes to, and finds a panel closing without
+  throwing in a window with no class for an SVG link, as jsdom has none. `e2e/focus.spec.tsx` finds
+  a late request from a component since gone land on one. Each runs in Chromium, WebKit and Firefox.
+  `e2e/shadow.spec.ts` finds focus sent back to a control inside an open shadow root that focus came
+  into the toast from.
 - `e2e/teardown.spec.tsx` also opens and closes a panel through `set` in the task its signal
   aborts and finds it closed, and finds a copy button's word kept for the block its last press
   copied and put back to Copy where a source that reads the page's state gives another block, or

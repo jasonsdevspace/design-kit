@@ -1427,7 +1427,11 @@ signal it never aborts on every call keeps each one as a holder, so it aborts wh
 needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
 it, or where focus is on the body or nowhere and the piece had it as it left, and a dialog also
 where focus is still on what the browser handed it to as the dialog closed, so focus a page sets in
-the abort's own task stays, and a `moveFocus` asked in that task still lands.
+the abort's own task stays, and a `moveFocus` asked in that task still lands. Each place a piece
+hands focus back to can be any HTML or SVG element that takes focus, such as a link in an inline
+chart, and one that is hidden, inert or disabled is passed over for the next. A control marked off
+with `aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a
+panel does for its buttons. The toast and the dialog hand focus to it.
 
 As the kit hands focus back, it tries each place in turn, and where a page's own listener moves
 focus elsewhere as one is tried, it goes no further and that focus stays. A walk that focuses
@@ -1794,21 +1798,22 @@ it is drawn. A page in React asks through `useFocusAfterDraw`, below, which wait
 that draws the change rather than a frame alone, so a change set after an await is drawn too. Where
 the target is gone, hidden, inert, disabled or marked off, focus goes to the first of the fallbacks
 that takes it, and then to the app frame's body or the page's main content, by the walk a closing
-panel hands focus back by. Focus a visitor has moved since the request is left where they put it:
-focus is free only while it is where it was when asked, or on the page's body, as it is once the
-control that had it is removed, or where the kit has handed it back since, as a toast, a dialog or a
-panel does as it closes, or on what the browser hands it to as a dialog closes, until the dialog's
-close is handled. A request still waiting a second later, as in a tab out of sight, is dropped, so
-focus does not jump when the visitor comes back. Each request is new, so the same control asked for
-twice is focused twice, and the function `moveFocus` returns calls a request off before it lands, as
-aborting the `signal` it is given does. A request asked as its component
-unmounts is given no signal that unmount aborts, so it still lands. An id is looked for in the root
-where focus was when the request was made, so a widget drawn inside a shadow root finds its own
-control, never an element of the page around it that shares the id, and the form's refusal, a
-stepper and progress find the errors, hints and labels they read in their own element's root. A
-panel and its button are found from the page's document, which the panel listens on. `activeOf()`
-from `./controls` returns what has focus, followed into each shadow root that holds it, as a request
-reads where focus was, for a page that asks later and passes `from` itself.
+panel hands focus back by. A target or a fallback, here and for `focusOnArrival` below, can be any
+HTML or SVG element that takes focus, such as a link in an inline chart. Focus a visitor has moved
+since the request is left where they put it: focus is free only while it is where it was when asked,
+or on the page's body, as it is once the control that had it is removed, or where the kit has handed
+it back since, as a toast, a dialog or a panel does as it closes, or on what the browser hands it to
+as a dialog closes, until the dialog's close is handled. A request still waiting a second later, as
+in a tab out of sight, is dropped, so focus does not jump when the visitor comes back. Each request
+is new, so the same control asked for twice is focused twice, and the function `moveFocus` returns
+calls a request off before it lands, as aborting the `signal` it is given does. A request asked as
+its component unmounts is given no signal that unmount aborts, so it still lands. An id is looked
+for in the root where focus was when the request was made, so a widget drawn inside a shadow root
+finds its own control, never an element of the page around it that shares the id, and the form's
+refusal, a stepper and progress find the errors, hints and labels they read in their own element's
+root. A panel and its button are found from the page's document, which the panel listens on.
+`activeOf()` from `./controls` returns what has focus, followed into each shadow root that holds it,
+as a request reads where focus was, for a page that asks later and passes `from` itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -2972,15 +2977,12 @@ then the control outside the toast that had focus as the latest message came, th
 app's frame, or on a page with no frame its main content where that takes focus, as the
 `tabindex="-1"` the skip link's markup puts on it lets it. The first is passed over where focus last
 came into the toast from nowhere. So a keyboard user who moved on from where they were as the
-message came lands where they left off.
-Only an HTML control counts as either control, so focus that came from an SVG link goes on down the
-list.
-Its Close and its action carry `tabindex="0"`, which `Toast` draws and `attachToast` adds where a
-page's markup has none, so Safari, which focuses a pressed button only where it has a tabindex,
-leaves focus in the toast on a press and focus goes back as the toast leaves. An action runs after
-the toast has left, so where it takes away what focus came from, it moves focus itself. A message
-with no action replaces one with an action and its way back, so a page shows one another only when
-the first is done with. More than one action is a dialog's job.
+message came lands where they left off. Its Close and its action carry `tabindex="0"`, which `Toast`
+draws and `attachToast` adds where a page's markup has none, so Safari, which focuses a pressed
+button only where it has a tabindex, leaves focus in the toast on a press and focus goes back as the
+toast leaves. An action runs after the toast has left, so where it takes away what focus came from,
+it moves focus itself. A message with no action replaces one with an action and its way back, so a
+page shows one another only when the first is done with. More than one action is a dialog's job.
 
 Focus leaves the toast where nothing on that list takes it, so it falls to the page's body in every
 engine rather than staying on the toast's hidden button. Where a page's own listener moves focus
