@@ -403,26 +403,32 @@ test.describe('in React', () => {
     }) => {
         const errors: string[] = [];
         page.on('pageerror', (error) => errors.push(error.message));
+        // A still clock, run past the frame a refusal waits and the moment the line waits to put
+        // its words in, so words on their way have landed before the line is read as silent.
+        await stillClock(page.clock);
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
-        // Each time the screen's status line comes to say something, noted as it is said.
+        // Every set of words the screen's status line is given, by a watch on the line itself, so
+        // the same words said again are kept again.
         await page.evaluate(() => {
             const heard: string[] = [];
             (window as unknown as { heard: string[] }).heard = heard;
             const line = document.querySelector('#root p[role="status"]');
-            if (!line) return;
+            if (!line) throw new Error('expected the status line drawn');
             new MutationObserver(() => {
                 const words = line.textContent.trim();
-                if (words !== '' && heard.at(-1) !== words) heard.push(words);
+                if (words !== '') heard.push(words);
             }).observe(line, { childList: true, characterData: true, subtree: true });
         });
+        const heard = () => page.evaluate(() => (window as unknown as { heard: string[] }).heard);
         const seat = page.getByRole('textbox', { name: 'Seat' });
         const error = page.locator('[id="seat-error"]');
         await page.getByRole('button', { name: 'Book' }).click();
-        await expect(seat).toBeFocused();
+        // The error is drawn as React commits, which is when the refusal asks for its frame, so
+        // the clock runs only once that frame is there to run.
         await expect(error).toHaveText('Error: Enter a value.');
-        await expect
-            .poll(() => page.evaluate(() => (window as unknown as { heard: string[] }).heard))
-            .toEqual(['Seat: Error: Enter a value.']);
+        await page.clock.runFor(300);
+        await expect(seat).toBeFocused();
+        expect(await heard()).toEqual(['Seat: Error: Enter a value.']);
         // New words from the page while the refusal stands, plain and then with an address React
         // draws in parts, so its children change as well as its text.
         for (const words of ['Pick a seat.', 'Pick a seat, or ask box@example.com.']) {
@@ -434,10 +440,10 @@ test.describe('in React', () => {
             await expect(error).toHaveText(`Error: ${words}`);
             await expect(seat).toHaveAccessibleDescription(`Error: ${words}`);
             await expect(seat).toHaveAttribute('aria-invalid', 'true');
+            // Nothing more is said for the error drawn again, the refusal's words among them.
+            await page.clock.runFor(300);
+            expect(await heard(), words).toEqual(['Seat: Error: Enter a value.']);
         }
-        expect(await page.evaluate(() => (window as unknown as { heard: string[] }).heard)).toEqual(
-            ['Seat: Error: Enter a value.']
-        );
         expect(errors).toEqual([]);
     });
 

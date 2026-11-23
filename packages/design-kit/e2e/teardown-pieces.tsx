@@ -275,6 +275,16 @@ window.pieces = {
         use: () => undefined,
         after: (cancel) => cancel(),
     },
+    // Asked as a view that changed on a press asks, so it waits for its frame whatever the last
+    // input was.
+    'a view taking focus as it arrives': {
+        attach: (signal) => {
+            $('#start').focus();
+            return kit.focusOnArrival('target', { signal, changed: true });
+        },
+        use: () => undefined,
+        after: (cancel) => cancel(),
+    },
 };
 const once = new AbortController();
 kit.attachThemeSwitch(group, { signal: once.signal });
@@ -297,13 +307,16 @@ export const PIECES = [
     'progress',
     'the dialog',
     'a focus request',
+    'a view taking focus as it arrives',
 ] as const;
 
 /**
  * The pieces an attach keeps by their element, which a later attach joins and a signal holds, every
- * piece but a focus request, which is made afresh by each call.
+ * piece but a focus request and a view's request as it arrives, each made afresh by each call.
  */
-export const KEPT = PIECES.filter((name) => name !== 'a focus request');
+export const KEPT = PIECES.filter(
+    (name) => name !== 'a focus request' && name !== 'a view taking focus as it arrives'
+);
 
 /** A piece in the table, as the page holds it. */
 export type Piece = {

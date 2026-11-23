@@ -5,175 +5,202 @@ import { describe, expect, it } from 'vitest';
 import { withoutComments } from '../examples/palette.js';
 
 /*
- * A row of fields sizes each field by a length, never by its content, as record 25 has it. A rule
- * that names the row with anything after it may only be a rule for what the row holds directly,
- * and may set only how a field flexes, never from a basis its content sets. It never reaches
- * inside a field, since a rule on a field's own parts would be content reaching a width again,
- * which the rules of a field, a stepper and a choice field already own. A rule that names the row
- * as what it styles, as the measure and a plain form's spacing do, is the row's own.
+ * A row of fields sizes each field by a length, never by its content, as record 25 has it, and no
+ * rule reaches inside a field from the row, since a rule on a field's own parts would be content
+ * reaching a width again. A check that looked for the forms such a rule can take was walked around
+ * three times, so the rules that name the row are listed here instead, each whole, and the sheets
+ * must hold exactly those. A rule that names the row anywhere, in a selector, a list, a nested
+ * rule or an at-rule, fails until it is added to the list on purpose, by someone who has read the
+ * record. The rules for what the row holds directly are short enough to read, and are held to how
+ * a field flexes from a length.
  */
 
-type Rule = { readonly selector: string; readonly declarations: readonly string[] };
+/** The rules that name a row of fields, each as its selector and declarations on one line. */
+const LISTED: readonly string[] = [
+    // The measure, which the row holds to as a field does, and a callout beside a field or a row.
+    ':where(:is(.dk-page, .dk-band, .dk-stack) :is(.dk-field, .dk-fields, form .dk-callout, :is(.dk-field, .dk-fields) ~ .dk-callout, .dk-callout:has(~ :is(.dk-field, .dk-fields))):not(.dk-dialog *, dialog *, [popover] *)) { max-width: var(--dk-field-measure, var(--dk-measure)) }',
+    // The row itself.
+    ':where(.dk-fields) { display: flex; flex-wrap: wrap; align-items: end; gap: var(--dk-space-4) }',
+    // The row's wrapped lines as far apart as the blocks around it, where a container sets a step.
+    ':where(:is(.dk-explainer, .dk-page, .dk-band, .dk-stack, :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section, .dk-panel, .dk-app-body, .dk-dialog) > .dk-fields) { row-gap: var(--dk-flow-step) }',
+    // What the row holds directly: every field from one length, and a line each for two kinds.
+    ':where(.dk-fields > .dk-field) { flex: 1 1 var(--dk-fields-least, 10rem) }',
+    ':where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) { flex-basis: 100% }',
+    // A plain form's step, which the row takes as one of the kit's blocks.
+    ':where(form:not([class]) > :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(:is([hidden], [data-empty], .dk-visually-hidden, .dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions)))) ~ :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)) { margin-block-start: var(--dk-space-4) }',
+];
 
-/** Each rule in a sheet that names a row of fields, with its declarations. */
-const rulesNamingTheRow = (css: string): Rule[] =>
-    [...withoutComments(css).matchAll(/([^{};]+)\{([^{}]*)\}/g)]
-        .map(([, selector = '', body = '']) => ({
-            selector: selector.replace(/\s+/g, ' ').trim(),
-            declarations: body
-                .split(';')
-                .map((declaration) => declaration.replace(/\s+/g, ' ').trim())
-                .filter(Boolean),
-        }))
-        .filter(({ selector }) => /\.dk-fields(?![\w-])/.test(selector));
+/** The listed rules for what the row holds directly, which alone set how a field is sized. */
+const FOR_ITS_FIELDS = LISTED.filter((rule) => /\.dk-fields > /.test(rule));
 
-/** The text from the start given to the end of the selector it sits in, at its own depth. */
-const toItsEnd = (text: string): string => {
+const BEFORE_ADDING =
+    'A rule that names a row of fields is not in the list in src/fields.test.ts, or a listed one ' +
+    'changed. Read decision record 25 before adding one: the row sizes each field by a length ' +
+    'and never reaches inside a field.';
+
+const ROW = /\.dk-fields(?![\w-])/g;
+
+/** How many times a text names the row. */
+const names = (text: string): number => [...text.matchAll(ROW)].length;
+
+/** A text on one line, with no space inside a parenthesis's ends. */
+const onOneLine = (text: string): string =>
+    text.replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')').trim();
+
+/** Where the block that opens at the place given closes, or the text's end where it never does. */
+const closeOf = (css: string, open: number): number => {
     let depth = 0;
-    for (let at = 0; at < text.length; at += 1) {
-        const character = text[at];
-        if (character === '(') depth += 1;
-        if (character === ')') {
-            if (depth === 0) return text.slice(0, at);
-            depth -= 1;
+    for (let at = open; at < css.length; at += 1) {
+        if (css[at] === '{') depth += 1;
+        if (css[at] === '}') depth -= 1;
+        if (css[at] === '}' && depth === 0) return at;
+    }
+    return css.length;
+};
+
+/** A block of a sheet: what stands before each brace around it, outermost first, and its own. */
+type Block = { readonly around: readonly string[]; readonly declarations: readonly string[] };
+
+/** Every block in a sheet, a nested one after the block it is in. */
+const blocksIn = (css: string, around: readonly string[] = []): Block[] => {
+    const blocks: Block[] = [];
+    const declarations: string[] = [];
+    let from = 0;
+    for (let at = 0; at < css.length; at += 1) {
+        if (css[at] === ';') {
+            declarations.push(css.slice(from, at));
+            from = at + 1;
         }
-        if (character === ',' && depth === 0) return text.slice(0, at);
+        if (css[at] !== '{') continue;
+        const close = closeOf(css, at);
+        blocks.push(
+            ...blocksIn(css.slice(at + 1, close), [...around, onOneLine(css.slice(from, at))])
+        );
+        at = close;
+        from = close + 1;
     }
-    return text;
+    declarations.push(css.slice(from));
+    return [{ around, declarations: declarations.map(onOneLine).filter(Boolean) }, ...blocks];
 };
 
-/** A selector with every parenthesized part taken out, so only its own combinators remain. */
-const flattened = (selector: string): string => {
-    let text = selector;
-    for (let before = ''; before !== text;) {
-        before = text;
-        text = text.replace(/\([^()]*\)/g, '');
-    }
-    return text;
+/**
+ * Every rule in the sheets given that names the row, in what stands before its own brace or
+ * before one around it, a layer's name left out. The sheet's text is searched for the row's name
+ * first, and every place found must be one a rule here holds, so a name the reading missed, in a
+ * value for one, fails instead of passing unread.
+ */
+const namingTheRow = (sheets: string): string[] => {
+    const css = withoutComments(sheets);
+    const blocks = blocksIn(css);
+    // Each block is opened by the last of what stands around it, so each is counted once.
+    const read = blocks.reduce((sum, { around }) => sum + names(around.at(-1) ?? ''), 0);
+    if (read !== names(css))
+        throw new Error('the sheets name a row of fields outside any rule this test reads');
+    return blocks
+        .filter(
+            ({ around, declarations }) => declarations.length > 0 && names(around.join(' ')) > 0
+        )
+        .map(
+            ({ around, declarations }) =>
+                `${around.filter((one) => !one.startsWith('@layer')).join(' { ')} { ${declarations.join('; ')} }`
+        );
 };
 
-/** Each place a selector names the row with something after it, as what follows it to its end. */
-const afterTheRow = (selector: string): string[] =>
-    [...selector.matchAll(/\.dk-fields(?![\w-])/g)]
-        .map((match) => toItsEnd(selector.slice(match.index + '.dk-fields'.length)))
-        .filter((after) => after.trim() !== '');
+/** The rules that name the row in the sheets given and are not in the list. */
+const unlisted = (sheets: string): string[] =>
+    namingTheRow(sheets).filter((rule) => !LISTED.includes(rule));
 
-/** A flex shorthand's values, split on the spaces outside a function's parentheses. */
-const valuesOf = (value: string): string[] => {
-    const values: string[] = [];
-    let depth = 0;
-    let current = '';
-    for (const character of value) {
-        if (character === '(') depth += 1;
-        if (character === ')') depth -= 1;
-        if (character === ' ' && depth === 0) {
-            if (current) values.push(current);
-            current = '';
-        } else current += character;
-    }
-    if (current) values.push(current);
-    return values;
-};
+/** A basis a field's content sets, or a keyword that leaves the basis to one. */
+const FROM_CONTENT =
+    /(?:^|[\s(,])(?:auto|none|content|(?:-webkit-|-moz-)?(?:max|min|fit)-content|initial|unset|revert|revert-layer|inherit)(?![\w-])/i;
 
-/** A basis a field's content sets, by its keyword or by a function of one. */
-const FROM_CONTENT = /^(auto|content|max-content|min-content|fit-content|initial)$|^fit-content\(/;
-
-/** What is wrong with where a rule reaches, for each place it names the row with more after it. */
-const reachOf = (afters: readonly string[]): string[] =>
-    afters.flatMap((after) => {
-        const child = /^\s*>\s*(.*)$/s.exec(after)?.[1];
-        return child === undefined || /[\s>+~]/.test(flattened(child).trim())
-            ? [`reaches past what the row holds, by .dk-fields${after}`]
+/** What is wrong with a listed rule for what the row holds directly, or nothing. */
+const faultsOf = (rule: string): string[] =>
+    (/\{ (.*) \}$/.exec(rule)?.[1] ?? '').split('; ').flatMap((declaration) => {
+        const [name = '', value = ''] = declaration.split(/:(.*)/s).map((part) => part.trim());
+        if (!['flex', 'flex-basis', 'flex-grow', 'flex-shrink'].includes(name))
+            return [`sets ${name}, not how a field flexes`];
+        return FROM_CONTENT.test(value) || /var\([^,)]*,?\s*\)/.test(value)
+            ? [`takes its basis from its content, by ${declaration}`]
             : [];
     });
 
-/** What is wrong with a declaration in a rule for what the row holds, or nothing. */
-const declarationFaultsOf = (declaration: string): string[] => {
-    const [name = '', value = ''] = declaration.split(/:(.*)/s).map((part) => part.trim());
-    if (!['flex', 'flex-basis', 'flex-grow', 'flex-shrink'].includes(name))
-        return [`sets ${name}, not how a field flexes`];
-    const basis =
-        name === 'flex-basis'
-            ? value
-            : name === 'flex'
-              ? /^(none|auto|initial)$/.test(value)
-                  ? 'auto'
-                  : valuesOf(value).find((part) => !/^[\d.]+$/.test(part))
-              : undefined;
-    return basis !== undefined && FROM_CONTENT.test(basis)
-        ? [`takes its basis from its content, by ${declaration}`]
-        : [];
-};
+const SHEETS = ['tokens.css', 'base.css', 'components.css']
+    .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8'))
+    .join('\n');
 
-/** What is wrong with a rule that names the row with something after it, or nothing. */
-const faultsOf = (rule: Rule): string[] => {
-    const afters = afterTheRow(rule.selector);
-    // A rule that names the row only as what it styles is the row's own.
-    if (afters.length === 0) return [];
-    return [...reachOf(afters), ...rule.declarations.flatMap(declarationFaultsOf)];
-};
-
-/** Every fault the rules of a sheet that name the row hold, each with its selector. */
-const faultsIn = (css: string): string[] =>
-    rulesNamingTheRow(css).flatMap((rule) =>
-        faultsOf(rule).map((fault) => `${rule.selector} ${fault}`)
-    );
-
-const SHEET = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
+/** A rule a sheet might gain, in each form a review found the earlier check to miss. */
+const WAYS_AROUND = {
+    'a descendant': ':where(.dk-fields .dk-stepper) { min-width: 0; }',
+    'a list in :is()': ':where(:is(.dk-fields, .dk-x) > .dk-field > .dk-input) { width: 1px; }',
+    'an ancestor in :has()': ':where(.dk-page:has(.dk-fields) .dk-input) { min-width: 0; }',
+    'a nested rule': ':where(.dk-fields) { & > .dk-field { flex: none; } }',
+    'a nested list': ':where(.dk-page) { .dk-x, .dk-fields .dk-input { width: 1px; } }',
+    'a rule nested in a list': ':where(.dk-x, .dk-fields) { .dk-input { width: 1px; } }',
+    'a scope': '@scope (.dk-fields) { .dk-input { width: 1px; } }',
+    "a scope's limit": '@scope (.dk-page) to (.dk-fields > *) { .dk-field { flex: auto; } }',
+    'a media query': '@media (width < 24rem) { :where(.dk-fields > .dk-field) { flex: 0 auto; } }',
+    'a second rule for a field':
+        ':where(.dk-fields > .dk-field) { flex-basis: calc(var(--dk-x)); }',
+} as const;
 
 describe('a row of fields', () => {
-    it('sizes each field by a length, never by its content, and never reaches inside one', () => {
-        // The row's rules are there to read, so the check cannot pass on a sheet with none.
-        expect(
-            rulesNamingTheRow(SHEET).filter((rule) => afterTheRow(rule.selector).length)
-        ).not.toEqual([]);
-        expect(faultsIn(SHEET)).toEqual([]);
+    it('is named only by the rules listed here', () => {
+        expect(namingTheRow(SHEETS), BEFORE_ADDING).toEqual(LISTED);
     });
 
-    it('finds a basis its content sets, in the shorthand at any place and in flex-basis', () => {
+    it('sizes what it holds directly only by how a field flexes, from a length', () => {
+        expect(FOR_ITS_FIELDS).toHaveLength(2);
+        expect(FOR_ITS_FIELDS.flatMap(faultsOf)).toEqual([]);
+    });
+
+    for (const [way, rule] of Object.entries(WAYS_AROUND))
+        it(`finds a rule that names the row by ${way}, since it is not on the list`, () => {
+            expect(unlisted(`${SHEETS}\n${rule}`)).toHaveLength(1);
+            expect(namingTheRow(`${SHEETS}\n${rule}`)).not.toEqual(LISTED);
+        });
+
+    it('finds a listed rule changed, and one taken away', () => {
+        const changed = SHEETS.replace(
+            'var(--dk-fields-least, 10rem)',
+            'var(--dk-fields-least, auto)'
+        );
+        expect(changed).not.toBe(SHEETS);
+        expect(unlisted(changed)).toHaveLength(1);
+        const gone = SHEETS.replace(/:where\(\.dk-fields > \.dk-field\) \{[^}]*\}/, '');
+        expect(namingTheRow(gone)).toHaveLength(LISTED.length - 1);
+    });
+
+    it('fails where the row is named outside any rule it reads', () => {
+        expect(() => namingTheRow(':where(.dk-x) { content: ".dk-fields"; }')).toThrow(
+            'outside any rule'
+        );
+    });
+
+    it("finds a field's rule that sets more than how it flexes, or a basis its content sets", () => {
         for (const declaration of [
+            'min-width: 0',
             'flex: 0 1 auto',
-            'flex: 0 auto',
-            'flex: max-content 1',
             'flex: none',
-            'flex: auto',
-            'flex: initial',
-            'flex-basis: content',
+            'flex: 1 1 AUTO',
             'flex-basis: max-content',
-            'flex-basis: min-content',
-            'flex-basis: fit-content',
-            'flex-basis: initial',
+            'flex-basis: -webkit-max-content',
+            'flex-basis: fit-content(10rem)',
+            'flex-basis: auto !important',
+            'flex-basis: unset',
+            'flex-basis: revert',
+            'flex-basis: inherit',
+            'flex: 1 1 var(--dk-fields-least, auto)',
+            'flex: 1 1 var(--dk-fields-least)',
+            'flex: 1 1 var(--dk-fields-least,)',
+            'flex-basis: calc(var(--dk-fields-least))',
         ])
             expect(
-                faultsIn(`:where(.dk-fields > .dk-field) { ${declaration}; }`),
+                faultsOf(`:where(.dk-fields > .dk-field) { ${declaration} }`),
                 declaration
             ).toHaveLength(1);
-    });
-
-    it('finds a rule past what the row holds, or setting more than how a field flexes', () => {
-        expect(faultsIn(':where(.dk-fields .dk-stepper) { min-width: 0; }')).toHaveLength(2);
         expect(
-            faultsIn(':where(.dk-fields:not(.x) > .dk-field > .dk-input) { width: 1px; }')
-        ).toHaveLength(2);
-        expect(
-            faultsIn(':where(.dk-fields > .dk-field > :not(.dk-stepper)) { contain: inline-size; }')
-        ).toHaveLength(2);
-        expect(faultsIn(':where(.dk-fields > .dk-field .dk-stepper) { flex: 1; }')).toHaveLength(1);
-    });
-
-    it("passes the row's own rules, a basis of a length or of the whole line, and the row named as what a rule styles", () => {
-        expect(
-            faultsIn(`
-                :where(.dk-fields) { display: flex; gap: 1rem; }
-                :where(.dk-fields > .dk-field) { flex: 1 1 var(--dk-fields-least, 10rem); }
-                :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) { flex-basis: 100%; }
-                :where(:is(.dk-page, .dk-band) :is(.dk-field, .dk-fields, form .dk-callout):not(dialog *)) {
-                    max-width: 34rem;
-                }
-                :where(form:not([class]) > :is(.dk-field, .dk-fields):not([hidden]) ~ :is(.dk-field, .dk-fields)) {
-                    margin-block-start: 1rem;
-                }
-            `)
+            faultsOf(':where(.dk-fields > .dk-field) { flex: 1 1 10rem; flex-grow: 2 }')
         ).toEqual([]);
     });
 });

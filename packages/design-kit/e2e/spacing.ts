@@ -27,6 +27,33 @@ export const cutOff = (page: Page, selector: string): Promise<string[]> =>
         selector
     );
 
+/**
+ * The fields of one line given that are drawn shorter than their line needs, each by its id: the
+ * line's height with the field's own padding and edges. A field of one line reports no more to
+ * scroll than it shows however short it is drawn, so its height is held to its line instead. The
+ * line's height is read in pixels, as the wider spacing sets it.
+ */
+export const tooShort = (page: Page, selector: string): Promise<string[]> =>
+    page.evaluate((wanted) => {
+        const fields = [...document.querySelectorAll<HTMLElement>(wanted)];
+        if (fields.length === 0) throw new Error(`expected a field to measure, by ${wanted}`);
+        return fields
+            .filter((field) => {
+                const style = getComputedStyle(field);
+                const [line = NaN, ...around] = [
+                    style.lineHeight,
+                    style.paddingTop,
+                    style.paddingBottom,
+                    style.borderTopWidth,
+                    style.borderBottomWidth,
+                ].map(Number.parseFloat);
+                if (Number.isNaN(line)) throw new Error("expected a line's height in pixels");
+                const needs = around.reduce((sum, length) => sum + length, line);
+                return field.getBoundingClientRect().height < needs - 0.5;
+            })
+            .map(({ id }) => id);
+    }, selector);
+
 /** The words in the elements given that the browser breaks across two lines, each a cut word. */
 export const brokenWords = (page: Page, selector: string): Promise<string[]> =>
     page.evaluate((wanted) => {

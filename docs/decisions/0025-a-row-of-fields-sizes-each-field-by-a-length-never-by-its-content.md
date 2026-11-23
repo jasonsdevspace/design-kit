@@ -114,12 +114,18 @@ The paths are in `packages/design-kit`.
   it, ending at their edge, with a field in it narrowed by `--dk-field-measure`. It finds a tall
   stepper at 12rem, a tall one of three figures at 13.25rem and one of three at 10.5rem each inside
   its field with its buttons at full size, beside a text field where the row is wide enough, with
-  and without `:has()`.
-- `src/fields.test.ts` reads every rule in the components sheet that names a row of fields with
-  anything after it, and fails one that is not a rule for what the row holds directly, that sets
-  anything but how a field flexes, or that takes its basis from content, as `auto`, `content`,
-  `max-content`, `min-content`, `fit-content` or `initial` in `flex-basis` or at any place in
-  `flex`, or as `flex: none`, `flex: auto` or `flex: initial`.
+  and without `:has()`. In a row left at 10rem it finds a tall stepper of two figures and of three
+  inside its field at 375, 392 and 1280 wide, its buttons the target wide or more and as tall as the
+  same stepper's drawn alone. With the `:has()` rules taken out it measures how far each wider
+  stepper runs past its field at 368, 381, 385 and 417 wide, holds it to the figures the
+  accessibility notes give, and finds none a pixel past each end they give, at 382 and 418. Under
+  wider text spacing it finds the row's labels, values and fields whole at 320 and 390 wide.
+- `src/fields.test.ts` searches the sheets for every place a row of fields is named, in a selector,
+  a list, a nested rule or an at-rule, and holds the rules found to a list written in the test, each
+  whole: the row's own rule, its lines' step in a column, the two rules for what it holds directly,
+  the measure and a plain form's step. A rule that names the row and is not on the list fails, with
+  a message that sends its author here first, as does a listed rule that changes. The two rules for
+  what the row holds directly are held to how a field flexes, from a basis that is a length.
 
 ## Sources
 
