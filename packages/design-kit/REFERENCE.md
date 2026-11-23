@@ -603,7 +603,7 @@ rather than pushing the field past the column's edge. In a page, a band or a sta
 too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
 `--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a
-postcode, or `none` for the column's width. A row of the page's own that sets fields side by side
+ZIP code, or `none` for the column's width. A row of the page's own that sets fields side by side
 sets `none` on the row, so each field fills its cell. In a dialog or a popover the property has no
 effect, since the dialog's own width sizes its fields. In a form with no class attribute, a field, a
 row of actions or a callout that is not empty stands `--dk-space-4` below what sits above it, once
