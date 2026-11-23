@@ -51,36 +51,73 @@ export interface Downloads {
     readonly styles: readonly string[];
 }
 
+/** A tag's attributes by name, in lower case, whichever way each value is quoted. */
+const attributesOf = (tag: string): ReadonlyMap<string, string> =>
+    new Map(
+        [...tag.matchAll(/\s([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>]+)))?/g)].map(
+            (match) => [(match[1] ?? '').toLowerCase(), match[2] ?? match[3] ?? match[4] ?? '']
+        )
+    );
+
 /**
- * The scripts and the sheets a built page's HTML names: each script it loads or preloads, and each
- * sheet it links. Every one is served under the site's base, so its path is read from the assets
- * folder down. A file from anywhere else is one the audit cannot measure, so it is refused by name
- * rather than left out of the sum.
+ * The file a script or a link tag has the page download and which kind it counts as, or nothing
+ * for a script with no address, which is inline, and a link to anything but a sheet or a module.
  */
-export const downloadsOf = (html: string): Downloads => {
-    const named = (pattern: RegExp) => [
-        ...new Set(
-            [...html.matchAll(pattern)].map((match) => {
-                const address = match[1] ?? '';
-                const at = address.indexOf('assets/');
-                if (at === -1) throw new Error(`${address} is not among the built assets`);
-                return address.slice(at);
-            })
-        ),
-    ];
-    return {
-        scripts: named(/<(?:script\b[^>]*\ssrc|link rel="modulepreload"[^>]*\shref)="([^"]+)"/g),
-        styles: named(/<link rel="stylesheet"[^>]*\shref="([^"]+)"/g),
-    };
+const namedBy = (
+    tag: string,
+    isScript: boolean
+): { address: string; kind: 'script' | 'style' } | undefined => {
+    const attributes = attributesOf(tag);
+    const address = attributes.get(isScript ? 'src' : 'href');
+    if (address === undefined) return undefined;
+    if (isScript) return { address, kind: 'script' };
+    const rel = (attributes.get('rel') ?? '').toLowerCase().split(/\s+/);
+    if (rel.includes('modulepreload')) return { address, kind: 'script' };
+    return rel.includes('stylesheet') ? { address, kind: 'style' } : undefined;
 };
 
-/** A size in kilobytes, to a hundredth, which tells a budget from a size just past it. */
-const kb = (bytes: number) => `${(bytes / KB).toFixed(2)} KB`;
+/**
+ * The scripts and the sheets a built page's HTML names: each script it loads or preloads, and each
+ * sheet it links, whatever the order of a tag's attributes and however each is quoted. Every one
+ * is served from the build's assets folder under the site's base, so its address must start there,
+ * and its path is read from the assets folder down. A file from another folder or another origin
+ * is one the audit cannot measure, so it is refused by name, not left out of the sum. So is a
+ * page that names a built script or sheet in any other way, which would be downloaded and not
+ * counted.
+ *
+ * @param html the built page
+ * @param base the path the site is served under, such as `/design-kit/`
+ */
+export const downloadsOf = (html: string, base: string): Downloads => {
+    const scripts = new Set<string>();
+    const styles = new Set<string>();
+    const built = `${base}assets/`;
+    for (const [tag, name = ''] of html.matchAll(/<(script|link)\b[^>]*>/gi)) {
+        const named = namedBy(tag, name.toLowerCase() === 'script');
+        if (named === undefined) continue;
+        const { address, kind } = named;
+        if (!address.startsWith(built)) throw new Error(`${address} is not among the built assets`);
+        (kind === 'script' ? scripts : styles).add(address.slice(base.length));
+    }
+    // Every built script and sheet the page names anywhere, each of which must have been counted.
+    for (const [address] of html.matchAll(/[^\s"'<>=()]+\.(?:js|css)(?![\w.-])/g)) {
+        const at = address.indexOf(built);
+        const file = address.slice(at + base.length);
+        if (at !== -1 && !scripts.has(file) && !styles.has(file)) {
+            throw new Error(`${address.slice(at)} is named in the page and not counted`);
+        }
+    }
+    return { scripts: [...scripts], styles: [...styles] };
+};
+
+/** A size in kilobytes, to a hundredth, as the gate's misses and the audit's log write it. */
+export const kb = (bytes: number) => `${(bytes / KB).toFixed(2)} KB`;
 
 /**
  * What a page's bytes miss of its budget, each in a few words, or nothing when both fit. A kind
  * with no bytes at all is a miss too, since every page loads a script and a sheet, and a page the
- * reader found none on would otherwise pass unmeasured.
+ * reader found none on would otherwise pass unmeasured. A size that rounds to its budget is said in
+ * the bytes it is over, so a miss never reads as a size past itself.
  */
 export const pastBudget = (sizes: Budget, budget: Budget): readonly string[] =>
     (
@@ -90,5 +127,31 @@ export const pastBudget = (sizes: Budget, budget: Budget): readonly string[] =>
         ] as const
     ).flatMap(([kind, size, most]) => {
         if (size === 0) return [`no ${kind} found to measure`];
-        return size > most ? [`${kind} ${kb(size)} past ${kb(most)}`] : [];
+        if (size <= most) return [];
+        const over = Math.ceil(size - most);
+        const by =
+            kb(size) === kb(most) ? `${String(over)} ${over === 1 ? 'byte' : 'bytes'}` : kb(size);
+        return [`${kind} ${by} past ${kb(most)}`];
     });
+
+/** A page as the gate weighed it: its sizes, where they could be measured, and what it missed. */
+export interface Weighed {
+    readonly sizes?: Budget;
+    readonly missed: readonly string[];
+}
+
+/**
+ * A page weighed against its budget. A page whose downloads cannot be read is a miss that says
+ * why, not an error, so the audit carries on to the other pages and its summary lists this one.
+ *
+ * @param measure reads the page's sizes, and throws where it cannot
+ */
+export const weighed = (measure: () => Budget, budget: Budget): Weighed => {
+    try {
+        const sizes = measure();
+        return { sizes, missed: pastBudget(sizes, budget) };
+    } catch (error) {
+        const why = error instanceof Error ? error.message : String(error);
+        return { missed: [`downloads not measured, ${why}`] };
+    }
+};

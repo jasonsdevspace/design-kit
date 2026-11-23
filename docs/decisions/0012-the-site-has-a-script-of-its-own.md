@@ -161,5 +161,8 @@ The paths are in `packages/site`.
   behavior page downloads and in no other page's.
 - `bench/lighthouse.ts` also holds each page's script and its sheets, gzipped, to the budgets in
   `src/budgets.ts`, measured over the files the build wrote. `src/budgets.test.ts` finds the scripts
-  a page loads or preloads and the sheets it links counted, a file from outside the build refused,
-  each page given its budget, and a page past one, or with nothing found to measure, failed.
+  a page loads or preloads and the sheets it links counted, however their tags are written, a file
+  from outside the build's assets folder refused, and with it a built file the page names and does
+  not count. It finds each page given its budget, a page past one, or with nothing found to
+  measure, failed, and a page whose files cannot be read taken for a miss, with the audit carrying
+  on.

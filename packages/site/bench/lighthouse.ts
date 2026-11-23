@@ -17,8 +17,8 @@ import {
     writeRecord,
 } from '../../../scripts/record.mjs';
 import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
-import { type Budget, budgetOf, downloadsOf, pastBudget } from '../src/budgets.ts';
-import { ROUTES } from '../src/routes.ts';
+import { type Budget, budgetOf, downloadsOf, kb, weighed } from '../src/budgets.ts';
+import { BASE, ROUTES } from '../src/routes.ts';
 
 /**
  * Lighthouse over the built site, held to the gates ShelfLens is held to.
@@ -111,9 +111,6 @@ const findingsOf = (report: Report): readonly string[] =>
 /** The built site, whose files the byte budgets are measured over. */
 const DIST = new URL('../dist/', import.meta.url);
 
-/** A size in kilobytes, to a hundredth, as the budgets' misses are written. */
-const kb = (bytes: number) => `${(bytes / 1024).toFixed(2)} KB`;
-
 /**
  * The bytes of script and of sheets the page built from an HTML file downloads, each file gzipped
  * as a server sends it.
@@ -121,19 +118,24 @@ const kb = (bytes: number) => `${(bytes / 1024).toFixed(2)} KB`;
 const bytesOf = (file: string): Budget => {
     const gzipped = (files: readonly string[]) =>
         files.reduce((sum, each) => sum + gzipSync(readFileSync(new URL(each, DIST))).length, 0);
-    const { scripts, styles } = downloadsOf(readFileSync(new URL(file, DIST), 'utf8'));
+    const { scripts, styles } = downloadsOf(readFileSync(new URL(file, DIST), 'utf8'), BASE);
     return { script: gzipped(scripts), style: gzipped(styles) };
 };
 
-/** What a page's bytes miss of its budget, with each size and its budget said in the log. */
+/**
+ * What a page's bytes miss of its budget, with each size and its budget said in the log. A page
+ * whose files cannot be read is a miss too, said in the log in its place.
+ */
 const pastItsBudget = (path: string, file: string): readonly string[] => {
-    const sizes = bytesOf(file);
     const budget = budgetOf(file);
+    const { sizes, missed } = weighed(() => bytesOf(file), budget);
     console.log(
-        `${path} downloads: script ${kb(sizes.script)} of ${kb(budget.script)}, ` +
-            `sheets ${kb(sizes.style)} of ${kb(budget.style)}`
+        sizes === undefined
+            ? `${path} downloads: ${missed.join(', ')}`
+            : `${path} downloads: script ${kb(sizes.script)} of ${kb(budget.script)}, ` +
+                  `sheets ${kb(sizes.style)} of ${kb(budget.style)}`
     );
-    return pastBudget(sizes, budget);
+    return missed;
 };
 
 /** Whether this run records what it measured, as `npm run bench:pages` asks. */
