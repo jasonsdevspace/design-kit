@@ -11,7 +11,7 @@ import { servePage, stillClock } from './page.js';
  * nothing where focus moves to a summary, its words where the summary already had focus, and
  * otherwise that field's name and error with how many need attention where more are wrong, with a
  * second refusal heard again, "Form cleared." where a reset takes away the kit's errors, and a
- * React field's error the page draws again while the kit's words stand in its place.
+ * field's error the page draws again with new words while a refusal through the hook stands.
  */
 
 const FORM = renderToStaticMarkup(
@@ -398,36 +398,46 @@ test.describe('in React', () => {
         await expect(page.locator('#root p[role="status"]')).toHaveText(/^Player: Error: /);
     });
 
-    test("keeps a field's error working as the page draws it again while the kit refuses", async ({
+    test("keeps a field's error working as the page draws it again while a refusal stands", async ({
         page,
     }) => {
         const errors: string[] = [];
         page.on('pageerror', (error) => errors.push(error.message));
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
+        // Each time the screen's status line comes to say something, noted as it is said.
+        await page.evaluate(() => {
+            const heard: string[] = [];
+            (window as unknown as { heard: string[] }).heard = heard;
+            const line = document.querySelector('#root p[role="status"]');
+            if (!line) return;
+            new MutationObserver(() => {
+                const words = line.textContent.trim();
+                if (words !== '' && heard.at(-1) !== words) heard.push(words);
+            }).observe(line, { childList: true, characterData: true, subtree: true });
+        });
         const seat = page.getByRole('textbox', { name: 'Seat' });
-        const shown = page.locator('#book .dk-field-error:visible');
+        const error = page.locator('[id="seat-error"]');
         await page.getByRole('button', { name: 'Book' }).click();
-        await expect(seat).toHaveAccessibleDescription('Error: Enter a value.');
+        await expect(seat).toBeFocused();
+        await expect(error).toHaveText('Error: Enter a value.');
+        await expect
+            .poll(() => page.evaluate(() => (window as unknown as { heard: string[] }).heard))
+            .toEqual(['Seat: Error: Enter a value.']);
         // New words from the page while the refusal stands, plain and then with an address React
         // draws in parts, so its children change as well as its text.
         for (const words of ['Pick a seat.', 'Pick a seat, or ask box@example.com.']) {
             await page.evaluate((next) => {
                 (window as unknown as { seatError: (words: string) => void }).seatError(next);
             }, words);
-            await expect(shown).toHaveText('Error: Enter a value.');
-            await expect(seat).toHaveAccessibleDescription('Error: Enter a value.');
+            await expect(error).toHaveCount(1);
+            await expect(error).toBeVisible();
+            await expect(error).toHaveText(`Error: ${words}`);
+            await expect(seat).toHaveAccessibleDescription(`Error: ${words}`);
+            await expect(seat).toHaveAttribute('aria-invalid', 'true');
         }
-        // The value fixed, the kit takes its words away and the page's newest words are back.
-        await seat.fill('12A');
-        await page.getByRole('button', { name: 'Book' }).click();
-        await expect(shown).toHaveText('Error: Pick a seat, or ask box@example.com.');
-        await expect(seat).toHaveAccessibleDescription(
-            'Error: Pick a seat, or ask box@example.com.'
+        expect(await page.evaluate(() => (window as unknown as { heard: string[] }).heard)).toEqual(
+            ['Seat: Error: Enter a value.']
         );
-        await page.evaluate(() => {
-            (window as unknown as { seatError: (words: string) => void }).seatError('Seat taken.');
-        });
-        await expect(shown).toHaveText('Error: Seat taken.');
         expect(errors).toEqual([]);
     });
 

@@ -819,9 +819,8 @@ the `validity` of each of the form's fields, the whole form even where a part of
 fields tied to it from outside by `form` among them, before the page's handler, passing over a field
 marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
 field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
-error the page already drew for the field is hidden until the field passes, and the kit's takes its
-place and its id, so the page's own children stay as it drew them, and a page that draws them again,
-as React does, finds each one where it left it. A stepper's range error is left as the one error. Where every field passes, the page's handler runs as
+error the page already drew for the field takes the kit's words until the field passes, and a
+stepper's range error is left as the one error. Where every field passes, the page's handler runs as
 ever, for the checks the constraints cannot express, such as two fields that must match or a name
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
@@ -833,6 +832,14 @@ was attached first, so its options are the ones the check takes, and a refusal t
 only in the part it attached. Fields not in error are marked `aria-invalid="false"` as the form is
 attached, so a browser does not read an empty required field as invalid before anything is
 submitted.
+
+`attachForm` draws into the markup it finds, so it draws errors only in markup nothing will draw
+again, such as a page written by hand or the React components rendered to static HTML and attached
+from plain script. A form React still draws refuses through `useFormRefusal`, whose `invalid` hands
+the failures to the page to draw, since React writes a field's error, its id and the control's
+`aria-describedby` and `aria-invalid` again whenever the field's props change, and would find the
+kit's words and marks in what it holds as its own. `attachForm` drawing its own errors in a form
+React still draws, as from an effect, is not supported.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,

@@ -1,15 +1,14 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { attachForm } from '../src/controls.js';
 import { Button, InputField, StatusProvider, useFormRefusal } from '../src/react.js';
 
 /*
  * The page form.spec.tsx draws with React: a form that refuses an empty name, drawing its error and
  * then refusing through the screen's status line, and one that refuses it after an await, as a
  * page that asks its store first does, refused twice with the first called off, and refused as the
- * visitor moves focus before the error is drawn, and a field whose error the page draws while the
- * kit refuses the form, which the page then draws with new words.
+ * visitor moves focus before the error is drawn, and a field whose error the page draws again with
+ * new words while a refusal stands.
  */
 
 type Page = {
@@ -87,18 +86,18 @@ const SavePlayer = () => {
     );
 };
 
-// A form the kit refuses itself, whose field holds an error the page drew, and words the page can
-// change at any time, as a page whose state changes before the visitor fixes the value does.
+// A form refused through the hook, whose field's error the page draws from its state and can draw
+// again with new words at any time, as a page whose state changes before the visitor fixes the
+// value does.
 const BookSeat = () => {
-    const [error, setError] = useState('Choose a seat.');
-    const form = useRef<HTMLFormElement>(null);
+    const [error, setError] = useState('');
+    const [form] = useFormRefusal<HTMLFormElement>({
+        invalid: (failures) => {
+            setError(failures[0]?.words ?? '');
+        },
+    });
     useEffect(() => {
         page.seatError = setError;
-        const controller = new AbortController();
-        if (form.current) attachForm(form.current, { signal: controller.signal });
-        return () => {
-            controller.abort();
-        };
     }, []);
     return (
         <form id="book" ref={form} onSubmit={(event) => event.preventDefault()}>

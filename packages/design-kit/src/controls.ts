@@ -2441,11 +2441,8 @@ const errorStart = () => {
 
 /**
  * The error a failure is shown in, and what takes it away: a stepper's range error, which says what
- * is wrong already, left as it is, else one the kit draws with the kit's words. Where the page
- * already drew an error for the field, the kit's takes its place and its id, and the page's is
- * hidden until the kit's is taken away, its children never touched, since React may draw them
- * again at any time. Else the kit's goes after the field's hint, above the control or under a set's
- * legend.
+ * is wrong already, left as it is, an error the page already drew for the field given the kit's
+ * words, else one the kit draws after the field's hint, above the control or under a set's legend.
  */
 const errorFor = (
     field: Element,
@@ -2459,26 +2456,24 @@ const errorFor = (
                 part instanceof HTMLElement && part.matches('.dk-stepper-range') && !part.hidden
         );
     if (range) return { error: range, takeAway: () => undefined };
-    const made = document.createElement('p');
-    made.className = 'dk-field-error';
-    made.append(errorStart(), ...breakable(words));
     const page = field.id ? byId(field, `${field.id}-error`) : null;
     if (page instanceof HTMLElement && page.matches('.dk-field-error')) {
-        const { id, hidden } = page;
-        page.removeAttribute('id');
-        page.hidden = true;
-        made.id = id;
-        page.before(made);
+        const kept = [...page.childNodes];
+        const hidden = page.hidden;
+        page.replaceChildren(errorStart(), ...breakable(words));
+        page.hidden = false;
         return {
-            error: made,
+            error: page,
             takeAway: () => {
-                made.remove();
-                page.id = id;
+                page.replaceChildren(...kept);
                 page.hidden = hidden;
             },
         };
     }
+    const made = document.createElement('p');
+    made.className = 'dk-field-error';
     made.id = freeId(`${field.id || control.id || 'dk-field'}-error`, field);
+    made.append(errorStart(), ...breakable(words));
     const set = field.matches('fieldset');
     const after = set
         ? ([...field.querySelectorAll(':scope > .dk-field-hint')].at(-1) ??
@@ -2770,8 +2765,8 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     /**
      * Draws a failure's error in its field as the kit's field draws one: after its hint, above the
      * control or under a set's legend, starting with a word a screen reader reads, and described
-     * after the hint. An error the page already drew for the field is hidden behind the kit's, and
-     * a stepper's range error, which says what is wrong already, is left as it is and only marked.
+     * after the hint. An error the page already drew for the field takes the kit's words, and a
+     * stepper's range error, which says what is wrong already, is left as it is and only marked.
      */
     const draw = ({ field, control, words }: FieldFailure) => {
         undraw(field);
