@@ -1421,6 +1421,8 @@ const PROPERTY_WORDS: Readonly<Record<string, string>> = {
     '--dk-button-grid-least': 'The least width of a cell in a grid of buttons',
     '--dk-table-ground': 'The ground under a table’s pinned column',
     '--dk-table-pinned-size': 'The width of a table’s pinned column, 8rem unless set',
+    '--dk-field-measure':
+        'The widest a field in a page, a band or a stack grows, the measure unless set',
     '--dk-stepper-digits': 'The figures a stepper’s field keeps room for, 2 unless set',
     '--dk-band-room': 'The room above and below a band, inside its ground',
     '--dk-sections-least': 'The least width of a section in a group of sections, 20rem unless set',
