@@ -14,17 +14,24 @@ import { contrast as ratio } from '../examples/palette.js';
 /** The origin the specs that load a module serve their page from, so it has storage of its own. */
 export const ORIGIN = 'https://kit.test';
 
+/** Where a still clock starts, a fixed moment, so every run reads the same time. */
+const CLOCK_START = Date.UTC(2026, 0, 1);
+
+/**
+ * Where a still clock stops, a day after it starts. The clock runs from the moment it is put on
+ * and can only be stopped at a time it has not yet passed, so the stop lies further ahead than any
+ * test runs, and however slow a runner is between the two calls the stop is still to come.
+ */
+const CLOCK_STOP = CLOCK_START + 24 * 60 * 60 * 1000;
+
 /**
  * Puts a stand-in clock on a page or a context and stops it, so time moves only by the test's own
  * steps. An installed clock left running keeps pace with real time between steps as well, and on a
  * slow runner that real time can fire a timer before the step that expects it to be still waiting.
- * It stops a second after it starts, since the clock runs from the moment it is installed and can
- * only be stopped at a time it has not yet passed.
  */
-export const stillClock = async (clock: Clock): Promise<void> => {
-    const time = Date.now();
-    await clock.install({ time });
-    await clock.pauseAt(time + 1000);
+export const stillClock = async (clock: Pick<Clock, 'install' | 'pauseAt'>): Promise<void> => {
+    await clock.install({ time: CLOCK_START });
+    await clock.pauseAt(CLOCK_STOP);
 };
 
 /**
