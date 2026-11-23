@@ -15,7 +15,7 @@ import {
     tabKey,
 } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
-import { textSize } from './text-size.js';
+import { doubled, textSize } from './text-size.js';
 
 /*
  * A stepper as a page attaches it: its buttons hidden with no script and once taken away and named
@@ -33,7 +33,8 @@ import { textSize } from './text-size.js';
  * value starting where a read-only field's words start and standing at the field's height, or at
  * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
  * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
- * stepper's error above it and its hint below it, focus handed to a read-only value or to the
+ * stepper's error above it and its hint below it, a field's control at its own height beside a
+ * taller field in a page's own row, focus handed to a read-only value or to the
  * stepper itself and kept there as it is taken down with a button focused, the keyboard, and no
  * audit findings in either theme.
  */
@@ -461,6 +462,97 @@ test('fits a dialog and a sheet on a phone 320px wide at twice the text size', a
             });
         }
     }
+});
+
+/** Two text fields in a page's own row, the first label long enough to wrap at a phone's width. */
+const PAIR = renderToStaticMarkup(
+    <div className="pair">
+        <InputField id="first" label="First name, as it is printed on the card" />
+        <InputField id="last" label="Last name" />
+    </div>
+);
+
+/**
+ * A text field beside a stepper's field in a column only as wide as it needs, the text field's
+ * label wrapping in the room the stepper leaves at a phone's width and twice the text size.
+ */
+const BESIDE = renderToStaticMarkup(
+    <div className="beside">
+        <InputField id="table" label="Table name" />
+        <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} />
+    </div>
+);
+
+test("keeps each field's control at its own height beside a taller field in a page's own row", async ({
+    page,
+    browserName,
+}) => {
+    /*
+     * Each field's controls in the row, and the same field's drawn alone under the row at the same
+     * width, so a field stretched to its row's height shows as a taller control than its own.
+     */
+    const measure = () =>
+        page.evaluate(() =>
+            [...document.querySelectorAll<HTMLElement>(':is(.pair, .beside) > .dk-field')].map(
+                (field) => {
+                    const heights = (of: HTMLElement) =>
+                        [...of.querySelectorAll('.dk-input, .dk-stepper > .dk-button')].map(
+                            (control) => Math.round(control.getBoundingClientRect().height)
+                        );
+                    const alone = field.cloneNode(true);
+                    if (!(alone instanceof HTMLElement)) throw new Error('no copy');
+                    alone.style.width = `${String(field.getBoundingClientRect().width)}px`;
+                    field.closest('main')?.append(alone);
+                    const result = {
+                        field: field.querySelector('input')?.id,
+                        heights: heights(field),
+                        alone: heights(alone),
+                    };
+                    alone.remove();
+                    return result;
+                }
+            )
+        );
+    const serve = async (width: number, body: string) => {
+        await page.setViewportSize({ width, height: 700 });
+        await servePage(page, {
+            title: 'Round 3',
+            css:
+                '.pair, .beside { display: grid; gap: var(--dk-space-3); }' +
+                ' .pair { grid-template-columns: 1fr 1fr; } .beside { grid-template-columns: 1fr auto; }',
+            body: `<main><h1>Round 3</h1>${body}</main>`,
+            script: `import { attachStepper } from './controls.js';
+for (const stepper of document.querySelectorAll('.dk-stepper')) attachStepper(stepper);
+window.ready = true;`,
+        });
+        await page.waitForFunction(() => 'ready' in window);
+    };
+
+    await serve(390, PAIR);
+    const labels = await page
+        .locator('.pair .dk-field-label')
+        .evaluateAll((all) => all.map((label) => label.getBoundingClientRect().height));
+    // The first label wraps, so the row is taller than the second field needs.
+    expect(labels[0] ?? 0).toBeGreaterThan((labels[1] ?? 0) + 4);
+    for (const { field, heights, alone } of await measure()) {
+        expect(heights, String(field)).toEqual(alone);
+        for (const drawn of heights) expect(drawn, String(field)).toBe(44);
+    }
+
+    await serve(320, BESIDE);
+    await doubled(page, browserName);
+    const beside = await page
+        .locator('.beside .dk-field-label')
+        .evaluateAll((all) => all.map((label) => label.getBoundingClientRect().height));
+    // The text field's label wraps, so the row is taller than the stepper's field needs.
+    expect(beside[0] ?? 0).toBeGreaterThan((beside[1] ?? 0) + 4);
+    const measured = await measure();
+    for (const { field, heights, alone } of measured) {
+        expect(heights, String(field)).toEqual(alone);
+    }
+    // The stepper's buttons and its value at the target, at twice the text size.
+    const seats = measured.find(({ field }) => field === 'seats');
+    expect(seats?.heights).toEqual([2.75 * 32, 2.75 * 32, 2.75 * 32]);
 });
 
 test('empties its status line once the value is typed over, and once it is taken away', async ({

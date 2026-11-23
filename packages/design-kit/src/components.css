@@ -717,11 +717,14 @@
      * body wraps a long word only where it cannot fit, by `overflow-wrap: break-word`, and a word
      * wrapped that way still sets a grid column's least width, so the field's one column is given
      * no least width, and a word with no place to break, such as an email address in an error,
-     * breaks inside it.
+     * breaks inside it. A field stretched taller than its parts, as by a taller field beside it in
+     * a page's own row, keeps each part at its own height and leaves the spare room below them,
+     * so its control never grows to fill the row.
      */
     :where(.dk-field) {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
+        align-content: start;
         gap: var(--dk-space-1);
     }
 

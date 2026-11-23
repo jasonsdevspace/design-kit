@@ -604,11 +604,12 @@ too, a field holds to `--dk-measure` as the prose beside it does, so a field for
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
 `--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a
 ZIP code, or `none` for the column's width. A row of the page's own that sets fields side by side
-sets `none` on the row, so each field fills its cell. In a dialog or a popover the property has no
-effect, since the dialog's own width sizes its fields. In a form with no class attribute, a field, a
-row of actions or a callout that is not empty stands `--dk-space-4` below what sits above it, once
-another of those has come before it, so a form's buttons go in a `dk-actions`, a lone submit too.
-Nothing else in a plain form is given room. A form with a class attribute lays out its own parts. An
+sets `none` on the row, so each field fills its cell, and a field shorter than the tallest beside it
+keeps its control at its own height, with the spare room below it. In a dialog or a popover the
+property has no effect, since the dialog's own width sizes its fields. In a form with no class
+attribute, a field, a row of actions or a callout that is not empty stands `--dk-space-4` below what
+sits above it, once another of those has come before it, so a form's buttons go in a `dk-actions`, a
+lone submit too. Nothing else in a plain form is given room. A form with a class attribute lays out its own parts. An
 error's words allow a break after each "@", by a `<wbr>`, so an address too long for its line breaks
 there rather than at whichever letter or stop the line runs out on, and the kit's own words keep
 punctuation away from the address they show. A page that puts an address in its own label or hint
