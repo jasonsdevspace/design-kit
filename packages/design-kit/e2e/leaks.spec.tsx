@@ -124,6 +124,15 @@ for (const name of PIECES) {
     });
 }
 
+test('adds no listener to the document as a stepper is attached', async ({ page }) => {
+    await opened(page);
+    const before = await leaksOf(page);
+    await call(page, 'attach', 'the stepper');
+    const attached = await leaksOf(page);
+    expect(attached).not.toEqual(before);
+    expect(attached.documentListeners).toBe(before.documentListeners);
+});
+
 for (const name of KEPT) {
     test(`keeps ${name} joined ${OVER} without growing, and leaves nothing once taken down`, async ({
         page,

@@ -291,6 +291,28 @@ test('reports a typed value outside the limits, or none where one is required, a
     await expect(bid(page)).not.toHaveAttribute('aria-invalid');
 });
 
+test('clears an error for a value between steps, and marks its buttons again, as a script changes the step', async ({
+    page,
+}) => {
+    await open(page);
+    const error = page.locator('#bid-range');
+    const up = raise(page);
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.step = '7';
+    });
+    await bid(page).fill('8');
+    await bid(page).press('Tab');
+    // Between steps of 7, and past 7, the last a press reaches under 10, so the button is off.
+    await expect(error).toBeVisible();
+    await expect(up).toHaveAttribute('aria-disabled', 'true');
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.step = '2';
+    });
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+    await expect(up).not.toHaveAttribute('aria-disabled');
+});
+
 test("keeps a page's own hint and error in place through its own error", async ({ page }) => {
     await open(page);
     const players = page.getByRole('spinbutton', { name: 'Players' });

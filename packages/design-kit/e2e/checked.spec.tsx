@@ -797,9 +797,12 @@ const RANGE = 'Error: Enter a whole number from 0 to 10.';
 
 /**
  * How a test draws the bid: required or not, with a value or blank, speaking through a `say` on a
- * second line, and in a form given words of the page's for a failure.
+ * second line, in a form given words of the page's for a failure, in a form the kit does not check,
+ * which the page marks `novalidate` and handles itself, and marked off by a set around it.
  */
 type Bid = {
+    readonly unchecked?: boolean;
+    readonly off?: boolean;
     readonly required?: boolean;
     readonly blank?: boolean;
     readonly second?: boolean;
@@ -809,26 +812,28 @@ type Bid = {
 
 /** The bid in a form attached with `attachForm`, on a clock that stands still. */
 const openBid = async (page: Page, drawn: Bid = {}) => {
-    const { required = false, blank = false } = drawn;
+    const { required = false, blank = false, unchecked = false, off = false } = drawn;
     await stillClock(page.clock);
     await servePage(page, {
         title: 'Bid',
         body: renderToStaticMarkup(
             <main>
                 <h1>Bid</h1>
-                <form>
+                <form noValidate={unchecked}>
                     <InputField id="name" name="name" label="Name" required />
                     {/* Above the bid, so an error drawn as focus leaves the bid never moves it. */}
                     <button type="submit">Send</button>
-                    <StepperField
-                        id="bid"
-                        name="bid"
-                        label="Bid"
-                        min={0}
-                        max={10}
-                        defaultValue={blank ? undefined : 5}
-                        required={required}
-                    />
+                    <div aria-disabled={off ? 'true' : undefined}>
+                        <StepperField
+                            id="bid"
+                            name="bid"
+                            label="Bid"
+                            min={0}
+                            max={10}
+                            defaultValue={blank ? undefined : 5}
+                            required={required}
+                        />
+                    </div>
                     <p id="count">0</p>
                 </form>
                 <StatusLine className="screen-status" />
@@ -842,10 +847,11 @@ attachStepper(
     document.querySelector('.dk-stepper'),
     drawn.second ? { say: attachStatus(document.querySelector('.second-status')) } : undefined
 );
-attachForm(form, {
-    status: document.querySelector('.screen-status'),
-    errorWords: drawn.errorWords,
-});
+if (!drawn.unchecked)
+    attachForm(form, {
+        status: document.querySelector('.screen-status'),
+        errorWords: drawn.errorWords,
+    });
 form.addEventListener('submit', (event) => {
     event.preventDefault();
     const count = document.querySelector('#count');
@@ -878,6 +884,24 @@ test('leaves a stepper that speaks through a say of its own unsaid on a refused 
     await bid.press('Enter');
     expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
 });
+
+for (const [drawn, where] of [
+    [{ unchecked: true }, 'a form the page handles itself, with no check of the kit'],
+    [{ off: true }, 'a checked form that passes over it, marked off'],
+] as const)
+    test(`leaves a stepper's own error said once in ${where}`, async ({ page }) => {
+        await openBid(page, drawn);
+        await page.getByLabel('Name').fill('Ana');
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        // Forced, since a field under a set marked off is not one Playwright takes for enabled.
+        await bid.fill('99', { force: true });
+        await bid.focus();
+        await page.keyboard.press('Enter');
+        // No refusal follows to say it, so the stepper's own words are the ones heard.
+        await expect(page.locator('#count')).toHaveText('1');
+        expect(await saidAfterWait(page)).toEqual([`stepper: ${RANGE}`]);
+        expect((await bidErrors(page)).drawn).toEqual([RANGE]);
+    });
 
 /*
  * A stepper is wrong exactly where the browser's constraints say its field is, and where its own
@@ -1054,25 +1078,8 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                 expect(await handed(page)).toEqual(['bid: Enter a value.']);
         });
 
-        test('saves a stepper a script set right with no event, and clears its error as it is submitted', async ({
-            page,
-        }) => {
-            await openWay(page);
-            await bidOf(page).fill('99');
-            await bidOf(page).press('Tab');
-            expect((await bidErrors(page)).drawn).toEqual([RANGE]);
-            await bidOf(page).evaluate((input: HTMLInputElement) => {
-                input.value = '4';
-            });
-            await send(page).focus();
-            await send(page).press('Enter');
-            await expect(page.locator('#count')).toHaveText('1');
-            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
-            await expect(bidOf(page)).not.toHaveAttribute('aria-invalid', 'true');
-        });
-
         if (way === 'useFormRefusal')
-            test('says nothing where a refusal moves focus to a summary over a stepper typed past its range', async ({
+            test('keeps a stepper typed past its range from speaking over a summary the refusal moves focus to', async ({
                 page,
             }) => {
                 await openWay(page, { summary: true });
