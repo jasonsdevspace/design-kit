@@ -29,12 +29,13 @@ import { doubled, textSize } from './text-size.js';
  * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
  * needed, the value in figures of one width so the field keeps its width, every figure shown under
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
- * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
- * value starting where a read-only field's words start and standing at the field's height, or at
- * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
- * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
- * stepper's error above it and its hint below it, a field's control at its own height beside a
- * taller field in a page's own row, an inline stepper's label level with its neighbor's there,
+ * a stepper that fits a phone at twice the text size, alone and inside its field in a page's own
+ * row, the larger target when asked, a read-only value starting where a read-only field's words
+ * start and standing at the field's height, or at the larger target when tall, centered at an
+ * inline stepper's row's end, and kept in place with a button holding focus, hidden pieces kept
+ * hidden by sheets read without :has(), an inline stepper's error above it and its hint below it,
+ * a field's control at its own height beside a taller field in a page's own row, an inline
+ * stepper's label level with its neighbor's there,
  * focus handed to a read-only value or to the stepper itself and kept there as it is taken down
  * with a button focused, the keyboard, and no audit findings in either theme.
  */
@@ -570,6 +571,124 @@ window.ready = true;`,
     // The text field's label wraps, so the row is taller than the stepper's field needs.
     expect(beside[0] ?? 0).toBeGreaterThan((beside[1] ?? 0) + 4);
     await same();
+});
+
+/** A row of the page's own, as a page lays out a stepper's field beside a text field. */
+const ROW_CSS =
+    '.row { display: flex; align-items: end; gap: var(--dk-space-2); padding-inline: var(--dk-space-4); }';
+
+/** A stepper's field and a text field in a row of the page's own, attached, at 320 wide. */
+const openRow = async (page: Page, stepper: string): Promise<void> => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        css: ROW_CSS,
+        body: `<main><h1>Round 3</h1><div class="row">${stepper}${renderToStaticMarkup(
+            <InputField label="Player" />
+        )}</div></main>`,
+        script: ATTACH,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+for (const scale of [1, 2]) {
+    test(`keeps a stepper inside its field beside a text field in a page's own row at ${String(scale)}x the text size`, async ({
+        page,
+        browserName,
+    }) => {
+        await openRow(
+            page,
+            renderToStaticMarkup(
+                <StepperField id="bid" label="Bid" min={0} max={10} defaultValue={3} />
+            )
+        );
+        if (scale === 2) await doubled(page, browserName);
+        const placed = await page.locator('.row').evaluate((row) => {
+            const field = row.querySelector('.dk-field')?.getBoundingClientRect();
+            const stepper = row.querySelector('.dk-stepper')?.getBoundingClientRect();
+            const buttons = [...row.querySelectorAll('.dk-stepper > .dk-button')].map((button) =>
+                button.getBoundingClientRect()
+            );
+            return {
+                inside:
+                    !!field &&
+                    !!stepper &&
+                    stepper.left >= field.left - 0.5 &&
+                    stepper.right <= field.right + 0.5,
+                past: buttons.filter(
+                    (button) =>
+                        !field || button.left < field.left - 0.5 || button.right > field.right + 0.5
+                ).length,
+                widths: buttons.map((button) => button.width),
+                heights: buttons.map((button) => button.height),
+            };
+        });
+        // The stepper and both its buttons within the field, at least 44 wide and the target tall.
+        expect(placed.inside, 'the stepper inside its field').toBe(true);
+        expect(placed.past, 'buttons past the field').toBe(0);
+        expect(placed.widths).toHaveLength(2);
+        for (const width of placed.widths) expect(width).toBeGreaterThanOrEqual(44 - 0.5);
+        // The target, in rems, at the text size.
+        for (const height of placed.heights) {
+            expect(height).toBeGreaterThanOrEqual(2.75 * 16 * scale - 1);
+        }
+        expect(await sideways(page)).toBe(0);
+    });
+}
+
+test("widens a stepper's field for its stepper alone, not for words in its hint that never wrap", async ({
+    page,
+    browserName,
+}) => {
+    await openRow(
+        page,
+        renderToStaticMarkup(
+            <StepperField
+                id="bid"
+                label="Bid"
+                hint={
+                    <>
+                        Saved as{' '}
+                        <code style={{ whiteSpace: 'nowrap' }}>round-three-bid-of-ana</code>
+                    </>
+                }
+                min={0}
+                max={10}
+                defaultValue={3}
+            />
+        )
+    );
+    await doubled(page, browserName);
+    const measured = await page.locator('.row').evaluate((row) => {
+        const field = row.querySelector('.dk-field');
+        const value = row.querySelector('.dk-stepper-value');
+        const stepper = row.querySelector('.dk-stepper');
+        const other = row.querySelector('.dk-field:last-child');
+        if (!field || !value || !stepper || !other) throw new Error('the row is not drawn');
+        const gap = parseFloat(getComputedStyle(stepper).columnGap);
+        const edge =
+            row.getBoundingClientRect().right - parseFloat(getComputedStyle(row).paddingRight);
+        const box = field.getBoundingClientRect();
+        const within = (part: Element) => {
+            const drawn = part.getBoundingClientRect();
+            return drawn.left >= box.left - 0.5 && drawn.right <= box.right + 0.5;
+        };
+        return {
+            field: box.width,
+            inside: within(stepper),
+            past: [...stepper.querySelectorAll(':scope > .dk-button')].filter(
+                (button) => !within(button)
+            ).length,
+            // The stepper's least width: its buttons at 44 wide, its value and the space between.
+            least: 2 * 44 + value.getBoundingClientRect().width + 2 * gap,
+            otherInside: other.getBoundingClientRect().right <= edge + 0.5,
+        };
+    });
+    // The squeezed row leaves the field its stepper's least width and the text field its room.
+    expect(measured.inside, 'the stepper inside its field').toBe(true);
+    expect(measured.past, 'buttons past the field').toBe(0);
+    expect(measured.field).toBeLessThanOrEqual(measured.least + 1);
+    expect(measured.otherInside, 'the text field inside the row').toBe(true);
 });
 
 test('empties its status line once the value is typed over, and once it is taken away', async ({

@@ -97,6 +97,8 @@ is its CSS transformer, as the package README shows.
   in one column where a page asks for columns, a row with a picture sets the picture in the column
   its words would take, and a footer at the page's end pads its foot by its own step alone rather
   than past what a phone keeps there.
+- In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
+  can still get narrower than its stepper.
 - On a page that scrolls whole and is 18rem wide or more, the room kept for a tab bar holds a label
   on two lines. A label that wraps further can leave what the keyboard reaches partly under the bar.
   CSS cannot read its height, so the reference asks for short labels. An app's frame keeps clear of

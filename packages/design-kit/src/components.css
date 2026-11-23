@@ -3485,14 +3485,42 @@
         max-width: 100%;
     }
 
+    /*
+     * A stepper's field is never narrower than the stepper's least width, where the page's row
+     * leaves its items their own least width. The stepper alone sets it: the field's other parts
+     * ask for no least width, so a long word, a picture or words that never wrap in a hint leave
+     * the field as wide as its stepper, and a long word still breaks inside the column.
+     */
+    :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper)) {
+        grid-template-columns: minmax(auto, 1fr);
+    }
+
+    :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper) > *) {
+        min-width: 0;
+    }
+
+    :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper) > .dk-stepper) {
+        min-width: min-content;
+    }
+
     /* A stepper taken down while a button had focus holds focus itself, so it shows the ring. */
     :where(.dk-stepper):focus-visible {
         outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
     }
 
+    /*
+     * A button is the target wide at most, its edge included, and its figure sits centered in a
+     * column that can narrow to nothing, so the button asks for the target where there is room and
+     * for no more than its least width where there is not. A width would ask for the target
+     * everywhere. The stepper's least width is then its buttons' least and its value's, which its
+     * field keeps.
+     */
     :where(.dk-stepper > .dk-button) {
-        width: var(--dk-target);
+        display: grid;
+        grid-template-columns: minmax(0, var(--dk-target));
+        place-items: center;
+        max-width: var(--dk-target);
         min-width: min(var(--dk-target), 44px);
         min-height: var(--dk-target);
         padding-inline: 0;
@@ -3528,7 +3556,8 @@
     }
 
     :where(.dk-stepper-tall > .dk-button) {
-        width: var(--dk-target-large);
+        grid-template-columns: minmax(0, var(--dk-target-large));
+        max-width: var(--dk-target-large);
         min-height: var(--dk-target-large);
     }
 
@@ -4039,7 +4068,7 @@
      * rule for hidden never leans on it.
      */
     :where(.dk-stepper:has(> .dk-button:not([hidden])) > .dk-button[hidden]) {
-        display: inline-flex !important;
+        display: grid !important;
         visibility: hidden;
     }
 }

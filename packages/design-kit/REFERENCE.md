@@ -604,21 +604,23 @@ too, a field holds to `--dk-measure` as the prose beside it does, so a field for
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
 `--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a ZIP
 code, or `none` for the column's width. A row of the page's own that sets fields side by side sets
-`none` on the row, so each field fills its cell, and a field shorter than the tallest beside it
-keeps its control at its own height, with the spare room below it. In a dialog or a popover the
-property has no effect, since the dialog's own width sizes its fields. An inline stepper in a page's
-row keeps its label and stepper at the top of its cell, its label level with the labels beside it. A
-field given more height than its parts, by a height or a flex grow of the page's own, leaves the
-room below them too, so a control meant to fill its field, such as a textarea that fills a panel,
-takes the room by the page's own `grid-template-rows` on the field, which gives the control's row
-`1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a form with no
-class attribute, a field, a row of actions or a callout that is not empty stands `--dk-space-4`
-below what sits above it, once another of those has come before it, so a form's buttons go in a
-`dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form with a class
-attribute lays out its own parts. An error's words allow a break after each "@", by a `<wbr>`, so an
-address too long for its line breaks there rather than at whichever letter or stop the line runs out
-on, and the kit's own words keep punctuation away from the address they show. A page that puts an
-address in its own label or hint can add `<wbr>` after the "@" for the same break.
+`none` on the row, so each field fills its cell, and lets its fields wrap, with `flex-wrap: wrap`, a
+gap of `--dk-space-4` both ways and a basis such as `flex: 1 1 7rem` on a text field, so at a large
+text size each field takes its own line with its label whole. A field shorter than the tallest
+beside it keeps its control at its own height, with the spare room below it. In a dialog or a
+popover the property has no effect, since the dialog's own width sizes its fields. An inline stepper
+in a page's row keeps its label and stepper at the top of its cell, its label level with the labels
+beside it. A field given more height than its parts, by a height or a flex grow of the page's own,
+leaves the room below them too, so a control meant to fill its field, such as a textarea that fills
+a panel, takes the room by the page's own `grid-template-rows` on the field, which gives the
+control's row `1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a
+form with no class attribute, a field, a row of actions or a callout that is not empty stands
+`--dk-space-4` below what sits above it, once another of those has come before it, so a form's
+buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form
+with a class attribute lays out its own parts. An error's words allow a break after each "@", by a
+`<wbr>`, so an address too long for its line breaks there rather than at whichever letter or stop
+the line runs out on, and the kit's own words keep punctuation away from the address they show. A
+page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -2987,15 +2989,25 @@ once whichever it is given, and returns what takes it down again.
 The buttons are `--dk-target` both ways, or `--dk-target-large` in a tall stepper. Where a large
 text size leaves the stepper less room than its buttons take, on a phone, the buttons grow narrower,
 never under the target at the usual text size, and keep their height, so the stepper fits its field,
-in an app's dock too. The value is in the mono face with figures of one width, centered, with room
-for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
-asks a page to allow, so the field does not change width as the value changes and no figure is cut
-off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so
-it stands level with them. At 48rem wide or less, in an app's frame and on a page that ends in a tab
-bar, where a field and a button are the target tall, a stepper that is not tall stands level with
-one beside it. With its label to the left the label takes the room the stepper leaves and wraps
-within it, and the stepper moves under the label where a large text size leaves no room for both.
-Its errors sit on lines above it, as every field's do, and its hint on a line below, which only the
+in an app's dock too. A stepper's field with its label above is in turn never narrower than the
+stepper at that least width, in a browser with `:has()`, wherever the page's row leaves its items
+their own least width, so beside a text field the field keeps its stepper and the row's other fields
+take the room left. The stepper alone sets that width, so a long word, a picture or words that never
+wrap in its label, hint or error leave the field as wide as its stepper. A row whose items or tracks
+have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below
+its stepper, which is the row's choice. A stepper's field with its label to the left keeps that
+least width in such a row too, in every browser, its stepper moving under the label where the row
+leaves no room for both. In a row that cannot wrap, the stepper's field keeps its least width and
+the fields beside it take what is left, which at a large text size can be too little for a word in
+their labels. The value is in the mono face with figures of one width, centered, with room for two
+figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page
+to allow, so the field does not change width as the value changes and no figure is cut off, and in a
+tall stepper it is at the heading size. Its height, edge included, is its buttons', so it stands
+level with them. At 48rem wide or less, in an app's frame and on a page that ends in a tab bar,
+where a field and a button are the target tall, a stepper that is not tall stands level with one
+beside it. With its label to the left the label takes the room the stepper leaves and wraps within
+it, and the stepper moves under the label where a large text size leaves no room for both. Its
+errors sit on lines above it, as every field's do, and its hint on a line below, which only the
 inline stepper does. In a stepper with its label above, the hint sits under the label and over the
 errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
 buttons stand in for them and they would keep their room even out of sight.
