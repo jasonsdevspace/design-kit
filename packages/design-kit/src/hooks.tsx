@@ -312,21 +312,24 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
  * shadow root too. It is called in the press or key handler that makes the change, after an await
  * in it too, or in an effect with dependencies once a change React draws later is drawn, never as
  * the component renders nor in an effect that runs on every render, since asking renders the
- * component again. A change made in a transition is asked for inside the same `startTransition`,
- * so the request waits for the render that draws it. A change drawn in another React root is not
+ * component again. A change made in a transition is asked for inside the same `startTransition`, so
+ * the request waits for the render that draws it. A change drawn in another React root is not
  * waited for. Each call is a new request that takes the place of one not yet landed, so the last
  * asked for wins, and returns what calls that request off, which is all that does: nothing at
- * unmount calls a request off. One still waiting when the component unmounts, or when an
- * `Activity` hides it, is made then, with where focus was read as it was asked, so a row that asks
- * for focus on the next one as it is removed moves focus there, after an await, from a timer or in
- * a transition too, and `moveFocus` lands it only where focus is still there or has fallen to the
+ * unmount calls a request off. One still waiting when the component unmounts, or when an `Activity`
+ * hides it, is made then, with where focus was read as it was asked, so a row that asks for focus
+ * on the next one as it is removed moves focus there, after an await, from a timer or in a
+ * transition too, and `moveFocus` lands it only where focus is still there or has fallen to the
  * page's body. A request in a transition an urgent update overtook lands before the transition
  * draws, so it goes to its fallbacks where the transition draws its target. One asked after the
  * component has gone, as a panel that closes and then asks after an await, waits a frame and is
  * made late, taking focus only from the page's body, whatever `from` it was given, and only where
  * its target is in sight, so one whose target an `Activity` hides with the component is held until
- * it shows. A late request still finds an id, its target's or a fallback's, in the root focus was
- * in as it was asked, so one inside a shadow root lands.
+ * it shows. A late request still finds an id, its target's or a fallback's, in the root where focus
+ * was as it was asked, or where the `from` it was given is. Focus has most often fallen to the
+ * page's body by then, so a widget drawn inside a shadow root passes `from`, an element still in
+ * that root, to find its own control, and with no `from` an id is found there only while focus is
+ * still in that root.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
