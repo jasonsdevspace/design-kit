@@ -67,10 +67,11 @@ returns a function that does nothing, as record 22 has it. A dialog attached to 
 still stays when attached again with no options, and a copy button attached again with a new source
 copies from it. A part a control cannot work without, such as a stepper's buttons, a toast's status
 line, its action and its close button, since any message may carry an action, or a table's frame,
-throws an error that names it, so a page that left one out learns of it where it attached. A part it
-can do without, such as a stepper's status line, is skipped. A theme switch with no choices yet is
-the one exception: it is left hidden and returns a function that does nothing, so a page that
-attaches it before its choices are drawn can attach it again once they are.
+throws an error that names it, so a page that left one out learns of it where it first attached,
+under a signal already aborted too, while a control already attached is handed back as it is, as
+record 22 has it. A part it can do without, such as a stepper's status line, is skipped. A theme
+switch with no choices yet is the one exception: it is left hidden and returns a function that does
+nothing, so a page that attaches it before its choices are drawn can attach it again once they are.
 
 What an attach returns is what a page calls next. The switch, the copy button, the stepper, a
 table's frame, a group the arrow keys move through, a busy button and progress return their detach.
@@ -167,6 +168,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 | 0.9.4   | A busy button's dots, with too little room left                                 | 12,523 bytes    | 154 bytes    | 12.5 KB    |
 | 0.9.4   | A field held to the measure, with too little room left                          | 12,661 bytes    | 155 bytes    | 12.75 KB   |
+| 0.9.4   | The root's room written in em, with too little room left                        | 12,909 bytes    | 181 bytes    | 13 KB      |
 
 | Release | What raised it                                                                           | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |

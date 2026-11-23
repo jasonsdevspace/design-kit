@@ -151,18 +151,24 @@ export const teardown = <Options = AttachOptions>(
 
 /**
  * What an attach called again returns: the handle of the control attached to the element, with this
- * call joined to it, or nothing where none is attached.
+ * call joined to it, or nothing where none is attached. An attach that throws for a missing part
+ * calls it before it looks for its parts or reads its signal, so a control already attached is
+ * handed back as it is though its markup has since lost a part, and gives `idle`, what it returns
+ * under a signal already aborted, which is returned for such a signal with nothing joined.
  */
 export const join = <Element extends object, Handle, Options>(
     registry: WeakMap<Element, Kept<Handle, Options>>,
     element: Element,
-    options?: Options & AttachOptions
+    options?: Options & AttachOptions,
+    idle?: Handle
 ): Handle | undefined => {
     const kept = registry.get(element);
-    kept?.down.hold(options?.signal, optionsIn(options));
     // A control taken down by now, or being taken down, as an attach made from its own takedown
     // finds it, is attached afresh.
-    return kept && !kept.down.signal.aborted ? kept.handle : undefined;
+    if (!kept || kept.down.signal.aborted) return undefined;
+    if (idle && options?.signal?.aborted) return idle;
+    kept.down.hold(options?.signal, optionsIn(options));
+    return kept.handle;
 };
 
 /**

@@ -16,6 +16,7 @@ export const WEBKIT: Engine = {
     close: "A dialog's Close closing it with no script, in the native dialog.",
     stepper: "A number field's inner room, and a press by pointer that gives no focus.",
     'stepper-say': 'A stepper attached again from a focusout handler, an event each engine fires.',
+    'stepper-height': "A stepper's height beside a field's, by each engine's number field.",
     table: "What a table's frame scrolls to as the keyboard reaches a link in it.",
     icon: "How an svg's stroke is drawn.",
     rows: "How a phone's list of rows is pressed and reached by the keyboard.",
@@ -42,6 +43,7 @@ export const WEBKIT: Engine = {
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: 'Where focus is after a refusal and a reset, which Safari sets its own way.',
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
+    dated: 'A date or a time field, which Safari never counts as focused by the keyboard.',
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
@@ -49,6 +51,7 @@ export const FIREFOX: Engine = {
     busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
     'stepper-say': 'A stepper attached again from a focusout handler, an event each engine fires.',
+    'stepper-height': "A stepper's height beside a field's, by each engine's number field.",
     controls: 'Lengths Firefox rounds to a sixty-fourth of a pixel.',
     pieces: 'Lengths Firefox rounds to a sixty-fourth of a pixel.',
     table: "A frame's shade, drawn only where a browser ties an animation to a scroll.",
@@ -68,6 +71,7 @@ export const FIREFOX: Engine = {
     panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
     form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
+    dated: "A date or a time field's ring, drawn once where the field is focused two ways.",
     tabbar: 'What the keyboard reaches kept clear of the bar at a root size the page sets.',
 };
 

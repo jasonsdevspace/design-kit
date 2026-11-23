@@ -412,7 +412,7 @@
          * below its words, so its band is only what that leaves short, and a line of it in
          * ordinary text keeps the button's height.
          */
-        padding-block: max(0px, 0.375rem - (1lh - 1.2em) / 2);
+        padding-block: max(0px, 0.375rem - (1lh - var(--dk-leading-tight) * 1em) / 2);
         border: 0;
         /* A link has no edge to lift, so it takes no shadow and does not move when pressed. */
         box-shadow: none;
@@ -735,15 +735,23 @@
     /*
      * A field anywhere in a page, a band or a stack, a form's included, holds to the measure as the
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
-     * a callout in a form ends where its fields end. A row of fields holds to it too, so it ends
-     * where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
+     * a callout in a form ends where its fields end, as does one written before or after a field
+     * or a row of fields in what holds them, for a page that draws its fields with no form. A
+     * callout with no field beside it there runs the column. A row of fields holds to the measure
+     * too, so it ends where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
      * shorter length for a short answer or `none` for the column, and a field in a row of fields
      * narrows by it as well. A dialog and a popover set their own width, which a page may widen, so
      * what they hold takes theirs.
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, .dk-fields, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
+            :is(
+                .dk-field,
+                .dk-fields,
+                form .dk-callout,
+                :is(.dk-field, .dk-fields) ~ .dk-callout,
+                .dk-callout:has(~ :is(.dk-field, .dk-fields))
+            ):not(.dk-dialog *, dialog *, [popover] *)
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
     }
@@ -756,13 +764,32 @@
      * narrow screen or at a large text size each field has a line of its own, with its label whole.
      * The fields stand a plain form's step apart both ways and line up along their foot, so their
      * controls stand level where one label wraps or one field shows a hint or an error. An inline
-     * stepper and a set of choices each take a line of their own.
+     * stepper and a set of choices each take a line of their own. A row written straight in what
+     * holds a column of pieces stands its lines that column's step apart, so a wrapped field sits
+     * as far below as a field under another in a panel, a dialog or a stack too. Only a row the
+     * column holds itself takes the step, since a plain form inside one keeps its own.
      */
     :where(.dk-fields) {
         display: flex;
         flex-wrap: wrap;
         align-items: end;
         gap: var(--dk-space-4);
+    }
+
+    :where(
+        :is(
+                .dk-explainer,
+                .dk-page,
+                .dk-band,
+                .dk-stack,
+                :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
+            > .dk-fields
+    ) {
+        row-gap: var(--dk-flow-step);
     }
 
     :where(.dk-fields > .dk-field) {
@@ -3496,14 +3523,16 @@
     /*
      * A stepper: a number field with a button to lower the value before it and one to raise it
      * after, for a small whole number that is quicker to step than to type on a phone. The buttons
-     * are as tall as the field and as wide as they are tall, and the value is in the mono face with
-     * figures of one width, two wide unless --dk-stepper-digits says more, so the field never
-     * changes width as the value does. Each figure keeps room for the spacing between letters WCAG
-     * asks a page to allow, so none is cut off. A button at a limit is off and drawn as any off
-     * button. In a tall stepper the buttons and the value take the larger target, and the value a
-     * larger size. A value with a button beside it is the buttons' height, edge included, so it
-     * stands level with them, and with a field or a button beside it where those are the target
-     * tall, on a phone and in an app. A read-only value shown alone takes a field's height.
+     * and the value take their height from the rules every button and field take theirs from, so a
+     * stepper is the field's height on a wide page and the target's on a phone, in an app's frame,
+     * on a page that ends in a tab bar and in a dialog on either, level with a field or a button
+     * beside it everywhere. Nothing here sets that height, which record 26 holds. The buttons are
+     * the target wide at both heights, and the value is in the mono face with figures of one
+     * width, two wide unless --dk-stepper-digits says more, so the field never changes width as
+     * the value does. Each figure keeps room for the spacing between letters WCAG asks a page to
+     * allow, so none is cut off. A button at a limit is off and drawn as any off button. In a tall
+     * stepper the buttons and the value take the larger target at every width, and the value a
+     * larger size.
      *
      * Where a large text size leaves the stepper less room than its buttons take, on a phone, the
      * buttons grow narrower, never under the target at the usual text size, and keep their height,
@@ -3547,7 +3576,9 @@
      * column that can narrow to nothing, so the button asks for the target where there is room and
      * for no more than its least width where there is not. A width would ask for the target
      * everywhere. The stepper's least width is then its buttons' least and its value's, which its
-     * field keeps.
+     * field keeps. It keeps no padding, since its one figure never wraps and it is never busy, so
+     * the figure's line stands inside a button's least height and the button is exactly as tall as
+     * a field.
      */
     :where(.dk-stepper > .dk-button) {
         display: grid;
@@ -3555,8 +3586,7 @@
         place-items: center;
         max-width: var(--dk-target);
         min-width: min(var(--dk-target), 44px);
-        min-height: var(--dk-target);
-        padding-inline: 0;
+        padding: 0;
         font-size: var(--dk-text-title);
     }
 
@@ -3595,23 +3625,14 @@
     }
 
     /*
-     * A value with a button beside it stands level with its buttons, at the target's height, the
-     * row stretching a read-only one beside a button that keeps focus, with no :has() to lean on.
-     * A read-only value shown alone, once both buttons are hidden, takes a field's height at each
-     * width from the field's own rules, and a field's inline padding, its figures starting where a
-     * read-only field's words start, so a column of read-only values keeps one edge. An inline
-     * stepper's value sits at its row's end with no such column, so it keeps its centered figures
-     * and the target's height. While a button keeps focus as the field turns read only, the value
-     * keeps its place beside it, and the hidden button keeps its room, by a rule after the rule for
-     * hidden.
+     * A value is a field, so it stands at a field's height at each width by the field's own rules,
+     * level with its buttons, read only or not, with no :has() to lean on. A read-only value shown
+     * alone, once both buttons are hidden, takes a field's inline padding, its figures starting
+     * where a read-only field's words start, so a column of read-only values keeps one edge. An
+     * inline stepper's value sits at its row's end with no such column, so it keeps its centered
+     * figures. While a button keeps focus as the field turns read only, the value keeps its place
+     * beside it, and the hidden button keeps its room, by a rule after the rule for hidden.
      */
-    :where(
-        .dk-stepper-value:is(:not([readonly]), :disabled),
-        .dk-stepper-inline > .dk-stepper > .dk-stepper-value
-    ) {
-        min-height: var(--dk-target);
-    }
-
     :where(
         :not(.dk-stepper-inline)
             > .dk-stepper:not(:has(> .dk-button:not([hidden])))
