@@ -168,7 +168,7 @@ export const fieldMarks: ReactElement = (
 /** Values a visitor reads but cannot change: a text field, a select and a stepper, read only. */
 export const readOnlyFields: ReactElement = (
     <>
-        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <TextareaField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
         <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
             <option value="flip-7">Flip 7</option>
             <option value="wizard">Wizard</option>

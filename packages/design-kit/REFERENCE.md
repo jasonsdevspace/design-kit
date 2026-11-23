@@ -684,7 +684,7 @@ color and is told apart by its words.
 ```html
 <div class="dk-field">
     <label class="dk-field-label" for="round" id="round-label">Round</label>
-    <input class="dk-input" readonly="" id="round" value="Round 3 of 10" />
+    <textarea class="dk-textarea" rows="3" readonly="" id="round">Round 3 of 10</textarea>
 </div>
 <div class="dk-field">
     <label class="dk-field-label" for="game" id="game-label">Game</label>
@@ -728,7 +728,13 @@ this game, is read only, `readOnly` on the field. It stays in the tab order, so 
 it and a screen reader reads it, and its words can be copied. It keeps its edge's width, drawn
 clear on a clear ground with its text in the page's color, so it lines up with the fields beside it
 and reads as a value, while a field that can be changed keeps its edge and its well. In forced
-colors its edge takes the ground's color. A select has no read-only state, so a read-only
+colors its edge takes the ground's color. A value of words is a read-only `TextareaField`, which
+the kit draws as tall as its value rather than its rows, so words that run past the field's width
+at a large text size wrap and show whole. At 320 wide with twice the text size and wider spacing,
+even a short phrase such as "Round 3 of 10" can be wider than a field of one line. A read-only
+`InputField` is one line, and cuts off what runs past its edge with nothing to say more follows, so
+it suits a short figure, or a field held read only for a moment while it saves, which keeps the
+visitor's place in it as a new element would not. A select has no read-only state, so a read-only
 `SelectField` draws a read-only field with the chosen option's words, and a hidden field carries
 its value, so the form still sends it, and it is read only for the page rather than for a moment,
 since turning it on or off draws a new control. A read-only stepper shows its value alone, its

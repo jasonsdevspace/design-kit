@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { readOnlyFields } from '../examples/examples.js';
-import { InputField } from '../src/react.js';
+import { InputField, TextareaField } from '../src/react.js';
 import { forceColors, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED, tooShort } from './spacing.js';
 import { textSize } from './text-size.js';
@@ -14,24 +14,36 @@ import { textSize } from './text-size.js';
  * page's color, the edge in the ground's color in forced colors, a read-only select drawn as a field
  * with its option's words and sending its value, a read-only stepper with no buttons, no audit
  * findings in either theme, and every field whole at 320px with twice the text size and under wider
- * text spacing.
+ * text spacing in a content page, a read-only value of words wrapping where it must. The dealer's
+ * value is longer than its field at that size in any machine's typeface, so the wrap is held
+ * wherever the test runs.
  */
 
-const BODY = `<main><h1>Round</h1><form id="form">${renderToStaticMarkup(
+const BODY = `<main class="dk-page"><h1>Round</h1><form id="form">${renderToStaticMarkup(
     <>
         {readOnlyFields}
+        <TextareaField
+            id="dealer"
+            label="Dealer"
+            defaultValue="Round 3 of 10, Ann deals and Ben keeps the score"
+            readOnly
+        />
         <InputField id="note" label="Note" defaultValue="Ann deals" />
         <InputField id="gone" label="Seat" defaultValue="4" disabled />
     </>
 )}</form></main>`;
 
-/** Each field's control: a text field, a read-only select's field, or a stepper's value. */
-const CONTROLS = '.dk-field :is(.dk-input, .dk-stepper-value)';
+/**
+ * Each field's control: a text field, a read-only value of words in a textarea, a read-only
+ * select's field, or a stepper's value.
+ */
+const CONTROLS = '.dk-field :is(.dk-input, .dk-textarea, .dk-stepper-value)';
 
 /**
- * The controls drawn out of their field, and a stepper's value cut in its width, which the kit
- * sizes for its figures, each by its id. A text field's value is the page's, and one longer than
- * its field scrolls inside it as in any field of one line, so its width is not held here.
+ * The controls drawn out of their field, and a read-only value or a stepper's value that cuts off
+ * what it holds, by width or by height, each by its id. A value that can be changed is the page's,
+ * and one longer than its field scrolls inside it as a visitor types, so its width is not held
+ * here, but a read-only value is there to be read and has nothing to scroll it into view.
  */
 const cutControls = (page: Page): Promise<string[]> =>
     page.locator(CONTROLS).evaluateAll((controls) =>
@@ -41,8 +53,9 @@ const cutControls = (page: Page): Promise<string[]> =>
                 const field = control.closest('.dk-field')?.getBoundingClientRect();
                 return (
                     !field ||
-                    (control.matches('.dk-stepper-value') &&
-                        control.scrollWidth > control.clientWidth + 1) ||
+                    (control.matches('.dk-stepper-value, [readonly]') &&
+                        (control.scrollWidth > control.clientWidth + 1 ||
+                            control.scrollHeight > control.clientHeight + 1)) ||
                     box.left < field.left - 0.5 ||
                     box.right > field.right + 0.5
                 );
@@ -145,7 +158,7 @@ test('keeps every field whole at 320px with twice the text size and under wider 
     expect(await page.evaluate(() => window.innerWidth)).toBe(320);
     // Every field's label and control is there to measure, so nothing passes by matching nothing.
     const fields = await page.locator('.dk-field').count();
-    expect(fields).toBe(5);
+    expect(fields).toBe(6);
     await expect(page.locator('.dk-field-label')).toHaveCount(fields);
     await expect(page.locator(CONTROLS)).toHaveCount(fields);
     expect(await cutOff(page, '.dk-field-label')).toEqual([]);

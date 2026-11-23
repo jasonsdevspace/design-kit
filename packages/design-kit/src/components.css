@@ -990,6 +990,18 @@
         color: var(--dk-fg);
     }
 
+    /*
+     * A read-only textarea holds a value of words, as tall as its value rather than its rows, so
+     * words that run past its width at a large text size wrap and show whole, where an input of one
+     * line cuts them off. Its block padding is a field's, so one line stands at a field's height,
+     * and with nothing to type there is nothing to resize it for.
+     */
+    :where(.dk-textarea[readonly]) {
+        padding-block: var(--dk-space-1);
+        resize: none;
+        field-sizing: content;
+    }
+
     /* A control with an error shown, its edge in the danger color, beside the error's words. */
     :where(
         .dk-input[aria-invalid='true'],

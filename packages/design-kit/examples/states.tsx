@@ -331,16 +331,16 @@ export const CONTROLS: readonly Control[] = [
                 name: 'Values to read but not change',
                 attribute: 'readonly',
                 react: `<>
-    <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+    <TextareaField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
     <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
         <option value="flip-7">Flip 7</option>
         <option value="wizard">Wizard</option>
     </SelectField>
     <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
 </>`,
-                draw: ({ InputField, SelectField, StepperField }, id) => (
+                draw: ({ TextareaField, SelectField, StepperField }, id) => (
                     <>
-                        <InputField
+                        <TextareaField
                             id={id('round')}
                             label="Round"
                             defaultValue="Round 3 of 10"
