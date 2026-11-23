@@ -1537,18 +1537,18 @@ same markup and gets the same behavior.
 The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
 stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
 dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. `moveFocus`
-takes one too, which calls off a request not yet landed, as the function `moveFocus` returns does,
-and the rest of this section covers the attaches. The status line, the toast, a form's check and the
-dialog return what says, shows, refuses or opens rather than what takes them down, so the signal
-alone takes them down: the line is let go, the toast's message is dismissed as its Close dismisses
-it, and an open dialog closes with focus handed back to what opened it, and what each returned does
-nothing after. The others return a function that takes them down. Once a control is taken down,
-nothing it started acts, such as a copy the clipboard answers late, and calling that function or
-aborting a signal again does nothing. A signal already aborted does nothing: the control stays as
-the markup drew it, a control already attached keeps the options it had, and what the attach returns
-does nothing. A part a control cannot work without is looked for before the signal is read, so
-markup missing one, such as a stepper with no buttons or a panel's button with no `aria-controls`,
-throws under a signal already aborted as it does under any other.
+and `focusOnArrival` take one too, which calls off a request not yet landed, as the function each
+returns does, and the rest of this section covers the attaches. The status line, the toast, a form's
+check and the dialog return what says, shows, refuses or opens rather than what takes them down, so
+the signal alone takes them down: the line is let go, the toast's message is dismissed as its Close
+dismisses it, and an open dialog closes with focus handed back to what opened it, and what each
+returned does nothing after. The others return a function that takes them down. Once a control is
+taken down, nothing it started acts, such as a copy the clipboard answers late, and calling that
+function or aborting a signal again does nothing. A signal already aborted does nothing: the control
+stays as the markup drew it, a control already attached keeps the options it had, and what the
+attach returns does nothing. A part a control cannot work without is looked for before the signal is
+read, so markup missing one, such as a stepper with no buttons or a panel's button with no
+`aria-controls`, throws under a signal already aborted as it does under any other.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision
@@ -2013,10 +2013,12 @@ land together, and the first in the page takes focus, so a view's title is heard
 it. Focus a view placed itself as it drew, as a field with autofocus does, is never taken. What
 decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page without
 React calls as each view draws, and with `changed` as a view already drawn changes on a press, which
-then lands with any view first drawn for that press, so the first in the page still takes focus. The
-key is a string, a number or a boolean, compared by value, and changes on a press or a submit, never
-as a visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG
-3.2.2 has it.
+then lands with any view first drawn for that press, so the first in the page still takes focus. It
+takes a `signal` as `moveFocus` does: an abort calls off a request not yet landed, as the function
+it returns does, and a signal already aborted asks for nothing and leaves the press for another
+view. The key is a string, a number or a boolean, compared by value, and changes on a press or a
+submit, never as a visitor chooses in a list or a set of radios, which would move them as they
+choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';

@@ -340,6 +340,8 @@ type Arrival = {
     readonly heading: FocusTarget;
     readonly from: Element | null;
     readonly fallbacks: readonly FocusTarget[] | undefined;
+    /** Calls the view's request off, and lets go of the signal it was given. */
+    readonly stop: () => void;
 };
 /** The views asking for the press now being answered, landed together in one frame. */
 let arriving: {
@@ -360,12 +362,16 @@ let arriving: {
  * request called off before it lands hands its press back where no input has come since, so a view
  * asked for again, as React asks again in development, takes focus. A view already drawn that
  * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
- * with the views first drawn for the same press, and spends the press.
+ * with the views first drawn for the same press, and spends the press. Its `signal` calls the
+ * request off as the function it returns does, a microtask after it aborts, as `moveFocus` has it,
+ * and a signal already aborted asks for nothing and leaves the press for another view.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
     options: ArrivalOptions = {}
 ): (() => void) => {
+    // Read before the press, so a signal already aborted spends none.
+    if (options.signal?.aborted) return () => undefined;
     if (!arriving) {
         const fresh = pressedAt !== null && performance.now() - pressedAt <= PRESS_LIVES;
         if (!fresh && !options.changed) return () => undefined;
@@ -375,7 +381,10 @@ export const focusOnArrival = (
         const asked = performance.now();
         const frame = window.requestAnimationFrame(() => {
             arriving = null;
-            const places = [...views].flatMap((view) => {
+            // Stopped as they land, so a signal the page keeps for longer holds nothing of a view.
+            const asking = [...views];
+            for (const view of asking) view.stop();
+            const places = asking.flatMap((view) => {
                 const place = placeOf(view.heading, view.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
@@ -388,26 +397,29 @@ export const focusOnArrival = (
             if (first) land(first.place, first.view.fallbacks, first.view.from, asked);
             else {
                 // No heading is there to take focus, so the first view asked goes by its fallbacks.
-                const [view] = views;
+                const [view] = asking;
                 if (view) land(view.heading, view.fallbacks, view.from, asked);
             }
         });
         arriving = { views, frame, at: inputs, press };
     }
     const batch = arriving;
+    const down = teardown(options.signal);
     const view: Arrival = {
         heading,
         from: options.from === undefined ? activeOf() : options.from,
         fallbacks: options.fallbacks,
+        stop: down.stop,
     };
     batch.views.add(view);
-    return () => {
+    down.add(() => {
         batch.views.delete(view);
         if (batch.views.size > 0 || arriving !== batch) return;
         window.cancelAnimationFrame(batch.frame);
         arriving = null;
         if (inputs === batch.at) pressedAt = batch.press;
-    };
+    });
+    return down.stop;
 };
 
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */

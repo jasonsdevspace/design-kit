@@ -117,7 +117,8 @@ signal comes off with the teardown, so a signal a page keeps for longer holds no
 already taken down. Until then the page's signal keeps the piece alive, so a page hands over a
 signal that lives no longer than the piece. In 0.9.3 the theme switch, the copy button, the status
 line, the toast, the form, the panels, the stepper, a table's frame, a group the arrow keys move
-through, a busy button, progress, the dialog and `moveFocus` keep the contract through it.
+through, a busy button, progress, the dialog and `moveFocus` keep the contract through it, and since
+0.9.4 `focusOnArrival` does, whose options had named a signal it did not read.
 
 ## Consequences
 
@@ -158,7 +159,8 @@ The paths are in `packages/design-kit`.
   abort unseen by the switch, the switch's listener on the document off after an abort with its
   choices open, a busy wait, a progress step and a stepper's error said by none once taken down
   where a step and an error left attached are heard, and a focus request called off by an abort and
-  holding nothing on the page's signal once it lands.
+  holding nothing on the page's signal once it lands, as a view asking for focus as it arrives is,
+  which under a signal already aborted moves nothing and leaves its press for another view.
 - `e2e/leaks.spec.tsx` holds every attach and `moveFocus` to leaving nothing running, in the three
   engines, on a stand-in clock that moves only by the test's steps. A script loaded before the
   page's own, `e2e/leaks.ts`, counts the listeners on elements, the document, the window and

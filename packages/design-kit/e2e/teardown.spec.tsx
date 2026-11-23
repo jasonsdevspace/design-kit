@@ -1877,3 +1877,65 @@ test.describe('a focus request', () => {
         await expect(page.locator('#target')).toBeFocused();
     });
 });
+
+test.describe('a view asking for focus as it arrives', () => {
+    test('moves nothing given a signal already aborted, and leaves the press for another view', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            kit.focusOnArrival('target', { signal: AbortSignal.abort() });
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#start')).toBeFocused();
+        // The press is not spent, so a view that asks for it after takes focus.
+        await page.evaluate(`kit.focusOnArrival('target')`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+    });
+
+    test('is called off by an abort, and lets go of the signal once it lands', async ({ page }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            const controller = new AbortController();
+            kit.focusOnArrival('target', { signal: controller.signal });
+            controller.abort();
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#start')).toBeFocused();
+        // The press is handed back, so a view left to land takes focus for it, and then holds
+        // nothing on a signal the page keeps.
+        await page.evaluate(`(() => {
+            window.kept = new AbortController();
+            kit.focusOnArrival('target', { signal: kept.signal });
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+        expect(await count(page, '[kept.signal]')).toBe(0);
+        await page.evaluate('kept.abort()');
+        await expect(page.locator('#target')).toBeFocused();
+    });
+
+    test('lands the views left when one of several asking for the same press is aborted', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            const controller = new AbortController();
+            window.kept = new AbortController();
+            // The view first in the page would take focus, and its abort leaves it to the other.
+            kit.focusOnArrival('start', { signal: controller.signal, from: $('#start') });
+            kit.focusOnArrival('target', { signal: kept.signal });
+            controller.abort();
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+        expect(await count(page, '[kept.signal]')).toBe(0);
+    });
+});
