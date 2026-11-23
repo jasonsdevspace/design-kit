@@ -124,7 +124,10 @@
      * after it: a tab strip or another roving widget gives every item but the chosen one a tabindex
      * of -1 and moves focus between them from the keyboard. The widget roles are the ones an
      * element with a tabindex takes to be a control, since a plain element with a role of its own
-     * cannot be told from a landmark otherwise.
+     * cannot be told from a landmark otherwise. A field for a date or a time draws the ring
+     * whenever it holds focus, since Safari hands focus to a part inside it and never counts the
+     * field itself as focused by the keyboard, and the other engines show focus on it however it
+     * came, as they do on any field a visitor types in.
      */
     :where([tabindex='-1']):focus {
         outline: none;
@@ -167,7 +170,8 @@
             [role='separator'],
             [role='scrollbar']
         )
-    ):focus-visible {
+    ):focus-visible,
+    :where(input:is([type^='date'], [type='time'], [type='month'], [type='week'])):focus {
         outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
     }

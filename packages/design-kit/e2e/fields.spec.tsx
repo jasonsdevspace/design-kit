@@ -16,7 +16,9 @@ import { doubled } from './text-size.js';
  * address breaking inside its field, an inline stepper and choices each on a line of their own,
  * two text fields sharing a line only where twice the length and the gap fit, three at 1280, a hint
  * leaving the controls level, and a row in a plain form a step from the fields around it, ending
- * where they end, with a field in it narrowed by --dk-field-measure.
+ * where they end, with a field in it narrowed by --dk-field-measure, and a wrapped row's lines as far
+ * apart as the fields around it, in a panel, a dialog, a stack and a plain form alike, and in a
+ * stack nothing holds, where neither has a step.
  */
 
 /** Attaches each stepper, which shows its buttons. */
@@ -25,11 +27,14 @@ for (const stepper of document.querySelectorAll('.dk-stepper')) attachStepper(st
 window.ready = true;`;
 
 /** A page with the body given in its content column, at the width given, its steppers attached. */
-const open = async (page: Page, width: number, body: string): Promise<void> => {
+const open = async (page: Page, width: number, body: string, bare = false): Promise<void> => {
     await page.setViewportSize({ width, height: 900 });
     await servePage(page, {
         title: 'Round 3',
-        body: `<main class="dk-page"><h1>Round 3</h1>${body}</main>`,
+        // A bare body has none of the kit's containers around it.
+        body: bare
+            ? `<main>${body}</main>`
+            : `<main class="dk-page"><h1>Round 3</h1>${body}</main>`,
         script: ATTACH,
     });
     await page.waitForFunction(() => 'ready' in window);
@@ -466,3 +471,47 @@ test('stands a row in a plain form a step from the fields around it, ending wher
     expect(city).toBeCloseTo(region, 0);
     expect(city + region + zip + 2 * 16).toBeCloseTo(measured.fieldsWidth, 0);
 });
+
+/** A field, a row of two fields and a field, which a narrow column wraps into four lines. */
+const COLUMN = renderToStaticMarkup(
+    <>
+        <InputField id="street" label="Street" />
+        <div className="dk-fields">
+            <InputField id="city" label="City" />
+            <InputField id="region" label="Region" />
+        </div>
+        <InputField id="note" label="Note" />
+    </>
+);
+
+for (const [where, before, after, step] of [
+    ['a page', '', '', 16],
+    ['a panel', '<div class="dk-panel">', '</div>', 12],
+    ['a dialog', '<dialog class="dk-dialog" open>', '</dialog>', 12],
+    ['a stack', '<div class="dk-stack">', '</div>', 16],
+    ['a stack in a panel', '<div class="dk-panel"><div class="dk-stack">', '</div></div>', 12],
+    ["a pair's stack", '<div class="dk-stack dk-stack-pair">', '</div>', 8],
+    ['a plain form', '<form>', '</form>', 16],
+    ['a plain form in a panel', '<div class="dk-panel"><form>', '</form></div>', 16],
+    // A stack outside the kit's containers has no step until it names one, and the row follows it.
+    ['a stack nothing holds', '<div class="dk-stack">', '</div>', 0],
+] as const) {
+    test(`stands a wrapped row's lines as far apart as the fields around it in ${where}`, async ({
+        page,
+    }) => {
+        await open(page, 320, `${before}${COLUMN}${after}`, where === 'a stack nothing holds');
+        const fields = await page.locator('.dk-field').evaluateAll((all) =>
+            all.map((field) => {
+                const drawn = field.getBoundingClientRect();
+                return { left: drawn.left, top: drawn.top, bottom: drawn.bottom };
+            })
+        );
+        expect(fields).toHaveLength(4);
+        // Every field on a line of its own, so the row has wrapped.
+        expect(new Set(fields.map((field) => Math.round(field.left))).size).toBe(1);
+        const steps = fields
+            .slice(1)
+            .map((field, index) => Math.round(field.top - (fields[index]?.bottom ?? 0)));
+        expect(steps).toEqual([step, step, step]);
+    });
+}
