@@ -857,6 +857,17 @@ window.ready = true;`,
     await listen(page);
 };
 
+/**
+ * Chooses the React page's size by the keyboard, which lands whatever is drawn over the page, since
+ * a click on the radio in Firefox was once found to change nothing.
+ */
+const chooseSmall = async (page: Page) => {
+    const small = page.getByLabel('Small');
+    await small.focus();
+    await small.press('Space');
+    await expect(small).toBeChecked();
+};
+
 /** What the lines said so far, every write, a repeat among them. */
 const saidSoFar = (page: Page) =>
     page.evaluate(() => (window as unknown as { said: string[] }).said);
@@ -974,6 +985,57 @@ test('keeps one error on a stepper first attached after its form refused it', as
     await expect(page.locator('#bid')).toHaveAttribute('aria-invalid', 'true');
 });
 
+test('puts back the mark of a field not in error as a refused stepper is put right or reset', async ({
+    page,
+}) => {
+    await openBid(page, { required: true, blank: true });
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+    await page.getByRole('button', { name: 'Send' }).click();
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    await bid.fill('5');
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+    await bid.fill('');
+    await bid.press('Enter');
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    await page.getByRole('button', { name: 'Reset' }).click();
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+    expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+});
+
+test('keeps one error, with words, on a stepper the page refused of its own once its value changes', async ({
+    page,
+}) => {
+    await openBid(page);
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.evaluate((input: HTMLInputElement) => {
+        input.setCustomValidity('Bids are closed.');
+    });
+    await page.getByRole('button', { name: 'Send' }).click();
+    const closed = 'Error: Bids are closed.';
+    expect(await bidErrors(page)).toEqual({ drawn: [closed], described: [closed] });
+    await bid.fill('99');
+    await bid.press('Enter');
+    const most = 'Error: Enter 10 or less.';
+    await expect.poll(async () => (await bidErrors(page)).drawn).toEqual([most]);
+    expect((await bidErrors(page)).described).toEqual([most]);
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    // Put in range, the field is still the page's to refuse, and keeps its error until a submit.
+    await bid.fill('5');
+    await bid.press('Tab');
+    expect(await bidErrors(page)).toEqual({ drawn: [most], described: [most] });
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    await bid.evaluate((input: HTMLInputElement) => {
+        input.setCustomValidity('');
+    });
+    await page.getByRole('button', { name: 'Send' }).click();
+    await expect(page.locator('#count')).toHaveText('1');
+    expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+});
+
 /*
  * A stepper is wrong exactly where the browser's constraints say its field is, so its own error and
  * its form's refusal agree, in a form the kit draws its errors in and in one React draws.
@@ -1002,7 +1064,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             });
             await listen(page);
             await page.getByLabel('Name').fill('Ana');
-            await page.getByLabel('Small').check();
+            await chooseSmall(page);
         };
 
         const bidOf = (page: Page) => page.getByRole('spinbutton', { name: 'Bid' });
@@ -1114,7 +1176,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                 });
                 await listen(page);
                 await page.getByLabel('Name').fill('Ana');
-                await page.getByLabel('Small').check();
+                await chooseSmall(page);
                 await bidOf(page).evaluate((input: HTMLInputElement) => {
                     input.value = '99';
                 });
@@ -1133,6 +1195,26 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                 expect(
                     await page.evaluate(() => (window as unknown as { handed: string[] }).handed)
                 ).toEqual(['bid: Enter 10 or less.']);
+        });
+
+        test('says the refusal alone for a stepper left by Tab before Enter on the button', async ({
+            page,
+        }) => {
+            await openWay(page);
+            const bid = bidOf(page);
+            await bid.fill('99');
+            await bid.press('Tab');
+            // Focus has left the value, so the stepper says its error then, on its own.
+            const own = way === 'attachForm' ? `stepper: ${RANGE}` : `page: ${RANGE}`;
+            await expect.poll(() => said(page)).toEqual([own]);
+            await forget(page);
+            const save = page.getByRole('button', { name: /Send|Join/ });
+            await save.focus();
+            await save.press('Enter');
+            expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await expect(bid).toBeFocused();
+            await expect(page.locator('#count')).toHaveText('0');
         });
 
         for (const required of [false, true])
@@ -1237,7 +1319,7 @@ test.describe('in React', () => {
         await servePage(page, { title: 'Join', body: '<div id="root"></div>', script: app });
         await listen(page);
         await page.getByLabel('Name').fill('Ana');
-        await page.getByLabel('Small').check();
+        await chooseSmall(page);
         const bid = page.getByRole('spinbutton', { name: 'Bid' });
         await bid.fill('99');
         await bid.press('Enter');
@@ -1277,7 +1359,7 @@ test.describe('in React', () => {
             script: app,
         });
         await page.getByLabel('Name').fill('Ana');
-        await page.getByLabel('Small').check();
+        await chooseSmall(page);
         await page.getByRole('button', { name: 'Join' }).click();
         const bid = page.getByRole('spinbutton', { name: 'Bid' });
         await expect(bid).toBeFocused();
@@ -1297,7 +1379,7 @@ test.describe('in React', () => {
             script: app,
         });
         await page.getByLabel('Name').fill('Ana');
-        await page.getByLabel('Small').check();
+        await chooseSmall(page);
         await page.getByRole('button', { name: 'Join' }).click();
         const bid = page.getByRole('spinbutton', { name: 'Bid' });
         await expect(bid).toBeFocused();
@@ -1319,7 +1401,7 @@ test.describe('in React', () => {
         });
         await listen(page);
         await page.getByLabel('Name').fill('Ana');
-        await page.getByLabel('Small').check();
+        await chooseSmall(page);
         const bid = page.getByRole('spinbutton', { name: 'Bid' });
         await bid.fill('99');
         await bid.press('Enter');

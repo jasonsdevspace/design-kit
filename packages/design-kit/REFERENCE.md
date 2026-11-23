@@ -3042,10 +3042,11 @@ a form's reset set is followed. The field still takes a typed value. A stepper i
 where the browser's constraints say its field is, so its error and its form's refusal agree. A value
 outside the limits, between steps, such as 2.5 with a step of 1, or that is no number, as letters
 typed, or none at all in a field that is `required`, shows the stepper's own error, which waits
-hidden in the markup, once the value is changed, and the status line says it, unless its form
-refuses a submit in that moment, when the refusal says it in its place. A blank in a field that is
-not required passes, shows no error, and its form saves, so a stepper whose blank has no meaning
-takes `required`, as the example here does. A refusal the page sets of its own with
+hidden in the markup, once the value is changed, or as focus leaves a blank field that letters were
+typed into, since its value stays blank and no `change` fires, and the status line says it, unless
+its form refuses a submit in that moment, when the refusal says it in its place. A blank in a field
+that is not required passes, shows no error, and its form saves, so a stepper whose blank has no
+meaning takes `required`, as the example here does. A refusal the page sets of its own with
 `setCustomValidity` is left to the page. A form that refuses a submit, by `attachForm` or
 `useFormRefusal`, shows the error of each attached stepper that fails, one never touched too, such
 as a required one drawn blank, so the stepper's own error is the one error, in place of the form's
@@ -3061,11 +3062,12 @@ shows none until it is changed or its form refuses it, so a stepper attached aga
 shows the error for a value past its limits but not for a field left blank. A field that is disabled
 or read only shows none, since no one can put it right, and where the page draws its own error in
 the field, the page's error is the one shown as the page loads. The error is cleared as soon as the
-value is right again, and the attach function adds and takes away only its own error, so an error or
-a hint the page draws keeps its place. A page that draws the field again, as React does when the
-page's own error comes or goes, rewrites the field's description and its invalid mark, and the
-attach function puts its shown error back in both at once. It takes the stepper or its field,
-attaches each stepper once whichever it is given, and returns what takes it down again.
+value is right again, with the `aria-invalid` the field held before put back, so a field an attached
+form marked `false` reads `false` again, and the attach function adds and takes away only its own
+error, so an error or a hint the page draws keeps its place. A page that draws the field again, as
+React does when the page's own error comes or goes, rewrites the field's description and its invalid
+mark, and the attach function puts its shown error back in both at once. It takes the stepper or its
+field, attaches each stepper once whichever it is given, and returns what takes it down again.
 
 **`StepperField` props**
 

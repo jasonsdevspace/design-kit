@@ -187,7 +187,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.3   | Focus falling to the body and followed into a frame, with too little room left           | 19,222 bytes   | 624 bytes       | 19.5 KB    |
 | 0.9.3   | A control kept clear inside a frame of the page's own origin, with too little room left  | 19,609 bytes   | 633 bytes       | 20 KB      |
 | 0.9.4   | A dated field's limit in words a visitor reads, with too little room left                | 20,708 bytes   | 626 bytes       | 21 KB      |
-| 0.9.4   | A stepper's error following its form's verdict, with too little room left                | 20,977 bytes   | 658 bytes       | 21.25 KB   |
+| 0.9.4   | A stepper's error following its form's verdict, with too little room left                | 21,026 bytes   | 662 bytes       | 21.25 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
