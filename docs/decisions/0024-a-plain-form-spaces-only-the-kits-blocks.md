@@ -2,7 +2,8 @@
 
 **Status:** accepted in 0.9.4, amending record 16 so that in a form with no class attribute the kit
 spaces only its own blocks, and a page's own markup there keeps the place the browser and the page
-give it
+give it, and amended in the same release to count a row of fields, record 25's `dk-fields`, among
+those blocks
 
 ## Context
 
@@ -38,15 +39,15 @@ apart. Nothing else in the form is given room.
 
 ## Decision
 
-Option C. The rule reads a child of `form:not([class])` that is a block, a field, a row of actions
-or a callout, not marked `hidden` or `data-empty`, not visually hidden, and not a callout whose
-message is empty with no actions, then any later block by the general sibling combinator. A field
-nested in a page's own `div` is not a child of the form, so it is not spaced. The test for an empty
-callout written without its mark asks for `:has()`, inside an `:is()` that drops it where a browser
-lacks it, so the rest of the rule holds there. The rule sits before the callout's rules, so an empty
-callout's own margin still wins by order and it takes no room. A form's buttons go in a
-`dk-actions`, a lone submit too, and the README's checkout and the reference write them so. A form
-with a class attribute lays out its own parts, as before.
+Option C. The rule reads a child of `form:not([class])` that is a block, a field, a row of fields, a
+row of actions or a callout, not marked `hidden` or `data-empty`, not visually hidden, and not a
+callout whose message is empty with no actions, then any later block by the general sibling
+combinator. A field nested in a page's own `div` is not a child of the form, so it is not spaced.
+The test for an empty callout written without its mark asks for `:has()`, inside an `:is()` that
+drops it where a browser lacks it, so the rest of the rule holds there. The rule sits before the
+callout's rules, so an empty callout's own margin still wins by order and it takes no room. A form's
+buttons go in a `dk-actions`, a lone submit too, and the README's checkout and the reference write
+them so. A form with a class attribute lays out its own parts, as before.
 
 ## Consequences
 

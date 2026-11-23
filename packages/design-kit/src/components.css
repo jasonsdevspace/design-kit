@@ -735,30 +735,28 @@
     /*
      * A field anywhere in a page, a band or a stack, a form's included, holds to the measure as the
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
-     * a callout in a form ends where its fields end. A page sets --dk-field-measure on a field or on
-     * its form, a shorter length for a short answer or `none` for the column. A dialog and a popover
-     * set their own width, which a page may widen, so what they hold takes theirs. A row of fields
-     * holds to the measure as a field does, and shares that width out among its own.
+     * a callout in a form ends where its fields end. A row of fields holds to it too, so it ends
+     * where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
+     * shorter length for a short answer or `none` for the column, and a field in a row of fields
+     * narrows by it as well. A dialog and a popover set their own width, which a page may widen, so
+     * what they hold takes theirs.
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, .dk-fields, form .dk-callout):not(
-                .dk-dialog *,
-                dialog *,
-                [popover] *,
-                .dk-fields > *
-            )
+            :is(.dk-field, .dk-fields, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
     }
 
     /*
-     * A row of fields set side by side, such as a stepper beside a name: each text field asks for
-     * --dk-fields-least, 7rem until a page sets it, and shares what is left, and a field that finds
-     * no room on the line takes the next, so at a large text size each field has a line of its own
-     * with its label whole. A stepper's field keeps its stepper's width. The fields stand a plain
-     * form's step apart both ways, so a wrapped line sits as far below as a field under another,
-     * and they line up along their foot, so their controls stand level whatever their labels take.
+     * A row of fields set side by side, such as a stepper beside a name. Every field starts from
+     * one length, --dk-fields-least, 10rem until a page sets it, a stepper's width rounded up, and
+     * shares what is left, so a field's width comes from the row alone and no label, hint or error
+     * moves the field beside it. A field that finds no room on the line takes the next, so on a
+     * narrow screen or at a large text size each field has a line of its own, with its label whole.
+     * The fields stand a plain form's step apart both ways and line up along their foot, so their
+     * controls stand level where one label wraps or one field shows a hint or an error. An inline
+     * stepper and a set of choices each take a line of their own.
      */
     :where(.dk-fields) {
         display: flex;
@@ -768,23 +766,10 @@
     }
 
     :where(.dk-fields > .dk-field) {
-        flex: 1 1 var(--dk-fields-least, 7rem);
+        flex: 1 1 var(--dk-fields-least, 10rem);
     }
 
-    :where(.dk-fields > .dk-field:has(> .dk-stepper)) {
-        flex: 0 1 auto;
-    }
-
-    /*
-     * A stepper's field asks for no more than its stepper, its label, hint and error wrapping
-     * inside it, so a long label or an error shown never moves the field beside it.
-     */
-    :where(.dk-fields > .dk-field:has(> .dk-stepper) > :not(.dk-stepper)) {
-        contain: inline-size;
-    }
-
-    /* An inline stepper and a column of choices each take a line of their own. */
-    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field:not(:has(> .dk-choices-row)))) {
+    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) {
         flex-basis: 100%;
     }
 
@@ -3545,24 +3530,6 @@
     }
 
     :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper) > .dk-stepper) {
-        min-width: min-content;
-    }
-
-    /*
-     * In a row of fields, every field but an inline stepper's takes its least width from its
-     * parts as a stepper's does, by rules that need no :has(), so a browser without it still keeps
-     * a stepper's field as wide as its stepper. A text field's parts ask for no least width, so it
-     * draws as before.
-     */
-    :where(.dk-fields > .dk-field:not(.dk-stepper-inline)) {
-        grid-template-columns: minmax(auto, 1fr);
-    }
-
-    :where(.dk-fields > .dk-field:not(.dk-stepper-inline) > *) {
-        min-width: 0;
-    }
-
-    :where(.dk-fields > .dk-field > .dk-stepper) {
         min-width: min-content;
     }
 
