@@ -203,7 +203,7 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'A busy button, drawn off once the wait has passed',
+                name: 'A busy button, drawn off with its dots once the wait has passed',
                 attribute: 'data-busy="Saving the rule."',
                 pictured: true,
                 react: `<Button accent busy="Saving the rule.">

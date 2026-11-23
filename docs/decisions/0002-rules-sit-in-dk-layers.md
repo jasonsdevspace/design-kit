@@ -5,7 +5,7 @@
 dialog's `::backdrop`, and in 0.8.7 to let a value the kit works out for itself start with `--_dk-`,
 as record 16 has it, and in 0.9.0 to let a component reach a progress bar's track and fill,
 `::-webkit-progress-bar`, `::-webkit-progress-value` and `::-moz-progress-bar`, which each engine
-names apart, and in 0.9.4 to let a busy button draw its dots of work in its `::after`
+names apart, and in 0.9.4 to let a busy button draw the dots that show it at work in its `::after`
 
 ## Context
 
@@ -30,7 +30,8 @@ unlayered rules.
 **C. A prefix, dk layers, and `:where()` inside them.** Every name prefixed, every rule in a layer
 of the kit's, and every selector but the kit's own classes one `:where()`, followed at most by a
 focus pseudo-class, by a pseudo-element in the base, or in the components by a number field's spin
-buttons or a dialog's `::backdrop` or a progress bar's track and fill.
+buttons or a dialog's `::backdrop` or a progress bar's track and fill, or a busy button's
+`::after`.
 
 ## Decision
 
@@ -44,13 +45,20 @@ instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element 
 matches nothing. A component may follow its `:where()` with `::-webkit-inner-spin-button` or
 `::-webkit-outer-spin-button`, a number field's own spin buttons, which the stepper takes away, with
 `::backdrop`, the scrim behind a dialog, or with a progress bar's track and fill, which each engine
-names apart. Each is a part of a browser's own element that only a pseudo-element reaches. A busy
-button follows its `:where()` with `::after`, where it draws its dots of work once the wait has
-passed, since dots drawn there take no place in the row and hold no words for the button's name, as
-an element of their own would, and a page writing a busy button by hand writes none. No other
-pseudo-element follows a component's `:where()`. So only the kit's classes, the focus rules
-and those pseudo-elements carry any weight, and that weight counts for nothing against a page's own
-rule outside a layer.
+names apart. Each is a part of a browser's own element that only a pseudo-element reaches.
+
+Every pseudo-element allowed until 0.9.4 is such a part. The one exception is a mark a component
+draws of its own state, which bends that rule. A component may draw such a mark in its own `::after`
+only where three things hold:
+
+- The mark holds no words, with `content: ''`, so no name changes.
+- It takes no place in the row, being absolutely placed, so the piece keeps its size.
+- No element of the kit's markup could carry it without a page writing one more by hand.
+
+A busy button's dots of work are the one such mark. Each selector that draws one is named in the
+scope test, and no other pseudo-element follows a component's `:where()`. So only the kit's
+classes, the focus rules and those pseudo-elements carry any weight, and that weight counts for
+nothing against a page's own rule outside a layer.
 
 ## Consequences
 
@@ -78,8 +86,13 @@ rule outside a layer.
   layer.
 - The visually hidden class carries a class's weight, since a page names it on purpose. It still
   loses to a page's rule outside a layer.
-- A busy button's `::after` is the kit's, so a page draws nothing of its own there, and a rule of
-  the page's for a button's `::after` outside a layer wins over the dots.
+- A busy button's dots are drawn in its own `::after`, so a page that writes a busy button's markup
+  by hand needs no extra element. That `::after` is the kit's, so a page draws nothing of its own
+  there while the button is busy. A page's own rule for a button's `::after` outside a layer wins
+  over the dots, and picks up the properties the dots set that it does not set itself, which the
+  reference names.
+- A busy button is placed relative, as the dots are placed against it, so an element a page places
+  absolutely inside it sits against the button while it is busy.
 - The border box reaches a page's `::before` and `::after` too, so one that sets a width or height
   beside padding or a border draws that size including them, as every element does.
 - A page with a reset in a layer of its own, as a framework's base is, has it win over the kit's
@@ -96,7 +109,11 @@ The paths are in `packages/design-kit`.
   kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
   pseudo-element, or in the components by a number field's spin buttons or a dialog's `::backdrop`
   or a progress bar's track and fill, or a busy button's `::after`, with no pseudo-element inside a
-  `:where()`, and custom properties to the tokens.
+  `:where()`, and custom properties to the tokens. It finds each mark named as drawn in a
+  component's `::after` in the components sheet, holding `content: ''` and `position: absolute`
+  wherever it is drawn, and setting only its colors in forced colors.
+- `e2e/busy.spec.tsx` finds a busy button's dots in Chromium, WebKit and Firefox, with the button's
+  name unchanged and neither its box nor its neighbor's changed by them.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix, or `--_dk-` for the kit's
   own working values.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its

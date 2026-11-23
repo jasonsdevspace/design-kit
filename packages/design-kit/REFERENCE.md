@@ -458,14 +458,15 @@ a press shows the errors rather than doing nothing.
 A button whose press has started something still running, such as a save, is busy: marked
 `data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes them
 with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
-`--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
+`--dk-wait` before it is drawn off, so a fast save does not flash it gray, and the pointer shows the
 wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
 forced colors, where the button then takes `GrayText` as an off one does. Drawn off, it also shows a
-short row of dots centered at its foot, so a visitor who sees it can tell a button at work from one
-that cannot be pressed. The dots pulse, and stand still under reduced motion. They take the button's
-color, the system's in forced colors, and no place in the row, so the button keeps its size, an icon
-alone or a text button included, and they hold no words, so its name stays as it was. A screen
-reader hears the off state at once, as it must for the press to be stopped.
+row of three dots centered at its foot, so a visitor who sees it can tell a button at work from one
+that cannot be pressed. The dots pulse, never fainter than 3:1 on the kit's grounds, and stand still
+under reduced motion. They take the text color, the system's in forced colors. They take no place
+in the row, so the button keeps its size, an icon alone or a text button included, and they hold no
+words, so its name stays as it was. A screen reader hears the off state at once, as it must for the
+press to be stopped.
 
 `attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks on
 the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
@@ -479,8 +480,14 @@ words. Words not yet said when the work is done are dropped, so a result a toast
 followed by a late "Saving." Taken down, by the function it returns or by its `signal`, as [Taking a
 control down](#taking-a-control-down) has it, it no longer stops a press, takes away the mark it set
 and drops words not yet said. A page that sets a transition of its own on a busy button replaces
-the wait, and the button is drawn off at once, though its dots still wait. The dots are a busy
-button's `::after`, so a page draws nothing of its own there.
+the wait, and the button is drawn off at once, though its dots still wait.
+
+The dots are a busy button's `::after`, so a page draws nothing of its own there while it is busy.
+They set `content`, `position`, `inset-block-end`, `inset-inline`, `margin-inline`, `width`,
+`height`, `color`, `background` and `animation`, and `forced-color-adjust` in forced colors, so a
+page whose own rule draws something in a kit button's `::after` resets those it does not set
+itself. A busy button is `position: relative`, as its dots are placed against it, so an element a
+page places absolutely inside it sits against the button while it is busy.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
@@ -1898,7 +1905,7 @@ A part of the page waiting for its content, such as a product on its way, carrie
 line's wait is timed from when it first matches. The line shows only once the wait outlasts
 `--dk-wait`, 400ms, so a fast answer shows nothing. The wait is a delay rather than a motion, so it
 stands under reduced motion and in forced colors. The line is words in the muted text, with no
-spinner, since words say what is happening and a spinner is a motion reduced motion would stop.
+spinner, since its words already show what is happening.
 
 Once the content is drawn, the page takes the line out and the mark away in one change, since the
 line shows at once the moment the mark goes. Where the wait fails, the page puts a danger callout

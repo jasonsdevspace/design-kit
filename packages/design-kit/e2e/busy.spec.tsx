@@ -11,9 +11,11 @@ import { box, forceColors, servePage, stillClock, style } from './page.js';
  * its off look held back for --dk-wait so a fast save shows and says nothing, the pointer's wait
  * shown at once, its words said once the wait outlasts the token, dropped where the work ends first
  * and said again for a busy that starts again, the look's wait kept under reduced motion and in
- * forced colors, a row of dots past the wait that an off button lacks, its name and its box kept and
- * its pulse stopped under reduced motion, and through React's `useBusy`, a double press saving once and a save that ends
- * just after the wait saying nothing late.
+ * forced colors, and three dots past the wait that an off button lacks, its name and its box kept,
+ * centered whatever the button's alignment, three at every text size, in the system's gray in
+ * forced colors, never fainter than the pulse's floor and still under reduced motion. Through
+ * React's `useBusy`, a double press saves once and a save that ends just after the wait says
+ * nothing late.
  */
 
 const BODY = renderToStaticMarkup(
@@ -72,9 +74,28 @@ const dots = (page: Page, selector: string) =>
         return {
             content: drawn.content,
             visibility: drawn.visibility,
-            edge: drawn.borderBottomStyle,
+            image: drawn.backgroundImage,
             opacity: drawn.opacity,
+            color: drawn.color,
         };
+    });
+
+/**
+ * How far the middle of a button's dots sits from the middle of the button, and how many dots wide
+ * their box is, the box's width over the width of one dot's tile.
+ */
+const placed = (page: Page, selector: string) =>
+    page.locator(selector).evaluate((element) => {
+        const frame = element.getBoundingClientRect();
+        const drawn = getComputedStyle(element, '::after');
+        const start =
+            frame.left +
+            Number.parseFloat(getComputedStyle(element).borderLeftWidth) +
+            Number.parseFloat(drawn.left) +
+            Number.parseFloat(drawn.marginLeft);
+        const width = Number.parseFloat(drawn.width);
+        const tile = Number.parseFloat(drawn.backgroundSize.split(' ')[0] ?? '');
+        return { off: start + width / 2 - (frame.left + frame.width / 2), across: width / tile };
     });
 
 /** Whether anything drawn on the button after its words is still moving. */
@@ -156,22 +177,51 @@ for (const motion of ['no-preference', 'reduce'] as const) {
     });
 }
 
-test('draws a row of dots once the wait has passed, which an off button lacks, its name and box kept', async ({
+test('draws three dots past the wait, which an off button lacks, its name and box kept', async ({
     page,
 }) => {
     await open(page, '150ms');
     await save(page).click();
     await expect.poll(async () => (await dots(page, '#save')).visibility).toBe('visible');
-    expect(await dots(page, '#save')).toMatchObject({ content: '""', edge: 'dotted' });
+    const drawn = await dots(page, '#save');
+    expect(drawn.content).toBe('""');
+    expect(drawn.image).toContain('radial-gradient');
     expect((await dots(page, '#off')).content).toBe('none');
     expect(await moving(page)).toBe(true);
     await expect(save(page)).toHaveAccessibleName('Save rule');
     // The dots taken away, neither the busy button nor the off one beside it moves or resizes.
     const busy = page.locator('#save');
     const off = page.locator('#off');
-    const drawn = [await box(busy, 'the busy button'), await box(off, 'the off button')];
+    const boxes = [await box(busy, 'the busy button'), await box(off, 'the off button')];
     await page.addStyleTag({ content: '.dk-button::after { display: none; }' });
-    expect([await box(busy, 'the busy button'), await box(off, 'the off button')]).toEqual(drawn);
+    expect([await box(busy, 'the busy button'), await box(off, 'the off button')]).toEqual(boxes);
+});
+
+test('centers its dots whatever the alignment, three across at every text size', async ({
+    page,
+}) => {
+    await open(page, '0s');
+    await page.evaluate(() => {
+        const start = document.createElement('button');
+        start.id = 'start';
+        start.className = 'dk-button';
+        start.style.cssText = 'justify-content: flex-start; width: 14rem';
+        start.setAttribute('data-busy', '');
+        start.setAttribute('aria-disabled', 'true');
+        start.textContent = 'Save the list';
+        document.querySelector('main')?.append(start);
+        document.querySelector('#save')?.setAttribute('data-busy', '');
+    });
+    for (const size of ['100%', '125%', '150%']) {
+        await page.evaluate((root) => {
+            document.documentElement.style.fontSize = root;
+        }, size);
+        for (const selector of ['#save', '#start']) {
+            const { off, across } = await placed(page, selector);
+            expect(Math.abs(off), `${selector} at ${size}`).toBeLessThan(0.5);
+            expect(across, `${selector} at ${size}`).toBeCloseTo(3, 5);
+        }
+    }
 });
 
 test('holds its dots out of sight for the wait', async ({ page }) => {
@@ -181,13 +231,57 @@ test('holds its dots out of sight for the wait', async ({ page }) => {
     expect((await dots(page, '#save')).visibility).toBe('hidden');
 });
 
+test('pulses its dots no fainter than a floor that keeps them clear', async ({ page }) => {
+    await open(page);
+    const floor = await page.evaluate(() => {
+        const find = (rules: CSSRuleList): string | null => {
+            for (const rule of Array.from(rules)) {
+                if (rule instanceof CSSKeyframesRule && rule.name === 'dk-busy') {
+                    const frames = Array.from(rule.cssRules) as CSSKeyframeRule[];
+                    return frames.map((frame) => frame.style.opacity).find(Boolean) ?? null;
+                }
+                if ('cssRules' in rule) {
+                    const inner = find((rule as CSSGroupingRule).cssRules);
+                    if (inner !== null) return inner;
+                }
+            }
+            return null;
+        };
+        for (const sheet of Array.from(document.styleSheets)) {
+            const found = find(sheet.cssRules);
+            if (found !== null) return found;
+        }
+        return null;
+    });
+    expect(Number(floor)).toBeGreaterThanOrEqual(0.55);
+});
+
 test('draws its dots still under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(page, '150ms');
     await save(page).click();
     await expect.poll(async () => (await dots(page, '#save')).visibility).toBe('visible');
     await expect.poll(() => moving(page)).toBe(false);
-    expect(await dots(page, '#save')).toMatchObject({ edge: 'dotted', opacity: '1' });
+    const drawn = await dots(page, '#save');
+    expect(drawn.image).toContain('radial-gradient');
+    expect(drawn.opacity).toBe('1');
+});
+
+test("draws its dots in the system's gray in forced colors", async ({ page }) => {
+    await forceColors(page);
+    await open(page, '150ms');
+    await save(page).click();
+    await expect.poll(async () => (await dots(page, '#save')).visibility).toBe('visible');
+    const gray = await page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.style.cssText = 'forced-color-adjust: none; color: GrayText';
+        document.body.append(probe);
+        return getComputedStyle(probe).color;
+    });
+    const drawn = await dots(page, '#save');
+    expect(drawn.image).not.toBe('none');
+    expect(drawn.image).toContain('radial-gradient');
+    expect(drawn.color).toBe(gray);
 });
 
 test('says its words again for a busy that ends and starts again at once', async ({ page }) => {
@@ -232,9 +326,14 @@ test.describe('in React', () => {
     test('says nothing late for a save that ends just after the wait', async ({ page }) => {
         await stillClock(page.clock);
         await servePage(page, { title: 'Busy', body: '<div id="root"></div>', script: app });
-        await page.getByRole('button', { name: 'Save the scores' }).click();
-        // Past the save's end and the moment the line would have put words in.
-        await page.clock.runFor(800);
+        const button = page.getByRole('button', { name: 'Save the scores' });
+        await button.click();
+        // To just past the save's end, where React draws the button again on a task of its own,
+        // which WebKit runs only once real time passes, as it always does outside a test.
+        await page.clock.runFor(460);
+        await expect(button).not.toHaveAttribute('data-busy');
+        // Past the moment the line would have put words in.
+        await page.clock.runFor(340);
         expect(await page.evaluate(() => (window as unknown as { heard: string[] }).heard)).toEqual(
             []
         );

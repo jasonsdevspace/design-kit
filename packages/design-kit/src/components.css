@@ -4,7 +4,8 @@
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, or by a number
  * field's spin buttons or a dialog's ::backdrop, the parts of a browser's own element only a
- * pseudo-element reaches. So only the classes, the focus rules and those parts carry weight.
+ * pseudo-element reaches, or by the ::after a busy button draws its dots of work in. So only the
+ * classes, the focus rules and those pseudo-elements carry weight.
  *
  * The page chrome comes first, then the buttons and a row of them, the fields, a field with a
  * button beside it, the sets of choices, the callouts and a loading line, then the explainer page
@@ -478,7 +479,7 @@
     /*
      * Busy, a button whose press has started something still running, such as a save. It is off at
      * once, so a second press does nothing, but its look holds for --dk-wait before it changes, so
-     * a fast save does not flash the button grey, and the pointer shows the wait at once. The wait
+     * a fast save does not flash the button gray, and the pointer shows the wait at once. The wait
      * is a delay, which reduced motion keeps, and it holds in forced colors too.
      */
     :where(.dk-button[data-busy]) {
@@ -493,20 +494,27 @@
     }
 
     /*
-     * Once the wait has passed, a busy button draws a short row of dots centered at its foot, so a
-     * visitor who sees it can tell it is at work and not only off. The dots are an edge drawn
-     * dotted, so they take the button's color, the system's in forced colors, and they take no
-     * place in the row, so the button keeps its size, an icon alone or a text button with no
-     * padding included. They hold no words, so the button's name stays as it was. They wait as a
-     * loading line does and then pulse, which reduced motion stops, leaving them still. The row is a
-     * little over five dots wide, which each engine draws as three.
+     * Once the wait has passed, a busy button draws three dots centered at its foot, so a visitor
+     * who sees it can tell it is at work and not only off. The dots are a gradient repeated three
+     * times across a box exactly three dots wide, so every engine draws three at every text size.
+     * They are in the text color, which keeps 3:1 on every ground at the faintest of their pulse,
+     * and in forced colors, where a gradient is dropped, they keep it in the system's gray. They
+     * are centered whatever the button's own alignment and take no place in the row, so the button
+     * keeps its size, an icon alone or a text button with no padding included. They hold no words,
+     * so the button's name stays as it was. They wait as a loading line does and then pulse.
+     * Reduced motion stops the pulse and they stand still.
      */
     :where(.dk-button[data-busy])::after {
         content: '';
         position: absolute;
         inset-block-end: 0.125rem;
-        width: 1.0625rem;
-        border-block-end: 0.2rem dotted;
+        inset-inline: 0;
+        margin-inline: auto;
+        width: 1.125rem;
+        height: 0.1875rem;
+        color: var(--dk-fg);
+        background: radial-gradient(circle closest-side, currentColor 80%, transparent) 0 / 0.375rem
+            100% repeat-x;
         animation:
             dk-wait 0s var(--dk-wait) backwards,
             dk-busy 0.6s var(--dk-wait) infinite alternate;
@@ -514,7 +522,7 @@
 
     @keyframes dk-busy {
         to {
-            opacity: 0.3;
+            opacity: 0.55;
         }
     }
 
@@ -669,6 +677,12 @@
         :where(.dk-button:disabled, .dk-button[aria-disabled='true']) {
             border-color: GrayText;
             background: Canvas;
+            color: GrayText;
+        }
+
+        /* A gradient is dropped here, so the dots keep theirs, drawn in the system's gray. */
+        :where(.dk-button[data-busy])::after {
+            forced-color-adjust: none;
             color: GrayText;
         }
 
@@ -1474,9 +1488,9 @@
     /*
      * Steps a demo takes one after another, each in a box of its own with an arrow above it from
      * the step before. The arrow is a span hidden from a screen reader, since a selector in this
-     * sheet takes no pseudo-element after its :where() but a number field's spin buttons and a
-     * dialog's backdrop, and a pseudo-element cannot sit inside one. The list keeps role="list" in
-     * its markup, since a browser can drop a list's meaning when its markers are gone.
+     * sheet takes no pseudo-element after its :where() but the parts of a browser's own element and
+     * a busy button's dots, and a pseudo-element cannot sit inside one. The list keeps role="list"
+     * in its markup, since a browser can drop a list's meaning when its markers are gone.
      */
     :where(.dk-steps) {
         display: grid;
