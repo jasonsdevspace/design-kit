@@ -2000,25 +2000,28 @@ component, so a request in a transition an urgent update overtook lands before t
 and goes to its fallbacks where the transition draws its target. One asked after the component has
 gone, as a panel that closes itself and then asks after an await, waits a frame and is made then,
 taking focus only from the page's body, whatever `from` it was given, and only where its target is
-in sight, so a visitor already on the next screen is left where they are. One whose target an
-`Activity` hides with the component is held until the component shows, and is made then.
-`useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of -1 where
-it has none, and focuses it when the key changes, such as the round on screen, and when the view is
-first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is. A first
-draw takes nothing as the page first draws, after a key that moves or types, such as Tab or an arrow
-along a row of tabs, after a press on nothing or on a control that is off, or more than five seconds
-after the press, as a view a poll brings. A row of tabs' panels take no focus on arrival, since a
-tab keeps focus as its panel changes, so they leave the hook out. Views first drawn by one press
-land together, and the first in the page takes focus, so a view's title is heard before a section of
-it. Focus a view placed itself as it drew, as a field with autofocus does, is never taken. What
-decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page without
-React calls as each view draws, and with `changed` as a view already drawn changes on a press, which
-then lands with any view first drawn for that press, so the first in the page still takes focus. It
-takes a `signal` as `moveFocus` does: an abort calls off a request not yet landed, as the function
-it returns does, and a signal already aborted asks for nothing and leaves the press for another
-view. The key is a string, a number or a boolean, compared by value, and changes on a press or a
-submit, never as a visitor chooses in a list or a set of radios, which would move them as they
-choose, as WCAG 3.2.2 has it.
+in sight, so a visitor already on the next screen is left where they are. It still finds an id in
+the root where focus was as it was asked, or where the `from` it was given is, so a widget drawn
+inside a shadow root that passes `from` finds its own control. One whose target an `Activity` hides
+with the component is held until the component shows, and is made then. `useArrivalFocus(key)`
+returns a ref for a view's heading, gives the heading a tabindex of -1 where it has none, and
+focuses it when the key changes, such as the round on screen, and when the view is first drawn by a
+visitor's press on a button or a link, or a submit, as a tab bar's view is. A first draw takes
+nothing as the page first draws, after a key that moves or types, such as Tab or an arrow along a
+row of tabs, after a press on nothing or on a control that is off, or more than five seconds after
+the press, as a view a poll brings. A row of tabs' panels take no focus on arrival, since a tab
+keeps focus as its panel changes, so they leave the hook out. Views first drawn by one press land
+together, and the first in the page takes focus, so a view's title is heard before a section of it.
+Focus a view placed itself as it drew, as a field with autofocus does, is never taken. Where focus
+was is read inside a shadow root too, so a press on a widget's own button there brings focus to the
+heading. What decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a
+page without React calls as each view draws, and with `changed` as a view already drawn changes on a
+press, which then lands with any view first drawn for that press, so the first in the page still
+takes focus. It takes a `signal` as `moveFocus` does: an abort calls off a request not yet landed,
+as the function it returns does, and a signal already aborted asks for nothing and leaves the press
+for another view. The key is a string, a number or a boolean, compared by value, and changes on a
+press or a submit, never as a visitor chooses in a list or a set of radios, which would move them as
+they choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';

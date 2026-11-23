@@ -325,19 +325,34 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
  * component has gone, as a panel that closes and then asks after an await, waits a frame and is
  * made late, taking focus only from the page's body, whatever `from` it was given, and only where
  * its target is in sight, so one whose target an `Activity` hides with the component is held until
- * it shows.
+ * it shows. A late request still finds an id, its target's or a fallback's, in the root focus was
+ * in as it was asked, so one inside a shadow root lands.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
             const from = options?.from === undefined ? activeOf() : options.from;
+            // The root focus was in, read as the request is asked, since a late request is made
+            // with no place focus was, which is where `moveFocus` would look for an id.
+            const root = from?.getRootNode();
+            const within = (place: FocusTarget): FocusTarget =>
+                typeof place === 'string' && root instanceof ShadowRoot
+                    ? () => root.getElementById(place)
+                    : place;
             // No signal tied to the component goes with the request, since the unmount that makes
             // a request still waiting would abort it too, so it is called off only by what
             // moveFocus returns.
             return afterCommit((late) => {
                 if (!late) return moveFocus(target, { ...options, from });
-                return inSight(target) ? moveFocus(target, { ...options, from: null }) : null;
+                const found = within(target);
+                return inSight(found)
+                    ? moveFocus(found, {
+                          ...options,
+                          fallbacks: options?.fallbacks?.map(within),
+                          from: null,
+                      })
+                    : null;
             });
         },
         [afterCommit]
@@ -381,13 +396,15 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     const heading = useRef<Heading | null>(null);
     const seen = useRef<{ readonly key: ArrivalKey; readonly first: boolean } | null>(null);
     // Where focus was as the change began, read as the view draws, before anything in it can take
-    // focus, so a field the view focuses itself is not taken for the visitor's own place.
+    // focus, so a field the view focuses itself is not taken for the visitor's own place. Read
+    // into each shadow root that holds it, as the request compares it when it lands, so a press
+    // inside one is not taken for focus the visitor moved.
     const from = useRef<Element | null>(null);
     if (
         (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
-        from.current = document.activeElement;
+        from.current = activeOf();
     // Asks once for each key, since the effect runs again only when the key changes: as the view
     // first draws, by whether a press brought it, and as its key changes, whatever the last input,
     // since the page changes it on a press. The request is called off as the effect is cleaned up,
