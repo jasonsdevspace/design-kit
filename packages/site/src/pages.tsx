@@ -160,7 +160,11 @@ const SiteFooter = ({
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header className="dk-site-header">
-        <a className="dk-site-brand" href={BASE}>
+        <a
+            className="dk-site-brand"
+            href={BASE}
+            aria-current={current === 'index.html' ? 'page' : undefined}
+        >
             <span className="dk-site-mark site-mark" aria-hidden="true">
                 <svg viewBox="0 0 32 32">
                     {TILES.map((tile) =>
@@ -586,6 +590,9 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
     </>
 );
 
+/** A file the site serves, such as a picture a state draws, by its address under the site's base. */
+const served = (name: string) => `${BASE}${name}`;
+
 /**
  * One state of a control, in one card: its name as a heading and the code that draws it at the top,
  * then its copies, and its code at the foot. The state is drawn live in the visitor's theme and
@@ -628,14 +635,14 @@ const StateShown = ({
                     <p className="site-copy-label">
                         <ThemeName of="page" />, a picture
                     </p>
-                    {state.draw(kit, (name) => `${name}-yours`)}
+                    {state.draw(kit, (name) => `${name}-yours`, served)}
                 </div>
             ) : (
                 <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
                     <p className="site-copy-label" aria-hidden="true">
                         <ThemeName of="page" /> <span className="site-live">Live</span>
                     </p>
-                    {state.draw(kit, (name) => name)}
+                    {state.draw(kit, (name) => name, served)}
                 </div>
             )}
             <div className="site-copy site-other dk-picture" inert>
@@ -643,7 +650,7 @@ const StateShown = ({
                     <ThemeName of="other" />
                     {pictured ? ', a picture' : ', preview only'}
                 </p>
-                {state.draw(kit, (name) => `${name}-other`)}
+                {state.draw(kit, (name) => `${name}-other`, served)}
             </div>
         </div>
         <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
@@ -918,14 +925,10 @@ export const Together = ({ build }: { readonly build: Build }) => (
     </Page>
 );
 
-/** The layouts no live copy can show, since each holds a page's h1, and those any of them holds. */
-const PICTURED_LAYOUTS = LAYOUTS.filter(({ pictured }) => pictured === true);
-const LIVE_LAYOUTS = LAYOUTS.filter(({ pictured }) => pictured !== true);
-
 /**
  * A content page, bands with a hero and a group of sections as pictures, each the column's full
  * width, as a band runs the width of the screen, and the stacks, split rows, notes and numerals
- * any of them holds, live.
+ * any of them holds, live, each in the order the layouts list them, as the list of sections is.
  */
 export const Layouts = ({ build }: { readonly build: Build }) => (
     <Page
@@ -951,8 +954,14 @@ export const Layouts = ({ build }: { readonly build: Build }) => (
         }
         sections={listed(LAYOUTS.map(({ name }) => name))}
     >
-        <Shown controls={PICTURED_LAYOUTS} build={build} wide />
-        <Shown controls={LIVE_LAYOUTS} build={build} />
+        {LAYOUTS.map((control) => (
+            <Shown
+                key={control.name}
+                controls={[control]}
+                build={build}
+                wide={control.pictured === true}
+            />
+        ))}
     </Page>
 );
 

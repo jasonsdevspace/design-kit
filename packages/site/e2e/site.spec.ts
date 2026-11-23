@@ -1672,6 +1672,11 @@ test.describe("the site's header", () => {
                 drawn.filter(({ round }) => !round),
                 path
             ).toEqual([]);
+            // The landing page, which no pill names, is marked current on the brand that leads
+            // to it, so the header always says where the visitor is.
+            const brand = page.locator('.dk-site-header .dk-site-brand');
+            if (path === BASE) await expect(brand, path).toHaveAttribute('aria-current', 'page');
+            else await expect(brand, path).not.toHaveAttribute('aria-current');
         }
     });
 
@@ -2158,7 +2163,7 @@ test.describe('the code of each state', () => {
             '/design-kit/explainer-pieces/',
         ]) {
             await page.goto(path);
-            const differ = await page.evaluate(() => {
+            const differ = await page.evaluate((base) => {
                 /** The elements a browser lays out as blocks, at whose edges a space draws nothing. */
                 const BLOCKS = new Set(['DIV', 'P', 'FOOTER', 'NAV', 'SECTION', 'UL', 'OL', 'LI']);
                 /**
@@ -2261,13 +2266,17 @@ test.describe('the code of each state', () => {
                         hidden.removeAttribute('hidden');
                     steppersAsWritten(copy);
                     panelsAsWritten(copy, shown);
-                    const drawn = copy.innerHTML.replaceAll('-yours"', '"');
+                    // A file the site serves is drawn at its address under the site's base,
+                    // where the code names the file alone, as a page that copies it would.
+                    const drawn = copy.innerHTML
+                        .replaceAll('-yours"', '"')
+                        .replaceAll(`src="${base}`, 'src="');
                     const laidOut = code.dataset['layout'] === 'laid-out';
                     return read(shown, laidOut) === read(drawn, laidOut)
                         ? []
                         : [state.querySelector('.site-state-name')?.textContent ?? ''];
                 });
-            });
+            }, BASE);
             expect(differ, path).toEqual([]);
         }
     });

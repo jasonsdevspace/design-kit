@@ -29,12 +29,15 @@ describe('the states a page shows', () => {
         for (const state of states) {
             const markup = renderToStaticMarkup(state.draw(kit, asWritten));
             // An attribute with a value is found whole, its closing quote included, and one with
-            // none by its own name inside a tag, not as the end of another such as aria-disabled
-            // or as a word of the text, in the case HTML writes it or the one React writes.
+            // none by its own name where an attribute's name stands in a tag, with every quoted
+            // value emptied first, so neither the end of another name such as aria-disabled, a
+            // word of the text nor a word inside another attribute's value passes, in the case
+            // HTML writes it or the one React writes.
             const names = [state.attribute, REACT_CASE[state.attribute]].filter(Boolean);
+            const tags = markup.replaceAll(/"[^"]*"/g, '""');
             const drawn = state.attribute.includes('=')
                 ? markup.includes(` ${state.attribute}`)
-                : new RegExp(`<[^>]*\\s(${names.join('|')})(=""|[\\s/>])`).test(markup);
+                : new RegExp(`<[^>]*\\s(${names.join('|')})(=""|[\\s/>])`).test(tags);
             expect(drawn, `${state.name}: ${state.attribute}`).toBe(true);
         }
     });

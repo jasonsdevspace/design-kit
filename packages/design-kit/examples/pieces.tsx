@@ -775,7 +775,7 @@ export const LAYOUTS: readonly Control[] = [
                 // A div rather than main, since the page it is shown on has its own main content
                 // and its own h1. The picture only sets a mood beside words that say what the page
                 // is, so it says nothing.
-                draw: () => (
+                draw: (_kit, _id, asset = asWritten) => (
                     <div>
                         <section className="dk-band">
                             <div className="dk-band-hero">
@@ -786,12 +786,7 @@ export const LAYOUTS: readonly Control[] = [
                                         Keep score for any card game on one phone.
                                     </p>
                                 </div>
-                                <img
-                                    src="/design-kit/game-night.svg"
-                                    width="880"
-                                    height="1008"
-                                    alt=""
-                                />
+                                <img src={asset('hero.svg')} width="880" height="1008" alt="" />
                             </div>
                         </section>
                         <section className="dk-band site-ground-band">

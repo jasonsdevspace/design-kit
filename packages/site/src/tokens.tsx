@@ -224,7 +224,7 @@ export const Spaces = ({ declared }: { readonly declared: Declared }) => (
 );
 
 /** A step of the type scale, its name the scale's and its step the size. */
-const TEXT = /^--dk-text-[a-z]+$/;
+const TEXT = /^--dk-text-[a-z0-9-]+$/;
 
 /**
  * The steps of the type scale the site's sheet has a class to draw, one for each, as with the

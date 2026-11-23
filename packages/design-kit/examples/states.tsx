@@ -63,9 +63,15 @@ export interface State {
     readonly pictured?: true;
     /**
      * Draws the state. `id` turns a name into an id of this copy's own, so a page that draws a
-     * state twice, once in each theme, never holds one id twice.
+     * state twice, once in each theme, never holds one id twice. `asset` turns a file's name, such
+     * as a picture's, into the address the page serves it from, and leaves it as written unless a
+     * page passes its own, so the code a reader copies names the file alone.
      */
-    readonly draw: (kit: Kit, id: (name: string) => string) => ReactElement;
+    readonly draw: (
+        kit: Kit,
+        id: (name: string) => string,
+        asset?: (name: string) => string
+    ) => ReactElement;
 }
 
 /** A control and its states, in the order a page shows them. */
