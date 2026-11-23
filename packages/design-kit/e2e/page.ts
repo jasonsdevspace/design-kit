@@ -22,12 +22,15 @@ const CLOCK_START = Date.UTC(2026, 0, 1);
  * and can only be stopped at a time it has not yet passed, so the stop lies further ahead than any
  * test runs, and however slow a runner is between the two calls the stop is still to come.
  */
-const CLOCK_STOP = CLOCK_START + 24 * 60 * 60 * 1000;
+export const CLOCK_STOP = CLOCK_START + 24 * 60 * 60 * 1000;
 
 /**
  * Puts a stand-in clock on a page or a context and stops it, so time moves only by the test's own
  * steps. An installed clock left running keeps pace with real time between steps as well, and on a
  * slow runner that real time can fire a timer before the step that expects it to be still waiting.
+ * It is called before the page it holds loads, or followed by a reload, since the stop a day ahead
+ * fires at once every timer a page already running has set to come due within that day. A page
+ * loaded after it takes the stopped time and fires nothing.
  */
 export const stillClock = async (clock: Pick<Clock, 'install' | 'pauseAt'>): Promise<void> => {
     await clock.install({ time: CLOCK_START });

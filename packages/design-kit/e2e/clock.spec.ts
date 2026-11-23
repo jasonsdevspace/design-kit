@@ -1,6 +1,6 @@
 import { type Clock, expect, test } from '@playwright/test';
 
-import { stillClock } from './page.js';
+import { CLOCK_STOP, servePage, stillClock } from './page.js';
 
 /*
  * The still clock the browser tests share, held on a runner slow between its two calls: seconds
@@ -22,7 +22,10 @@ test('stands the clock still where seconds pass between putting it on and stoppi
         pauseAt: (time) => page.clock.pauseAt(time),
     };
     await stillClock(slow);
+    // A page loaded after, as every test loads its own, takes the clock where it stopped.
+    await servePage(page, { title: 'Clock', body: '<p>Still</p>' });
     const before = await page.evaluate(() => Date.now());
     await new Promise((done) => setTimeout(done, 200));
     expect(await page.evaluate(() => Date.now())).toBe(before);
+    expect(before).toBe(CLOCK_STOP);
 });
