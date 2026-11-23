@@ -3401,9 +3401,8 @@
     :where(.dk-stepper-value) {
         flex: none;
         /*
-         * Sized by its border box, as every box in the kit is, so its height, edge included, is
-         * its buttons' and it stands level with them. Its width so holds the figures, its inline
-         * padding, its edge and the pixel a side WebKit keeps inside a field.
+         * Sized by its border box, as every box in the kit is, so its width holds the figures, its
+         * inline padding, its edge and the pixel a side WebKit keeps inside a field.
          */
         width: calc(
             var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * var(--dk-field-inline-held) + 4px
@@ -3433,21 +3432,27 @@
     }
 
     /*
-     * A read-only value shows no buttons to stand level with, so it takes a field's height at each
-     * width, from the field's own rules, unless the stepper is tall. Its figures start where a
-     * read-only field's words start, at the field's inline padding, and it widens by what that
-     * padding adds past the held one, so a column of read-only values keeps one edge.
+     * A value with a button beside it stands level with its buttons, at the target's height. A
+     * read-only value shown alone, once both buttons are hidden, takes a field's height at each
+     * width from the field's own rules, and a field's inline padding, its figures starting where a
+     * read-only field's words start, so a column of read-only values keeps one edge. While a
+     * button keeps focus as the field turns read only, the value keeps its place beside it.
      */
-    :where(.dk-stepper-value:not([readonly]:not(:disabled))) {
+    :where(
+        .dk-stepper-value:is(:not([readonly]), :disabled),
+        .dk-stepper:has(> .dk-button:not([hidden])) > .dk-stepper-value
+    ) {
         min-height: var(--dk-target);
     }
 
-    :where(.dk-stepper-value[readonly]:not(:disabled)) {
+    :where(
+        .dk-stepper:not(:has(> .dk-button:not([hidden])))
+            > .dk-stepper-value[readonly]:not(:disabled)
+    ) {
         width: calc(
-            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + var(--dk-field-inline) +
-                var(--dk-field-inline-held) + 4px
+            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * var(--dk-field-inline) + 4px
         );
-        padding-inline-start: var(--dk-field-inline);
+        padding-inline: var(--dk-field-inline);
         text-align: start;
     }
 

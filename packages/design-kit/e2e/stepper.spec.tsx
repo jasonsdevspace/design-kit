@@ -20,7 +20,8 @@ import { textSize } from './text-size.js';
  * needed, the value in figures of one width so the field keeps its width, every figure shown under
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
  * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
- * value starting where a read-only field's words start and standing at its height, an inline
+ * value starting where a read-only field's words start and standing at the field's height, or at
+ * the larger target when tall, and kept in place beside a button holding focus, an inline
  * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
  * theme.
  */
@@ -622,35 +623,94 @@ const READ_ONLY = renderToStaticMarkup(
         <h1>Round 3</h1>
         <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
         <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
+        <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} readOnly tall />
+        <StepperField id="deals" label="Deals" min={1} max={10} defaultValue={3} />
+        <StepperField id="held" label="Held" min={1} max={10} defaultValue={3} />
     </main>
 );
+
+/** The read-only page, in an app's frame when asked, attached, at the width and text size given. */
+const openReadOnly = async (
+    page: Page,
+    { width, scale = 1, app = false }: { width: number; scale?: number; app?: boolean }
+): Promise<void> => {
+    await page.setViewportSize({ width, height: 900 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: app
+            ? `<div class="dk-app"><div class="dk-app-body">${READ_ONLY}</div></div>`
+            : READ_ONLY,
+        script: ATTACH,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await textSize(page, scale);
+};
 
 test("lines a read-only stepper's value up with a read-only field's, at a field's height", async ({
     page,
     browserName,
 }) => {
     const sizes = [
-        [390, 1],
-        [1280, 1],
-        // The figures start at the field's own inline padding as the text grows past its usual size.
-        ...(browserName === 'chromium' ? [[390, 2] as const] : []),
-    ] as const;
-    for (const [width, scale] of sizes) {
-        const at = `${String(width)} at ${String(scale)}x`;
-        await page.setViewportSize({ width, height: 700 });
-        await servePage(page, { title: 'Round 3', body: READ_ONLY, script: ATTACH });
-        await page.waitForFunction(() => 'ready' in window);
-        await textSize(page, scale);
+        { width: 390, scale: 1, app: false },
+        { width: 1280, scale: 1, app: false },
+        // In an app's frame a field stands at the target's height on a wide screen too.
+        { width: 1280, scale: 1, app: true },
+        // Twice the text size, set through Chromium, where a field's inline padding passes the
+        // held one that an editable value keeps.
+        ...(browserName === 'chromium' ? [{ width: 390, scale: 2, app: false }] : []),
+    ];
+    for (const size of sizes) {
+        const at = `${String(size.width)} at ${String(size.scale)}x${size.app ? ' in an app' : ''}`;
+        await openReadOnly(page, size);
         const field = page.locator('#round');
         const value = page.locator('#cards');
         const [fieldBox, valueBox] = [await box(field), await box(value)];
         expect.soft(valueBox.x, at).toBeCloseTo(fieldBox.x, 0);
         const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];
         expect(Math.min(fieldInk, valueInk), `${at}, both drawn`).toBeGreaterThan(0);
-        // The two faces' figures sit a pixel or so apart within their own widths.
+        // The mono face and the body face leave a pixel or so of different room before a first
+        // figure.
         expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
         expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
     }
+});
+
+test("keeps a tall read-only stepper's larger target, its figures at a field's padding", async ({
+    page,
+}) => {
+    for (const width of [390, 1280]) {
+        await openReadOnly(page, { width });
+        const field = page.locator('#round');
+        const value = page.locator('#seats');
+        expect.soft((await box(value)).height, String(width)).toBeCloseTo(56, 0);
+        const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];
+        expect(Math.min(fieldInk, valueInk), `${String(width)}, both drawn`).toBeGreaterThan(0);
+        // The larger figure leaves a little more room before itself than the field's words do.
+        expect.soft(Math.abs(valueInk - fieldInk), String(width)).toBeLessThanOrEqual(3);
+    }
+});
+
+test('keeps the value where it stood beside a focused button as the field turns read only', async ({
+    page,
+}) => {
+    // Twice the text size, where a read-only value shown alone takes a field's wider padding.
+    await openReadOnly(page, { width: 390, scale: 2 });
+    const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+    await raiseHeld.focus();
+    await page.locator('#held').evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByRole('button', { name: 'Lower Held' })).toBeHidden();
+    const [value, button] = [await box(page.locator('#held')), await box(raiseHeld)];
+    const [open, openButton] = [
+        await box(page.locator('#deals')),
+        await box(page.getByRole('button', { name: 'Raise Deals' })),
+    ];
+    // Its width, its height and the button's place beside it are an editable stepper's.
+    expect.soft(value.width).toBeCloseTo(open.width, 0);
+    expect.soft(value.height).toBeCloseTo(open.height, 0);
+    expect.soft(button.x - value.x).toBeCloseTo(openButton.x - open.x, 0);
 });
 
 test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({
