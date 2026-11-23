@@ -508,6 +508,253 @@ describe('what the sheets style', () => {
         expect(reference.match(/--_dk-[\w-]+/g) ?? []).toEqual([]);
     });
 
+    /**
+     * The compound a selector styles, the last one, past every combinator outside parentheses and
+     * square brackets, so a `~=` inside an attribute selector is not read as a combinator.
+     */
+    const subjectOf = (selector: string): string => {
+        let depth = 0;
+        let start = 0;
+        [...selector].forEach((sign, at) => {
+            if (sign === '(' || sign === '[') depth += 1;
+            if (sign === ')' || sign === ']') depth -= 1;
+            if (depth === 0 && ' >+~'.includes(sign)) start = at + 1;
+        });
+        return selector.slice(start);
+    };
+
+    /**
+     * A rule's selectors with the `:where()` each is wrapped in taken off, and what follows the
+     * `:where()` kept on each, a pseudo-element or a combinator and more, since that decides what
+     * the selector draws.
+     */
+    const membersOf = (selector: string): string[] =>
+        split(selector).flatMap((member) => {
+            if (!member.startsWith(':where(')) return [member];
+            const end = closing(member, ':where'.length);
+            const tail = member.slice(end + 1);
+            return split(member.slice(':where('.length, end)).map((inner) => inner + tail);
+        });
+
+    /**
+     * Whether a selector draws the root itself: its subject is the root, by either name, and not a
+     * pseudo-element of it, which is a box of its own.
+     */
+    const isRoot = (member: string): boolean => {
+        const subject = subjectOf(member);
+        return /^(?::root|html)\b/.test(subject) && !subject.includes('::');
+    };
+
+    /** Each declaration of a rule, as its name and its value. */
+    const declarationsOf = (body: string): [string, string][] =>
+        body
+            .split(';')
+            .map((declaration): [string, string] => {
+                const colon = declaration.indexOf(':');
+                return [
+                    declaration.slice(0, colon).trim(),
+                    declaration
+                        .slice(colon + 1)
+                        .replace(/\s+/g, ' ')
+                        .trim(),
+                ];
+            })
+            .filter(([name]) => name !== '');
+
+    /** Each declaration of a rule's own, a custom property's left out. */
+    const ownOf = (body: string): [string, string][] =>
+        declarationsOf(body).filter(([name]) => !name.startsWith('--'));
+
+    /**
+     * Each custom property a rule with the root among its subjects declares, in the sheets given,
+     * with every value it is given, since the root reads a property whichever sheet sets it there.
+     */
+    const declaredOnRoot = (css: readonly string[]): Map<string, string[]> => {
+        const found = new Map<string, string[]>();
+        for (const { selector, body } of css.flatMap(rulesOf)) {
+            if (!membersOf(selector).some(isRoot)) continue;
+            for (const [name, value] of declarationsOf(body))
+                if (name.startsWith('--')) found.set(name, [...(found.get(name) ?? []), value]);
+        }
+        return found;
+    };
+
+    const texts = sheets.map((name) => readFileSync(new URL(name, folder), 'utf8'));
+    const rootTokens = declaredOnRoot(texts);
+
+    /** Whether a value holds a length in rem, itself or through a property the root declares. */
+    const inRem = (
+        value: string,
+        declared: ReadonlyMap<string, string[]>,
+        seen: readonly string[] = []
+    ): boolean =>
+        /\d\s*rem\b/.test(value) ||
+        [...value.matchAll(/var\(\s*(--[\w-]+)/g)].some(
+            ([, name = '']) =>
+                !seen.includes(name) &&
+                (declared.get(name) ?? []).some((held) => inRem(held, declared, [...seen, name]))
+        );
+
+    /** The properties a value reads with no fallback that no rule on the root declares. */
+    const unknownIn = (value: string, declared: ReadonlyMap<string, string[]>): string[] =>
+        [...value.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)]
+            .map(([, name = '']) => name)
+            .filter((name) => !declared.has(name));
+
+    /**
+     * Each declaration on the root itself that reads a rem, in the sheet text given, or reads a
+     * property no rule on the root declares and gives no fallback, whose unit nothing here can
+     * tell.
+     */
+    const remOnRoot = (
+        css: string,
+        declared: ReadonlyMap<string, string[]> = rootTokens
+    ): string[] =>
+        rulesOf(css)
+            .filter(({ selector }) => membersOf(selector).some(isRoot))
+            .flatMap(({ selector, body }) =>
+                ownOf(body).flatMap(([name, value]) => [
+                    ...(inRem(value, declared) ? [`${selector} sets ${name} in rem`] : []),
+                    ...unknownIn(value, declared).map(
+                        (read) =>
+                            `${selector} sets ${name} from ${read}, which no root rule declares`
+                    ),
+                ])
+            );
+
+    /**
+     * Each rule that reads one of the root's twins in em anywhere but in a property of the root's
+     * own: in a rule that draws another element, where an em is that element's text size, or in a
+     * custom property, which hands the em on to whatever reads it.
+     */
+    const twinsAstray = (css: string): string[] =>
+        rulesOf(css).flatMap(({ selector, body }) =>
+            declarationsOf(body)
+                .filter(([, value]) => value.includes('--_dk-root-'))
+                .filter(([name]) => name.startsWith('--') || !membersOf(selector).every(isRoot))
+                .map(([name]) => `${selector} reads a twin in ${name}`)
+        );
+
+    it('tells a rule on the root that reads a rem from one that reads an em or sits elsewhere', () => {
+        expect(rootTokens.get('--dk-target')).toEqual(['2.75rem']);
+        expect(
+            remOnRoot(`
+                :where(:root:has(.a)) { scroll-padding-bottom: calc(2 * var(--dk-target) + 1px); }
+                :where(.b, html) { padding: 1rem; --dk-own: 2rem; }
+                :where(:root:has(.c)) { scroll-padding-bottom: var(--_dk-root-target); }
+                :where(:root:has(.d) > body) { padding-bottom: var(--dk-target); }
+                :where(.e :root) { margin: 0 1em; }
+            `)
+        ).toEqual([
+            ':where(:root:has(.a)) sets scroll-padding-bottom in rem',
+            ':where(.b, html) sets padding in rem',
+        ]);
+    });
+
+    it('reads what follows a :where() as part of its selector, so a pseudo-element or a child of the root is not the root', () => {
+        expect(membersOf(':where(:root, .a)::view-transition-new(*)')).toEqual([
+            ':root::view-transition-new(*)',
+            '.a::view-transition-new(*)',
+        ]);
+        expect(
+            remOnRoot(`
+                :where(:root)::view-transition-new(*) { margin: 1rem; }
+                :where(:root:has(.x)) > body { padding-bottom: var(--dk-target); }
+                :where(html)::before { height: 2rem; }
+                :where(:root:has(.y)) { scroll-padding-top: 1rem; }
+            `)
+        ).toEqual([':where(:root:has(.y)) sets scroll-padding-top in rem']);
+    });
+
+    it('reads a combinator sign inside an attribute selector as part of the attribute', () => {
+        expect(subjectOf(":root[class~='a b']")).toBe(":root[class~='a b']");
+        expect(subjectOf('.a > html[data-x~=y]:has(.b ~ .c)')).toBe('html[data-x~=y]:has(.b ~ .c)');
+        expect(
+            remOnRoot(':where(:root[data-theme~=dark]) { scroll-padding-bottom: 1rem; }')
+        ).toEqual([':where(:root[data-theme~=dark]) sets scroll-padding-bottom in rem']);
+    });
+
+    it('follows a property to its rem whichever sheet declares it on the root, and fails one it cannot find', () => {
+        const declared = declaredOnRoot([
+            ':where(:root) { --dk-a: 1rem; --dk-c: 2em; }',
+            ':where(.p) { --dk-piece: 1rem; }',
+            '@media (width <= 1px) { :where(html:has(.late)) { --dk-b: calc(2 * var(--dk-a)); } }',
+        ]);
+        expect([...declared.keys()]).toEqual(['--dk-a', '--dk-c', '--dk-b']);
+        expect(
+            remOnRoot(
+                `
+                :where(:root) { scroll-padding-top: var(--dk-b); }
+                :where(:root) { scroll-padding-bottom: var(--dk-c); }
+                :where(:root) { scroll-padding-left: var(--dk-piece); }
+                :where(:root) { scroll-padding-right: var(--dk-page, 1em); }
+                :where(:root) { scroll-margin-top: var(--dk-page, 1rem); }
+            `,
+                declared
+            )
+        ).toEqual([
+            ':where(:root) sets scroll-padding-top in rem',
+            ':where(:root) sets scroll-padding-left from --dk-piece, which no root rule declares',
+            ':where(:root) sets scroll-margin-top in rem',
+        ]);
+        // A property a later sheet declares on the root is followed in the kit's own sheets too.
+        expect(rootTokens.size).toBeGreaterThanOrEqual(
+            declaredOnRoot([readFileSync(new URL('tokens.css', folder), 'utf8')]).size
+        );
+    });
+
+    it("tells a twin read by the root's own property from one read elsewhere or handed on", () => {
+        expect(
+            twinsAstray(`
+                :where(:root) { --_dk-root-target: 2.75em; }
+                :where(:root:has(.a)) { scroll-padding-bottom: var(--_dk-root-target); }
+                :where(html) { scroll-padding-top: calc(2 * var(--_dk-root-space-1)); }
+                :where(.b) { padding: var(--_dk-root-target); }
+                :where(:root, .c) { margin: var(--_dk-root-target); }
+                :where(:root)::before { height: var(--_dk-root-target); }
+                :where(:root:has(.d)) > body { padding: var(--_dk-root-target); }
+                :where(:root) { --dk-room: calc(2 * var(--_dk-root-target)); }
+                :where(.e) { --_dk-own: var(--_dk-root-space-4); }
+            `)
+        ).toEqual([
+            ':where(.b) reads a twin in padding',
+            ':where(:root, .c) reads a twin in margin',
+            ':where(:root)::before reads a twin in height',
+            ':where(:root:has(.d)) > body reads a twin in padding',
+            ':where(:root) reads a twin in --dk-room',
+            ':where(.e) reads a twin in --_dk-own',
+        ]);
+    });
+
+    it("reads no rem in a property of the root's own, which Safari draws from 16px at any root size", () => {
+        const astray = sheets.flatMap((name, at) =>
+            remOnRoot(texts[at] ?? '').map((found) => `${name}: ${found}`)
+        );
+        expect(astray).toEqual([]);
+    });
+
+    it("gives each of the root's twins in em the number its token holds in rem", () => {
+        const twins = [...rootTokens].filter(([name]) => name.startsWith('--_dk-root-'));
+        expect(twins.length).toBeGreaterThan(0);
+        const astray = twins.filter(([name, values]) => {
+            const token = rootTokens.get(name.replace('--_dk-root-', '--dk-')) ?? [];
+            return (
+                token.length !== 1 ||
+                values.length !== 1 ||
+                !/^[\d.]+rem$/.test(token[0] ?? '') ||
+                values[0] !== (token[0] ?? '').replace(/rem$/, 'em')
+            );
+        });
+        expect(astray).toEqual([]);
+        // A twin is read by a property of the root's own alone, since an em elsewhere is that
+        // element's text size.
+        expect(
+            sheets.flatMap((name, at) =>
+                twinsAstray(texts[at] ?? '').map((found) => `${name}: ${found}`)
+            )
+        ).toEqual([]);
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

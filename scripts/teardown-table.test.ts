@@ -74,9 +74,9 @@ const namedIn = (table: string): string[] =>
 const notCalled = (names: readonly string[], page: string): string[] =>
     names.filter((name) => !new RegExp(`\\b${name}(?:<[^()]*>)?\\(`).test(withoutComments(page)));
 
-/** What the controls export that record 22 holds: every attach, and the focus request. */
+/** What the controls export that record 22 holds: every attach, and the two focus requests. */
 const ATTACHES = Object.keys(controls).filter(
-    (name) => /^attach[A-Z]/.test(name) || name === 'moveFocus'
+    (name) => /^attach[A-Z]/.test(name) || name === 'moveFocus' || name === 'focusOnArrival'
 );
 
 /** Every hook the React entry exports. */
@@ -89,10 +89,11 @@ const LEAKS_PAGE = readFileSync(
 );
 
 describe('the teardown table', () => {
-    it('attaches every attach the controls export, and makes a focus request', () => {
+    it('attaches every attach the controls export, and makes both focus requests', () => {
         // The exports are there to read, so the check cannot pass on a package with none.
         expect(ATTACHES).toContain('attachStepper');
         expect(ATTACHES).toContain('moveFocus');
+        expect(ATTACHES).toContain('focusOnArrival');
         expect(notInTable(ATTACHES, TABLE)).toEqual([]);
     });
 

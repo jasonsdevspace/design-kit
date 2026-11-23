@@ -127,6 +127,7 @@ follow by area.
 | A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `packages/design-kit/e2e/links.spec.ts`           |
 | Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts`          |
 | Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | `packages/design-kit/src/tokens.resolver.test.ts` |
+| A rule on the root reads its lengths in em, since Safari draws a root's own rem from 16px at any size     | `packages/design-kit/src/scope.test.ts`           |
 
 </details>
 
@@ -278,7 +279,7 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
-  test to 12.75 KB, and the theme script goes inline in the page's head. A page that attaches a
+  test to 13 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to
   21 KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
   publishes is 132 KB packed, the sheets and modules a page loads together with the README, the
@@ -289,8 +290,9 @@ follow by area.
   processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
   shows its main content in under a second with nothing jumping as it loads, and downloads 24.4 to
   39.5 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
-  performance, that takes longer than two and a half seconds to show its main content, or whose
-  layout shifts by more than a tenth. [The record](docs/benchmarks/site-pages.md) gives each page.
+  performance, that takes longer than two and a half seconds to show its main content, whose layout
+  shifts by more than a tenth, or whose script or sheets, gzipped, pass the budgets in
+  `packages/site/src/budgets.ts`. [The record](docs/benchmarks/site-pages.md) gives each page.
 
 ## Decisions
 
@@ -392,6 +394,12 @@ options rejected, what the choice costs, and the test behind it.
     error moves the field beside it, at the cost of two fields stacking where the row is narrower
     than 21rem, a screen narrower than 368 pixels in a page's column, and a wider stepper asking
     the page for a wider length.
+26. [A stepper is as tall as a field wherever it stands](docs/decisions/0026-a-stepper-is-as-tall-as-a-field-wherever-it-stands.md).
+    A stepper's buttons and value take their height from the rules every button and field take
+    theirs from, so a row's labels stand level on a wide page as on a phone, at the cost of a
+    stepper 8 pixels shorter on a wide page outside an app, where a tall stepper keeps the larger
+    target. Leaving it the target tall, a row that lines its fields up by their labels, a height of
+    the stepper's own and buttons as wide as they are tall were turned down.
 
 </details>
 

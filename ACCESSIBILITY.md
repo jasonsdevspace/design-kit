@@ -22,9 +22,12 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   in the accent, so it meets the ratio a link does. A control keeps it whatever its tabindex, a
   native one or an element with a tabindex and a widget role such as tab, option, menu item, grid
   cell, row, slider or text box, so a tab the arrow keys move focus to is ringed as a link is. A
-  tile's title and detail are measured at 4.5 to 1 and its sign at 3 to 1, as drawn, on the
-  grounds a page sets, on the kit's own surface and on the grounds a tile steps to in a panel, and
-  its ring, drawn outside it, at 3 to 1 on what the list sits on.
+  field for a date or a time draws it whenever it holds focus, since Safari hands focus to a part
+  inside the field and never counts the field itself as focused by the keyboard, so there a press
+  draws it too, as it does on any field a visitor types in. A tile's title and detail are measured
+  at 4.5 to 1 and its sign at 3 to 1, as drawn, on the grounds a page sets, on the kit's own surface
+  and on the grounds a tile steps to in a panel, and its ring, drawn outside it, at 3 to 1 on what
+  the list sits on.
 - **Links.** A link in running text keeps its underline, in a color that shows, in every place it
   sits from the strip to the footer, a dialog, a table and a toast among them, in both themes and in
   forced colors, since the accent stands too close to the text to mark a link by color alone. In the
@@ -32,9 +35,10 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   is a link, such as a button, a pill, a tab, a row, a tab bar's link or a site's brand, draws none.
 - **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen, and 44 on a phone
   and at every width in an app, and tab bar links 56, as are an app's buttons, grid cells, rows and
-  steppers where a page asks for the tall size. A quiet Close is as wide as it is tall, 36 pixels
-  on a wide screen and 44 on a phone, and a site header's brand and each of its pages are 44 tall
-  at every width.
+  steppers where a page asks for the tall size. A stepper's buttons are 44 wide whether it stands 36
+  tall or 44, and 56 wide where it is tall. A quiet Close is as wide as it is tall, 36 pixels on a
+  wide screen and 44 on a phone, and a site header's brand and each of its pages are 44 tall at
+  every width.
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG
   asks a page to allow. The kit's site header, a content page and its lead, rows with a picture and
@@ -97,6 +101,17 @@ is its CSS transformer, as the package README shows.
   in one column where a page asks for columns, a row with a picture sets the picture in the column
   its words would take, and a footer at the page's end pads its foot by its own step alone rather
   than past what a phone keeps there.
+- In Chromium, which draws a picker's icon at the end of a dated field and cuts the field's words
+  short at it, a 320 pixel screen at twice the text size leaves a dated field less room than its
+  words take. A date as typed fits there in the system typeface, and the empty date pattern, a
+  month, a week and a date with a time do not, so a chosen month shows with its year cut short. A
+  dated field in a panel on that screen cuts a typed date short as well, and a wider typeface cuts
+  more. The words and the icon are the browser's own parts, drawn at the text size the visitor set,
+  and no padding the field could give up makes room for a month or a date with a time, so the field
+  stays padded as every other field is. A page that must show a whole month on that screen asks for
+  it with a select or a text field.
+- In Firefox 120, which lacks `:has()`, a callout written before the first field with no form runs
+  the column's width.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
   can still get narrower than its stepper. In a `dk-fields` row there, a stepper wider than the
   row's 10rem runs past its field on a screen 368 pixels wide and up, up to 7 pixels into the gap

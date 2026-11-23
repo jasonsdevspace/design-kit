@@ -17,10 +17,12 @@ import { withoutComments } from '../examples/palette.js';
 
 /** The rules that name a row of fields, each as its selector and declarations on one line. */
 const LISTED: readonly string[] = [
-    // The measure, which the row holds to as a field does.
-    ':where(:is(.dk-page, .dk-band, .dk-stack) :is(.dk-field, .dk-fields, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)) { max-width: var(--dk-field-measure, var(--dk-measure)) }',
+    // The measure, which the row holds to as a field does, and a callout beside a field or a row.
+    ':where(:is(.dk-page, .dk-band, .dk-stack) :is(.dk-field, .dk-fields, form .dk-callout, :is(.dk-field, .dk-fields) ~ .dk-callout, .dk-callout:has(~ :is(.dk-field, .dk-fields))):not(.dk-dialog *, dialog *, [popover] *)) { max-width: var(--dk-field-measure, var(--dk-measure)) }',
     // The row itself.
     ':where(.dk-fields) { display: flex; flex-wrap: wrap; align-items: end; gap: var(--dk-space-4) }',
+    // The row's wrapped lines as far apart as the blocks around it, where a container sets a step.
+    ':where(:is(.dk-explainer, .dk-page, .dk-band, .dk-stack, :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section, .dk-panel, .dk-app-body, .dk-dialog) > .dk-fields) { row-gap: var(--dk-flow-step) }',
     // What the row holds directly: every field from one length, and a line each for two kinds.
     ':where(.dk-fields > .dk-field) { flex: 1 1 var(--dk-fields-least, 10rem) }',
     ':where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) { flex-basis: 100% }',
