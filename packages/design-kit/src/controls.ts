@@ -59,6 +59,28 @@ const holds = (place: Element, node: Node | null): boolean => {
     return !!inside;
 };
 
+/** A place focus may be handed to, or a function that gives more of them when it is reached. */
+type Place = Element | null | undefined | (() => readonly Element[]);
+
+/**
+ * Tries one place of a walk: true where it took focus, false where a page's own listener moved
+ * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
+ * that takes focus or refused it, so the walk goes on.
+ */
+const tryFocus = (place: Element | null | undefined): boolean | undefined => {
+    if (
+        !(place instanceof HTMLElement || place instanceof SVGElement) ||
+        !place.isConnected ||
+        place === document.body
+    )
+        return undefined;
+    const before = focusedNow();
+    place.focus({ preventScroll: place.matches('.dk-app-body') });
+    const now = focusedNow();
+    if (holds(place, now) && (now !== before || place === before)) return true;
+    return now && now !== before ? false : undefined;
+};
+
 /**
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
@@ -69,22 +91,16 @@ const holds = (place: Element, node: Node | null): boolean => {
  * slotted into it too, as a host that delegates focus or a widget that forwards it, counts as
  * taken, as does a place that has focus already, while a place that refuses focus is passed over
  * though focus is inside it. Where a page's own listener moves focus elsewhere as one is tried, the
- * walk stops and that focus stays.
+ * walk stops and that focus stays. A function among the places gives more of them, and is called
+ * only once every place before it has refused focus, so places that cost a search of the page are
+ * looked for only where they are needed, in the same walk.
  */
-const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
-    for (const place of places) {
-        if (
-            !(place instanceof HTMLElement || place instanceof SVGElement) ||
-            !place.isConnected ||
-            place === document.body
-        )
-            continue;
-        const before = focusedNow();
-        place.focus({ preventScroll: place.matches('.dk-app-body') });
-        const now = focusedNow();
-        if (holds(place, now) && (now !== before || place === before)) return true;
-        if (now && now !== before) return false;
-    }
+const focusFirst = (...places: readonly Place[]): boolean => {
+    for (const given of places)
+        for (const place of typeof given === 'function' ? given() : [given]) {
+            const took = tryFocus(place);
+            if (took !== undefined) return took;
+        }
     return false;
 };
 
@@ -118,7 +134,7 @@ const restoring = new Map<HTMLDialogElement, Element>();
  * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
  * Returns whether it focused a place.
  */
-const handBack = (...places: readonly (Element | null | undefined)[]): boolean => {
+const handBack = (...places: readonly Place[]): boolean => {
     if (!focusFirst(...places)) return false;
     handedTo = activeOf();
     handedAt = performance.now();
@@ -1963,11 +1979,14 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     handBack(
         jumpFrom(panel),
         ...[by, ...openers].filter((button) => !isOff(button)),
-        ...[...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
-            (next) =>
-                next.tabIndex >= 0 &&
-                panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
-        ),
+        // Looked for only once the place a link went to and every button has refused focus, since
+        // it reads every element of the page that takes focus.
+        () =>
+            [...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
+                (next) =>
+                    next.tabIndex >= 0 &&
+                    panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
+            ),
         homeOf(panel)
     );
 };
@@ -2035,12 +2054,13 @@ const isOpenOver = (place: Element): boolean =>
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
-    // The elements from the one the key was pressed in, inside a page's own component where the
-    // component's shadow root is open, though the event's target names only the component's host.
-    const path = event.composedPath().filter((node) => node instanceof Element);
     // Safari ends composing with an Escape whose keydown carries the key code 229 instead.
     const composing = event.isComposing || event.keyCode === 229;
     if (event.key !== 'Escape' || event.defaultPrevented || composing) return;
+    // The elements from the one the key was pressed in, inside a page's own component where the
+    // component's shadow root is open, though the event's target names only the component's host.
+    // Read only for an Escape, so every other key the page hears costs nothing here.
+    const path = event.composedPath().filter((node) => node instanceof Element);
     // A field, a combobox or a menu button keeps its Escape, from the element the key was pressed
     // in out to that host, so a component that marks its host as a combobox keeps it too.
     if (!(target instanceof Element) || path.slice(0, path.indexOf(target) + 1).some(ownsEscape))

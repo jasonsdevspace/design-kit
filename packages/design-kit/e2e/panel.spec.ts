@@ -954,6 +954,31 @@ test.describe('a link in the panel', () => {
 });
 
 test.describe('Escape', () => {
+    test('reads the path of a key that is not Escape no more than a page with no panel does', async ({
+        page,
+    }) => {
+        await open(page);
+        // How often a key pressed on the tips' button has its path read, by every listener.
+        const read = () =>
+            page.evaluate(() => {
+                const event = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
+                const path = event.composedPath.bind(event);
+                let times = 0;
+                event.composedPath = () => {
+                    times += 1;
+                    return path();
+                };
+                document.querySelector('#tips-button')?.dispatchEvent(event);
+                return times;
+            });
+        const attached = await read();
+        await page.evaluate(() => {
+            for (const one of (window as unknown as Kit).panels) one.detach();
+        });
+        // What is left is the controls' own note of whether a key is a press.
+        expect(attached).toBe(await read());
+    });
+
     test('leaves the panel open on the Escape with which Safari ends typing in a script such as Japanese', async ({
         page,
     }) => {
@@ -1164,6 +1189,49 @@ test.describe('Escape', () => {
 });
 
 test.describe('where focus goes', () => {
+    test('searches the page for what follows the panel only where no button takes focus', async ({
+        page,
+        browserName,
+    }) => {
+        await open(page);
+        // Every search of the whole page the page's script makes, counted from here on.
+        await page.evaluate(() => {
+            const counted = window as unknown as { searches: number };
+            counted.searches = 0;
+            const search = document.querySelectorAll.bind(document);
+            document.querySelectorAll = (selectors: string) => {
+                counted.searches += 1;
+                return search(selectors);
+            };
+        });
+        const searches = () =>
+            page.evaluate(() => (window as unknown as { searches: number }).searches);
+        await button(page).click();
+        // The Close is the next stop after the button that opened the panel and the three after it.
+        await tab(page, browserName, 4);
+        await expect(close(page)).toBeFocused();
+        await page.keyboard.press('Space');
+        await expect(panel(page)).toBeHidden();
+        await expect(button(page)).toBeFocused();
+        expect(await searches()).toBe(0);
+        // With both of the panel's buttons off, focus goes to what follows it, which only a search
+        // of the page finds.
+        await page.evaluate(() => {
+            for (const id of ['#tips-button', '#tips-again'])
+                document.querySelector(id)?.setAttribute('aria-disabled', 'true');
+        });
+        await page.evaluate(() => {
+            (window as unknown as Kit).setTips(true);
+        });
+        await page.locator('#deal').focus();
+        await page.evaluate(() => {
+            (window as unknown as Kit).setTips(false);
+        });
+        await expect(panel(page)).toBeHidden();
+        await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
+        expect(await searches()).toBe(1);
+    });
+
     test('moves focus to what follows the panel where no button that names it is left', async ({
         page,
     }) => {
