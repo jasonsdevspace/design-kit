@@ -8,6 +8,12 @@ export interface Held {
 
 const BOTH_THEMES = (title: (theme: string) => string) => [title('light'), title('dark')];
 
+/** The audits a newer piece's own spec runs, in each theme and in forced colors. */
+const EVERY_AUDIT = [
+    ...BOTH_THEMES((theme) => `has no audit findings in the ${theme} theme`),
+    'has no audit findings in forced colors',
+];
+
 /** The tests that hold every state on the controls page alike. */
 const EVERY_CONTROL = [
     'fits a phone 320px wide without scrolling the page sideways',
@@ -114,6 +120,22 @@ export const HELD = {
                 'swallows Enter, Space and a click on an off button alike, and keeps focus on it',
             ],
         },
+        {
+            file: 'e2e/busy.spec.tsx',
+            titles: [
+                'marks a busy button off and ignores a press by pointer, Enter, Space or a form',
+                'holds its look and says nothing for a fast save',
+                'drops its words where the work ends after the wait but before they are said',
+                ...['no-preference', 'reduce'].map(
+                    (motion) =>
+                        `shows and says the wait once it outlasts the token, with motion ${motion}`
+                ),
+                'says its words again for a busy that ends and starts again at once',
+                'holds its look for the wait in forced colors too',
+                'in React saves once for a double press, and says it is saving only while it is',
+                'in React says nothing late for a save that ends just after the wait',
+            ],
+        },
     ],
     Fields: [
         {
@@ -166,6 +188,31 @@ export const HELD = {
                 "wraps a long label on a field's button and a dialog's action rather than run past the page",
             ],
         },
+        {
+            file: 'e2e/marks.spec.tsx',
+            titles: [
+                'names a required field without its words, which its aria-required says, and an optional one with them',
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `draws the mark muted at the normal weight, with no audit findings, in the ${theme} theme`
+                ),
+                'shows the mark in forced colors, and keeps it whole at 320px with twice the text size and under wider spacing',
+            ],
+        },
+        {
+            file: 'e2e/readonly.spec.tsx',
+            titles: [
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `draws a read-only field as a value, apart from one that can change or is off, in the ${theme} theme`
+                ),
+                'keeps the error edge on a read-only field with an error, and draws a disabled one disabled',
+                'draws a read-only edge in the ground color in forced colors',
+                "draws a read-only select as a field with its option's words, and sends its value",
+                'draws a read-only stepper with its value alone, which a keyboard still reaches',
+                'keeps every field whole at 320px with twice the text size and under wider spacing',
+            ],
+        },
     ],
     Callouts: [
         {
@@ -192,6 +239,59 @@ export const HELD = {
                 "draws nothing for an empty live callout, and the callout's look once it is filled",
                 ...EVERY_CONTROL,
                 'pads a callout as the other boxed text at its size is padded',
+            ],
+        },
+        {
+            file: 'e2e/try-again.spec.tsx',
+            titles: [
+                'mounts the callout empty and out of sight beside the loading line',
+                'fills the callout at the first failure and moves no focus',
+                'reads the failure and never the button in the alert',
+                'reads the same failure twice with focus left on what is loading again',
+                'puts a failure that comes back at once in a moment after the callout empties',
+                'draws the list and marks the callout empty again when Try again works',
+                'stays whole on a 320px phone at twice the text size',
+                'stays whole under wider text spacing',
+                ...EVERY_AUDIT,
+            ],
+        },
+    ],
+    'Loading and progress': [
+        {
+            file: 'e2e/loading.spec.tsx',
+            titles: [
+                ...['no-preference', 'reduce'].map(
+                    (motion) =>
+                        `keeps the loading line out of sight for the wait, then shows it, with motion ${motion}`
+                ),
+                'keeps the wait in forced colors',
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `draws the line in the muted text, with no audit findings, in the ${theme} theme`
+                ),
+                'keeps its words whole under wider spacing and at 320px with twice the text size',
+            ],
+        },
+        {
+            file: 'e2e/progress.spec.tsx',
+            titles: [
+                'draws a short track in the line color on pill corners, filled in the accent',
+                'draws an empty track with no fill for a bar with no value',
+                'fills in the highlight on an edged canvas track in forced colors',
+                'reads the label, the amount and the words',
+                'says each quarter once, and the end once',
+                'waits three seconds between steps, and never before the end',
+                'says the end of a run that never pauses, and nothing after it',
+                'says a jump across several quarters once',
+                "gives way to a page's own words said just before it",
+                'says the done words in place of the end',
+                'says a run that starts again, and not the amount a bar first shows once known',
+                'counts its steps again when the page sets new ones, and says nothing once taken away',
+                'names a bar by its own label, and says hundredths where it has no words',
+                'in React says each quarter and the done words through useProgress',
+                'stays whole on a 320px phone at twice the text size',
+                'stays whole under wider text spacing',
+                ...EVERY_AUDIT,
             ],
         },
     ],
@@ -285,6 +385,19 @@ export const HELD = {
                 'has no audit findings in the dark theme',
             ],
         },
+        {
+            file: 'e2e/dock.spec.ts',
+            titles: [
+                ...[1, 2].map(
+                    (scale) =>
+                        `holds Scores and a main action on one row on a 320px phone at ${String(scale)}x the text size`
+                ),
+                'takes two rows, rather than a page scrolled sideways or a word cut, where the two cannot share one',
+                "draws the reference's pair with the main action last in the keyboard order",
+                'keeps every word whole under wider spacing',
+                ...EVERY_AUDIT,
+            ],
+        },
     ],
     'Tab bar': [
         {
@@ -367,6 +480,20 @@ export const HELD = {
                 'keeps a row with a button as tall as one without, the button in the middle and every ring off the words',
                 'has no audit findings in the light theme',
                 'has no audit findings in the dark theme',
+            ],
+        },
+        {
+            file: 'e2e/empty.spec.tsx',
+            titles: [
+                'draws no ground and no edge, its words where a row title starts in a page',
+                'starts its words where a row title does at a bare edge too',
+                'is not live, so it is read where it is',
+                'draws its words muted at the body size and a plain button under them',
+                'stays whole on a 320px phone at twice the text size',
+                'stays whole under wider text spacing',
+                ...EVERY_AUDIT,
+                'the saved games waits for typing to stop, then says the search matches nothing and names it',
+                'the saved games brings the list back when the search is emptied in the field itself',
             ],
         },
     ],
@@ -576,21 +703,120 @@ export const HELD = {
         },
         { file: 'e2e/explainer.spec.tsx', titles: STRIP_AND_FOOTER.explainer },
     ],
-    Bands: [
+    'Content page': [
+        {
+            file: 'e2e/layouts.spec.ts',
+            titles: [
+                'spaces a content page by the flow, its sections further apart, and holds its prose to the measure',
+                "takes a content page's controls in the markup's order, and cuts nothing off at 320 wide, twice the text size and the wider text spacing",
+            ],
+        },
+        {
+            file: 'e2e/bands.spec.ts',
+            titles: [
+                "keeps a content page's section a section's step under the page's own heading",
+            ],
+        },
+    ],
+    'Bands and a hero': [
         {
             file: 'e2e/bands.spec.ts',
             titles: [
                 "sizes a band's title, its heading and its sections, and keeps a group under the heading that names it",
                 "lines a band's content up with the column and spaces it by the flow",
                 "spaces a grid's items in a band by its gap alone, and a stack's pieces by the flow",
-                "sets a group of sections 2 to a row at 1280 wide, each with a page section's heading and steps",
-                "sets a group of sections 1 to a row at 390 wide, each with a page section's heading and steps",
                 "holds a band's and a stack's own prose to the measure, as a content page's",
-                "keeps a content page's section a section's step under the page's own heading",
                 "reaches a row and a switch past a band's column by their ring, as on a content page",
                 'keeps every word whole and nothing sideways on a 320px phone at twice the text size',
                 "holds a band's sides at a phone's step on an app's page at twice the text size",
                 'has no audit findings',
+            ],
+        },
+        {
+            file: 'e2e/hero.spec.ts',
+            titles: [
+                'sets the words beside the picture from 48rem, centered, the picture at 28rem',
+                'holds the picture to 45% of the row, and breaks a display heading between words only, at 48rem',
+                'sets the picture at the width a page names, held to 45% of the row',
+                'stands the words over the picture a step apart on a phone, in their own proportions',
+                ...['band', 'content page'].map(
+                    (holder) => `keeps its own spacing written on a ${holder}`
+                ),
+                'holds the picture to its named height on a wider phone, cropped',
+                ...['picture', 'figure'].map(
+                    (kind) => `fits a picture in a ${kind} to its cell at every width`
+                ),
+                "lays out the reference's band example with nothing pushed sideways",
+                'fills its cell beside taller words by cropping the picture, never stretching it',
+                'pushes nothing sideways on a 320px phone at twice the text size',
+                'pushes nothing sideways written on a content page at 320px and twice the text size',
+                'pushes nothing sideways under wider text spacing at 48rem',
+                ...EVERY_AUDIT,
+            ],
+        },
+    ],
+    'Groups of sections': [
+        {
+            file: 'e2e/bands.spec.ts',
+            titles: [
+                "sizes a band's title, its heading and its sections, and keeps a group under the heading that names it",
+                ...[
+                    [2, 1280],
+                    [1, 390],
+                ].map(
+                    ([many, width]) =>
+                        `sets a group of sections ${String(many)} to a row at ${String(width)} wide, each with a page section's heading and steps`
+                ),
+            ],
+        },
+        {
+            file: 'e2e/split.spec.ts',
+            titles: [
+                'lines up the sections of a group written on a band, and a split row written on a stack',
+                'sets a group of sections at --dk-sections-least, 20rem until a page sets it',
+            ],
+        },
+    ],
+    Stacks: [
+        {
+            file: 'e2e/stack.spec.ts',
+            titles: [
+                "spaces a pair, a heading's stack and its list at their steps",
+                'spaces a plain stack at the step of what holds it, and a stack in a pair at the pair step',
+                'keeps a named step under a title and under a page section heading',
+                'gives a step class alone nothing, and a stack outside any container only its named step',
+                ...['plain', 'dk-stack-pair', 'dk-stack-heading'].map(
+                    (step) => `adds no step for a hidden piece in a ${step} stack`
+                ),
+                'draws a stack on a list with no marker, indent or room of its own',
+                "writes the list's role in the example, which Safari drops with the markers",
+                'stays whole on a 320px phone at twice the text size, a wrapped pair at its step',
+                'keeps its steps between the pieces under wider text spacing',
+                ...EVERY_AUDIT,
+            ],
+        },
+    ],
+    'Split rows, notes and numerals': [
+        {
+            file: 'e2e/split.spec.ts',
+            titles: [
+                'sets the start and the end on one line, on their baseline, at the ends of the row',
+                'puts the end under the start a small step apart where they do not fit',
+                'breaks a long first word rather than push the page sideways at twice the text size',
+                'draws a note muted at the small size, and a numeral at its size in tabular mono',
+                ...BOTH_THEMES(
+                    (theme) =>
+                        `draws a note beside a label's words at the normal weight in the ${theme} theme`
+                ),
+                'keeps the numeral and the row whole under wider text spacing',
+                'reads the numeral with its unit',
+                ...['-1234', '12345'].map(
+                    (score) =>
+                        `keeps a score of ${score} on one line on a 320px phone at twice the text size`
+                ),
+                'breaks a long word at the end of the row too',
+                'holds a split row to the measure on a wide page',
+                ...EVERY_AUDIT,
             ],
         },
     ],

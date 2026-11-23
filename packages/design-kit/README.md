@@ -41,8 +41,9 @@ More on [what it is built for](https://jasonsdevspace.com/design-kit/#built-for)
   [the controls page](https://jasonsdevspace.com/design-kit/controls/).
 - **An app's frame.** A tab bar, a dock, a toast, a grid of buttons, a stepper and a dialog, on
   [the app pieces page](https://jasonsdevspace.com/design-kit/app-pieces/).
-- **Pages.** A site header, a footer, bands and a "How it works" page, on [the page chrome
-  page](https://jasonsdevspace.com/design-kit/page-chrome/) and [the explainer pieces page](https://jasonsdevspace.com/design-kit/explainer-pieces/).
+- **Pages.** A site header, a footer and a "How it works" page, on [the page chrome
+  page](https://jasonsdevspace.com/design-kit/page-chrome/) and [the explainer pieces page](https://jasonsdevspace.com/design-kit/explainer-pieces/),
+  and a content page, bands and a hero, on [the layouts page](https://jasonsdevspace.com/design-kit/layouts/).
 - **Lists and layout.** Rows, tiles and panels, under [Rows](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#rows) and
   [Panels](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#panels) in the reference, and for a content page a hero, stacks, split rows and
   numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#content-pages).

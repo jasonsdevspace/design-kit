@@ -3,12 +3,12 @@ import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from
 
 import { type Group, HELD } from '../../design-kit/examples/held.js';
 import { declaredIn } from '../../design-kit/examples/palette.js';
-import { APP, CHROME, EXPLAINER } from '../../design-kit/examples/pieces.js';
+import { APP, CHROME, EXPLAINER, LAYOUTS } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
 import { HowItWorks } from './explainer.js';
 import { FAINT, TILES } from './mark.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
-import { Colors, Contrast, Scale, Spaces } from './tokens.js';
+import { Colors, Contrast, Scale, SCALE_GROUPS, Spaces, TypeScale } from './tokens.js';
 
 const { DemoFooter, PortfolioStrip, SkipLink, Toast } = kit;
 
@@ -160,7 +160,11 @@ const SiteFooter = ({
  */
 const SiteNav = ({ current }: { readonly current: Route['file'] }) => (
     <header className="dk-site-header">
-        <a className="dk-site-brand" href={BASE}>
+        <a
+            className="dk-site-brand"
+            href={BASE}
+            aria-current={current === 'index.html' ? 'page' : undefined}
+        >
             <span className="dk-site-mark site-mark" aria-hidden="true">
                 <svg viewBox="0 0 32 32">
                     {TILES.map((tile) =>
@@ -389,6 +393,18 @@ const PREVIEWS: Readonly<Record<Extract<Route, { card: string }>['file'], ReactN
             <span className="site-preview-dock" />
         </span>
     ),
+    'layouts/index.html': (
+        <span className="site-preview-layout">
+            <span className="site-preview-hero">
+                <span className="site-preview-hero-words" />
+                <span className="site-preview-hero-picture" />
+            </span>
+            <span className="site-preview-sections">
+                <span className="site-preview-line" />
+                <span className="site-preview-line" />
+            </span>
+        </span>
+    ),
     'page-chrome/index.html': (
         <span className="site-preview-page">
             <span className="site-preview-strip" />
@@ -574,6 +590,9 @@ const ThemeName = ({ of }: { readonly of: 'page' | 'other' }) => (
     </>
 );
 
+/** A file the site serves, such as a picture a state draws, by its address under the site's base. */
+const served = (name: string) => `${BASE}${name}`;
+
 /**
  * One state of a control, in one card: its name as a heading and the code that draws it at the top,
  * then its copies, and its code at the foot. The state is drawn live in the visitor's theme and
@@ -616,14 +635,14 @@ const StateShown = ({
                     <p className="site-copy-label">
                         <ThemeName of="page" />, a picture
                     </p>
-                    {state.draw(kit, (name) => `${name}-yours`)}
+                    {state.draw(kit, (name) => `${name}-yours`, served)}
                 </div>
             ) : (
                 <div className="site-copy" role="group" aria-labelledby={`${id}-name`}>
                     <p className="site-copy-label" aria-hidden="true">
                         <ThemeName of="page" /> <span className="site-live">Live</span>
                     </p>
-                    {state.draw(kit, (name) => name)}
+                    {state.draw(kit, (name) => name, served)}
                 </div>
             )}
             <div className="site-copy site-other dk-picture" inert>
@@ -631,7 +650,7 @@ const StateShown = ({
                     <ThemeName of="other" />
                     {pictured ? ', a picture' : ', preview only'}
                 </p>
-                {state.draw(kit, (name) => `${name}-other`)}
+                {state.draw(kit, (name) => `${name}-other`, served)}
             </div>
         </div>
         <details className="site-code" data-layout={laidOut ? 'laid-out' : 'as-written'}>
@@ -668,7 +687,7 @@ const Shown = ({
                     <StateShown
                         key={state.name}
                         state={state}
-                        pictured={control.pictured ?? false}
+                        pictured={control.pictured ?? state.pictured ?? false}
                         markup={markupFor(markup, control, state)}
                         id={`${idOf(control.name)}-${idOf(state.name)}`}
                         laidOut={control.laidOut ?? false}
@@ -689,7 +708,9 @@ const TOAST = 'Toast';
 
 const APP_PIECES = ROUTES.find(({ file }) => file === 'app-pieces/index.html')?.path ?? BASE;
 
-/** Each state of the buttons, fields, steppers, callouts and dialogs, and the toast. */
+/**
+ * Each state of the buttons, fields, steppers, callouts, waits, progress and dialogs, and the toast.
+ */
 export const Controls = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
@@ -697,15 +718,18 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         title="Controls"
         lead={
             <>
-                The design kit&rsquo;s buttons, fields, steppers, callouts and dialogs, in each
-                state they can be in, and its toast.
+                The design kit&rsquo;s buttons, busy buttons, marked and read-only fields, steppers,
+                callouts with Try again and dialogs, in each state they can be in. Its loading line,
+                progress and toast are here too.
             </>
         }
         intro={
             <p>
                 Each state is shown twice: live in your theme, marked Live, and as a preview in the
-                other. Under each name is the code behind it. To see the other theme live, choose
-                Light or Dark next to Theme, at the top of the page.
+                other. The busy button, the failure with Try again and the part of the page that is
+                loading are pictures in both themes, since a live copy would act as the page loads.
+                Under each name is the code behind it. To see the other theme live, choose Light or
+                Dark next to Theme, at the top of the page.
             </p>
         }
         sections={listed([...CONTROLS.map(({ name }) => name), TOAST])}
@@ -739,17 +763,17 @@ export const App = ({ build }: { readonly build: Build }) => (
         title="App pieces"
         lead={
             <>
-                The frame, tab bar, grids of buttons, raised panel, rows, tiles and pinned table a
-                phone app is drawn from.
+                The frame, dock, tab bar, grids of buttons, raised panel, rows, empty lists, tiles
+                and pinned table a phone app is drawn from.
             </>
         }
         intro={
             <p>
                 Each piece is shown twice: live in your theme, marked Live, and as a preview in the
                 other. Under each name is the code behind it. To see the other theme live, choose
-                Light or Dark next to Theme, at the top of the page. The frame and the tab bar are
-                pictures in both themes, since a live copy would give this page a second main
-                heading and a second set of places to go.
+                Light or Dark next to Theme, at the top of the page. The frame, with its dock, and
+                the tab bar are pictures in both themes, since a live copy would give this page a
+                second main heading and a second set of places to go.
             </p>
         }
         sections={listed(APP.map(({ name }) => name))}
@@ -902,12 +926,52 @@ export const Together = ({ build }: { readonly build: Build }) => (
 );
 
 /**
+ * A content page, bands with a hero and a group of sections as pictures, each the column's full
+ * width, as a band runs the width of the screen, and the stacks, split rows, notes and numerals
+ * any of them holds, live, each in the order the layouts list them, as the list of sections is.
+ */
+export const Layouts = ({ build }: { readonly build: Build }) => (
+    <Page
+        build={build}
+        current="layouts/index.html"
+        title="Layouts"
+        lead={
+            <>
+                The content page, bands with a hero, groups of sections, stacks, split rows, notes
+                and numerals a page is laid out with.
+            </>
+        }
+        intro={
+            <p>
+                The content page, the bands and the groups of sections are pictures in both themes,
+                since a live copy would give this page a second main heading, and each is the width
+                of its picture where a page would give it the width of the screen. The stacks, split
+                rows, notes and numerals work inside any of them, and are shown twice: live in your
+                theme, marked Live, and as a preview in the other. Under each name is the code
+                behind it. To see the other theme live, choose Light or Dark next to Theme, at the
+                top of the page.
+            </p>
+        }
+        sections={listed(LAYOUTS.map(({ name }) => name))}
+    >
+        {LAYOUTS.map((control) => (
+            <Shown
+                key={control.name}
+                controls={[control]}
+                build={build}
+                wide={control.pictured === true}
+            />
+        ))}
+    </Page>
+);
+
+/**
  * The page chrome's own section, written by hand rather than from the states, under one name for
  * its heading, its id, its tests and its place in the list of sections.
  */
 const SKIP_LINK = 'Skip link';
 
-/** The skip link, and each state of the strip, the footer and the bands, as pictures. */
+/** The skip link, and each state of the strip and the footer, as pictures. */
 export const Chrome = ({ build }: { readonly build: Build }) => (
     <Page
         build={build}
@@ -916,19 +980,17 @@ export const Chrome = ({ build }: { readonly build: Build }) => (
         lead={
             <>
                 Page chrome is the frame a demo draws around its content: the skip link, the strip
-                across the top that says whose demo it is, the footer, and the bands a landing page
-                inside it runs in. It puts the same links in the same places on every demo built
-                with the design kit.
+                across the top that says whose demo it is, and the footer. It puts the same links in
+                the same places on every demo built with the design kit.
             </>
         }
         intro={
             <p>
-                The frame around this page is the kit&rsquo;s own, and a landing page inside such a
-                frame runs in bands, each the width of the screen, shown here the width of its
-                picture. Each state of the strip, the footer and the bands is shown as a picture in
-                both themes, since a second working strip would give this page two portfolio menus,
-                and a second page in bands a second title. To try the real ones in the other theme,
-                choose Light or Dark next to Theme, at the top of the page.
+                The frame around this page is the kit&rsquo;s own. Each state of the strip and the
+                footer is shown as a picture in both themes, since a second working strip would give
+                this page two portfolio menus. The bands a landing page runs in inside the frame are
+                on the Layouts page. To try the real ones in the other theme, choose Light or Dark
+                next to Theme, at the top of the page.
             </p>
         }
         sections={listed([SKIP_LINK, ...CHROME.map(({ name }) => name)])}
@@ -991,6 +1053,11 @@ const TokenHeading = ({ id }: { readonly id: (typeof TOKEN_SECTIONS)[number]['id
     <h2 id={id}>{TOKEN_SECTIONS.find((section) => section.id === id)?.name}</h2>
 );
 
+/** A heading of a group of the scale, named as the group is. */
+const ScaleHeading = ({ id }: { readonly id: (typeof SCALE_GROUPS)[number]['id'] }) => (
+    <h3 id={id}>{SCALE_GROUPS.find((group) => group.id === id)?.name}</h3>
+);
+
 /** The color roles in both themes, the contrast of every pairing, the scale, and the theme. */
 export const Tokens = ({ build }: { readonly build: Build }) => {
     const declared = declaredIn(build.sheets);
@@ -1003,7 +1070,7 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <>
                     Tokens are the named colors and sizes everything in the design kit is drawn
                     from. This page shows each color in both themes, the contrast of each pairing it
-                    is meant for, every size, and how a page picks its theme.
+                    is meant for, its type, sizes and waits, and how a page picks its theme.
                 </>
             }
             intro={
@@ -1047,13 +1114,45 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Sizes that should grow when a reader makes their text bigger are in rem. Code
                     inside a sentence is in em, so it matches the words around it. Borders, the
-                    focus ring and shadows are in px, since they should stay the same size. So is
-                    the pill radius, set far larger than any tab or tag is tall, so their ends are
-                    always fully round. Each step of the spacing scale is drawn to size.
+                    focus ring and shadows are in px, since they should stay the same size.
                 </p>
-                <Spaces declared={declared} />
-                <Scale declared={declared} />
                 <Tests group="Scale" commit={build.commit} />
+                <h3 id="spacing">Spacing</h3>
+                <p>Each step of the spacing scale is drawn to size.</p>
+                <Spaces declared={declared} />
+                <ScaleHeading id="type" />
+                <p>
+                    Each step of the type scale is drawn as words at its size. The numeral is for a
+                    score read from across a table.
+                </p>
+                <TypeScale declared={declared} />
+                <Scale declared={declared} group="type" />
+                <ScaleHeading id="radius" />
+                <p>
+                    The pill radius is set far larger than any tab or tag is tall, so their ends are
+                    always fully round.
+                </p>
+                <Scale declared={declared} group="radius" />
+                <ScaleHeading id="motion" />
+                <p>
+                    The durations time the kit&rsquo;s motion, which reduced motion turns off.{' '}
+                    <code>--dk-wait</code> is a delay rather than a motion: how long a wait goes
+                    unremarked before a busy button is drawn off or a loading line shows. So reduced
+                    motion keeps it, and so do forced colors.
+                </p>
+                <Scale declared={declared} group="motion" />
+                <ScaleHeading id="sizes" />
+                <p>
+                    The heights of a field and a target, the widths of the column and the measure,
+                    and the insets that keep a page clear of a phone&rsquo;s edges.
+                </p>
+                <Scale declared={declared} group="sizes" />
+                <ScaleHeading id="layers" />
+                <p>
+                    The shadows that lift a piece, the layers that stack the bars, the toast and the
+                    skip link, and the grounds a container sets for what it holds.
+                </p>
+                <Scale declared={declared} group="layers" />
             </section>
             <section>
                 <TokenHeading id="theme" />
@@ -1078,6 +1177,7 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'tokens/index.html': (build) => <Tokens build={build} />,
     'controls/index.html': (build) => <Controls build={build} />,
     'app-pieces/index.html': (build) => <App build={build} />,
+    'layouts/index.html': (build) => <Layouts build={build} />,
     'page-chrome/index.html': (build) => <Chrome build={build} />,
     'explainer-pieces/index.html': (build) => <Pieces build={build} />,
     'together/index.html': (build) => <Together build={build} />,

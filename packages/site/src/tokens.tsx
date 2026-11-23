@@ -223,24 +223,140 @@ export const Spaces = ({ declared }: { readonly declared: Declared }) => (
     </ul>
 );
 
-/** Every token the color roles and the spacing scale leave out, by name, with its value as written. */
-export const Scale = ({ declared }: { readonly declared: Declared }) => (
-    <Table
-        id="scale-title"
-        title="Every other token"
-        columns={[{ name: 'Token' }, { name: 'Value' }]}
-    >
+/** A step of the type scale, its name the scale's and its step the size. */
+const TEXT = /^--dk-text-[a-z0-9-]+$/;
+
+/**
+ * The steps of the type scale the site's sheet has a class to draw, one for each, as with the
+ * spacing scale. A step the pinned sheet adds fails the build here until the sheet draws it too.
+ * Code takes its size from the words around it, so it is drawn inside a sentence by the kit's own
+ * rule for code, and the numeral by the kit's own class for it, with no class of the site's.
+ */
+const TEXT_DRAWN = new Set([
+    'caption',
+    'small',
+    'body',
+    'lead',
+    'title',
+    'heading',
+    'display',
+    'numeral',
+    'code',
+]);
+
+/** A type step's sample, drawn at its size, or a build that fails for a step the sheet cannot draw. */
+const sampleOf = (name: string) => {
+    const step = name.replace(/^--dk-text-/, '');
+    if (!TEXT_DRAWN.has(step)) throw new Error(`the site's sheet has no class to draw ${name}`);
+    if (step === 'code') {
+        return (
+            <span className="site-type-sample">
+                Run <code>npm test</code> first
+            </span>
+        );
+    }
+    if (step === 'numeral') return <span className="site-type-sample dk-numeral">212</span>;
+    return <span className={`site-type-sample site-text-${step}`}>Round 3 is saved</span>;
+};
+
+/**
+ * The type scale, each step drawn as words at its size beside its name and its value, each taking
+ * its size from its own token by a class, as the page's policy allows, so it is drawn from the
+ * pinned sheet. The words say nothing the name and value do not, so a screen reader passes them by.
+ */
+export const TypeScale = ({ declared }: { readonly declared: Declared }) => (
+    <ul className="site-type" role="list">
         {[...declared]
-            .filter(([name, value]) => !TWO_COLORS.test(value) && !SPACE.test(name))
+            .filter(([name]) => TEXT.test(name))
             .map(([name, value]) => (
-                <tr key={name}>
-                    <th scope="row">
-                        <code>{name}</code>
-                    </th>
-                    <td>
-                        <code>{value}</code>
-                    </td>
-                </tr>
+                <li key={name}>
+                    <span className="site-type-room" aria-hidden="true">
+                        {sampleOf(name)}
+                    </span>
+                    <code>{name}</code>
+                    <span className="site-type-value">{value}</span>
+                </li>
             ))}
-    </Table>
+    </ul>
 );
+
+/**
+ * The groups the tokens the color roles and the spacing scale leave out are shown in, by the id
+ * each heading carries, its name, the title of its table and the tokens it holds. The type scale's
+ * own steps are drawn rather than listed, so the type table holds the rest of the type tokens.
+ */
+export const SCALE_GROUPS = [
+    {
+        id: 'type',
+        name: 'Type',
+        title: 'Line heights, weights, tracking and faces',
+        holds: /^--dk-(leading|weight|tracking|font)-/,
+    },
+    { id: 'radius', name: 'Radius', title: 'Every radius', holds: /^--dk-radius(-|$)/ },
+    {
+        id: 'motion',
+        name: 'Motion and waits',
+        title: 'Every duration and wait',
+        holds: /^--dk-(duration-|wait$)/,
+    },
+    {
+        id: 'sizes',
+        name: 'Sizes',
+        title: 'Every other size',
+        holds: /^--dk-(ring|indicator|field|target|strip|measure|column|app|dialog|space-\d+-held|safe|band|card|icon|flow)(-|$)/,
+    },
+    {
+        id: 'layers',
+        name: 'Shadows, layers and grounds',
+        title: 'Every shadow, layer and ground',
+        holds: /^--dk-(shadow-|scrim$|stack-|ground(-|$))/,
+    },
+] as const;
+
+export type ScaleGroup = (typeof SCALE_GROUPS)[number]['id'];
+
+/**
+ * The group a token is shown in, or a build that fails for one no group holds, rather than a token
+ * the page leaves out.
+ */
+const groupOfToken = (name: string): ScaleGroup => {
+    const found = SCALE_GROUPS.find(({ holds }) => holds.test(name));
+    if (found === undefined) throw new Error(`the tokens page shows ${name} in no group`);
+    return found.id;
+};
+
+/**
+ * Every token of a group the color roles, the spacing scale and the type scale leave out, by name,
+ * with its value as written.
+ */
+export const Scale = ({
+    declared,
+    group,
+}: {
+    readonly declared: Declared;
+    readonly group: ScaleGroup;
+}) => {
+    const { title } = SCALE_GROUPS.find(({ id }) => id === group) ?? SCALE_GROUPS[0];
+    return (
+        <Table id={`${group}-title`} title={title} columns={[{ name: 'Token' }, { name: 'Value' }]}>
+            {[...declared]
+                .filter(
+                    ([name, value]) =>
+                        !TWO_COLORS.test(value) &&
+                        !SPACE.test(name) &&
+                        !TEXT.test(name) &&
+                        groupOfToken(name) === group
+                )
+                .map(([name, value]) => (
+                    <tr key={name}>
+                        <th scope="row">
+                            <code>{name}</code>
+                        </th>
+                        <td>
+                            <code>{value}</code>
+                        </td>
+                    </tr>
+                ))}
+        </Table>
+    );
+};

@@ -18,6 +18,7 @@ type Components = Pick<
     | 'DemoFooter'
     | 'InputField'
     | 'PortfolioStrip'
+    | 'Progress'
     | 'SelectField'
     | 'StepperField'
     | 'TextareaField'
@@ -55,10 +56,22 @@ export interface State {
     /** The React a page writes for the state, where a component draws it. */
     readonly react?: string;
     /**
-     * Draws the state. `id` turns a name into an id of this copy's own, so a page that draws a
-     * state twice, once in each theme, never holds one id twice.
+     * The state is a picture in both themes, where its control's other states are live, since a
+     * live copy would act as the page loads, such as an alert read out or a part of the page busy
+     * for good, or would need a script the page does not attach to say what it shows.
      */
-    readonly draw: (kit: Kit, id: (name: string) => string) => ReactElement;
+    readonly pictured?: true;
+    /**
+     * Draws the state. `id` turns a name into an id of this copy's own, so a page that draws a
+     * state twice, once in each theme, never holds one id twice. `asset` turns a file's name, such
+     * as a picture's, into the address the page serves it from, and leaves it as written unless a
+     * page passes its own, so the code a reader copies names the file alone.
+     */
+    readonly draw: (
+        kit: Kit,
+        id: (name: string) => string,
+        asset?: (name: string) => string
+    ) => ReactElement;
 }
 
 /** A control and its states, in the order a page shows them. */
@@ -190,6 +203,19 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
+                name: 'A busy button, drawn off once the wait has passed',
+                attribute: 'data-busy="Saving the rule."',
+                pictured: true,
+                react: `<Button accent busy="Saving the rule.">
+    Save rule
+</Button>`,
+                draw: ({ Button }) => (
+                    <Button accent busy="Saving the rule.">
+                        Save rule
+                    </Button>
+                ),
+            },
+            {
                 name: 'A larger target, for the one thing a page asks first',
                 attribute: 'class="dk-button dk-button-large"',
                 react: `<Button large>Try it with your own products</Button>`,
@@ -280,6 +306,65 @@ export const CONTROLS: readonly Control[] = [
                         disabled
                         defaultValue="Closed"
                     />
+                ),
+            },
+            {
+                name: 'A required field and an optional one',
+                attribute: 'class="dk-field-mark"',
+                react: `<>
+    <InputField id="rule-name" label="Rule name" mark="required" required />
+    <InputField id="rule-note" label="Note" mark="optional" />
+</>`,
+                draw: ({ InputField }, id) => (
+                    <>
+                        <InputField
+                            id={id('rule-name')}
+                            label="Rule name"
+                            mark="required"
+                            required
+                        />
+                        <InputField id={id('rule-note')} label="Note" mark="optional" />
+                    </>
+                ),
+            },
+            {
+                name: 'Values to read but not change',
+                attribute: 'readonly',
+                react: `<>
+    <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+    <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
+        <option value="flip-7">Flip 7</option>
+        <option value="wizard">Wizard</option>
+    </SelectField>
+    <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
+</>`,
+                draw: ({ InputField, SelectField, StepperField }, id) => (
+                    <>
+                        <InputField
+                            id={id('round')}
+                            label="Round"
+                            defaultValue="Round 3 of 10"
+                            readOnly
+                        />
+                        <SelectField
+                            id={id('game')}
+                            name={id('game')}
+                            label="Game"
+                            defaultValue="wizard"
+                            readOnly
+                        >
+                            <option value="flip-7">Flip 7</option>
+                            <option value="wizard">Wizard</option>
+                        </SelectField>
+                        <StepperField
+                            id={id('cards')}
+                            label="Cards each"
+                            min={1}
+                            max={10}
+                            defaultValue={3}
+                            readOnly
+                        />
+                    </>
                 ),
             },
             {
@@ -536,6 +621,29 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
+                name: 'A failure read out as it comes, with Try again',
+                attribute: 'role="alert"',
+                pictured: true,
+                react: `<Callout
+    tone="danger"
+    live="alert"
+    title="The products could not be loaded"
+    actions={<Button>Try again</Button>}
+>
+    <p>Check your connection.</p>
+</Callout>`,
+                draw: ({ Button, Callout }) => (
+                    <Callout
+                        tone="danger"
+                        live="alert"
+                        title="The products could not be loaded"
+                        actions={<Button>Try again</Button>}
+                    >
+                        <p>Check your connection.</p>
+                    </Callout>
+                ),
+            },
+            {
                 name: 'Something that could go wrong',
                 attribute: 'class="dk-callout dk-callout-warning"',
                 react: `<Callout tone="warning" title="Three products are running low">
@@ -545,6 +653,37 @@ export const CONTROLS: readonly Control[] = [
                     <Callout tone="warning" title="Three products are running low">
                         <p>Each has fewer than five left.</p>
                     </Callout>
+                ),
+            },
+        ],
+    },
+    {
+        name: 'Loading and progress',
+        laidOut: true,
+        states: [
+            {
+                name: 'A part of the page that is loading',
+                attribute: 'class="dk-loading"',
+                pictured: true,
+                draw: (_kit, id) => (
+                    <article aria-labelledby={id('product')} aria-busy="true">
+                        <h4 id={id('product')}>Product</h4>
+                        <p className="dk-loading">Loading the product.</p>
+                    </article>
+                ),
+            },
+            {
+                name: 'Progress through a known amount',
+                attribute: 'class="dk-progress"',
+                react: `<Progress id="import" label="Importing products" value={12} max={40} words="12 of 40" />`,
+                draw: ({ Progress }, id) => (
+                    <Progress
+                        id={id('import')}
+                        label="Importing products"
+                        value={12}
+                        max={40}
+                        words="12 of 40"
+                    />
                 ),
             },
         ],

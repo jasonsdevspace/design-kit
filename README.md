@@ -33,9 +33,11 @@ theme](https://jasonsdevspace.com/design-kit/tokens/) for every color role in bo
 contrast of each pairing it is meant for.
 [Controls](https://jasonsdevspace.com/design-kit/controls/) shows buttons, fields, steppers,
 callouts and dialogs in every state with the code that draws each, [App
-pieces](https://jasonsdevspace.com/design-kit/app-pieces/) the frame, tab bar, grids, rows and
-tables of a phone app, and [Page chrome](https://jasonsdevspace.com/design-kit/page-chrome/) the
-skip link, strip and footer around a demo. [Explainer
+pieces](https://jasonsdevspace.com/design-kit/app-pieces/) the frame, dock, tab bar, grids, rows and
+tables of a phone app, [Layouts](https://jasonsdevspace.com/design-kit/layouts/) the content page,
+bands with a hero, groups of sections, stacks and split rows a page is laid out with, and [Page
+chrome](https://jasonsdevspace.com/design-kit/page-chrome/) the skip link, strip and footer around a
+demo. [Explainer
 pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the layout of the page that
 says how a demo works, and [How it works](https://jasonsdevspace.com/design-kit/how-it-works/) is
 that page written for the kit itself. [The pieces
