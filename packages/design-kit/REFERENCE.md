@@ -2733,41 +2733,42 @@ safe area tokens their values:
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Its column is a phone's whatever the screen, so every button, field, select and choice in it is the
 target tall at every width, as on a phone, and one screen has one height of control. A page that
-ends in a tab bar does the same, as does a dialog written inside either or straight before or after
-it, as its sibling, and so do a theme switch, pills and tabs there, and a button in a toast. A
-dialog set apart from the frame, such as one inside a wrapper of its own, is drawn as a content
-page's is. A demo's strip and footer stay as they are on every page. A page that shows a picture of
-a screen, such as a page of a kit's pieces, gives `dk-picture` to the picture's wrapper or to the
-frame itself and makes it `inert`, so the keyboard and a screen reader pass it by. A frame, a page
-that ends in a tab bar or a shown toast is a picture when it carries `dk-picture` or sits inside an
-element with the class, and the page around a picture keeps its column, its dialogs and its foot as
-a content page does. A pictured toast sits in its place rather than over the foot of the page. A
-pictured frame or page that ends in a tab bar is as tall as what it holds, its bars in their places
-in it rather than held to the screen, and the page draws the edge, the corners and the room around
-it. Only a toast's attach function reads a height, the toast's and the body's, as it shows and while
-it stays. A dock grows with what it holds and a tab bar grows at a large text size, so the body ends
-where the rows below it begin. A toast floats over the foot of the body, just above the dock, so
-showing or hiding one never moves the dock under a thumb about to press it again. While one is shown
-its place opens on a rule, under which the body scrolls as it does under the bar, and the body
-leaves room for the toast after its last element, as many rows as its attach function measured it
-at, up to five, so its last line scrolls clear of the toast and what the keyboard reaches in it
-stops short of the toast. The attach function marks the frame's body with those rows, as
-`data-toast-rows`, while the toast floats over it, and the sheet keeps the room by that mark, in
-every browser the kit supports. A page that writes a shown toast into a live frame by hand, with
-`data-shown` and no attach, writes `data-toast-rows` on the frame's body too, with the toast's
-`data-rows` or with no value for two rows, since the body keeps no room without it. A picture of a
-frame needs no mark. Where the body would keep less than a row and a half above that room, as on a
-phone on its side or at a large text size, the toast takes its row above the dock instead, so
-nothing in the body is covered by it or the bar, and the attach function scrolls the page by as much
-as the dock moved, so the dock stays under the thumb. The toast is measured again while it stays, as
-the screen turns or the text size changes. The room is that element's margin, so the body ends in a
-block, such as a paragraph or a list, as its content does. On a screen too short for the frame the
-toast takes its row above the dock, and the page keeps the dock in place as the toast comes and
-goes, in a browser that keeps a scroll position by what is on screen, as Chrome and Firefox do. Each
-row but the body's is never shorter than what it holds, and the body keeps `--dk-app-body`, 8rem, a
-few lines, so where the rows come to more than the screen the page scrolls and no row covers its
-neighbor or squeezes the body to nothing. What the body holds out of sight, such as a row's words
-for a screen reader, scrolls with it and never lengthens the page.
+ends in a tab bar does the same, as does a dialog written inside either, or before or after it as
+its sibling, or one that carries `dk-dialog-app`, and so do a theme switch, pills and tabs there,
+and a button in a toast. A dialog set apart from the frame with no such class, such as one inside a
+wrapper of its own, is drawn as a content page's is. A demo's strip and footer stay as they are on
+every page. A page that shows a picture of a screen, such as a page of a kit's pieces, gives
+`dk-picture` to the picture's wrapper or to the frame itself and makes it `inert`, so the keyboard
+and a screen reader pass it by. A frame, a page that ends in a tab bar or a shown toast is a picture
+when it carries `dk-picture` or sits inside an element with the class, and the page around a picture
+keeps its column, its dialogs and its foot as a content page does. A pictured toast sits in its
+place rather than over the foot of the page. A pictured frame or page that ends in a tab bar is as
+tall as what it holds, its bars in their places in it rather than held to the screen, and the page
+draws the edge, the corners and the room around it. Only a toast's attach function reads a height,
+the toast's and the body's, as it shows and while it stays. A dock grows with what it holds and a
+tab bar grows at a large text size, so the body ends where the rows below it begin. A toast floats
+over the foot of the body, just above the dock, so showing or hiding one never moves the dock under
+a thumb about to press it again. While one is shown its place opens on a rule, under which the body
+scrolls as it does under the bar, and the body leaves room for the toast after its last element, as
+many rows as its attach function measured it at, up to five, so its last line scrolls clear of the
+toast and what the keyboard reaches in it stops short of the toast. The attach function marks the
+frame with those rows, as `data-toast-rows`, while the toast floats over the body, and the sheet
+keeps the room by that mark, in every browser the kit supports and through a body the page draws
+afresh. A page that writes a toast already shown into a live frame writes the mark too, as
+[Toast](#toast) shows. The toast floats, and the room is kept, where the body is the frame's own
+child, and where it sits deeper, inside a form for one, the toast takes its row above the dock.
+Where the body would keep less than a row and a half above that room, as on a phone on its side or
+at a large text size, the toast takes its row above the dock instead, so nothing in the body is
+covered by it or the bar, and the attach function scrolls the page by as much as the dock moved, so
+the dock stays under the thumb. The toast is measured again while it stays, as the screen turns or
+the text size changes. The room is that element's margin, so the body ends in a block, such as a
+paragraph or a list, as its content does. On a screen too short for the frame the toast takes its
+row above the dock, and the page keeps the dock in place as the toast comes and goes, in a browser
+that keeps a scroll position by what is on screen, as Chrome and Firefox do. Each row but the body's
+is never shorter than what it holds, and the body keeps `--dk-app-body`, 8rem, a few lines, so where
+the rows come to more than the screen the page scrolls and no row covers its neighbor or squeezes
+the body to nothing. What the body holds out of sight, such as a row's words for a screen reader,
+scrolls with it and never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A pictured frame is as tall as what it holds instead, as the app
@@ -3200,7 +3201,7 @@ a part is refused even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
-pads so its last line scrolls clear of it, by the rows `attachToast` marks on the frame's body in
+pads so its last line scrolls clear of it, by the rows `attachToast` marks on the frame in
 `data-toast-rows` while the toast floats there and takes off as it leaves. On a page with no frame
 of its own it sits at the bottom of the screen, over the page and clear of the safe areas, in the
 app's column. While it is shown there, what the keyboard reaches stops short of it and the page's
@@ -3210,6 +3211,23 @@ than five rows can cover what the keyboard reaches, so a toast's message is a sh
 that ends in a tab bar and shows toasts is drawn in the frame, where the toast clears the bar. A
 toast shown while a dialog is open sits under the dialog's scrim, out of sight and out of a screen
 reader's reach, so a page shows its message once the dialog has closed.
+
+A page that writes a toast already shown into a live frame, with `data-shown` in its markup and no
+attach, writes the mark on the frame too, since the body keeps no room without it:
+
+```html
+<div class="dk-app" data-toast-rows="3">
+    ...
+    <main id="main-content" tabindex="0" class="dk-app-body">...</main>
+    <div class="dk-app-toast">
+        <div class="dk-toast" data-shown="" data-rows="3">...</div>
+    </div>
+    ...
+</div>
+```
+
+The value is the toast's `data-rows`, or empty for the two rows a toast with no count keeps. A
+picture of a frame needs no mark.
 
 **`Toast` props**
 
@@ -3803,9 +3821,17 @@ down](#taking-a-control-down) has it, an open dialog closes, with focus handed b
 it where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
 still where the browser handed it as the dialog closed, and the function that opens it does nothing.
 
-On a page with an app's frame, or one that ends in a tab bar, a dialog is written inside the frame
-or straight before or after it, as its sibling, so it takes the frame's sizes at every width, a
-phone's target for each control among them.
+On a page with an app's frame, or one that ends in a tab bar, a dialog is written inside the frame,
+or before or after it as its sibling, so it takes the frame's sizes at every width, a phone's target
+for each control among them. A dialog that sits anywhere else, such as one a page portals to the
+body beside a wrapper that holds the frame, carries `dk-dialog-app` to take them:
+
+```html
+<div id="root">
+    <div class="dk-app">...</div>
+</div>
+<dialog class="dk-dialog dk-dialog-app" aria-labelledby="rename-title">...</dialog>
+```
 
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
@@ -3823,12 +3849,13 @@ width, the actions grow to fill their row, so stacked ones are the dialog's widt
 widths at its end, and a text button keeps its link's width. It pads by `--dk-space-5`, and by
 `--dk-space-4` at 48rem wide or less and on an app's page, as a panel does, with a sheet still clear
 of the home indicator. A dialog is on an app's page where it is written inside an app's frame or a
-page that ends in a tab bar, or straight before or after one, as its sibling, a picture of either
-aside. One set apart, such as inside a wrapper of its own beside the frame, is drawn as on a content
-page, which shows from 48rem wide: its controls at the field's height, the wider inset and its
-actions at its end. Its margins from the screen's edges and its padding stop growing with the text
-past their usual size, so on a phone at a large text size what it holds, such as a stepper, keeps
-its room. They stop there too where a page sets the space tokens larger.
+page that ends in a tab bar, or before or after one as its sibling, a picture of either aside, or
+where it carries `dk-dialog-app`. One set apart with no such class, such as inside a wrapper of its
+own beside the frame, is drawn as on a content page, which shows above 48rem wide: its controls at
+the field's height, the wider inset and its actions at its end. Its margins from the screen's edges
+and its padding stop growing with the text past their usual size, so on a phone at a large text size
+what it holds, such as a stepper, keeps its room. They stop there too where a page sets the space
+tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it

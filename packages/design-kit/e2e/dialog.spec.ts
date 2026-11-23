@@ -601,6 +601,32 @@ test('pads a dialog and a sheet by the smaller space on a phone, the sheet still
     }
 });
 
+test("takes an app's sizes on a wide screen by its class where a page writes it apart from the frame", async ({
+    page,
+}) => {
+    // A dialog a page portals to the body, beside the wrapper that holds its frame.
+    const apart = (classes: string) =>
+        `<div id="root"><div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header>` +
+        `<main class="dk-app-body" tabindex="0"><p>Pick a game.</p></main></div></div>` +
+        `<dialog class="${classes}" aria-labelledby="apart-title"><h2 class="dk-dialog-title" id="apart-title">Rename</h2>` +
+        `<div class="dk-field"><label class="dk-field-label" for="apart-name">Name</label><input class="dk-input" id="apart-name"></div>` +
+        `<div class="dk-dialog-actions"><button type="button" class="dk-button dk-button-accent" id="apart-save">Save</button></div></dialog>`;
+    const read = async (classes: string) => {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await servePage(page, { title: 'Play', body: apart(classes) });
+        await page.locator('dialog').evaluate((dialog: HTMLDialogElement) => {
+            dialog.showModal();
+        });
+        return [
+            (await style(page.locator('#apart-name'), 'min-height'))['min-height'],
+            (await style(page.locator('dialog'), 'padding-left'))['padding-left'],
+            ...Object.values(await style(page.locator('#apart-save'), 'min-height', 'flex-grow')),
+        ];
+    };
+    expect(await read('dk-dialog')).toEqual(['36px', '24px', '36px', '0']);
+    expect(await read('dk-dialog dk-dialog-app')).toEqual(['44px', '16px', '44px', '1']);
+});
+
 test('draws a solid edge round an open dialog in forced colors, where its shadow is gone', async ({
     page,
     browserName,

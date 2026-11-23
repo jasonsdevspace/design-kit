@@ -276,8 +276,8 @@
         /*
          * How far a dialog's content stands in from its edge, which its corner Close is placed
          * from: the larger step held at its size on a wide page, and a phone's held at its size on
-         * a phone, in an app's frame or a page that ends in a tab bar, and in a dialog beside
-         * either, as a sibling before or after it.
+         * a phone, in an app's frame or a page that ends in a tab bar, in a dialog beside either,
+         * as a sibling before or after it, and in one that carries dk-dialog-app.
          */
         --dk-dialog-inset: var(--dk-space-5-held);
     }
@@ -294,7 +294,8 @@
             .dk-app,
             .dk-tabbar-page,
             :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-            .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+            .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+            .dk-dialog-app
         )
     ) {
         --dk-card-inset: var(--dk-space-4-held);

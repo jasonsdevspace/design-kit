@@ -395,10 +395,10 @@ describe('what the sheets style', () => {
         .replace(/ \)/g, ')');
 
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
-        // A live frame or page that ends in a tab bar, and a dialog beside one, as a sibling before
-        // or after it, which no rule asks the root for.
+        // A live frame or page that ends in a tab bar, a dialog beside one, as a sibling before or
+        // after it, which no rule asks the root for, and a dialog whose class says it is an app's.
         const live = ':is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)';
-        const beside = `${live} ~ .dk-dialog, .dk-dialog:has(~ ${live})`;
+        const beside = `${live} ~ .dk-dialog, .dk-dialog:has(~ ${live}), .dk-dialog-app`;
         // The base list, and the same with a picture of a frame left out, which the dialog's
         // actions are told by.
         const forms = [`.dk-app, .dk-tabbar-page, ${beside}`, `${live}, ${beside}`];
@@ -443,13 +443,13 @@ describe('what the sheets style', () => {
      * elements, may be told by what it holds.
      */
     const hasOnHolder = (css: string): string[] => {
-        /** A selector's compounds, split at the combinators outside any parentheses. */
+        /** A selector's compounds, split at the combinators outside any parentheses or brackets. */
         const compoundsOf = (selector: string): string[] => {
             const parts = [''];
             let depth = 0;
             for (const sign of selector) {
-                if (sign === '(') depth += 1;
-                if (sign === ')') depth -= 1;
+                if (sign === '(' || sign === '[') depth += 1;
+                if (sign === ')' || sign === ']') depth -= 1;
                 if (depth === 0 && ' >+~'.includes(sign)) parts.push('');
                 else parts[parts.length - 1] += sign;
             }
@@ -521,6 +521,8 @@ describe('what the sheets style', () => {
                 :where(:is(.c, .dk-tabbar-page:has(.a))) { color: red; }
                 :where(.dk-app:is(.dk-picture, .dk-picture *):has(.a) > .b) { color: red; }
                 :where(.dk-dialog:has(~ .dk-app) .b, .dk-tabbar-page:has(.a) .b) { color: red; }
+                :where(.dk-app[data-toast-rows~=x] > .dk-app-body:has(.a)) { color: red; }
+                :where(body[class~=x]:has(.a) > .b) { color: red; }
             `)
         ).toEqual([
             ':where(:root:has(.a) > body)',
@@ -529,6 +531,7 @@ describe('what the sheets style', () => {
             ':where(:is(.dk-app, :root:has(.a) .dk-dialog) .b)',
             ':where(:is(.dk-app, .dk-tabbar-page):has(.a) .b)',
             ':where(.dk-dialog:has(~ .dk-app) .b, .dk-tabbar-page:has(.a) .b)',
+            ':where(body[class~=x]:has(.a) > .b)',
         ]);
     });
 

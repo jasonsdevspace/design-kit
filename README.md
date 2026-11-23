@@ -396,8 +396,7 @@ options rejected, what the choice costs, and the test behind it.
 26. [A `:has()` on an element that holds the page is written only where the rule draws that element](docs/decisions/0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md).
     A change to a page restyles what it touches in Chrome, where it restyled every element, at the
     cost of a shown toast written by hand in a live frame keeping no room until the page marks the
-    frame's body, and a dialog set apart from its frame drawing at a content page's sizes on a wide
-    screen.
+    frame, and a dialog set apart from its frame saying so with a class.
 
 </details>
 

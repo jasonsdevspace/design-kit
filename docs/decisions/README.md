@@ -124,6 +124,6 @@ costs, and the test behind it.
     element](0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md):
     Chromium restyling everything inside the root, the body or a frame whose `:has()` draws
     something else, the body as the subject of its own rule under a page's toast, `attachToast`
-    marking a frame's body with `data-toast-rows`, a dialog told by the frame it sits in or beside,
-    and why a property the root sets, a sibling `:has()`, a class on each subject and the body's own
-    padding were turned down.
+    marking a frame with `data-toast-rows`, a dialog told by the frame it sits in or beside or by
+    `dk-dialog-app`, and why a property the root sets, a sibling `:has()`, a class on each subject
+    and the body's own padding were turned down.

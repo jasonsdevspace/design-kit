@@ -601,11 +601,12 @@
      * switch, the pills and the tabs below do the same there. A toast's buttons take the target
      * too, so its quiet close is square. A demo's strip and footer are left as they are, so the
      * page's chrome is one height on every page of a demo. A dialog is on a frame's page, or on one
-     * that ends in a tab bar, where it sits inside the frame or beside it, as a sibling before or
-     * after it, a picture of a frame aside. Each list of these places below is written the same
-     * way, and none asks the root what the page holds, since Chromium restyles everything inside an
-     * element whose :has() draws anything but that element, for every element or word the page
-     * adds, as record 27 sets out.
+     * that ends in a tab bar, where it sits inside either, or beside one that is no picture, as a
+     * sibling before or after it. A dialog a page writes anywhere else, such as one it portals to
+     * the body beside a wrapper that holds the frame, says so with dk-dialog-app. Each list of
+     * these places below is written the same way, and none asks the root what the page holds,
+     * since Chromium restyles everything inside an element whose :has() draws anything but that
+     * element, for every element or word the page adds, as record 27 sets out.
      */
     :where(
         :is(
@@ -613,6 +614,7 @@
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
                 .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app,
                 .dk-toast
             )
             .dk-button:not(.dk-strip *, .dk-footer *)
@@ -627,6 +629,7 @@
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
                 .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app,
                 .dk-toast
             )
             .dk-button-text:not(.dk-button-quiet)
@@ -987,7 +990,8 @@
                 .dk-app,
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             :is(.dk-input, .dk-select, .dk-textarea)
     ) {
@@ -1149,7 +1153,8 @@
                 .dk-app,
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             .dk-choice
     ) {
@@ -2010,7 +2015,8 @@
                 .dk-app,
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             .dk-theme-switch-choice:not(.dk-strip *, .dk-footer *)
     ) {
@@ -2191,7 +2197,8 @@
                 .dk-app,
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             a.dk-pill,
         .dk-site-header a.dk-pill
@@ -2299,7 +2306,8 @@
                 .dk-app,
                 .dk-tabbar-page,
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             .dk-tab
     ) {
@@ -2543,17 +2551,19 @@
          * The body keeps its usual padding and leaves room for the toast after what it holds, as
          * the last element's margin, so the body never grows past its row under the dock, its last
          * line scrolls clear of the toast, and what the keyboard reaches in it stops short of the
-         * toast. The room is told by a mark on the body, data-toast-rows, which the toast's attach
+         * toast. The room is told by a mark on the frame, data-toast-rows, which the toast's attach
          * function writes while the toast floats over the body: as many rows as it measured the
-         * toast at, up to five, or two where the mark is empty. The mark is the body's own, so a
-         * change in the body restyles what it touches, where a :has() on the frame has Chromium
+         * toast at, up to five, or two where the mark is empty. An attribute asks for no :has(), so
+         * a change in the body restyles what it touches, where a :has() on the frame has Chromium
          * restyle the whole frame for every element or word added, as record 27 sets out, and a
-         * browser with no :has() keeps the room too. A picture of a frame, which no script marks,
-         * is told by its shown toast and the rows that carries, on the pictured frame alone.
+         * browser with no :has() keeps the room too. The mark is on the frame, the toast's own
+         * ancestor, so it lasts as long as the toast does, through a body the page draws afresh.
+         * A picture of a frame, which no script marks, is told by its shown toast and the rows
+         * that carries, on the pictured frame alone.
          */
         :where(
-            .dk-app
-                > .dk-app-body[data-toast-rows]
+            .dk-app[data-toast-rows]
+                > .dk-app-body
                 > :nth-last-child(
                     1 of :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
                 ),
@@ -2566,15 +2576,15 @@
             );
         }
 
-        :where(.dk-app > .dk-app-body[data-toast-rows]) {
+        :where(.dk-app[data-toast-rows] > .dk-app-body) {
             scroll-padding-bottom: calc(
                 2 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app
-                > .dk-app-body[data-toast-rows='1']
+            .dk-app[data-toast-rows='1']
+                > .dk-app-body
                 > :nth-last-child(
                     1 of :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
                 ),
@@ -2590,8 +2600,8 @@
         }
 
         :where(
-            .dk-app
-                > .dk-app-body[data-toast-rows='3']
+            .dk-app[data-toast-rows='3']
+                > .dk-app-body
                 > :nth-last-child(
                     1 of :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
                 ),
@@ -2606,21 +2616,21 @@
             );
         }
 
-        :where(.dk-app > .dk-app-body[data-toast-rows='1']) {
+        :where(.dk-app[data-toast-rows='1'] > .dk-app-body) {
             scroll-padding-bottom: calc(
                 1 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
-        :where(.dk-app > .dk-app-body[data-toast-rows='3']) {
+        :where(.dk-app[data-toast-rows='3'] > .dk-app-body) {
             scroll-padding-bottom: calc(
                 3 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app
-                > .dk-app-body[data-toast-rows='4']
+            .dk-app[data-toast-rows='4']
+                > .dk-app-body
                 > :nth-last-child(
                     1 of :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
                 ),
@@ -2635,15 +2645,15 @@
             );
         }
 
-        :where(.dk-app > .dk-app-body[data-toast-rows='4']) {
+        :where(.dk-app[data-toast-rows='4'] > .dk-app-body) {
             scroll-padding-bottom: calc(
                 4 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
         }
 
         :where(
-            .dk-app
-                > .dk-app-body[data-toast-rows='5']
+            .dk-app[data-toast-rows='5']
+                > .dk-app-body
                 > :nth-last-child(
                     1 of :not(.dk-visually-hidden, [hidden], .dk-callout[data-empty])
                 ),
@@ -2658,7 +2668,7 @@
             );
         }
 
-        :where(.dk-app > .dk-app-body[data-toast-rows='5']) {
+        :where(.dk-app[data-toast-rows='5'] > .dk-app-body) {
             scroll-padding-bottom: calc(
                 5 * var(--dk-target) + 2 * var(--dk-space-1) + 3px + 2 * var(--dk-space-2)
             );
@@ -2958,7 +2968,8 @@
      * sets there, and the body's keep the tokens. Each rule's :has() is on the element it draws,
      * the root for what scrolling stops short of and the body for its own padding, since Chromium
      * restyles everything inside an element whose :has() draws anything else, as record 27 sets
-     * out.
+     * out. A body that is itself the frame takes no padding, as a page that holds a frame takes
+     * none, since the frame keeps the room inside it.
      */
     :where(
         :root:has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
@@ -2972,7 +2983,7 @@
     }
 
     :where(
-        body:has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
+        body:not(.dk-app):has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
                 :has(.dk-app:not(.dk-picture, .dk-picture *))
             )
     ) {
@@ -2994,9 +3005,9 @@
     }
 
     :where(
-        body:has(.dk-toast[data-shown][data-rows='3']:not(.dk-picture, .dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture, .dk-picture *))
-            )
+        body:not(.dk-app):has(
+                .dk-toast[data-shown][data-rows='3']:not(.dk-picture, .dk-picture *)
+            ):not(:has(.dk-app:not(.dk-picture, .dk-picture *)))
     ) {
         padding-bottom: calc(
             3 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
@@ -3016,9 +3027,9 @@
     }
 
     :where(
-        body:has(.dk-toast[data-shown][data-rows='4']:not(.dk-picture, .dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture, .dk-picture *))
-            )
+        body:not(.dk-app):has(
+                .dk-toast[data-shown][data-rows='4']:not(.dk-picture, .dk-picture *)
+            ):not(:has(.dk-app:not(.dk-picture, .dk-picture *)))
     ) {
         padding-bottom: calc(
             4 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
@@ -3038,9 +3049,9 @@
     }
 
     :where(
-        body:has(.dk-toast[data-shown][data-rows='5']:not(.dk-picture, .dk-picture *)):not(
-                :has(.dk-app:not(.dk-picture, .dk-picture *))
-            )
+        body:not(.dk-app):has(
+                .dk-toast[data-shown][data-rows='5']:not(.dk-picture, .dk-picture *)
+            ):not(:has(.dk-app:not(.dk-picture, .dk-picture *)))
     ) {
         padding-bottom: calc(
             5 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) + 2 *
@@ -3755,9 +3766,10 @@
 
     /*
      * On a phone, and at every width in a dialog inside or beside an app's frame or a page that
-     * ends in a tab bar, a picture of either aside, the actions grow to fill their row, so stacked
-     * ones are the dialog's width rather than two widths pushed to its end, and each still wraps
-     * its words where its row is too narrow for them. A text button keeps its link's width.
+     * ends in a tab bar, a picture of either aside, and in one that carries dk-dialog-app, the
+     * actions grow to fill their row, so stacked ones are the dialog's width rather than two
+     * widths pushed to its end, and each still wraps its words where its row is too narrow for
+     * them. A text button keeps its link's width.
      */
     @media (width <= 48rem) {
         :where(.dk-dialog-actions > :not(.dk-button-text)) {
@@ -3769,7 +3781,8 @@
         :is(
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *),
                 :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
-                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *))
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
             )
             .dk-dialog-actions
             > :not(.dk-button-text)

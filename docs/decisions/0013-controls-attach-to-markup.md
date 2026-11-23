@@ -6,8 +6,8 @@ controls through a kit hook, in 0.9.0 for the listener the module adds to the do
 by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down, by record
 23 in 0.9.3, under which each signal that attaches an element holds its control, and by record 27 in
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
-function writes on the frame's body. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4,
-0.8.6, 0.9.0 and 0.9.3, as its tables give
+function writes on the frame. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6,
+0.9.0, 0.9.3 and 0.9.4, as its tables give
 
 ## Context
 
@@ -120,10 +120,10 @@ listeners the theme switch and the stepper each took away one by one, now one si
 found and kept, with why:
 
 - The room kept for a toast, written once for each count of rows, since a page's script sets no
-  style the kit could read and gzip already sends the repeats for little. Since record 27 the
-  room in an app's frame is told by `data-toast-rows` on the frame's body, a mark `attachToast`
-  writes there as a page's markup writes `data-empty` on a live callout, in place of a `:has()` on
-  the frame, and each count of rows is still a rule of its own.
+  style the kit could read and gzip already sends the repeats for little. Since record 27 the room
+  in an app's frame is told by `data-toast-rows` on the frame, a mark `attachToast` writes there as
+  a page's markup writes `data-empty` on a live callout, in place of a `:has()` on the frame, and
+  each count of rows is still a rule of its own.
 - The theme switch's collapsed form, since a phone reaches it whenever its reader sets a large text
   size, not only on a screen under 320px.
 - The strip's rules, whose likeness to others gzip already sends for nothing.

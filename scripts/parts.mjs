@@ -5,10 +5,10 @@
  * A piece's cost is what the three sheets save, sent together without their comments and gzipped as
  * the sheets' budget measures them, when that piece's rules are taken out. A rule belongs to the
  * piece it lays out, the first of the kit's classes in its first selector, read outside any
- * `:not()` or `:has()`, so a rule for a button in a grid counts to the grid and one for a dialog on
- * a page with an app counts to the dialog. A rule with no class of the kit's counts to the tokens
- * in the tokens' sheet, and to the page's own elements in the others. The costs add up to less than
- * the whole, since a piece that repeats another saves little once taken out.
+ * `:not()` or `:has()`, so a rule for a button in a grid counts to the grid and one for a dialog's
+ * actions in or beside an app's frame counts to the frame. A rule with no class of the kit's counts
+ * to the tokens in the tokens' sheet, and to the page's own elements in the others. The costs add
+ * up to less than the whole, since a piece that repeats another saves little once taken out.
  *
  * A function's cost is measured twice from the controls as a page's bundler takes them, without
  * comments and gzipped: alone, what a page that imports only that function sends, and added, what

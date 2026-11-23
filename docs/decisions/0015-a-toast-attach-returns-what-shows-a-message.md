@@ -5,7 +5,7 @@ the panel's, `attachPanel`, in 0.8.5 for the tabindex on a toast's buttons, in 0
 settle and polite words, in 0.9.2 for a line let go of as `StatusProvider` unmounts, in 0.9.3 for a
 `signal` on `attachStatus` and `attachToast`, by record 23 in 0.9.3, under which the line and the
 toast are taken down once every signal that holds them has aborted, and by record 27 in 0.9.4, for
-the mark a shown toast writes on the body of an app's frame
+the mark a shown toast writes on its app's frame
 
 ## Context
 
@@ -45,9 +45,9 @@ so the same words shown twice are heard twice.
 
 A shown toast carries `data-shown`, and `data-rows`, the rows it was measured at, from one to five,
 which the sheet keeps room for on a page with no frame. In an app's frame the attach also writes
-that count on the frame's body, as `data-toast-rows`, empty for a toast it could not measure, while
-the toast floats over the body, and the sheet keeps the body's room by it, as record 27 has it. The
-mark is not written while the toast takes its row above the dock, and it comes off as the toast
+that count on the frame, as `data-toast-rows`, empty for a toast it could not measure, while the
+toast floats over the frame's body, and the sheet keeps the body's room by it, as record 27 has it.
+The mark is not written while the toast takes its row above the dock, and it comes off as the toast
 leaves.
 
 A toast with an action stays until its close button, its action, Escape with focus in it or the next
@@ -65,13 +65,13 @@ The toast's listeners are on its own elements, so a toast taken from the page ta
 page that takes a toast away while the page stays gives `attachToast` a `signal`, as record 22 has
 every attach take, and it is taken down once every signal holding it has aborted, as record 23 has
 it. That dismisses the message as its Close does, so focus in the toast, which would drop to the
-page's body as its buttons hide, goes back where a dismiss sends it, and the mark on a frame's body
-comes off with the message. It takes off the toast's listeners, its observer, its listener on the
-window's size and its timer, takes away a tabindex the attach added that the page has not changed
-since and lets its line go, and the function the attach returned, and what that returned, do nothing
-after. Its behavior ships in the controls module beside the switch's and the copy button's, rather
-than in a module of its own, as its rules ship in the components sheet, and the module's budget rose
-from 3 KB to 5 KB for it.
+page's body as its buttons hide, goes back where a dismiss sends it, and the mark on its frame comes
+off with the message. It takes off the toast's listeners, its observer, its listener on the window's
+size and its timer, takes away a tabindex the attach added that the page has not changed since and
+lets its line go, and the function the attach returned, and what that returned, do nothing after.
+Its behavior ships in the controls module beside the switch's and the copy button's, rather than in
+a module of its own, as its rules ship in the components sheet, and the module's budget rose from 3
+KB to 5 KB for it.
 
 ## The status line
 

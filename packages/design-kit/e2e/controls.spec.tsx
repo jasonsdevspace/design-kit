@@ -943,10 +943,10 @@ test('passes over an empty live callout in the flow and the room kept for a toas
     expect(marked?.y).toBe(without?.y);
     await expect(page.getByRole('alert')).toBeAttached();
     // Last in the body, with a toast shown, the room for the toast goes under the list instead,
-    // by the mark the toast's attach function writes on the body.
+    // by the mark the toast's attach function writes on the frame.
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
-            `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body" data-toast-rows="1">` +
+            `<style>${KIT}</style></head><body><div class="dk-app" data-toast-rows="1"><main class="dk-app-body">` +
             '<ul id="list"><li>Ann</li></ul>' +
             renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
             '</main><div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
@@ -965,8 +965,8 @@ test('passes over an empty live callout in the flow and the room kept for a toas
             const parts = [''];
             let depth = 0;
             for (const sign of list) {
-                if (sign === '(') depth += 1;
-                if (sign === ')') depth -= 1;
+                if (sign === '(' || sign === '[') depth += 1;
+                if (sign === ')' || sign === ']') depth -= 1;
                 if (sign === ',' && depth === 0) parts.push('');
                 else parts[parts.length - 1] += sign;
             }

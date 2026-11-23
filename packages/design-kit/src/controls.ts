@@ -892,45 +892,63 @@ const markWith = (element: HTMLElement, name: string, value?: string) => {
 };
 
 /**
+ * Marks the frame a toast sits in with the rows the sheet keeps room for in its body, and says
+ * whether the toast floats over that body. The sheet floats the toast and keeps the room only for a
+ * body that is the frame's own child, looked for first so a picture of a frame inside the bar or
+ * the body is never taken for it. A body anywhere else in the frame, inside a form for one, takes
+ * no mark, and its toast takes its row above the dock, as does one whose body would keep less than
+ * a row and a half above the room. A frame with no body, or a toast not yet measured, is left
+ * floating.
+ */
+const floatsIn = (frame: HTMLElement, rows: string | undefined, target: number): boolean => {
+    const body =
+        frame.querySelector(':scope > .dk-app-body') ?? frame.querySelector('.dk-app-body');
+    const own = body?.parentElement === frame;
+    // An unmeasured toast keeps the two rows the sheet gives a mark with no count.
+    markWith(frame, 'toastRows', own ? (rows ?? '') : undefined);
+    if (!body || rows === undefined) return true;
+    if (!own) return false;
+    const room = body.clientHeight - parseFloat(getComputedStyle(body).scrollPaddingBottom);
+    return room >= 1.5 * target;
+};
+
+/**
  * Marks a shown toast with the rows it takes, its content's height over the target's length, which
  * the sheet's room counts by, from one to five, so the sheet keeps that much room for it. In an
- * app's frame it writes the same count on the frame's body, as data-toast-rows, empty for a toast
- * it could not measure, since the sheet keeps the body's room by that mark, where a rule that read
- * the toast from the frame would have Chromium restyle the whole frame for every change in it.
- * Where the body would keep less than a row and a half above that room, it marks the toast to take
- * its row above the dock instead, takes the body's mark off, and scrolls the page by as much as the
- * dock moved, so the dock stays under the thumb. All are attributes rather than styles, so a page's
- * policy may refuse every style it did not serve, and each is written only where it changes, so
- * measuring a toast that has not changed restyles nothing. A toast in a container out of sight,
- * which has no size, is left unmarked until it is measured again. It takes the body it marked last
- * and returns the one it found, marked or not, so the mark comes off a body the toast has left and
- * a dismiss takes it off the element that carries it.
+ * app's frame it writes the same count on the frame, as data-toast-rows, empty for a toast it could
+ * not measure, since the sheet keeps the room in the frame's body by that mark, where a rule that
+ * read the toast from the frame would have Chromium restyle the whole frame for every change in
+ * it. The mark is on the frame, the toast's own ancestor, so it lasts as long as the toast does,
+ * through a body the page draws afresh. Where the body would keep less than a row and a half above
+ * that room, or is not the frame's own child, it marks the toast to take its row above the dock
+ * instead, takes the frame's mark off, and scrolls the page by as much as the dock moved, so the
+ * dock stays under the thumb. All are attributes rather than styles, so a page's policy may refuse
+ * every style it did not serve, and each is written only where it changes, so measuring a floating
+ * toast that has not changed restyles nothing. A toast in a container out of sight, which has no
+ * size, is left unmarked until it is measured again. It takes the frame it marked last and returns
+ * the one it found, marked or not, so the mark comes off a frame the toast has left and a dismiss
+ * takes it off the element that carries it.
  */
 const measureToast = (
     element: HTMLElement,
     close: HTMLElement,
     marked?: HTMLElement
 ): HTMLElement | undefined => {
-    const frame = element.closest('.dk-app');
+    const frame = element.closest<HTMLElement>('.dk-app') ?? undefined;
     const dock = frame?.querySelector('.dk-app-dock');
-    const body = frame?.querySelector<HTMLElement>(':scope > .dk-app-body') ?? undefined;
-    // A body the toast marked and has since left keeps no room for it.
-    if (marked !== body) delete marked?.dataset['toastRows'];
+    // A frame the toast marked and has since left keeps no room for it.
+    if (marked !== frame) delete marked?.dataset['toastRows'];
     const target = parseFloat(getComputedStyle(close).minWidth);
     const before = dock?.getBoundingClientRect().top ?? 0;
     delete element.dataset['row'];
     const rows = rowsOf(element, target);
     markWith(element, 'rows', rows);
-    if (!body) return undefined;
-    // An unmeasured toast keeps the two rows the sheet gives a mark with no count.
-    markWith(body, 'toastRows', rows ?? '');
-    if (rows === undefined) return body;
-    const room = body.clientHeight - parseFloat(getComputedStyle(body).scrollPaddingBottom);
-    if (room >= 1.5 * target) return body;
-    element.dataset['row'] = '';
-    delete body.dataset['toastRows'];
-    window.scrollBy(0, (dock?.getBoundingClientRect().top ?? 0) - before);
-    return body;
+    if (frame && !floatsIn(frame, rows, target)) {
+        element.dataset['row'] = '';
+        delete frame.dataset['toastRows'];
+        window.scrollBy(0, (dock?.getBoundingClientRect().top ?? 0) - before);
+    }
+    return frame;
 };
 
 /**
@@ -988,7 +1006,7 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * are heard twice. A shown toast is marked by its data-shown attribute, which a page that draws it
  * again, as React does with its class, leaves alone. The dk-toast-shown class is set beside it for
  * a page that reads it, though such a redraw takes the class away while the toast stays shown. In
- * an app's frame the frame's body carries data-toast-rows while the toast floats over it, the rows
+ * an app's frame the frame carries data-toast-rows while the toast floats over its body, the rows
  * the sheet keeps room for there, written as the toast is measured and taken off as it leaves. As a
  * message shows, the control that has focus is scrolled clear of the toast where the toast,
  * measured where it comes to rest, would cover it across as well as down. With focus inside a frame
@@ -1011,10 +1029,10 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * none, so Safari, which focuses a pressed button only where it has one, leaves focus in the toast
  * on a press or a tap and focus can go back as it leaves. Attaching a toast again returns the same
  * function, its message still shown. Taken down by its `signal`, it dismisses its message as its
- * Close does, the mark on the frame's body with it, takes off its listeners, its observer, its
- * listener on the window's size and its timer, takes away the tabindex it added and lets its line
- * go, and the function it returned, and what that returned, do nothing after. A signal already
- * aborted returns a function that shows nothing.
+ * Close does, the mark on its frame with it, takes off its listeners, its observer, its listener on
+ * the window's size and its timer, takes away the tabindex it added and lets its line go, and the
+ * function it returned, and what that returned, do nothing after. A signal already aborted returns
+ * a function that shows nothing.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
@@ -1052,10 +1070,10 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     for (const button of given) button.tabIndex = 0;
     // The toast's own line, let go of as an earlier attach was taken down, speaks for this one.
     claimLine(status);
+    // The frame the toast last marked, so the mark comes off the element that carries it.
+    let marked: HTMLElement | undefined;
     // While a message is shown, the toast is measured again whenever its size or the screen's
     // changes, a turned phone or a new text size among them, so its room never goes stale.
-    // The frame's body the toast last marked, so the mark comes off the element that carries it.
-    let marked: HTMLElement | undefined;
     const remeasure = () => {
         marked = measureToast(element, close, marked);
     };
@@ -1103,11 +1121,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // Focus that was in the toast goes back to the control it came in from, then to where it
         // was as the message came, on to the control inside it where that is a frame of the page's
         // own origin, then to the body of the app's frame or the page's main content. The shown
-        // state and the mark on the frame's body come off first, so the room the sheet keeps under
-        // a shown toast is gone and the control focus goes to is not scrolled clear of a toast that
-        // is leaving. The buttons stay drawn until after, so no engine moves focus off a hidden
-        // button ahead of the handback, and where nothing takes focus, it leaves the toast for the
-        // page's body rather than staying on a hidden button, as WebKit and Firefox would leave it.
+        // state and the mark on the frame come off first, so the room the sheet keeps under a shown
+        // toast is gone and the control focus goes to is not scrolled clear of a toast that is
+        // leaving. The buttons stay drawn until after, so no engine moves focus off a hidden button
+        // ahead of the handback, and where nothing takes focus, it leaves the toast for the page's
+        // body rather than staying on a hidden button, as WebKit and Firefox would leave it.
         element.classList.remove('dk-toast-shown');
         delete element.dataset['shown'];
         delete element.dataset['rows'];

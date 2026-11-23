@@ -56,12 +56,12 @@ const screen = ({
     readonly dock?: 0 | 1 | 2;
     readonly toast?: boolean;
     readonly tabs?: boolean;
-} = {}): string => `<div class="dk-app">
+} = {}): string => `<div class="dk-app"${toast ? ' data-toast-rows' : ''}>
 <header class="dk-app-bar">
 <h1 class="dk-app-title">${title}</h1>
 <button type="button" class="dk-button dk-button-text">Scores</button>
 </header>
-<main class="dk-app-body" id="main-content" tabindex="0"${toast ? ' data-toast-rows' : ''}>
+<main class="dk-app-body" id="main-content" tabindex="0">
 <p><a href="#rules">How a round is scored</a></p>
 ${LINES}
 <p id="last">The last line.</p>
@@ -1107,6 +1107,10 @@ test("draws a dialog as an app's where it sits inside a frame or beside one, and
         ['after a page that ends in a tab bar', tabbed() + DIALOG],
         ['before a page that ends in a tab bar', DIALOG + tabbed()],
         ['inside a page that ends in a tab bar', tabbed(DIALOG)],
+        [
+            'in a wrapper beside a frame, with the class that says so',
+            `${frame()}<div>${DIALOG.replace('class="dk-dialog"', 'class="dk-dialog dk-dialog-app"')}</div>`,
+        ],
     ] as const) {
         expect(await read(body), where).toEqual(apps);
     }

@@ -806,11 +806,11 @@ test.describe('the toast', () => {
         await expect(toastLine(page)).toHaveText('Round 4 saved.');
     });
 
-    test("takes the mark off a frame's body as its signal aborts, and keeps it through an abort and an attach in one task", async ({
+    test('takes the mark off its frame as its signal aborts, and keeps it through an abort and an attach in one task', async ({
         page,
     }) => {
         await opened(page);
-        // The toast in an app's frame, whose body carries the rows the sheet keeps room for.
+        // The toast in an app's frame, which carries the rows the sheet keeps room for.
         await page.evaluate(`(() => {
             const frame = document.createElement('div');
             frame.className = 'dk-app';
@@ -825,9 +825,9 @@ test.describe('the toast', () => {
             window.first = new AbortController();
             kit.attachToast($('.dk-toast'), withSignal(first.signal))('Round 3 saved.');
         })()`);
-        const frameBody = page.locator('.dk-app-body');
-        await expect(frameBody).toHaveAttribute('data-toast-rows');
-        // Aborted and attached again in one task, the toast stays shown and the body marked.
+        const frame = page.locator('.dk-app');
+        await expect(frame).toHaveAttribute('data-toast-rows');
+        // Aborted and attached again in one task, the toast stays shown and the frame marked.
         await page.evaluate(`(() => {
             first.abort();
             window.later = new AbortController();
@@ -835,11 +835,11 @@ test.describe('the toast', () => {
         })()`);
         await page.clock.runFor(300);
         await expect(page.locator('.dk-toast')).toHaveAttribute('data-shown');
-        await expect(frameBody).toHaveAttribute('data-toast-rows');
+        await expect(frame).toHaveAttribute('data-toast-rows');
         // Taken down, the toast leaves and its mark with it.
         await page.evaluate('later.abort()');
         await expect(page.locator('.dk-toast')).not.toHaveAttribute('data-shown');
-        await expect(frameBody).not.toHaveAttribute('data-toast-rows');
+        await expect(frame).not.toHaveAttribute('data-toast-rows');
     });
 
     test('shows a message while a later signal holds it, and none once that one aborts', async ({

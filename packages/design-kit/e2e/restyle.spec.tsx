@@ -136,7 +136,7 @@ const showToast = (page: Page): Promise<void> =>
 for (const [kind, body] of Object.entries(PAGES)) {
     test(`restyles what a change touches, not the page, on ${kind}`, async ({ page }) => {
         const whole = await drawn(page, body);
-        // No more than a twentieth of the page, a bound a rule that restyles it whole passes by far.
+        // No more than a twentieth of the page, a bound a rule that restyles it whole exceeds by far.
         for (const [name, change] of Object.entries(CHANGES)) {
             const counts = await restyled(page, () => page.evaluate(change));
             expect(most(counts), name).toBeLessThanOrEqual(whole / 20);
