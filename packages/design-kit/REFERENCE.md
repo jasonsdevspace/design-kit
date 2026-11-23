@@ -122,7 +122,7 @@ may change in any release.
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                               |
 | `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field, a row of fields or a callout in its form grows inside a page, a band or a stack, a panel there included. `none` for its column's width |
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                               |
-| `--dk-fields-least`        | 10rem                                                              | The width each field asks for before the row wraps                                                                                                         |
+| `--dk-fields-least`        | 10rem                                                              | The width each field in a row of fields starts from, so two share a line only where both fit. At least a stepper's width where the row holds one           |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                                         |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                                  |
 | `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                                   |
@@ -825,18 +825,24 @@ Fields set side by side, such as a stepper's field beside a player's name, sit i
 which needs no rules of the page's own. Every field in the row starts from one length,
 `--dk-fields-least`, 10rem until a page sets it, a stepper's width rounded up, and the fields share
 what is left, so a field's width comes from the row alone and a long label, a hint or an error never
-moves the field beside it. Two fields share a line from a screen 368 pixels wide, and a narrower
-screen or a larger text size stacks them, each on a line of its own with its label whole. The fields
-stand `--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a
-field under another, and they line up along their foot, so their controls stand level where one
-label takes two lines or one field shows a hint or an error. An inline stepper and a choice field
-each take a line of their own in the row. The row holds to `--dk-field-measure` as a field does, so
-in a page, a band or a stack it ends where the fields and the callout around it end, and a page sets
+moves the field beside it. Two fields share a line where the row is at least 21rem wide, two lengths
+and the gap, which in a page's column is a screen from 368 pixels, and a narrower row or a larger
+text size stacks them, each on a line of its own with its label whole. The fields stand
+`--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a field
+under another, and they line up along their foot, so their controls stand level where one label
+takes two lines or one field shows a hint or an error. An inline stepper and a choice field each
+take a line of their own in the row. The row holds to `--dk-field-measure` as a field does, so in a
+page, a band or a stack it ends where the fields and the callout around it end, and a page sets
 `none` on the row for its column's width. A field in the row narrows by the same property, as a ZIP
 code's field with `--dk-field-measure: 6rem` does, and the others share the rest. A row with a
-stepper of more figures, by `--dk-stepper-digits`, sets `--dk-fields-least` wider, 10.5rem for
-three, and a page that wants two fields side by side on a screen 360 pixels wide sets it to 9.75rem,
-still as wide as a stepper of two. In a form with no class attribute the row is one of the kit's
+stepper wider than 10rem sets `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper
+of three figures, by `--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of
+three figures. Left at 10rem, such a stepper keeps its field as wide as itself in a browser with
+`:has()`, a tall one with its buttons narrowed toward the target but never under it, and the pair
+stacks on a screen where the two do not fit. A page that wants two fields side by side on a screen
+360 pixels wide sets the length to 9.75rem, still as wide as a stepper of two figures. A row whose
+fields are all hidden still takes a plain form's step, so a page that hides every field in a row
+hides the row itself, with `hidden`. In a form with no class attribute the row is one of the kit's
 blocks, and stands `--dk-space-4` from a field or a row of actions above or below it. A page with
 React writes the `div` around the fields' components.
 
@@ -3065,20 +3071,20 @@ least width in such a row too, in every browser, its stepper moving under the la
 leaves no room for both. Set beside other fields in a `dk-fields` row, as [fields side by
 side](#fields-side-by-side) shows, the stepper's field starts from the row's length, wider than a
 stepper of two figures, and a field with no room left beside it moves to a line of its own. In a
-page's own row that cannot wrap, the fields beside it take what is left, which at a large text size
-can be too little for a word in their labels. The value is in the mono face with figures of one
-width, centered, with room for two figures unless `--dk-stepper-digits` says more, and for the
-spacing between letters WCAG asks a page to allow, so the field does not change width as the value
-changes and no figure is cut off, and in a tall stepper it is at the heading size. Its height, edge
-included, is its buttons', so it stands level with them. At 48rem wide or less, in an app's frame
-and on a page that ends in a tab bar, where a field and a button are the target tall, a stepper that
-is not tall stands level with one beside it. With its label to the left the label takes the room the
-stepper leaves and wraps within it, and the stepper moves under the label where a large text size
-leaves no room for both. Its errors sit on lines above it, as every field's do, and its hint on a
-line below, which only the inline stepper does. In a stepper with its label above, the hint sits
-under the label and over the errors, as in any field. The number field's own spin buttons are taken
-away, since the stepper's buttons stand in for them and they would keep their room even out of
-sight.
+page's own row that cannot wrap, the stepper's field keeps its least width and the fields beside it
+take what is left, which at a large text size can be too little for a word in their labels. The
+value is in the mono face with figures of one width, centered, with room for two figures unless
+`--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page to allow, so
+the field does not change width as the value changes and no figure is cut off, and in a tall stepper
+it is at the heading size. Its height, edge included, is its buttons', so it stands level with them.
+At 48rem wide or less, in an app's frame and on a page that ends in a tab bar, where a field and a
+button are the target tall, a stepper that is not tall stands level with one beside it. With its
+label to the left the label takes the room the stepper leaves and wraps within it, and the stepper
+moves under the label where a large text size leaves no room for both. Its errors sit on lines above
+it, as every field's do, and its hint on a line below, which only the inline stepper does. In a
+stepper with its label above, the hint sits under the label and over the errors, as in any field.
+The number field's own spin buttons are taken away, since the stepper's buttons stand in for them
+and they would keep their room even out of sight.
 
 </details>
 

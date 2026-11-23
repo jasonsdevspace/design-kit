@@ -43,9 +43,10 @@ engines, with and without `:has()`, against every kind of field.
 a fallback for browsers without `:has()` and exceptions for an inline stepper and choices. Rejected,
 for the faults above: the rules reached a field's parts, and each fix needed the next.
 
-**B. A grid of equal tracks.** Each field takes a track of `repeat(auto-fit, minmax(10rem, 1fr))`.
-Rejected, since a track sets its own least width rather than the field's, and at 320 wide a stepper
-ran past its track.
+**B. A grid of equal tracks.** Each field takes a track of `repeat(auto-fit, minmax(7rem, 1fr))`.
+Rejected, since a track sets its own least width rather than the field's. At 320 wide two tracks of
+7rem ran a stepper 19 pixels past its track, and a track of 10rem, which cannot narrow, ran past the
+row at 320 wide and twice the text size.
 
 **C. A container query.** The row stacks its fields below a width it queries. Rejected, since a
 container query cannot read a custom property for its threshold, so a page could not move it as
@@ -56,7 +57,7 @@ the row, since fields of fixed widths leave its end ragged, where the fields aro
 the measure.
 
 **E. No row.** The reference keeps the recipe a page copies. Rejected, since every page would copy
-it and the recipe had already needed the faults above put right.
+it, and each copy would size a stepper's field by its content and meet the faults above on its own.
 
 **F. Every field starts from one length and shares the rest.** Each field in the row takes
 `flex: 1 1 var(--dk-fields-least, 10rem)`, and nothing in a field sets its width.
@@ -74,16 +75,25 @@ parts.
 
 ## Consequences
 
-- Two fields share a line from a screen 368 pixels wide, and a narrower screen or a larger text size
-  stacks them. A page that wants them side by side on a screen 360 pixels wide sets
-  `--dk-fields-least` to 9.75rem, still as wide as a stepper of two figures.
+- Two fields share a line where the row is at least 21rem wide, two lengths and the gap, which in a
+  page's column is a screen from 368 pixels, and a narrower row or a larger text size stacks them. A
+  page that wants them side by side on a screen 360 pixels wide sets `--dk-fields-least` to 9.75rem,
+  still as wide as a stepper of two figures.
 - A stepper's field shares the line equally with a text field, wider than its stepper, rather than
   taking only its stepper's width and leaving the rest to the text field.
 - A row of choices takes a line of its own, as a column of them does, rather than sharing one.
-- A stepper of more figures, by `--dk-stepper-digits`, asks a page to set `--dk-fields-least`
-  wider, 10.5rem for three. Without `:has()` a stepper of three figures left at 10rem runs up to 7
-  pixels past its field into the gap on a screen 368 to 381 pixels wide, which the accessibility
-  notes say.
+- A stepper of more figures, by `--dk-stepper-digits`, asks a page to set `--dk-fields-least` wider,
+  10.5rem for three. Left at 10rem, a stepper of three figures keeps its field as wide as itself, so
+  the pair stacks on a screen up to 374 pixels wide and stands at unequal widths up to 381. Without
+  `:has()` it runs up to 7 pixels past its field into the gap on a screen 368 to 381 pixels wide,
+  which the accessibility notes say.
+- A tall stepper, 191 pixels wide with its buttons at the larger target, asks for 12rem, and a tall
+  one of three figures, 209 pixels wide, for 13.25rem, which hold each at its full size. Left at
+  10rem, a tall stepper keeps its field as wide as its least, its buttons narrowed toward the target
+  but never under it, from a screen 375 pixels wide for two figures and 392 for three. Without
+  `:has()` a tall stepper of two figures runs up to 7 pixels past its field into the gap on a screen
+  368 to 381 pixels wide, and one of three up to 25 pixels on a screen 368 to 417 pixels wide, over
+  the field beside it up to 385, which the accessibility notes say.
 - A field's own rules, a stepper's least width and a long word breaking inside a field's column
   among them, hold in the row as they do outside it.
 
@@ -91,26 +101,31 @@ parts.
 
 The paths are in `packages/design-kit`.
 
-- `e2e/fields.spec.tsx`, in Chromium, WebKit and Firefox, finds a stepper's field and a text field at
-  equal widths a step apart with their controls level at 390 and 1280 wide, and each on its own line
-  at 320 wide and at twice the text size, every label on one line, every part inside its field and
-  no sideways scroll. It finds a stepper no wider than 10rem at either size, the same boxes drawn
-  with the sheet's `:has()` rules taken out, neither field moved by a range error or a long label, a
-  long address breaking inside its field, an inline stepper and choices each on a line of their own,
-  two text fields sharing a line only where twice the length and the gap fit, three at 1280, both
-  controls level beside a hint, and a row in a plain form a step from the fields around it, ending
-  at their edge, with a field in it narrowed by `--dk-field-measure`.
-- `src/fields.test.ts` reads every rule in the components sheet whose selector names what a row of
-  fields holds, and fails one that sets anything but how a field flexes, takes a basis of `auto` or
-  `content`, or reaches inside a field.
+- `e2e/fields.spec.tsx`, in Chromium, WebKit and Firefox, finds a stepper's field and a text field
+  at equal widths a step apart with their controls level at 390 and 1280 wide, and each on its own
+  line at 320 wide and at twice the text size, every label on one line, every part inside its field
+  and no sideways scroll. It finds a stepper no wider than 10rem at either size, the same boxes
+  drawn with the sheet's `:has()` rules taken out, neither field moved by a range error or a long
+  label, a long address breaking inside its field, an inline stepper and choices each on a line of
+  their own, two text fields sharing a line only where twice the length and the gap fit, three at
+  1280, both controls level beside a hint, and a row in a plain form a step from the fields around
+  it, ending at their edge, with a field in it narrowed by `--dk-field-measure`. It finds a tall
+  stepper at 12rem, a tall one of three figures at 13.25rem and one of three at 10.5rem each inside
+  its field with its buttons at full size, beside a text field where the row is wide enough, with
+  and without `:has()`.
+- `src/fields.test.ts` reads every rule in the components sheet that names a row of fields with
+  anything after it, and fails one that is not a rule for what the row holds directly, that sets
+  anything but how a field flexes, or that takes its basis from content, as `auto`, `content`,
+  `max-content`, `min-content`, `fit-content` or `initial` in `flex-basis` or at any place in
+  `flex`, or as `flex: none`, `flex: auto` or `flex: initial`.
 
 ## Sources
 
-- Baymard Institute, [Form Field Usability: Avoid Extensive Multicolumn Layouts](https://baymard.com/blog/avoid-multi-column-forms),
+- Baymard Institute, [Form Field Usability: Avoid Extensive Multicolumn Layouts](https://baymard.com/research-articles/avoid-multi-column-forms),
   read 2026-11-23.
 - Nielsen Norman Group, [Website Forms Usability: Top 10 Recommendations](https://www.nngroup.com/articles/web-form-design/),
   read 2026-11-23.
 - GOV.UK Design System, [date input](https://design-system.service.gov.uk/components/date-input/)
   and [text input](https://design-system.service.gov.uk/components/text-input/), read 2026-11-23.
-- Carbon Design System, [forms pattern](https://carbondesignsystem.com/patterns/forms-pattern/),
+- Carbon Design System, [forms pattern](https://www.carbondesignsystem.com/building-blocks/core/patterns/forms),
   read 2026-11-23.

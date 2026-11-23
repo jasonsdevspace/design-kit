@@ -158,28 +158,94 @@ const boxes = (page: Page) =>
             })
         );
 
+/**
+ * The kit's sheets as a browser without :has() reads them, a selector naming it left unknown,
+ * which drops a rule it is in outside a forgiving list.
+ */
+const withoutHas = async (page: Page): Promise<void> => {
+    await page.evaluate(
+        async ([kit, unknown]) => {
+            const link = document.querySelector('link[href="/kit.css"]');
+            if (!link) throw new Error('expected the kit sheet linked as /kit.css');
+            const served = await (await fetch('/kit.css')).text();
+            if (!served.startsWith(kit))
+                throw new Error('expected the served sheet to open with the kit');
+            const swapped = document.createElement('style');
+            swapped.textContent = unknown + served.slice(kit.length);
+            link.replaceWith(swapped);
+        },
+        [KIT, KIT.replaceAll(':has(', ':-dk-unknown(')] as const
+    );
+    await frames(page);
+};
+
 for (const width of [320, 390]) {
     test(`draws the same boxes without :has() at ${String(width)} wide`, async ({ page }) => {
         await open(page, width, bid());
         const drawn = await boxes(page);
-        // The kit's sheets as a browser without :has() reads them, a selector naming it left
-        // unknown, which drops a rule it is in outside a forgiving list.
-        await page.evaluate(
-            async ([kit, withoutHas]) => {
-                const link = document.querySelector('link[href="/kit.css"]');
-                if (!link) throw new Error('expected the kit sheet linked as /kit.css');
-                const served = await (await fetch('/kit.css')).text();
-                if (!served.startsWith(kit))
-                    throw new Error('expected the served sheet to open with the kit');
-                const swapped = document.createElement('style');
-                swapped.textContent = withoutHas + served.slice(kit.length);
-                link.replaceWith(swapped);
-            },
-            [KIT, KIT.replaceAll(':has(', ':-dk-unknown(')] as const
-        );
-        await frames(page);
+        await withoutHas(page);
         expect(await boxes(page)).toEqual(drawn);
     });
+}
+
+/*
+ * A stepper wider than the length a field starts from, a tall one or one of three figures, in a
+ * row that sets --dk-fields-least as the reference says, at the narrowest width that sets the pair
+ * side by side and at 1280.
+ */
+for (const [what, tall, digits, least, buttons, width] of [
+    ['a tall stepper', true, 2, '12rem', 3.5, 440],
+    ['a tall stepper of three figures', true, 3, '13.25rem', 3.5, 480],
+    ['a stepper of three figures', false, 3, '10.5rem', 2.75, 390],
+] as const) {
+    for (const has of [true, false]) {
+        for (const at of [width, 1280]) {
+            test(`keeps ${what} whole beside a text field in a row asking ${least} a field, at ${String(at)} wide${has ? '' : ' without :has()'}`, async ({
+                page,
+            }) => {
+                await open(
+                    page,
+                    at,
+                    renderToStaticMarkup(
+                        <div
+                            className="dk-fields"
+                            style={
+                                {
+                                    '--dk-fields-least': least,
+                                    '--dk-stepper-digits': String(digits),
+                                } as CSSProperties
+                            }
+                        >
+                            <StepperField
+                                id="score"
+                                label="Score"
+                                min={0}
+                                max={digits === 3 ? 200 : 20}
+                                defaultValue={digits === 3 ? 120 : 12}
+                                tall={tall}
+                            />
+                            <InputField id="player" label="Player" />
+                        </div>
+                    )
+                );
+                if (!has) await withoutHas(page);
+                const [stepper, text] = await pairOf(page);
+                expect(stepper.inside, "the stepper's parts inside its field").toBe(true);
+                expect(text.left - stepper.right).toBeCloseTo(16, 0);
+                expect(Math.abs(text.foot - stepper.foot)).toBeLessThan(0.5);
+                const widths = await page
+                    .locator('.dk-stepper > .dk-button')
+                    .evaluateAll((all) =>
+                        all.map((button) => button.getBoundingClientRect().width)
+                    );
+                expect(widths).toHaveLength(2);
+                // Each button at its full target, not narrowed to fit.
+                for (const button of widths)
+                    expect(button).toBeGreaterThanOrEqual(buttons * 16 - 0.5);
+                expect(await sideways(page)).toBe(0);
+            });
+        }
+    }
 }
 
 for (const [what, label, past] of [

@@ -1425,7 +1425,7 @@ const PROPERTY_WORDS: Readonly<Record<string, string>> = {
         'The widest a field, a row of fields or a callout in its form grows in a page, a band or a stack, the measure unless set',
     '--dk-stepper-digits': 'The figures a stepper’s field keeps room for, 2 unless set',
     '--dk-fields-least':
-        'The width each field asks for before the row of fields wraps, 10rem unless set',
+        'The width each field in a row of fields starts from, so two share a line only where both fit, 10rem unless set',
     '--dk-band-room': 'The room above and below a band, inside its ground',
     '--dk-sections-least': 'The least width of a section in a group of sections, 20rem unless set',
     '--dk-band-hero-picture': 'The width of a hero’s picture beside its words',

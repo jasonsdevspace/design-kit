@@ -83,3 +83,5 @@ The paths are in `packages/design-kit`.
   callout a step below the row, and finds an empty or hidden callout adding no room.
 - `e2e/checked.spec.tsx` finds the error a refusal adds to bare markup at its own margins, with no
   step from the form.
+- `e2e/fields.spec.tsx` stands a row of fields in a plain form a step below the field above it and
+  a step above the field below it.

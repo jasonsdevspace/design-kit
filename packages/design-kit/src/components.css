@@ -1171,13 +1171,13 @@
     }
 
     /*
-     * In a form with no class attribute, a field, a row of fields, a row of actions or a callout that
-     * is not empty stands --dk-space-4 below what sits above it, once another of those has come
-     * before it, so a hidden input or a script between two of them leaves them a step apart. Only
-     * the kit's own blocks are spaced, so what a page writes around them, a bare label and control,
-     * a fieldset, a row of its own or a closed dialog, keeps the place the browser and the page give
-     * it, and a form's buttons sit in a row of actions. A block out of sight or an empty callout,
-     * marked or not, counts as none. A form with a class attribute lays out its own parts.
+     * In a form with no class attribute, a field, a row of fields, a row of actions or a callout
+     * that is not empty stands --dk-space-4 below what sits above it, once another of those has
+     * come before it, so a hidden input or a script between two of them leaves them a step apart.
+     * Only the kit's own blocks are spaced, so what a page writes around them, a bare label and
+     * control, a fieldset, a row of its own or a closed dialog, keeps the place the browser and the
+     * page give it, and a form's buttons sit in a row of actions. A block out of sight or an empty
+     * callout, marked or not, counts as none. A form with a class attribute lays out its own parts.
      */
     :where(
         form:not([class])
