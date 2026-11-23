@@ -68,6 +68,7 @@ export const FIREFOX: Engine = {
     panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
     form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
+    tabbar: 'What the keyboard reaches kept clear of the bar at a root size the page sets.',
 };
 
 /**
