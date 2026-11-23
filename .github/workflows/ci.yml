@@ -340,7 +340,8 @@ jobs:
 
     # Lighthouse over the built site, held to ShelfLens's gates: accessibility at a hundred, and on
     # a first visit as a slow phone makes it, performance at ninety or more, a good largest paint
-    # and no more layout shift than a good visit has.
+    # and no more layout shift than a good visit has. Each page's script and sheets are held to
+    # the site's byte budgets too.
     lighthouse:
         name: Lighthouse audits
         runs-on: ubuntu-26.04

@@ -59,6 +59,28 @@ const holds = (place: Element, node: Node | null): boolean => {
     return !!inside;
 };
 
+/** A place focus may be handed to, or a function that gives more of them when it is reached. */
+type Place = Element | null | undefined | (() => readonly Element[]);
+
+/**
+ * Tries one place of a walk: true where it took focus, false where a page's own listener moved
+ * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
+ * that takes focus or refused it, so the walk goes on.
+ */
+const tryFocus = (place: Element | null | undefined): boolean | undefined => {
+    if (
+        !(place instanceof HTMLElement || place instanceof SVGElement) ||
+        !place.isConnected ||
+        place === document.body
+    )
+        return undefined;
+    const before = focusedNow();
+    place.focus({ preventScroll: place.matches('.dk-app-body') });
+    const now = focusedNow();
+    if (holds(place, now) && (now !== before || place === before)) return true;
+    return now && now !== before ? false : undefined;
+};
+
 /**
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
@@ -69,22 +91,20 @@ const holds = (place: Element, node: Node | null): boolean => {
  * slotted into it too, as a host that delegates focus or a widget that forwards it, counts as
  * taken, as does a place that has focus already, while a place that refuses focus is passed over
  * though focus is inside it. Where a page's own listener moves focus elsewhere as one is tried, the
- * walk stops and that focus stays.
+ * walk stops and that focus stays. A function among the places gives more of them, and is called
+ * only once every place before it has refused focus, so places that cost a search of the page are
+ * looked for only where they are needed, in the same walk.
  */
-const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
-    for (const place of places) {
-        if (
-            !(place instanceof HTMLElement || place instanceof SVGElement) ||
-            !place.isConnected ||
-            place === document.body
-        )
-            continue;
-        const before = focusedNow();
-        place.focus({ preventScroll: place.matches('.dk-app-body') });
-        const now = focusedNow();
-        if (holds(place, now) && (now !== before || place === before)) return true;
-        if (now && now !== before) return false;
-    }
+const focusFirst = (...places: readonly Place[]): boolean => {
+    for (const given of places)
+        // An element is never called, though an object or an embed is a function to some
+        // browsers.
+        for (const place of typeof given === 'function' && !(given instanceof Element)
+            ? given()
+            : [given]) {
+            const took = tryFocus(place);
+            if (took !== undefined) return took;
+        }
     return false;
 };
 
@@ -118,7 +138,7 @@ const restoring = new Map<HTMLDialogElement, Element>();
  * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
  * Returns whether it focused a place.
  */
-const handBack = (...places: readonly (Element | null | undefined)[]): boolean => {
+const handBack = (...places: readonly Place[]): boolean => {
     if (!focusFirst(...places)) return false;
     handedTo = activeOf();
     handedAt = performance.now();
@@ -340,6 +360,8 @@ type Arrival = {
     readonly heading: FocusTarget;
     readonly from: Element | null;
     readonly fallbacks: readonly FocusTarget[] | undefined;
+    /** Calls the view's request off, and lets go of the signal it was given. */
+    readonly stop: () => void;
 };
 /** The views asking for the press now being answered, landed together in one frame. */
 let arriving: {
@@ -360,12 +382,16 @@ let arriving: {
  * request called off before it lands hands its press back where no input has come since, so a view
  * asked for again, as React asks again in development, takes focus. A view already drawn that
  * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
- * with the views first drawn for the same press, and spends the press.
+ * with the views first drawn for the same press, and spends the press. Its `signal` calls the
+ * request off as the function it returns does, a microtask after it aborts, as `moveFocus` has it,
+ * and a signal already aborted asks for nothing and leaves the press for another view.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
     options: ArrivalOptions = {}
 ): (() => void) => {
+    // Read before the press, so a signal already aborted spends none.
+    if (options.signal?.aborted) return () => undefined;
     if (!arriving) {
         const fresh = pressedAt !== null && performance.now() - pressedAt <= PRESS_LIVES;
         if (!fresh && !options.changed) return () => undefined;
@@ -375,7 +401,10 @@ export const focusOnArrival = (
         const asked = performance.now();
         const frame = window.requestAnimationFrame(() => {
             arriving = null;
-            const places = [...views].flatMap((view) => {
+            // Stopped as they land, so a signal the page keeps for longer holds nothing of a view.
+            const asking = [...views];
+            for (const view of asking) view.stop();
+            const places = asking.flatMap((view) => {
                 const place = placeOf(view.heading, view.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
@@ -388,26 +417,29 @@ export const focusOnArrival = (
             if (first) land(first.place, first.view.fallbacks, first.view.from, asked);
             else {
                 // No heading is there to take focus, so the first view asked goes by its fallbacks.
-                const [view] = views;
+                const [view] = asking;
                 if (view) land(view.heading, view.fallbacks, view.from, asked);
             }
         });
         arriving = { views, frame, at: inputs, press };
     }
     const batch = arriving;
+    const down = teardown(options.signal);
     const view: Arrival = {
         heading,
         from: options.from === undefined ? activeOf() : options.from,
         fallbacks: options.fallbacks,
+        stop: down.stop,
     };
     batch.views.add(view);
-    return () => {
+    down.add(() => {
         batch.views.delete(view);
         if (batch.views.size > 0 || arriving !== batch) return;
         window.cancelAnimationFrame(batch.frame);
         arriving = null;
         if (inputs === batch.at) pressedAt = batch.press;
-    };
+    });
+    return down.stop;
 };
 
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */
@@ -998,6 +1030,12 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * there goes on down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
+    const idle: ShowToast = () => () => undefined;
+    // A toast already attached is handed back as it is, before its parts are looked for, so one
+    // whose markup has since lost a part still returns what shows a message. A signal already
+    // aborted does nothing to it.
+    const already = join(attachedToasts, element, options, idle);
+    if (already) return already;
     const part = <T extends HTMLElement>(name: string) => {
         const found = element.querySelector<T>(`.dk-toast-${name}`);
         if (!found) throw new Error(`a toast needs its ${name}`);
@@ -1007,11 +1045,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
-    // Checked after the parts, so markup missing one throws whatever the signal. A signal already
-    // aborted does nothing, even to a toast already attached.
-    if (options?.signal?.aborted) return () => () => undefined;
-    const already = join(attachedToasts, element, options);
-    if (already) return already;
+    // Checked after the parts, so markup missing one throws at its first attach whatever the
+    // signal.
+    if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const { signal } = down;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
@@ -1394,13 +1430,17 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const stepper = element.matches('.dk-stepper')
         ? element
         : (field.querySelector<HTMLElement>('.dk-stepper') ?? element);
-    // A signal already aborted does nothing, so even new options for a stepper already attached are
-    // not taken.
-    if (options?.signal?.aborted) return () => undefined;
-    const already = join(attachedSteppers, stepper, options);
+    const idle = () => undefined;
+    // A stepper already attached is handed back as it is, before its parts are looked for, so one
+    // whose markup has since lost a part still returns its detach. A signal already aborted does
+    // nothing to it, so even new options are not taken.
+    const already = join(attachedSteppers, stepper, options, idle);
     if (already) return already;
-    let chosen: StepperOptions = options ?? {};
+    // Read before the signal, so markup missing a part throws at its first attach whatever the
+    // signal.
     const parts = stepperParts(field);
+    if (options?.signal?.aborted) return idle;
+    let chosen: StepperOptions = options ?? {};
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
     if (!parts) return () => undefined;
     const torn = teardown(options?.signal, options);
@@ -2013,11 +2053,14 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     handBack(
         jumpFrom(panel),
         ...[by, ...openers].filter((button) => !isOff(button)),
-        ...[...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
-            (next) =>
-                next.tabIndex >= 0 &&
-                panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
-        ),
+        // Looked for only once the place a link went to and every button has refused focus, since
+        // it reads every element of the page that takes focus.
+        () =>
+            [...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
+                (next) =>
+                    next.tabIndex >= 0 &&
+                    panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
+            ),
         homeOf(panel)
     );
 };
@@ -2085,12 +2128,13 @@ const isOpenOver = (place: Element): boolean =>
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
-    // The elements from the one the key was pressed in, inside a page's own component where the
-    // component's shadow root is open, though the event's target names only the component's host.
-    const path = event.composedPath().filter((node) => node instanceof Element);
     // Safari ends composing with an Escape whose keydown carries the key code 229 instead.
     const composing = event.isComposing || event.keyCode === 229;
     if (event.key !== 'Escape' || event.defaultPrevented || composing) return;
+    // The elements from the one the key was pressed in, inside a page's own component where the
+    // component's shadow root is open, though the event's target names only the component's host.
+    // Read only for an Escape, so every other key the page hears costs nothing here.
+    const path = event.composedPath().filter((node) => node instanceof Element);
     // A field, a combobox or a menu button keeps its Escape, from the element the key was pressed
     // in out to that host, so a component that marks its host as a combobox keeps it too.
     if (!(target instanceof Element) || path.slice(0, path.indexOf(target) + 1).some(ownsEscape))
@@ -2127,20 +2171,25 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * the page. Attached again, a button returns what it returned first.
  *
  * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
- * nothing. A button taken down is marked collapsed. A button taken from the page without being
- * taken down stays held, and keeps the document's listeners, until it is. An open panel stays the
- * kit's while an attached button names it, so once the button that opened it is taken down, Escape
- * and its Close both still close it, and focus goes back to the first attached button that names
- * it. A button attached to it while it is open takes it where no attached button names it. Once
- * none does, neither closes it, and the page holds it as it is.
+ * nothing, though a button with no aria-controls throws under it as under any other. A button taken
+ * down is marked collapsed. A button taken from the page without being taken down stays held, and
+ * keeps the document's listeners, until it is. An open panel stays the kit's while an attached
+ * button names it, so once the button that opened it is taken down, Escape and its Close both still
+ * close it, and focus goes back to the first attached button that names it. A button attached to it
+ * while it is open takes it where no attached button names it. Once none does, neither closes it,
+ * and the page holds it as it is.
  */
 export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
     const idle: PanelControl = { set: () => undefined, detach: () => undefined };
-    // A signal already aborted does nothing, even to a button already attached.
-    if (options?.signal?.aborted) return idle;
-    const already = join(attachedPanels, opener, options);
+    // A button already attached is handed back as it is, before its panel's name is read, so one
+    // that has since lost its aria-controls still returns its control. A signal already aborted
+    // does nothing to it.
+    const already = join(attachedPanels, opener, options, idle);
     if (already) return already;
+    // Checked before the signal, so a button that names no panel throws at its first attach
+    // whatever the signal.
     if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
+    if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const control: PanelControl = {
         set: (open) => {

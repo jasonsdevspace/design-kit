@@ -8,7 +8,7 @@ import {
     useLayoutEffect,
     useState,
 } from 'react';
-import { flushSync } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
 import { useArrivalFocus, useFocusAfterDraw, useRoving } from '../src/react.js';
@@ -19,6 +19,7 @@ type Page = {
     drawAgain?: () => void;
     answerLeave?: () => void;
     answerNamed?: () => void;
+    answerShadow?: () => void;
     dropOwner?: () => void;
     hideOwner?: () => void;
     showOwner?: () => void;
@@ -35,14 +36,16 @@ const page = window as unknown as Page;
  * drawn late beside a field, one gone in the frame it arrived in, a view drawn again many times
  * before any press, a view and a section of it brought by one press, a save answered after an await
  * that turns on the control it asks focus for, the same with the control in a sibling and with the
- * save pressed inside a shadow root, a panel that asks for focus on its opener once it is gone,
- * rows that each ask for focus on the next as their own press removes them, a screen that asks for
- * focus late, once it is gone and the visitor is on the next, the same naming that field as where
- * focus was, a view that asks for focus on its first field from that field's ref as a press draws
- * it, rows removed after an await, from a timer and in a transition, requests asked in a transition
- * held back by a part that never loads, whose owner an urgent update then unmounts or an `Activity`
- * hides, a request asked as an `Activity` hides its owner in the same press, one asked while it
- * hides it, and one made in a commit whose owner the next commit takes away.
+ * save pressed inside a shadow root, a view whose key a press inside a shadow root changes, a panel
+ * inside a shadow root that asks late for focus on its opener by its id, a panel that asks for
+ * focus on its opener once it is gone, rows that each ask for focus on the next as their own press
+ * removes them, a screen that asks for focus late, once it is gone and the visitor is on the next,
+ * the same naming that field as where focus was, a view that asks for focus on its first field from
+ * that field's ref as a press draws it, rows removed after an await, from a timer and in a
+ * transition, requests asked in a transition held back by a part that never loads, whose owner an
+ * urgent update then unmounts or an `Activity` hides, a request asked as an `Activity` hides its
+ * owner in the same press, one asked while it hides it, and one made in a commit whose owner the
+ * next commit takes away.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -417,6 +420,85 @@ const ShadowSave = () => {
     );
 };
 
+// A view whose key changes on a press of a button inside a shadow root, as a widget's own button
+// is, where the document names only the widget's host as what has focus.
+const ShadowRound = () => {
+    const [round, setRound] = useState(1);
+    const heading = useArrivalFocus<HTMLHeadingElement>(round);
+    const host = useCallback((element: HTMLDivElement | null) => {
+        if (!element || element.shadowRoot) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = 'shadow-bump';
+        button.textContent = 'Next round in the widget';
+        button.addEventListener('click', () => {
+            setRound((now) => now + 1);
+        });
+        element.attachShadow({ mode: 'open' }).append(button);
+    }, []);
+    return (
+        <section>
+            <div ref={host} />
+            <h2 id="shadow-round" ref={heading}>
+                Widget round {round}
+            </h2>
+        </section>
+    );
+};
+
+// A panel drawn inside a shadow root, closed by its own press, which asks for focus on its opener
+// by the opener's id once the test answers, after it is gone, naming a place in the same root as
+// where focus was, since focus fell to the page's body as the panel went.
+const ShadowPanel = ({ onClose }: { readonly onClose: () => void }) => {
+    const focusBack = useFocusAfterDraw();
+    const close = async (near: Element | null) => {
+        onClose();
+        await new Promise<void>((resolve) => {
+            page.answerShadow = resolve;
+        });
+        focusBack('shadow-panel-open', { from: near });
+    };
+    return (
+        <button
+            id="shadow-panel-close"
+            type="button"
+            onClick={(event) => {
+                void close(event.currentTarget.parentElement);
+            }}
+        >
+            Close the panel in the widget
+        </button>
+    );
+};
+
+const ShadowPanels = () => {
+    const [root, setRoot] = useState<ShadowRoot | null>(null);
+    const [open, setOpen] = useState(true);
+    const host = useCallback((element: HTMLDivElement | null) => {
+        if (element) setRoot(element.shadowRoot ?? element.attachShadow({ mode: 'open' }));
+    }, []);
+    return (
+        <section>
+            <div ref={host} />
+            {root
+                ? createPortal(
+                      <div>
+                          <button
+                              id="shadow-panel-open"
+                              type="button"
+                              onClick={() => setOpen(true)}
+                          >
+                              Open the panel in the widget
+                          </button>
+                          {open ? <ShadowPanel onClose={() => setOpen(false)} /> : null}
+                      </div>,
+                      root
+                  )
+                : null}
+        </section>
+    );
+};
+
 // A panel closed by its own press, which asks for focus on its opener after an await, once it is
 // gone.
 const Panel = ({
@@ -786,6 +868,8 @@ if (root)
                 <SiblingNext />
             </section>
             <ShadowSave />
+            <ShadowRound />
+            <ShadowPanels />
             <Panels />
             <ChartPanels />
             <Rows how="click" />

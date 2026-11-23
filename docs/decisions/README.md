@@ -120,3 +120,10 @@ costs, and the test behind it.
     starting every field from `--dk-fields-least` and sharing the rest, a field narrowed by
     `--dk-field-measure`, and why a stepper's field sized by its stepper, a grid of equal tracks, a
     container query, fixed widths and no row were turned down.
+26. [A stepper is as tall as a field wherever it
+    stands](0026-a-stepper-is-as-tall-as-a-field-wherever-it-stands.md): a stepper's buttons and
+    value setting no height, so each takes `--dk-field-height` on a wide page and `--dk-target` on a
+    phone, in an app and on a tab bar page from the rules every button and field take theirs from,
+    the buttons the target wide at both, a tall stepper at the larger target everywhere, and why
+    leaving a stepper the target tall, a row that lines its fields up by their labels, a height of
+    the stepper's own and buttons as wide as they are tall were turned down.
