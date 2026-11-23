@@ -149,6 +149,14 @@ export const fieldAction: ReactElement = (
     </form>
 );
 
+/** A stepper's field beside a text field, in a row that wraps them, as a bid beside a name. */
+export const fieldsRow: ReactElement = (
+    <div className="dk-fields">
+        <StepperField id="bid" label="Bid" min={0} max={10} defaultValue={3} />
+        <InputField id="player" label="Player" />
+    </div>
+);
+
 /** A form where one field is required and one optional, each marked in words in its label. */
 export const fieldMarks: ReactElement = (
     <>
@@ -1099,6 +1107,7 @@ export const EXAMPLES = {
     fieldMarks,
     readOnlyFields,
     fieldAction,
+    fieldsRow,
     choiceField,
     callout,
     tryAgain,

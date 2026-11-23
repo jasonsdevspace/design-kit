@@ -737,13 +737,42 @@
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
      * a callout in a form ends where its fields end. A page sets --dk-field-measure on a field or on
      * its form, a shorter length for a short answer or `none` for the column. A dialog and a popover
-     * set their own width, which a page may widen, so what they hold takes theirs.
+     * set their own width, which a page may widen, so what they hold takes theirs, and a row of
+     * fields shares its width out among its own.
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
+            :is(.dk-field, form .dk-callout):not(
+                .dk-dialog *,
+                dialog *,
+                [popover] *,
+                .dk-fields > *
+            )
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
+    }
+
+    /*
+     * A row of fields set side by side, such as a stepper beside a name: each text field asks for
+     * --dk-fields-least, 7rem until a page sets it, and shares what is left, and a field that finds
+     * no room on the line takes the next, so at a large text size each field has a line of its own
+     * with its label whole. A stepper's field keeps its stepper's width. The fields stand a plain
+     * form's step apart both ways, so a wrapped line sits as far below as a field under another,
+     * and they line up along their foot, so their controls stand level whatever their labels take.
+     */
+    :where(.dk-fields) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: var(--dk-space-4);
+    }
+
+    :where(.dk-fields > .dk-field) {
+        flex: 1 1 var(--dk-fields-least, 7rem);
+    }
+
+    :where(.dk-fields > .dk-field:has(> .dk-stepper)) {
+        flex: 0 1 auto;
     }
 
     /*
@@ -1144,17 +1173,17 @@
     }
 
     /*
-     * In a form with no class attribute, a field, a row of actions or a callout that is not empty
-     * stands --dk-space-4 below what sits above it, once another of those has come before it, so a
-     * hidden input or a script between two of them leaves them a step apart. Only the kit's own
-     * blocks are spaced, so what a page writes around them, a bare label and control, a fieldset, a
-     * row of its own or a closed dialog, keeps the place the browser and the page give it, and a
-     * form's buttons sit in a row of actions. A block out of sight or an empty callout, marked or
-     * not, counts as none. A form with a class attribute lays out its own parts.
+     * In a form with no class attribute, a field, a row of fields, a row of actions or a callout that
+     * is not empty stands --dk-space-4 below what sits above it, once another of those has come
+     * before it, so a hidden input or a script between two of them leaves them a step apart. Only
+     * the kit's own blocks are spaced, so what a page writes around them, a bare label and control,
+     * a fieldset, a row of its own or a closed dialog, keeps the place the browser and the page give
+     * it, and a form's buttons sit in a row of actions. A block out of sight or an empty callout,
+     * marked or not, counts as none. A form with a class attribute lays out its own parts.
      */
     :where(
         form:not([class])
-            > :is(.dk-field, .dk-actions, .dk-callout):not(
+            > :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(
                 :is(
                     [hidden],
                     [data-empty],
@@ -1162,7 +1191,10 @@
                     .dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions))
                 )
             )
-            ~ :is(.dk-field, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)
+            ~ :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(
+                [data-empty],
+                .dk-visually-hidden
+            )
     ) {
         margin-block-start: var(--dk-space-4);
     }

@@ -122,6 +122,7 @@ may change in any release.
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
 | `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field, or a callout in its form, grows inside a page, a band or a stack, a panel there included. `none` for its column's width    |
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
+| `--dk-fields-least`        | 7rem                                                               | The least width of a text field in a row of fields, so fields stand side by side only where each has that much room                            |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
 | `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                       |
@@ -603,24 +604,23 @@ rather than pushing the field past the column's edge. In a page, a band or a sta
 too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
 `--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a ZIP
-code, or `none` for the column's width. A row of the page's own that sets fields side by side sets
-`none` on the row, so each field fills its cell, and lets its fields wrap, with `flex-wrap: wrap`, a
-gap of `--dk-space-4` both ways and a basis such as `flex: 1 1 7rem` on a text field, so at a large
-text size each field takes its own line with its label whole. A field shorter than the tallest
-beside it keeps its control at its own height, with the spare room below it. In a dialog or a
-popover the property has no effect, since the dialog's own width sizes its fields. An inline stepper
-in a page's row keeps its label and stepper at the top of its cell, its label level with the labels
-beside it. A field given more height than its parts, by a height or a flex grow of the page's own,
-leaves the room below them too, so a control meant to fill its field, such as a textarea that fills
-a panel, takes the room by the page's own `grid-template-rows` on the field, which gives the
-control's row `1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a
-form with no class attribute, a field, a row of actions or a callout that is not empty stands
-`--dk-space-4` below what sits above it, once another of those has come before it, so a form's
-buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form
-with a class attribute lays out its own parts. An error's words allow a break after each "@", by a
-`<wbr>`, so an address too long for its line breaks there rather than at whichever letter or stop
-the line runs out on, and the kit's own words keep punctuation away from the address they show. A
-page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same break.
+code, or `none` for the column's width. Fields set side by side go in a `dk-fields` row, as [fields
+side by side](#fields-side-by-side) shows, and a row of the page's own sets `none` on the row, so
+each field fills its cell. A field shorter than the tallest beside it keeps its control at its own
+height, with the spare room below it. In a dialog or a popover the property has no effect, since the
+dialog's own width sizes its fields. An inline stepper in a page's row keeps its label and stepper
+at the top of its cell, its label level with the labels beside it. A field given more height than
+its parts, by a height or a flex grow of the page's own, leaves the room below them too, so a
+control meant to fill its field, such as a textarea that fills a panel, takes the room by the page's
+own `grid-template-rows` on the field, which gives the control's row `1fr`, as `auto 1fr` for a
+label and its control or `auto auto 1fr` with a hint. In a form with no class attribute, a field, a
+row of fields, a row of actions or a callout that is not empty stands `--dk-space-4` below what sits
+above it, once another of those has come before it, so a form's buttons go in a `dk-actions`, a lone
+submit too. Nothing else in a plain form is given room. A form with a class attribute lays out its
+own parts. An error's words allow a break after each "@", by a `<wbr>`, so an address too long for
+its line breaks there rather than at whichever letter or stop the line runs out on, and the kit's
+own words keep punctuation away from the address they show. A page that puts an address in its own
+label or hint can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -780,6 +780,64 @@ screen, and is named by its own words, not the field's label.
         action={<Button type="submit">Search</Button>}
     />
 </form>
+```
+
+#### Fields side by side
+
+<!-- example: fieldsRow -->
+
+```html
+<div class="dk-fields">
+    <div class="dk-field">
+        <label class="dk-field-label" for="bid" id="bid-label">Bid</label>
+        <p class="dk-field-error dk-stepper-range" id="bid-range" hidden="">
+            <span class="dk-visually-hidden">Error: </span>Enter a whole number from 0 to 10.
+        </p>
+        <div class="dk-stepper" role="group" aria-labelledby="bid-label">
+            <button type="button" class="dk-button dk-stepper-down" aria-controls="bid" hidden="">
+                <span aria-hidden="true">−</span
+                ><span class="dk-visually-hidden">Lower Bid</span></button
+            ><input
+                class="dk-input dk-stepper-value"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="10"
+                step="1"
+                id="bid"
+                value="3"
+            /><button type="button" class="dk-button dk-stepper-up" aria-controls="bid" hidden="">
+                <span aria-hidden="true">+</span
+                ><span class="dk-visually-hidden">Raise Bid</span></button
+            ><span class="dk-visually-hidden dk-stepper-limits" id="bid-limits"></span
+            ><span class="dk-visually-hidden dk-stepper-status" role="status"></span>
+        </div>
+    </div>
+    <div class="dk-field">
+        <label class="dk-field-label" for="player" id="player-label">Player</label
+        ><input class="dk-input" id="player" />
+    </div>
+</div>
+```
+
+Fields set side by side, such as a stepper's field beside a player's name, sit in a `dk-fields`
+row, which needs no rules of the page's own. Each field but a stepper's asks for
+`--dk-fields-least`, 7rem until a page sets it, and the fields share what is left, so two of them
+stand side by side wherever twice that and the gap fit. A stepper's field keeps its stepper's width,
+and the text field beside it takes the rest. A field that finds no room on the line takes the next,
+so at a large text size each field has a line of its own, with its label whole. The fields stand
+`--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a field
+under another. They line up along their foot, so their controls stand level even where one label
+takes two lines. A field in the row holds no measure of its own, since the row shares its width out
+among its fields. In a form with no class attribute the row is one of the kit's blocks, and stands
+`--dk-space-4` from a field or a row of actions above or below it. A page with React writes the
+`div` around the fields' components.
+
+```tsx
+<div className="dk-fields">
+    <StepperField label="Bid" min={0} max={10} />
+    <InputField label="Player" />
+</div>
 ```
 
 #### A refused form
@@ -2997,9 +3055,11 @@ wrap in its label, hint or error leave the field as wide as its stepper. A row w
 have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below
 its stepper, which is the row's choice. A stepper's field with its label to the left keeps that
 least width in such a row too, in every browser, its stepper moving under the label where the row
-leaves no room for both. In a row that cannot wrap, the stepper's field keeps its least width and
-the fields beside it take what is left, which at a large text size can be too little for a word in
-their labels. The value is in the mono face with figures of one width, centered, with room for two
+leaves no room for both. Set beside other fields in a `dk-fields` row, as [fields side by
+side](#fields-side-by-side) shows, the stepper's field keeps its least width and a field with no
+room left beside it moves to a line of its own. In a page's own row that cannot wrap, the fields
+beside it take what is left, which at a large text size can be too little for a word in their
+labels. The value is in the mono face with figures of one width, centered, with room for two
 figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page
 to allow, so the field does not change width as the value changes and no figure is cut off, and in a
 tall stepper it is at the heading size. Its height, edge included, is its buttons', so it stands
