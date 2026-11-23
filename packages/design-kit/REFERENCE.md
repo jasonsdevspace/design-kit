@@ -2956,21 +2956,26 @@ once whichever it is given, and returns what takes it down again.
 The buttons are `--dk-target` both ways, or `--dk-target-large` in a tall stepper. Where a large
 text size leaves the stepper less room than its buttons take, on a phone, the buttons grow narrower,
 never under the target at the usual text size, and keep their height, so the stepper fits its field,
-in an app's dock too. The field in turn is never narrower than the stepper at that least width, so
-in a row of the page's own, beside a text field, the field keeps its stepper and the row's other
-fields take the room left. Its label, hint and error break their words anywhere they must, so a long
-word in them sets no least width. The value is in the mono face with figures of one width, centered, with room
-for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
-asks a page to allow, so the field does not change width as the value changes and no figure is cut
-off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so
-it stands level with them. At 48rem wide or less, in an app's frame and on a page that ends in a tab
-bar, where a field and a button are the target tall, a stepper that is not tall stands level with
-one beside it. With its label to the left the label takes the room the stepper leaves and wraps
-within it, and the stepper moves under the label where a large text size leaves no room for both.
-Its errors sit on lines above it, as every field's do, and its hint on a line below, which only the
-inline stepper does. In a stepper with its label above, the hint sits under the label and over the
-errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
-buttons stand in for them and they would keep their room even out of sight.
+in an app's dock too. The field in turn is never narrower than the stepper at that least width, in a
+browser with `:has()`, wherever the page's row leaves its items their own least width, so beside a
+text field the field keeps its stepper and the row's other fields take the room left. The stepper
+alone sets that width, so a long word, a picture or words that never wrap in its label, hint or
+error leave the field as wide as its stepper. A row whose items or tracks have no least width, such
+as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below its stepper, which is the
+row's choice. A row of fields that may run short lets its fields wrap, as with `flex-wrap: wrap`, so
+a field drops to its own line with its label whole. The value is in the mono face with figures of
+one width, centered, with room for two figures unless `--dk-stepper-digits` says more, and for the
+spacing between letters WCAG asks a page to allow, so the field does not change width as the value
+changes and no figure is cut off, and in a tall stepper it is at the heading size. Its height, edge
+included, is its buttons', so it stands level with them. At 48rem wide or less, in an app's frame
+and on a page that ends in a tab bar, where a field and a button are the target tall, a stepper that
+is not tall stands level with one beside it. With its label to the left the label takes the room the
+stepper leaves and wraps within it, and the stepper moves under the label where a large text size
+leaves no room for both. Its errors sit on lines above it, as every field's do, and its hint on a
+line below, which only the inline stepper does. In a stepper with its label above, the hint sits
+under the label and over the errors, as in any field. The number field's own spin buttons are taken
+away, since the stepper's buttons stand in for them and they would keep their room even out of
+sight.
 
 </details>
 
