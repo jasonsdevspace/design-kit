@@ -1141,7 +1141,15 @@ const TAKEN = renderToStaticMarkup(
             Next round
         </button>
         <StepperField id="kept" label="Kept" min={0} max={10} defaultValue={5} />
-        <StepperField id="count" label="Count" min={0} max={10} defaultValue={5} />
+        <StepperField
+            id="players"
+            label="Players"
+            mark="required"
+            required
+            min={0}
+            max={10}
+            defaultValue={5}
+        />
         <StepperField id="shut" label="Shut" min={0} max={10} defaultValue={5} disabled />
     </main>
 );
@@ -1150,11 +1158,12 @@ const TAKEN = renderToStaticMarkup(
 const ATTACH_HELD = `import { attachStepper, moveFocus } from './controls.js';
 window.kit = { attachStepper, moveFocus };
 window.held = {};
-for (const stepper of document.querySelectorAll('.dk-stepper')) {
+window.hold = (stepper) => {
     const controller = new AbortController();
     const detach = attachStepper(stepper, { signal: controller.signal });
     window.held[stepper.querySelector('input').id] = { controller, detach };
-}
+};
+for (const stepper of document.querySelectorAll('.dk-stepper')) window.hold(stepper);
 window.ready = true;`;
 
 type Held = {
@@ -1163,6 +1172,7 @@ type Held = {
         moveFocus: typeof import('../src/controls.js').moveFocus;
     };
     held: Record<string, { controller: AbortController; detach: () => void }>;
+    hold: (stepper: HTMLElement) => void;
 };
 
 /** Where focus is, read in the task the takedown lands in. */
@@ -1191,24 +1201,34 @@ const takeDown = (page: Page, id: string, way: 'signal' | 'detach'): Promise<Lan
         [id, way] as const
     );
 
+/** Attaches a stepper again with a signal of its own, a microtask after anything before it. */
+const attachAgain = (page: Page, id: string): Promise<void> =>
+    page.evaluate(async (given) => {
+        await Promise.resolve();
+        const stepper = document.querySelector<HTMLElement>(`.dk-stepper:has(#${given})`);
+        if (!stepper) throw new Error(`expected a stepper for ${given}`);
+        (window as unknown as Held).hold(stepper);
+    }, id);
+
 /** The steppers taken down, and where focus goes from a focused button as each is. */
 const TAKEN_DOWN = [
-    { kind: 'a read-only', id: 'kept', label: 'Kept', readOnly: true, at: '#kept' },
-    {
-        kind: 'an editable',
-        id: 'count',
-        label: 'Count',
-        readOnly: false,
-        at: '.dk-stepper:has(#count)',
-    },
-    {
-        kind: 'a disabled',
-        id: 'shut',
-        label: 'Shut',
-        readOnly: false,
-        at: '.dk-stepper:has(#shut)',
-    },
+    { kind: 'a read-only', id: 'kept', label: 'Kept', readOnly: true },
+    { kind: 'an editable', id: 'players', label: 'Players', readOnly: false },
+    { kind: 'a disabled', id: 'shut', label: 'Shut', readOnly: false },
 ] as const;
+
+/** The page of steppers each attached with a signal. */
+const openTaken = async (page: Page): Promise<void> => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, { title: 'Round 3', body: TAKEN, script: ATTACH_HELD });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** A stepper's buttons, by its label. */
+const buttonsOf = (page: Page, label: string): { lower: Locator; raise: Locator } => ({
+    lower: page.getByRole('button', { name: `Lower ${label}` }),
+    raise: page.getByRole('button', { name: `Raise ${label}` }),
+});
 
 /**
  * The page of steppers each attached with a signal, with the given one's Raise focused by the
@@ -1217,15 +1237,11 @@ const TAKEN_DOWN = [
 const focusRaise = async (
     page: Page,
     browserName: string,
-    { label, id, readOnly }: (typeof TAKEN_DOWN)[number]
+    { label, id, readOnly }: (typeof TAKEN_DOWN)[number],
+    { open = true }: { open?: boolean } = {}
 ): Promise<{ lower: Locator; raise: Locator }> => {
-    await page.setViewportSize({ width: 390, height: 700 });
-    await servePage(page, { title: 'Round 3', body: TAKEN, script: ATTACH_HELD });
-    await page.waitForFunction(() => 'ready' in window);
-    const buttons = {
-        lower: page.getByRole('button', { name: `Lower ${label}` }),
-        raise: page.getByRole('button', { name: `Raise ${label}` }),
-    };
+    if (open) await openTaken(page);
+    const buttons = buttonsOf(page, label);
     await ringByKeyboard(buttons.raise, browserName);
     if (readOnly) {
         await page.locator(`#${id}`).evaluate((input: HTMLInputElement) => {
@@ -1237,10 +1253,28 @@ const focusRaise = async (
     return buttons;
 };
 
+/** The box of a stepper, by its value's id. */
+const boxOf = (page: Page, id: string): Locator => page.locator(`.dk-stepper:has(#${id})`);
+
+/** Every attribute of the element, by name. */
+const attributesOf = (locator: Locator): Promise<Record<string, string>> =>
+    locator.evaluate((element) =>
+        Object.fromEntries(
+            element.getAttributeNames().map((name) => [name, element.getAttribute(name) ?? ''])
+        )
+    );
+
+/** Finds the ring drawn on the element. */
+const expectRing = async (locator: Locator): Promise<void> => {
+    const ring = await style(locator, 'outline-style', 'outline-width');
+    expect(ring['outline-style'], 'the ring').not.toBe('none');
+    expect(pixels(ring['outline-width']), 'the ring').toBeGreaterThan(0);
+};
+
 test.describe('taken down with a button focused', () => {
     for (const way of ['signal', 'detach'] as const) {
         for (const stepper of TAKEN_DOWN) {
-            test(`hands focus from ${stepper.kind} stepper's button to ${stepper.readOnly ? 'its value' : 'itself'}, by its ${way}`, async ({
+            test(`hands focus from ${stepper.kind} stepper's button to ${stepper.readOnly ? 'its value' : 'the group'}, by its ${way}`, async ({
                 page,
                 browserName,
             }) => {
@@ -1249,118 +1283,181 @@ test.describe('taken down with a button focused', () => {
                 expect(landed.body, 'focus on the body').toBe(false);
                 // An editable value would open a phone's keyboard.
                 expect(landed.editable, 'focus on an editable value').toBe(false);
-                await expect(page.locator(stepper.at)).toBeFocused();
+                const place = stepper.readOnly
+                    ? page.locator(`#${stepper.id}`)
+                    : page.getByRole('group', { name: stepper.label, exact: true });
+                await expect(place).toBeFocused();
                 await expect(buttons.lower).toBeHidden();
                 await expect(buttons.raise).toBeHidden();
-                const ring = await style(
-                    page.locator(stepper.at),
-                    'outline-style',
-                    'outline-width'
-                );
-                expect(ring['outline-style'], 'the ring').not.toBe('none');
-                expect(pixels(ring['outline-width']), 'the ring').toBeGreaterThan(0);
-                const group = page.locator(`.dk-stepper:has(#${stepper.id})`);
-                if (stepper.readOnly) {
-                    // Focus on the value leaves the stepper as the page drew it.
-                    await expect(group).not.toHaveAttribute('tabindex');
-                    await expect(group).not.toHaveAttribute('role');
-                } else {
-                    // A screen reader hears the field's name and its value, not the value alone.
-                    await expect(group).toHaveRole('group');
-                    await expect(group).toHaveAccessibleName(`${stepper.label} 5`);
-                }
+                await expectRing(place);
+                // The required mark is hidden from a screen reader, in the group's name too.
+                if (!stepper.readOnly) await expect(place).toHaveAccessibleName(stepper.label);
             });
         }
     }
 
-    test('names the stepper from the words of a label with no id, with its value', async ({
+    test('keeps the box as the markup drew it, but for a tabindex it gives once and keeps', async ({
         page,
         browserName,
     }) => {
-        await focusRaise(page, browserName, TAKEN_DOWN[1]);
-        await page.locator('label[for="count"]').evaluate((label) => {
-            label.removeAttribute('id');
-        });
-        await takeDown(page, 'count', 'signal');
-        const group = page.locator('.dk-stepper:has(#count)');
-        await expect(group).toBeFocused();
-        await expect(group).toHaveRole('group');
-        await expect(group).toHaveAccessibleName('Count 5');
+        await openTaken(page);
+        const group = boxOf(page, 'players');
+        const drawn = await attributesOf(group);
+        const steps: [string, () => Promise<unknown>][] = [
+            [
+                'a takedown with a button focused',
+                () =>
+                    focusRaise(page, browserName, TAKEN_DOWN[1], { open: false }).then(() =>
+                        takeDown(page, 'players', 'signal')
+                    ),
+            ],
+            [
+                // Focus moved on first, as a visitor moves on before the page draws it again.
+                'an attach a microtask later, with focus moved on',
+                async () => {
+                    await page.locator('#next').focus();
+                    await attachAgain(page, 'players');
+                },
+            ],
+            [
+                'a button focused',
+                () => ringByKeyboard(buttonsOf(page, 'Players').raise, browserName),
+            ],
+            ['a takedown again', () => takeDown(page, 'players', 'detach')],
+            [
+                'an abort and an attach in one task',
+                async () => {
+                    await attachAgain(page, 'players');
+                    await page.evaluate(async () => {
+                        const { held, hold } = window as unknown as Held;
+                        const stepper = document.querySelector<HTMLElement>(
+                            '.dk-stepper:has(#players)'
+                        );
+                        if (!stepper) throw new Error('expected the stepper for players');
+                        held['players']?.controller.abort();
+                        hold(stepper);
+                        await Promise.resolve();
+                    });
+                },
+            ],
+        ];
+        for (const [step, run] of steps) {
+            await run();
+            expect(await attributesOf(group), step).toEqual({ ...drawn, tabindex: '-1' });
+        }
     });
 
-    test('goes on to the stepper where a read-only value refuses focus', async ({
+    test('never takes away an attribute the page gave the box', async ({ page, browserName }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await takeDown(page, 'players', 'signal');
+        const group = boxOf(page, 'players');
+        await group.evaluate((stepper: HTMLElement) => {
+            stepper.setAttribute('aria-label', 'Players at the table');
+            stepper.tabIndex = 0;
+        });
+        await page.locator('#next').focus();
+        await attachAgain(page, 'players');
+        await ringByKeyboard(buttonsOf(page, 'Players').raise, browserName);
+        await takeDown(page, 'players', 'signal');
+        await expect(group).toHaveAttribute('aria-label', 'Players at the table');
+        await expect(group).toHaveAttribute('tabindex', '0');
+        await expect(group).toBeFocused();
+    });
+
+    test('gives older markup with no role or tabindex a tabindex, and keeps a tabindex of 0', async ({
+        page,
+        browserName,
+    }) => {
+        for (const tabindex of [null, '0']) {
+            await openTaken(page);
+            const group = boxOf(page, 'players');
+            await group.evaluate((stepper: HTMLElement, given) => {
+                stepper.removeAttribute('role');
+                stepper.removeAttribute('aria-labelledby');
+                if (given) stepper.setAttribute('tabindex', given);
+            }, tabindex);
+            await focusRaise(page, browserName, TAKEN_DOWN[1], { open: false });
+            await takeDown(page, 'players', 'signal');
+            await expect(group, String(tabindex)).toBeFocused();
+            await expect(group, String(tabindex)).toHaveAttribute('tabindex', tabindex ?? '-1');
+        }
+    });
+
+    test('gives a box that refuses focus nothing but a tabindex', async ({ page, browserName }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        const group = boxOf(page, 'players');
+        const drawn = await attributesOf(group);
+        await page.evaluate(async () => {
+            const { held } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#players)');
+            if (stepper) stepper.inert = true;
+            held['players']?.controller.abort();
+            await Promise.resolve();
+        });
+        const after = await attributesOf(group);
+        const { tabindex, ...rest } = after;
+        expect(rest).toEqual({ ...drawn, inert: '' });
+        expect([undefined, '-1']).toContain(tabindex);
+        await expect(group).not.toBeFocused();
+    });
+
+    test('leaves focus where a page listener moves it as the value is tried', async ({
         page,
         browserName,
     }) => {
         await focusRaise(page, browserName, TAKEN_DOWN[0]);
         await page.evaluate(async () => {
             const { held } = window as unknown as Held;
-            const value = document.querySelector<HTMLElement>('#kept');
-            if (value) value.style.visibility = 'hidden';
+            document
+                .querySelector('#kept')
+                ?.addEventListener(
+                    'focus',
+                    () => document.querySelector<HTMLElement>('#next')?.focus(),
+                    { once: true }
+                );
             held['kept']?.controller.abort();
             await Promise.resolve();
         });
-        const group = page.locator('.dk-stepper:has(#kept)');
+        await expect(page.locator('#next')).toBeFocused();
+        await expect(boxOf(page, 'kept')).not.toHaveAttribute('tabindex');
+    });
+
+    test("keeps the group's name as a script changes the value while it has focus", async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await takeDown(page, 'players', 'signal');
+        await page.locator('#players').evaluate((input: HTMLInputElement) => {
+            input.value = '7';
+        });
+        const group = page.getByRole('group', { name: 'Players', exact: true });
         await expect(group).toBeFocused();
-        await expect(group).toHaveAttribute('tabindex', '-1');
-        await expect(group).toHaveRole('group');
+        await expect(group).toHaveAccessibleName('Players');
     });
 
-    test("keeps a page's own tabindex on the stepper it hands focus to", async ({
+    test('leaves a stepper attached again out of the tab order, with no ring for a pointer', async ({
         page,
         browserName,
     }) => {
         await focusRaise(page, browserName, TAKEN_DOWN[1]);
-        const group = page.locator('.dk-stepper:has(#count)');
-        await group.evaluate((stepper: HTMLElement) => {
-            stepper.tabIndex = 0;
-        });
-        await takeDown(page, 'count', 'signal');
-        await expect(group).toBeFocused();
-        await expect(group).toHaveAttribute('tabindex', '0');
-    });
-
-    test('takes away the tabindex, role and name it gave once the stepper is attached again', async ({
-        page,
-        browserName,
-    }) => {
-        await focusRaise(page, browserName, TAKEN_DOWN[1]);
-        await takeDown(page, 'count', 'signal');
-        const group = page.locator('.dk-stepper:has(#count)');
-        await expect(group).toHaveRole('group');
-        // Focus moved on first, as a visitor moves on before the page draws the stepper again.
-        await page.locator('#next').focus();
-        await page.evaluate(() => {
-            const { kit } = window as unknown as Held;
-            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
-            if (stepper) kit.attachStepper(stepper);
-        });
-        for (const name of ['tabindex', 'role', 'aria-labelledby', 'aria-label'])
-            await expect(group, name).not.toHaveAttribute(name);
-        await expect(page.getByRole('button', { name: 'Raise Count' })).toBeVisible();
-    });
-
-    test('keeps the buttons of a stepper a page attaches afresh as focus comes to it', async ({
-        page,
-        browserName,
-    }) => {
-        await focusRaise(page, browserName, TAKEN_DOWN[1]);
-        await page.evaluate(async () => {
-            const { kit, held } = window as unknown as Held;
-            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
-            if (!stepper) throw new Error('expected the stepper for count');
-            // A page that attaches a stepper as focus comes into it.
-            stepper.addEventListener('focusin', () => kit.attachStepper(stepper), { once: true });
-            held['count']?.controller.abort();
-            await Promise.resolve();
-        });
-        const raiseCount = page.getByRole('button', { name: 'Raise Count' });
-        // Focus stays on the stepper, which keeps what it was given while it has focus.
-        await expect(page.locator('.dk-stepper:has(#count)')).toBeFocused();
-        await expect(raiseCount).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Lower Count' })).toBeVisible();
-        await press(raiseCount, browserName);
-        await expect(page.locator('#count')).toHaveValue('6');
+        await takeDown(page, 'players', 'signal');
+        await attachAgain(page, 'players');
+        const players = buttonsOf(page, 'Players');
+        await expect(players.lower).toBeVisible();
+        // Tab from the control before the stepper reaches its Lower, not the box.
+        await page.getByRole('button', { name: 'Raise Kept' }).focus();
+        await page.keyboard.press(tabKey(browserName));
+        await expect(players.lower).toBeFocused();
+        // A click in the gap between Lower and the value focuses the box, with no ring.
+        const lowerBox = await box(players.lower);
+        const valueBox = await box(page.locator('#players'));
+        await page.mouse.click(
+            (lowerBox.x + lowerBox.width + valueBox.x) / 2,
+            lowerBox.y + lowerBox.height / 2
+        );
+        const group = boxOf(page, 'players');
+        expect((await style(group, 'outline-style'))['outline-style']).toBe('none');
     });
 
     for (const stepper of TAKEN_DOWN) {
@@ -1371,7 +1468,9 @@ test.describe('taken down with a button focused', () => {
         }) => {
             await focusRaise(page, browserName, stepper);
             await takeDown(page, stepper.id, 'signal');
-            const place = page.locator(stepper.at);
+            const place = stepper.readOnly
+                ? page.locator(`#${stepper.id}`)
+                : page.getByRole('group', { name: stepper.label, exact: true });
             await expect(place).toBeFocused();
             // What a window losing focus fires, and then a real trip to another tab and back.
             await place.evaluate((element) => {
@@ -1384,24 +1483,47 @@ test.describe('taken down with a button focused', () => {
             await page.bringToFront();
             await other.close();
             await expect(place).toBeFocused();
+            await expect(place).toHaveAccessibleName(stepper.label);
         });
     }
+
+    test('keeps the buttons of a stepper a page attaches afresh as focus comes to it', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.evaluate(async () => {
+            const { kit, held } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#players)');
+            if (!stepper) throw new Error('expected the stepper for players');
+            // A page that attaches a stepper as focus comes into it.
+            stepper.addEventListener('focusin', () => kit.attachStepper(stepper), { once: true });
+            held['players']?.controller.abort();
+            await Promise.resolve();
+        });
+        const { lower: lowerPlayers, raise: raisePlayers } = buttonsOf(page, 'Players');
+        await expect(boxOf(page, 'players')).toBeFocused();
+        await expect(raisePlayers).toBeVisible();
+        await expect(lowerPlayers).toBeVisible();
+        await press(raisePlayers, browserName);
+        await expect(page.locator('#players')).toHaveValue('6');
+    });
 
     test('keeps focus on the button where the page attaches it again in the task its signal aborts', async ({
         page,
         browserName,
     }) => {
-        const { raise: raiseCount } = await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        const { raise: raisePlayers } = await focusRaise(page, browserName, TAKEN_DOWN[1]);
         await page.evaluate(async () => {
-            const { kit, held } = window as unknown as Held;
-            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
-            if (!stepper || !held['count']) throw new Error('expected the stepper for count');
-            held['count'].controller.abort();
-            kit.attachStepper(stepper, { signal: new AbortController().signal });
+            const { held, hold } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#players)');
+            if (!stepper) throw new Error('expected the stepper for players');
+            held['players']?.controller.abort();
+            hold(stepper);
             await Promise.resolve();
         });
-        await expect(raiseCount).toBeFocused();
-        await expect(raiseCount).toBeVisible();
+        await expect(raisePlayers).toBeFocused();
+        await expect(raisePlayers).toBeVisible();
     });
 
     test('leaves focus where the page moves it in the task its signal aborts', async ({
@@ -1411,7 +1533,7 @@ test.describe('taken down with a button focused', () => {
         await focusRaise(page, browserName, TAKEN_DOWN[1]);
         await page.evaluate(async () => {
             const { held } = window as unknown as Held;
-            held['count']?.controller.abort();
+            held['players']?.controller.abort();
             document.querySelector<HTMLElement>('#next')?.focus();
             await Promise.resolve();
         });
@@ -1425,7 +1547,7 @@ test.describe('taken down with a button focused', () => {
         await focusRaise(page, browserName, TAKEN_DOWN[1]);
         await page.evaluate(() => {
             const { kit, held } = window as unknown as Held;
-            held['count']?.controller.abort();
+            held['players']?.controller.abort();
             kit.moveFocus('next');
         });
         await expect(page.locator('#next')).toBeFocused();

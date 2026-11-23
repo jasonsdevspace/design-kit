@@ -1250,6 +1250,8 @@ export type StepperFieldProps = Omit<FieldParts, 'label'> &
  * and to which field, a status line out of sight says the value a press sets, and the error for a
  * value the field refuses waits, hidden, for the attach function to show it. A field whose least
  * value is below nothing asks a phone for its full keyboard, since the numeric one has no minus.
+ * The box around the value and the buttons is a group named by the label, which holds focus as the
+ * attach function hands it there.
  */
 export const StepperField = (props: StepperFieldProps) => {
     const { min, max, step = 1, subject, rangeError, tall, inline, ...forField } = props;
@@ -1269,7 +1271,15 @@ export const StepperField = (props: StepperFieldProps) => {
                         ? `Enter a whole number from ${String(min)} to ${String(max)}.`
                         : `Enter a number from ${String(min)} to ${String(max)} in steps of ${String(step)}.`)}
             </p>
-            <div className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}>
+            {/*
+             * A group named by the label, so a stepper taken down with a button focused can hold
+             * focus with a name. It takes no tabindex here, which the attach gives it only then.
+             */}
+            <div
+                className={spaced('dk-stepper', tall === true && 'dk-stepper-tall')}
+                role="group"
+                aria-labelledby={`${field.id}-label`}
+            >
                 <button
                     type="button"
                     className="dk-button dk-stepper-down"

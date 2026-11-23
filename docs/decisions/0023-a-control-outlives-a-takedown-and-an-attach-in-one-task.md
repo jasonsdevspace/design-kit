@@ -167,26 +167,24 @@ Option C.
 - **A stepper hands focus back from its buttons.** A stepper taken down while one of its buttons has
   focus hides both, so it hands focus back first, while the button still has focus, and only where
   focus is on one of them. Focus goes to its value where the value is read only and enabled, and
-  otherwise to the stepper itself, as it does where the value refuses focus. An editable value is
-  skipped, since focusing it opens a phone's keyboard the visitor did not ask for, and a disabled
-  one refuses focus. Only a stepper that takes focus this way is given a tabindex of -1, so a script
-  can focus it while the tab order passes it by, and the components sheet draws the focus ring on it
-  where the browser shows focus, which the base sheet leaves off an element with that tabindex.
-  Where its field has a label, it is given the role of a group too, named by the label and the value
-  through `aria-labelledby` where the label has an id, as the React field's label now does, and
-  through `aria-label` from the label's words otherwise, so a screen reader hears the field's name
-  and not the value alone. A name is never given without the role, since ARIA forbids naming a
-  generic element. A tabindex, a role or a name the page gave the stepper itself is left as it is,
-  the kit keeps which attributes it gave, and the stepper's next attach takes those away, unless
-  focus is on the stepper then, as where a page attaches it again as focus comes to it, which leaves
-  them for a later attach. Keeping the focused button shown until it lost focus was rejected, since
-  a window losing focus blurs the button as the visitor switches apps, and handing focus to an
-  editable value was rejected for the keyboard it opens. Focus goes by `handBack`, so the handback
-  is kept and a `moveFocus` asked in the abort's task still lands, and the stepper is tried only
-  where focus is still on the button once the value has been tried, so focus the page moved
-  elsewhere in the abort's task, or as the value is tried, stays. The buttons are hidden only while
-  the takedown still owns the stepper, so a page that attaches it afresh as focus comes to it keeps
-  its buttons. Nothing is left listening once the stepper is down.
+  otherwise, or where the value refuses focus, to its box, which the markup draws as a group named
+  by the field's label, `role="group"` with `aria-labelledby` naming the label's id. An editable
+  value is skipped, since focusing it opens a phone's keyboard the visitor did not ask for, and a
+  disabled one refuses focus. The kit writes only a tabindex of -1, on a box that has none, and
+  never removes it, so a script can focus the box while the tab order passes it by, and a pointer's
+  focus on it shows no ring. The components sheet draws the focus ring on the box where the browser
+  shows focus, which the base sheet leaves off an element with that tabindex. Writing the group's
+  role and name at the takedown, and clearing them with a focusout listener once focus leaves, was
+  rejected, since that listener outlives the takedown and leaks where the focused node is taken from
+  the page, and every attribute written then has to be taken away again without touching the page's
+  own. Keeping the focused button shown until it lost focus was rejected, since a window losing
+  focus blurs the button as the visitor switches apps, and handing focus to an editable value was
+  rejected for the keyboard it opens. Focus goes by `handBack`, so the handback is kept and a
+  `moveFocus` asked in the abort's task still lands, and the box is tried only where focus is still
+  on the button once the value has been tried, so focus the page moved elsewhere in the abort's
+  task, or as the value is tried, stays. The buttons are hidden only while the takedown still owns
+  the stepper, so a page that attaches it afresh as focus comes to it keeps its buttons. Nothing is
+  left listening once the stepper is down.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -249,12 +247,11 @@ every signal it has ever held.
   19,288. A toast that keeps the control inside a frame of the page's own origin clear of itself as
   a message shows, and measures the toast at rest and across as well as down, brings them to 19,609,
   with less room under 19.5 KB than a function of the usual size, so the rule sets them at 20 KB. A
-  stepper that hands focus back as it is taken down with a button focused, and names itself where it
-  takes focus, brings them to 19,928, with less room under 20 KB than a function of the usual size,
-  so the rule sets them at 20.25 KB.
-- A stepper that takes focus as it is taken down keeps its tabindex of -1, its role and its name
-  until it is attached again, when the kit takes away what it gave. It never touches a tabindex, a
-  role or a name the page gave the stepper itself.
+  stepper that hands focus back as it is taken down with a button focused brings them to 19,689.
+- Every visit to a stepper hears the group's name once on entry, before the value's own label, the
+  cost the ARIA17 technique accepts for a group named by its label. A box that took focus as the
+  stepper was taken down keeps its tabindex of -1, and a page that writes a stepper by hand gives
+  its label an id and its box `role="group"` with `aria-labelledby`.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -350,15 +347,18 @@ The paths are in `packages/design-kit`.
   hooks on one form dropped leaving the other's check and refusal.
 - `e2e/stepper.spec.tsx` focuses a button of a read-only, an editable and a disabled stepper by the
   keyboard, takes each down by its signal and by its detach, and finds focus off the body and off an
-  editable value, on the read-only value and on the editable and the disabled stepper themselves,
-  each of those a group named by its label and value, both buttons hidden and the focus ring drawn.
-  It finds a stepper named from its label's words where the label has no id, the stepper focused
-  where a read-only value refuses focus, a page's own tabindex kept, and what the kit gave taken
-  away once the stepper is attached again. It finds focus kept there after the focused element and
-  the window are told they lost focus and after a trip to another tab and back. It finds focus kept
-  on the button where the page attaches the stepper again in the task its signal aborts, the buttons
-  kept where the page attaches it afresh as focus comes to it, focus the page moves in that task
-  staying, and a focus request asked in that task landing.
+  editable value, on the read-only value and on the group named by its label, without a required
+  field's hidden mark, both buttons hidden and the focus ring drawn. It finds the box's attributes
+  as drawn, but for the tabindex given once and kept, through a takedown, an attach after it, a
+  takedown again and an abort and an attach in one task, and finds an attribute the page gives the
+  box kept. It finds older markup with no role given a tabindex and focused, a tabindex of 0 kept, a
+  box that refuses focus given nothing but at most the tabindex, focus a page listener moves as the
+  value is tried staying, the group's name kept as a script changes the value, and a stepper
+  attached again left out of the tab order with no ring for a pointer. It finds focus and the name
+  kept after the window loses focus and gets it back, the buttons kept where the page attaches the
+  stepper afresh as focus comes to it, focus kept on the button where the page attaches it again in
+  the task its signal aborts, focus the page moves in that task staying, and a focus request asked
+  in that task landing. `e2e/leaks.spec.tsx` takes the stepper down with a button focused.
 - `e2e/leaks.spec.tsx` joins every piece but a focus request twice with a new signal and finds
   nothing growing as it is joined and nothing left once it is taken down, listeners on signals
   included.
@@ -380,6 +380,8 @@ The paths are in `packages/design-kit`.
 
 - React Aria, [useToastRegion](https://github.com/adobe/react-spectrum/blob/main/packages/react-aria/src/toast/useToastRegion.ts),
   which keeps where focus came into the region from and sends it back there, read 2026-11-21.
+- W3C, [ARIA17: using grouping roles to identify related form
+  controls](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA17), read 2026-11-22.
 - React, [ref callback](https://react.dev/reference/react-dom/components/common#ref-callback) and
   [fixing bugs found by re-running ref callbacks in
   development](https://react.dev/reference/react/StrictMode#fixing-bugs-found-by-re-running-ref-callbacks-in-development),

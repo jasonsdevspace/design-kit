@@ -651,7 +651,7 @@ color and is told apart by its words.
         <span class="dk-visually-hidden">Error: </span>
         Enter a whole number from 1 to 10.
     </p>
-    <div class="dk-stepper">
+    <div class="dk-stepper" role="group" aria-labelledby="cards-label">
         <button type="button" class="dk-button dk-stepper-down" aria-controls="cards" hidden="">
             <span aria-hidden="true">−</span>
             <span class="dk-visually-hidden">Lower Cards each</span>
@@ -2790,7 +2790,7 @@ to raise it after.
         <span class="dk-visually-hidden">Error: </span>
         Enter a whole number from 2 to 8.
     </p>
-    <div class="dk-stepper dk-stepper-tall">
+    <div class="dk-stepper dk-stepper-tall" role="group" aria-labelledby="players-label">
         <button type="button" class="dk-button dk-stepper-down" aria-controls="players" hidden="">
             <span aria-hidden="true">−</span>
             <span class="dk-visually-hidden">Lower the number of players</span>
@@ -2835,16 +2835,13 @@ since focus stays on the button, and that it is the least or the most where a pr
 limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
 or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
-`signal`. A stepper taken down while one of its buttons has focus hands focus to its value where the
-value is read only and enabled, and otherwise, or where the value refuses focus, to the stepper
-itself, so a keyboard user keeps their place and an editable value does not open a phone's keyboard.
-A stepper handed focus this way keeps the `tabindex="-1"` it is given, which lets a script focus it
-but leaves it out of the tab order, and draws the kit's focus ring where the browser shows focus.
-Where its field has a label, it is also given the role of a group, named by the label and the value,
-as "Players 4", through the label's id where the label has one, as the React field's label does with
-the field's id and `-label`, and from the label's words otherwise. A tabindex, a role or a name the
-page gave the stepper itself is left as it is, and what the kit gave is taken away as the stepper is
-attached again.
+`signal`. Its box is a group named by the label, with `role="group"` and `aria-labelledby` naming
+the label's id, so a stepper taken down while one of its buttons has focus can hold focus, and the
+kit gives the box a tabindex of -1 then, which stays. That takedown hands focus to the value where
+the value is read only and enabled, and otherwise, or where the value refuses focus, to the box, so
+a keyboard user keeps their place and an editable value does not open a phone's keyboard. The
+tabindex lets a script focus the box but leaves it out of the tab order, a tabindex the page gave
+the box is kept, and the box draws the kit's focus ring where the browser shows focus.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on

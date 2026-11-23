@@ -190,7 +190,8 @@ window.pieces = {
     },
     'the stepper': {
         attach: (signal) => kit.attachStepper(steps, { signal }),
-        // A press, a value out of range, a reset and focus leaving, each of which waits.
+        // A press, a value out of range, a reset and focus leaving, each of which waits, and a
+        // button focused last, so the takedown hands focus back from it.
         use: () => {
             steps.querySelector('.dk-stepper-up').click();
             const input = steps.querySelector('input');
@@ -198,6 +199,7 @@ window.pieces = {
             input.dispatchEvent(new Event('change', { bubbles: true }));
             $('#counts').reset();
             steps.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+            steps.querySelector('.dk-stepper-up').focus();
         },
         // A reset and then a press, so a stepper still attached would leave the value raised.
         after: () => {

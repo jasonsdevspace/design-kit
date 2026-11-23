@@ -1248,51 +1248,6 @@ export type StepperOptions = AttachOptions & {
 const attachedSteppers = new WeakMap<HTMLElement, Kept<() => void, StepperOptions>>();
 
 /**
- * The attributes the kit gave each stepper it handed focus to as it was taken down, which its next
- * attach takes away, so a page's own are never touched.
- */
-const gaveSteppers = new WeakMap<HTMLElement, readonly string[]>();
-
-/**
- * Readies a stepper to hold focus as its takedown hands focus to it: a tabindex of -1 where the
- * page gave it none, and where its field has a label and the page gave it no role or name of its
- * own, a group's role named by the label and the value, so a screen reader hears the field's name
- * and not the value alone. The name comes from the label's id where it has one, and otherwise from
- * its words.
- */
-const holdFocus = (stepper: HTMLElement, input: HTMLInputElement) => {
-    const label = input.labels?.[0];
-    const words = label?.textContent.trim();
-    const given: [string, string][] = stepper.hasAttribute('tabindex') ? [] : [['tabindex', '-1']];
-    if (
-        words &&
-        !['role', 'aria-label', 'aria-labelledby'].some((name) => stepper.hasAttribute(name))
-    )
-        given.push(
-            ['role', 'group'],
-            label?.id && input.id
-                ? ['aria-labelledby', `${label.id} ${input.id}`]
-                : ['aria-label', `${words} ${input.value}`]
-        );
-    for (const [name, value] of given) stepper.setAttribute(name, value);
-    gaveSteppers.set(
-        stepper,
-        given.map(([name]) => name)
-    );
-};
-
-/**
- * Takes away what the kit gave a stepper as its last takedown handed it focus, unless focus is on
- * it still, as where a page attaches it again as focus comes to it, which keeps it for a later
- * attach to take away.
- */
-const letGo = (stepper: HTMLElement) => {
-    if (activeOf() === stepper) return;
-    for (const name of gaveSteppers.get(stepper) ?? []) stepper.removeAttribute(name);
-    gaveSteppers.delete(stepper);
-};
-
-/**
  * A field's description with a stepper's own parts in their place: the error while it shows, which
  * names the range itself, or else the range in words when there are some, after the page's own.
  */
@@ -1388,12 +1343,11 @@ const stepperParts = (
  * same message, on the page's status line when one is given. Taken down while one of its buttons
  * has focus, it hands focus to its value where the value is read only and enabled, and otherwise,
  * or where the value refuses focus, to the stepper itself, since an editable value would open a
- * phone's keyboard. The stepper then keeps a tabindex of -1, where the page gave it none, and is a
- * group named by its field's label and value, where its field has a label and the page gave it no
- * role or name, and it draws the focus ring where the browser shows focus. What the kit gave is
- * taken away as it is attached again, and focus the page has moved elsewhere stays. It takes the
- * stepper's field or the stepper, attaches each stepper once whichever it is given, runs on the
- * options of its newest holder, and returns what takes it down again.
+ * phone's keyboard. The stepper, which the markup draws as a group named by its field's label, then
+ * holds focus and draws the focus ring where the browser shows focus. A stepper with no tabindex is
+ * given one then, which stays. Focus the page has moved elsewhere stays. It takes the stepper's
+ * field or the stepper, attaches each stepper once whichever it is given, runs on the options of
+ * its newest holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1405,7 +1359,6 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     if (options?.signal?.aborted) return () => undefined;
     const already = join(attachedSteppers, stepper, options);
     if (already) return already;
-    letGo(stepper);
     let chosen: StepperOptions = options ?? {};
     const parts = stepperParts(field);
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
@@ -1613,13 +1566,14 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         quiet();
         report(false);
         // A button with focus is about to hide, so focus goes first to a read-only value, which
-        // opens no keyboard, or else to the stepper, which takes a tabindex, a group's role and a
-        // name from the field's label and value only where focus goes to it. Focus the page has
-        // moved elsewhere, as the value is tried, stays.
+        // opens no keyboard, or else to the stepper, which the markup draws as a group named by the
+        // field's label. A stepper with no tabindex is given one that stays, since it is out of the
+        // tab order and a pointer's focus shows no ring. Focus the page has moved elsewhere, as the
+        // value is tried, stays.
         const at = activeOf();
         if (at === down || at === up) {
             if (!handBack(input.readOnly && !input.disabled ? input : null) && activeOf() === at) {
-                holdFocus(stepper, input);
+                if (!stepper.hasAttribute('tabindex')) stepper.tabIndex = -1;
                 handBack(stepper);
             }
         }
