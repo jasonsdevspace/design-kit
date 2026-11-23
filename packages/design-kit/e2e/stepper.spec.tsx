@@ -23,21 +23,21 @@ import { doubled, textSize } from './text-size.js';
  * often, and in whichever order, the stepper was attached, firing the events a typed value fires
  * and saying the value on its status line, the buttons off at the limits with focus kept and on a
  * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
- * limits or none reported as a field's error once changed and said, and cleared once right while a
- * page's own error keeps its place, a value drawn past the limits shown as an error once attached
- * or brought back by a reset with nothing said, but not on a field no one can change, for a refusal
- * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
- * needed, the value in figures of one width so the field keeps its width, every figure shown under
- * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
- * a stepper that fits a phone at twice the text size, alone and inside its field in a page's own
- * row, the larger target when asked, a read-only value starting where a read-only field's words
- * start and standing at the field's height, or at the larger target when tall, centered at an
- * inline stepper's row's end, and kept in place with a button holding focus, hidden pieces kept
- * hidden by sheets read without :has(), an inline stepper's error above it and its hint below it,
- * a field's control at its own height beside a taller field in a page's own row, an inline
- * stepper's label level with its neighbor's there,
- * focus handed to a read-only value or to the stepper itself and kept there as it is taken down
- * with a button focused, the keyboard, and no audit findings in either theme.
+ * limits, or none where one is required, reported as a field's error once changed and said, and
+ * cleared once right while a page's own error keeps its place, a value drawn past the limits shown
+ * as an error once attached or brought back by a reset with nothing said, but not on a field no one
+ * can change, for a refusal the page sets or beside the page's own error, a phone's keyboard with a
+ * minus only where it is needed, the value in figures of one width so the field keeps its width,
+ * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
+ * phone's narrowest width, a stepper that fits a phone at twice the text size, alone and inside its
+ * field in a page's own row, the larger target when asked, a read-only value starting where a
+ * read-only field's words start and standing at the field's height, or at the larger target when
+ * tall, centered at an inline stepper's row's end, and kept in place with a button holding focus,
+ * hidden pieces kept hidden by sheets read without :has(), an inline stepper's error above it and
+ * its hint below it, a field's control at its own height beside a taller field in a page's own row,
+ * an inline stepper's label level with its neighbor's there, focus handed to a read-only value or
+ * to the stepper itself and kept there as it is taken down with a button focused, the keyboard, and
+ * no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -227,7 +227,7 @@ test('follows a value a form reset sets, and fires nothing for a press that chan
     expect(await heard(page)).toHaveLength(before);
 });
 
-test('reports a typed value outside the limits, or none, as a field reports an error, says it, and clears it once right', async ({
+test('reports a typed value outside the limits, or none where one is required, as a field reports an error, says it, and clears it once right', async ({
     page,
 }) => {
     await open(page);
@@ -249,10 +249,21 @@ test('reports a typed value outside the limits, or none, as a field reports an e
     // The range in words describes it again once the error has gone.
     await expect(bid(page)).toHaveAttribute('aria-describedby', 'bid-limits');
     await expect(bid(page)).toHaveAccessibleDescription('From 0 to 10.');
-    // An emptied field is told the same.
+    // An emptied field passes where it is not required, as the browser's constraints have it.
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await expect(error).toBeHidden();
+    await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+    // A required one emptied is told the same as one outside the limits.
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.required = true;
+    });
+    await bid(page).fill('6');
+    await bid(page).press('Tab');
     await bid(page).fill('');
     await bid(page).press('Tab');
     await expect(error).toBeVisible();
+    await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');
 });
 
 test("keeps a page's own hint and error in place through its own error", async ({ page }) => {

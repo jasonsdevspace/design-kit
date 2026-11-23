@@ -18,10 +18,14 @@ import {
  * id, with words of the page's own for an empty name, and a count of
  * the submits the page's handler took. A stepper for a bid, which speaks through the page's line,
  * is drawn with whatever error the page is handed for it, and the failures handed are kept, each
- * as its field's id and its words.
+ * as its field's id and its words. The root's `data-bid` names how the bid is drawn: `required`,
+ * `blank` for one drawn with no value, or both.
  */
 
 type Handed = { handed?: string[] };
+
+const root = document.getElementById('root');
+const drawn = root?.dataset['bid'] ?? '';
 
 const Join = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,7 +70,8 @@ const Join = () => {
                     label="Bid"
                     min={0}
                     max={10}
-                    defaultValue={3}
+                    defaultValue={drawn.includes('blank') ? undefined : 3}
+                    required={drawn.includes('required')}
                     error={errors['bid']}
                 />
             </div>
@@ -76,7 +81,6 @@ const Join = () => {
     );
 };
 
-const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
         <StatusProvider>

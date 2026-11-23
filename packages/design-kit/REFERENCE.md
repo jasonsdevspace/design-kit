@@ -905,7 +905,11 @@ the `validity` of each of the form's fields, the whole form even where a part of
 fields tied to it from outside by `form` among them, before the page's handler, passing over a field
 marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
 field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
-error the page already drew for the field takes the kit's words until the field passes, and a stepper's range error is left as the one error. A stepper in the form that said its own error as its value changed, as one typed past its range and submitted by Enter does, is quieted, on its own line and on a page's, so the refusal is the one message said. Where every field passes, the page's handler runs as
+error the page already drew for the field takes the kit's words until the field passes, and an
+attached stepper that fails shows its own range error, which is left as the one error, whether or
+not its value was changed first. A stepper in the form that said its own error as its value changed,
+as one typed past its range and submitted by Enter does, is quieted, on its own line and on a
+page's, so the refusal is the one message said. Where every field passes, the page's handler runs as
 ever, for the checks the constraints cannot express, such as two fields that must match or a name
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
@@ -948,8 +952,11 @@ kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-e
 field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
 without them it asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`,
 since the markup is the page's: the failures go to it, the page sets its errors from them, keyed by
-each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. A stepper that shows its own range error is left out of the failures, since that error is the one drawn, as in a form the kit draws, so `invalid` is handed an empty list where only such steppers fail, and the refusal still counts the stepper and names it. `invalid` is called only for a submit that fails, so the page's own submit handler clears the
-errors it set.
+each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are
+drawn. A stepper that shows its own range error is left out of the failures, since that error is the
+one drawn, as in a form the kit draws, so `invalid` is handed an empty list where only such steppers
+fail, and the refusal still counts the stepper and names it. `invalid` is called only for a submit
+that fails, so the page's own submit handler clears the errors it set.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -1902,9 +1909,11 @@ stepper speaks on a line of its own inside its field, and the toast on one of it
 finds its screen's line by a class of its own rather than by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
-what happened on its own line and the two would speak over each other. A field's error is not live, since a form that fails in several fields at once would speak over itself, and a refused form says one message on the line, as [A refused form](#a-refused-form) has it. While a
-dialog is open the page behind it is inert, and a line there is not heard, so a screen that speaks
-while a dialog is open puts a line inside the dialog and says its messages there.
+what happened on its own line and the two would speak over each other. A field's error is not live,
+since a form that fails in several fields at once would speak over itself, and a refused form says
+one message on the line, as [A refused form](#a-refused-form) has it. While a dialog is open the
+page behind it is inert, and a line there is not heard, so a screen that speaks while a dialog is
+open puts a line inside the dialog and says its messages there.
 
 React's `StatusLine` draws the line, taking `className` and `ref`, its ref the line drawn.
 `CopyStatus` is the same component under the name a copy button's line was given first.
@@ -2933,6 +2942,7 @@ to raise it after.
             min="2"
             max="8"
             step="1"
+            required=""
             id="players"
             value="4"
         />
@@ -3021,21 +3031,29 @@ A press steps the value by the step, and one that changes it fires the `input` a
 typed value fires. A button that would pass the least or the greatest value is off, by
 `aria-disabled` so focus stays on it, as both are on a field that is disabled or read only, and a
 press of an off button does nothing. Each press reads the value again first, so a value a script or
-a form's reset set is followed. The field still takes a typed value. One outside the limits, none at
-all, or between steps, such as 2.5 with a step of 1, shows the stepper's own error, which waits
-hidden in the markup, once the value is changed, and the status line says it, unless its form refuses a submit in that moment, when the refusal says it in its place. A refusal the page
-sets of its own with `setCustomValidity` is left to the page. A value drawn outside the limits or
-between steps shows the error as the stepper is attached, and again when a form's reset brings it
-back, with nothing said, so a page that draws that state writes no code of its own for it. A field
-drawn blank shows none until it is changed, so a stepper attached again, as on a remount, shows the
-error for a value past its limits but not for a field left blank. A field that is disabled or read
-only shows none, since no one can put it right, and where the page draws its own error in the field,
-the page's error is the one shown as the page loads. The error is cleared as soon as the value is
-right again, and the attach function adds and takes away only its own error, so an error or a hint
-the page draws keeps its place. A page that draws the field again, as React does when the page's own
-error comes or goes, rewrites the field's description and its invalid mark, and the attach function
-puts its shown error back in both at once. It takes the stepper or its field, attaches each stepper
-once whichever it is given, and returns what takes it down again.
+a form's reset set is followed. The field still takes a typed value. A stepper is wrong exactly
+where the browser's constraints say its field is, so its error and its form's refusal agree. A value
+outside the limits, between steps, such as 2.5 with a step of 1, or that is no number, as letters
+typed, or none at all in a field that is `required`, shows the stepper's own error, which waits
+hidden in the markup, once the value is changed, and the status line says it, unless its form
+refuses a submit in that moment, when the refusal says it in its place. A blank in a field that is
+not required passes, shows no error, and its form saves, so a stepper whose blank has no meaning
+takes `required`, as the example here does. A refusal the page sets of its own with
+`setCustomValidity` is left to the page. A form that refuses a submit, by `attachForm` or
+`useFormRefusal`, shows the error of each attached stepper that fails, one never touched too, such
+as a required one drawn blank, so the stepper's own error is the one error, in place of the form's
+"Enter a value.". A value drawn outside the limits or between steps shows the error as the stepper
+is attached, and again when a form's reset brings it back, with nothing said, so a page that draws
+that state writes no code of its own for it. A field drawn blank shows none until it is changed or
+its form refuses it, so a stepper attached again, as on a remount, shows the error for a value past
+its limits but not for a field left blank. A field that is disabled or read only shows none, since
+no one can put it right, and where the page draws its own error in the field, the page's error is
+the one shown as the page loads. The error is cleared as soon as the value is right again, and the
+attach function adds and takes away only its own error, so an error or a hint the page draws keeps
+its place. A page that draws the field again, as React does when the page's own error comes or goes,
+rewrites the field's description and its invalid mark, and the attach function puts its shown error
+back in both at once. It takes the stepper or its field, attaches each stepper once whichever it is
+given, and returns what takes it down again.
 
 **`StepperField` props**
 

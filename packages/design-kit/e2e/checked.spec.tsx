@@ -769,7 +769,10 @@ const bidErrors = (page: Page) =>
 
 const RANGE = 'Error: Enter a whole number from 0 to 10.';
 
-const openBid = async (page: Page) => {
+/** How a test draws the bid: required or not, and with a value or blank. */
+type Bid = { readonly required?: boolean; readonly blank?: boolean };
+
+const openBid = async (page: Page, { required = false, blank = false }: Bid = {}) => {
     await servePage(page, {
         title: 'Bid',
         body: renderToStaticMarkup(
@@ -783,16 +786,24 @@ const openBid = async (page: Page) => {
                         label="Bid"
                         min={0}
                         max={10}
-                        defaultValue={5}
+                        defaultValue={blank ? undefined : 5}
+                        required={required}
                     />
                     <button type="submit">Send</button>
+                    <p id="count">0</p>
                 </form>
                 <StatusLine className="screen-status" />
             </main>
         ),
         script: `import { attachForm, attachStepper } from './controls.js';
+const form = document.querySelector('form');
 attachStepper(document.querySelector('.dk-stepper'));
-attachForm(document.querySelector('form'), { status: document.querySelector('.screen-status') });
+attachForm(form, { status: document.querySelector('.screen-status') });
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const count = document.querySelector('#count');
+    count.textContent = String(Number(count.textContent) + 1);
+});
 window.ready = true;`,
     });
     await page.waitForFunction(() => 'ready' in window);
@@ -824,6 +835,118 @@ test("says the refusal alone where a stepper's error shows and another field is 
     ]);
     expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
 });
+
+/*
+ * A stepper is wrong exactly where the browser's constraints say its field is, so its own error and
+ * its form's refusal agree, in a form the kit draws its errors in and in one React draws.
+ */
+for (const way of ['attachForm', 'useFormRefusal'] as const) {
+    test.describe(`a stepper in a form refused through ${way}`, () => {
+        let app = '';
+        test.beforeAll(async () => {
+            if (way !== 'useFormRefusal') return;
+            test.setTimeout(120_000);
+            app = await bundle('checked-page.tsx');
+        });
+
+        /** Draws the form with every field but the bid filled in, and listens to its lines. */
+        const openWay = async (page: Page, drawn: Bid = {}) => {
+            if (way === 'attachForm') {
+                await openBid(page, drawn);
+                await page.getByLabel('Name').fill('Ana');
+                return;
+            }
+            const how = [drawn.required && 'required', drawn.blank && 'blank'].filter(Boolean);
+            await servePage(page, {
+                title: 'Join',
+                body: `<div id="root" data-bid="${how.join(' ')}"></div>`,
+                script: app,
+            });
+            await listen(page);
+            await page.getByLabel('Name').fill('Ana');
+            await page.getByLabel('Small').check();
+        };
+
+        const bidOf = (page: Page) => page.getByRole('spinbutton', { name: 'Bid' });
+        const said = (page: Page) =>
+            page.evaluate(() => (window as unknown as { said: string[] }).said);
+
+        /** The bid refused with its own error alone, drawn, described and said once. */
+        const refused = async (page: Page) => {
+            expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
+            await expect(bidOf(page)).toHaveAccessibleDescription(RANGE);
+            await expect(bidOf(page)).toBeFocused();
+            await expect(page.locator('#count')).toHaveText('0');
+        };
+
+        test('saves a stepper left blank that is not required, with no error', async ({ page }) => {
+            await openWay(page);
+            const bid = bidOf(page);
+            await bid.fill('');
+            await bid.press('Enter');
+            await expect(page.locator('#count')).toHaveText('1');
+            await page.waitForTimeout(400);
+            expect(await said(page)).toEqual([]);
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+            await expect(bid).toHaveAccessibleDescription('From 0 to 10.');
+        });
+
+        test('shows no error on a stepper left blank that is not required as focus leaves it', async ({
+            page,
+        }) => {
+            await openWay(page);
+            const bid = bidOf(page);
+            await bid.fill('');
+            await bid.blur();
+            await page.waitForTimeout(400);
+            expect(await said(page)).toEqual([]);
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+        });
+
+        test('refuses a required stepper left blank, with its own error', async ({ page }) => {
+            await openWay(page, { required: true });
+            const bid = bidOf(page);
+            await bid.fill('');
+            await bid.press('Enter');
+            await refused(page);
+        });
+
+        test('leaves a stepper drawn blank unflagged, and refuses it untouched with its own error', async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true });
+            const bid = bidOf(page);
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+            await page.getByRole('button', { name: /Send|Join/ }).click();
+            await refused(page);
+            // A value typed past the range after it keeps the one error, said on the page's line.
+            await bid.fill('99');
+            await bid.press('Enter');
+            await page.waitForTimeout(400);
+            expect(await said(page)).toEqual([`page: Bid: ${RANGE}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await expect(page.locator('#count')).toHaveText('0');
+        });
+
+        for (const required of [false, true])
+            for (const typed of ['2.5', 'e'])
+                test(`refuses a stepper${required ? ' that is required' : ''} holding ${typed}, with its own error`, async ({
+                    page,
+                }) => {
+                    await openWay(page, { required });
+                    const bid = bidOf(page);
+                    await bid.fill('');
+                    await bid.pressSequentially(typed);
+                    await bid.press('Enter');
+                    await refused(page);
+                });
+    });
+}
 
 test("counts a page's own set of boxes of different names once", async ({ page }) => {
     await openWith(
