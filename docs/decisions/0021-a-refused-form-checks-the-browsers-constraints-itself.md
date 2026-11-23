@@ -99,19 +99,25 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   a stepper's range error is left as it is. The stepper's own error follows the same constraints: a
   stepper is wrong exactly where its field's `validity` says so, a blank only where the field is
   required, and a checked submit shows the error of a stepper that fails untouched, so its error and
-  its form's refusal never disagree. The kit puts back what it changed once the field passes on a
-  later checked submit, or the form is reset, and only what still holds the kit's change, so a mark
-  a stepper has since taken away stays away. **In React the failures go to `invalid`,** which the
-  hook asks for, since the markup belongs to the page's state, and the hook refuses after the render
-  that draws them. A stepper that shows its own range error is left out of them, so that error is
-  the one error in React as in plain markup.
+  its form's refusal never disagree. The form owns the verdict and the stepper the drawing: the form
+  keeps the fields its last checked submit refused, until the next or a reset, and tells each
+  attached stepper after every verdict, pass or fail, so a stepper attached afresh shows its error
+  again and one that passes clears it. An error shown in the field that is not the stepper's keeps
+  the field at a submit, and takes the failure as any field's does. The stepper's words are its own,
+  as `rangeError` gives them, never the form's words for one failure. The kit puts back what it
+  changed once the field passes on a later checked submit, or the form is reset, and only what still
+  holds the kit's change, so a mark a stepper has since taken away stays away. **In React the
+  failures go to `invalid`,** which the hook asks for, since the markup belongs to the page's state,
+  and the hook refuses after the render that draws them. A stepper that shows its own range error is
+  left out of them, so that error is the one error in React as in plain markup, and a summary a page
+  builds from the failures does not hold it.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
   words, and the summary's words where focus was already on it. A device check with VoiceOver on an
   iPhone heard no error where the kit left it to the field's description, which iOS reads only as a
   hint, and focus moved by script may not land. The refusal is the one message said: a stepper in
-  the form that said its own error as its value changed takes its words back, since two lines that
-  change in one moment speak over each other.
+  the form that said its own error as its value changed takes its words back, from a line of its
+  own, a page's or a page's `say`, since two lines that change in one moment speak over each other.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
 - **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
@@ -160,9 +166,12 @@ The paths are in `packages/design-kit`.
   range error as the one error, drawn, described and said once for a value typed past its range and
   submitted by Enter, in plain markup and in React, saves a stepper left blank that is not required
   with no error, refuses one that is required, holds a fraction or holds letters with the stepper's
-  own error, one drawn blank and never touched too, marks fields not in error before any submit, and
-  in React hands the failures, a set's among them, to the page, which draws them, and refuses once
-  they are drawn. It runs in Chromium, WebKit and Firefox.
+  own error, one drawn blank and never touched too, shows a refused stepper's error again once it is
+  attached afresh, clears it on a submit that passes or is unchecked and on a reset, leaves a page's
+  own error in a stepper's field as the one error, says nothing of a stepper's own where a summary
+  takes focus or the stepper speaks through a `say`, marks fields not in error before any submit,
+  and in React hands the failures, a set's among them, to the page, which draws them, and refuses
+  once they are drawn. It runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
   marked off, names a set none of whose controls can take focus, says the name and error of a field
   focus moves to or was already on, a set's where its choice does not read the error, and a field's

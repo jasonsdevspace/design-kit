@@ -738,8 +738,12 @@ const listen = (page: Page) =>
                 );
                 const words = line?.textContent ?? '';
                 if (!line || words === '') continue;
-                const heard = `${line.matches('.dk-stepper-status') ? 'stepper' : 'page'}: ${words}`;
-                if (said.at(-1) !== heard) said.push(heard);
+                const which = line.matches('.dk-stepper-status')
+                    ? 'stepper'
+                    : line.matches('.second-status')
+                      ? 'second'
+                      : 'page';
+                said.push(`${which}: ${words}`);
             }
         }).observe(document.body, { childList: true, characterData: true, subtree: true });
     });
@@ -769,36 +773,79 @@ const bidErrors = (page: Page) =>
 
 const RANGE = 'Error: Enter a whole number from 0 to 10.';
 
-/** How a test draws the bid: required or not, and with a value or blank. */
-type Bid = { readonly required?: boolean; readonly blank?: boolean };
+/**
+ * How a test draws the bid: required or not, with a value, 5 unless given, or blank, with an error
+ * of the page's own, with words of its own for its range error, outside the form and tied to it by
+ * `form`, attached after the form or only once the test asks, speaking through a `say` on a second
+ * line, and in a form given words of the page's for a failure.
+ */
+type Bid = {
+    readonly required?: boolean;
+    readonly blank?: boolean;
+    readonly value?: number;
+    readonly error?: string;
+    readonly rangeError?: string;
+    readonly outside?: boolean;
+    readonly formFirst?: boolean;
+    readonly late?: boolean;
+    readonly second?: boolean;
+    readonly errorWords?: Record<string, string>;
+};
 
-const openBid = async (page: Page, { required = false, blank = false }: Bid = {}) => {
+const openBid = async (page: Page, drawn: Bid = {}) => {
+    const { required = false, blank = false, value = 5, outside = false } = drawn;
+    const stepper = (
+        <StepperField
+            id="bid"
+            name="bid"
+            label="Bid"
+            min={0}
+            max={10}
+            defaultValue={blank ? undefined : value}
+            required={required}
+            error={drawn.error}
+            rangeError={drawn.rangeError}
+            form={outside ? 'join' : undefined}
+        />
+    );
     await servePage(page, {
         title: 'Bid',
         body: renderToStaticMarkup(
             <main>
                 <h1>Bid</h1>
-                <form>
+                <form id="join">
                     <InputField id="name" name="name" label="Name" required />
-                    <StepperField
-                        id="bid"
-                        name="bid"
-                        label="Bid"
-                        min={0}
-                        max={10}
-                        defaultValue={blank ? undefined : 5}
-                        required={required}
-                    />
+                    {outside ? null : stepper}
                     <button type="submit">Send</button>
+                    <button type="submit" formNoValidate>
+                        Save a draft
+                    </button>
+                    <button type="reset">Reset</button>
                     <p id="count">0</p>
                 </form>
+                {outside ? stepper : null}
                 <StatusLine className="screen-status" />
+                <StatusLine className="second-status" />
             </main>
         ),
-        script: `import { attachForm, attachStepper } from './controls.js';
+        script: `import { attachForm, attachStatus, attachStepper } from './controls.js';
+const drawn = ${JSON.stringify(drawn)};
 const form = document.querySelector('form');
-attachStepper(document.querySelector('.dk-stepper'));
-attachForm(form, { status: document.querySelector('.screen-status') });
+const bid = () => {
+    window.down = attachStepper(
+        document.querySelector('.dk-stepper'),
+        drawn.second ? { say: attachStatus(document.querySelector('.second-status')) } : undefined
+    );
+};
+const check = () =>
+    attachForm(form, {
+        status: document.querySelector('.screen-status'),
+        errorWords: drawn.errorWords,
+    });
+if (drawn.formFirst) check();
+if (!drawn.late) bid();
+if (!drawn.formFirst) check();
+window.attachBid = bid;
 form.addEventListener('submit', (event) => {
     event.preventDefault();
     const count = document.querySelector('#count');
@@ -809,6 +856,18 @@ window.ready = true;`,
     await page.waitForFunction(() => 'ready' in window);
     await listen(page);
 };
+
+/** What the lines said so far, every write, a repeat among them. */
+const saidSoFar = (page: Page) =>
+    page.evaluate(() => (window as unknown as { said: string[] }).said);
+
+/** Forgets what the lines said, so a later step's words are read alone. */
+const forget = (page: Page) =>
+    page.evaluate(() => {
+        (window as unknown as { said: string[] }).said.length = 0;
+    });
+
+type BidPage = { down: () => void; attachBid: () => void };
 
 test('shows one error for a stepper typed past its range and submitted, and says it once', async ({
     page,
@@ -834,6 +893,85 @@ test("says the refusal alone where a stepper's error shows and another field is 
         'page: Name: Error: Enter a value. 2 fields need attention.',
     ]);
     expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+});
+
+for (const formFirst of [false, true])
+    test(`shows no error after a reset on a required stepper refused untouched, attached ${formFirst ? 'after' : 'before'} its form`, async ({
+        page,
+    }) => {
+        await openBid(page, { required: true, blank: true, formFirst });
+        await page.getByLabel('Name').fill('Ana');
+        await page.getByRole('button', { name: 'Send' }).click();
+        expect((await bidErrors(page)).drawn).toEqual([RANGE]);
+        await page.getByRole('button', { name: 'Reset' }).click();
+        await page.waitForTimeout(300);
+        expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+        await expect(page.locator('#bid')).not.toHaveAttribute('aria-invalid', 'true');
+    });
+
+test("draws and says a stepper's own words for a blank it requires, over the form's words for it", async ({
+    page,
+}) => {
+    await openBid(page, {
+        required: true,
+        blank: true,
+        rangeError: 'Bid from nothing to ten.',
+        errorWords: { valueMissing: 'Fill this in.' },
+    });
+    await page.getByLabel('Name').fill('Ana');
+    await page.getByRole('button', { name: 'Send' }).click();
+    const words = 'Error: Bid from nothing to ten.';
+    expect(await saidOf(page)).toEqual([`page: Bid: ${words}`]);
+    expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+});
+
+test('leaves a stepper that speaks through a say of its own unsaid on a refused submit', async ({
+    page,
+}) => {
+    await openBid(page, { second: true });
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+});
+
+test("draws the form's own error for a stepper taken down, which shows and says nothing", async ({
+    page,
+}) => {
+    await openBid(page, { required: true, blank: true });
+    await page.getByLabel('Name').fill('Ana');
+    await page.evaluate(() => {
+        (window as unknown as BidPage).down();
+    });
+    await page.getByRole('button', { name: 'Send' }).click();
+    const words = 'Error: Enter a value.';
+    expect(await saidOf(page)).toEqual([`page: Bid: ${words}`]);
+    expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+    await expect(page.locator('#bid-range')).toBeHidden();
+});
+
+test("shows a stepper's own error on one tied to the form from outside and refused untouched", async ({
+    page,
+}) => {
+    await openBid(page, { required: true, blank: true, outside: true });
+    await page.getByLabel('Name').fill('Ana');
+    await page.getByRole('button', { name: 'Send' }).click();
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+    expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+});
+
+test('keeps one error on a stepper first attached after its form refused it', async ({ page }) => {
+    await openBid(page, { required: true, blank: true, late: true });
+    await page.getByLabel('Name').fill('Ana');
+    await page.getByRole('button', { name: 'Send' }).click();
+    const words = 'Error: Enter a value.';
+    expect((await bidErrors(page)).drawn).toEqual([words]);
+    await page.evaluate(() => {
+        (window as unknown as BidPage).attachBid();
+    });
+    expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+    await expect(page.locator('#bid')).toHaveAttribute('aria-invalid', 'true');
 });
 
 /*
@@ -925,12 +1063,76 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await page.getByRole('button', { name: /Send|Join/ }).click();
             await refused(page);
             // A value typed past the range after it keeps the one error, said on the page's line.
+            await forget(page);
             await bid.fill('99');
             await bid.press('Enter');
-            await page.waitForTimeout(400);
-            expect(await said(page)).toEqual([`page: Bid: ${RANGE}`]);
+            expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
             expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
             await expect(page.locator('#count')).toHaveText('0');
+        });
+
+        test('saves a stepper refused untouched once a script sets its value, with no error left', async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true });
+            const bid = bidOf(page);
+            await page.getByRole('button', { name: /Send|Join/ }).click();
+            await refused(page);
+            // Set with no event, so only the form's next verdict tells the stepper.
+            await bid.evaluate((input: HTMLInputElement) => {
+                input.value = '4';
+            });
+            await page.getByRole('button', { name: /Send|Join/ }).click();
+            await expect(page.locator('#count')).toHaveText('1');
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
+        });
+
+        test("clears a stepper's error on a submit from a button marked formnovalidate", async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true });
+            await page.getByRole('button', { name: /Send|Join/ }).click();
+            await refused(page);
+            await page.getByRole('button', { name: 'Save a draft' }).click();
+            await expect(page.locator('#count')).toHaveText('1');
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bidOf(page)).not.toHaveAttribute('aria-invalid', 'true');
+        });
+
+        test("keeps an error of the page's own as the one error on a stepper submitted untouched", async ({
+            page,
+        }) => {
+            if (way === 'attachForm') {
+                await openBid(page, { value: 99, error: 'Bids are closed.' });
+                await page.getByLabel('Name').fill('Ana');
+            } else {
+                await servePage(page, {
+                    title: 'Join',
+                    body: '<div id="root" data-bid="error"></div>',
+                    script: app,
+                });
+                await listen(page);
+                await page.getByLabel('Name').fill('Ana');
+                await page.getByLabel('Small').check();
+                await bidOf(page).evaluate((input: HTMLInputElement) => {
+                    input.value = '99';
+                });
+            }
+            expect(await bidErrors(page)).toEqual({
+                drawn: ['Error: Bids are closed.'],
+                described: ['Error: Bids are closed.'],
+            });
+            await page.getByRole('button', { name: /Send|Join/ }).click();
+            const words = 'Error: Enter 10 or less.';
+            expect(await saidOf(page)).toEqual([`page: Bid: ${words}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+            await expect(page.locator('#bid-range')).toBeHidden();
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
+            if (way === 'useFormRefusal')
+                expect(
+                    await page.evaluate(() => (window as unknown as { handed: string[] }).handed)
+                ).toEqual(['bid: Enter 10 or less.']);
         });
 
         for (const required of [false, true])
@@ -1064,5 +1266,66 @@ test.describe('in React', () => {
         expect(
             await page.evaluate(() => (window as unknown as { handed: string[] }).handed)
         ).toEqual(['name: Enter your name.', 'size: Choose an option.']);
+    });
+
+    test("shows a refused stepper's error again once the stepper is attached afresh", async ({
+        page,
+    }) => {
+        await servePage(page, {
+            title: 'Join',
+            body: '<div id="root" data-bid="required blank"></div>',
+            script: app,
+        });
+        await page.getByLabel('Name').fill('Ana');
+        await page.getByLabel('Small').check();
+        await page.getByRole('button', { name: 'Join' }).click();
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await expect(bid).toBeFocused();
+        expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+        await page.getByRole('button', { name: 'Attach the bid' }).click();
+        await page.waitForTimeout(200);
+        expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+        await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    test('keeps one error on a stepper first attached after its form refused it', async ({
+        page,
+    }) => {
+        await servePage(page, {
+            title: 'Join',
+            body: '<div id="root" data-bid="required blank late"></div>',
+            script: app,
+        });
+        await page.getByLabel('Name').fill('Ana');
+        await page.getByLabel('Small').check();
+        await page.getByRole('button', { name: 'Join' }).click();
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await expect(bid).toBeFocused();
+        const words = 'Error: Enter a value.';
+        expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+        await page.getByRole('button', { name: 'Attach the bid' }).click();
+        await page.waitForTimeout(200);
+        expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+        await expect(bid).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    test('says nothing where a refusal moves focus to a summary over a stepper typed past its range', async ({
+        page,
+    }) => {
+        await servePage(page, {
+            title: 'Join',
+            body: '<div id="root" data-bid="summary"></div>',
+            script: app,
+        });
+        await listen(page);
+        await page.getByLabel('Name').fill('Ana');
+        await page.getByLabel('Small').check();
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await bid.fill('99');
+        await bid.press('Enter');
+        await expect(page.locator('#summary')).toBeFocused();
+        await page.waitForTimeout(400);
+        expect(await saidSoFar(page)).toEqual([]);
+        expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
     });
 });
