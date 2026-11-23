@@ -1877,3 +1877,148 @@ test.describe('a focus request', () => {
         await expect(page.locator('#target')).toBeFocused();
     });
 });
+
+test.describe('a control whose markup has since lost a part', () => {
+    test('is handed back as it is by a repeat attach, and refused once it is attached afresh', async ({
+        page,
+    }) => {
+        await opened(page);
+        const wrong = await page.evaluate(`(async () => {
+            const wrong = [];
+            const again = async (name, attach, lose, needs) => {
+                const held = new AbortController();
+                const first = attach(held.signal);
+                lose();
+                try {
+                    if (attach(held.signal) !== first) wrong.push(name + ': a repeat attach gave another control');
+                    if (attach() !== first) wrong.push(name + ': a repeat attach with no signal gave another control');
+                    if (attach(AbortSignal.abort()) === first)
+                        wrong.push(name + ': an aborted signal was given the control');
+                } catch (error) {
+                    wrong.push(name + ': a repeat attach threw, ' + error.message);
+                }
+                // Taken down, the control is gone, so the next attach is a first one and is told.
+                held.abort();
+                (typeof first === 'function' ? first : first.detach)();
+                await Promise.resolve();
+                for (const signal of [undefined, AbortSignal.abort()]) {
+                    try {
+                        attach(signal);
+                        wrong.push(name + ': a first attach missing a part did not throw');
+                    } catch (error) {
+                        if (error.message !== needs) wrong.push(name + ': threw ' + error.message);
+                    }
+                }
+            };
+            await again(
+                'the stepper',
+                (signal) => kit.attachStepper($('.dk-stepper'), withSignal(signal)),
+                () => $('.dk-stepper-up').remove(),
+                'a stepper needs its two buttons, or a read-only value'
+            );
+            await again(
+                'a panel',
+                (signal) => panel('#tips-button', signal),
+                () => $('#tips-button').removeAttribute('aria-controls'),
+                "a panel's button needs aria-controls"
+            );
+            return wrong;
+        })()`);
+        expect(wrong).toEqual([]);
+    });
+
+    test('hands back a toast that has lost a part, and refuses it once it is attached afresh', async ({
+        page,
+    }) => {
+        await opened(page);
+        const wrong = await page.evaluate(`(async () => {
+            const wrong = [];
+            const toast = $('.dk-toast');
+            const held = new AbortController();
+            const show = kit.attachToast(toast, { signal: held.signal });
+            $('.dk-toast-action').remove();
+            try {
+                if (kit.attachToast(toast, { signal: held.signal }) !== show) wrong.push('a repeat attach gave another control');
+                if (kit.attachToast(toast, { signal: AbortSignal.abort() }) === show)
+                    wrong.push('an aborted signal was given the control');
+            } catch (error) {
+                wrong.push('a repeat attach threw, ' + error.message);
+            }
+            // Only its signal takes a toast down, a microtask after it aborts.
+            held.abort();
+            await Promise.resolve();
+            for (const signal of [undefined, AbortSignal.abort()]) {
+                try {
+                    kit.attachToast(toast, withSignal(signal));
+                    wrong.push('a first attach missing a part did not throw');
+                } catch (error) {
+                    if (error.message !== 'a toast needs its action') wrong.push('threw ' + error.message);
+                }
+            }
+            return wrong;
+        })()`);
+        expect(wrong).toEqual([]);
+    });
+});
+
+test.describe('a view asking for focus as it arrives', () => {
+    test('moves nothing given a signal already aborted, and leaves the press for another view', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            kit.focusOnArrival('target', { signal: AbortSignal.abort() });
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#start')).toBeFocused();
+        // The press is not spent, so a view that asks for it after takes focus.
+        await page.evaluate(`kit.focusOnArrival('target')`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+    });
+
+    test('is called off by an abort, and lets go of the signal once it lands', async ({ page }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            const controller = new AbortController();
+            kit.focusOnArrival('target', { signal: controller.signal });
+            controller.abort();
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#start')).toBeFocused();
+        // The press is handed back, so a view left to land takes focus for it, and then holds
+        // nothing on a signal the page keeps.
+        await page.evaluate(`(() => {
+            window.kept = new AbortController();
+            kit.focusOnArrival('target', { signal: kept.signal });
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+        expect(await count(page, '[kept.signal]')).toBe(0);
+        await page.evaluate('kept.abort()');
+        await expect(page.locator('#target')).toBeFocused();
+    });
+
+    test('lands the views left when one of several asking for the same press is aborted', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#start').focus();
+            $('#start').click();
+            const controller = new AbortController();
+            window.kept = new AbortController();
+            // The view first in the page would take focus, and its abort leaves it to the other.
+            kit.focusOnArrival('start', { signal: controller.signal, from: $('#start') });
+            kit.focusOnArrival('target', { signal: kept.signal });
+            controller.abort();
+        })()`);
+        await page.evaluate('frames()');
+        await expect(page.locator('#target')).toBeFocused();
+        expect(await count(page, '[kept.signal]')).toBe(0);
+    });
+});

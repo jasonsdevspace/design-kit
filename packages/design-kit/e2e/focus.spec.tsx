@@ -254,6 +254,27 @@ test.describe('in React', () => {
         await expect(page.locator('#shadow-next')).toBeFocused();
     });
 
+    test("focuses a view's heading when a press inside a shadow root changes its key", async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#shadow-bump');
+        await expect(page.locator('#shadow-round')).toHaveText('Widget round 2');
+        await expect(page.locator('#shadow-round')).toBeFocused();
+    });
+
+    test('moves focus asked for late, by an id inside a shadow root, by a component since gone', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#shadow-panel-close');
+        await expect(page.locator('#shadow-panel-close')).toHaveCount(0);
+        await page.evaluate(() => {
+            (window as unknown as { answerShadow: () => void }).answerShadow();
+        });
+        await expect(page.locator('#shadow-panel-open')).toBeFocused();
+    });
+
     test('moves focus asked for after an await by a component that has since unmounted', async ({
         page,
     }) => {

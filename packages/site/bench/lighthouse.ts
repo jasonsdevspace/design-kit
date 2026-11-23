@@ -1,5 +1,7 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 import { chromium } from '@playwright/test';
 import { launch } from 'chrome-launcher';
@@ -15,7 +17,8 @@ import {
     writeRecord,
 } from '../../../scripts/record.mjs';
 import { lighthouseSummary, writeSummary } from '../../../scripts/summary.mjs';
-import { ROUTES } from '../src/routes.ts';
+import { type Budget, budgetOf, downloadsOf, kb, weighed } from '../src/budgets.ts';
+import { BASE, ROUTES } from '../src/routes.ts';
 
 /**
  * Lighthouse over the built site, held to the gates ShelfLens is held to.
@@ -27,7 +30,9 @@ import { ROUTES } from '../src/routes.ts';
  * slow network makes it, performance at least ninety, the largest paint within the time a visit
  * counts as good, and no more layout shift than a good visit has. One trace on a shared machine
  * can be slow for reasons of its own, so a page that misses on its first is measured twice more
- * and judged on the middle of the three.
+ * and judged on the middle of the three. Each page's script and its sheets are held to the budgets
+ * in `src/budgets.ts` too, measured over the files the build wrote, gzipped, so a page that grows
+ * past one fails here whatever a trace makes of it.
  *
  *   npm run bench:pages
  *
@@ -102,6 +107,36 @@ const findingsOf = (report: Report): readonly string[] =>
         const audit = report.audits[ref.id];
         return audit?.score !== null && audit !== undefined && audit.score < 1 ? [audit.id] : [];
     });
+
+/** The built site, whose files the byte budgets are measured over. */
+const DIST = new URL('../dist/', import.meta.url);
+
+/**
+ * The bytes of script and of sheets the page built from an HTML file downloads, each file gzipped
+ * as a server sends it.
+ */
+const bytesOf = (file: string): Budget => {
+    const gzipped = (files: readonly string[]) =>
+        files.reduce((sum, each) => sum + gzipSync(readFileSync(new URL(each, DIST))).length, 0);
+    const { scripts, styles } = downloadsOf(readFileSync(new URL(file, DIST), 'utf8'), BASE);
+    return { script: gzipped(scripts), style: gzipped(styles) };
+};
+
+/**
+ * What a page's bytes miss of its budget, with each size and its budget said in the log. A page
+ * whose files cannot be read is a miss too, said in the log in its place.
+ */
+const pastItsBudget = (path: string, file: string): readonly string[] => {
+    const budget = budgetOf(file);
+    const { sizes, missed } = weighed(() => bytesOf(file), budget);
+    console.log(
+        sizes === undefined
+            ? `${path} downloads: ${missed.join(', ')}`
+            : `${path} downloads: script ${kb(sizes.script)} of ${kb(budget.script)}, ` +
+                  `sheets ${kb(sizes.style)} of ${kb(budget.style)}`
+    );
+    return missed;
+};
 
 /** Whether this run records what it measured, as `npm run bench:pages` asks. */
 const RECORD = process.argv.includes('--record');
@@ -182,15 +217,17 @@ const main = async () => {
     const measured: Recorded[] = [];
     let tools: Tools | undefined;
     try {
-        for (const { path } of ROUTES) {
+        for (const { path, file } of ROUTES) {
             const url = `${origin}${path}`;
+            const heavy = pastItsBudget(path, file);
+            failures.push(...heavy.map((each) => `${path} (${each})`));
             const access = await run(url, 'accessibility');
             const score = Math.round((access.categories['accessibility']?.score ?? 0) * 100);
             const findings = findingsOf(access);
             console.log(
                 `${path}: accessibility ${String(score)}${findings.length > 0 ? `, ${findings.join(', ')}` : ''}`
             );
-            const short = score < 100 ? [`accessibility ${String(score)}`] : [];
+            const short = [...heavy, ...(score < 100 ? [`accessibility ${String(score)}`] : [])];
             if (score < 100) failures.push(`${path} (accessibility ${String(score)})`);
             // Kept now, so a page whose performance run fails is still reported, and replaced at
             // its own place once performance is measured.

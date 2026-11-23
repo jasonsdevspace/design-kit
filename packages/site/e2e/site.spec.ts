@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, type Response, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
@@ -321,6 +321,31 @@ for (const path of PAGES) {
         expect(policy).not.toMatch(/script-src[^;]*'self'/);
         expect(await page.locator('[style]').count()).toBe(0);
         expect(refused).toEqual([]);
+    });
+
+    test(`${path} downloads the code of the behavior page's examples only where it shows them`, async ({
+        page,
+    }) => {
+        // Every script the page asks for, the files its own script imports among them, each read
+        // once the page has loaded, when the browser has the whole of it to hand back.
+        const scripts: Response[] = [];
+        page.on('response', (response) => {
+            if (response.request().resourceType() === 'script') scripts.push(response);
+        });
+        await page.goto(path, { waitUntil: 'networkidle' });
+        const bodies = await Promise.all(
+            scripts.map((response) =>
+                response.text().catch((error: unknown) => {
+                    throw new Error(`${response.url()} gave no body to read`, { cause: error });
+                })
+            )
+        );
+        const code = bodies.join('\n');
+        expect(code).not.toBe('');
+        // Words only the examples say, each from a different example.
+        for (const mark of ['The rule was saved.', 'The players are back.', 'Product loaded.']) {
+            expect(code.includes(mark), mark).toBe(path === `${BASE}behavior/`);
+        }
     });
 }
 
