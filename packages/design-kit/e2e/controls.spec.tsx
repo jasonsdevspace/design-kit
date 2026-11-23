@@ -943,7 +943,7 @@ test('passes over an empty live callout in the flow and the room kept for a toas
     expect(marked?.y).toBe(without?.y);
     await expect(page.getByRole('alert')).toBeAttached();
     // Last in the body, with a toast shown, the room for the toast goes under the list instead,
-    // by the mark the toast's attach function writes on the body, which asks for no :has().
+    // by the mark the toast's attach function writes on the body.
     await page.setContent(
         `<!doctype html><html lang="en" data-theme="light"><head><title>Callouts</title>` +
             `<style>${KIT}</style></head><body><div class="dk-app"><main class="dk-app-body" data-toast-rows="1">` +
@@ -951,11 +951,55 @@ test('passes over an empty live callout in the flow and the room kept for a toas
             renderToStaticMarkup(<Callout tone="danger" live="alert" />) +
             '</main><div class="dk-toast" data-shown data-rows="1"></div></div></body></html>'
     );
-    expect(
+    const room = async () =>
         Number.parseFloat(
             (await style(page.locator('#list'), 'margin-bottom'))['margin-bottom'] ?? '0'
-        )
-    ).toBeGreaterThan(0);
+        );
+    const kept = await room();
+    expect(kept).toBeGreaterThan(0);
+    // And so it does with no :has(): each selector that asks for one taken out of its rule's list,
+    // as a browser without it drops that selector from a :where() and keeps the rest.
+    const left = await page.evaluate(() => {
+        let asking = 0;
+        const membersOf = (list: string) => {
+            const parts = [''];
+            let depth = 0;
+            for (const sign of list) {
+                if (sign === '(') depth += 1;
+                if (sign === ')') depth -= 1;
+                if (sign === ',' && depth === 0) parts.push('');
+                else parts[parts.length - 1] += sign;
+            }
+            return parts.map((part) => part.trim());
+        };
+        const drop = (rules: CSSRuleList) => {
+            for (let at = rules.length - 1; at >= 0; at -= 1) {
+                const rule = rules[at];
+                if (rule instanceof CSSStyleRule && rule.selectorText.includes(':has(')) {
+                    const text = rule.selectorText;
+                    const whole = text.startsWith(':where(') && text.endsWith(')');
+                    const members = whole ? membersOf(text.slice(':where('.length, -1)) : [];
+                    const plain = members.filter((member) => !member.includes(':has('));
+                    if (plain.length > 0) rule.selectorText = `:where(${plain.join(', ')})`;
+                    else if (rule.parentRule instanceof CSSGroupingRule)
+                        rule.parentRule.deleteRule(at);
+                    else rule.parentStyleSheet?.deleteRule(at);
+                } else if (rule instanceof CSSGroupingRule) drop(rule.cssRules);
+            }
+        };
+        const count = (rules: CSSRuleList) => {
+            for (const rule of rules) {
+                if (rule instanceof CSSStyleRule && rule.selectorText.includes(':has('))
+                    asking += 1;
+                else if (rule instanceof CSSGroupingRule) count(rule.cssRules);
+            }
+        };
+        for (const sheet of document.styleSheets) drop(sheet.cssRules);
+        for (const sheet of document.styleSheets) count(sheet.cssRules);
+        return asking;
+    });
+    expect(left).toBe(0);
+    expect(await room()).toBe(kept);
 });
 
 test("draws nothing for an empty live callout, and the callout's look once it is filled", async ({
