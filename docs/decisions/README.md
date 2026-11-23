@@ -106,8 +106,9 @@ costs, and the test behind it.
     task](0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md):
     every signal that attaches an element holding its control, a takedown a microtask after the last
     of them aborts that an attach before then cancels, a detach that still takes it down at once,
-    the newest holder's options, the hooks taking their part down at once, and why deferring the
-    takedown in the hooks and leaving it to pages were turned down.
+    the newest holder's options, the hooks taking their part down at once, a stepper handing focus
+    back from its buttons, and why deferring the takedown in the hooks and leaving it to pages were
+    turned down.
 24. [A plain form spaces only the kit's blocks](0024-a-plain-form-spaces-only-the-kits-blocks.md):
     a field, a row of actions and a callout that is not empty in a form with no class attribute each
     stand a step below what sits above them once another has come before, a page's own markup there
