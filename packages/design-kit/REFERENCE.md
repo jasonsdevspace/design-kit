@@ -1546,7 +1546,9 @@ nothing after. The others return a function that takes them down. Once a control
 nothing it started acts, such as a copy the clipboard answers late, and calling that function or
 aborting a signal again does nothing. A signal already aborted does nothing: the control stays as
 the markup drew it, a control already attached keeps the options it had, and what the attach returns
-does nothing.
+does nothing. A part a control cannot work without is looked for before the signal is read, so
+markup missing one, such as a stepper with no buttons or a panel's button with no `aria-controls`,
+throws under a signal already aborted as it does under any other.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision

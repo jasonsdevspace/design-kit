@@ -71,7 +71,10 @@ Option E.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
   it, so a later attach finds nothing of it. A piece already attached is left as it is, and the new
-  options are not taken. What the attach returns does nothing.
+  options are not taken. What the attach returns does nothing. A missing part is told before the
+  signal is read: an attach looks for the parts record 13 has it throw for, a toast's, a stepper's
+  value and buttons, a panel button's `aria-controls` and a table's frame, before it reads its
+  signal, so a page learns of markup missing one where it attached, whatever the signal.
 - **Aborting is the same as detach,** once no other signal holds the piece, as record 23 has it, and
   a microtask later. Everything the attach set up comes off: its listeners, observers, timers and
   frames, a listener on the document it added, and what it drew or showed, as its detach would. An
@@ -138,6 +141,9 @@ The paths are in `packages/design-kit`.
   what it is given at once, runs what it keeps once and in order whether the page aborts or the
   attach detaches first, runs every undo where one throws and reports the error, runs one kept after
   the teardown at once, and takes its listener off the page's signal once it has run.
+- `src/controls.test.ts` calls every attach that throws for a missing part with markup missing it
+  and a signal already aborted, and finds each throw, and reads the module for every error an
+  attach throws, so one that gains a part is held to the same order.
 - `e2e/teardown.spec.tsx` holds to the contract every piece in the table `e2e/teardown-pieces.tsx`
   names but a focus request, which no later attach joins, in Chromium, WebKit and Firefox: a signal
   already aborted attaching nothing and keeping nothing, an abort taking the piece down a microtask

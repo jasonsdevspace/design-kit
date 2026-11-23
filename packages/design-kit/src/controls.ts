@@ -1369,13 +1369,14 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const stepper = element.matches('.dk-stepper')
         ? element
         : (field.querySelector<HTMLElement>('.dk-stepper') ?? element);
+    // Read before the signal, so markup missing a part throws whatever the signal.
+    const parts = stepperParts(field);
     // A signal already aborted does nothing, so even new options for a stepper already attached are
     // not taken.
     if (options?.signal?.aborted) return () => undefined;
     const already = join(attachedSteppers, stepper, options);
     if (already) return already;
     let chosen: StepperOptions = options ?? {};
-    const parts = stepperParts(field);
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
     if (!parts) return () => undefined;
     const torn = teardown(options?.signal, options);
@@ -2064,20 +2065,22 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * the page. Attached again, a button returns what it returned first.
  *
  * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
- * nothing. A button taken down is marked collapsed. A button taken from the page without being
- * taken down stays held, and keeps the document's listeners, until it is. An open panel stays the
- * kit's while an attached button names it, so once the button that opened it is taken down, Escape
- * and its Close both still close it, and focus goes back to the first attached button that names
- * it. A button attached to it while it is open takes it where no attached button names it. Once
- * none does, neither closes it, and the page holds it as it is.
+ * nothing, though a button with no aria-controls throws under it as under any other. A button taken
+ * down is marked collapsed. A button taken from the page without being taken down stays held, and
+ * keeps the document's listeners, until it is. An open panel stays the kit's while an attached
+ * button names it, so once the button that opened it is taken down, Escape and its Close both still
+ * close it, and focus goes back to the first attached button that names it. A button attached to it
+ * while it is open takes it where no attached button names it. Once none does, neither closes it,
+ * and the page holds it as it is.
  */
 export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
     const idle: PanelControl = { set: () => undefined, detach: () => undefined };
+    // Checked before the signal, so a button that names no panel throws whatever the signal.
+    if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
     // A signal already aborted does nothing, even to a button already attached.
     if (options?.signal?.aborted) return idle;
     const already = join(attachedPanels, opener, options);
     if (already) return already;
-    if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
     const down = teardown(options?.signal);
     const control: PanelControl = {
         set: (open) => {
