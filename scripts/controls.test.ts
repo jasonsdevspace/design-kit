@@ -30,9 +30,10 @@ import { sentOf } from './parts.mjs';
  * line, the toast, the form, the panels and the remaining attaches moved onto it, and again once
  * record 23's holders left too little room for another, again once its one rule for handing focus
  * back did, again once a handback that takes an SVG element did, again once focus falling to the
- * body and followed into a frame did, and again once a control kept clear inside a frame did.
+ * body and followed into a frame did, again once a control kept clear inside a frame did, and again
+ * for 0.9.4 once a dated field's limit in words left too little room for another.
  */
-const BUDGET = 20 * 1024;
+const BUDGET = 21 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;
