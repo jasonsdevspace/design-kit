@@ -166,7 +166,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.0   | A prototype of the release's planned pieces, from 11,398 bytes                  | 12,112 bytes    | 169 bytes    | 12 KB      |
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 | 0.9.4   | A busy button's dots, with too little room left                                 | 12,523 bytes    | 154 bytes    | 12.5 KB    |
-| 0.9.4   | A field held to the measure, with too little room left                          | 12,647 bytes    | 161 bytes    | 12.75 KB   |
+| 0.9.4   | A field held to the measure, with too little room left                          | 12,661 bytes    | 155 bytes    | 12.75 KB   |
 
 | Release | What raised it                                                                           | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
