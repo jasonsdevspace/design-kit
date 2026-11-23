@@ -11,8 +11,9 @@ import { servePage, stillClock } from './page.js';
  * each failing field's error drawn in the field, focus on the first and the count said, the page's
  * handler run once every field passes, a button marked formnovalidate submitting unchecked, the
  * words each failure takes from the field, the page's map or the kit, errors taken away once their
- * fields pass, fields not in error marked so before any submit, and the same through React, where
- * the page draws the failures from its own state and the refusal follows.
+ * fields pass, fields not in error marked so before any submit, the error added to bare markup
+ * left at its own margins, and the same through React, where the page draws the failures from its
+ * own state and the refusal follows.
  */
 
 const BODY = renderToStaticMarkup(

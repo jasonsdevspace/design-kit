@@ -657,9 +657,10 @@
      * A field: its label, a hint when it has one, an error when it has one, and then the control.
      * The error sits above the control, so a phone's keyboard or an open list never covers it, and
      * the hint stays while the error shows, since it often says how to put the error right. The
-     * page breaks a word too long for its line only where it cannot fit, which leaves a grid's own
-     * column as wide as that word, so the field's one column is held to the width it is given, and
-     * a word with no place to break, such as an email address in an error, breaks inside it.
+     * body wraps a long word only where it cannot fit, by `overflow-wrap: break-word`, and a word
+     * wrapped that way still sets a grid column's least width, so the field's one column is given
+     * no least width, and a word with no place to break, such as an email address in an error,
+     * breaks inside it.
      */
     :where(.dk-field) {
         display: grid;
@@ -1069,17 +1070,25 @@
     }
 
     /*
-     * In a form with no class attribute, a field, a row of actions, a callout with words or a
-     * fieldset stands --dk-space-4 below the one of those before it, wherever a hidden input or a
-     * script sits between them. Only the kit's own blocks are spaced, and only after another, so
-     * what a page writes around them, a bare label and control, a row of its own or a closed
-     * dialog, keeps the place the browser and the page give it, and a form's buttons sit in a row
-     * of actions. A form with a class attribute lays out its own parts.
+     * In a form with no class attribute, a field, a row of actions or a callout that is not empty
+     * stands --dk-space-4 below what sits above it, once another of those has come before it, so a
+     * hidden input or a script between two of them leaves them a step apart. Only the kit's own
+     * blocks are spaced, so what a page writes around them, a bare label and control, a fieldset, a
+     * row of its own or a closed dialog, keeps the place the browser and the page give it, and a
+     * form's buttons sit in a row of actions. A block out of sight or an empty callout, marked or
+     * not, counts as none. A form with a class attribute lays out its own parts.
      */
     :where(
         form:not([class])
-            > :is(.dk-field, .dk-actions, .dk-callout, fieldset):not([hidden], [data-empty])
-            ~ :is(.dk-field, .dk-actions, .dk-callout:not([data-empty]), fieldset)
+            > :is(.dk-field, .dk-actions, .dk-callout):not(
+                :is(
+                    [hidden],
+                    [data-empty],
+                    .dk-visually-hidden,
+                    .dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions))
+                )
+            )
+            ~ :is(.dk-field, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)
     ) {
         margin-block-start: var(--dk-space-4);
     }

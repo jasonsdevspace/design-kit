@@ -232,6 +232,20 @@ test("keeps a field with long words beside a button in a page's own row at twice
     });
     await doubled(page, browserName);
     expect(await sideways(page)).toBe(0);
+    const placed = await page.locator('.row').evaluate((row) => {
+        const edge =
+            row.getBoundingClientRect().right - parseFloat(getComputedStyle(row).paddingRight);
+        const field = row.querySelector('.dk-field')?.getBoundingClientRect();
+        const button = row.querySelector('.dk-button')?.getBoundingClientRect();
+        return {
+            past: [...row.querySelectorAll('.dk-field *')]
+                .filter((part) => part.getBoundingClientRect().right > edge + 0.5)
+                .map((part) => part.className || part.tagName.toLowerCase()),
+            beside: (button?.left ?? 0) >= (field?.right ?? Infinity) - 0.5,
+        };
+    });
+    // Nothing in the field past the row's padded edge, and the button to the field's right.
+    expect(placed).toEqual({ past: [], beside: true });
 });
 
 test('keeps an off button in the tab order, and skips a disabled one, drawn alike', async ({

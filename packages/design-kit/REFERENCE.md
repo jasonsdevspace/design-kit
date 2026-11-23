@@ -426,7 +426,9 @@ look to fill and the open panel is the sign.
 
 A row of buttons, such as a page's actions under its lead, sits in a `dk-actions`, as above. It
 spaces the buttons by `--dk-space-2` and wraps them onto rows the same step apart, where spaces
-between buttons would leave the rows touching. It sets no margin of its own.
+between buttons would leave the rows touching. It sets no margin of its own. In a form with no class
+attribute a bare button stands no step below a field above it, where a `dk-actions` does, so a
+form's buttons go in a `dk-actions`, a lone submit too.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -580,9 +582,9 @@ error, followed by any description of the page's own, and is left off when there
 `aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
 column, so a word with no place to break, such as an email address in an error, breaks inside it
 rather than pushing the field past the column's edge. In a form with no class attribute, a field, a
-row of actions, a callout with words or a fieldset stands `--dk-space-4` below the one of those
-before it, so a form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form
-is given room or has its margins taken. A form with a class attribute lays out its own parts.
+row of actions or a callout that is not empty stands `--dk-space-4` below what sits above it, once
+another of those has come before it, so a form's buttons go in a `dk-actions`, a lone submit too.
+Nothing else in a plain form is given room. A form with a class attribute lays out its own parts.
 
 <details>
 <summary>How a field is drawn</summary>
