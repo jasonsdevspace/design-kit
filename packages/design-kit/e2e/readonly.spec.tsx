@@ -28,6 +28,31 @@ const BODY = `<main><h1>Round</h1><form id="form">${renderToStaticMarkup(
 /** Each field's control: a text field, a read-only select's field, or a stepper's value. */
 const CONTROLS = '.dk-field :is(.dk-input, .dk-stepper-value)';
 
+/**
+ * The controls drawn cut off or out of their field, each by its id: any cut in its height, as
+ * taller lines would cut one of a fixed height, any past its field's edges, and a stepper's value
+ * cut in its width, which the kit sizes for its figures. A text field's value is the page's, and
+ * one longer than its field scrolls inside it as in any field of one line, so its width is not
+ * held here.
+ */
+const cutControls = (page: Page): Promise<string[]> =>
+    page.locator(CONTROLS).evaluateAll((controls) =>
+        controls
+            .filter((control) => {
+                const box = control.getBoundingClientRect();
+                const field = control.closest('.dk-field')?.getBoundingClientRect();
+                return (
+                    !field ||
+                    control.scrollHeight > control.clientHeight + 1 ||
+                    (control.matches('.dk-stepper-value') &&
+                        control.scrollWidth > control.clientWidth + 1) ||
+                    box.left < field.left - 0.5 ||
+                    box.right > field.right + 0.5
+                );
+            })
+            .map(({ id }) => id)
+    );
+
 const draw = (page: Page, theme: 'light' | 'dark' = 'light', css = '') =>
     writePage(page, { title: 'Read only', body: BODY, theme, css });
 
@@ -127,6 +152,6 @@ test('keeps every field whole at 320px with twice the text size and under wider 
     await expect(page.locator('.dk-field-label')).toHaveCount(fields);
     await expect(page.locator(CONTROLS)).toHaveCount(fields);
     expect(await cutOff(page, '.dk-field-label')).toEqual([]);
-    expect(await cutOff(page, CONTROLS)).toEqual([]);
+    expect(await cutControls(page)).toEqual([]);
     expect(await sideways(page)).toBe(0);
 });
