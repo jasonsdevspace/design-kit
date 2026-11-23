@@ -86,9 +86,10 @@ costs, and the test behind it.
     callback ref whose cleanup aborts the signal it gave its attach and taking its part down at
     once, while the kit keeps the control through a ref made afresh, setting its options again only
     when one changes, and making a focus request once the page's change is drawn or as its component
-    unmounts, the markup components held free of effects by the lint, and why leaving pages to
-    attach in an effect, behavior written in React and three ways of telling a stale focus request
-    apart were turned down.
+    unmounts, a form React still draws refused only through `useFormRefusal`, the markup components
+    held free of effects by the lint, and why leaving pages to attach in an effect, behavior written
+    in React, three ways of telling a stale focus request apart, and a mark on every React field
+    and an observer that repairs React's markup were turned down.
 21. [A refused form checks the browser's constraints
     itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
     the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`

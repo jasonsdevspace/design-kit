@@ -7,10 +7,15 @@ import { Button, InputField, StatusProvider, useFormRefusal } from '../src/react
  * The page form.spec.tsx draws with React: a form that refuses an empty name, drawing its error and
  * then refusing through the screen's status line, and one that refuses it after an await, as a
  * page that asks its store first does, refused twice with the first called off, and refused as the
- * visitor moves focus before the error is drawn.
+ * visitor moves focus before the error is drawn, and a field whose error the page draws again with
+ * new words while a refusal stands.
  */
 
-type Page = { refuseTwice?: () => void; refuseAndMove?: () => void };
+type Page = {
+    refuseTwice?: () => void;
+    refuseAndMove?: () => void;
+    seatError?: (words: string) => void;
+};
 const page = window as unknown as Page;
 
 const AddPlayer = () => {
@@ -81,11 +86,33 @@ const SavePlayer = () => {
     );
 };
 
+// A form refused through the hook, whose field's error the page draws from its state and can draw
+// again with new words at any time, as a page whose state changes before the visitor fixes the
+// value does.
+const BookSeat = () => {
+    const [error, setError] = useState('');
+    const [form] = useFormRefusal<HTMLFormElement>({
+        invalid: (failures) => {
+            setError(failures[0]?.words ?? '');
+        },
+    });
+    useEffect(() => {
+        page.seatError = setError;
+    }, []);
+    return (
+        <form id="book" ref={form} onSubmit={(event) => event.preventDefault()}>
+            <InputField id="seat" name="seat" label="Seat" required error={error} />
+            <Button type="submit">Book</Button>
+        </form>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
         <StatusProvider>
             <AddPlayer />
             <SavePlayer />
+            <BookSeat />
         </StatusProvider>
     );
