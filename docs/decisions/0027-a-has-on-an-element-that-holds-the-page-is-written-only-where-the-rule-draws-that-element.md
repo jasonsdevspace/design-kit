@@ -145,9 +145,9 @@ it. A body that ends in a tab bar keeps the padding, as it did before.
   as it is, where before it gave that body the room of a toast of its own.
 - The room in a frame holds in a browser with no `:has()`, Firefox 120 among them, as does a dialog
   inside a frame or after one.
-- The sheets grew by 130 bytes and the controls by 169, as the budget tests measure them, which left
-  less room under each budget than one more piece or function of the usual size, so record 13's rule
-  set both again, as its tables give.
+- The sheets came to 12,969 bytes and the controls to 21,073, as the budget tests measure them,
+  which left less room under each budget than one more piece or function of the usual size, so
+  record 13's rule set both again, as its tables give.
 - A `hidden` attribute toggled on a stepper's button in a plain form still restyles a few hundred
   elements, about 1.2 ms, through record 24's rule that spaces a plain form's blocks, whose `:has()`
   is on a callout before the block it spaces. That rule is outside these three families, and this
