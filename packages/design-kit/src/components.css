@@ -656,10 +656,13 @@
     /*
      * A field: its label, a hint when it has one, an error when it has one, and then the control.
      * The error sits above the control, so a phone's keyboard or an open list never covers it, and
-     * the hint stays while the error shows, since it often says how to put the error right.
+     * the hint stays while the error shows, since it often says how to put the error right. Its
+     * one column holds to the width it is given rather than growing to its longest word, so a word
+     * with no place to break, such as an email address in an error, breaks inside it.
      */
     :where(.dk-field) {
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--dk-space-1);
     }
 
@@ -1062,14 +1065,6 @@
             outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
             outline-offset: var(--dk-ring-offset);
         }
-    }
-
-    /*
-     * A field after a field in a plain form stands one step from it. A form with a class of its
-     * own lays out its own fields, as a grid or a row with a gap, so nothing is added to them.
-     */
-    :where(form:not([class]) > .dk-field + .dk-field) {
-        margin-block-start: var(--dk-space-4);
     }
 
     /*
@@ -3603,6 +3598,20 @@
             ~ :not(dialog)
     ) {
         margin-block-start: var(--dk-flow-step);
+    }
+
+    /*
+     * A plain form spaces its parts as the flow does, each one step below the one before it, a
+     * button, a row of actions or a callout after a field as well as a field, with a hidden input
+     * before the first passed over too. A form with a class of its own lays out its own parts, as a
+     * grid or a row with a gap, so nothing is added to them.
+     */
+    :where(
+        form:not([class])
+            > :not(.dk-visually-hidden, [hidden], [type='hidden'], .dk-callout[data-empty])
+            ~ :not(dialog)
+    ) {
+        margin-block-start: var(--dk-space-4);
     }
 
     :where(

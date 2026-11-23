@@ -577,8 +577,12 @@ or an open list never covers it, and the hint stays while the error shows, since
 to put the error right. The error starts with a visually hidden "Error: ", so it is told from the
 hint by more than its color. `aria-describedby` lists only what is drawn, the hint and then the
 error, followed by any description of the page's own, and is left off when there is none.
-`aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
-class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
+`aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
+column, so a word with no place to break, such as an email address in an error, breaks inside it
+rather than pushing the field past its edge. In a form with no class attribute, each part after the
+first, a field, a button, a row of actions or a callout, stands `--dk-space-4` below the one before
+it, and a hidden input, a hidden part or an empty live callout before the first adds no room. A form
+with a class lays out its own parts.
 
 <details>
 <summary>How a field is drawn</summary>

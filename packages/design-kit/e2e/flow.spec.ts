@@ -87,12 +87,28 @@ test('stands each piece one step after the one before it in a dialog, and its ac
     ]);
 });
 
-test('stands each field one step after the one before it in a plain form', async ({ page }) => {
+test('stands each part one step after the one before it in a plain form', async ({ page }) => {
     await writePage(page, {
         title: 'Flow',
-        body: `<form id="form">${FIELD('a')}${FIELD('b')}<fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset></form>`,
+        body: `<form id="form">${FIELD('a')}${FIELD('b')}<fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset>${CALLOUT}<p>After.</p></form>`,
     });
-    expect(await gaps(page, '#form')).toEqual(each(['dk-field', 'dk-field dk-choice-field'], 16));
+    expect(await gaps(page, '#form')).toEqual(
+        each(['dk-field', 'dk-field dk-choice-field', 'dk-callout', 'p'], 16)
+    );
+});
+
+test("adds no step for a hidden input or a piece out of sight before a plain form's first part", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="form"><input type="hidden" name="t"><p hidden>Saved.</p><h2 class="dk-visually-hidden">Join</h2>${FIELD('a')}</form>`,
+    });
+    const under = await page.locator('#form').evaluate((form) => {
+        const first = form.querySelector('.dk-field')?.getBoundingClientRect().top ?? 0;
+        return Math.round(first - form.getBoundingClientRect().top);
+    });
+    expect(under).toBe(0);
 });
 
 test('adds nothing to fields in a form that lays them out itself, in a grid or side by side', async ({
