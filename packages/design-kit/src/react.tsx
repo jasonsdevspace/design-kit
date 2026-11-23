@@ -244,8 +244,8 @@ export type ButtonProps = NativeButton & {
     readonly off?: boolean | undefined;
     /**
      * Busy while what its press started runs, such as a save: off at once, drawn off only once the
-     * wait outlasts --dk-wait, and said by `attachBusy` or `useBusy` in the words given, or
-     * "Saving." where it is just true.
+     * wait outlasts --dk-wait, then with a row of dots that shows it at work, and said by
+     * `attachBusy` or `useBusy` in the words given, or "Saving." where it is just true.
      */
     readonly busy?: boolean | string | undefined;
 } & (

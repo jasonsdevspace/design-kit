@@ -460,8 +460,16 @@ A button whose press has started something still running, such as a save, is bus
 with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
 `--dk-wait` before it is drawn off, so a fast save does not flash it gray, and the pointer shows the
 wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
-forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
-off state at once, as it must for the press to be stopped.
+forced colors, where the button then takes `GrayText` as an off one does. Drawn off, it also shows a
+row of three dots centered at its foot, so a visitor who sees it can tell a button at work from one
+that cannot be pressed. The dots pulse, never fainter than 3:1 on the kit's grounds, and stand still
+under reduced motion and in forced colors. They take `--dk-fg`, the system's gray in forced colors,
+so a page that recolors a busy button's words, as on a dark band, sets `--dk-fg` there too. They sit
+in the band every button keeps below its words, so they never meet words that wrap or grow. They
+take no place in the row, so the button keeps its size, an icon alone or a text button included, and
+they hold no words, so its name stays as it was. Only a busy button marked off draws them, so markup
+that marks a button busy before an attach runs, or with no script, draws no dots on the accent's
+fill. A screen reader hears the off state at once, as it must for the press to be stopped.
 
 `attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks on
 the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
@@ -474,9 +482,15 @@ already there and the end of a progress beside them takes their place. `busy` se
 words. Words not yet said when the work is done are dropped, so a result a toast says is never
 followed by a late "Saving." Taken down, by the function it returns or by its `signal`, as [Taking a
 control down](#taking-a-control-down) has it, it no longer stops a press, takes away the mark it set
-and drops words not yet said. There is no spinner, since words say what is happening. A page that
-sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
-once.
+and drops words not yet said. A page that sets a transition of its own on a busy button replaces
+the wait, and the button is drawn off at once, though its dots still wait.
+
+The dots are a busy button's `::after`, so a page draws nothing of its own there while it is busy.
+They set `content`, `position`, `inset-block-end`, `inset-inline`, `margin-inline`, `width`,
+`height`, `color`, `background` and `animation`, and `forced-color-adjust` in forced colors, so a
+page whose own rule draws something in a kit button's `::after` resets those it does not set
+itself. A busy button is `position: relative`, as its dots are placed against it, so an element a
+page places absolutely inside it sits against the button while it is busy.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried
@@ -500,8 +514,11 @@ export const SaveRound = ({ saving, save }: { saving: boolean; save: () => void 
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and at every width in an app's frame, on a page that ends in a tab bar, in a
-dialog on either and in a toast, and it is never narrower than it is tall. It takes a tap at once,
-with no wait for a second tap that would zoom the page. It has no ground of its own, so it takes the
+dialog on either and in a toast, and it is never narrower than it is tall. It keeps a band of
+0.375rem above and below its words, which a button of one line fits inside its height, so only
+words that wrap stand it taller. A text button keeps only what the leading around it leaves short of
+that band, so a line of it in ordinary text keeps the button's height. It takes a tap at once, with
+no wait for a second tap that would zoom the page. It has no ground of its own, so it takes the
 ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every width,
 with wider inline padding and the body text size. A tall button is 3.5rem tall at every width and
 never narrower than that, and changes nothing else. A text button has no edge, no inline padding and
@@ -1904,7 +1921,7 @@ A part of the page waiting for its content, such as a product on its way, carrie
 line's wait is timed from when it first matches. The line shows only once the wait outlasts
 `--dk-wait`, 400ms, so a fast answer shows nothing. The wait is a delay rather than a motion, so it
 stands under reduced motion and in forced colors. The line is words in the muted text, with no
-spinner, since words say what is happening and a spinner is a motion reduced motion would stop.
+spinner, since its words already show what is happening.
 
 Once the content is drawn, the page takes the line out and the mark away in one change, since the
 line shows at once the moment the mark goes. Where the wait fails, the page puts a danger callout

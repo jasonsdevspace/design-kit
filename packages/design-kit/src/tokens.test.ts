@@ -264,6 +264,39 @@ describe('the tokens', () => {
         expect(lit('raised', 'light')).toBeGreaterThanOrEqual(lit('bg', 'light'));
     });
 
+    it("keeps a busy button's dots at 3:1 on every ground at the faintest of their pulse", () => {
+        const components = readFileSync(new URL('./components.css', import.meta.url), 'utf8');
+        const floor = Number(
+            /@keyframes dk-busy\s*\{\s*to\s*\{\s*opacity:\s*([\d.]+)/.exec(components)?.[1]
+        );
+        expect(floor).toBeGreaterThan(0);
+        // The dots in the text color at that opacity, laid over each ground they can sit on.
+        const over = (front: string, back: string) =>
+            `#${[1, 3, 5]
+                .map((at) => {
+                    const channel = (hex: string) => Number.parseInt(hex.slice(at, at + 2), 16);
+                    const mixed = channel(front) * floor + channel(back) * (1 - floor);
+                    return Math.round(mixed).toString(16).padStart(2, '0');
+                })
+                .join('')}`;
+        const short = THEMES.flatMap((theme) =>
+            [
+                'bg',
+                'surface',
+                'raised',
+                'danger-bg',
+                'success-bg',
+                'warning-bg',
+                'highlight',
+            ].flatMap((ground) => {
+                const back = colorOf(declared, ground, theme);
+                const measured = contrast(over(colorOf(declared, 'fg', theme), back), back);
+                return measured < 3 ? [`${theme} ${ground}: ${measured.toFixed(2)}`] : [];
+            })
+        );
+        expect(short).toEqual([]);
+    });
+
     for (const theme of THEMES) {
         it(`holds every pairing to its ratio in the ${theme} theme`, () => {
             const short = PAIRS.flatMap(([front, back, ratio]) => {
