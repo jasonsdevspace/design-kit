@@ -27,7 +27,7 @@ const LISTED: readonly string[] = [
     ':where(.dk-fields > .dk-field) { flex: 1 1 var(--dk-fields-least, 10rem) }',
     ':where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) { flex-basis: 100% }',
     // A plain form's step, which the row takes as one of the kit's blocks.
-    ':where(form:not([class]) > :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(:is([hidden], [data-empty], .dk-visually-hidden, .dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions)))) ~ :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)) { margin-block-start: var(--dk-space-4) }',
+    ':where(form:not([class]) > :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not([hidden], [data-empty], .dk-visually-hidden) ~ :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)) { margin-block-start: var(--dk-space-4) }',
 ];
 
 /** The listed rules for what the row holds directly, which alone set how a field is sized. */

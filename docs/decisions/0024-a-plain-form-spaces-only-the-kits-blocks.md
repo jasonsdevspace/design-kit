@@ -2,8 +2,9 @@
 
 **Status:** accepted in 0.9.4, amending record 16 so that in a form with no class attribute the kit
 spaces only its own blocks, and a page's own markup there keeps the place the browser and the page
-give it, and amended in the same release to count a row of fields, record 25's `dk-fields`, among
-those blocks
+give it, amended in the same release to count a row of fields, record 25's `dk-fields`, among
+those blocks, and amended again in it, by record 27's rule, to count an empty callout written
+without its mark as a block
 
 ## Context
 
@@ -40,14 +41,16 @@ apart. Nothing else in the form is given room.
 ## Decision
 
 Option C. The rule reads a child of `form:not([class])` that is a block, a field, a row of fields, a
-row of actions or a callout, not marked `hidden` or `data-empty`, not visually hidden, and not a
-callout whose message is empty with no actions, then any later block by the general sibling
-combinator. A field nested in a page's own `div` is not a child of the form, so it is not spaced.
-The test for an empty callout written without its mark asks for `:has()`, inside an `:is()` that
-drops it where a browser lacks it, so the rest of the rule holds there. The rule sits before the
-callout's rules, so an empty callout's own margin still wins by order and it takes no room. A form's
-buttons go in a `dk-actions`, a lone submit too, and the README's checkout and the reference write
-them so. A form with a class attribute lays out its own parts, as before.
+row of actions or a callout, not marked `hidden` or `data-empty` and not visually hidden, then any
+later block by the general sibling combinator. A field nested in a page's own `div` is not a child
+of the form, so it is not spaced. An empty callout written without its mark counts as a block.
+Telling it apart took a `:has()` on the callout before the block the rule spaces, which Chromium
+answers by restyling every block after that callout for a change inside any one of them, 337
+elements for a stepper's button shown in a form of 150 fields. Without it, the same change restyles
+the field it is in. The rule sits before the callout's rules, so an empty callout's own margin
+still wins by order and it takes no room. A form's buttons go in a `dk-actions`, a lone submit too,
+and the README's checkout and the reference write them so. A form with a class attribute lays out
+its own parts, as before.
 
 ## Consequences
 
@@ -64,6 +67,9 @@ them so. A form with a class attribute lays out its own parts, as before.
 - A bare fieldset is a page's own markup and is not spaced. The kit's set of choices is a `dk-field`
   and is.
 - A new block the kit adds that should stand apart in a plain form joins both lists in the rule.
+- An empty callout a page writes without `data-empty` first in a plain form puts a step above the
+  field after it, and the reference says a page marks it, as `Callout` does. One between two blocks
+  changes nothing, since the block after it stands a step below the block before it either way.
 
 ## How it is tested
 
@@ -77,8 +83,11 @@ The paths are in `packages/design-kit`.
   lone button after one field, in a plain form and in a form with a class, and finds every part at
   the same place with the same margins in both. It finds no step before a first field after a hidden
   input, a script, a template, a dialog, a datalist, parts out of sight, a visually hidden status
-  callout or an empty callout written without its mark, and two fields with a hidden input between
-  them a step apart. A plain form inside a dialog keeps the dialog's further step above its actions.
+  callout or an empty callout marked `data-empty`, a field a step below an empty callout written
+  without its mark, and two fields with a hidden input between them a step apart. A plain form
+  inside a dialog keeps the dialog's further step above its actions.
+- `e2e/restyle.spec.tsx`, in Chromium, shows a stepper's button in a plain form of a few hundred
+  elements and finds no more than a tenth of the form restyled.
 - `e2e/controls.spec.tsx` stands the README's checkout row a step below its select and a filled
   callout a step below the row, and finds an empty or hidden callout adding no room.
 - `e2e/checked.spec.tsx` finds the error a refusal adds to bare markup at its own margins, with no
