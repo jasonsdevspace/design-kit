@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readOnlyFields } from '../examples/examples.js';
 import { InputField } from '../src/react.js';
 import { forceColors, sideways, style, writePage } from './page.js';
-import { cutOff, SPACED } from './spacing.js';
+import { cutOff, SPACED, tooShort } from './spacing.js';
 import { textSize } from './text-size.js';
 
 /*
@@ -24,6 +24,31 @@ const BODY = `<main><h1>Round</h1><form id="form">${renderToStaticMarkup(
         <InputField id="gone" label="Seat" defaultValue="4" disabled />
     </>
 )}</form></main>`;
+
+/** Each field's control: a text field, a read-only select's field, or a stepper's value. */
+const CONTROLS = '.dk-field :is(.dk-input, .dk-stepper-value)';
+
+/**
+ * The controls drawn out of their field, and a stepper's value cut in its width, which the kit
+ * sizes for its figures, each by its id. A text field's value is the page's, and one longer than
+ * its field scrolls inside it as in any field of one line, so its width is not held here.
+ */
+const cutControls = (page: Page): Promise<string[]> =>
+    page.locator(CONTROLS).evaluateAll((controls) =>
+        controls
+            .filter((control) => {
+                const box = control.getBoundingClientRect();
+                const field = control.closest('.dk-field')?.getBoundingClientRect();
+                return (
+                    !field ||
+                    (control.matches('.dk-stepper-value') &&
+                        control.scrollWidth > control.clientWidth + 1) ||
+                    box.left < field.left - 0.5 ||
+                    box.right > field.right + 0.5
+                );
+            })
+            .map(({ id }) => id)
+    );
 
 const draw = (page: Page, theme: 'light' | 'dark' = 'light', css = '') =>
     writePage(page, { title: 'Read only', body: BODY, theme, css });
@@ -110,9 +135,22 @@ test('draws a read-only stepper with its value alone, which a keyboard still rea
 test('keeps every field whole at 320px with twice the text size and under wider spacing', async ({
     page,
 }) => {
-    await draw(page, 'light', SPACED);
-    expect(await cutOff(page, '.dk-field-label')).toEqual([]);
+    // The browser's own text size, which holds as the page is written, then the page drawn once
+    // with all three at work, each read back so none can drop out and leave the rest passing.
     await textSize(page, 2);
-    await writePage(page, { title: 'Read only', body: BODY, width: 320, height: 640 });
+    await writePage(page, { title: 'Read only', body: BODY, width: 320, height: 640, css: SPACED });
+    const drawn = await style(page.locator('#round'), 'font-size', 'letter-spacing');
+    expect(drawn['font-size']).toBe('32px');
+    expect(Number.parseFloat(drawn['letter-spacing'] ?? '')).toBeCloseTo(0.12 * 32, 1);
+    expect(await page.evaluate(() => window.innerWidth)).toBe(320);
+    // Every field's label and control is there to measure, so nothing passes by matching nothing.
+    const fields = await page.locator('.dk-field').count();
+    expect(fields).toBe(5);
+    await expect(page.locator('.dk-field-label')).toHaveCount(fields);
+    await expect(page.locator(CONTROLS)).toHaveCount(fields);
+    expect(await cutOff(page, '.dk-field-label')).toEqual([]);
+    expect(await cutControls(page)).toEqual([]);
+    // Each control as tall as its line, which the wider spacing makes taller.
+    expect(await tooShort(page, CONTROLS)).toEqual([]);
     expect(await sideways(page)).toBe(0);
 });

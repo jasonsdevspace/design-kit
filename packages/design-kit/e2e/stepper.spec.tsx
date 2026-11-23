@@ -139,6 +139,25 @@ const line = (page: Page, id: string): Locator =>
 const heard = (page: Page): Promise<string[]> =>
     page.evaluate(() => (window as unknown as { heard: string[] }).heard);
 
+/**
+ * Keeps every set of words a stepper's own line is given from here on, by a watch on the line
+ * itself, so words said twice are kept twice. A test of silence stops the clock first and runs it
+ * past the moment a line waits before its words are put in, since an empty line read any sooner is
+ * empty whatever the stepper said.
+ */
+const record = (page: Page, id: string): Promise<void> =>
+    line(page, id).evaluate((status) => {
+        const said: string[] = [];
+        (window as unknown as { said: string[] }).said = said;
+        new MutationObserver(() => {
+            if (status.textContent) said.push(status.textContent);
+        }).observe(status, { childList: true, characterData: true, subtree: true });
+    });
+const said = (page: Page): Promise<string[]> =>
+    page.evaluate(() => (window as unknown as { said: string[] }).said);
+/** Longer than a line waits before its words are put in, so words on their way have landed. */
+const PAST_THE_WAIT = 300;
+
 test('shows the buttons only once attached, each named for what it does and to which field', async ({
     page,
 }) => {
@@ -360,17 +379,27 @@ test('fits a phone at twice the text size, its buttons and its value whole', asy
         await textSize(page, 2);
         expect(await sideways(page), String(width)).toBe(0);
         expect(await cutOff(page, '.dk-stepper-value'), String(width)).toEqual([]);
-        // A read-only stepper shows no buttons to fit.
-        for (const stepper of await page
-            .locator('.dk-stepper:has(.dk-stepper-up:not([hidden]))')
-            .all()) {
+        // A read-only stepper shows no buttons to fit, and every other is measured, by name.
+        const shown = page.locator('.dk-stepper:has(.dk-stepper-up:not([hidden]))');
+        expect(
+            await shown
+                .locator('.dk-stepper-value')
+                .evaluateAll((values) => values.map(({ id }) => id)),
+            String(width)
+        ).toEqual(['bid', 'players', 'score', 'locked', 'odd', 'one', 'hand']);
+        for (const stepper of await shown.all()) {
             const field = await box(stepper.locator('xpath=..'), 'the field');
             const last = await box(stepper.locator('.dk-stepper-up'), 'the raise button');
             expect(last.x + last.width, String(width)).toBeLessThanOrEqual(
                 field.x + field.width + 1
             );
+            const id = await stepper.locator('.dk-stepper-value').getAttribute('id');
             const tall = (await stepper.getAttribute('class'))?.includes('dk-stepper-tall');
-            for (const button of await stepper.locator('.dk-button').all()) {
+            // The one tall stepper is held to the larger target, and not to the usual one.
+            expect(tall, id ?? '').toBe(id === 'players');
+            const buttons = await stepper.locator('.dk-button').all();
+            expect(buttons, id ?? '').toHaveLength(2);
+            for (const button of buttons) {
                 const pressed = await box(button, 'a button');
                 expect(pressed.width, String(width)).toBeGreaterThanOrEqual(44);
                 // The target and the larger target, in rems, at twice the text size.
@@ -424,6 +453,7 @@ test("narrows its buttons to fit a narrow place, never under the usual text size
     );
     for (const { room, id, fits, widths } of measured) {
         const where = `${id} in ${String(room)}px`;
+        expect(widths, where).toHaveLength(2);
         for (const width of widths) {
             expect(width, where).toBeGreaterThanOrEqual(44 - 0.5);
             expect(width, where).toBeLessThan(3.5 * 32);
@@ -432,6 +462,7 @@ test("narrows its buttons to fit a narrow place, never under the usual text size
     }
     // In the narrower room the tall stepper's buttons rest at the floor rather than under it.
     const floor = measured.find(({ room, id }) => room === 240 && id === 'players');
+    expect(floor?.widths, 'the tall stepper in 240px').toHaveLength(2);
     for (const width of floor?.widths ?? []) expect(width).toBeLessThanOrEqual(44 + 0.5);
 });
 
@@ -1250,20 +1281,28 @@ const drawAndAttach = (
 test('shows its error at once, with nothing said, when attached past its limit, and clears it after', async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await open(page);
     const attachWith = (id: string, value: string) => drawAndAttach(page, id, value);
-    const said = 'Error: Enter a whole number from 0 to 10.';
     const error = page.locator('#bid-range');
+    await record(page, 'bid');
     await attachWith('bid', '14');
     await expect(error).toBeVisible();
-    await expect(bid(page)).toHaveAccessibleDescription(said);
+    await expect(bid(page)).toHaveAccessibleDescription(
+        'Error: Enter a whole number from 0 to 10.'
+    );
     await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');
-    await expect(line(page, 'bid')).toHaveText('');
+    await page.clock.runFor(PAST_THE_WAIT);
+    expect(await said(page)).toEqual([]);
     // A value made right clears it.
     await bid(page).fill('6');
     await expect(error).toBeHidden();
     await expect(bid(page)).not.toHaveAttribute('aria-invalid');
     await expect(bid(page)).toHaveAccessibleDescription('From 0 to 10.');
+    // A press is heard by the same watch, so the silence above is the stepper's and not the watch's.
+    await lower(page).click();
+    await page.clock.runFor(PAST_THE_WAIT);
+    expect(await said(page)).toEqual(['5']);
     // Taking the stepper away clears it.
     await attachWith('bid', '-1');
     await expect(error).toBeVisible();
@@ -1278,6 +1317,8 @@ test('shows its error at once, with nothing said, when attached past its limit, 
     await expect(page.locator('#score-range')).toBeVisible();
     await expect(score).toHaveAttribute('aria-invalid', 'true');
     await page.getByRole('button', { name: 'Reset' }).click();
+    // The stepper follows a reset a task after it.
+    await page.clock.runFor(PAST_THE_WAIT);
     await expect(score).toHaveValue('11');
     await expect(page.locator('#score-range')).toBeHidden();
     await expect(score).not.toHaveAttribute('aria-invalid');
@@ -1291,6 +1332,7 @@ test('shows its error at once, with nothing said, when attached past its limit, 
 test("shows its error again when a form's reset brings back a value drawn past the limit", async ({
     page,
 }) => {
+    await stillClock(page.clock);
     await open(page);
     const score = page.getByRole('spinbutton', { name: 'Score' });
     const error = page.locator('#score-range');
@@ -1299,12 +1341,20 @@ test("shows its error again when a form's reset brings back a value drawn past t
     await score.fill('5');
     await expect(error).toBeHidden();
     await expect(score).not.toHaveAttribute('aria-invalid');
+    // A press is heard by the watch, so the silence after the reset is the stepper's own.
+    await record(page, 'score');
+    await page.getByRole('button', { name: 'Raise Score' }).click();
+    await page.clock.runFor(PAST_THE_WAIT);
+    expect(await said(page)).toEqual(['6']);
     await page.getByRole('button', { name: 'Reset' }).click();
+    // The stepper follows a reset a task after it, and words it said then would land after that.
+    await page.clock.runFor(PAST_THE_WAIT);
     await expect(score).toHaveValue('15');
     await expect(error).toBeVisible();
     await expect(score).toHaveAttribute('aria-invalid', 'true');
     await expect(score).toHaveAccessibleDescription('Error: Enter a whole number from -9 to 12.');
-    await expect(line(page, 'score')).toHaveText('');
+    await page.clock.runFor(PAST_THE_WAIT);
+    expect(await said(page)).toEqual(['6']);
 });
 
 test('shows no error at attach on a field no one can change', async ({ page }) => {
