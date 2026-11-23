@@ -2,6 +2,8 @@ import { getEventListeners } from 'node:events';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import * as controls from './controls.js';
+
 /*
  * The controls as a page's bundler takes them: a module that runs nothing when it is imported but a
  * listener on a page's document, so it loads in Node and in a page that never attaches a control.
@@ -51,11 +53,76 @@ describe('the controls', () => {
         }
     });
 
-    it('refuses a toast missing a part even when given a signal already aborted', async () => {
-        const { attachToast } = await import('./controls.js');
-        const empty = { querySelector: () => null } as unknown as HTMLElement;
-        expect(() => attachToast(empty, { signal: AbortSignal.abort() })).toThrow(
-            'a toast needs its message'
+    /*
+     * Every attach that needs a part, each given markup without it and a signal already aborted.
+     * An attach reads only what it asks its element for, so a plain object stands in for each.
+     */
+    const nothing = { closest: () => null, matches: () => false, querySelector: () => null };
+    const missing: readonly (readonly [string, (signal: AbortSignal) => unknown, string])[] = [
+        [
+            'a toast with no message',
+            (signal) => controls.attachToast(nothing as unknown as HTMLElement, { signal }),
+            'a toast needs its message',
+        ],
+        [
+            'a stepper with no value',
+            (signal) => controls.attachStepper(nothing as unknown as HTMLElement, { signal }),
+            'a stepper needs its value',
+        ],
+        [
+            'a stepper with no buttons whose value can be changed',
+            (signal) => {
+                const field = {
+                    ...nothing,
+                    querySelector: (part: string) =>
+                        part === '.dk-stepper-value' ? { readOnly: false } : null,
+                };
+                return controls.attachStepper(field as unknown as HTMLElement, { signal });
+            },
+            'a stepper needs its two buttons, or a read-only value',
+        ],
+        [
+            "a panel's button with no aria-controls",
+            (signal) => {
+                const button = { getAttribute: () => null };
+                return controls.attachPanel(button as unknown as HTMLButtonElement, { signal });
+            },
+            "a panel's button needs aria-controls",
+        ],
+        [
+            'a table with no frame',
+            (signal) => controls.attachTable(nothing as unknown as HTMLElement, { signal }),
+            'a table needs its frame',
+        ],
+    ];
+
+    it.each(missing)(
+        'refuses %s even when given a signal already aborted',
+        (_markup, attach, error) => {
+            expect(() => attach(AbortSignal.abort())).toThrow(error);
+        }
+    );
+
+    it('throws only errors whose words a case above holds to a signal already aborted', async () => {
+        const { readFileSync } = await import('node:fs');
+        const source = readFileSync(new URL('./controls.ts', import.meta.url), 'utf8');
+        // The module's code without its comments, which speak of what throws.
+        const code = source
+            .split('\n')
+            .filter((line) => !/^\s*(\/\/|\/?\*)/.test(line))
+            .join('\n');
+        // Each error thrown, of any kind, by the words it opens with, up to a part it names.
+        const thrown = [...code.matchAll(/\bthrow new \w*Error\(\s*[`'"](.*?)[`'"]\s*\)/g)].map(
+            ([, words]) => (words ?? '').replace(/\$\{.*$/, '')
         );
+        // Every throw is one of those, so none in another form goes unread.
+        expect(thrown).toHaveLength(code.match(/\bthrow\b/g)?.length ?? 0);
+        expect(thrown.length).toBeGreaterThan(0);
+        // The cases above find each thrown under a signal already aborted, which holds each to
+        // being told before the signal is read, so an attach that gains a throw gains a case.
+        for (const words of thrown) {
+            expect(words.trim()).not.toBe('');
+            expect(missing.some(([, , error]) => error.startsWith(words))).toBe(true);
+        }
     });
 });

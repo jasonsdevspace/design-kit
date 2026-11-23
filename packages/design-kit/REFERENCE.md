@@ -733,9 +733,9 @@ buttons hidden while the field is read only, and with both hidden its figures st
 read-only field's words start, at a field's height, so it keeps the edge of a column of read-only
 values, in a browser with `:has()`. Without it the figures stay centered. A tall one keeps the
 larger target. An inline stepper's value sits at its row's end, after its label, with no column to
-line up with, so it keeps its centered figures and the target's height. A stepper is read only for
-the page, as a setting fixed for the game is, since hiding its buttons changes its row, and on a
-wide screen outside an app its height too.
+line up with, so it keeps its centered figures. A read-only value stands as tall as one that can be
+changed, at every width. A stepper is read only for the page, as a setting fixed for the game is,
+since hiding its buttons changes its row.
 
 A button that can do nothing for now is off, `aria-disabled`, kept in the tab order with the reason
 beside it. `aria-disabled` does not stop typing in a field, so a field held for a moment is read
@@ -830,21 +830,23 @@ and the gap, which in a page's column is a screen from 368 pixels, and a narrowe
 text size stacks them, each on a line of its own with its label whole. The fields stand
 `--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a field
 under another, and they line up along their foot, so their controls stand level where one label
-takes two lines or one field shows a hint or an error. An inline stepper and a choice field each
-take a line of their own in the row. The row holds to `--dk-field-measure` as a field does, so in a
-page, a band or a stack it ends where the fields and the callout around it end, and a page sets
-`none` on the row for its column's width. A field in the row narrows by the same property, as a ZIP
-code's field with `--dk-field-measure: 6rem` does, and the others share the rest. A row with a
-stepper wider than 10rem sets `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper
-of three figures, by `--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of
-three figures. Left at 10rem, such a stepper keeps its field as wide as itself in a browser with
-`:has()`, a tall one with its buttons narrowed toward the target but never under it, and the pair
-stacks on a screen where the two do not fit. A page that wants two fields side by side on a screen
-360 pixels wide sets the length to 9.75rem, still as wide as a stepper of two figures. A row whose
-fields are all hidden still takes a plain form's step, so a page that hides every field in a row
-hides the row itself, with `hidden`. In a form with no class attribute the row is one of the kit's
-blocks, and stands `--dk-space-4` from a field or a row of actions above or below it. A page with
-React writes the `div` around the fields' components.
+takes two lines or one field shows a hint or an error. A stepper is as tall as the fields beside it
+at every width, so its label stands level with theirs, and a tall stepper, at the larger target,
+stands its label above theirs. An inline stepper and a choice field each take a line of their own in
+the row. The row holds to `--dk-field-measure` as a field does, so in a page, a band or a stack it
+ends where the fields and the callout around it end, and a page sets `none` on the row for its
+column's width. A field in the row narrows by the same property, as a ZIP code's field with
+`--dk-field-measure: 6rem` does, and the others share the rest. A row with a stepper wider than
+10rem sets `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper of three figures,
+by `--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of three figures.
+Left at 10rem, such a stepper keeps its field as wide as itself in a browser with `:has()`, a tall
+one with its buttons narrowed toward the target but never under it, and the pair stacks on a screen
+where the two do not fit. A page that wants two fields side by side on a screen 360 pixels wide sets
+the length to 9.75rem, still as wide as a stepper of two figures. A row whose fields are all hidden
+still takes a plain form's step, so a page that hides every field in a row hides the row itself,
+with `hidden`. In a form with no class attribute the row is one of the kit's blocks, and stands
+`--dk-space-4` from a field or a row of actions above or below it. A page with React writes the
+`div` around the fields' components.
 
 ```tsx
 <div className="dk-fields">
@@ -1537,16 +1539,20 @@ same markup and gets the same behavior.
 The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
 stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
 dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. `moveFocus`
-takes one too, which calls off a request not yet landed, as the function `moveFocus` returns does,
-and the rest of this section covers the attaches. The status line, the toast, a form's check and the
-dialog return what says, shows, refuses or opens rather than what takes them down, so the signal
-alone takes them down: the line is let go, the toast's message is dismissed as its Close dismisses
-it, and an open dialog closes with focus handed back to what opened it, and what each returned does
-nothing after. The others return a function that takes them down. Once a control is taken down,
-nothing it started acts, such as a copy the clipboard answers late, and calling that function or
-aborting a signal again does nothing. A signal already aborted does nothing: the control stays as
-the markup drew it, a control already attached keeps the options it had, and what the attach returns
-does nothing.
+and `focusOnArrival` take one too, which calls off a request not yet landed, as the function each
+returns does, and the rest of this section covers the attaches. The status line, the toast, a form's
+check and the dialog return what says, shows, refuses or opens rather than what takes them down, so
+the signal alone takes them down: the line is let go, the toast's message is dismissed as its Close
+dismisses it, and an open dialog closes with focus handed back to what opened it, and what each
+returned does nothing after. The others return a function that takes them down. Once a control is
+taken down, nothing it started acts, such as a copy the clipboard answers late, and calling that
+function or aborting a signal again does nothing. A signal already aborted does nothing: the control
+stays as the markup drew it, a control already attached keeps the options it had, and what the
+attach returns does nothing. A part a control cannot work without is looked for at the first attach,
+before the signal is read, so markup missing one, such as a stepper with no buttons or a panel's
+button with no `aria-controls`, throws under a signal already aborted as it does under any other. A
+control already attached is handed back as it is, so attaching it again after its markup has lost a
+part returns the control and throws nothing.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision
@@ -1898,6 +1904,10 @@ come wait for those in turn. Polite words given as a function, such as the busy 
 any words on the line, polite ones too, and are read as they are put in, so they never put out the
 end of a progress and say nothing once the work is done.
 
+Words given as a function that throws as it is read, such as a stepper's `words`, are not said. The
+line is left free, so polite words waiting for it are said in their turn, and the error is reported
+through `reportError`, as an uncaught one is, so the page's own error handling still hears it.
+
 Attached again, a line returns the function it returned first, with its words, unless it was let go
 of, as a toast lets its own line go when the toast is taken down, when it returns one afresh. A
 stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
@@ -1994,23 +2004,30 @@ component, so a request in a transition an urgent update overtook lands before t
 and goes to its fallbacks where the transition draws its target. One asked after the component has
 gone, as a panel that closes itself and then asks after an await, waits a frame and is made then,
 taking focus only from the page's body, whatever `from` it was given, and only where its target is
-in sight, so a visitor already on the next screen is left where they are. One whose target an
-`Activity` hides with the component is held until the component shows, and is made then.
-`useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of -1 where
-it has none, and focuses it when the key changes, such as the round on screen, and when the view is
-first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is. A first
-draw takes nothing as the page first draws, after a key that moves or types, such as Tab or an arrow
-along a row of tabs, after a press on nothing or on a control that is off, or more than five seconds
-after the press, as a view a poll brings. A row of tabs' panels take no focus on arrival, since a
-tab keeps focus as its panel changes, so they leave the hook out. Views first drawn by one press
-land together, and the first in the page takes focus, so a view's title is heard before a section of
-it. Focus a view placed itself as it drew, as a field with autofocus does, is never taken. What
-decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page without
-React calls as each view draws, and with `changed` as a view already drawn changes on a press, which
-then lands with any view first drawn for that press, so the first in the page still takes focus. The
-key is a string, a number or a boolean, compared by value, and changes on a press or a submit, never
-as a visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG
-3.2.2 has it.
+in sight, so a visitor already on the next screen is left where they are. It still finds an id in
+the root where focus was as it was asked, or where the `from` it was given is. Focus has most often
+fallen to the page's body by then, so a widget drawn inside a shadow root passes `from`, an element
+still in that root, to find its own control, and with no `from` an id is found there only while
+focus is still in that root. One whose target an `Activity` hides with the component is held until
+the component shows, and is made then. `useArrivalFocus(key)` returns a ref for a view's heading,
+gives the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as
+the round on screen, and when the view is first drawn by a visitor's press on a button or a link, or
+a submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key
+that moves or types, such as Tab or an arrow along a row of tabs, after a press on nothing or on a
+control that is off, or more than five seconds after the press, as a view a poll brings. A row of
+tabs' panels take no focus on arrival, since a tab keeps focus as its panel changes, so they leave
+the hook out. Views first drawn by one press land together, and the first in the page takes focus,
+so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
+with autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on
+a widget's own button there brings focus to the heading. What decides a first draw is
+`focusOnArrival(heading, { from })` from `./controls`, which a page without React calls as each view
+draws, and with `changed` as a view already drawn changes on a press, which then lands with any view
+first drawn for that press, so the first in the page still takes focus. It takes a `signal` as
+`moveFocus` does: an abort calls off a request not yet landed, as the function it returns does, and
+a signal already aborted asks for nothing and leaves the press for another view. The key is a
+string, a number or a boolean, compared by value, and changes on a press or a submit, never as a
+visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2
+has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
@@ -3064,34 +3081,39 @@ once whichever it is given, and returns what takes it down again.
 <details>
 <summary>How a stepper is drawn</summary>
 
-The buttons are `--dk-target` both ways, or `--dk-target-large` in a tall stepper. Where a large
-text size leaves the stepper less room than its buttons take, on a phone, the buttons grow narrower,
-never under the target at the usual text size, and keep their height, so the stepper fits its field,
-in an app's dock too. A stepper's field with its label above is in turn never narrower than the
-stepper at that least width, in a browser with `:has()`, wherever the page's row leaves its items
-their own least width, so beside a text field the field keeps its stepper and the row's other fields
-take the room left. The stepper alone sets that width, so a long word, a picture or words that never
-wrap in its label, hint or error leave the field as wide as its stepper. A row whose items or tracks
-have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below
-its stepper, which is the row's choice. A stepper's field with its label to the left keeps that
-least width in such a row too, in every browser, its stepper moving under the label where the row
-leaves no room for both. Set beside other fields in a `dk-fields` row, as [fields side by
-side](#fields-side-by-side) shows, the stepper's field starts from the row's length, wider than a
-stepper of two figures, and a field with no room left beside it moves to a line of its own. In a
-page's own row that cannot wrap, the stepper's field keeps its least width and the fields beside it
-take what is left, which at a large text size can be too little for a word in their labels. The
-value is in the mono face with figures of one width, centered, with room for two figures unless
-`--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page to allow, so
-the field does not change width as the value changes and no figure is cut off, and in a tall stepper
-it is at the heading size. Its height, edge included, is its buttons', so it stands level with them.
-At 48rem wide or less, in an app's frame and on a page that ends in a tab bar, where a field and a
-button are the target tall, a stepper that is not tall stands level with one beside it. With its
-label to the left the label takes the room the stepper leaves and wraps within it, and the stepper
-moves under the label where a large text size leaves no room for both. Its errors sit on lines above
-it, as every field's do, and its hint on a line below, which only the inline stepper does. In a
-stepper with its label above, the hint sits under the label and over the errors, as in any field.
-The number field's own spin buttons are taken away, since the stepper's buttons stand in for them
-and they would keep their room even out of sight.
+A stepper takes its height from the rules a field and a button take theirs from. On a page wider
+than 48rem, in a panel and in a dialog there too, its buttons and its value are `--dk-field-height`
+tall, 36 pixels. At 48rem wide or less, in an app's frame, on a page that ends in a tab bar and in a
+dialog on either, they are `--dk-target` tall, 44 pixels. Either way a stepper stands level with a
+field or a button beside it, and its buttons are `--dk-target` wide, so a press keeps the target's
+width where the stepper is a field's height. In a tall stepper the buttons are `--dk-target-large`
+both ways and the value as tall, at every width. [Decision record
+0026](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0026-a-stepper-is-as-tall-as-a-field-wherever-it-stands.md)
+gives why. Where a large text size leaves the stepper less room than its buttons take, on a phone,
+the buttons grow narrower, never under the target at the usual text size, and keep their height, so
+the stepper fits its field, in an app's dock too. A stepper's field with its label above is in turn
+never narrower than the stepper at that least width, in a browser with `:has()`, wherever the page's
+row leaves its items their own least width, so beside a text field the field keeps its stepper and
+the row's other fields take the room left. The stepper alone sets that width, so a long word, a
+picture or words that never wrap in its label, hint or error leave the field as wide as its stepper.
+A row whose items or tracks have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can
+still squeeze the field below its stepper, which is the row's choice. A stepper's field with its
+label to the left keeps that least width in such a row too, in every browser, its stepper moving
+under the label where the row leaves no room for both. Set beside other fields in a `dk-fields` row,
+as [fields side by side](#fields-side-by-side) shows, the stepper's field starts from the row's
+length, wider than a stepper of two figures, and a field with no room left beside it moves to a line
+of its own. In a page's own row that cannot wrap, the stepper's field keeps its least width and the
+fields beside it take what is left, which at a large text size can be too little for a word in their
+labels. The value is in the mono face with figures of one width, centered, with room for two figures
+unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page to
+allow, so the field does not change width as the value changes and no figure is cut off, and in a
+tall stepper it is at the heading size. Its height, edge included, is its buttons', so it stands
+level with them. With its label to the left the label takes the room the stepper leaves and wraps
+within it, and the stepper moves under the label where a large text size leaves no room for both.
+Its errors sit on lines above it, as every field's do, and its hint on a line below, which only the
+inline stepper does. In a stepper with its label above, the hint sits under the label and over the
+errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
+buttons stand in for them and they would keep their room even out of sight.
 
 </details>
 
@@ -3197,7 +3219,7 @@ tabindex it added that the page has not changed since and lets its line go. Focu
 dismiss sends it only where it is in the toast, inside a shadow tree within it or on a control
 slotted into it too, or where the page has taken the toast away with focus in it so that focus has
 fallen to the body or to nothing, while focus a visitor has put anywhere else stays. A toast missing
-a part is refused even with a signal already aborted.
+a part is refused at its first attach even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body

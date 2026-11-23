@@ -290,8 +290,9 @@ follow by area.
   processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
   shows its main content in under a second with nothing jumping as it loads, and downloads 24.4 to
   39.5 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
-  performance, that takes longer than two and a half seconds to show its main content, or whose
-  layout shifts by more than a tenth. [The record](docs/benchmarks/site-pages.md) gives each page.
+  performance, that takes longer than two and a half seconds to show its main content, whose layout
+  shifts by more than a tenth, or whose script or sheets, gzipped, pass the budgets in
+  `packages/site/src/budgets.ts`. [The record](docs/benchmarks/site-pages.md) gives each page.
 
 ## Decisions
 
@@ -393,7 +394,13 @@ options rejected, what the choice costs, and the test behind it.
     error moves the field beside it, at the cost of two fields stacking where the row is narrower
     than 21rem, a screen narrower than 368 pixels in a page's column, and a wider stepper asking
     the page for a wider length.
-26. [A `:has()` on an element that holds the page is written only where the rule draws that element](docs/decisions/0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md).
+26. [A stepper is as tall as a field wherever it stands](docs/decisions/0026-a-stepper-is-as-tall-as-a-field-wherever-it-stands.md).
+    A stepper's buttons and value take their height from the rules every button and field take
+    theirs from, so a row's labels stand level on a wide page as on a phone, at the cost of a
+    stepper 8 pixels shorter on a wide page outside an app, where a tall stepper keeps the larger
+    target. Leaving it the target tall, a row that lines its fields up by their labels, a height of
+    the stepper's own and buttons as wide as they are tall were turned down.
+27. [A `:has()` on an element that holds the page is written only where the rule draws that element](docs/decisions/0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md).
     A change to a page restyles what it touches in Chrome, where it restyled every element, at the
     cost of a shown toast written by hand in a live frame keeping no room until the page marks the
     frame, and a dialog set apart from its frame saying so with a class.

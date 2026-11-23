@@ -113,4 +113,5 @@ The paths are in `packages/site`.
   other name or path.
 - `bench/lighthouse.ts` audits every page in the site's routes, held to the gates ShelfLens is held
   to: accessibility at a hundred, and on a first visit, performance at ninety or more, the largest
-  paint within two and a half seconds and a layout shift of no more than a tenth.
+  paint within two and a half seconds and a layout shift of no more than a tenth. It holds each
+  page's script and its sheets, gzipped, to the byte budgets in `src/budgets.ts` too.

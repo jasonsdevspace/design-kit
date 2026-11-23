@@ -69,10 +69,11 @@ returns a function that does nothing, as record 22 has it. A dialog attached to 
 still stays when attached again with no options, and a copy button attached again with a new source
 copies from it. A part a control cannot work without, such as a stepper's buttons, a toast's status
 line, its action and its close button, since any message may carry an action, or a table's frame,
-throws an error that names it, so a page that left one out learns of it where it attached. A part it
-can do without, such as a stepper's status line, is skipped. A theme switch with no choices yet is
-the one exception: it is left hidden and returns a function that does nothing, so a page that
-attaches it before its choices are drawn can attach it again once they are.
+throws an error that names it, so a page that left one out learns of it where it first attached,
+under a signal already aborted too, while a control already attached is handed back as it is, as
+record 22 has it. A part it can do without, such as a stepper's status line, is skipped. A theme
+switch with no choices yet is the one exception: it is left hidden and returns a function that does
+nothing, so a page that attaches it before its choices are drawn can attach it again once they are.
 
 What an attach returns is what a page calls next. The switch, the copy button, the stepper, a
 table's frame, a group the arrow keys move through, a busy button and progress return their detach.

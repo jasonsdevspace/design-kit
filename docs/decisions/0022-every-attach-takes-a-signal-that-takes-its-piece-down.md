@@ -72,7 +72,15 @@ Option E.
 - **A signal already aborted does nothing.** The piece is left as the markup drew it, hidden where
   it starts hidden, with no listener, observer, timer or frame of the kit's, and nothing kept for
   it, so a later attach finds nothing of it. A piece already attached is left as it is, and the new
-  options are not taken. What the attach returns does nothing.
+  options are not taken. What the attach returns does nothing. A missing part is told at the first
+  attach, before the signal is read: an attach that finds no control attached to its element looks
+  for the parts record 13 has it throw for, a toast's, a stepper's value and buttons, a panel
+  button's `aria-controls` and a table's frame, before it reads its signal, so a page learns of
+  markup missing one where it first attached, whatever the signal. A control already attached is
+  handed back as it is, though its markup has since lost a part, so a page that attaches again from
+  a ref or an effect does not throw as it draws, and under a signal already aborted it is left alone
+  as ever. A table's control is kept by its frame, so an element since taken out of its frame has no
+  control to hand back and is refused.
 - **Aborting is the same as detach,** once no other signal holds the piece, as record 23 has it, and
   a microtask later. Everything the attach set up comes off: its listeners, observers, timers and
   frames, a listener on the document it added, and what it drew or showed, as its detach would, a
@@ -117,7 +125,8 @@ signal comes off with the teardown, so a signal a page keeps for longer holds no
 already taken down. Until then the page's signal keeps the piece alive, so a page hands over a
 signal that lives no longer than the piece. In 0.9.3 the theme switch, the copy button, the status
 line, the toast, the form, the panels, the stepper, a table's frame, a group the arrow keys move
-through, a busy button, progress, the dialog and `moveFocus` keep the contract through it.
+through, a busy button, progress, the dialog and `moveFocus` keep the contract through it, and since
+0.9.4 `focusOnArrival` does, whose options had named a signal it did not read.
 
 ## Consequences
 
@@ -141,6 +150,11 @@ The paths are in `packages/design-kit`.
   what it is given at once, runs what it keeps once and in order whether the page aborts or the
   attach detaches first, runs every undo where one throws and reports the error, runs one kept after
   the teardown at once, and takes its listener off the page's signal once it has run.
+- `src/controls.test.ts` calls every attach that throws for a missing part with markup missing it
+  and a signal already aborted, and finds each throw. It reads the module's code for every error
+  thrown, of any kind, and finds each among those cases, so an attach that gains a throw gains a
+  case that holds it to the same order. `src/teardown.test.ts` finds a join under a signal already
+  aborted given what the attach names and holding nothing.
 - `e2e/teardown.spec.tsx` holds to the contract every piece in the table `e2e/teardown-pieces.tsx`
   names but a focus request, which no later attach joins, in Chromium, WebKit and Firefox: a signal
   already aborted attaching nothing and keeping nothing, an abort taking the piece down a microtask
@@ -155,7 +169,11 @@ The paths are in `packages/design-kit`.
   abort unseen by the switch, the switch's listener on the document off after an abort with its
   choices open, a busy wait, a progress step and a stepper's error said by none once taken down
   where a step and an error left attached are heard, and a focus request called off by an abort and
-  holding nothing on the page's signal once it lands.
+  holding nothing on the page's signal once it lands, as a view asking for focus as it arrives is,
+  which under a signal already aborted moves nothing and leaves its press for another view. A
+  stepper, a panel's button and a toast that lose a part while attached are handed back by a repeat
+  attach, are not handed to a signal already aborted, and are refused by name once taken down and
+  attached afresh, with any signal.
 - `e2e/leaks.spec.tsx` holds every attach and `moveFocus` to leaving nothing running, in the three
   engines, on a stand-in clock that moves only by the test's steps. A script loaded before the
   page's own, `e2e/leaks.ts`, counts the listeners on elements, the document, the window and

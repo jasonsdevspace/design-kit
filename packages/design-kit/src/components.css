@@ -3556,14 +3556,16 @@
     /*
      * A stepper: a number field with a button to lower the value before it and one to raise it
      * after, for a small whole number that is quicker to step than to type on a phone. The buttons
-     * are as tall as the field and as wide as they are tall, and the value is in the mono face with
-     * figures of one width, two wide unless --dk-stepper-digits says more, so the field never
-     * changes width as the value does. Each figure keeps room for the spacing between letters WCAG
-     * asks a page to allow, so none is cut off. A button at a limit is off and drawn as any off
-     * button. In a tall stepper the buttons and the value take the larger target, and the value a
-     * larger size. A value with a button beside it is the buttons' height, edge included, so it
-     * stands level with them, and with a field or a button beside it where those are the target
-     * tall, on a phone and in an app. A read-only value shown alone takes a field's height.
+     * and the value take their height from the rules every button and field take theirs from, so a
+     * stepper is the field's height on a wide page and the target's on a phone, in an app's frame,
+     * on a page that ends in a tab bar and in a dialog on either, level with a field or a button
+     * beside it everywhere. Nothing here sets that height, which record 26 holds. The buttons are
+     * the target wide at both heights, and the value is in the mono face with figures of one
+     * width, two wide unless --dk-stepper-digits says more, so the field never changes width as
+     * the value does. Each figure keeps room for the spacing between letters WCAG asks a page to
+     * allow, so none is cut off. A button at a limit is off and drawn as any off button. In a tall
+     * stepper the buttons and the value take the larger target at every width, and the value a
+     * larger size.
      *
      * Where a large text size leaves the stepper less room than its buttons take, on a phone, the
      * buttons grow narrower, never under the target at the usual text size, and keep their height,
@@ -3607,7 +3609,9 @@
      * column that can narrow to nothing, so the button asks for the target where there is room and
      * for no more than its least width where there is not. A width would ask for the target
      * everywhere. The stepper's least width is then its buttons' least and its value's, which its
-     * field keeps.
+     * field keeps. It keeps no padding, since its one figure never wraps and it is never busy, so
+     * the figure's line stands inside a button's least height and the button is exactly as tall as
+     * a field.
      */
     :where(.dk-stepper > .dk-button) {
         display: grid;
@@ -3615,8 +3619,7 @@
         place-items: center;
         max-width: var(--dk-target);
         min-width: min(var(--dk-target), 44px);
-        min-height: var(--dk-target);
-        padding-inline: 0;
+        padding: 0;
         font-size: var(--dk-text-title);
     }
 
@@ -3655,23 +3658,14 @@
     }
 
     /*
-     * A value with a button beside it stands level with its buttons, at the target's height, the
-     * row stretching a read-only one beside a button that keeps focus, with no :has() to lean on.
-     * A read-only value shown alone, once both buttons are hidden, takes a field's height at each
-     * width from the field's own rules, and a field's inline padding, its figures starting where a
-     * read-only field's words start, so a column of read-only values keeps one edge. An inline
-     * stepper's value sits at its row's end with no such column, so it keeps its centered figures
-     * and the target's height. While a button keeps focus as the field turns read only, the value
-     * keeps its place beside it, and the hidden button keeps its room, by a rule after the rule for
-     * hidden.
+     * A value is a field, so it stands at a field's height at each width by the field's own rules,
+     * level with its buttons, read only or not, with no :has() to lean on. A read-only value shown
+     * alone, once both buttons are hidden, takes a field's inline padding, its figures starting
+     * where a read-only field's words start, so a column of read-only values keeps one edge. An
+     * inline stepper's value sits at its row's end with no such column, so it keeps its centered
+     * figures. While a button keeps focus as the field turns read only, the value keeps its place
+     * beside it, and the hidden button keeps its room, by a rule after the rule for hidden.
      */
-    :where(
-        .dk-stepper-value:is(:not([readonly]), :disabled),
-        .dk-stepper-inline > .dk-stepper > .dk-stepper-value
-    ) {
-        min-height: var(--dk-target);
-    }
-
     :where(
         :not(.dk-stepper-inline)
             > .dk-stepper:not(:has(> .dk-button:not([hidden])))
