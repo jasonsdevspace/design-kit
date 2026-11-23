@@ -109,3 +109,8 @@ costs, and the test behind it.
     the newest holder's options, the hooks taking their part down at once, a stepper handing focus
     back from its buttons, and why deferring the takedown in the hooks and leaving it to pages were
     turned down.
+24. [A plain form spaces only the kit's blocks](0024-a-plain-form-spaces-only-the-kits-blocks.md):
+    a field, a row of actions and a callout that is not empty in a form with no class attribute each
+    stand a step below what sits above them once another has come before, a page's own markup there
+    drawn as in a form with a class, buttons in a row of actions, and why spacing every part by tag
+    names and a flex column were turned down.

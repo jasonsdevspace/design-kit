@@ -469,6 +469,25 @@ const useField = (
 };
 
 /**
+ * An error given as words, with a break allowed after each "@", as the controls draw their own, so
+ * an address too long for its line breaks there, rather than at whichever letter or stop the line
+ * runs out on. An error given as markup is the page's own and is left as it is.
+ */
+const breakable = (error: ReactNode): ReactNode =>
+    typeof error === 'string'
+        ? error.split('@').map((part, at) =>
+              at === 0 ? (
+                  part
+              ) : (
+                  <Fragment key={at}>
+                      @<wbr />
+                      {part}
+                  </Fragment>
+              )
+          )
+        : error;
+
+/**
  * A field's hint and error, each drawn only when it holds something. The error sits above the
  * control, so a phone's keyboard never covers it, and starts with a word a screen reader reads, so
  * the error is told from the hint by more than its color. It is not live, since a form that fails
@@ -490,7 +509,7 @@ const FieldText = ({
         {field.error ? (
             <p className="dk-field-error" id={`${field.id}-error`}>
                 <span className="dk-visually-hidden">Error: </span>
-                {parts.error}
+                {breakable(parts.error)}
             </p>
         ) : null}
     </>
