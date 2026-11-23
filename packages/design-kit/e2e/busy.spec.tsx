@@ -13,7 +13,8 @@ import { box, forceColors, servePage, stillClock, style } from './page.js';
  * and said again for a busy that starts again, the look's wait kept under reduced motion and in
  * forced colors, and three dots past the wait that an off button lacks, its name and its box kept,
  * centered whatever the button's alignment, three at every text size, in the system's gray in
- * forced colors, never fainter than the pulse's floor and still under reduced motion. Through
+ * forced colors and still there, never fainter than the pulse's floor, still under reduced motion,
+ * clear of words that wrap and of an icon, and drawn only once the button is marked off. Through
  * React's `useBusy`, a double press saves once and a save that ends just after the wait says
  * nothing late.
  */
@@ -282,6 +283,90 @@ test("draws its dots in the system's gray in forced colors", async ({ page }) =>
     expect(drawn.image).not.toBe('none');
     expect(drawn.image).toContain('radial-gradient');
     expect(drawn.color).toBe(gray);
+    // Still, at the system's full gray, since a pulse over the canvas could fall under 3:1.
+    await expect.poll(() => moving(page)).toBe(false);
+    expect(drawn.opacity).toBe('1');
+});
+
+test('draws no dots on a busy button not yet drawn off, as on its accent fill', async ({
+    page,
+}) => {
+    await open(page, '0s');
+    await page.evaluate(() => {
+        // As markup puts it before an attach runs, or with no script at all.
+        document
+            .querySelector('main')
+            ?.insertAdjacentHTML(
+                'beforeend',
+                '<button id="early" class="dk-button dk-button-accent" data-busy="">Save</button>'
+            );
+    });
+    expect((await dots(page, '#early')).content).toBe('none');
+});
+
+test('keeps its dots clear of its words and its icon, every button its resting size', async ({
+    page,
+}) => {
+    await open(page, '0s');
+    await page.evaluate(() => {
+        const icon =
+            '<svg class="dk-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+            '<path d="M3 0h18v24H3z"/></svg>';
+        const kinds = [
+            ['wraps', 'dk-button', 'width: 6rem', 'Save the whole long list of rules'],
+            ['plain', 'dk-button', '', 'Save rule'],
+            ['accent', 'dk-button dk-button-accent', '', 'Save rule'],
+            ['large', 'dk-button dk-button-large', '', 'Save the round'],
+            ['tall', 'dk-button dk-button-large dk-button-tall', '', 'Save the round'],
+            ['text', 'dk-button dk-button-text', '', 'Save draft'],
+            ['icon', 'dk-button dk-button-icon', '', icon],
+        ];
+        document
+            .querySelector('main')
+            ?.insertAdjacentHTML(
+                'beforeend',
+                kinds
+                    .map(
+                        ([id, kind, style, face]) =>
+                            `<p><button id="${String(id)}" class="${String(kind)}" ` +
+                            `style="${String(style)}" data-busy="" aria-disabled="true" ` +
+                            `aria-label="${String(id)}">${String(face)}</button></p>`
+                    )
+                    .join('')
+            );
+    });
+    const clear = (selector: string) =>
+        page.locator(selector).evaluate((element) => {
+            const frame = element.getBoundingClientRect();
+            const drawn = getComputedStyle(element, '::after');
+            const foot =
+                frame.bottom -
+                Number.parseFloat(getComputedStyle(element).borderBottomWidth) -
+                Number.parseFloat(drawn.bottom);
+            const top = foot - Number.parseFloat(drawn.height);
+            // What the dots must miss, the words' lines or the icon.
+            const face = element.querySelector('svg');
+            let lowest: number;
+            if (face) lowest = face.getBoundingClientRect().bottom;
+            else {
+                const words = document.createRange();
+                words.selectNodeContents(element);
+                lowest = Math.max(...Array.from(words.getClientRects()).map((line) => line.bottom));
+            }
+            const rest = Number.parseFloat(getComputedStyle(element).minHeight);
+            return { gap: top - lowest, height: frame.height, rest };
+        });
+    for (const size of ['100%', '150%', '200%']) {
+        await page.evaluate((root) => {
+            document.documentElement.style.fontSize = root;
+        }, size);
+        for (const id of ['wraps', 'plain', 'accent', 'large', 'tall', 'text', 'icon']) {
+            const { gap, height, rest } = await clear(`#${id}`);
+            expect(gap, `#${id}'s dots past its face at ${size}`).toBeGreaterThanOrEqual(0);
+            // A button of one line stands at its least height, no taller for the room kept.
+            if (id !== 'wraps') expect(height, `#${id} at ${size}`).toBeCloseTo(rest, 1);
+        }
+    }
 });
 
 test('says its words again for a busy that ends and starts again at once', async ({ page }) => {

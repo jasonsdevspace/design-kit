@@ -310,7 +310,10 @@
     /*
      * A button stands as tall as a field, so the two sit level in a row, and is never narrower
      * than it is tall. It has no ground of its own, so it takes the ground of whatever it sits on,
-     * a callout or a panel included. A link that wears the class looks the same.
+     * a callout or a panel included. A link that wears the class looks the same. Above and below
+     * its words it keeps a band as deep as a busy button's dots sit high, so the dots never meet
+     * words that wrap or grow. A button of one line is shorter than its least height with the band,
+     * so it keeps its size, and only words that wrap stand the band taller.
      */
     :where(.dk-button) {
         display: inline-flex;
@@ -321,7 +324,7 @@
         gap: var(--dk-space-2);
         min-height: var(--dk-field-height);
         min-width: var(--dk-field-height);
-        padding: 0 var(--dk-space-3);
+        padding: 0.375rem var(--dk-space-3);
         border: 1px solid var(--dk-control);
         border-radius: var(--dk-radius);
         background: transparent;
@@ -494,17 +497,19 @@
     }
 
     /*
-     * Once the wait has passed, a busy button draws three dots centered at its foot, so a visitor
-     * who sees it can tell it is at work and not only off. The dots are a gradient repeated three
-     * times across a box exactly three dots wide, so every engine draws three at every text size.
-     * They are in the text color, which keeps 3:1 on every ground at the faintest of their pulse,
-     * and in forced colors, where a gradient is dropped, they keep it in the system's gray. They
-     * are centered whatever the button's own alignment and take no place in the row, so the button
-     * keeps its size, an icon alone or a text button with no padding included. They hold no words,
-     * so the button's name stays as it was. They wait as a loading line does and then pulse.
-     * Reduced motion stops the pulse and they stand still.
+     * Once the wait has passed, a busy button that is off draws three dots centered at its foot,
+     * so a visitor who sees it can tell it is at work and not only off. A busy button not yet
+     * marked off, as markup has it before an attach runs, draws none, so dots never sit dark on the
+     * accent's fill. The dots are a gradient repeated three times across a box exactly three dots
+     * wide, so every engine draws three at every text size. They are in the text color, which
+     * keeps 3:1 on every ground at the faintest of their pulse, and in forced colors, where a
+     * gradient is dropped, they keep it in the system's gray and stand still. They are centered
+     * whatever the button's own alignment, sit in the band a button keeps below its words and take
+     * no place in the row, so the button keeps its size, an icon alone or a text button with no
+     * inline padding included. They hold no words, so the button's name stays as it was. They wait
+     * as a loading line does and then pulse. Reduced motion stops the pulse and they stand still.
      */
-    :where(.dk-button[data-busy])::after {
+    :where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after {
         content: '';
         position: absolute;
         inset-block-end: 0.125rem;
@@ -680,10 +685,14 @@
             color: GrayText;
         }
 
-        /* A gradient is dropped here, so the dots keep theirs, drawn in the system's gray. */
-        :where(.dk-button[data-busy])::after {
+        /*
+         * A gradient is dropped here, so the dots keep theirs, drawn in the system's gray, and
+         * stand still after their wait, since a pulse over the canvas could fall under 3:1.
+         */
+        :where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after {
             forced-color-adjust: none;
             color: GrayText;
+            animation: dk-wait 0s var(--dk-wait) backwards;
         }
 
         :where(

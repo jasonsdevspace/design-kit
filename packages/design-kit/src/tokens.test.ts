@@ -280,7 +280,15 @@ describe('the tokens', () => {
                 })
                 .join('')}`;
         const short = THEMES.flatMap((theme) =>
-            ['bg', 'surface', 'raised'].flatMap((ground) => {
+            [
+                'bg',
+                'surface',
+                'raised',
+                'danger-bg',
+                'success-bg',
+                'warning-bg',
+                'highlight',
+            ].flatMap((ground) => {
                 const back = colorOf(declared, ground, theme);
                 const measured = contrast(over(colorOf(declared, 'fg', theme), back), back);
                 return measured < 3 ? [`${theme} ${ground}: ${measured.toFixed(2)}`] : [];

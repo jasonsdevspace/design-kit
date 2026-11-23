@@ -102,7 +102,7 @@ const CONTROL_PARTS = [
  * The pseudo-elements a component draws a mark of its state in, each with the one selector it is
  * drawn on, a busy button's dots of work alone.
  */
-const DRAWN = [':where(.dk-button[data-busy])::after'];
+const DRAWN = [":where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after"];
 
 /** The rule for forced colors, the one place a drawn mark may set its colors alone. */
 const FORCED = '@media (forced-colors: active)';
@@ -231,14 +231,21 @@ describe('what the sheets style', () => {
 
     it('draws each mark it names in DRAWN, and nothing else there', () => {
         const rules = rulesOf(readFileSync(new URL('components.css', folder), 'utf8'));
+        // The rules read a quoted string as empty, so the name is read the same way.
         const on = (drawn: string) =>
-            rules.filter(({ selector }) => split(selector).includes(drawn));
+            rules.filter(({ selector }) =>
+                split(selector).includes(drawn.replace(/"[^"]*"|'[^']*'/g, "''"))
+            );
         expect(DRAWN.filter((drawn) => on(drawn).length === 0)).toEqual([]);
         for (const drawn of DRAWN) {
             for (const { body, within } of on(drawn)) {
                 if (within.includes(FORCED)) {
-                    // In forced colors the mark only keeps its colors, as the system's.
-                    expect(propertiesOf(body).sort()).toEqual(['color', 'forced-color-adjust']);
+                    // In forced colors the mark only keeps its colors, as the system's, and its wait.
+                    expect(propertiesOf(body).sort()).toEqual([
+                        'animation',
+                        'color',
+                        'forced-color-adjust',
+                    ]);
                 } else {
                     // A mark holds no words, so no name changes, and takes no place in the row.
                     const flat = body.replace(/\s+/g, ' ');

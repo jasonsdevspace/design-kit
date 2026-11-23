@@ -463,10 +463,13 @@ wait at once. The wait is a delay rather than a motion, so it stands under reduc
 forced colors, where the button then takes `GrayText` as an off one does. Drawn off, it also shows a
 row of three dots centered at its foot, so a visitor who sees it can tell a button at work from one
 that cannot be pressed. The dots pulse, never fainter than 3:1 on the kit's grounds, and stand still
-under reduced motion. They take the text color, the system's in forced colors. They take no place
-in the row, so the button keeps its size, an icon alone or a text button included, and they hold no
-words, so its name stays as it was. A screen reader hears the off state at once, as it must for the
-press to be stopped.
+under reduced motion and in forced colors. They take the text color, the system's in forced colors.
+They sit in the band every button keeps below its words, so they never meet words that wrap or
+grow. They take no place in the row, so the button keeps its size, an icon alone or a text button
+included, and they hold no words, so its name stays as it was. Only a busy button marked off draws
+them, so markup that marks a button busy before an attach runs, or with no script, draws no dots
+on the accent's fill. A screen reader hears the off state at once, as it must for the press to be
+stopped.
 
 `attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks on
 the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
@@ -511,7 +514,9 @@ export const SaveRound = ({ saving, save }: { saving: boolean; save: () => void 
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and at every width in an app's frame, on a page that ends in a tab bar, in a
-dialog on either and in a toast, and it is never narrower than it is tall. It takes a tap at once,
+dialog on either and in a toast, and it is never narrower than it is tall. It keeps a band of
+0.375rem above and below its words, which a button of one line fits inside its height, so only
+words that wrap stand it taller. It takes a tap at once,
 with no wait for a second tap that would zoom the page. It has no ground of its own, so it takes the
 ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every width,
 with wider inline padding and the body text size. A tall button is 3.5rem tall at every width and

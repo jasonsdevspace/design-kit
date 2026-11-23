@@ -111,7 +111,7 @@ The paths are in `packages/design-kit`.
   or a progress bar's track and fill, or a busy button's `::after`, with no pseudo-element inside a
   `:where()`, and custom properties to the tokens. It finds each mark named as drawn in a
   component's `::after` in the components sheet, holding `content: ''` and `position: absolute`
-  wherever it is drawn, and setting only its colors in forced colors.
+  wherever it is drawn, and setting only its colors and its wait in forced colors.
 - `e2e/busy.spec.tsx` finds a busy button's dots in Chromium, WebKit and Firefox, with the button's
   name unchanged and neither its box nor its neighbor's changed by them.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix, or `--_dk-` for the kit's
