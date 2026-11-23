@@ -15,9 +15,42 @@ import * as react from '../packages/design-kit/src/react.js';
  * here and each is found called where the specs look.
  */
 
-/** A source with its comments taken out, so a name in a comment is not taken for a call. */
-const withoutComments = (source: string): string =>
-    source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+/** Where a comment that opens at the place given ends, or nothing where none opens there. */
+const commentEnd = (source: string, at: number): number | null => {
+    if (source.startsWith('//', at)) {
+        const end = source.indexOf('\n', at);
+        return end < 0 ? source.length : end;
+    }
+    if (!source.startsWith('/*', at)) return null;
+    const end = source.indexOf('*/', at + 2);
+    return end < 0 ? source.length : end + 2;
+};
+
+/** Where a string that opens at the place given ends, past its closing quote, or nothing. */
+const stringEnd = (source: string, at: number): number | null => {
+    const quote = source[at] ?? '';
+    if (!`'"\``.includes(quote) || quote === '') return null;
+    let end = at + 1;
+    while (end < source.length && source[end] !== quote) end += source[end] === '\\' ? 2 : 1;
+    return end + 1;
+};
+
+/**
+ * A source with its comments taken out, a block's and a line's to the line's end, after code on
+ * the same line too, so a name in a comment is not taken for a call. What a string holds is kept,
+ * so an address in one is not cut at its slashes.
+ */
+const withoutComments = (source: string): string => {
+    let kept = '';
+    for (let at = 0; at < source.length;) {
+        const string = stringEnd(source, at);
+        const comment = string === null ? commentEnd(source, at) : null;
+        const next = string ?? comment ?? at + 1;
+        if (comment === null) kept += source.slice(at, next);
+        at = next;
+    }
+    return kept;
+};
 
 /** The table in the page's script, from its opening to the brace that closes it. */
 const tableOf = (source: string): string => {
@@ -71,14 +104,19 @@ describe('the teardown table', () => {
         const table = tableOf(`window.pieces = {
     'the stepper': {
         // Not kit.attachTable(frame), which a comment names.
-        attach: (signal) => kit.attachStepper(steps, { signal }),
+        attach: (signal) => kit.attachStepper(steps, { signal }), // nor kit.attachBusy(button)
+        use: () => open('https://kit.test/'), /* nor kit.attachForm(form) */
     },
 };
 kit.attachDialog(dialog);`);
-        expect(notInTable(['attachStepper', 'attachTable', 'attachDialog'], table)).toEqual([
-            'attachTable',
-            'attachDialog',
-        ]);
+        expect(
+            notInTable(
+                ['attachStepper', 'attachTable', 'attachBusy', 'attachForm', 'attachDialog'],
+                table
+            )
+        ).toEqual(['attachTable', 'attachBusy', 'attachForm', 'attachDialog']);
+        // A string's slashes open no comment, so what follows one on its line is still read.
+        expect(table).toContain("open('https://kit.test/'),");
         expect(namedIn(table)).toEqual(['the stepper']);
     });
 });
@@ -92,11 +130,10 @@ describe('the leaks page', () => {
     it('finds a hook the page only imports, or leaves out', () => {
         const page = `import { useBusy, useRoving, useStatus } from '../src/react.js';
 // useStatus() is called in a comment alone.
-const row = useRoving<HTMLDivElement>();
+const row = useRoving<HTMLDivElement>(); // and useArrivalFocus(round) after the code
 const save = useBusy();`;
-        expect(notCalled(['useBusy', 'useRoving', 'useStatus', 'useProgress'], page)).toEqual([
-            'useStatus',
-            'useProgress',
-        ]);
+        expect(
+            notCalled(['useBusy', 'useRoving', 'useStatus', 'useProgress', 'useArrivalFocus'], page)
+        ).toEqual(['useStatus', 'useProgress', 'useArrivalFocus']);
     });
 });

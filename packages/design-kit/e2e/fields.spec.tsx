@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ChoiceField, InputField, StepperField } from '../src/react.js';
 import { frames, KIT, pixels, servePage, sideways, style } from './page.js';
-import { cutOff, SPACED } from './spacing.js';
+import { cutOff, SPACED, tooShort } from './spacing.js';
 import { doubled } from './text-size.js';
 
 /*
@@ -526,17 +526,19 @@ for (const digits of [2, 3] as const) {
 
 /*
  * How far a stepper wider than 10rem runs past its field in a row left at that length, with the
- * sheet's :has() rules taken out, at the widths the accessibility notes name: up to 7 pixels, into
- * the gap, from 368 until 381 for a stepper of three figures or a tall one of two, and for a tall
- * one of three up to 25 pixels from 368, over the field beside it until 385 and inside the gap
- * until 417. Each is measured to the pixel, as the notes give it, and found running past at 368,
- * so the figures are not held by a stepper that never left its field.
+ * sheet's :has() rules taken out, at the widths the accessibility notes name and a pixel past each
+ * end they give: up to 7 pixels, into the gap, from 368 until 381 for a stepper of three figures
+ * or a tall one of two, and none from 382, and for a tall one of three up to 25 pixels from 368,
+ * over the field beside it until 385, inside the gap until 417, and none from 418. Each is
+ * measured to the pixel, as the notes give it, the last width of each stretch held to the pixel
+ * or so measured there, and each found running past at 368, so the figures are not held by a
+ * stepper that never left its field.
  */
 const GAP = 16;
 for (const [what, tall, digits, most] of [
-    ['a stepper of three figures', false, 3, { 368: 7, 381: 7, 385: 0, 417: 0 }],
-    ['a tall stepper', true, 2, { 368: 7, 381: 7, 385: 0, 417: 0 }],
-    ['a tall stepper of three figures', true, 3, { 368: 25, 381: 25, 385: 25, 417: GAP }],
+    ['a stepper of three figures', false, 3, { 368: 7, 381: 1, 382: 0, 385: 0, 417: 0, 418: 0 }],
+    ['a tall stepper', true, 2, { 368: 7, 381: 1, 382: 0, 385: 0, 417: 0, 418: 0 }],
+    ['a tall stepper of three figures', true, 3, { 368: 25, 381: 25, 385: 17, 417: 1, 418: 0 }],
 ] as const) {
     for (const [width, pixels] of Object.entries(most)) {
         test(`runs ${what} no more than ${String(pixels)}px past its field without :has() in a row left at 10rem, at ${width} wide`, async ({
@@ -587,6 +589,8 @@ for (const [width, beside] of [
         const parts = '.dk-fields :is(.dk-field-label, .dk-stepper-value, .dk-input)';
         await expect(page.locator(parts)).toHaveCount(4);
         expect(await cutOff(page, parts)).toEqual([]);
+        // Each control as tall as its line, which the wider spacing makes taller.
+        expect(await tooShort(page, '.dk-fields :is(.dk-stepper-value, .dk-input)')).toEqual([]);
         expect(await sideways(page)).toBe(0);
     });
 }
