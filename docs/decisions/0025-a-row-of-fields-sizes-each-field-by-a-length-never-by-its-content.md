@@ -65,7 +65,9 @@ it, and each copy would size a stepper's field by its content and meet the fault
 ## Decision
 
 Option F. The row wraps, with a gap of `--dk-space-4` both ways and its fields lined up along their
-foot. Every field starts from `--dk-fields-least`, 10rem until a page sets it, a stepper's width
+foot. A row written straight in what holds a column of pieces, a panel, a dialog or a stack among
+them, stands its lines that column's step apart, `--dk-flow-step`, so a wrapped field sits as far
+below as a field under another there too. Every field starts from `--dk-fields-least`, 10rem until a page sets it, a stepper's width
 rounded up, so a field in the row is never narrower than a stepper of two figures needs and nothing
 rests on `:has()`. An inline stepper and a choice field take a line of their own by a basis of the
 whole line. The row holds to `--dk-field-measure` as a field does, and a field in it narrows by the

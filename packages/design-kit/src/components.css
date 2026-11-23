@@ -412,7 +412,7 @@
          * below its words, so its band is only what that leaves short, and a line of it in
          * ordinary text keeps the button's height.
          */
-        padding-block: max(0px, 0.375rem - (1lh - 1.2em) / 2);
+        padding-block: max(0px, 0.375rem - (1lh - var(--dk-leading-tight) * 1em) / 2);
         border: 0;
         /* A link has no edge to lift, so it takes no shadow and does not move when pressed. */
         box-shadow: none;
@@ -756,13 +756,32 @@
      * narrow screen or at a large text size each field has a line of its own, with its label whole.
      * The fields stand a plain form's step apart both ways and line up along their foot, so their
      * controls stand level where one label wraps or one field shows a hint or an error. An inline
-     * stepper and a set of choices each take a line of their own.
+     * stepper and a set of choices each take a line of their own. A row written straight in what
+     * holds a column of pieces stands its lines that column's step apart, so a wrapped field sits
+     * as far below as a field under another in a panel, a dialog or a stack too. Only a row the
+     * column holds itself takes the step, since a plain form inside one keeps its own.
      */
     :where(.dk-fields) {
         display: flex;
         flex-wrap: wrap;
         align-items: end;
         gap: var(--dk-space-4);
+    }
+
+    :where(
+        :is(
+                .dk-explainer,
+                .dk-page,
+                .dk-band,
+                .dk-stack,
+                :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
+                .dk-panel,
+                .dk-app-body,
+                .dk-dialog
+            )
+            > .dk-fields
+    ) {
+        row-gap: var(--dk-flow-step);
     }
 
     :where(.dk-fields > .dk-field) {

@@ -828,9 +828,11 @@ what is left, so a field's width comes from the row alone and a long label, a hi
 moves the field beside it. Two fields share a line where the row is at least 21rem wide, two lengths
 and the gap, which in a page's column is a screen from 368 pixels, and a narrower row or a larger
 text size stacks them, each on a line of its own with its label whole. The fields stand
-`--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a field
-under another, and they line up along their foot, so their controls stand level where one label
-takes two lines or one field shows a hint or an error. An inline stepper and a choice field each
+`--dk-space-4` apart both ways, a plain form's step, and a row written straight in a panel, a
+dialog, a stack or anything else that spaces what it holds by `--dk-flow-step` stands its lines that
+step apart, so a wrapped field sits as far below as a field under another wherever the row is
+written. The fields line up along their foot, so their controls stand level where one label takes
+two lines or one field shows a hint or an error. An inline stepper and a choice field each
 take a line of their own in the row. The row holds to `--dk-field-measure` as a field does, so in a
 page, a band or a stack it ends where the fields and the callout around it end, and a page sets
 `none` on the row for its column's width. A field in the row narrows by the same property, as a ZIP
