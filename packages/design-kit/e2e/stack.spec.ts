@@ -15,7 +15,10 @@ import { doubled } from './text-size.js';
  * stack doing nothing, no step for a piece hidden or visually hidden, a stack on a list with no
  * marker, indent or room of its own, the example's role kept and a list nested in an item keeping
  * its markers, and the example with a long name whole on a 320px phone at twice the text size and
- * under wider spacing, with no audit findings in either theme or in forced colors.
+ * under wider spacing, with no audit findings in either theme or in forced colors. A field in a
+ * wide stack, a page or a band holds to the measure, a form's too, its button beside its control,
+ * and a callout in the form ends where its fields end, while a callout outside a form, a field a
+ * page widens and one in a dialog or a popover a page widens take the width they are given.
  */
 
 const EXAMPLE = renderToStaticMarkup(stacks);
@@ -183,3 +186,77 @@ for (const colors of ['light', 'dark', 'forced'] as const) {
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
 }
+
+/** A field with a label and a control, given an id and the attributes the case asks for. */
+const field = (id: string, attributes = ''): string =>
+    `<div class="dk-field" id="${id}"${attributes}><label class="dk-field-label" for="${id}-input">Name</label>` +
+    `<input class="dk-input" id="${id}-input" /></div>`;
+
+test('holds a field and a callout in its form to the measure in a wide stack, a page or a band, and a field a page, a dialog or a popover widens to its column', async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Fields',
+        body:
+            '<main><section class="dk-band" id="band">' +
+            field('band-field') +
+            '</section><div class="dk-page" id="page">' +
+            field('page-field') +
+            '<div class="dk-stack" id="stack"><form>' +
+            field('stack-field') +
+            '<div class="dk-field" id="action-field"><label class="dk-field-label" for="q">Search</label>' +
+            '<div class="dk-field-action"><input class="dk-input" id="q" type="search" />' +
+            '<button type="button" class="dk-button">Search</button></div></div>' +
+            field('wide-field', ' style="--dk-field-measure: none"') +
+            '<div class="dk-callout dk-callout-danger" id="form-callout"><div class="dk-callout-body">' +
+            '<p>Enter a name.</p></div></div>' +
+            '</form><div class="dk-callout" id="callout"><div class="dk-callout-body">' +
+            '<p>Saved.</p></div></div>' +
+            '<dialog class="dk-dialog" id="dialog" open style="--dk-dialog-width: 48rem"><form>' +
+            field('dialog-field') +
+            '</form></dialog><dialog id="native" open style="width: 48rem"><form>' +
+            field('native-field') +
+            '</form></dialog><div popover id="popover" style="width: 48rem"><form>' +
+            field('popover-field') +
+            '</form></div></div></div></main>',
+    });
+    await page.locator('#popover').evaluate((popover: HTMLElement) => {
+        popover.showPopover();
+    });
+    const measure = await lengthOf(page, 'var(--dk-measure)');
+    const stack = await box(page.locator('#stack'));
+    expect(stack.width).toBeGreaterThan(measure);
+    for (const id of ['#band-field', '#page-field', '#stack-field', '#action-field']) {
+        const drawn = await box(page.locator(id));
+        expect(Math.round(drawn.width), id).toBe(measure);
+        expect(Math.round(drawn.x), id).toBe(Math.round(stack.x));
+    }
+    // The button beside the search stays on its line, at the end of the field.
+    const action = await box(page.locator('#action-field'));
+    const button = await box(page.locator('#action-field .dk-button'));
+    expect(Math.round(button.x + button.width)).toBe(Math.round(action.x + action.width));
+    expect(Math.round(button.y)).toBe(Math.round((await box(page.locator('#q'))).y));
+    const wide = await box(page.locator('#wide-field'));
+    expect(Math.round(wide.width)).toBe(Math.round(stack.width));
+    // A callout in the form ends where its fields end, and one outside a form takes the column.
+    const formCallout = await box(page.locator('#form-callout'));
+    const stackField = await box(page.locator('#stack-field'));
+    expect(Math.round(formCallout.width)).toBe(measure);
+    expect(Math.round(formCallout.x + formCallout.width)).toBe(
+        Math.round(stackField.x + stackField.width)
+    );
+    expect(Math.round((await box(page.locator('#callout'))).width)).toBe(Math.round(stack.width));
+    // A dialog or a popover a page widens past the measure lays its field across its own width.
+    for (const [holder, id] of [
+        ['#dialog', '#dialog-field'],
+        ['#native', '#native-field'],
+        ['#popover', '#popover-field'],
+    ] as const) {
+        const inside = await page.locator(holder).evaluate((element) => {
+            const { paddingLeft, paddingRight } = getComputedStyle(element);
+            return element.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight);
+        });
+        expect(inside, holder).toBeGreaterThan(measure);
+        expect(Math.round((await box(page.locator(id))).width), id).toBe(Math.round(inside));
+    }
+});
