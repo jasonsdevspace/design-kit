@@ -98,7 +98,11 @@ is its CSS transformer, as the package README shows.
   its words would take, and a footer at the page's end pads its foot by its own step alone rather
   than past what a phone keeps there.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
-  can still get narrower than its stepper.
+  can still get narrower than its stepper. In a `dk-fields` row there, a stepper wider than the
+  row's 10rem runs past its field on a screen 368 pixels wide and up, up to 7 pixels into the gap
+  until 381 for a stepper of three figures or a tall one of two, and up to 25 pixels until 417 for a
+  tall one of three, over the field beside it until 385, unless the page sets `--dk-fields-least` as
+  the reference says, 10.5rem, 12rem or 13.25rem.
 - On a page that scrolls whole and is 18rem wide or more, the room kept for a tab bar holds a label
   on two lines. A label that wraps further can leave what the keyboard reaches partly under the bar.
   CSS cannot read its height, so the reference asks for short labels. An app's frame keeps clear of

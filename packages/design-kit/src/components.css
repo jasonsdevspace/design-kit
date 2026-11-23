@@ -735,15 +735,42 @@
     /*
      * A field anywhere in a page, a band or a stack, a form's included, holds to the measure as the
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
-     * a callout in a form ends where its fields end. A page sets --dk-field-measure on a field or on
-     * its form, a shorter length for a short answer or `none` for the column. A dialog and a popover
-     * set their own width, which a page may widen, so what they hold takes theirs.
+     * a callout in a form ends where its fields end. A row of fields holds to it too, so it ends
+     * where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
+     * shorter length for a short answer or `none` for the column, and a field in a row of fields
+     * narrows by it as well. A dialog and a popover set their own width, which a page may widen, so
+     * what they hold takes theirs.
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
+            :is(.dk-field, .dk-fields, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
+    }
+
+    /*
+     * A row of fields set side by side, such as a stepper beside a name. Every field starts from
+     * one length, --dk-fields-least, 10rem until a page sets it, a stepper's width rounded up, and
+     * shares what is left, so a field's width comes from the row alone and no label, hint or error
+     * moves the field beside it. A field that finds no room on the line takes the next, so on a
+     * narrow screen or at a large text size each field has a line of its own, with its label whole.
+     * The fields stand a plain form's step apart both ways and line up along their foot, so their
+     * controls stand level where one label wraps or one field shows a hint or an error. An inline
+     * stepper and a set of choices each take a line of their own.
+     */
+    :where(.dk-fields) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: var(--dk-space-4);
+    }
+
+    :where(.dk-fields > .dk-field) {
+        flex: 1 1 var(--dk-fields-least, 10rem);
+    }
+
+    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) {
+        flex-basis: 100%;
     }
 
     /*
@@ -1144,17 +1171,17 @@
     }
 
     /*
-     * In a form with no class attribute, a field, a row of actions or a callout that is not empty
-     * stands --dk-space-4 below what sits above it, once another of those has come before it, so a
-     * hidden input or a script between two of them leaves them a step apart. Only the kit's own
-     * blocks are spaced, so what a page writes around them, a bare label and control, a fieldset, a
-     * row of its own or a closed dialog, keeps the place the browser and the page give it, and a
-     * form's buttons sit in a row of actions. A block out of sight or an empty callout, marked or
-     * not, counts as none. A form with a class attribute lays out its own parts.
+     * In a form with no class attribute, a field, a row of fields, a row of actions or a callout
+     * that is not empty stands --dk-space-4 below what sits above it, once another of those has
+     * come before it, so a hidden input or a script between two of them leaves them a step apart.
+     * Only the kit's own blocks are spaced, so what a page writes around them, a bare label and
+     * control, a fieldset, a row of its own or a closed dialog, keeps the place the browser and the
+     * page give it, and a form's buttons sit in a row of actions. A block out of sight or an empty
+     * callout, marked or not, counts as none. A form with a class attribute lays out its own parts.
      */
     :where(
         form:not([class])
-            > :is(.dk-field, .dk-actions, .dk-callout):not(
+            > :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(
                 :is(
                     [hidden],
                     [data-empty],
@@ -1162,7 +1189,10 @@
                     .dk-callout:has(> .dk-callout-body:empty):not(:has(> .dk-callout-actions))
                 )
             )
-            ~ :is(.dk-field, .dk-actions, .dk-callout):not([data-empty], .dk-visually-hidden)
+            ~ :is(.dk-field, .dk-fields, .dk-actions, .dk-callout):not(
+                [data-empty],
+                .dk-visually-hidden
+            )
     ) {
         margin-block-start: var(--dk-space-4);
     }

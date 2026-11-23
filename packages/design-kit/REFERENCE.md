@@ -106,25 +106,26 @@ A property whose name starts with `--_dk-` is the kit's own working value, such 
 buttons works its columns out with. It is not one of these, a page never reads or sets it, and it
 may change in any release.
 
-| Property                   | Default                                                            | What it sets, and what it must hold                                                                                                            |
-| -------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dk-focus`               | the accent                                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                   |
-| `--dk-button-shadow`       | none                                                               | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                                     |
-| `--dk-button-press`        | none, so a held button does not move                               | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px`          |
-| `--dk-panel-shadow`        | the resting shadow                                                 | A shadow under a raised panel                                                                                                                  |
-| `--dk-tile-ground`         | `--dk-ground-step`, the card's on a page and the page's in a panel | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign 3 to 1                                                            |
-| `--dk-tile-shadow`         | none                                                               | A shadow under a tile                                                                                                                          |
-| `--dk-row-picture-size`    | the target                                                         | The width and height of a picture at a row's start, at most a quarter of the screen. A tile in columns lays its picture across its top instead |
-| `--dk-tile-least`          | 15rem                                                              | The least width of a tile in a list of tiles in columns, so a name of a few words fits                                                         |
-| `--dk-button-grid-columns` | 3                                                                  | The columns a grid of buttons asks for                                                                                                         |
-| `--dk-button-grid-least`   | the target, and the larger target in a tall grid                   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                          |
-| `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
-| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
-| `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field, or a callout in its form, grows inside a page, a band or a stack, a panel there included. `none` for its column's width    |
-| `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
-| `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
-| `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
-| `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                       |
+| Property                   | Default                                                            | What it sets, and what it must hold                                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dk-focus`               | the accent                                                         | The focus ring and a control's edge under a pointer, at 3 to 1 against every ground it rings                                                               |
+| `--dk-button-shadow`       | none                                                               | A shadow under a button at rest. The button's edge still marks it, so the shadow holds no ratio of its own                                                 |
+| `--dk-button-press`        | none, so a held button does not move                               | How a held button moves, and where a toggle that is on or a button whose panel is open rests, as a whole `translate`, such as `0 2px`                      |
+| `--dk-panel-shadow`        | the resting shadow                                                 | A shadow under a raised panel                                                                                                                              |
+| `--dk-tile-ground`         | `--dk-ground-step`, the card's on a page and the page's in a panel | A tile's ground. A tile's title and detail hold 4.5 to 1 on it, and its sign 3 to 1                                                                        |
+| `--dk-tile-shadow`         | none                                                               | A shadow under a tile                                                                                                                                      |
+| `--dk-row-picture-size`    | the target                                                         | The width and height of a picture at a row's start, at most a quarter of the screen. A tile in columns lays its picture across its top instead             |
+| `--dk-tile-least`          | 15rem                                                              | The least width of a tile in a list of tiles in columns, so a name of a few words fits                                                                     |
+| `--dk-button-grid-columns` | 3                                                                  | The columns a grid of buttons asks for                                                                                                                     |
+| `--dk-button-grid-least`   | the target, and the larger target in a tall grid                   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                                      |
+| `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                                     |
+| `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                               |
+| `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field, a row of fields or a callout in its form grows inside a page, a band or a stack, a panel there included. `none` for its column's width |
+| `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                               |
+| `--dk-fields-least`        | 10rem                                                              | The width each field in a row of fields starts from, so two share a line only where both fit. At least a stepper's width where the row holds one           |
+| `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                                         |
+| `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                                  |
+| `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                                   |
 
 ## Page chrome
 
@@ -603,24 +604,24 @@ rather than pushing the field past the column's edge. In a page, a band or a sta
 too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
 `--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a ZIP
-code, or `none` for the column's width. A row of the page's own that sets fields side by side sets
-`none` on the row, so each field fills its cell, and lets its fields wrap, with `flex-wrap: wrap`, a
-gap of `--dk-space-4` both ways and a basis such as `flex: 1 1 7rem` on a text field, so at a large
-text size each field takes its own line with its label whole. A field shorter than the tallest
-beside it keeps its control at its own height, with the spare room below it. In a dialog or a
-popover the property has no effect, since the dialog's own width sizes its fields. An inline stepper
-in a page's row keeps its label and stepper at the top of its cell, its label level with the labels
-beside it. A field given more height than its parts, by a height or a flex grow of the page's own,
-leaves the room below them too, so a control meant to fill its field, such as a textarea that fills
-a panel, takes the room by the page's own `grid-template-rows` on the field, which gives the
-control's row `1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a
-form with no class attribute, a field, a row of actions or a callout that is not empty stands
-`--dk-space-4` below what sits above it, once another of those has come before it, so a form's
-buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form
-with a class attribute lays out its own parts. An error's words allow a break after each "@", by a
-`<wbr>`, so an address too long for its line breaks there rather than at whichever letter or stop
-the line runs out on, and the kit's own words keep punctuation away from the address they show. A
-page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same break.
+code, or `none` for the column's width. Fields set side by side go in a `dk-fields` row, as [fields
+side by side](#fields-side-by-side) shows, and a row of the page's own sets `none` on the row, so
+each field fills its cell. In a page's own row, a field shorter than the tallest beside it keeps its
+control at its own height, with the spare room below it, and in a `dk-fields` row the fields line up
+along their foot instead. In a dialog or a popover the property has no effect, since the dialog's
+own width sizes its fields. An inline stepper in a page's row keeps its label and stepper at the top
+of its cell, its label level with the labels beside it. A field given more height than its parts, by
+a height or a flex grow of the page's own, leaves the room below them too, so a control meant to
+fill its field, such as a textarea that fills a panel, takes the room by the page's own
+`grid-template-rows` on the field, which gives the control's row `1fr`, as `auto 1fr` for a label
+and its control or `auto auto 1fr` with a hint. In a form with no class attribute, a field, a row of
+fields, a row of actions or a callout that is not empty stands `--dk-space-4` below what sits above
+it, once another of those has come before it, so a form's buttons go in a `dk-actions`, a lone
+submit too. Nothing else in a plain form is given room. A form with a class attribute lays out its
+own parts. An error's words allow a break after each "@", by a `<wbr>`, so an address too long for
+its line breaks there rather than at whichever letter or stop the line runs out on, and the kit's
+own words keep punctuation away from the address they show. A page that puts an address in its own
+label or hint can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -780,6 +781,76 @@ screen, and is named by its own words, not the field's label.
         action={<Button type="submit">Search</Button>}
     />
 </form>
+```
+
+#### Fields side by side
+
+<!-- example: fieldsRow -->
+
+```html
+<div class="dk-fields">
+    <div class="dk-field">
+        <label class="dk-field-label" for="bid" id="bid-label">Bid</label>
+        <p class="dk-field-error dk-stepper-range" id="bid-range" hidden="">
+            <span class="dk-visually-hidden">Error: </span>Enter a whole number from 0 to 10.
+        </p>
+        <div class="dk-stepper" role="group" aria-labelledby="bid-label">
+            <button type="button" class="dk-button dk-stepper-down" aria-controls="bid" hidden="">
+                <span aria-hidden="true">−</span
+                ><span class="dk-visually-hidden">Lower Bid</span></button
+            ><input
+                class="dk-input dk-stepper-value"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="10"
+                step="1"
+                id="bid"
+                value="3"
+            /><button type="button" class="dk-button dk-stepper-up" aria-controls="bid" hidden="">
+                <span aria-hidden="true">+</span
+                ><span class="dk-visually-hidden">Raise Bid</span></button
+            ><span class="dk-visually-hidden dk-stepper-limits" id="bid-limits"></span
+            ><span class="dk-visually-hidden dk-stepper-status" role="status"></span>
+        </div>
+    </div>
+    <div class="dk-field">
+        <label class="dk-field-label" for="player" id="player-label">Player</label
+        ><input class="dk-input" id="player" />
+    </div>
+</div>
+```
+
+Fields set side by side, such as a stepper's field beside a player's name, sit in a `dk-fields` row,
+which needs no rules of the page's own. Every field in the row starts from one length,
+`--dk-fields-least`, 10rem until a page sets it, a stepper's width rounded up, and the fields share
+what is left, so a field's width comes from the row alone and a long label, a hint or an error never
+moves the field beside it. Two fields share a line where the row is at least 21rem wide, two lengths
+and the gap, which in a page's column is a screen from 368 pixels, and a narrower row or a larger
+text size stacks them, each on a line of its own with its label whole. The fields stand
+`--dk-space-4` apart both ways, a plain form's step, so a wrapped field sits as far below as a field
+under another, and they line up along their foot, so their controls stand level where one label
+takes two lines or one field shows a hint or an error. An inline stepper and a choice field each
+take a line of their own in the row. The row holds to `--dk-field-measure` as a field does, so in a
+page, a band or a stack it ends where the fields and the callout around it end, and a page sets
+`none` on the row for its column's width. A field in the row narrows by the same property, as a ZIP
+code's field with `--dk-field-measure: 6rem` does, and the others share the rest. A row with a
+stepper wider than 10rem sets `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper
+of three figures, by `--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of
+three figures. Left at 10rem, such a stepper keeps its field as wide as itself in a browser with
+`:has()`, a tall one with its buttons narrowed toward the target but never under it, and the pair
+stacks on a screen where the two do not fit. A page that wants two fields side by side on a screen
+360 pixels wide sets the length to 9.75rem, still as wide as a stepper of two figures. A row whose
+fields are all hidden still takes a plain form's step, so a page that hides every field in a row
+hides the row itself, with `hidden`. In a form with no class attribute the row is one of the kit's
+blocks, and stands `--dk-space-4` from a field or a row of actions above or below it. A page with
+React writes the `div` around the fields' components.
+
+```tsx
+<div className="dk-fields">
+    <StepperField label="Bid" min={0} max={10} />
+    <InputField label="Player" />
+</div>
 ```
 
 #### A refused form
@@ -2997,20 +3068,23 @@ wrap in its label, hint or error leave the field as wide as its stepper. A row w
 have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below
 its stepper, which is the row's choice. A stepper's field with its label to the left keeps that
 least width in such a row too, in every browser, its stepper moving under the label where the row
-leaves no room for both. In a row that cannot wrap, the stepper's field keeps its least width and
-the fields beside it take what is left, which at a large text size can be too little for a word in
-their labels. The value is in the mono face with figures of one width, centered, with room for two
-figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page
-to allow, so the field does not change width as the value changes and no figure is cut off, and in a
-tall stepper it is at the heading size. Its height, edge included, is its buttons', so it stands
-level with them. At 48rem wide or less, in an app's frame and on a page that ends in a tab bar,
-where a field and a button are the target tall, a stepper that is not tall stands level with one
-beside it. With its label to the left the label takes the room the stepper leaves and wraps within
-it, and the stepper moves under the label where a large text size leaves no room for both. Its
-errors sit on lines above it, as every field's do, and its hint on a line below, which only the
-inline stepper does. In a stepper with its label above, the hint sits under the label and over the
-errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
-buttons stand in for them and they would keep their room even out of sight.
+leaves no room for both. Set beside other fields in a `dk-fields` row, as [fields side by
+side](#fields-side-by-side) shows, the stepper's field starts from the row's length, wider than a
+stepper of two figures, and a field with no room left beside it moves to a line of its own. In a
+page's own row that cannot wrap, the stepper's field keeps its least width and the fields beside it
+take what is left, which at a large text size can be too little for a word in their labels. The
+value is in the mono face with figures of one width, centered, with room for two figures unless
+`--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page to allow, so
+the field does not change width as the value changes and no figure is cut off, and in a tall stepper
+it is at the heading size. Its height, edge included, is its buttons', so it stands level with them.
+At 48rem wide or less, in an app's frame and on a page that ends in a tab bar, where a field and a
+button are the target tall, a stepper that is not tall stands level with one beside it. With its
+label to the left the label takes the room the stepper leaves and wraps within it, and the stepper
+moves under the label where a large text size leaves no room for both. Its errors sit on lines above
+it, as every field's do, and its hint on a line below, which only the inline stepper does. In a
+stepper with its label above, the hint sits under the label and over the errors, as in any field.
+The number field's own spin buttons are taken away, since the stepper's buttons stand in for them
+and they would keep their room even out of sight.
 
 </details>
 

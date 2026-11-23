@@ -383,6 +383,15 @@ options rejected, what the choice costs, and the test behind it.
     A hook's ref made afresh on every render, a merged ref and React's second run keep a control and
     its state, at the cost of a takedown landing a microtask after its abort, so a page that means
     to start afresh within the task calls the detach.
+24. [A plain form spaces only the kit's blocks](docs/decisions/0024-a-plain-form-spaces-only-the-kits-blocks.md).
+    A field, a row of fields, a row of actions and a filled callout in a form with no class each
+    stand a step below the one before, and a page's own markup keeps its place, at the cost of a
+    lone button written bare after a field sitting flush under it.
+25. [A row of fields sizes each field by a length, never by its content](docs/decisions/0025-a-row-of-fields-sizes-each-field-by-a-length-never-by-its-content.md).
+    Fields set side by side each start from one length and share the rest, so no label, hint or
+    error moves the field beside it, at the cost of two fields stacking where the row is narrower
+    than 21rem, a screen narrower than 368 pixels in a page's column, and a wider stepper asking
+    the page for a wider length.
 
 </details>
 

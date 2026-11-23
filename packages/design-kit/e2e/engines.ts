@@ -41,6 +41,7 @@ export const WEBKIT: Engine = {
     busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: 'Where focus is after a refusal and a reset, which Safari sets its own way.',
+    fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
@@ -66,6 +67,7 @@ export const FIREFOX: Engine = {
     dialog: "Focus handed back to the dialog's opener, an SVG link too, by each engine's focus.",
     panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
     form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
+    fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
 };
 
 /**
