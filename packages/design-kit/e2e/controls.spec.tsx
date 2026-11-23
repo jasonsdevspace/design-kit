@@ -1,9 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { useState } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { controlStates } from '../examples/examples.js';
-import { Callout } from '../src/react.js';
+import { Button, Callout, InputField, SelectField } from '../src/react.js';
 import {
     box,
     colorOf,
@@ -20,6 +21,7 @@ import {
     writePage,
 } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
+import { doubled } from './text-size.js';
 
 /*
  * The buttons, fields and callouts as a browser draws them, from the markup the components draw
@@ -27,9 +29,11 @@ import { cutOff, SPACED } from './spacing.js';
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, a large button at the target at every width and a text button drawn as a link at the
  * button's height, an off button the keyboard still reaches, the field's label, hint and error
- * read as its name and description, an empty live callout waiting a pixel out of the flow until
- * it is filled, a tap on a touch screen leaving a toggle's edge as it was, no text cut off under
- * the wider spacing a visitor may set, and no audit findings for any state in either theme.
+ * read as its name and description, the README's checkout spacing its row of buttons and callout
+ * as its fields, a field's long words breaking inside a narrow form and beside a button in a
+ * page's own row at twice the text size, an empty live callout waiting a pixel out of the flow
+ * until it is filled, a tap on a touch screen leaving a toggle's edge as it was, no text cut off
+ * under the wider spacing a visitor may set, and no audit findings for any state in either theme.
  */
 
 /** Every state of each control, on a page of its own. */
@@ -89,6 +93,166 @@ test('draws text in a field at 16px or more on a phone, so tapping it does not z
 test('fits a phone 320px wide without scrolling the page sideways', async ({ page }) => {
     await open(page, { width: 320 });
     expect(await sideways(page)).toBe(0);
+});
+
+/** The package README's first example, as a reader copies it. */
+const Checkout = ({ error, saved }: { readonly error?: string; readonly saved?: string }) => {
+    const [gift, setGift] = useState(false);
+    return (
+        <form>
+            <InputField
+                label="Email"
+                name="email"
+                hint="Where the receipt goes"
+                error={error}
+                type="email"
+            />
+            <SelectField label="Delivery" name="delivery">
+                <option value="standard">Standard</option>
+                <option value="express">Express</option>
+            </SelectField>
+            <div className="dk-actions">
+                <Button
+                    pressed={gift}
+                    onClick={() => {
+                        setGift(!gift);
+                    }}
+                >
+                    Gift wrap
+                </Button>
+                <Button type="submit" accent>
+                    Place order
+                </Button>
+            </div>
+            <Callout tone="success" live="status">
+                {saved}
+            </Callout>
+        </form>
+    );
+};
+
+/** How far each part named stands below the one given, to the pixel, failing on one not found. */
+const below = (page: Page, above: string, ...parts: string[]) =>
+    page.evaluate(
+        ([from, names]) => {
+            const at = (selector: string) => {
+                const found = document.querySelector(selector);
+                if (!found) throw new Error(`expected ${selector} on the page`);
+                return found.getBoundingClientRect();
+            };
+            const edge = at(from).bottom;
+            return names.map((name) => Math.round(at(name).top - edge));
+        },
+        [above, parts] as const
+    );
+
+test("stands the README's checkout row and callout one step below what is above them", async ({
+    page,
+}) => {
+    await writePage(page, { title: 'Checkout', body: renderToStaticMarkup(<Checkout />) });
+    const space = Math.round(
+        await page.evaluate(() => {
+            const probe = document.createElement('div');
+            probe.style.width = 'var(--dk-space-4)';
+            document.body.append(probe);
+            const width = probe.getBoundingClientRect().width;
+            probe.remove();
+            return width;
+        })
+    );
+    // The select under the field, and the row of both buttons under the select.
+    expect(await below(page, 'form > :nth-child(1)', 'form > :nth-child(2)')).toEqual([space]);
+    expect(await below(page, 'form > :nth-child(2)', 'form > :nth-child(3)')).toEqual([space]);
+    // The empty callout adds no room under the row.
+    const form = await box(page.locator('form'), 'the form');
+    const row = await box(page.locator('.dk-actions'), 'the row');
+    expect(Math.round(form.y + form.height)).toBe(Math.round(row.y + row.height));
+    // A hidden one with words adds none either, nor gives the field after it a step.
+    await writePage(page, {
+        title: 'Checkout',
+        body: `<form style="display: flow-root"><div class="dk-callout" hidden><div class="dk-callout-body" role="status">The order is placed.</div></div>${renderToStaticMarkup(
+            <InputField label="Email" name="email" type="email" />
+        )}</form>`,
+    });
+    const under = await page.locator('form').evaluate((holder) => {
+        const field = holder.querySelector('.dk-field');
+        return {
+            margin: field ? getComputedStyle(field).marginTop : '',
+            top: Math.round(
+                (field?.getBoundingClientRect().top ?? 0) - holder.getBoundingClientRect().top
+            ),
+        };
+    });
+    expect(under).toEqual({ margin: '0px', top: 0 });
+    // With words, the callout takes the same step under the row.
+    await writePage(page, {
+        title: 'Checkout',
+        body: renderToStaticMarkup(<Checkout saved="The order is placed." />),
+    });
+    expect(await below(page, '.dk-actions', '.dk-callout')).toEqual([space]);
+});
+
+test('keeps a field and its long words inside a narrow form at twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    await writePage(page, {
+        title: 'Field',
+        width: 320,
+        css: 'form { padding-inline: var(--dk-space-4); }',
+        body: `<main><h1>Join</h1><form>${renderToStaticMarkup(
+            <InputField
+                label="Email"
+                hint="Where the receipt goes"
+                error="Enter an email address like name@example.com here."
+                type="email"
+            />
+        )}</form></main>`,
+    });
+    await doubled(page, browserName);
+    const past = await page.locator('form').evaluate((form) => {
+        const style = getComputedStyle(form);
+        const edge = form.getBoundingClientRect().right - parseFloat(style.paddingRight);
+        return [...form.querySelectorAll('.dk-field, .dk-field *')]
+            .filter((part) => part.getBoundingClientRect().right > edge + 0.5)
+            .map((part) => part.className || part.tagName.toLowerCase());
+    });
+    expect(past).toEqual([]);
+    expect(await sideways(page)).toBe(0);
+});
+
+test("keeps a field with long words beside a button in a page's own row at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await writePage(page, {
+        title: 'Field',
+        width: 320,
+        css: '.row { display: flex; align-items: end; gap: var(--dk-space-2); padding-inline: var(--dk-space-4); }',
+        body: `<main><h1>Join</h1><form><div class="row">${renderToStaticMarkup(
+            <InputField
+                label="Email, like name@example.com"
+                error="Enter an email address like name@example.com here."
+                type="email"
+            />
+        )}<button class="dk-button" type="submit">Join</button></div></form></main>`,
+    });
+    await doubled(page, browserName);
+    expect(await sideways(page)).toBe(0);
+    const placed = await page.locator('.row').evaluate((row) => {
+        const edge =
+            row.getBoundingClientRect().right - parseFloat(getComputedStyle(row).paddingRight);
+        const field = row.querySelector('.dk-field')?.getBoundingClientRect();
+        const button = row.querySelector('.dk-button')?.getBoundingClientRect();
+        return {
+            past: [...row.querySelectorAll('.dk-field *')]
+                .filter((part) => part.getBoundingClientRect().right > edge + 0.5)
+                .map((part) => part.className || part.tagName.toLowerCase()),
+            beside: (button?.left ?? 0) >= (field?.right ?? Infinity) - 0.5,
+        };
+    });
+    // Nothing in the field past the row's padded edge, and the button to the field's right.
+    expect(placed).toEqual({ past: [], beside: true });
 });
 
 test('keeps an off button in the tab order, and skips a disabled one, drawn alike', async ({
@@ -595,7 +759,7 @@ test('reads a field by its label, and describes it by its hint and then its erro
     await expect(page.getByLabel('Search words')).not.toHaveAttribute('aria-invalid');
     const email = page.getByRole('textbox', { name: 'Email' });
     await expect(email).toHaveAccessibleDescription(
-        'Where the receipt goes Error: Enter an email address, like name@example.com'
+        'Where the receipt goes Error: Enter an email address like name@example.com here.'
     );
     await expect(email).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('');

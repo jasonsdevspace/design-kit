@@ -426,7 +426,9 @@ look to fill and the open panel is the sign.
 
 A row of buttons, such as a page's actions under its lead, sits in a `dk-actions`, as above. It
 spaces the buttons by `--dk-space-2` and wraps them onto rows the same step apart, where spaces
-between buttons would leave the rows touching. It sets no margin of its own.
+between buttons would leave the rows touching. It sets no margin of its own. In a form with no class
+attribute a bare button stands no step below a field above it, where a `dk-actions` does, so a
+form's buttons go in a `dk-actions`, a lone submit too.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -594,8 +596,16 @@ or an open list never covers it, and the hint stays while the error shows, since
 to put the error right. The error starts with a visually hidden "Error: ", so it is told from the
 hint by more than its color. `aria-describedby` lists only what is drawn, the hint and then the
 error, followed by any description of the page's own, and is left off when there is none.
-`aria-invalid="true"` is there only while an error is drawn. A field after another in a form with no
-class of its own stands `--dk-space-4` below it. A form with a class lays out its own fields.
+`aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
+column, so a word with no place to break, such as an email address in an error, breaks inside it
+rather than pushing the field past the column's edge. In a form with no class attribute, a field, a
+row of actions or a callout that is not empty stands `--dk-space-4` below what sits above it, once
+another of those has come before it, so a form's buttons go in a `dk-actions`, a lone submit too.
+Nothing else in a plain form is given room. A form with a class attribute lays out its own parts. An
+error's words allow a break after each "@", by a `<wbr>`, so an address too long for its line breaks
+there rather than at whichever letter or stop the line runs out on, and the kit's own words keep
+punctuation away from the address they show. A page that puts an address in its own label or hint
+can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -825,18 +835,19 @@ submitted.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
-"Enter an email address, like name@example.com." for a malformed address, "Enter at least 8
-characters." for one too short, "Enter 18 or more." for a number under its least, "Enter a whole
-number." for a fraction, and the page's own words from `setCustomValidity`. A field's own words for
-a failure come first, as `data-error-value-missing="Enter your name."` on the control or on its
-set's fieldset, then the words a page gives the form as `errorWords`, as a page in another language
-gives them, then the kit's. Each attribute is the failure's `validity` name in kebab case after
-`data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A field with a
-`pattern` gives words of its own, since the kit cannot put a pattern in words, and without them it
-asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`, since the markup
-is the page's: the failures go to it, the page sets its errors from them, keyed by each failure's
-`field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. `invalid`
-is called only for a submit that fails, so the page's own submit handler clears the errors it set.
+"Enter an email address like name@example.com here." for a malformed address, "Enter the full web
+address, with https:// at the start." for a malformed web address, "Enter at least 8 characters."
+for one too short, "Enter 18 or more." for a number under its least, "Enter a whole number." for a
+fraction, and the page's own words from `setCustomValidity`. A field's own words for a failure come
+first, as `data-error-value-missing="Enter your name."` on the control or on its set's fieldset,
+then the words a page gives the form as `errorWords`, as a page in another language gives them, then
+the kit's. Each attribute is the failure's `validity` name in kebab case after `data-error-`, such
+as `data-error-pattern-mismatch` or `data-error-too-short`. A field with a `pattern` gives words of
+its own, since the kit cannot put a pattern in words, and without them it asks for the format its
+hint shows. In React, `useFormRefusal` asks for `invalid`, since the markup is the page's: the
+failures go to it, the page sets its errors from them, keyed by each failure's `field`, which is a
+set's fieldset for a set, and the refusal follows once they are drawn. `invalid` is called only for
+a submit that fails, so the page's own submit handler clears the errors it set.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -1301,12 +1312,14 @@ export const Checkout = ({ error, saved }: Props) => {
                 <option value="standard">Standard</option>
                 <option value="express">Express</option>
             </SelectField>
-            <Button pressed={gift} onClick={() => setGift(!gift)}>
-                Gift wrap
-            </Button>
-            <Button type="submit" accent>
-                Place order
-            </Button>
+            <div className="dk-actions">
+                <Button pressed={gift} onClick={() => setGift(!gift)}>
+                    Gift wrap
+                </Button>
+                <Button type="submit" accent>
+                    Place order
+                </Button>
+            </div>
             <Callout tone="success" live="status">
                 {saved}
             </Callout>

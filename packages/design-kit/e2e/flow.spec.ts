@@ -5,7 +5,8 @@ import { writePage } from './page.js';
 /*
  * The step between pieces placed one after another in each container the kit draws, as the
  * reference writes them: one step of the kit's scale, with no piece's own margin canceling it and
- * no browser margin left over, in the explainer, a panel, an app's body, a dialog and a plain form.
+ * no browser margin left over, in the explainer, a panel, an app's body, a dialog and a plain form,
+ * and a page's own markup in a plain form left where a form with a class leaves it.
  */
 
 const CALLOUT =
@@ -87,12 +88,115 @@ test('stands each piece one step after the one before it in a dialog, and its ac
     ]);
 });
 
-test('stands each field one step after the one before it in a plain form', async ({ page }) => {
+test("stands each of the kit's blocks one step after the one before it in a plain form", async ({
+    page,
+}) => {
     await writePage(page, {
         title: 'Flow',
-        body: `<form id="form">${FIELD('a')}${FIELD('b')}<fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset></form>`,
+        body: `<form id="form">${FIELD('a')}${FIELD('b')}<div class="dk-actions"><button class="dk-button">Back</button><button class="dk-button">Next</button></div><fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset>${CALLOUT}</form>`,
     });
-    expect(await gaps(page, '#form')).toEqual(each(['dk-field', 'dk-field dk-choice-field'], 16));
+    expect(await gaps(page, '#form')).toEqual(
+        each(['dk-field', 'dk-actions', 'dk-field dk-choice-field', 'dk-callout'], 16)
+    );
+});
+
+test("stands a block a step below a page's own markup between two blocks, the margins collapsing", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="form">${FIELD('a')}<h2>More</h2>${FIELD('b')}</form>`,
+    });
+    const own = await page
+        .locator('#form h2')
+        .evaluate((heading) => Math.round(parseFloat(getComputedStyle(heading).marginBottom)));
+    // The heading keeps its own margins, and the field under it the larger of its step and them.
+    expect(own).toBeGreaterThan(16);
+    expect(await gaps(page, '#form')).toEqual([`h2 ${String(own)}`, `dk-field ${String(own)}`]);
+});
+
+test("keeps a dialog's further step above its actions in a plain form inside it", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        width: 390,
+        body: `<dialog class="dk-dialog"><h2 class="dk-dialog-title">Options</h2><form id="form" method="dialog">${FIELD('a')}${FIELD('b')}<div class="dk-actions dk-dialog-actions"><button class="dk-button">Done</button></div></form></dialog>`,
+    });
+    await page.locator('dialog').evaluate((dialog) => {
+        (dialog as HTMLDialogElement).showModal();
+    });
+    expect(await gaps(page, 'dialog')).toEqual(['form 12']);
+    expect(await gaps(page, '#form')).toEqual(['dk-field 16', 'dk-actions dk-dialog-actions 24']);
+});
+
+/** Where each of a form's parts sits below the form's top, and the margins it is drawn with. */
+const placesIn = (page: Page, form: string) =>
+    page.locator(form).evaluate((holder) =>
+        [...holder.children].map((part) => {
+            const style = getComputedStyle(part);
+            // A part that draws no box has no place to compare, only its margins.
+            const top =
+                part.getClientRects().length === 0
+                    ? 'none'
+                    : String(
+                          Math.round(
+                              part.getBoundingClientRect().top - holder.getBoundingClientRect().top
+                          )
+                      );
+            return `${part.tagName.toLowerCase()} ${top} ${style.marginTop} ${style.marginBottom}`;
+        })
+    );
+
+test("draws a page's own markup in a plain form as in a form with a class", async ({ page }) => {
+    const parts =
+        '<dialog><p>Later.</p></dialog><button>Back</button><button>Next</button>' +
+        '<label for="w">Words</label><br><input id="w">' +
+        '<label for="c">Code</label><input type="hidden" name="t"><input id="c">' +
+        '<datalist id="d"><option value="Ana"></option></datalist>' +
+        '<div style="display: flex"><input aria-label="Search"><button>Go</button></div>' +
+        `<h2>More</h2><p>Before.</p>${FIELD('f')}<fieldset><legend>Ship</legend></fieldset>` +
+        '<button class="dk-button">Send</button>';
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="plain" style="display: flow-root">${parts}</form><form class="own" id="classed" style="display: flow-root">${parts.replaceAll('id="', 'id="o-').replaceAll('for="', 'for="o-')}</form>`,
+    });
+    expect(await placesIn(page, '#plain')).toEqual(await placesIn(page, '#classed'));
+});
+
+test("adds no step for a hidden input or a piece out of sight before a plain form's first part", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="form" style="display: flow-root"><input type="hidden" name="t"><script type="application/json">{}</script><template><p>Later.</p></template><dialog><p>Later.</p></dialog><datalist id="d"><option value="Ana"></option></datalist><p hidden>Saved.</p><h2 class="dk-visually-hidden">Join</h2>${FIELD('a')}</form>
+<form id="status" style="display: flow-root"><div class="dk-callout dk-visually-hidden"><p class="dk-callout-body" role="status">Saved.</p></div>${FIELD('s')}</form>
+<form id="empty" style="display: flow-root"><div class="dk-callout"><div class="dk-callout-body" role="status"></div></div>${FIELD('e')}</form>
+<form id="pair">${FIELD('b')}<input type="hidden" name="u">${FIELD('c')}</form>`,
+    });
+    // Each form holds its own margins, so a step on the field would show rather than collapse.
+    const under = (form: string) =>
+        page.locator(form).evaluate((holder) => {
+            const field = holder.querySelector('.dk-field');
+            return {
+                margin: field ? getComputedStyle(field).marginTop : '',
+                top: Math.round(
+                    (field?.getBoundingClientRect().top ?? 0) - holder.getBoundingClientRect().top
+                ),
+            };
+        });
+    // Before the field, parts that draw nothing, a visually hidden status callout, and an empty
+    // callout written without its mark.
+    for (const form of ['#form', '#status', '#empty'])
+        expect.soft(await under(form), form).toEqual({ margin: '0px', top: 0 });
+    // Two fields with a hidden input between them still stand one step apart.
+    const apart = await page.locator('#pair').evaluate((form) => {
+        const [first, second] = [...form.querySelectorAll('.dk-field')].map((field) =>
+            field.getBoundingClientRect()
+        );
+        return Math.round((second?.top ?? 0) - (first?.bottom ?? 0));
+    });
+    expect(apart).toBe(16);
 });
 
 test('adds nothing to fields in a form that lays them out itself, in a grid or side by side', async ({
