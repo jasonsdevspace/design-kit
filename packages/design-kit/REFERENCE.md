@@ -3071,15 +3071,17 @@ outside the limits, between steps, such as 2.5 with a step of 1, or that is no n
 all in a field that is `required`, shows the stepper's own error, which waits hidden in the markup,
 once the value is changed, and the status line says it. A blank in a field that is not required
 passes, shows no error, and its form saves, so a stepper whose blank has no meaning takes
-`required`, as the example here does. The error's words are the markup's, which `rangeError` sets on
-`StepperField`, never `data-error-*` or a form's `errorWords`. A stepper that fails with no error of
-its own showing, as a required one drawn blank and submitted untouched, takes its form's error and
-the form's words for the failure, the kit's "Enter a value." unless the field or the page gives
-others, or is handed to `invalid` in React. Letters typed into a blank field leave its value blank
-and may fire no `change`, so the stepper shows nothing for them until a submit, where the form's
-error for it is "Enter a number.". A value typed past the range in a field that already shows an
-error of the form's or the page's shows both, the form's until the next submit and the page's until
-the page clears it. In a checked form, a stepper the form marked first can keep
+`required`, as the example here does. The `required` attribute is what makes a blank wrong, not the
+mark in the label, which only says the field is required, so a stepper marked required takes
+`required` too where a blank must be refused. The error's words are the markup's, which `rangeError`
+sets on `StepperField`, never `data-error-*` or a form's `errorWords`. A stepper that fails with no
+error of its own showing, as a required one drawn blank and submitted untouched, takes its form's
+error and the form's words for the failure, the kit's "Enter a value." unless the field or the page
+gives others, or is handed to `invalid` in React. Letters typed into a blank field leave its value
+blank and may fire no `change`, so the stepper shows nothing for them until a submit, where the
+form's error for it is "Enter a number.". A value typed past the range in a field that already shows
+an error of the form's or the page's shows both, the form's until the next submit and the page's
+until the page clears it. In a checked form, a stepper the form marked first can keep
 `aria-invalid="true"` after its range error hides, until the next submit. An error that shows
 follows `required` and `step` as a script changes them, as it does its limits. A refusal the page
 sets of its own with `setCustomValidity` is left to the page. A value drawn outside the limits or

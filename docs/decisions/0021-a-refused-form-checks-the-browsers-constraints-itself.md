@@ -131,7 +131,7 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - The controls carry the words and the check, and record 13 raises their budget by its rule.
 - A stepper's failure whose own error shows is not in the list `invalid` is handed, so the list can
   be empty on a refused submit, and a page reads the refusal for whether the form passed.
-- A stepper shows no error of its own at a submit, so one that fails untouched takes the form's
+- A submit never makes a stepper show its own error, so one that fails untouched takes the form's
   error, and a value typed past its range over that error shows both until the next submit.
 - `attachForm` keeps a submit and a reset listener on its form, one of each however many of its
   parts are attached, which leave with the form, where it kept none.

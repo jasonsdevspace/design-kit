@@ -806,6 +806,8 @@ type Bid = {
     readonly required?: boolean;
     readonly blank?: boolean;
     readonly second?: boolean;
+    /** Speaking on a second status line of the page's, given as its `status`. */
+    readonly line?: boolean;
     readonly summary?: boolean;
     readonly errorWords?: Record<string, string>;
 };
@@ -845,7 +847,11 @@ const drawn = ${JSON.stringify(drawn)};
 const form = document.querySelector('form');
 attachStepper(
     document.querySelector('.dk-stepper'),
-    drawn.second ? { say: attachStatus(document.querySelector('.second-status')) } : undefined
+    drawn.second
+        ? { say: attachStatus(document.querySelector('.second-status')) }
+        : drawn.line
+          ? { status: document.querySelector('.second-status') }
+          : undefined
 );
 if (!drawn.unchecked)
     attachForm(form, {
@@ -883,6 +889,18 @@ test('leaves a stepper that speaks through a say of its own unsaid on a refused 
     await bid.fill('99');
     await bid.press('Enter');
     expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+});
+
+test("takes a stepper's words back from a line of the page's it was given, on a refused submit", async ({
+    page,
+}) => {
+    await openBid(page, { line: true });
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+    await expect(page.locator('.second-status')).toHaveText('');
 });
 
 for (const [drawn, where] of [
@@ -1076,6 +1094,25 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await expect(page.locator('#count')).toHaveText('0');
             if (way === 'useFormRefusal')
                 expect(await handed(page)).toEqual(['bid: Enter a value.']);
+        });
+
+        test("shows a stepper's error beside the form's once a value past its range is typed, until the next submit", async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true });
+            await send(page).click();
+            const missing = 'Error: Enter a value.';
+            expect(await saidOf(page)).toEqual([`page: Bid: ${missing}`]);
+            expect((await bidErrors(page)).drawn).toEqual([missing]);
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            // Both show until the form is submitted again.
+            expect([...(await bidErrors(page)).drawn].sort()).toEqual([missing, RANGE].sort());
+            await page.clock.runFor(500);
+            await forget(page);
+            await send(page).focus();
+            await send(page).press('Enter');
+            await refused(page);
         });
 
         if (way === 'useFormRefusal')
