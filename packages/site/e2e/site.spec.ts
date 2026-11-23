@@ -1127,19 +1127,24 @@ test.describe('the behavior page', () => {
 
 test.describe('the behavior page, with two loads at once', () => {
     test('shows only the newest load when Load again is pressed twice', async ({ page }) => {
+        // The page's own clock, so the loads end when the test moves it and never by a race.
+        await page.clock.install();
         await page.goto(BEHAVIOR);
         const product = page.locator('#product');
         const load = page.getByRole('button', { name: 'Load again' });
         await load.click();
-        await page.waitForTimeout(1000);
+        await page.clock.runFor(1000);
         await load.click();
+        await expect(product).toHaveAttribute('aria-busy', 'true');
         // Past when the first load would end, the second is still loading.
-        await page.waitForTimeout(1400);
+        await page.clock.runFor(1500);
         await expect(product).toHaveAttribute('aria-busy', 'true');
         await expect(product.locator('.dk-loading')).toHaveCount(1);
         await expect(saidUnder(page, 'Loading, and a failure')).not.toHaveText('“Product loaded.”');
-        await expect(product).not.toHaveAttribute('aria-busy', { timeout: 3000 });
+        await page.clock.runFor(1000);
+        await expect(product).not.toHaveAttribute('aria-busy');
         await expect(product.locator('p')).toHaveCount(1);
+        await expect(saidUnder(page, 'Loading, and a failure')).toHaveText('“Product loaded.”');
     });
 });
 
@@ -1157,6 +1162,16 @@ test.describe('the behavior page with no script', () => {
             'With scripts on, each example here works as you press or type.'
         );
         await expect(page.locator('#rule-save')).toBeHidden();
+        await expect(page.locator('#rule-save')).toBeDisabled();
+        await expect(page.locator('#hand')).toBeHidden();
+        // Enter in a field presses a form's first submit even where it is hidden, so it is off too,
+        // and nothing is sent to the address bar.
+        const before = page.url();
+        await page.locator('#rule-name').fill('Trail shoes');
+        await page.locator('#rule-email').fill('ann@example.com');
+        await page.locator('#rule-name').press('Enter');
+        await page.waitForLoadState();
+        expect(page.url()).toBe(before);
         await expect(page.locator('#save-round, #product-load, #players-back')).toHaveCount(3);
         for (const id of ['#save-round', '#product-load', '#players-back']) {
             await expect(page.locator(id), id).toBeHidden();

@@ -354,7 +354,9 @@ const ruleLine = ruleForm && lineOf(ruleForm);
 if (ruleForm && ruleSave && ruleLine) {
     const sayRule = attachStatus(ruleLine);
     attachForm(ruleForm, { status: ruleLine });
-    // Shown only once the kit checks the form, so no submit ever goes to the address bar.
+    // Shown and on only once the kit checks the form, since a hidden submit is still the one Enter
+    // in a field presses, and the browser would send the form to the address bar.
+    ruleSave.disabled = false;
     ruleSave.hidden = false;
     ruleForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -392,6 +394,8 @@ const hand = document.querySelector<HTMLElement>('main #hand');
 const handLine = hand && lineOf(hand);
 if (hand && handLine) {
     const sayHand = attachStatus(handLine);
+    // Shown first, so the arrow keys place their stop on a grid in sight.
+    hand.hidden = false;
     attachRoving(hand);
     const cards = [...hand.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
     for (const card of cards) {

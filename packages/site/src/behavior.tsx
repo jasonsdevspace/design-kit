@@ -11,9 +11,10 @@ export interface Behavior {
     /** The example's name, its section's heading and the key its markup is found by. */
     readonly name: string;
     /**
-     * Draws the example. `live` is set for the copy the page shows, where a button that does
-     * nothing until the script attaches it waits hidden, and left unset for the markup shown under
-     * it, which is what a page writes.
+     * Draws the example. `live` is set for the copy the page shows, where a control that does
+     * nothing until the script attaches it waits hidden, and a submit waits off as well, since Enter
+     * in a field presses even a hidden one. It is left unset for the markup shown under it, which is
+     * what a page writes.
      */
     readonly draw: (live: boolean) => ReactElement;
     /** The React a page writes for it, a whole module a reader can copy. */
@@ -24,7 +25,7 @@ export interface Behavior {
  * The entry a page imports the components and hooks from, as the React shown names it. It is
  * text the page shows, while the site itself reaches the kit only through its pinned alias.
  */
-const REACT = ['@jasonsdevspace/design-kit', 'react'].join('/');
+export const REACT = ['@jasonsdevspace/design-kit', 'react'].join('/');
 
 /** The status line each example speaks on, out of sight as the kit draws it. */
 const Line = () => <kit.StatusLine className="screen-status" />;
@@ -58,9 +59,23 @@ export const BEHAVIORS = [
                         hint="Where the alert is sent"
                         required
                     />
-                    <kit.Button type="submit" accent id="rule-save" hidden={live}>
-                        Save rule
-                    </kit.Button>
+                    {live ? (
+                        // The kit's Button never writes disabled, which the browser alone reads as
+                        // a submit Enter cannot press, so the live copy writes its markup by hand.
+                        <button
+                            type="submit"
+                            className="dk-button dk-button-accent"
+                            id="rule-save"
+                            hidden
+                            disabled
+                        >
+                            Save rule
+                        </button>
+                    ) : (
+                        <kit.Button type="submit" accent id="rule-save">
+                            Save rule
+                        </kit.Button>
+                    )}
                 </form>
                 <Line />
             </>
@@ -167,13 +182,14 @@ export const RoundScreen = () => (
     },
     {
         name: 'Arrow keys through a grid',
-        draw: () => (
+        draw: (live) => (
             <>
                 <div
                     className="dk-button-grid site-hand"
                     role="group"
                     aria-label="Cards in hand"
                     id="hand"
+                    hidden={live}
                 >
                     {CARDS.map((card) => (
                         <kit.Button key={card} pressed={CHOSEN.has(card)} off={card === OFF}>
