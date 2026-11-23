@@ -656,9 +656,10 @@
     /*
      * A field: its label, a hint when it has one, an error when it has one, and then the control.
      * The error sits above the control, so a phone's keyboard or an open list never covers it, and
-     * the hint stays while the error shows, since it often says how to put the error right. Its
-     * one column holds to the width it is given rather than growing to its longest word, so a word
-     * with no place to break, such as an email address in an error, breaks inside it.
+     * the hint stays while the error shows, since it often says how to put the error right. The
+     * page breaks a word too long for its line only where it cannot fit, which leaves a grid's own
+     * column as wide as that word, so the field's one column is held to the width it is given, and
+     * a word with no place to break, such as an email address in an error, breaks inside it.
      */
     :where(.dk-field) {
         display: grid;
@@ -1201,9 +1202,9 @@
     }
 
     /*
-     * Nothing in what holds a column of pieces keeps room under itself, so the step above the next
-     * one is the whole space between them. It comes before the rules that keep an app's last line
-     * clear of a toast, which set the room under that one.
+     * Nothing in what holds a column of pieces, a plain form among them, keeps room under itself,
+     * so the step above the next one is the whole space between them. It comes before the rules
+     * that keep an app's last line clear of a toast, which set the room under that one.
      */
     :where(
         :is(
@@ -1214,7 +1215,8 @@
                 :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
                 .dk-panel,
                 .dk-app-body,
-                .dk-dialog
+                .dk-dialog,
+                form:not([class])
             )
             > :not(dialog)
     ) {
@@ -3556,9 +3558,10 @@
     /*
      * The flow in what holds a column of pieces, an explainer, a content page and each of their
      * sections, a band and its sections, a stack, a section in a group, a panel, an app's body
-     * and a dialog: each piece stands its container's step,
-     * --dk-flow-step, from the one before it, and the first sits at the top. A piece out of sight
-     * before the first one adds no step of its own. A dialog in one of them is left alone, so it
+     * and a dialog: each piece stands its container's step, --dk-flow-step, from the one before
+     * it, and the first sits at the top. A plain form's parts have their margins zeroed here too,
+     * and take the form's own step below. A piece out of sight before the first one adds no step of
+     * its own. A dialog in one of them is left alone, so it
      * keeps the place the browser and its own rules give it. The flow comes near the end of the
      * sheet, after every piece's own rules, so a piece's own margin never cancels the step above
      * it, and the room under each is set further up. The steps that differ follow it: the short
@@ -3576,7 +3579,8 @@
                 :is(.dk-explainer, .dk-page, .dk-band, .dk-sections) > section,
                 .dk-panel,
                 .dk-app-body,
-                .dk-dialog
+                .dk-dialog,
+                form:not([class])
             )
             > :not(dialog)
     ) {
@@ -3601,15 +3605,41 @@
     }
 
     /*
-     * A plain form spaces its parts as the flow does, each one step below the one before it, a
-     * button, a row of actions or a callout after a field as well as a field, with a hidden input
-     * before the first passed over too. A form with a class of its own lays out its own parts, as a
-     * grid or a row with a gap, so nothing is added to them.
+     * A form with no class attribute: each part after the first stands --dk-space-4 below the one
+     * before it, whatever it is, a field, a button, a row of actions, a callout or a paragraph, its
+     * browser margins zeroed with the flow's. A hidden input, or a part that draws nothing, being
+     * hidden, visually hidden, an empty live callout, a script, a style, a template or a noscript,
+     * adds no room before the first. Parts on one line take none, so a button beside a button, or
+     * a label, an error the kit adds and a control written bare, keep their places, and a dialog
+     * keeps the place the browser gives it. It sits beside the flow, after every piece's own rules,
+     * so a piece's own margin never cancels the step, and before a dialog's actions, which keep
+     * their further room. A form with a class attribute lays out its own parts.
      */
     :where(
         form:not([class])
-            > :not(.dk-visually-hidden, [hidden], [type='hidden'], .dk-callout[data-empty])
-            ~ :not(dialog)
+            > :not(
+                .dk-visually-hidden,
+                [hidden],
+                [type='hidden'],
+                .dk-callout[data-empty],
+                script,
+                style,
+                template,
+                noscript
+            )
+            ~ :not(
+                dialog,
+                :is(
+                        .dk-button,
+                        button,
+                        input:not([type='hidden']),
+                        select,
+                        textarea,
+                        label,
+                        .dk-field-error
+                    )
+                    + :is(.dk-button, button, input, select, textarea, label, .dk-field-error)
+            )
     ) {
         margin-block-start: var(--dk-space-4);
     }

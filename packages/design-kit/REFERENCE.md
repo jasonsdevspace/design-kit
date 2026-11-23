@@ -579,10 +579,14 @@ hint by more than its color. `aria-describedby` lists only what is drawn, the hi
 error, followed by any description of the page's own, and is left off when there is none.
 `aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
 column, so a word with no place to break, such as an email address in an error, breaks inside it
-rather than pushing the field past its edge. In a form with no class attribute, each part after the
-first, a field, a button, a row of actions or a callout, stands `--dk-space-4` below the one before
-it, and a hidden input, a hidden part or an empty live callout before the first adds no room. A form
-with a class lays out its own parts.
+rather than pushing the field past the column's edge. In a form with no class attribute, each part
+after the first stands `--dk-space-4` below the one before it, whatever it is, a field, a button, a
+row of actions, a callout or a paragraph, with the browser's own margins taken away. A hidden input,
+or a part that is hidden, visually hidden or an empty live callout, adds no room before the first,
+nor does a script, a style, a template or a noscript. Parts on one line take no room between them,
+so two buttons side by side, or a label, the error the kit adds and a control written bare, keep
+their places. A dialog in the form keeps the place the browser gives it, and a dialog's row of
+actions keeps its own further room. A form with a class attribute lays out its own parts.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -1280,12 +1284,14 @@ export const Checkout = ({ error, saved }: Props) => {
                 <option value="standard">Standard</option>
                 <option value="express">Express</option>
             </SelectField>
-            <Button pressed={gift} onClick={() => setGift(!gift)}>
-                Gift wrap
-            </Button>
-            <Button type="submit" accent>
-                Place order
-            </Button>
+            <div className="dk-actions">
+                <Button pressed={gift} onClick={() => setGift(!gift)}>
+                    Gift wrap
+                </Button>
+                <Button type="submit" accent>
+                    Place order
+                </Button>
+            </div>
             <Callout tone="success" live="status">
                 {saved}
             </Callout>

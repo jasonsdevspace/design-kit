@@ -90,11 +90,46 @@ test('stands each piece one step after the one before it in a dialog, and its ac
 test('stands each part one step after the one before it in a plain form', async ({ page }) => {
     await writePage(page, {
         title: 'Flow',
-        body: `<form id="form">${FIELD('a')}${FIELD('b')}<fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset>${CALLOUT}<p>After.</p></form>`,
+        body: `<form id="form">${FIELD('a')}<button class="dk-button" type="submit">Send</button>${FIELD('b')}<fieldset class="dk-field dk-choice-field"><legend class="dk-field-label">Show</legend></fieldset><h2>More</h2><p>Before.</p>${CALLOUT}<p>After.</p></form>`,
     });
+    // A lone button after a field, and a heading and a paragraph with no browser margin left over.
     expect(await gaps(page, '#form')).toEqual(
-        each(['dk-field', 'dk-field dk-choice-field', 'dk-callout', 'p'], 16)
+        each(
+            ['dk-button', 'dk-field', 'dk-field dk-choice-field', 'h2', 'p', 'dk-callout', 'p'],
+            16
+        )
     );
+});
+
+test('adds no room above parts on one line in a plain form', async ({ page }) => {
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="pair" style="display: flow-root"><button class="dk-button">Back</button><button class="dk-button">Next</button></form>
+<form id="named" style="display: flow-root"><label for="n">Name</label><input id="n"></form>`,
+    });
+    // Two buttons side by side make the form as tall as one of them.
+    const tall = await page
+        .locator('#pair')
+        .evaluate((form) => [
+            Math.round(form.getBoundingClientRect().height),
+            ...[...form.children].map((button) =>
+                Math.round(button.getBoundingClientRect().height)
+            ),
+        ]);
+    expect(new Set(tall).size).toBe(1);
+    // A label and its input share a line with no band above either.
+    const named = await page.locator('#named').evaluate((form) => {
+        const input = form.querySelector('input');
+        const label = form.querySelector('label');
+        return {
+            margins: [label, input].map((part) => (part ? getComputedStyle(part).marginTop : '')),
+            extra: Math.round(
+                form.getBoundingClientRect().height - (input?.getBoundingClientRect().height ?? 0)
+            ),
+        };
+    });
+    expect(named.margins).toEqual(['0px', '0px']);
+    expect(named.extra).toBeLessThan(8);
 });
 
 test("adds no step for a hidden input or a piece out of sight before a plain form's first part", async ({
@@ -102,13 +137,19 @@ test("adds no step for a hidden input or a piece out of sight before a plain for
 }) => {
     await writePage(page, {
         title: 'Flow',
-        body: `<form id="form"><input type="hidden" name="t"><p hidden>Saved.</p><h2 class="dk-visually-hidden">Join</h2>${FIELD('a')}</form>`,
+        body: `<form id="form" style="display: flow-root"><input type="hidden" name="t"><script type="application/json">{}</script><template><p>Later.</p></template><p hidden>Saved.</p><h2 class="dk-visually-hidden">Join</h2>${FIELD('a')}</form>`,
     });
+    // The form holds its own margins, so a step on the field would show rather than collapse.
     const under = await page.locator('#form').evaluate((form) => {
-        const first = form.querySelector('.dk-field')?.getBoundingClientRect().top ?? 0;
-        return Math.round(first - form.getBoundingClientRect().top);
+        const field = form.querySelector('.dk-field');
+        return {
+            margin: field ? getComputedStyle(field).marginTop : '',
+            top: Math.round(
+                (field?.getBoundingClientRect().top ?? 0) - form.getBoundingClientRect().top
+            ),
+        };
     });
-    expect(under).toBe(0);
+    expect(under).toEqual({ margin: '0px', top: 0 });
 });
 
 test('adds nothing to fields in a form that lays them out itself, in a grid or side by side', async ({

@@ -311,6 +311,38 @@ test("takes the kit's errors away as the form is reset", async ({ page }) => {
     await expect(page.locator('#n')).toHaveAttribute('aria-invalid', 'false');
 });
 
+test('draws the error it adds to bare markup between the label and the control, with no band', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form style="display: flow-root"><label for="n">Name</label><input id="n" required><button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#n-error')).toBeVisible();
+    const placed = await page.evaluate(() => {
+        const at = (selector: string) => {
+            const found = document.querySelector(selector);
+            if (!found) throw new Error(`expected ${selector} on the page`);
+            return found.getBoundingClientRect();
+        };
+        const label = at('label');
+        const error = at('#n-error');
+        const input = at('#n');
+        const button = at('button');
+        return {
+            underLabel: Math.round(error.top - label.bottom),
+            underError: Math.round(input.top - error.bottom),
+            oneLine: input.top < button.bottom && button.top < input.bottom,
+        };
+    });
+    // The error under its label and the control under it, each nearer than the form's step, and
+    // the button on the control's line.
+    expect(placed.underLabel).toBeLessThan(16);
+    expect(placed.underError).toBeLessThan(16);
+    expect(placed.oneLine).toBe(true);
+});
+
 test("leaves a stepper's own range error as the one error for a value past its limits", async ({
     page,
 }) => {

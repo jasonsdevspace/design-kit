@@ -154,12 +154,14 @@ export const Checkout = ({ error, saved }: Props) => {
                 <option value="standard">Standard</option>
                 <option value="express">Express</option>
             </SelectField>
-            <Button pressed={gift} onClick={() => setGift(!gift)}>
-                Gift wrap
-            </Button>
-            <Button type="submit" accent>
-                Place order
-            </Button>
+            <div className="dk-actions">
+                <Button pressed={gift} onClick={() => setGift(!gift)}>
+                    Gift wrap
+                </Button>
+                <Button type="submit" accent>
+                    Place order
+                </Button>
+            </div>
             <Callout tone="success" live="status">
                 {saved}
             </Callout>

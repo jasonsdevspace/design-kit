@@ -29,11 +29,11 @@ import { doubled } from './text-size.js';
  * a field and a button level at the target size on a phone and at the field's height on a wide
  * screen, a large button at the target at every width and a text button drawn as a link at the
  * button's height, an off button the keyboard still reaches, the field's label, hint and error
- * read as its name and description, the README's checkout spacing its buttons and callout as its
- * fields, a field's long words breaking inside a narrow form at twice the text size, an empty live
- * callout waiting a pixel out of the flow until it is filled, a tap on a touch screen leaving a
- * toggle's edge as it was, no text cut off under the wider spacing a visitor may set, and no audit
- * findings for any state in either theme.
+ * read as its name and description, the README's checkout spacing its row of buttons and callout
+ * as its fields, a field's long words breaking inside a narrow form at twice the text size, an
+ * empty live callout waiting a pixel out of the flow until it is filled, a tap on a touch screen
+ * leaving a toggle's edge as it was, no text cut off under the wider spacing a visitor may set, and
+ * no audit findings for any state in either theme.
  */
 
 /** Every state of each control, on a page of its own. */
@@ -111,17 +111,19 @@ const Checkout = ({ error, saved }: { readonly error?: string; readonly saved?: 
                 <option value="standard">Standard</option>
                 <option value="express">Express</option>
             </SelectField>
-            <Button
-                pressed={gift}
-                onClick={() => {
-                    setGift(!gift);
-                }}
-            >
-                Gift wrap
-            </Button>
-            <Button type="submit" accent>
-                Place order
-            </Button>
+            <div className="dk-actions">
+                <Button
+                    pressed={gift}
+                    onClick={() => {
+                        setGift(!gift);
+                    }}
+                >
+                    Gift wrap
+                </Button>
+                <Button type="submit" accent>
+                    Place order
+                </Button>
+            </div>
             <Callout tone="success" live="status">
                 {saved}
             </Callout>
@@ -129,19 +131,22 @@ const Checkout = ({ error, saved }: { readonly error?: string; readonly saved?: 
     );
 };
 
-/** How far each part named stands below the one given, to the pixel. */
+/** How far each part named stands below the one given, to the pixel, failing on one not found. */
 const below = (page: Page, above: string, ...parts: string[]) =>
     page.evaluate(
         ([from, names]) => {
-            const edge = document.querySelector(from)?.getBoundingClientRect().bottom ?? 0;
-            return names.map((name) =>
-                Math.round((document.querySelector(name)?.getBoundingClientRect().top ?? 0) - edge)
-            );
+            const at = (selector: string) => {
+                const found = document.querySelector(selector);
+                if (!found) throw new Error(`expected ${selector} on the page`);
+                return found.getBoundingClientRect();
+            };
+            const edge = at(from).bottom;
+            return names.map((name) => Math.round(at(name).top - edge));
         },
         [above, parts] as const
     );
 
-test("stands the README's checkout buttons and callout one step below what is above them", async ({
+test("stands the README's checkout row and callout one step below what is above them", async ({
     page,
 }) => {
     await writePage(page, { title: 'Checkout', body: renderToStaticMarkup(<Checkout />) });
@@ -155,29 +160,29 @@ test("stands the README's checkout buttons and callout one step below what is ab
             return width;
         })
     );
-    // The select under the field, and both buttons, side by side, under the select.
+    // The select under the field, and the row of both buttons under the select.
     expect(await below(page, 'form > :nth-child(1)', 'form > :nth-child(2)')).toEqual([space]);
-    expect(
-        await below(page, 'form > :nth-child(2)', 'form > :nth-child(3)', 'form > :nth-child(4)')
-    ).toEqual([space, space]);
-    // The empty callout adds no room under the buttons, and hidden it adds none either.
-    const bottom = async () => {
+    expect(await below(page, 'form > :nth-child(2)', 'form > :nth-child(3)')).toEqual([space]);
+    // The empty callout adds no room under the row, and a hidden one adds none either.
+    const bottoms = async () => {
         const form = await box(page.locator('form'), 'the form');
-        return Math.round(form.y + form.height);
+        const row = await box(page.locator('.dk-actions'), 'the row');
+        return [Math.round(form.y + form.height), Math.round(row.y + row.height)];
     };
-    const submit = await box(page.getByRole('button', { name: 'Place order' }), 'the submit');
-    expect(await bottom()).toBe(Math.round(submit.y + submit.height));
+    const [empty, row] = await bottoms();
+    expect(empty).toBe(row);
     await page.locator('.dk-callout').evaluate((callout) => {
         callout.removeAttribute('data-empty');
         callout.setAttribute('hidden', '');
     });
-    expect(await bottom()).toBe(Math.round(submit.y + submit.height));
-    // With words, the callout takes the same step under the buttons.
+    const [hidden, rowAgain] = await bottoms();
+    expect(hidden).toBe(rowAgain);
+    // With words, the callout takes the same step under the row.
     await writePage(page, {
         title: 'Checkout',
         body: renderToStaticMarkup(<Checkout saved="The order is placed." />),
     });
-    expect(await below(page, 'form > :nth-child(4)', '.dk-callout')).toEqual([space]);
+    expect(await below(page, '.dk-actions', '.dk-callout')).toEqual([space]);
 });
 
 test('keeps a field and its long words inside a narrow form at twice the text size', async ({
