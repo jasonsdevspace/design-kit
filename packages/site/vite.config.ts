@@ -190,6 +190,30 @@ const pagesPlugin = (): Plugin => ({
     },
 });
 
+/** The module the behavior page's script takes the kit's functions it alone uses from. */
+const BEHAVIOR_CONTROLS = fileURLToPath(new URL('src/behavior-controls.ts', import.meta.url));
+
+/**
+ * Gives the behavior page's script a copy of the kit's controls of its own. The kit ships its
+ * controls as one module, and a bundler keeps a module whole in one file, so with one copy every
+ * page's script would hold the form, the busy button and the focus request the behavior page alone
+ * uses. A second copy, named apart by a query the file is read without, is shaken down to what
+ * `src/behavior-controls.ts` passes on and written into that page's file. The status line and the
+ * teardown the controls import are modules of their own, which both copies share, so the kit's
+ * status lines still take turns across the two.
+ */
+const behaviorControlsPlugin = (): Plugin => ({
+    name: 'design-kit-site-behavior-controls',
+    // The dev server writes no files to keep small, and serves the kit from its own cache.
+    apply: 'build',
+    enforce: 'pre',
+    async resolveId(source, importer, options) {
+        if (source !== 'design-kit-release/controls' || importer !== BEHAVIOR_CONTROLS) return null;
+        const found = await this.resolve(source, importer, { ...options, skipSelf: true });
+        return found === null ? null : { ...found, id: `${found.id}?behavior` };
+    },
+});
+
 /**
  * The site, served under the path GitHub Pages gives the repository on the portfolio's domain,
  * here and in the preview the tests and the audits run against, so every link is the one a visitor
@@ -197,7 +221,7 @@ const pagesPlugin = (): Plugin => ({
  */
 export default defineConfig({
     base: BASE,
-    plugins: [pagesPlugin(), themeScriptPlugin()],
+    plugins: [behaviorControlsPlugin(), pagesPlugin(), themeScriptPlugin()],
     build: {
         emptyOutDir: true,
         // The kit's browser floor, as the pinned version gives it, for the script and the sheets

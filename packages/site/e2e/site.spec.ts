@@ -322,6 +322,23 @@ for (const path of PAGES) {
         expect(await page.locator('[style]').count()).toBe(0);
         expect(refused).toEqual([]);
     });
+
+    test(`${path} downloads the code of the behavior page's examples only where it shows them`, async ({
+        page,
+    }) => {
+        // Every script the page asks for, the files its own script imports among them.
+        const scripts: Promise<string>[] = [];
+        page.on('response', (response) => {
+            if (response.request().resourceType() === 'script') scripts.push(response.text());
+        });
+        await page.goto(path, { waitUntil: 'networkidle' });
+        const code = (await Promise.all(scripts)).join('\n');
+        expect(code).not.toBe('');
+        // Words only the examples say, and the attribute only the kit's busy button reads.
+        for (const mark of ['The rule was saved.', 'data-busy']) {
+            expect(code.includes(mark), mark).toBe(path === `${BASE}behavior/`);
+        }
+    });
 }
 
 /** Text as a pattern that matches it word for word, whatever marks it holds. */
