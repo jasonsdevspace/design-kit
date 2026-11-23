@@ -965,10 +965,15 @@ each failure's `field`, which is a set's fieldset for a set, and the refusal fol
 drawn. A stepper whose own range error shows is left out of the failures, since that error is the
 one drawn, as in a form the kit draws, so `invalid` can be handed an empty list, where only such
 steppers fail, and the refusal still counts the stepper and names it. A page does not take an empty
-list for a pass, nor read the first failure as present, and a summary it builds from the failures
-leaves out such a stepper, with nothing said for it, since the summary takes focus and reads its own
-words. `invalid` is called only for a submit that fails, so the page's own submit handler clears the
-errors it set.
+list for a pass, nor read the first failure as present. An error summary is built from the second
+list `invalid` is handed, `invalid(failures, shown)`, which holds every failure in the form's order,
+each with its `field`, its `control` and the words its field shows: the form's words for a failure
+in the first list, and a stepper's own error's words, without the "Error:" a screen reader alone is
+given, for one left out of it. A summary built from the first list would leave such a stepper out,
+with nothing said for it, since the summary takes focus and reads its own words. A page that takes
+one argument reads the first list alone, and `attachForm` given `invalid` hands both lists the same
+way. `invalid` is called only for a submit that fails, so the page's own submit
+handler clears the errors it set.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -982,17 +987,28 @@ form.addEventListener('submit', (event) => {
 ```
 
 ```tsx
+const summary = useRef<HTMLDivElement>(null);
 const [form] = useFormRefusal<HTMLFormElement>({
     errorWords: { valueMissing: 'Enter your name.' },
-    invalid: (failures) => {
+    summary: () => summary.current,
+    // Errors drawn in the fields, and a summary of every failure with the words its field shows.
+    invalid: (failures, shown) => {
         setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
+        setListed(shown.map(({ control, words }) => ({ id: control.id, words })));
     },
 });
 const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
+    setListed([]);
 };
 // <form ref={form} onSubmit={submit}>
+//     <div ref={summary} tabIndex={-1} hidden={listed.length === 0}>
+//         <h2>There is a problem</h2>
+//         <ul>
+//             {listed.map(({ id, words }) => <li key={id}><a href={`#${id}`}>{words}</a></li>)}
+//         </ul>
+//     </div>
 ```
 
 The kit checks only on a submit, never while someone is typing or as they leave a field, and checks

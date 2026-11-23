@@ -2349,10 +2349,12 @@ export type FormOptions = AttachOptions & {
      * Called with the fields that fail the browser's constraints on a submit, for a page that draws
      * its errors itself, as React does from its state, and refuses once they are drawn. A stepper
      * whose own range error shows is left out, since that error is the one drawn, so the list is
-     * empty where only such steppers fail. Without it, the kit draws each error in the field and
-     * refuses.
+     * empty where only such steppers fail. The second list holds every failure in the form's order
+     * with the words its field shows, such a stepper's own error's words among them, for an error
+     * summary. Without it, the kit draws each error in the field and refuses.
      */
-    readonly invalid?: ((failures: readonly FieldFailure[]) => void) | undefined;
+    readonly invalid?:
+        ((failures: readonly FieldFailure[], shown: readonly FieldFailure[]) => void) | undefined;
 };
 
 /** The ways a field fails the browser's constraints, in the order their words are chosen. */
@@ -2666,6 +2668,14 @@ const shownRange = (control: Element): HTMLElement | undefined =>
                 part instanceof HTMLElement && part.matches('.dk-stepper-range') && !part.hidden
         );
 
+/** An error's words, without the word a screen reader alone is given to start it. */
+const ownWords = (error: Element): string =>
+    [...error.childNodes]
+        .filter((part) => !(part instanceof Element && part.matches('.dk-visually-hidden')))
+        .map((part) => part.textContent)
+        .join('')
+        .trim();
+
 /**
  * The error a failure is shown in, and what takes it away: a stepper's range error, which says what
  * is wrong already, left as it is, an error the page already drew for the field given the kit's
@@ -2947,9 +2957,10 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * stopped, a stepper that fails takes back its own words not yet said, and the kit draws each error
  * as its field draws one and refuses, or hands the failures to `invalid` for a page that draws them
  * itself and refuses, all but a stepper's whose own range error shows, which stays the one error
- * either way. Each failure's words are the field's own, else the page's `errorWords`, else the
- * kit's. A button marked formnovalidate submits unchecked, and errors the kit drew go once their
- * fields pass or the form is reset.
+ * either way, with every failure and the words its field shows as a second list, for a summary.
+ * Each failure's words are the field's own, else the page's `errorWords`, else the kit's. A button
+ * marked formnovalidate submits unchecked, and errors the kit drew go once their fields pass or the
+ * form is reset.
  *
  * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
  * page names one, else the first field in error that can take focus, or in a set its checked radio
@@ -3091,8 +3102,17 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const { control } of failures) refusedSteppers.get(control)?.();
         if (chosen.invalid) {
             // A stepper whose own error shows is the one that draws it, so the page is handed no
-            // failure to draw a second from, while the refusal still counts and names the field.
-            chosen.invalid(failures.filter(({ control }) => !shownRange(control)));
+            // failure to draw a second from, while the refusal still counts and names the field. A
+            // summary is built from every failure with the words its field shows, its own among
+            // them.
+            const shown = failures.map((failure) => {
+                const range = shownRange(failure.control);
+                return range ? { ...failure, words: ownWords(range) } : failure;
+            });
+            chosen.invalid(
+                failures.filter((failure, at) => shown[at] === failure),
+                shown
+            );
             return;
         }
         for (const failure of failures) draw(failure);

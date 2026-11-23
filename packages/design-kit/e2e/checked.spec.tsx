@@ -793,7 +793,9 @@ const bidErrors = (page: Page) =>
             .map((part) => part?.textContent.trim()),
     }));
 
-const RANGE = 'Error: Enter a whole number from 0 to 10.';
+/** The words the bid's range error shows, and the error as it reads with the word it starts with. */
+const OWN = 'Enter a whole number from 0 to 10.';
+const RANGE = `Error: ${OWN}`;
 
 /**
  * How a test draws the bid: required or not, with a value or blank, speaking through a `say` on a
@@ -810,6 +812,8 @@ type Bid = {
     readonly line?: boolean;
     readonly summary?: boolean;
     readonly errorWords?: Record<string, string>;
+    /** Handed to a page that draws its own errors, which keeps both lists it is handed. */
+    readonly own?: boolean;
 };
 
 /** The bid in a form attached with `attachForm`, on a clock that stands still. */
@@ -857,6 +861,14 @@ if (!drawn.unchecked)
     attachForm(form, {
         status: document.querySelector('.screen-status'),
         errorWords: drawn.errorWords,
+        invalid: drawn.own
+            ? (failures, shown) => {
+                  const named = (list) => list.map(({ field, control, words }) =>
+                      field.id + ' ' + control.id + ': ' + words);
+                  window.handed = named(failures);
+                  window.shown = named(shown);
+              }
+            : undefined,
     });
 form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -920,6 +932,24 @@ for (const [drawn, where] of [
         expect(await saidAfterWait(page)).toEqual([`stepper: ${RANGE}`]);
         expect((await bidErrors(page)).drawn).toEqual([RANGE]);
     });
+
+test('hands a page that draws its own errors every failure with the words its field shows, a stepper showing its own among them', async ({
+    page,
+}) => {
+    await openBid(page, { own: true });
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    const lists = await page.evaluate(() => {
+        const { handed, shown } = window as unknown as { handed: string[]; shown: string[] };
+        return { handed, shown };
+    });
+    expect(lists).toEqual({
+        handed: ['name name: Enter a value.'],
+        shown: ['name name: Enter a value.', `bid bid: ${OWN}`],
+    });
+    await expect(page.locator('#count')).toHaveText('0');
+});
 
 /*
  * A stepper is wrong exactly where the browser's constraints say its field is, and where its own
@@ -1115,20 +1145,32 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await refused(page);
         });
 
+        /*
+         * A summary built from the failures with the words each field shows lists the stepper with
+         * its own error's words, where the page is handed no failure to draw for it, and the
+         * stepper says nothing over the summary the refusal moves focus to.
+         */
         if (way === 'useFormRefusal')
-            test('keeps a stepper typed past its range from speaking over a summary the refusal moves focus to', async ({
-                page,
-            }) => {
-                await openWay(page, { summary: true });
-                await bidOf(page).fill('99');
-                await bidOf(page).press('Enter');
-                await expect(async () => {
-                    await page.clock.runFor(100);
-                    await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
-                }).toPass();
-                expect(await saidAfterWait(page)).toEqual([]);
-                expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
-            });
+            for (const [name, listed] of [
+                ['Ana', [OWN]],
+                ['', ['Enter your name.', OWN]],
+            ] as const)
+                test(`lists a stepper typed past its range with its own words in a summary${name ? '' : ' beside an empty field'}, and focus lands on it`, async ({
+                    page,
+                }) => {
+                    await openWay(page, { summary: true }, name);
+                    await bidOf(page).fill('99');
+                    await bidOf(page).press('Enter');
+                    await expect(async () => {
+                        await page.clock.runFor(100);
+                        await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
+                    }).toPass();
+                    await expect(page.locator('#summary li')).toHaveText(listed);
+                    expect(await handed(page)).toEqual(name ? [] : ['name: Enter your name.']);
+                    expect(await saidAfterWait(page)).toEqual([]);
+                    expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+                    await expect(page.locator('#count')).toHaveText('0');
+                });
     });
 }
 

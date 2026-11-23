@@ -20,7 +20,7 @@ import {
  * is drawn with whatever error the page is handed for it, and the failures handed are kept, each
  * as its field's id and its words. The root's `data-bid` names how the bid is drawn: `required`,
  * `blank` for one drawn with no value, and `summary` for a form whose refusal moves focus to a
- * summary.
+ * summary, which lists every failure with the words its field shows.
  */
 
 type Handed = { handed?: string[] };
@@ -30,10 +30,11 @@ const drawn = root?.dataset['bid'] ?? '';
 
 const Join = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [listed, setListed] = useState<readonly string[]>([]);
     const [count, setCount] = useState(0);
     const say = useStatus();
     const bid = useRef<HTMLDivElement>(null);
-    const summary = useRef<HTMLParagraphElement>(null);
+    const summary = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const stepper = bid.current?.querySelector<HTMLElement>('.dk-stepper');
         return stepper ? attachStepper(stepper, { say }) : undefined;
@@ -43,21 +44,28 @@ const Join = () => {
         errorWords: {
             valueMissing: (control) => (control.id === 'name' ? 'Enter your name.' : ''),
         },
-        invalid: (failures) => {
+        invalid: (failures, shown) => {
             (window as Handed).handed = failures.map(({ field, words }) => `${field.id}: ${words}`);
             setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
+            if (drawn.includes('summary')) setListed(shown.map(({ words }) => words));
         },
     });
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setErrors({});
+        setListed([]);
         setCount(count + 1);
     };
     return (
         <form ref={form} onSubmit={submit}>
-            <p ref={summary} id="summary" tabIndex={-1}>
-                There is a problem.
-            </p>
+            <div ref={summary} id="summary" tabIndex={-1}>
+                <p>There is a problem.</p>
+                <ul>
+                    {listed.map((words) => (
+                        <li key={words}>{words}</li>
+                    ))}
+                </ul>
+            </div>
             <InputField id="name" name="name" label="Name" required error={errors['name']} />
             <ChoiceField
                 id="size"

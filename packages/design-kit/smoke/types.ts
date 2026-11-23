@@ -313,6 +313,20 @@ export const checkedOf = (form: HTMLFormElement, words: FailureWords): Refuse =>
         },
     });
 
+// A page that builds a summary takes a second list, every failure with the words its field shows.
+export const summedOf = (form: HTMLFormElement, listed: string[]): Refuse =>
+    attachForm(form, {
+        invalid: (failures: readonly FieldFailure[], shown: readonly FieldFailure[]) => {
+            listed.splice(0, listed.length, ...shown.map(({ words }) => words));
+            void failures;
+        },
+    });
+
+export const wordsOnly: FormOptions = {
+    // @ts-expect-error The second list holds failures, not words.
+    invalid: (_: readonly FieldFailure[], shown: readonly string[]) => shown,
+};
+
 // @ts-expect-error A failure is named as validity names it.
 export const misnamed: FailureWords = { missing: 'Enter it.' };
 
@@ -382,6 +396,15 @@ export const HookTypes = (children: ProviderProps['children']): readonly unknown
             invalid: (failures: readonly FieldFailure[]) => failures.map(({ field }) => field.id),
             errorWords: { valueMissing: 'Enter your name.' },
         });
+    const [summed]: readonly [RefCallback<HTMLFormElement>, Refuse] =
+        useFormRefusal<HTMLFormElement>({
+            invalid: (failures, shown) => {
+                const words: readonly string[] = shown.map(({ words }) => words);
+                const field: Element | undefined = shown[0]?.field;
+                const control: HTMLElement | undefined = shown[0]?.control;
+                return [failures, words, field, control];
+            },
+        });
     const orientation: RovingOrientation = 'grid';
     const group: RefCallback<HTMLDivElement> = useRoving<HTMLDivElement>({ orientation });
     const busy: RefCallback<HTMLButtonElement> = useBusy<HTMLButtonElement>();
@@ -395,6 +418,7 @@ export const HookTypes = (children: ProviderProps['children']): readonly unknown
         heading,
         formOptions,
         form,
+        summed,
         refuse,
         group,
         busy,
