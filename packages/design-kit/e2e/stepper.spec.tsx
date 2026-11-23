@@ -22,9 +22,9 @@ import { textSize } from './text-size.js';
  * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
  * value starting where a read-only field's words start and standing at the field's height, or at
  * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
- * button holding focus, focus kept off the page and an editable value as a stepper is taken down,
- * hidden pieces kept hidden by sheets read without :has(), an inline stepper's error above it and
- * its hint below it, the keyboard, and no audit findings in either theme.
+ * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
+ * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
+ * theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -638,7 +638,6 @@ const READ_ONLY = renderToStaticMarkup(
             inline
         />
         <StepperField id="bids" label="Bids" min={0} max={10} defaultValue={3} inline />
-        <StepperField id="gone" label="Gone" min={1} max={10} defaultValue={3} disabled />
     </main>
 );
 
@@ -691,11 +690,15 @@ test("lines a read-only stepper's value up with a read-only field's, at a field'
         expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
         expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
         // An inline stepper's value sits at its row's end, after its label, with no column of
-        // values to line up with, so a read-only one keeps an editable value's centered figures.
+        // values to line up with, so a read-only one keeps an editable value's centered figures
+        // and its height.
         const [inline, editable] = [page.locator('#tricks'), page.locator('#bids')];
         expect
             .soft((await box(inline)).width, `${at}, inline`)
             .toBeCloseTo((await box(editable)).width, 0);
+        expect
+            .soft((await box(inline)).height, `${at}, inline`)
+            .toBeCloseTo((await box(editable)).height, 0);
         expect
             .soft(Math.abs((await inkStart(page, inline)) - (await inkStart(page, editable))), at)
             .toBeLessThanOrEqual(1);
@@ -752,79 +755,26 @@ test('keeps the value and a focused button where they stood as the field turns r
     }
 });
 
-/** Attaches the steppers named, each through a signal of its own that `abortOf` aborts. */
-const ABORTABLE = `import { attachStepper } from './controls.js';
-const controls = {};
-for (const id of ['held', 'deals', 'gone']) {
-    controls[id] = new AbortController();
-    attachStepper(document.querySelector('#' + id).closest('.dk-stepper'), {
-        signal: controls[id].signal,
-    });
-}
-window.abortOf = (id) => controls[id].abort();
-window.ready = true;`;
-
-const abortOf = (page: Page, id: string): Promise<void> =>
-    page.evaluate((stepper) => {
-        (window as unknown as { abortOf: (id: string) => void }).abortOf(stepper);
-    }, id);
-
-test('hands focus to the value when a read-only stepper is taken down with a button focused', async ({
-    page,
-}) => {
-    await openReadOnly(page, { width: 1280, script: ABORTABLE });
-    const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
-    const held = page.locator('#held');
-    await raiseHeld.focus();
-    await held.evaluate((input: HTMLInputElement) => {
-        input.readOnly = true;
-    });
-    await expect(raiseHeld).toBeFocused();
-    await abortOf(page, 'held');
-    await expect(raiseHeld).toBeHidden();
-    await expect(held).toBeFocused();
-});
-
-test('keeps focus on a button of an editable or a disabled stepper taken down, until it leaves', async ({
-    page,
-}) => {
-    await openReadOnly(page, { width: 1280, script: ABORTABLE });
-    for (const [id, name] of [
-        ['deals', 'Raise Deals'],
-        ['gone', 'Raise Gone'],
-    ] as const) {
-        const raiseIt = page.getByRole('button', { name });
-        await raiseIt.focus();
-        await abortOf(page, id);
-        // Never on the body, and never on an editable value, which would open a phone's keyboard.
-        await expect.soft(raiseIt, id).toBeFocused();
-        await expect.soft(page.locator(`#${id}`), id).not.toBeFocused();
-        expect
-            .soft(await page.evaluate(() => document.activeElement === document.body), id)
-            .toBe(false);
-        await expect(
-            page.getByRole('button', { name: name.replace('Raise', 'Lower') })
-        ).toBeHidden();
-        // Hidden once focus leaves it, as a stepper taken down is.
-        await page.locator('#round').focus();
-        await expect.soft(raiseIt, id).toBeHidden();
-    }
-});
-
 test('keeps hidden pieces hidden and a value beside a focused button at the target, without :has()', async ({
     page,
 }) => {
     await openReadOnly(page, { width: 1280 });
     // The kit's sheets as a browser without :has() reads them, a selector naming it left unknown,
-    // which drops a rule it is in outside a forgiving list.
+    // which drops a rule it is in outside a forgiving list. Only the kit's part of the sheet served
+    // is swapped, so the page's own rules after it stay, and a page that loads the kit some other
+    // way fails here rather than testing nothing.
     await page.evaluate(
-        (sheets) => {
-            document.querySelector('link[href="/kit.css"]')?.remove();
-            const style = document.createElement('style');
-            style.textContent = sheets;
-            document.head.append(style);
+        async ([kit, withoutHas]) => {
+            const link = document.querySelector('link[href="/kit.css"]');
+            if (!link) throw new Error('expected the kit sheet linked as /kit.css');
+            const served = await (await fetch('/kit.css')).text();
+            if (!served.startsWith(kit))
+                throw new Error('expected the served sheet to open with the kit');
+            const swapped = document.createElement('style');
+            swapped.textContent = withoutHas + served.slice(kit.length);
+            link.replaceWith(swapped);
         },
-        KIT.replaceAll(':has(', ':-dk-unknown(')
+        [KIT, KIT.replaceAll(':has(', ':-dk-unknown(')] as const
     );
     // A read-only stepper's buttons, hidden by the stepper, drawn by the button's own display rule
     // unless the kit's rule for hidden holds.

@@ -3437,11 +3437,15 @@
      * A read-only value shown alone, once both buttons are hidden, takes a field's height at each
      * width from the field's own rules, and a field's inline padding, its figures starting where a
      * read-only field's words start, so a column of read-only values keeps one edge. An inline
-     * stepper's value sits at its row's end with no such column, so it keeps its centered figures.
-     * While a button keeps focus as the field turns read only, the value keeps its place beside it,
-     * and the hidden button keeps its room, by a rule after the rule for hidden.
+     * stepper's value sits at its row's end with no such column, so it keeps its centered figures
+     * and the target's height. While a button keeps focus as the field turns read only, the value
+     * keeps its place beside it, and the hidden button keeps its room, by a rule after the rule for
+     * hidden.
      */
-    :where(.dk-stepper-value:is(:not([readonly]), :disabled)) {
+    :where(
+        .dk-stepper-value:is(:not([readonly]), :disabled),
+        .dk-stepper-inline > .dk-stepper > .dk-stepper-value
+    ) {
         min-height: var(--dk-target);
     }
 

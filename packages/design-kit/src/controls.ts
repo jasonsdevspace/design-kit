@@ -1340,7 +1340,7 @@ const stepperParts = (
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
  * same message, on the page's status line when one is given. It takes the stepper's field or the
  * stepper, attaches each stepper once whichever it is given, runs on the options of its newest
- * holder, and returns what takes it down again, which hands focus on a button to the value first.
+ * holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1558,24 +1558,8 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(resetting);
         quiet();
         report(false);
-        // A button with focus hands it to a read-only value, which opens no keyboard, before it
-        // goes. Where the value is one a visitor types into or is disabled, the button stays until
-        // focus leaves it, unless the stepper is attached again meanwhile, so focus is never
-        // dropped and no keyboard opens unasked.
-        const focused = [down, up].find((button) => activeOf() === button);
-        const fixed = input.readOnly && !input.disabled;
-        if (focused && fixed) input.focus({ preventScroll: true });
-        for (const button of [down, up]) {
-            if (button !== focused || fixed) button.hidden = true;
-            else
-                button.addEventListener(
-                    'blur',
-                    () => {
-                        if (!attachedSteppers.has(stepper)) button.hidden = true;
-                    },
-                    { once: true }
-                );
-        }
+        down.hidden = true;
+        up.hidden = true;
     });
     torn.set = (next) => {
         // A page that takes the stepper's words to its own line leaves none on the stepper's,
