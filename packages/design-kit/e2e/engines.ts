@@ -65,6 +65,7 @@ export const FIREFOX: Engine = {
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     dialog: "Focus handed back to the dialog's opener, an SVG link too, by each engine's focus.",
     panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
+    form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
 };
 
 /**

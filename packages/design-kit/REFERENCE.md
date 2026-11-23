@@ -840,6 +840,14 @@ only in the part it attached. Fields not in error are marked `aria-invalid="fals
 attached, so a browser does not read an empty required field as invalid before anything is
 submitted.
 
+`attachForm` draws into the markup it finds, so a page lets it draw errors only in markup nothing
+will draw again, such as a page written by hand or the React components rendered to static HTML and
+attached from plain script. A form React still draws refuses through `useFormRefusal`, whose
+`invalid` hands the failures to the page to draw, since React writes a field's error, its id and the
+control's `aria-describedby` and `aria-invalid` again whenever the field's props change, and would
+find the kit's words and marks in what it holds as its own. `attachForm` drawing its own errors in a
+form React still draws, as from an effect, is not supported.
+
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
 "Enter an email address like name@example.com here." for a malformed address, "Enter the full web
