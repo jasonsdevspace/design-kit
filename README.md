@@ -396,7 +396,8 @@ options rejected, what the choice costs, and the test behind it.
     A stepper's buttons and value take their height from the rules every button and field take
     theirs from, so a row's labels stand level on a wide page as on a phone, at the cost of a
     stepper 8 pixels shorter on a wide page outside an app, where a tall stepper keeps the larger
-    target.
+    target. Leaving it the target tall, a row that lines its fields up by their labels, a height of
+    the stepper's own and buttons as wide as they are tall were turned down.
 
 </details>
 

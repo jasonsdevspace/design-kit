@@ -23,9 +23,9 @@ height as well as losing its buttons, and an inline one kept the target by a rul
   square of that size that fits inside the target, so a target wide enough and too short does not
   meet it by its size.
 - **The larger target is the further level.** Success criterion 2.5.5, at level AAA, asks for 44 by
-  44 CSS pixels. The kit holds its controls to it on a phone and in an app, where a finger presses
-  them, and to a field's 36 pixels on a wide page, where a pointer does, which the accessibility
-  notes say.
+  44 CSS pixels. The kit holds its controls to it at 48rem wide or less and in an app, and to a
+  field's 36 pixels on a wider page, which the accessibility notes say. The switch reads the
+  page's width and not the pointer, so a wide screen pressed by a finger gets the field's height.
 
 ## Options
 
@@ -44,22 +44,27 @@ taller than a button beside it everywhere else.
 tab bar page and their dialogs written again for the stepper. Rejected, as a second copy of the
 switch that would have to follow the first every time it changes.
 
-**D. The stepper sets no height, so its parts take the switch.** A stepper's button is a button and
+**D. The buttons as wide as they are tall.** On a wide page a button would be a square of the
+field's height, 36 pixels, as a quiet Close is. Rejected. The stepper would change width at 48rem,
+and a press would lose 8 pixels of width for nothing gained in the row.
+
+**E. The stepper sets no height, so its parts take the switch.** A stepper's button is a button and
 its value is a field. With the stepper's own least heights taken away, each takes the height the
 switch gives every button and field.
 
 ## Decision
 
-Option D. A stepper's buttons and its value set no height. On a page wider than 48rem, in a panel
+Option E. A stepper's buttons and its value set no height. On a page wider than 48rem, in a panel
 and in a dialog there too, they are `--dk-field-height` tall, and at 48rem wide or less, in an app's
 frame, on a page that ends in a tab bar and in a dialog on either, `--dk-target` tall, by the rules
 every button and field take their height from. A tall stepper sets the larger target for its
 buttons and its value, as before, at every width.
 
 The buttons keep the target's width at both heights, 44 by 36 pixels on a wide page. The width does
-not follow the height, for two reasons. The press area stays as generous as the height allows, well
-over the 24 pixels criterion 2.5.8 asks each way. And the stepper keeps one width at every screen
-width, so the lengths record 25 gives for a row of fields hold.
+not follow the height, for three reasons. The press area stays as generous as the height allows,
+well over the 24 pixels criterion 2.5.8 asks each way. The stepper does not change width as a
+window crosses 48rem. And a button 44 pixels wide stands nearer the width of the value between
+them, 51 pixels for two figures, than a square of 36 would.
 
 A stepper's button keeps no padding. A button's padding above and below its words keeps room for a
 busy button's dots and for words that wrap, and a stepper's button is never busy and holds one
@@ -68,11 +73,12 @@ figure. With the padding, the figure's line stood the button 2 pixels over a fie
 ## Consequences
 
 - On a page wider than 48rem outside an app's frame, a stepper is 8 pixels shorter than it was, and
-  what follows it moves up by as much. The changelog says so under Upgrading. A page that wants the
-  larger target there asks for a tall stepper.
+  what follows it moves up by as much. The changelog says so under Upgrading. Nothing gives a
+  stepper the target's 44 pixels there. A page that wants more asks for a tall stepper, 56 pixels
+  with its value at the heading size.
 - In a `dk-fields` row a stepper's label and its control stand level with those of the fields beside
-  it at every width. A tall stepper stands its label above theirs, 20 pixels on a wide page, which
-  is the page's choice.
+  it at every width. A tall stepper stands its label above theirs, 20 pixels on a wide page and 12
+  on a phone, as it did before, which is the page's choice.
 - A read-only stepper is as tall as one that can be changed, on a wide page too, so turning a
   stepper read only changes its row and never its height. An inline stepper needs no rule of its own
   for its height.
@@ -91,7 +97,9 @@ The paths are in `packages/design-kit`.
   panel and in a dialog. It finds them 44 pixels tall and level at 390 and at 768 wide, in an app's
   frame, on a page that ends in a tab bar and in a dialog on either at 1280. It finds a tall stepper
   56 pixels both ways at 390 and 1280, and an inline stepper, a read-only inline one and a read-only
-  one at the field's height at each width.
+  one at the height a field has at each width. Beside a select and beside a field with an action it
+  finds the stepper as tall as the control at 1280 and 390, and level with it wherever the action's
+  button has not moved under its control.
 - `e2e/stepper.spec.tsx` finds a button the target wide, at the field's height at 1280 and the
   target's at 390, and a tall one at the larger target at both, a read-only value as tall as a
   read-only field on a page and in an app, and a value beside a button that keeps focus as tall as

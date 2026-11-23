@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { InputField, StepperField } from '../src/react.js';
+import { InputField, SelectField, StepperField } from '../src/react.js';
 import { servePage } from './page.js';
 
 /*
@@ -249,3 +249,52 @@ test("draws an inline stepper and a read-only value by the field's switch too", 
         stands(await drawn(page, 'cards'), height, `a read-only stepper at ${at}`, { buttons: 0 });
     }
 });
+
+for (const [name, neighbor] of [
+    [
+        'a select',
+        <SelectField id="player" label="Player">
+            <option>Ana</option>
+            <option>Ben</option>
+        </SelectField>,
+    ],
+    [
+        'a field with an action',
+        <InputField
+            id="player"
+            label="Player"
+            action={
+                <button type="button" className="dk-button">
+                    Add
+                </button>
+            }
+        />,
+    ],
+] as const) {
+    test(`stands a stepper as tall as ${name} beside it in a row, on a wide page and on a phone`, async ({
+        page,
+    }) => {
+        for (const [width, height] of [
+            [1280, 36],
+            [390, 44],
+        ] as const) {
+            const at = `${name} at ${String(width)}`;
+            await open(
+                page,
+                width,
+                onPage(
+                    <div className="dk-fields">
+                        <StepperField id="bid" label="Bid" min={0} max={10} defaultValue={3} />
+                        {neighbor}
+                    </div>
+                )
+            );
+            const found = await drawn(page);
+            expect.soft(found.field, at).toBeCloseTo(height, 0);
+            stands(found, height, at);
+            // On a phone an action's button moves under its control, so that field stands taller
+            // and the row, lined up along its foot, sets its label lower. The heights still match.
+            if (width === 1280 || name === 'a select') level(found, at);
+        }
+    });
+}
