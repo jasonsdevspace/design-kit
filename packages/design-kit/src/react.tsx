@@ -530,7 +530,7 @@ const Field = ({
     readonly children: ReactNode;
 }) => (
     <div className={spaced('dk-field', className)}>
-        <label className="dk-field-label" htmlFor={field.id}>
+        <label className="dk-field-label" htmlFor={field.id} id={`${field.id}-label`}>
             <Labeled parts={parts} />
         </label>
         <FieldText parts={parts} field={field} />

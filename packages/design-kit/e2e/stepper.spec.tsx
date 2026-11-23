@@ -1259,9 +1259,109 @@ test.describe('taken down with a button focused', () => {
                 );
                 expect(ring['outline-style'], 'the ring').not.toBe('none');
                 expect(pixels(ring['outline-width']), 'the ring').toBeGreaterThan(0);
+                const group = page.locator(`.dk-stepper:has(#${stepper.id})`);
+                if (stepper.readOnly) {
+                    // Focus on the value leaves the stepper as the page drew it.
+                    await expect(group).not.toHaveAttribute('tabindex');
+                    await expect(group).not.toHaveAttribute('role');
+                } else {
+                    // A screen reader hears the field's name and its value, not the value alone.
+                    await expect(group).toHaveRole('group');
+                    await expect(group).toHaveAccessibleName(`${stepper.label} 5`);
+                }
             });
         }
     }
+
+    test('names the stepper from the words of a label with no id, with its value', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.locator('label[for="count"]').evaluate((label) => {
+            label.removeAttribute('id');
+        });
+        await takeDown(page, 'count', 'signal');
+        const group = page.locator('.dk-stepper:has(#count)');
+        await expect(group).toBeFocused();
+        await expect(group).toHaveRole('group');
+        await expect(group).toHaveAccessibleName('Count 5');
+    });
+
+    test('goes on to the stepper where a read-only value refuses focus', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[0]);
+        await page.evaluate(async () => {
+            const { held } = window as unknown as Held;
+            const value = document.querySelector<HTMLElement>('#kept');
+            if (value) value.style.visibility = 'hidden';
+            held['kept']?.controller.abort();
+            await Promise.resolve();
+        });
+        const group = page.locator('.dk-stepper:has(#kept)');
+        await expect(group).toBeFocused();
+        await expect(group).toHaveAttribute('tabindex', '-1');
+        await expect(group).toHaveRole('group');
+    });
+
+    test("keeps a page's own tabindex on the stepper it hands focus to", async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        const group = page.locator('.dk-stepper:has(#count)');
+        await group.evaluate((stepper: HTMLElement) => {
+            stepper.tabIndex = 0;
+        });
+        await takeDown(page, 'count', 'signal');
+        await expect(group).toBeFocused();
+        await expect(group).toHaveAttribute('tabindex', '0');
+    });
+
+    test('takes away the tabindex, role and name it gave once the stepper is attached again', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await takeDown(page, 'count', 'signal');
+        const group = page.locator('.dk-stepper:has(#count)');
+        await expect(group).toHaveRole('group');
+        // Focus moved on first, as a visitor moves on before the page draws the stepper again.
+        await page.locator('#next').focus();
+        await page.evaluate(() => {
+            const { kit } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
+            if (stepper) kit.attachStepper(stepper);
+        });
+        for (const name of ['tabindex', 'role', 'aria-labelledby', 'aria-label'])
+            await expect(group, name).not.toHaveAttribute(name);
+        await expect(page.getByRole('button', { name: 'Raise Count' })).toBeVisible();
+    });
+
+    test('keeps the buttons of a stepper a page attaches afresh as focus comes to it', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.evaluate(async () => {
+            const { kit, held } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
+            if (!stepper) throw new Error('expected the stepper for count');
+            // A page that attaches a stepper as focus comes into it.
+            stepper.addEventListener('focusin', () => kit.attachStepper(stepper), { once: true });
+            held['count']?.controller.abort();
+            await Promise.resolve();
+        });
+        const raiseCount = page.getByRole('button', { name: 'Raise Count' });
+        // Focus stays on the stepper, which keeps what it was given while it has focus.
+        await expect(page.locator('.dk-stepper:has(#count)')).toBeFocused();
+        await expect(raiseCount).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Lower Count' })).toBeVisible();
+        await press(raiseCount, browserName);
+        await expect(page.locator('#count')).toHaveValue('6');
+    });
 
     for (const stepper of TAKEN_DOWN) {
         test(`keeps focus on ${stepper.kind} stepper taken down as the window loses focus and gets it back`, async ({

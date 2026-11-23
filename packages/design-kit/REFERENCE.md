@@ -543,7 +543,7 @@ not moved there.
 
 ```html
 <div class="dk-field">
-    <label class="dk-field-label" for="email">Email</label>
+    <label class="dk-field-label" for="email" id="email-label">Email</label>
     <p class="dk-field-hint" id="email-hint">Where the receipt goes</p>
     <p class="dk-field-error" id="email-error">
         <span class="dk-visually-hidden">Error: </span>
@@ -558,14 +558,14 @@ not moved there.
     />
 </div>
 <div class="dk-field">
-    <label class="dk-field-label" for="sort">Sort by</label>
+    <label class="dk-field-label" for="sort" id="sort-label">Sort by</label>
     <select class="dk-select" id="sort">
         <option value="">Choose an order</option>
         <option value="price">Price</option>
     </select>
 </div>
 <div class="dk-field">
-    <label class="dk-field-label" for="note">Note</label>
+    <label class="dk-field-label" for="note" id="note-label">Note</label>
     <p class="dk-field-hint" id="note-hint">Shown to the picker</p>
     <textarea class="dk-textarea" rows="3" id="note" aria-describedby="note-hint"></textarea>
 </div>
@@ -604,12 +604,12 @@ than centered, and it resizes in height alone, since a wider one would push its 
 
 ```html
 <div class="dk-field">
-    <label class="dk-field-label" for="rule-name"
+    <label class="dk-field-label" for="rule-name" id="rule-name-label"
         >Rule name <span class="dk-field-mark" aria-hidden="true">(required)</span></label
     ><input class="dk-input" required="" id="rule-name" aria-required="true" />
 </div>
 <div class="dk-field">
-    <label class="dk-field-label" for="rule-note"
+    <label class="dk-field-label" for="rule-note" id="rule-note-label"
         >Note <span class="dk-field-mark">(optional)</span></label
     ><input class="dk-input" id="rule-note" />
 </div>
@@ -637,16 +637,16 @@ color and is told apart by its words.
 
 ```html
 <div class="dk-field">
-    <label class="dk-field-label" for="round">Round</label>
+    <label class="dk-field-label" for="round" id="round-label">Round</label>
     <input class="dk-input" readonly="" id="round" value="Round 3 of 10" />
 </div>
 <div class="dk-field">
-    <label class="dk-field-label" for="game">Game</label>
+    <label class="dk-field-label" for="game" id="game-label">Game</label>
     <input class="dk-input" readonly="" id="game" value="Wizard" />
     <input type="hidden" name="game" value="wizard" />
 </div>
 <div class="dk-field">
-    <label class="dk-field-label" for="cards">Cards each</label>
+    <label class="dk-field-label" for="cards" id="cards-label">Cards each</label>
     <p class="dk-field-error dk-stepper-range" id="cards-range" hidden="">
         <span class="dk-visually-hidden">Error: </span>
         Enter a whole number from 1 to 10.
@@ -1415,35 +1415,35 @@ the markup drew it, a control already attached keeps the options it had, and wha
 does nothing.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
-again returns what its first attach returned, as [decision 0022](https://github.com/jasonsdevspace/d
-esign-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
-and [decision 0023](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0023-a-con
-trol-outlives-a-takedown-and-an-attach-in-one-task.md) set out. Once every signal holding a control
-has aborted, the control is taken down a microtask later, unless the same element is attached again
-by then, which keeps the control as it was, with its state, such as a busy wait, a form's check and
-its errors, an open dialog or a shown toast. So a page that aborts and attaches the same element in
-one task keeps its control, and one that attaches after a microtask starts afresh. Until the
-takedown lands, the control is whole, so a call in the abort's own task, such as a panel's `set`,
-still acts, and a dialog left open keeps the page behind it inert. The function an attach returns
-takes the control down at once, whoever holds it, so a page that means to start afresh within the
-task calls it. A call with no signal holds the control for the page's life where nothing else holds
-it, an attach in the abort's own task among them, is filed under that hold where the page already
-holds the control without a signal, and elsewhere speaks for the newest holder without holding. An
-attach made from inside a control's own takedown, as a dialog's close handler that attaches it
-again, gets a control of its own. A page that passes a fresh signal it never aborts on every call
-keeps each one as a holder, so it aborts what it no longer needs. The kit hands focus back as a
-toast, a dialog, a panel or a stepper is taken down. A toast, a dialog or a panel hands it back only
-where focus is in it, inside a shadow tree within it too, such as on a page's own button component
-in a toast or a dialog's form, or where focus is on the body or nowhere and the piece had it as it
-left, a dialog also where focus is still on what the browser handed it to as the dialog closed, and
-a stepper only where focus is on one of the buttons it hides, so focus a page sets in the abort's
-own task stays, and a `moveFocus` asked in that task still lands. A control slotted into a piece
-drawn inside a shadow root counts as in the piece. Each place a piece hands focus back to can be any
-HTML or SVG element that takes focus, such as a link in an inline chart, and one that is hidden,
-inert or disabled is passed over for the next. A control marked off with `aria-disabled` still takes
-focus, so it is passed over only where a piece checks for it, as a panel does for its buttons. The
-toast and the dialog hand focus to it, though a toast does not follow a frame on to a control marked
-off inside it.
+again returns what its first attach returned, as [decision
+0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
+and [decision
+0023](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md)
+set out. Once every signal holding a control has aborted, the control is taken down a microtask
+later, unless the same element is attached again by then, which keeps the control as it was, with
+its state, such as a busy wait, a form's check and its errors, an open dialog or a shown toast. So a
+page that aborts and attaches the same element in one task keeps its control, and one that attaches
+after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
+abort's own task, such as a panel's `set`, still acts, and a dialog left open keeps the page behind
+it inert. The function an attach returns takes the control down at once, whoever holds it, so a page
+that means to start afresh within the task calls it. A call with no signal holds the control for the
+page's life where nothing else holds it, an attach in the abort's own task among them, is filed
+under that hold where the page already holds the control without a signal, and elsewhere speaks for
+the newest holder without holding. An attach made from inside a control's own takedown, as a
+dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
+signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
+needs. The kit hands focus back as a toast, a dialog, a panel or a stepper is taken down. A toast, a
+dialog or a panel hands it back only where focus is in it, inside a shadow tree within it too, such
+as on a page's own button component in a toast or a dialog's form, or where focus is on the body or
+nowhere and the piece had it as it left, and a dialog also where focus is still on what the browser
+handed it to as the dialog closed. A stepper hands it back only where focus is on one of the buttons
+it hides. So focus a page sets in the abort's own task stays, and a `moveFocus` asked in that task
+still lands. A control slotted into a piece drawn inside a shadow root counts as in the piece. Each
+place a piece hands focus back to can be any HTML or SVG element that takes focus, such as a link in
+an inline chart, and one that is hidden, inert or disabled is passed over for the next. A control
+marked off with `aria-disabled` still takes focus, so it is passed over only where a piece checks
+for it, as a panel does for its buttons. The toast and the dialog hand focus to it, though a toast
+does not follow a frame on to a control marked off inside it.
 
 As the kit hands focus back, it tries each place in turn and counts one as taken where focus moves
 onto it or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
@@ -1818,18 +1818,19 @@ panel hands focus back by. A target or a fallback, here and for `focusOnArrival`
 HTML or SVG element that takes focus, such as a link in an inline chart. Focus a visitor has moved
 since the request is left where they put it: focus is free only while it is where it was when asked,
 or on the page's body, as it is once the control that had it is removed, or where the kit has handed
-it back since, as a toast, a dialog or a panel does as it closes, or on what the browser hands it to
-as a dialog closes, until the dialog's close is handled. A request still waiting a second later, as
-in a tab out of sight, is dropped, so focus does not jump when the visitor comes back. Each request
-is new, so the same control asked for twice is focused twice, and the function `moveFocus` returns
-calls a request off before it lands, as aborting the `signal` it is given does. A request asked as
-its component unmounts is given no signal that unmount aborts, so it still lands. An id is looked
-for in the root where focus was when the request was made, so a widget drawn inside a shadow root
-finds its own control, never an element of the page around it that shares the id, and the form's
-refusal, a stepper and progress find the errors, hints and labels they read in their own element's
-root. A panel and its button are found from the page's document, which the panel listens on.
-`activeOf()` from `./controls` returns what has focus, followed into each shadow root that holds it,
-as a request reads where focus was, for a page that asks later and passes `from` itself.
+it back since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down,
+or on what the browser hands it to as a dialog closes, until the dialog's close is handled. A
+request still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump
+when the visitor comes back. Each request is new, so the same control asked for twice is focused
+twice, and the function `moveFocus` returns calls a request off before it lands, as aborting the
+`signal` it is given does. A request asked as its component unmounts is given no signal that unmount
+aborts, so it still lands. An id is looked for in the root where focus was when the request was
+made, so a widget drawn inside a shadow root finds its own control, never an element of the page
+around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
+and labels they read in their own element's root. A panel and its button are found from the page's
+document, which the panel listens on. `activeOf()` from `./controls` returns what has focus,
+followed into each shadow root that holds it, as a request reads where focus was, for a page that
+asks later and passes `from` itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -2784,7 +2785,7 @@ to raise it after.
 
 ```html
 <div class="dk-field dk-stepper-inline">
-    <label class="dk-field-label" for="players">Players</label>
+    <label class="dk-field-label" for="players" id="players-label">Players</label>
     <p class="dk-field-error dk-stepper-range" id="players-range" hidden="">
         <span class="dk-visually-hidden">Error: </span>
         Enter a whole number from 2 to 8.
@@ -2835,10 +2836,15 @@ limit, as "8, the most", or on the last value a step reaches short of the greate
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
 or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
 `signal`. A stepper taken down while one of its buttons has focus hands focus to its value where the
-value is read only, and otherwise to the stepper itself, so a keyboard user keeps their place and an
-editable value does not open a phone's keyboard. The stepper keeps the `tabindex="-1"` it is given
-then, which takes focus from a script but leaves it out of the tab order, and shows the kit's focus
-ring while it has focus.
+value is read only and enabled, and otherwise, or where the value refuses focus, to the stepper
+itself, so a keyboard user keeps their place and an editable value does not open a phone's keyboard.
+A stepper handed focus this way keeps the `tabindex="-1"` it is given, which lets a script focus it
+but leaves it out of the tab order, and draws the kit's focus ring where the browser shows focus.
+Where its field has a label, it is also given the role of a group, named by the label and the value,
+as "Players 4", through the label's id where the label has one, as the React field's label does with
+the field's id and `-label`, and from the label's words otherwise. A tabindex, a role or a name the
+page gave the stepper itself is left as it is, and what the kit gave is taken away as the stepper is
+attached again.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -3583,7 +3589,7 @@ closes it on Escape and makes the page behind it inert.
         Round options
     </h2>
     <div class="dk-field">
-        <label class="dk-field-label" for="dealt">Cards dealt</label>
+        <label class="dk-field-label" for="dealt" id="dealt-label">Cards dealt</label>
         <select class="dk-select" id="dealt">
             <option value="10">Ten each</option>
             <option value="7">Seven each</option>

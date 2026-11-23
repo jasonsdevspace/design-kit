@@ -63,12 +63,12 @@ const holds = (place: Element, node: Node | null): boolean => {
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
  * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
- * refuses it focus, as a stepper's disabled value is for the stepper itself. A control marked off
- * is left out only where a caller checks for it, as a panel does for its buttons and a focus
- * request for its target, so the toast and the dialog hand focus to one. Focus that moves onto a
- * place or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
- * delegates focus or a widget that forwards it, counts as taken, as does a place that has focus
- * already, while a place that refuses focus is passed over though focus is inside it. Where a
+ * refuses it focus, as a stepper's disabled value is passed over for the stepper itself. A control
+ * marked off is left out only where a caller checks for it, as a panel does for its buttons and a
+ * focus request for its target, so the toast and the dialog hand focus to one. Focus that moves
+ * onto a place or inside it, in a shadow tree it holds or on a control slotted into it too, as a
+ * host that delegates focus or a widget that forwards it, counts as taken, as does a place that has
+ * focus already, while a place that refuses focus is passed over though focus is inside it. Where a
  * page's own listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
@@ -92,8 +92,8 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
  * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
  * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
  * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. The
- * toast, the dialog and the panels hand focus back by this one rule, and the stepper by a narrower
- * one, only where focus is on one of the buttons it hides.
+ * toast, the dialog and the panels hand focus back by this one rule. The stepper does not use it,
+ * and hands focus back only where focus is on one of the buttons it hides.
  */
 const mayHandBack = (piece: Element, had: boolean): boolean => {
     const active = focusedNow();
@@ -1248,6 +1248,51 @@ export type StepperOptions = AttachOptions & {
 const attachedSteppers = new WeakMap<HTMLElement, Kept<() => void, StepperOptions>>();
 
 /**
+ * The attributes the kit gave each stepper it handed focus to as it was taken down, which its next
+ * attach takes away, so a page's own are never touched.
+ */
+const gaveSteppers = new WeakMap<HTMLElement, readonly string[]>();
+
+/**
+ * Readies a stepper to hold focus as its takedown hands focus to it: a tabindex of -1 where the
+ * page gave it none, and where its field has a label and the page gave it no role or name of its
+ * own, a group's role named by the label and the value, so a screen reader hears the field's name
+ * and not the value alone. The name comes from the label's id where it has one, and otherwise from
+ * its words.
+ */
+const holdFocus = (stepper: HTMLElement, input: HTMLInputElement) => {
+    const label = input.labels?.[0];
+    const words = label?.textContent.trim();
+    const given: [string, string][] = stepper.hasAttribute('tabindex') ? [] : [['tabindex', '-1']];
+    if (
+        words &&
+        !['role', 'aria-label', 'aria-labelledby'].some((name) => stepper.hasAttribute(name))
+    )
+        given.push(
+            ['role', 'group'],
+            label?.id && input.id
+                ? ['aria-labelledby', `${label.id} ${input.id}`]
+                : ['aria-label', `${words} ${input.value}`]
+        );
+    for (const [name, value] of given) stepper.setAttribute(name, value);
+    gaveSteppers.set(
+        stepper,
+        given.map(([name]) => name)
+    );
+};
+
+/**
+ * Takes away what the kit gave a stepper as its last takedown handed it focus, unless focus is on
+ * it still, as where a page attaches it again as focus comes to it, which keeps it for a later
+ * attach to take away.
+ */
+const letGo = (stepper: HTMLElement) => {
+    if (activeOf() === stepper) return;
+    for (const name of gaveSteppers.get(stepper) ?? []) stepper.removeAttribute(name);
+    gaveSteppers.delete(stepper);
+};
+
+/**
  * A field's description with a stepper's own parts in their place: the error while it shows, which
  * names the range itself, or else the range in words when there are some, after the page's own.
  */
@@ -1341,12 +1386,14 @@ const stepperParts = (
  * while the error is shown by the error alone, which names the range itself. A press that lands on
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
  * same message, on the page's status line when one is given. Taken down while one of its buttons
- * has focus, it hands focus to its value where the value is read only, which opens no keyboard, and
- * otherwise to the stepper itself, which keeps a tabindex of -1 and shows the focus ring, so focus
- * never falls to the page and an editable value opens no phone's keyboard, while focus the page has
- * moved elsewhere stays. It takes the stepper's field or the stepper, attaches each stepper once
- * whichever it is given, runs on the options of its newest holder, and returns what takes it down
- * again.
+ * has focus, it hands focus to its value where the value is read only and enabled, and otherwise,
+ * or where the value refuses focus, to the stepper itself, since an editable value would open a
+ * phone's keyboard. The stepper then keeps a tabindex of -1, where the page gave it none, and is a
+ * group named by its field's label and value, where its field has a label and the page gave it no
+ * role or name, and it draws the focus ring where the browser shows focus. What the kit gave is
+ * taken away as it is attached again, and focus the page has moved elsewhere stays. It takes the
+ * stepper's field or the stepper, attaches each stepper once whichever it is given, runs on the
+ * options of its newest holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1358,6 +1405,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     if (options?.signal?.aborted) return () => undefined;
     const already = join(attachedSteppers, stepper, options);
     if (already) return already;
+    letGo(stepper);
     let chosen: StepperOptions = options ?? {};
     const parts = stepperParts(field);
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
@@ -1564,15 +1612,22 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(resetting);
         quiet();
         report(false);
-        // A button with focus goes, so focus goes first to the value where it is read only, which
-        // opens no keyboard, or to the stepper, and focus the page has moved elsewhere stays.
+        // A button with focus is about to hide, so focus goes first to a read-only value, which
+        // opens no keyboard, or else to the stepper, which takes a tabindex, a group's role and a
+        // name from the field's label and value only where focus goes to it. Focus the page has
+        // moved elsewhere, as the value is tried, stays.
         const at = activeOf();
         if (at === down || at === up) {
-            if (!input.readOnly || input.disabled) stepper.tabIndex = -1;
-            handBack(input.readOnly ? input : null, stepper);
+            if (!handBack(input.readOnly && !input.disabled ? input : null) && activeOf() === at) {
+                holdFocus(stepper, input);
+                handBack(stepper);
+            }
         }
-        down.hidden = true;
-        up.hidden = true;
+        // Left as they are where a page attached the stepper afresh as focus came to it.
+        if (attachedSteppers.get(stepper)?.down === torn) {
+            down.hidden = true;
+            up.hidden = true;
+        }
     });
     torn.set = (next) => {
         // A page that takes the stepper's words to its own line leaves none on the stepper's,

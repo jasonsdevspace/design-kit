@@ -424,7 +424,7 @@ describe('the field', () => {
 
     it('ties a label to the control, and draws nothing it was not given', () => {
         expect(renderToStaticMarkup(<InputField id="email" label="Email" />)).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="email" id="email-label">Email</label>' +
                 '<input class="dk-input" id="email"/></div>'
         );
     });
@@ -441,7 +441,7 @@ describe('the field', () => {
                 />
             )
         ).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="search">Search the products</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="search" id="search-label">Search the products</label>' +
                 '<div class="dk-field-action"><input class="dk-input" type="search" id="search" name="q"/>' +
                 '<button type="submit" class="dk-button">Search</button></div></div>'
         );
@@ -452,7 +452,7 @@ describe('the field', () => {
                 </SelectField>
             )
         ).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="sort">Sort by</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="sort" id="sort-label">Sort by</label>' +
                 '<div class="dk-field-action"><select class="dk-select" id="sort">' +
                 '<option value="price">Price</option></select>' +
                 '<button type="button" class="dk-button">Apply</button></div></div>'
@@ -464,7 +464,7 @@ describe('the field', () => {
             expect(
                 renderToStaticMarkup(<InputField id="email" label="Email" action={action} />)
             ).toBe(
-                '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+                '<div class="dk-field"><label class="dk-field-label" for="email" id="email-label">Email</label>' +
                     '<input class="dk-input" id="email"/></div>'
             );
         }
@@ -489,7 +489,7 @@ describe('the field', () => {
             <InputField id="email" label="Email" hint="Where the receipt goes" />
         );
         expect(hinted).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="email" id="email-label">Email</label>' +
                 '<p class="dk-field-hint" id="email-hint">Where the receipt goes</p>' +
                 '<input class="dk-input" id="email" aria-describedby="email-hint"/></div>'
         );
@@ -502,7 +502,7 @@ describe('the field', () => {
             />
         );
         expect(wrong).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="email">Email</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="email" id="email-label">Email</label>' +
                 '<p class="dk-field-hint" id="email-hint">Where the receipt goes</p>' +
                 '<p class="dk-field-error" id="email-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Enter an email</p>' +
@@ -587,7 +587,7 @@ describe('the field', () => {
                 />
             )
         ).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="note">Note</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="note" id="note-label">Note</label>' +
                 '<p class="dk-field-hint" id="note-hint">Shown to the picker</p>' +
                 '<p class="dk-field-error" id="note-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Write a note</p>' +
@@ -612,7 +612,7 @@ describe('the field', () => {
                 </SelectField>
             )
         ).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="sort">Sort by</label>' +
+            '<div class="dk-field"><label class="dk-field-label" for="sort" id="sort-label">Sort by</label>' +
                 '<p class="dk-field-error" id="sort-error">' +
                 '<span class="dk-visually-hidden">Error: </span>Pick one</p>' +
                 '<select class="dk-select" id="sort" aria-describedby="sort-error"' +
@@ -1120,7 +1120,7 @@ describe('the status provider', () => {
 describe('a field marked required or optional', () => {
     it('hides a required mark from a screen reader, with its space outside it, and marks the control', () => {
         expect(renderToStaticMarkup(<InputField id="n" label="Name" mark="required" />)).toBe(
-            '<div class="dk-field"><label class="dk-field-label" for="n">Name ' +
+            '<div class="dk-field"><label class="dk-field-label" for="n" id="n-label">Name ' +
                 '<span class="dk-field-mark" aria-hidden="true">(required)</span></label>' +
                 '<input class="dk-input" id="n" aria-required="true"/></div>'
         );
