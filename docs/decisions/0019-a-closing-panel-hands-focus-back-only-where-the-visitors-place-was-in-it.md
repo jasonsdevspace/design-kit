@@ -112,7 +112,10 @@ it and the drop-in rule has the kit do it.
   UI's popover restore focus without scrolling, since a panel sits in the page's flow and its
   button may be off screen.
 - The fallback after the buttons passes over anything with a tabindex of -1, so an open panel
-  after the one closing does not take focus in its place.
+  after the one closing does not take focus in its place. It is the one step that reads every
+  element of the page that takes focus, so it is looked for only once the place a link went to and
+  every button has refused focus, inside the same walk, and a close whose button takes focus
+  searches nothing.
 - TalkBack and VoiceOver on iOS are walked on a device before a release that changes this, since a
   focusable panel may be read as one stop, which no browser test shows.
 
@@ -130,7 +133,9 @@ The path is in `packages/design-kit`.
   any panel leaving it unfocused, so the tests above test Safari's way. Firefox sends Shift and Tab
   from a panel a press focused to the page's body, so in the case where the visitor goes back into
   the panel after a press outside, the test focuses the link itself there, and still finds focus
-  handed to the button as the panel closes.
+  handed to the button as the panel closes. It counts the searches of the whole page a close makes,
+  none where the button takes focus and one where every button is off, and finds a key that is not
+  Escape having its path read no more often with panels attached than with none.
 - `e2e/teardown.spec.tsx`, in Chromium, WebKit and Firefox, closes a panel by Escape and by its
   Close alike once the button that opened it is let go, with focus on the first attached button and
   the button let go marked collapsed, by Escape once its button is drawn again, the only one among

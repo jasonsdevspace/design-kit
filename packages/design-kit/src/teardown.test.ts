@@ -397,6 +397,24 @@ describe('a teardown with several holders', () => {
         expect(registry.has(element)).toBe(false);
     });
 
+    it('gives a join under a signal already aborted what the attach names, and holds nothing', async () => {
+        const registry = new WeakMap<object, Kept<() => void>>();
+        const element = {};
+        const idle = () => undefined;
+        // Nothing attached, so the attach goes on to look for its parts, whatever the signal.
+        expect(join(registry, element, { signal: AbortSignal.abort() }, idle)).toBeUndefined();
+        const page = new AbortController();
+        const down = teardown(page.signal);
+        const handle = keep(registry, element, down, down.stop);
+        expect(join(registry, element, { signal: AbortSignal.abort() }, idle)).toBe(idle);
+        expect(join(registry, element, {}, idle)).toBe(handle);
+        // The aborted signal held nothing, so the control goes with the one signal that held it.
+        page.abort();
+        await Promise.resolve();
+        expect(registry.has(element)).toBe(false);
+        expect(join(registry, element, { signal: AbortSignal.abort() }, idle)).toBeUndefined();
+    });
+
     it("keeps an older holder's options through a later call from it that gives none", async () => {
         type Options = { readonly name: string };
         const older = new AbortController();

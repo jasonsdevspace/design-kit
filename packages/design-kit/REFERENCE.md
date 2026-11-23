@@ -1539,16 +1539,20 @@ same markup and gets the same behavior.
 The theme switch, the copy button, the status line, the toast, a form's check, a panel's button, the
 stepper, a table's frame, a group the arrow keys move through, a busy button, progress and the
 dialog take an `AbortSignal` as `signal` in their options, as `addEventListener` does. `moveFocus`
-takes one too, which calls off a request not yet landed, as the function `moveFocus` returns does,
-and the rest of this section covers the attaches. The status line, the toast, a form's check and the
-dialog return what says, shows, refuses or opens rather than what takes them down, so the signal
-alone takes them down: the line is let go, the toast's message is dismissed as its Close dismisses
-it, and an open dialog closes with focus handed back to what opened it, and what each returned does
-nothing after. The others return a function that takes them down. Once a control is taken down,
-nothing it started acts, such as a copy the clipboard answers late, and calling that function or
-aborting a signal again does nothing. A signal already aborted does nothing: the control stays as
-the markup drew it, a control already attached keeps the options it had, and what the attach returns
-does nothing.
+and `focusOnArrival` take one too, which calls off a request not yet landed, as the function each
+returns does, and the rest of this section covers the attaches. The status line, the toast, a form's
+check and the dialog return what says, shows, refuses or opens rather than what takes them down, so
+the signal alone takes them down: the line is let go, the toast's message is dismissed as its Close
+dismisses it, and an open dialog closes with focus handed back to what opened it, and what each
+returned does nothing after. The others return a function that takes them down. Once a control is
+taken down, nothing it started acts, such as a copy the clipboard answers late, and calling that
+function or aborting a signal again does nothing. A signal already aborted does nothing: the control
+stays as the markup drew it, a control already attached keeps the options it had, and what the
+attach returns does nothing. A part a control cannot work without is looked for at the first attach,
+before the signal is read, so markup missing one, such as a stepper with no buttons or a panel's
+button with no `aria-controls`, throws under a signal already aborted as it does under any other. A
+control already attached is handed back as it is, so attaching it again after its markup has lost a
+part returns the control and throws nothing.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision
@@ -1900,6 +1904,10 @@ come wait for those in turn. Polite words given as a function, such as the busy 
 any words on the line, polite ones too, and are read as they are put in, so they never put out the
 end of a progress and say nothing once the work is done.
 
+Words given as a function that throws as it is read, such as a stepper's `words`, are not said. The
+line is left free, so polite words waiting for it are said in their turn, and the error is reported
+through `reportError`, as an uncaught one is, so the page's own error handling still hears it.
+
 Attached again, a line returns the function it returned first, with its words, unless it was let go
 of, as a toast lets its own line go when the toast is taken down, when it returns one afresh. A
 stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
@@ -1996,23 +2004,30 @@ component, so a request in a transition an urgent update overtook lands before t
 and goes to its fallbacks where the transition draws its target. One asked after the component has
 gone, as a panel that closes itself and then asks after an await, waits a frame and is made then,
 taking focus only from the page's body, whatever `from` it was given, and only where its target is
-in sight, so a visitor already on the next screen is left where they are. One whose target an
-`Activity` hides with the component is held until the component shows, and is made then.
-`useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of -1 where
-it has none, and focuses it when the key changes, such as the round on screen, and when the view is
-first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is. A first
-draw takes nothing as the page first draws, after a key that moves or types, such as Tab or an arrow
-along a row of tabs, after a press on nothing or on a control that is off, or more than five seconds
-after the press, as a view a poll brings. A row of tabs' panels take no focus on arrival, since a
-tab keeps focus as its panel changes, so they leave the hook out. Views first drawn by one press
-land together, and the first in the page takes focus, so a view's title is heard before a section of
-it. Focus a view placed itself as it drew, as a field with autofocus does, is never taken. What
-decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page without
-React calls as each view draws, and with `changed` as a view already drawn changes on a press, which
-then lands with any view first drawn for that press, so the first in the page still takes focus. The
-key is a string, a number or a boolean, compared by value, and changes on a press or a submit, never
-as a visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG
-3.2.2 has it.
+in sight, so a visitor already on the next screen is left where they are. It still finds an id in
+the root where focus was as it was asked, or where the `from` it was given is. Focus has most often
+fallen to the page's body by then, so a widget drawn inside a shadow root passes `from`, an element
+still in that root, to find its own control, and with no `from` an id is found there only while
+focus is still in that root. One whose target an `Activity` hides with the component is held until
+the component shows, and is made then. `useArrivalFocus(key)` returns a ref for a view's heading,
+gives the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as
+the round on screen, and when the view is first drawn by a visitor's press on a button or a link, or
+a submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key
+that moves or types, such as Tab or an arrow along a row of tabs, after a press on nothing or on a
+control that is off, or more than five seconds after the press, as a view a poll brings. A row of
+tabs' panels take no focus on arrival, since a tab keeps focus as its panel changes, so they leave
+the hook out. Views first drawn by one press land together, and the first in the page takes focus,
+so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
+with autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on
+a widget's own button there brings focus to the heading. What decides a first draw is
+`focusOnArrival(heading, { from })` from `./controls`, which a page without React calls as each view
+draws, and with `changed` as a view already drawn changes on a press, which then lands with any view
+first drawn for that press, so the first in the page still takes focus. It takes a `signal` as
+`moveFocus` does: an abort calls off a request not yet landed, as the function it returns does, and
+a signal already aborted asks for nothing and leaves the press for another view. The key is a
+string, a number or a boolean, compared by value, and changes on a press or a submit, never as a
+visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2
+has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
@@ -3197,7 +3212,7 @@ tabindex it added that the page has not changed since and lets its line go. Focu
 dismiss sends it only where it is in the toast, inside a shadow tree within it or on a control
 slotted into it too, or where the page has taken the toast away with focus in it so that focus has
 fallen to the body or to nothing, while focus a visitor has put anywhere else stays. A toast missing
-a part is refused even with a signal already aborted.
+a part is refused at its first attach even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
