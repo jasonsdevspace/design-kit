@@ -737,12 +737,12 @@
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
      * a callout in a form ends where its fields end. A page sets --dk-field-measure on a field or on
      * its form, a shorter length for a short answer or `none` for the column. A dialog and a popover
-     * set their own width, which a page may widen, so what they hold takes theirs, and a row of
-     * fields shares its width out among its own.
+     * set their own width, which a page may widen, so what they hold takes theirs. A row of fields
+     * holds to the measure as a field does, and shares that width out among its own.
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, form .dk-callout):not(
+            :is(.dk-field, .dk-fields, form .dk-callout):not(
                 .dk-dialog *,
                 dialog *,
                 [popover] *,
@@ -773,6 +773,19 @@
 
     :where(.dk-fields > .dk-field:has(> .dk-stepper)) {
         flex: 0 1 auto;
+    }
+
+    /*
+     * A stepper's field asks for no more than its stepper, its label, hint and error wrapping
+     * inside it, so a long label or an error shown never moves the field beside it.
+     */
+    :where(.dk-fields > .dk-field:has(> .dk-stepper) > :not(.dk-stepper)) {
+        contain: inline-size;
+    }
+
+    /* An inline stepper and a column of choices each take a line of their own. */
+    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field:not(:has(> .dk-choices-row)))) {
+        flex-basis: 100%;
     }
 
     /*
@@ -3532,6 +3545,24 @@
     }
 
     :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper) > .dk-stepper) {
+        min-width: min-content;
+    }
+
+    /*
+     * In a row of fields, every field but an inline stepper's takes its least width from its
+     * parts as a stepper's does, by rules that need no :has(), so a browser without it still keeps
+     * a stepper's field as wide as its stepper. A text field's parts ask for no least width, so it
+     * draws as before.
+     */
+    :where(.dk-fields > .dk-field:not(.dk-stepper-inline)) {
+        grid-template-columns: minmax(auto, 1fr);
+    }
+
+    :where(.dk-fields > .dk-field:not(.dk-stepper-inline) > *) {
+        min-width: 0;
+    }
+
+    :where(.dk-fields > .dk-field > .dk-stepper) {
         min-width: min-content;
     }
 

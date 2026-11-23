@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import type { CSSProperties } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { InputField, StepperField } from '../src/react.js';
+import { ChoiceField, InputField, StepperField } from '../src/react.js';
 import { servePage, sideways } from './page.js';
 import { doubled } from './text-size.js';
 
@@ -176,7 +176,8 @@ test('stands a row a step from the fields around it in a plain form, its fields 
         return {
             over: row.top - above.bottom,
             under: below.top - row.bottom,
-            row: row.width,
+            rowEnd: row.right,
+            fieldEnd: above.right,
             column: form.getBoundingClientRect().width,
             measures: [...form.querySelectorAll('.dk-fields > .dk-field')].map(
                 (field) => getComputedStyle(field).maxWidth
@@ -186,6 +187,117 @@ test('stands a row a step from the fields around it in a plain form, its fields 
     expect(measured.over).toBeCloseTo(16, 0);
     expect(measured.under).toBeCloseTo(16, 0);
     expect(measured.measures).toEqual(['none', 'none']);
-    // The row runs the column, past the measure a field alone holds to.
-    expect(measured.row).toBeCloseTo(measured.column, 0);
+    // The row ends where the field above it ends, at the measure, short of the column.
+    expect(measured.rowEnd).toBeCloseTo(measured.fieldEnd, 0);
+    expect(measured.fieldEnd).toBeLessThan(measured.column - 100);
+});
+
+/** A stepper's field with the label given, past its limit or not, beside a text field. */
+const wide = (label: string, past: boolean): string =>
+    renderToStaticMarkup(
+        <div className="dk-fields">
+            <StepperField id="bid" label={label} min={0} max={10} defaultValue={past ? 12 : 3} />
+            <InputField id="player" label="Player" />
+        </div>
+    );
+
+for (const width of [320, 390]) {
+    for (const [what, label, past] of [
+        ['its range error shown', 'Bid', true],
+        ['a long label', 'Points scored this round', false],
+    ] as const) {
+        test(`keeps a stepper's field at its stepper's width with ${what}, at ${String(width)} wide`, async ({
+            page,
+        }) => {
+            await open(page, width, wide(label, past));
+            if (past) await expect(page.locator('.dk-stepper-range')).toBeVisible();
+            const [stepper, text] = await placed(page);
+            if (!stepper || !text) throw new Error('expected two fields');
+            const kept = await page
+                .locator('.dk-fields > .dk-field')
+                .first()
+                .evaluate((field) => {
+                    const box = field.getBoundingClientRect();
+                    const parts = [...field.querySelectorAll(':scope > :not([hidden])')].filter(
+                        (part) => part.getBoundingClientRect().width > 0
+                    );
+                    return {
+                        field: box.width,
+                        // What the stepper draws, from its first button's start to its last one's end.
+                        stepper:
+                            (field.querySelector('.dk-stepper-up')?.getBoundingClientRect().right ??
+                                0) -
+                            (field.querySelector('.dk-stepper-down')?.getBoundingClientRect()
+                                .left ?? 0),
+                        past: parts.filter((part) => {
+                            const drawn = part.getBoundingClientRect();
+                            return drawn.left < box.left - 0.5 || drawn.right > box.right + 0.5;
+                        }).length,
+                    };
+                });
+            // The field as wide as its stepper, its words wrapping inside it.
+            expect(kept.field).toBeCloseTo(kept.stepper, 0);
+            expect(kept.past, 'parts past the field').toBe(0);
+            // The text field stays beside it, the controls level.
+            expect(text.left - stepper.right).toBeCloseTo(16, 0);
+            expect(Math.abs(text.controlBottom - stepper.controlBottom)).toBeLessThan(0.5);
+            expect(await sideways(page)).toBe(0);
+        });
+    }
+}
+
+test('gives an inline stepper and a column of choices a line each in the row', async ({ page }) => {
+    await open(
+        page,
+        390,
+        renderToStaticMarkup(
+            <div className="dk-fields">
+                <StepperField
+                    id="tricks"
+                    label="Tricks"
+                    hint="Up to ten"
+                    min={0}
+                    max={10}
+                    defaultValue={2}
+                    inline
+                />
+                <InputField id="dealer" label="Dealer" />
+                <ChoiceField
+                    id="trump"
+                    name="trump"
+                    label="Trump"
+                    choices={[
+                        { value: 'hearts', label: 'Hearts' },
+                        { value: 'spades', label: 'Spades' },
+                    ]}
+                />
+            </div>
+        )
+    );
+    const drawn = await page.locator('.dk-fields').evaluate((row) => {
+        const of = (part: Element | null | undefined) => {
+            const box = part?.getBoundingClientRect();
+            if (!box) throw new Error('expected the part drawn');
+            return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+        };
+        const [inline, dealer, trump] = [...row.children];
+        return {
+            row: of(row),
+            inline: of(inline),
+            label: of(inline?.querySelector('.dk-field-label')),
+            stepper: of(inline?.querySelector('.dk-stepper')),
+            dealer: of(dealer),
+            trump: of(trump),
+        };
+    });
+    // The inline stepper runs the row, its label at the start and its stepper at the end.
+    expect(drawn.inline.left).toBeCloseTo(drawn.row.left, 0);
+    expect(drawn.inline.right).toBeCloseTo(drawn.row.right, 0);
+    expect(drawn.label.left).toBeCloseTo(drawn.row.left, 0);
+    expect(drawn.stepper.right).toBeCloseTo(drawn.row.right, 0);
+    // The next field a step under it, and the choices on a line of their own under that.
+    expect(drawn.dealer.top - drawn.inline.bottom).toBeCloseTo(16, 0);
+    expect(drawn.trump.left).toBeCloseTo(drawn.row.left, 0);
+    expect(drawn.trump.right).toBeCloseTo(drawn.row.right, 0);
+    expect(drawn.trump.top).toBeGreaterThan(drawn.dealer.bottom);
 });
