@@ -1558,10 +1558,24 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(resetting);
         quiet();
         report(false);
-        // A button with focus hands it to the value before it goes, so focus is never dropped.
-        if (activeOf() === down || activeOf() === up) input.focus();
-        down.hidden = true;
-        up.hidden = true;
+        // A button with focus hands it to a read-only value, which opens no keyboard, before it
+        // goes. Where the value is one a visitor types into or is disabled, the button stays until
+        // focus leaves it, unless the stepper is attached again meanwhile, so focus is never
+        // dropped and no keyboard opens unasked.
+        const focused = [down, up].find((button) => activeOf() === button);
+        const fixed = input.readOnly && !input.disabled;
+        if (focused && fixed) input.focus({ preventScroll: true });
+        for (const button of [down, up]) {
+            if (button !== focused || fixed) button.hidden = true;
+            else
+                button.addEventListener(
+                    'blur',
+                    () => {
+                        if (!attachedSteppers.has(stepper)) button.hidden = true;
+                    },
+                    { once: true }
+                );
+        }
     });
     torn.set = (next) => {
         // A page that takes the stepper's words to its own line leaves none on the stepper's,

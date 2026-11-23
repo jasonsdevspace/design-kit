@@ -3432,18 +3432,16 @@
     }
 
     /*
-     * A value with a button beside it stands level with its buttons, at the target's height. A
-     * read-only value shown alone, once both buttons are hidden, takes a field's height at each
+     * A value with a button beside it stands level with its buttons, at the target's height, the
+     * row stretching a read-only one beside a button that keeps focus, with no :has() to lean on.
+     * A read-only value shown alone, once both buttons are hidden, takes a field's height at each
      * width from the field's own rules, and a field's inline padding, its figures starting where a
      * read-only field's words start, so a column of read-only values keeps one edge. An inline
      * stepper's value sits at its row's end with no such column, so it keeps its centered figures.
      * While a button keeps focus as the field turns read only, the value keeps its place beside it,
-     * and the hidden button keeps its room, so nothing moves under the focused one.
+     * and the hidden button keeps its room, by a rule after the rule for hidden.
      */
-    :where(
-        .dk-stepper-value:is(:not([readonly]), :disabled),
-        .dk-stepper:has(> .dk-button:not([hidden])) > .dk-stepper-value
-    ) {
+    :where(.dk-stepper-value:is(:not([readonly]), :disabled)) {
         min-height: var(--dk-target);
     }
 
@@ -3457,11 +3455,6 @@
         );
         padding-inline: var(--dk-field-inline);
         text-align: start;
-    }
-
-    /* The rule for hidden below leaves this button drawn, for its room alone. */
-    :where(.dk-stepper:has(> .dk-button:not([hidden])) > .dk-button[hidden]) {
-        visibility: hidden;
     }
 
     :where(.dk-stepper-tall > .dk-stepper-value) {
@@ -3925,15 +3918,23 @@
      * page's own button rule. Important in this layer, the rule wins over a page's rules outside a
      * layer, as a state that is on or off should, so a page shows the element by taking the
      * attribute away. A kit class is one that starts with dk-, and hidden until found is the
-     * browser's to draw. A stepper's hidden button keeps its room, out of sight, while the other
-     * is shown, so nothing moves under the one that keeps focus.
+     * browser's to draw.
      */
     :where(
-        :is(
-            :is([class^='dk-'], [class*=' dk-'])[hidden],
-            :is([class^='dk-'], [class*=' dk-']) [hidden]
-        ):not([hidden='until-found' i], .dk-stepper:has(> .dk-button:not([hidden])) > *)
+        :is([class^='dk-'], [class*=' dk-'])[hidden]:not([hidden='until-found' i]),
+        :is([class^='dk-'], [class*=' dk-']) [hidden]:not([hidden='until-found' i])
     ) {
         display: none !important;
+    }
+
+    /*
+     * A stepper's hidden button keeps its room, out of sight, while the other is shown, so nothing
+     * moves under the one that keeps focus as the field turns read only. It comes after the rule
+     * for hidden, and important as that is, to win over it, and only where :has() works, so the
+     * rule for hidden never leans on it.
+     */
+    :where(.dk-stepper:has(> .dk-button:not([hidden])) > .dk-button[hidden]) {
+        display: inline-flex !important;
+        visibility: hidden;
     }
 }

@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StepperField } from '../src/react.js';
-import { box, servePage, sideways, stillClock, style, tabKey } from './page.js';
+import { box, KIT, servePage, sideways, stillClock, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -21,10 +21,10 @@ import { textSize } from './text-size.js';
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
  * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
  * value starting where a read-only field's words start and standing at the field's height, or at
- * the larger target when tall, centered at an inline stepper's row's end, and kept in place with
- * a button holding focus, focus handed to the value as a stepper is taken down, an inline
- * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
- * theme.
+ * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
+ * button holding focus, focus kept off the page and an editable value as a stepper is taken down,
+ * hidden pieces kept hidden by sheets read without :has(), an inline stepper's error above it and
+ * its hint below it, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -638,6 +638,7 @@ const READ_ONLY = renderToStaticMarkup(
             inline
         />
         <StepperField id="bids" label="Bids" min={0} max={10} defaultValue={3} inline />
+        <StepperField id="gone" label="Gone" min={1} max={10} defaultValue={3} disabled />
     </main>
 );
 
@@ -751,17 +752,27 @@ test('keeps the value and a focused button where they stood as the field turns r
     }
 });
 
+/** Attaches the steppers named, each through a signal of its own that `abortOf` aborts. */
+const ABORTABLE = `import { attachStepper } from './controls.js';
+const controls = {};
+for (const id of ['held', 'deals', 'gone']) {
+    controls[id] = new AbortController();
+    attachStepper(document.querySelector('#' + id).closest('.dk-stepper'), {
+        signal: controls[id].signal,
+    });
+}
+window.abortOf = (id) => controls[id].abort();
+window.ready = true;`;
+
+const abortOf = (page: Page, id: string): Promise<void> =>
+    page.evaluate((stepper) => {
+        (window as unknown as { abortOf: (id: string) => void }).abortOf(stepper);
+    }, id);
+
 test('hands focus to the value when a read-only stepper is taken down with a button focused', async ({
     page,
 }) => {
-    await openReadOnly(page, {
-        width: 1280,
-        script: `import { attachStepper } from './controls.js';
-const control = new AbortController();
-attachStepper(document.querySelector('#held').closest('.dk-stepper'), { signal: control.signal });
-window.abortHeld = () => control.abort();
-window.ready = true;`,
-    });
+    await openReadOnly(page, { width: 1280, script: ABORTABLE });
     const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
     const held = page.locator('#held');
     await raiseHeld.focus();
@@ -769,11 +780,71 @@ window.ready = true;`,
         input.readOnly = true;
     });
     await expect(raiseHeld).toBeFocused();
-    await page.evaluate(() => {
-        (window as unknown as { abortHeld: () => void }).abortHeld();
-    });
+    await abortOf(page, 'held');
     await expect(raiseHeld).toBeHidden();
     await expect(held).toBeFocused();
+});
+
+test('keeps focus on a button of an editable or a disabled stepper taken down, until it leaves', async ({
+    page,
+}) => {
+    await openReadOnly(page, { width: 1280, script: ABORTABLE });
+    for (const [id, name] of [
+        ['deals', 'Raise Deals'],
+        ['gone', 'Raise Gone'],
+    ] as const) {
+        const raiseIt = page.getByRole('button', { name });
+        await raiseIt.focus();
+        await abortOf(page, id);
+        // Never on the body, and never on an editable value, which would open a phone's keyboard.
+        await expect.soft(raiseIt, id).toBeFocused();
+        await expect.soft(page.locator(`#${id}`), id).not.toBeFocused();
+        expect
+            .soft(await page.evaluate(() => document.activeElement === document.body), id)
+            .toBe(false);
+        await expect(
+            page.getByRole('button', { name: name.replace('Raise', 'Lower') })
+        ).toBeHidden();
+        // Hidden once focus leaves it, as a stepper taken down is.
+        await page.locator('#round').focus();
+        await expect.soft(raiseIt, id).toBeHidden();
+    }
+});
+
+test('keeps hidden pieces hidden and a value beside a focused button at the target, without :has()', async ({
+    page,
+}) => {
+    await openReadOnly(page, { width: 1280 });
+    // The kit's sheets as a browser without :has() reads them, a selector naming it left unknown,
+    // which drops a rule it is in outside a forgiving list.
+    await page.evaluate(
+        (sheets) => {
+            document.querySelector('link[href="/kit.css"]')?.remove();
+            const style = document.createElement('style');
+            style.textContent = sheets;
+            document.head.append(style);
+        },
+        KIT.replaceAll(':has(', ':-dk-unknown(')
+    );
+    // A read-only stepper's buttons, hidden by the stepper, drawn by the button's own display rule
+    // unless the kit's rule for hidden holds.
+    expect
+        .soft(
+            (await style(page.locator('.dk-field:has(#cards) .dk-stepper-up'), 'display'))[
+                'display'
+            ]
+        )
+        .toBe('none');
+    const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+    await raiseHeld.focus();
+    await page.locator('#held').evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
+    // Level with the focused button, as every value is where :has() cannot tell one shown alone.
+    expect
+        .soft((await box(page.locator('#held'))).height)
+        .toBeCloseTo((await box(raiseHeld)).height, 0);
 });
 
 test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({
