@@ -23,10 +23,11 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * in 0.8.6, whose grid of buttons dropping to a count that divides its cells took them past
  * 10.75 KB, again for 0.9.0, measured with a prototype of the pieces planned for it, as 0.8.0's
  * were, and again once those pieces landed heavier than the prototype and left too little room for
- * another, and again in 0.9.4, once a busy button's dots left too little room for another. The
+ * another, again in 0.9.4, once a busy button's dots left too little room for another, and again
+ * in the same release, once a field held to the measure left too little room for another. The
  * app's pieces stay in the components sheet, so a page loads one sheet whatever it draws.
  */
-const BUDGET = 12.5 * 1024;
+const BUDGET = 12.75 * 1024;
 
 describe('the sheets', () => {
     it(`stay within ${String(BUDGET / 1024)} KB gzipped together, without their comments and blank lines`, () => {
