@@ -126,10 +126,13 @@ it, which the attach keeps, rather than one found again.
   as it is, where on main it gave that body the room of a toast of its own.
 - The room in a frame holds in a browser with no `:has()`, Firefox 120 among them, as does a dialog
   inside a frame or after one.
-- The sheets grew by 174 bytes and the controls by 169, as the budget tests measure them, and record
-  13's rule set the sheets' budget again, as its table gives.
-- A `hidden` attribute toggled on a stepper's button still restyles a few hundred elements, about
-  1.2 ms, from a rule outside these three families, which this record leaves as it is.
+- The sheets grew by 130 bytes and the controls by 169, as the budget tests measure them, which left
+  less room under each budget than one more piece or function of the usual size, so record 13's rule
+  set both again, as its tables give.
+- A `hidden` attribute toggled on a stepper's button in a plain form still restyles a few hundred
+  elements, about 1.2 ms, through record 24's rule that spaces a plain form's blocks, whose `:has()`
+  is on a callout before the block it spaces. That rule is outside these three families, and this
+  record leaves it as it is.
 
 ## How it is tested
 

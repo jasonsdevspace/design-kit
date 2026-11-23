@@ -172,6 +172,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 | 0.9.4   | A busy button's dots, with too little room left                                 | 12,523 bytes    | 154 bytes    | 12.5 KB    |
 | 0.9.4   | A field held to the measure, with too little room left                          | 12,661 bytes    | 155 bytes    | 12.75 KB   |
+| 0.9.4   | A frame's room told by a mark on its body, with too little room left            | 12,962 bytes    | 175 bytes    | 13 KB      |
 
 | Release | What raised it                                                                           | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
@@ -192,6 +193,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.3   | Focus falling to the body and followed into a frame, with too little room left           | 19,222 bytes   | 624 bytes       | 19.5 KB    |
 | 0.9.3   | A control kept clear inside a frame of the page's own origin, with too little room left  | 19,609 bytes   | 633 bytes       | 20 KB      |
 | 0.9.4   | A dated field's limit in words a visitor reads, with too little room left                | 20,708 bytes   | 626 bytes       | 21 KB      |
+| 0.9.4   | A toast's mark on the body of its frame, with too little room left                       | 20,877 bytes   | 632 bytes       | 21.25 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
