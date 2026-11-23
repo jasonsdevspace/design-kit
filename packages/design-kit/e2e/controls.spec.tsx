@@ -163,20 +163,27 @@ test("stands the README's checkout row and callout one step below what is above 
     // The select under the field, and the row of both buttons under the select.
     expect(await below(page, 'form > :nth-child(1)', 'form > :nth-child(2)')).toEqual([space]);
     expect(await below(page, 'form > :nth-child(2)', 'form > :nth-child(3)')).toEqual([space]);
-    // The empty callout adds no room under the row, and a hidden one adds none either.
-    const bottoms = async () => {
-        const form = await box(page.locator('form'), 'the form');
-        const row = await box(page.locator('.dk-actions'), 'the row');
-        return [Math.round(form.y + form.height), Math.round(row.y + row.height)];
-    };
-    const [empty, row] = await bottoms();
-    expect(empty).toBe(row);
-    await page.locator('.dk-callout').evaluate((callout) => {
-        callout.removeAttribute('data-empty');
-        callout.setAttribute('hidden', '');
+    // The empty callout adds no room under the row.
+    const form = await box(page.locator('form'), 'the form');
+    const row = await box(page.locator('.dk-actions'), 'the row');
+    expect(Math.round(form.y + form.height)).toBe(Math.round(row.y + row.height));
+    // A hidden one with words adds none either, nor gives the field after it a step.
+    await writePage(page, {
+        title: 'Checkout',
+        body: `<form style="display: flow-root"><div class="dk-callout" hidden><div class="dk-callout-body" role="status">The order is placed.</div></div>${renderToStaticMarkup(
+            <InputField label="Email" name="email" type="email" />
+        )}</form>`,
     });
-    const [hidden, rowAgain] = await bottoms();
-    expect(hidden).toBe(rowAgain);
+    const under = await page.locator('form').evaluate((holder) => {
+        const field = holder.querySelector('.dk-field');
+        return {
+            margin: field ? getComputedStyle(field).marginTop : '',
+            top: Math.round(
+                (field?.getBoundingClientRect().top ?? 0) - holder.getBoundingClientRect().top
+            ),
+        };
+    });
+    expect(under).toEqual({ margin: '0px', top: 0 });
     // With words, the callout takes the same step under the row.
     await writePage(page, {
         title: 'Checkout',

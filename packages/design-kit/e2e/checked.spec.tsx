@@ -24,6 +24,7 @@ const BODY = renderToStaticMarkup(
             <InputField id="name" name="name" label="Name" required />
             <InputField id="email" name="email" label="Email" type="email" required />
             <InputField id="age" name="age" label="Age" type="number" min={18} />
+            <InputField id="site" name="site" label="Website" type="url" />
             <button type="submit">Join</button>
             <button type="submit" formNoValidate>
                 Save a draft
@@ -77,6 +78,7 @@ test("refuses a submit that fails the browser's constraints, before the page's h
 }) => {
     await open(page);
     await page.getByLabel('Email').fill('abc');
+    await page.getByLabel('Website').fill('example.com');
     await join(page).click();
     await expect(page.getByLabel('Name')).toBeFocused();
     await expect(page.getByLabel('Name')).toHaveAttribute('aria-invalid', 'true');
@@ -87,9 +89,15 @@ test("refuses a submit that fails the browser's constraints, before the page's h
     await expect(page.getByLabel('Email')).toHaveAccessibleDescription(
         /Enter an email address like name@example.com here/
     );
+    await expect(errorOf(page, 'site')).toHaveText(
+        'Error: Enter the full web address, with https:// at the start.'
+    );
+    await expect(page.getByLabel('Website')).toHaveAccessibleDescription(
+        'Error: Enter the full web address, with https:// at the start.'
+    );
     await expect
         .poll(() => heard(page))
-        .toEqual(['Name: Error: Enter a value. 2 fields need attention.']);
+        .toEqual(['Name: Error: Enter a value. 3 fields need attention.']);
     expect(await submits(page)).toBe(0);
 });
 
@@ -280,6 +288,7 @@ const linesOf = (page: Page, selector: string) =>
 const badBreaks = (lines: readonly string[], address: string) => {
     const whole = lines.join('\n');
     const start = whole.replaceAll('\n', '').indexOf(address);
+    if (start < 0) return [`no "${address}" in "${lines.join(' / ')}"`];
     const wrong: string[] = [];
     let seen = 0;
     lines.slice(0, -1).forEach((line) => {
@@ -312,6 +321,11 @@ test('breaks a long address in its error only after the "@", at 320 wide and twi
     await expect(error).toBeVisible();
     const lines = await linesOf(page, '#mail-error');
     expect(badBreaks(lines, 'name@example.com'), lines.join(' / ')).toEqual([]);
+    // The row leaves the address too long for a line, so it breaks, and at the "@".
+    expect(
+        lines.some((line) => line.endsWith('@')),
+        lines.join(' / ')
+    ).toBe(true);
     // The words read and described whole, the address in one piece.
     await expect(error).toHaveText('Error: Enter an email address like name@example.com here.');
     await expect(page.locator('#mail')).toHaveAccessibleDescription(
@@ -349,6 +363,11 @@ test('breaks a long address in the error React draws only after the "@", at 320 
     );
     const lines = await linesOf(page, '#mail-error');
     expect(badBreaks(lines, 'name@example.com'), lines.join(' / ')).toEqual([]);
+    // The row leaves the address too long for a line, so it breaks, and at the "@".
+    expect(
+        lines.some((line) => line.endsWith('@')),
+        lines.join(' / ')
+    ).toBe(true);
 });
 
 test('gives fields with no id errors of their own', async ({ page }) => {
