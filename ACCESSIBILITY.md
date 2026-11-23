@@ -94,9 +94,13 @@ is its CSS transformer, as the package README shows.
   toast shown over it, and the room a table's frame keeps for its pinned column all rest on
   `:has()`, so there the keyboard can bring a control to rest under the bar, the toast or the pinned
   column, and a toast with an action covers the page's last line until it is dismissed. In an app's
-  frame there, the body does not pad for a toast floating over its foot, so the toast covers the
-  body's last line until it is dismissed, and the frame keeps clear of the tab bar, which has a row
-  of its own. The page behind an open dialog still scrolls there too.
+  frame there, the body keeps its room for a toast floating over its foot, by the mark the toast's
+  attach function writes on the frame, a picture of a frame aside. A toast that would take its row
+  above the dock, where the body is too short for it, still floats there with no room kept, so it
+  covers the body's last lines until it is dismissed, and the frame keeps clear of the tab bar,
+  which has a row of its own. A dialog written before an app's frame, rather than inside or after
+  it, is drawn there at a content page's sizes on a wide screen unless it carries `dk-dialog-app`.
+  The page behind an open dialog still scrolls there too.
 - In Firefox 120, which lacks `:has()`, a list of tiles draws its tiles touching, with no gap, and
   in one column where a page asks for columns, a row with a picture sets the picture in the column
   its words would take, and a footer at the page's end pads its foot by its own step alone rather

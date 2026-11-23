@@ -127,3 +127,10 @@ costs, and the test behind it.
     the buttons the target wide at both, a tall stepper at the larger target everywhere, and why
     leaving a stepper the target tall, a row that lines its fields up by their labels, a height of
     the stepper's own and buttons as wide as they are tall were turned down.
+27. [A `:has()` on an element that holds the page is written only where the rule draws that
+    element](0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md):
+    Chromium restyling everything inside the root, the body or a frame whose `:has()` draws
+    something else, the body as the subject of its own rule under a page's toast, `attachToast`
+    marking a frame with `data-toast-rows`, a dialog told by the frame it sits in or beside or by
+    `dk-dialog-app`, and why a property the root sets, a sibling `:has()`, a class on each subject
+    and the body's own padding were turned down.

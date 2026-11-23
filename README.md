@@ -281,7 +281,7 @@ follow by area.
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 13 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to
-  21.25 KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
+  21.5 KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
   publishes is 132 KB packed, the sheets and modules a page loads together with the README, the
   types and the tokens in the design tokens format, which it never does. [The
   record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
@@ -400,6 +400,10 @@ options rejected, what the choice costs, and the test behind it.
     stepper 8 pixels shorter on a wide page outside an app, where a tall stepper keeps the larger
     target. Leaving it the target tall, a row that lines its fields up by their labels, a height of
     the stepper's own and buttons as wide as they are tall were turned down.
+27. [A `:has()` on an element that holds the page is written only where the rule draws that element](docs/decisions/0027-a-has-on-an-element-that-holds-the-page-is-written-only-where-the-rule-draws-that-element.md).
+    A change to a page restyles what it touches in Chrome, where it restyled every element, at the
+    cost of a shown toast written by hand in a live frame keeping no room until the page marks the
+    frame, and a dialog set apart from its frame saying so with a class.
 
 </details>
 

@@ -1,11 +1,13 @@
 # 13. The kit's controls ship their behavior as a module a page attaches to their markup
 
 **Status:** accepted, amended by record 15 in 0.5.0, for the toast and the dialog, whose attach
-functions return what shows or opens them, by record 20 in 0.9.0, for React pages, which attach
-some controls through a kit hook, in 0.9.0 for the listener the module adds to the document as it
-loads, by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down,
-and by record 23 in 0.9.3, under which each signal that attaches an element holds its control. Its
-budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0 and 0.9.3, as its tables give
+functions return what shows or opens them, by record 20 in 0.9.0, for React pages, which attach some
+controls through a kit hook, in 0.9.0 for the listener the module adds to the document as it loads,
+by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down, by record
+23 in 0.9.3, under which each signal that attaches an element holds its control, and by record 27 in
+0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
+function writes on the frame. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6,
+0.9.0, 0.9.3 and 0.9.4, as its tables give
 
 ## Context
 
@@ -119,7 +121,10 @@ listeners the theme switch and the stepper each took away one by one, now one si
 found and kept, with why:
 
 - The room kept for a toast, written once for each count of rows, since a page's script sets no
-  style the kit could read and gzip already sends the repeats for little.
+  style the kit could read and gzip already sends the repeats for little. Since record 27 the room
+  in an app's frame is told by `data-toast-rows` on the frame, a mark `attachToast` writes there as
+  a page's markup writes `data-empty` on a live callout, in place of a `:has()` on the frame, and
+  each count of rows is still a rule of its own.
 - The theme switch's collapsed form, since a phone reaches it whenever its reader sets a large text
   size, not only on a screen under 320px.
 - The strip's rules, whose likeness to others gzip already sends for nothing.
@@ -189,7 +194,8 @@ own functions, with the medians the package record gave at each.
 | 0.9.3   | Focus falling to the body and followed into a frame, with too little room left           | 19,222 bytes   | 624 bytes       | 19.5 KB    |
 | 0.9.3   | A control kept clear inside a frame of the page's own origin, with too little room left  | 19,609 bytes   | 633 bytes       | 20 KB      |
 | 0.9.4   | A dated field's limit in words a visitor reads, with too little room left                | 20,708 bytes   | 626 bytes       | 21 KB      |
-| 0.9.4   | A stepper judged by the browser's constraints and quiet as its form is submitted         | 20,918 bytes   | 653 bytes       | 21.25 KB   |
+| 0.9.4   | A toast's mark on its frame, with too little room left                                   | 21,112 bytes   | 627 bytes       | 21.25 KB   |
+| 0.9.4   | A stepper quiet as its form is submitted, with too little room left                      | 21,172 bytes   | 645 bytes       | 21.5 KB    |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331

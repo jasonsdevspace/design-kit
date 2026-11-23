@@ -56,7 +56,7 @@ const screen = ({
     readonly dock?: 0 | 1 | 2;
     readonly toast?: boolean;
     readonly tabs?: boolean;
-} = {}): string => `<div class="dk-app">
+} = {}): string => `<div class="dk-app"${toast ? ' data-toast-rows' : ''}>
 <header class="dk-app-bar">
 <h1 class="dk-app-title">${title}</h1>
 <button type="button" class="dk-button dk-button-text">Scores</button>
@@ -1049,6 +1049,79 @@ test("draws a page with an app's frame of its own as an app's, a picture of anot
     expect(await read(app(PICTURED_ITSELF))).toEqual(alone);
     // The app's page draws apart from a content page, so the comparison above tests something.
     expect(alone).not.toEqual(await read(contentPage('')));
+});
+
+test("draws a dialog as an app's where it sits inside a frame or beside one, and as a content page's set apart from it", async ({
+    page,
+}) => {
+    const frame = (inside = '', picture = '') =>
+        `<div class="dk-app${picture}"><header class="dk-app-bar"><h1 class="dk-app-title">Play</h1></header>` +
+        `<main class="dk-app-body" tabindex="0"><p>Pick a game.</p></main>${inside}</div>`;
+    const tabbed = (inside = '') =>
+        `<div class="dk-tabbar-page"><main><p>Games</p></main>${inside}` +
+        `<nav class="dk-tabbar" aria-label="Sections"><ul><li><a href="#a">Play</a></li></ul></nav></div>`;
+    const content = '<main class="dk-page"><h1>Pieces</h1><p>Each piece.</p></main>';
+    // On a wide screen, where a content page's dialog and an app's are drawn apart.
+    const read = async (body: string) => {
+        await writePage(page, { width: 1280, title: 'Play', body });
+        await page.locator('dialog').evaluate((dialog: HTMLDialogElement) => dialog.showModal());
+        return page.evaluate(() =>
+            (
+                [
+                    ['.dk-dialog', 'padding-left'],
+                    ['.dk-dialog .dk-input', 'min-height'],
+                    ['.dk-dialog .dk-choice', 'min-height'],
+                    ['.dk-dialog-actions > .dk-button', 'min-height'],
+                    ['.dk-dialog-actions > .dk-button', 'flex-grow'],
+                ] as const
+            ).map(([selector, name]) => {
+                const found = document.querySelector(selector);
+                if (found === null) throw new Error(`no ${selector}`);
+                return `${selector} ${name} ${getComputedStyle(found).getPropertyValue(name)}`;
+            })
+        );
+    };
+    const apps = [
+        '.dk-dialog padding-left 16px',
+        '.dk-dialog .dk-input min-height 44px',
+        '.dk-dialog .dk-choice min-height 44px',
+        '.dk-dialog-actions > .dk-button min-height 44px',
+        '.dk-dialog-actions > .dk-button flex-grow 1',
+    ];
+    const pages = [
+        '.dk-dialog padding-left 24px',
+        '.dk-dialog .dk-input min-height 36px',
+        '.dk-dialog .dk-choice min-height 36px',
+        '.dk-dialog-actions > .dk-button min-height 36px',
+        '.dk-dialog-actions > .dk-button flex-grow 0',
+    ];
+    expect(await read(content + DIALOG), 'on a content page').toEqual(pages);
+    for (const [where, body] of [
+        ['after a frame', frame() + DIALOG],
+        [
+            'after a frame, past its footer',
+            `${frame()}<footer class="dk-footer"></footer>${DIALOG}`,
+        ],
+        ['before a frame', DIALOG + frame()],
+        ['inside a frame', frame(DIALOG)],
+        ['after a page that ends in a tab bar', tabbed() + DIALOG],
+        ['before a page that ends in a tab bar', DIALOG + tabbed()],
+        ['inside a page that ends in a tab bar', tabbed(DIALOG)],
+        [
+            'in a wrapper beside a frame, with the class that says so',
+            `${frame()}<div>${DIALOG.replace('class="dk-dialog"', 'class="dk-dialog dk-dialog-app"')}</div>`,
+        ],
+    ] as const) {
+        expect(await read(body), where).toEqual(apps);
+    }
+    for (const [where, body] of [
+        ['in a wrapper beside a frame', `${frame()}<div>${DIALOG}</div>`],
+        ['beside a wrapper that holds a frame', `<div>${frame()}</div>${DIALOG}`],
+        ['after a picture of a frame', content + frame('', ' dk-picture') + DIALOG],
+        ['before a picture of a frame', content + DIALOG + frame('', ' dk-picture')],
+    ] as const) {
+        expect(await read(body), where).toEqual(pages);
+    }
 });
 
 /** A picture of a frame with a bar, a body, a dock and a tab row, and of a page that ends in a tab bar. */
