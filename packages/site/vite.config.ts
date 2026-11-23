@@ -14,6 +14,8 @@ import { laidOut } from '../design-kit/examples/format.js';
 import { colorOf, declaredIn } from '../design-kit/examples/palette.js';
 import { APP, CHROME, EXPLAINER, LAYOUTS } from '../design-kit/examples/pieces.js';
 import { CONTROLS } from '../design-kit/examples/states.js';
+import { behaviorKey, BEHAVIORS } from './src/behavior.js';
+import { OWN_PIECES } from './src/own-palette.js';
 import { type Build, codeKey, PAGES } from './src/pages.js';
 import { policyFor, SITE_ORIGIN } from './src/policy.js';
 import { BASE, ROUTES } from './src/routes.js';
@@ -72,21 +74,30 @@ const withoutImageHints = (markup: string) =>
  * fails the build by name.
  */
 const markupOf = async (): Promise<Build['markup']> => {
-    const entries = await Promise.all(
-        [...CONTROLS, ...APP, ...LAYOUTS, ...CHROME, ...EXPLAINER].flatMap((control) =>
-            control.states.map(async (state) => {
-                const key = codeKey(control, state);
-                try {
-                    const markup = withoutImageHints(
-                        renderToStaticMarkup(state.draw(components, (name) => name))
-                    );
-                    return [key, await laidOut(markup, control.laidOut === true)] as const;
-                } catch (error) {
-                    throw new Error(`the markup of ${key} could not be laid out`, { cause: error });
-                }
-            })
-        )
-    );
+    /** One piece of markup laid out, or a build that fails by its key. */
+    const layOut = async (key: string, markup: () => string, free: boolean) => {
+        try {
+            return [key, await laidOut(withoutImageHints(markup()), free)] as const;
+        } catch (error) {
+            throw new Error(`the markup of ${key} could not be laid out`, { cause: error });
+        }
+    };
+    const entries = await Promise.all([
+        ...[...CONTROLS, ...APP, ...LAYOUTS, ...CHROME, ...EXPLAINER, OWN_PIECES].flatMap(
+            (control) =>
+                control.states.map((state) =>
+                    layOut(
+                        codeKey(control, state),
+                        () => renderToStaticMarkup(state.draw(components, (name) => name)),
+                        control.laidOut === true
+                    )
+                )
+        ),
+        // Each behavior as a page writes it, each element on a line of its own.
+        ...BEHAVIORS.map((behavior) =>
+            layOut(behaviorKey(behavior), () => renderToStaticMarkup(behavior.draw(false)), true)
+        ),
+    ]);
     const keys = entries.map(([key]) => key);
     const twice = keys.find((key, index) => keys.indexOf(key) !== index);
     if (twice !== undefined) throw new Error(`two states are both ${twice}`);
@@ -99,7 +110,7 @@ const released = (name: string): string =>
 
 /**
  * The version of the kit the site installed from npm, its tokens sheet and its three sheets
- * together, the commit the site is built at, and each state's markup, read once, when the first
+ * together, the sheet the own palette page sets its palette and column in, the commit the site is built at, and each state's markup, read once, when the first
  * page is built.
  */
 let built: Promise<Build> | undefined;
@@ -108,6 +119,7 @@ const build = (): Promise<Build> =>
         markup,
         version: kit.version,
         tokens: released('tokens.css'),
+        ownPalette: readFileSync(new URL('src/own-palette.css', import.meta.url), 'utf8'),
         sheets: ['tokens.css', 'base.css', 'components.css'].map(released).join('\n'),
         commit:
             process.env['GITHUB_SHA'] ??

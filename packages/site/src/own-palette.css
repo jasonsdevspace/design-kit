@@ -1,0 +1,19 @@
+/*
+ * The page's own palette and column, as a demo with a look of its own sets them. The kit's layer
+ * comes first and the page's after it, so the page's rules win over the kit's. Each color role
+ * holds its light and dark value in one light-dark(), and the column is set on the root, where the
+ * kit reads it.
+ */
+@layer dk, page;
+
+@layer page {
+    :root {
+        --dk-accent: light-dark(#0b6e5f, #5ad1bb);
+        --dk-on-accent: light-dark(#ffffff, #121212);
+        --dk-highlight: light-dark(#ddf2ed, #12332d);
+        --dk-focus: light-dark(#b8430f, #ff9a5c);
+        --dk-button-shadow: 0 2px 0 var(--dk-control);
+        --dk-button-press: 0 2px;
+        --dk-column: 48rem;
+    }
+}

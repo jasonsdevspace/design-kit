@@ -1208,3 +1208,42 @@ body > .dk-strip {
     justify-content: space-between;
     gap: var(--dk-space-3);
 }
+
+/*
+ * Each example on the behavior page in one card: the example working at the top, what its status
+ * line said last under it, and its code across the foot, closed until a reader opens it.
+ */
+.site-behavior {
+    min-width: 0;
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+    background: var(--dk-bg);
+}
+
+.site-behavior-live {
+    padding: var(--dk-space-4-held);
+}
+
+/* What the example's status line said last, which the line itself keeps out of sight. */
+.site-said {
+    margin: 0;
+    padding: var(--dk-space-3) var(--dk-space-4-held);
+    border-top: 1px solid var(--dk-line);
+    font-size: var(--dk-text-small);
+}
+
+.site-said-name {
+    color: var(--dk-muted);
+}
+
+/* The hand of cards in two rows of four, so the up and down arrows have a row to move to. */
+.site-hand {
+    --dk-button-grid-columns: 4;
+}
+
+/* The own palette page's sheet, a block of code in a frame of its own rather than a card's foot. */
+.site-code.site-sheet {
+    padding-bottom: var(--dk-space-4);
+    border: 1px solid var(--dk-line);
+    border-radius: var(--dk-radius-large);
+}

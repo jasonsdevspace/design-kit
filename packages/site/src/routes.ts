@@ -2,8 +2,8 @@
  * The site's pages, each the HTML file Vite builds it from, relative to the site, the path a
  * visitor asks for under the base GitHub Pages serves the site from, the page's title, the name the
  * site's navigation gives it, or none for a page the navigation leaves out, such as the landing
- * page, which the brand leads to, and the explainer, which the strip and the footer lead to as a
- * demo's do, the short line its card on the landing page gives it, for a page that has one, and the
+ * page, which the brand leads to, the explainer, which the strip and the footer lead to as a demo's
+ * do, and the behavior and own palette pages, which the pages beside them lead to, the short line its card on the landing page gives it, for a page that has one, and the
  * description a search result shows for it. The build, the browser tests and the Lighthouse audit
  * all read this one list.
  */
@@ -88,6 +88,22 @@ export const ROUTES = [
         nav: null,
         description:
             'The design kit’s tabs, raised panel, tiles, icons and dialog stacked as an app’s home page stacks them, each set apart from what it sits on, in both themes.',
+    },
+    {
+        file: 'behavior/index.html',
+        path: `${BASE}behavior/`,
+        title: 'Behavior · The design kit · Jason Poteet',
+        nav: null,
+        description:
+            'The design kit’s refused form, busy button, arrow keys through a grid, focus moved after a change and a part of the page that loads, each working, with what it says on its status line and the code behind it.',
+    },
+    {
+        file: 'own-palette/index.html',
+        path: `${BASE}own-palette/`,
+        title: 'A page’s own palette · The design kit · Jason Poteet',
+        nav: null,
+        description:
+            'A page drawn by the design kit in its own colors and its own column, its rules in a layer after the kit’s, with the contrast of each pairing in its palette and the properties a page sets.',
     },
     {
         file: 'how-it-works/index.html',

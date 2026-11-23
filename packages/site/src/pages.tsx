@@ -2,13 +2,15 @@ import * as kit from 'design-kit-release/react';
 import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from 'react';
 
 import { type Group, HELD } from '../../design-kit/examples/held.js';
-import { declaredIn } from '../../design-kit/examples/palette.js';
+import { declaredIn, pagePropertiesIn } from '../../design-kit/examples/palette.js';
 import { APP, CHROME, EXPLAINER, LAYOUTS } from '../../design-kit/examples/pieces.js';
 import { type Control, CONTROLS, type State } from '../../design-kit/examples/states.js';
+import { type Behavior, behaviorKey, BEHAVIORS } from './behavior.js';
 import { HowItWorks } from './explainer.js';
 import { FAINT, TILES } from './mark.js';
+import { OWN_PIECES } from './own-palette.js';
 import { ABOUT, BASE, NPM, type Route, ROUTES, SOURCE } from './routes.js';
-import { Colors, Contrast, Scale, SCALE_GROUPS, Spaces, TypeScale } from './tokens.js';
+import { Colors, Contrast, Scale, SCALE_GROUPS, Spaces, Table, TypeScale } from './tokens.js';
 
 const { DemoFooter, PortfolioStrip, SkipLink, Toast } = kit;
 
@@ -21,6 +23,8 @@ export interface Build {
     readonly tokens: string;
     /** The tokens, base and components sheets joined, which the tokens page reads its tokens from. */
     readonly sheets: string;
+    /** The sheet the own palette page sets its palette and column in, as the page loads it. */
+    readonly ownPalette: string;
     readonly commit: string;
     /** Each state's markup as the site draws it, laid out, by `codeKey`. */
     readonly markup: Readonly<Record<string, string>>;
@@ -465,6 +469,12 @@ const RuleMark = ({ d }: { readonly d: string }) => (
 /** The controls page, which the landing page leads to first. */
 const CONTROLS_PAGE = ROUTES.find(({ file }) => file === 'controls/index.html')?.path ?? BASE;
 
+/** The page that shows the kit's behavior working. */
+const BEHAVIOR_PAGE = ROUTES.find(({ file }) => file === 'behavior/index.html')?.path ?? BASE;
+
+/** The page drawn in a palette and a column of its own. */
+const OWN_PALETTE = ROUTES.find(({ file }) => file === 'own-palette/index.html')?.path ?? BASE;
+
 /** The page that stacks the newer pieces together. */
 const TOGETHER = ROUTES.find(({ file }) => file === 'together/index.html')?.path ?? BASE;
 
@@ -537,7 +547,9 @@ export const Landing = ({ build }: { readonly build: Build }) => (
             <p>
                 Each page shows every piece in the light and dark themes.{' '}
                 <a href={TOGETHER}>The pieces together</a> shows them stacked as an app&rsquo;s home
-                page stacks them.
+                page stacks them, <a href={BEHAVIOR_PAGE}>Behavior</a> shows what they do as you use
+                them, and <a href={OWN_PALETTE}>A page&rsquo;s own palette</a> shows a page that
+                brings its own colors.
             </p>
             <PageTiles />
         </section>
@@ -674,14 +686,17 @@ const Shown = ({
     controls,
     build: { markup, commit },
     wide = false,
+    notes = {},
 }: {
     readonly controls: readonly Control[];
     readonly build: Build;
     readonly wide?: boolean;
+    readonly notes?: Readonly<Record<string, ReactNode>>;
 }) =>
     controls.map((control) => (
         <section key={control.name}>
             <h2 id={idOf(control.name)}>{control.name}</h2>
+            {notes[control.name]}
             <ul className={wide ? 'site-states site-states-wide' : 'site-states'} role="list">
                 {control.states.map((state) => (
                     <StateShown
@@ -705,6 +720,34 @@ const Shown = ({
  * live, by a button the site's script attaches.
  */
 const TOAST = 'Toast';
+
+/**
+ * A note under the heading of each control on the controls page with a state pictured because it
+ * would act as the page loads, leading to where it is shown working.
+ */
+const PICTURED_NOTES: Readonly<Record<string, ReactNode>> = {
+    Buttons: (
+        <p>
+            The busy button is a picture here.{' '}
+            <a href={`${BEHAVIOR_PAGE}#a-busy-button`}>Behavior</a> shows one working when you press
+            it.
+        </p>
+    ),
+    Callouts: (
+        <p>
+            The failure with Try again is a picture here.{' '}
+            <a href={`${BEHAVIOR_PAGE}#a-part-of-the-page-that-loads-and-a-failure`}>Behavior</a>{' '}
+            shows one working when you press it.
+        </p>
+    ),
+    'Loading and progress': (
+        <p>
+            The part of the page that is loading is a picture here.{' '}
+            <a href={`${BEHAVIOR_PAGE}#a-part-of-the-page-that-loads-and-a-failure`}>Behavior</a>{' '}
+            shows one working when you press it.
+        </p>
+    ),
+};
 
 const APP_PIECES = ROUTES.find(({ file }) => file === 'app-pieces/index.html')?.path ?? BASE;
 
@@ -734,7 +777,7 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         }
         sections={listed([...CONTROLS.map(({ name }) => name), TOAST])}
     >
-        <Shown controls={CONTROLS} build={build} />
+        <Shown controls={CONTROLS} build={build} notes={PICTURED_NOTES} />
         <section className="site-toast">
             <h2 id={idOf(TOAST)}>{TOAST}</h2>
             <p>
@@ -1089,7 +1132,8 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     value. Each card shows its light value on the left and its dark value on the
                     right, whatever theme the page is in. In CSS both values sit in one{' '}
                     <code>light-dark()</code>, and a demo with its own palette sets them again on
-                    its root, both themes at once.
+                    its root, both themes at once, as{' '}
+                    <a href={OWN_PALETTE}>A page&rsquo;s own palette</a> does.
                 </p>
                 <Colors declared={declared} />
                 <Tests group="Color" commit={build.commit} />
@@ -1150,7 +1194,9 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <ScaleHeading id="layers" />
                 <p>
                     The shadows that lift a piece, the layers that stack the bars, the toast and the
-                    skip link, and the grounds a container sets for what it holds.
+                    skip link, and the grounds a container sets for what it holds. The cascade
+                    layers a page puts its own rules in, and the properties it sets, are on{' '}
+                    <a href={OWN_PALETTE}>A page&rsquo;s own palette</a>.
                 </p>
                 <Scale declared={declared} group="layers" />
             </section>
@@ -1171,6 +1217,341 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
     );
 };
 
+/** A behavior's markup, or a build that fails, rather than a page that shows an empty block. */
+const behaviorMarkup = (markup: Build['markup'], behavior: Behavior) => {
+    const found = markup[behaviorKey(behavior)];
+    if (found === undefined) throw new Error(`no markup was laid out for ${behaviorKey(behavior)}`);
+    return found;
+};
+
+type BehaviorName = (typeof BEHAVIORS)[number]['name'];
+
+/**
+ * What each behavior's section says before it, and the buttons only the site adds beside it, such
+ * as the one that makes a load fail, which wait hidden until the site's script attaches them.
+ */
+const BEHAVIOR_WORDS: Readonly<
+    Record<BehaviorName, { readonly about: ReactNode; readonly beside?: ReactNode }>
+> = {
+    'A refused form': {
+        about: (
+            <p>
+                Press Save rule with the fields empty, or with an address that is not one. The kit
+                stops the submit, draws what is wrong in each field and moves focus to the first
+                field in error. It says that field&rsquo;s name and error on the status line, and
+                how many fields need attention where more are wrong. With both fields right, the
+                page saves and says so.
+            </p>
+        ),
+    },
+    'A busy button': {
+        about: (
+            <p>
+                Press Save the round. The button is off at once, so a second press does nothing, and
+                keeps its look for <code>--dk-wait</code>, 400 milliseconds, so a fast save never
+                flashes it grey. Once that wait has passed it is drawn off and its words are said on
+                the status line. The save here takes three seconds, then says it is done.
+            </p>
+        ),
+    },
+    'Arrow keys through a grid': {
+        about: (
+            <p>
+                Tab to the cards, then move among them with the arrow keys, Home and End, since the
+                grid is one stop for the Tab key. Press a card to choose it or put it back. The 10
+                is off, so it keeps its place and a press does nothing. The count of cards chosen
+                waits for the presses to stop before it is said, so a quick run of presses is heard
+                once.
+            </p>
+        ),
+    },
+    'Focus moved after a change': {
+        about: (
+            <p>
+                Press Remove beside a player. The row goes, and the button that had focus with it,
+                so focus moves to the next player&rsquo;s Remove, or the one before after the last
+                row, and to the list&rsquo;s heading once no player is left. Put the players back
+                brings the list back as it was.
+            </p>
+        ),
+        beside: (
+            <p>
+                <button type="button" className="dk-button" id="players-back" hidden>
+                    Put the players back
+                </button>
+            </p>
+        ),
+    },
+    'A part of the page that loads, and a failure': {
+        about: (
+            <>
+                <p>
+                    Press Load again. The product is marked busy while it waits, so a screen reader
+                    holds off reading it half drawn, and its loading line shows once the wait
+                    outlasts <code>--dk-wait</code>. Then the product comes back and the status line
+                    says so.
+                </p>
+                <p>
+                    Press Show the failure, and the same load fails. The alert reads what happened,
+                    and focus stays where it was. Try again goes with the failure, so focus moves to
+                    the product&rsquo;s heading as it loads again.
+                </p>
+            </>
+        ),
+        beside: (
+            <template id="product-failure-words">
+                <kit.Callout
+                    tone="danger"
+                    title="The product could not be loaded"
+                    headingLevel={4}
+                    actions={<kit.Button>Try again</kit.Button>}
+                >
+                    <p>Check your connection.</p>
+                </kit.Callout>
+            </template>
+        ),
+    },
+};
+
+/**
+ * One behavior under its own heading: what to try, the example working, what its status line said
+ * last, out in the open, and its code, its markup and its React, closed until a reader opens it.
+ */
+const BehaviorShown = ({
+    behavior,
+    markup,
+}: {
+    readonly behavior: (typeof BEHAVIORS)[number];
+    readonly markup: Build['markup'];
+}) => {
+    const id = idOf(behavior.name);
+    const { about, beside } = BEHAVIOR_WORDS[behavior.name];
+    return (
+        <section>
+            <h2 id={id}>{behavior.name}</h2>
+            {about}
+            <div className="site-behavior">
+                <div className="site-behavior-live dk-stack">
+                    {behavior.draw(true)}
+                    {beside}
+                </div>
+                <p className="site-said">
+                    <span className="site-said-name">The status line said</span>{' '}
+                    <span className="site-said-words">nothing yet.</span>
+                </p>
+                <details className="site-code" data-layout="laid-out">
+                    <summary>
+                        <span aria-hidden="true">The code</span>
+                        <span className="dk-visually-hidden">{`The code, ${behavior.name}`}</span>
+                    </summary>
+                    <CodeBlock
+                        id={`${id}-markup`}
+                        title="Markup"
+                        of={behavior.name}
+                        code={behaviorMarkup(markup, behavior)}
+                    />
+                    <CodeBlock
+                        id={`${id}-react`}
+                        title="React"
+                        of={behavior.name}
+                        code={behavior.react}
+                    />
+                </details>
+            </div>
+        </section>
+    );
+};
+
+/** The kit's behavior, each example working, with what it says and the code behind it. */
+export const BehaviorPage = ({ build }: { readonly build: Build }) => (
+    <Page
+        build={build}
+        current="behavior/index.html"
+        title="Behavior"
+        lead={
+            <>
+                What the design kit does as a visitor uses a page: a refused form, a busy button,
+                the arrow keys through a grid, focus moved after a change and a part of the page
+                that loads, each working.
+            </>
+        }
+        intro={
+            <p>
+                Nothing here acts until you press or type. Each example speaks on a status line of
+                its own, the line out of sight that a screen reader reads without moving focus, and
+                what it said last is shown under it. Under that is its code. To see the other theme
+                live, choose Light or Dark next to Theme, at the top of the page.
+            </p>
+        }
+        sections={listed(BEHAVIORS.map(({ name }) => name))}
+    >
+        {BEHAVIORS.map((behavior) => (
+            <BehaviorShown key={behavior.name} behavior={behavior} markup={build.markup} />
+        ))}
+    </Page>
+);
+
+/**
+ * What each property a page sets changes, by its name, or a build that fails for one the pinned
+ * sheets add, rather than a row with nothing to say.
+ */
+const PROPERTY_WORDS: Readonly<Record<string, string>> = {
+    '--dk-focus': 'The focus ring and the edge a pointer brings to a button, the accent unless set',
+    '--dk-button-shadow': 'A shadow under a button at rest, none unless set',
+    '--dk-button-press':
+        'How a held button moves, as a whole translate such as 0 2px, and where a toggle that is on rests',
+    '--dk-panel-shadow': 'The shadow under a raised panel, the resting shadow unless set',
+    '--dk-tile-ground': 'The ground under a tile, the card’s on a page and the page’s in a panel',
+    '--dk-tile-shadow': 'A shadow under a tile, none unless set',
+    '--dk-tile-least': 'The least width of a tile in columns, 15rem unless set',
+    '--dk-row-picture-size': 'The width and height of a picture at a row’s start',
+    '--dk-button-grid-columns': 'The columns a grid of buttons asks for, 3 unless set',
+    '--dk-button-grid-least': 'The least width of a cell in a grid of buttons',
+    '--dk-table-ground': 'The ground under a table’s pinned column',
+    '--dk-table-pinned-size': 'The width of a table’s pinned column, 8rem unless set',
+    '--dk-stepper-digits': 'The figures a stepper’s field keeps room for, 2 unless set',
+    '--dk-band-room': 'The room above and below a band, inside its ground',
+    '--dk-sections-least': 'The least width of a section in a group of sections, 20rem unless set',
+    '--dk-band-hero-picture': 'The width of a hero’s picture beside its words',
+};
+
+/** What a property a page sets changes, or a build that fails for one with no words. */
+const propertyWords = (name: string) => {
+    const words = PROPERTY_WORDS[name];
+    if (words === undefined) throw new Error(`the own palette page says nothing of ${name}`);
+    return words;
+};
+
+/** The own palette page's sections, by the id each heading carries and its name. */
+const OWN_SECTIONS = [
+    { id: 'what-this-page-sets', name: 'What this page sets' },
+    { id: 'its-palette', name: 'Its palette' },
+    { id: 'its-column', name: 'Its column' },
+    { id: 'its-layers', name: 'Its layers' },
+    { id: 'properties', name: 'The properties a page sets' },
+] as const satisfies readonly Listed[];
+
+/** A section heading on the own palette page, named as the list of sections names it. */
+const OwnHeading = ({ id }: { readonly id: (typeof OWN_SECTIONS)[number]['id'] }) => (
+    <h2 id={id}>{OWN_SECTIONS.find((section) => section.id === id)?.name}</h2>
+);
+
+/**
+ * A page drawn in its own palette and column, with its rules in a layer after the kit's: the sheet
+ * it sets them in, the kit's pieces in that palette with the contrast of each pairing in it, and
+ * every property a page sets.
+ */
+export const OwnPalette = ({ build }: { readonly build: Build }) => {
+    const own = declaredIn(build.ownPalette);
+    const declared = new Map([...declaredIn(build.sheets), ...own]);
+    return (
+        <Page
+            build={build}
+            current="own-palette/index.html"
+            title="A page’s own palette and layers"
+            lead={
+                <>
+                    This page brings its own colors and a narrower column, and puts its rules in a
+                    layer after the design kit&rsquo;s, as a demo with a look of its own does.
+                </>
+            }
+            intro={
+                <p>
+                    Everything on it, the strip and the footer too, is drawn by the kit from what
+                    the page sets, with no rule written over a kit class. The colors and the column
+                    of this site&rsquo;s other pages are the kit&rsquo;s own. To see the other theme
+                    live, choose Light or Dark next to Theme, at the top of the page.
+                </p>
+            }
+            sections={OWN_SECTIONS}
+        >
+            <section>
+                <OwnHeading id="what-this-page-sets" />
+                <p>
+                    This is the whole of what the page adds to the kit, the sheet it loads after the
+                    kit&rsquo;s.
+                </p>
+                <div className="site-code site-sheet">
+                    <CodeBlock id="own-palette-sheet" title="CSS" code={build.ownPalette.trim()} />
+                </div>
+            </section>
+            <section>
+                <OwnHeading id="its-palette" />
+                <p>
+                    The page sets the accent, the text on it, the highlight and the focus ring, each
+                    as one <code>light-dark()</code> that holds both themes. Every piece reads its
+                    colors from those roles, so the markup is the same as on any other page. Press
+                    Tab to see the focus ring in the page&rsquo;s own color.
+                </p>
+                <ul className="site-states" role="list">
+                    {OWN_PIECES.states.map((state) => (
+                        <StateShown
+                            key={state.name}
+                            state={state}
+                            pictured={false}
+                            markup={markupFor(build.markup, OWN_PIECES, state)}
+                            id={`own-${idOf(state.name)}`}
+                            laidOut
+                        />
+                    ))}
+                </ul>
+                <p>
+                    A page that sets its own palette answers for its own contrast. These are the
+                    pairings the kit is meant for, measured in this page&rsquo;s palette.
+                </p>
+                <Contrast
+                    declared={declared}
+                    title="The contrast of every pairing in this page’s palette, the tightest first"
+                />
+            </section>
+            <section>
+                <OwnHeading id="its-column" />
+                <p>
+                    The kit lines the strip, the header, the page and the footer up on one column,{' '}
+                    <code>--dk-column</code>, 72rem wide unless a page sets it. This page sets it to{' '}
+                    {own.get('--dk-column')} on its root, where the kit reads it, so on a wide
+                    screen everything here stands in further from the sides than on the other pages.
+                    A phone is narrower than either column, so it shows no change.
+                </p>
+            </section>
+            <section>
+                <OwnHeading id="its-layers" />
+                <p>
+                    The kit&rsquo;s rules sit in a layer named <code>dk</code>. The page names its
+                    own layer after it, with <code>@layer dk, page;</code> before any rule of its
+                    own, so whatever it sets in <code>page</code> wins over the kit, however little
+                    its selector weighs. A rule outside any layer wins over both, as the
+                    site&rsquo;s own sheet does.
+                </p>
+            </section>
+            <section>
+                <OwnHeading id="properties" />
+                <p>
+                    Beyond the color roles, these are the properties the kit reads and leaves to a
+                    page, each unset until a page sets it, on its root or on a piece by a class of
+                    its own. This page sets <code>--dk-focus</code>, <code>--dk-button-shadow</code>{' '}
+                    and <code>--dk-button-press</code>, so its buttons sit on a shadow and move as
+                    they are pressed.
+                </p>
+                <Table
+                    id="properties-title"
+                    title="Every property a page sets"
+                    columns={[{ name: 'Property' }, { name: 'What it sets' }]}
+                >
+                    {[...pagePropertiesIn(build.sheets)].map((name) => (
+                        <tr key={name}>
+                            <th scope="row">
+                                <code>{name}</code>
+                            </th>
+                            <td>{propertyWords(name)}</td>
+                        </tr>
+                    ))}
+                </Table>
+            </section>
+        </Page>
+    );
+};
+
 /** What each page draws, by the HTML file it is built from. */
 export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElement>> = {
     'index.html': (build) => <Landing build={build} />,
@@ -1181,5 +1562,7 @@ export const PAGES: Readonly<Record<Route['file'], (build: Build) => ReactElemen
     'page-chrome/index.html': (build) => <Chrome build={build} />,
     'explainer-pieces/index.html': (build) => <Pieces build={build} />,
     'together/index.html': (build) => <Together build={build} />,
+    'behavior/index.html': (build) => <BehaviorPage build={build} />,
+    'own-palette/index.html': (build) => <OwnPalette build={build} />,
     'how-it-works/index.html': (build) => <Explainer build={build} />,
 };

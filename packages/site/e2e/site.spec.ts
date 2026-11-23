@@ -980,6 +980,185 @@ test.describe('the page chrome page', () => {
     });
 });
 
+/** The behavior page and the page drawn in a palette of its own. */
+const BEHAVIOR = ROUTES.find(({ file }) => file === 'behavior/index.html')?.path ?? BASE;
+const OWN_PALETTE = ROUTES.find(({ file }) => file === 'own-palette/index.html')?.path ?? BASE;
+
+/** What the status line of the behavior page's example under a heading said last, as shown. */
+const saidUnder = (page: Page, heading: string) =>
+    page
+        .locator('section')
+        .filter({ has: page.getByRole('heading', { name: heading, level: 2 }) })
+        .locator('.site-said-words');
+
+test.describe('the behavior page', () => {
+    test('says nothing, holds nothing busy and reads no alert as it loads', async ({ page }) => {
+        await page.goto(BEHAVIOR);
+        // Past the wait any busy button or loading line would show after.
+        await page.waitForTimeout(1000);
+        const lines = page.locator('main .site-behavior .screen-status');
+        expect(await lines.count()).toBeGreaterThan(0);
+        expect(await lines.allTextContents()).toEqual(
+            Array.from({ length: await lines.count() }, () => '')
+        );
+        await expect(page.locator('main [data-busy], main [aria-busy="true"]')).toHaveCount(0);
+        await expect(page.locator('main .dk-loading')).toHaveCount(0);
+        expect((await page.locator('main [role="alert"]').allTextContents()).join('').trim()).toBe(
+            ''
+        );
+        expect(new Set(await page.locator('.site-said-words').allTextContents())).toEqual(
+            new Set(['nothing yet.'])
+        );
+    });
+
+    test('refuses a form with its fields empty, then saves it once they are right', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const said = saidUnder(page, 'A refused form');
+        await page.getByRole('button', { name: 'Save rule' }).click();
+        await expect(page.locator('#rule-name')).toBeFocused();
+        await expect(page.locator('#rule-name')).toHaveAttribute('aria-invalid', 'true');
+        await expect(page.locator('#rule-email')).toHaveAttribute('aria-invalid', 'true');
+        await expect(said).toContainText('Rule name');
+        await page.locator('#rule-name').fill('Trail shoes under $90');
+        await page.locator('#rule-email').fill('not an address');
+        await page.getByRole('button', { name: 'Save rule' }).click();
+        await expect(page.locator('#rule-email')).toBeFocused();
+        await expect(said).toContainText('Email for alerts');
+        await page.locator('#rule-email').fill('ann@example.com');
+        await page.getByRole('button', { name: 'Save rule' }).click();
+        await expect(said).toHaveText('“The rule was saved.”');
+        await expect(page.locator('#rule-form [aria-invalid="true"]')).toHaveCount(0);
+    });
+
+    test('holds the busy button off while it saves, says its words once the wait has passed, then the result', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const said = saidUnder(page, 'A busy button');
+        const button = page.getByRole('button', { name: 'Save the round' });
+        await button.click();
+        await expect(button).toHaveAttribute('data-busy', 'Saving the round.');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(said).toHaveText('“Saving the round.”');
+        await expect(said).toHaveText('“The round was saved.”', { timeout: 6000 });
+        await expect(button).not.toHaveAttribute('data-busy');
+        await expect(button).not.toHaveAttribute('aria-disabled');
+    });
+
+    test('moves through the grid by the arrow keys from one stop, and says the count once the presses stop', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const cards = page.locator('#hand button');
+        await expect(page.locator('#hand button[tabindex="0"]')).toHaveCount(1);
+        const card = (name: string) => page.locator('#hand').getByRole('button', { name });
+        await card('3').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(card('4')).toBeFocused();
+        await page.keyboard.press('ArrowDown');
+        await expect(card('8')).toBeFocused();
+        await page.keyboard.press('End');
+        await expect(card('10')).toBeFocused();
+        await page.keyboard.press('Home');
+        await expect(card('3')).toBeFocused();
+        await page.keyboard.press('Space');
+        await expect(card('3')).toHaveAttribute('aria-pressed', 'true');
+        await card('10').click({ force: true });
+        await expect(card('10')).toHaveAttribute('aria-pressed', 'false');
+        await expect(saidUnder(page, 'Arrow keys through a grid')).toHaveText('“3 cards chosen.”');
+        expect(await cards.count()).toBeGreaterThan(4);
+    });
+
+    test('moves focus to the next row as a row goes, and to the heading once none is left', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const said = saidUnder(page, 'Focus moved after a change');
+        await page.locator('#remove-ann').click();
+        await expect(page.locator('#remove-ben')).toBeFocused();
+        await expect(said).toHaveText('“Ann was removed.”');
+        await page.locator('#remove-dee').click();
+        await expect(page.locator('#remove-cy')).toBeFocused();
+        await page.locator('#remove-cy').click();
+        await expect(page.locator('#remove-ben')).toBeFocused();
+        await page.locator('#remove-ben').click();
+        await expect(page.locator('#players-heading')).toBeFocused();
+        await expect(said).toHaveText('“Ben was removed.”');
+        await expect(page.locator('#players')).toBeHidden();
+        await page.getByRole('button', { name: 'Put the players back' }).click();
+        await expect(page.locator('#players > li')).toHaveCount(4);
+        await expect(said).toHaveText('“The players are back.”');
+    });
+
+    test('marks the product busy while it loads, reads a failure as an alert, and Try again takes focus to its heading', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const said = saidUnder(page, 'A part of the page that loads, and a failure');
+        const product = page.locator('#product');
+        await page.getByRole('button', { name: 'Load again' }).click();
+        await expect(product).toHaveAttribute('aria-busy', 'true');
+        await expect(product.locator('.dk-loading')).toBeVisible();
+        await expect(said).toHaveText('“Loading the product.”');
+        await expect(said).toHaveText('“Product loaded.”', { timeout: 5000 });
+        await expect(product).not.toHaveAttribute('aria-busy');
+        const fail = page.getByRole('button', { name: 'Show the failure' });
+        await fail.click();
+        const alert = page.locator('#product-failure [role="alert"]');
+        await expect(alert).toContainText('The product could not be loaded', { timeout: 5000 });
+        await expect(fail).toBeFocused();
+        await expect(product).not.toHaveAttribute('aria-busy');
+        await page.getByRole('button', { name: 'Try again' }).click();
+        await expect(page.locator('#product-heading')).toBeFocused();
+        await expect(alert).toHaveText('');
+        await expect(said).toHaveText('“Product loaded.”', { timeout: 5000 });
+    });
+});
+
+test.describe('the own palette page', () => {
+    test("draws the kit in the page's own accent and column, and the other pages in the kit's", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.emulateMedia({ colorScheme: 'light' });
+        const drawn = async (path: string) => {
+            await page.goto(path);
+            return page.evaluate(() => ({
+                accent: getComputedStyle(
+                    document.querySelector('main .site-copy:not([inert]) .dk-button-accent') ??
+                        document.body
+                ).backgroundColor,
+                column: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--dk-column')
+                    .trim(),
+                start: document.querySelector('main h1')?.getBoundingClientRect().left ?? 0,
+            }));
+        };
+        const own = await drawn(OWN_PALETTE);
+        expect(own.accent).toBe('rgb(11, 110, 95)');
+        expect(own.column).toBe('48rem');
+        const kits = await drawn(`${BASE}controls/`);
+        expect(kits.accent).not.toBe(own.accent);
+        expect(kits.column).toBe('72rem');
+        expect(own.start).toBeGreaterThan(kits.start);
+    });
+
+    test('shows the sheet it loads, and lists every property a page sets', async ({ page }) => {
+        await page.goto(OWN_PALETTE);
+        const sheet = (await page.locator('.site-sheet pre').textContent()) ?? '';
+        expect(sheet).toContain('@layer dk, page;');
+        expect(sheet).toContain('--dk-column: 48rem;');
+        const listed = await page
+            .getByRole('table', { name: 'Every property a page sets' })
+            .locator('tbody th')
+            .allTextContents();
+        expect(listed).toContain('--dk-focus');
+        expect(listed).toContain('--dk-tile-ground');
+    });
+});
+
 test.describe('the controls page', () => {
     test('draws a live copy of every state but those a live copy would act out at load', async ({
         page,

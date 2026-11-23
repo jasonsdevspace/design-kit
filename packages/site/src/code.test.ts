@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { elementOf } from '../../design-kit/examples/elements.js';
 import { APP, CHROME, LAYOUTS } from '../../design-kit/examples/pieces.js';
 import { CONTROLS } from '../../design-kit/examples/states.js';
+import { OWN_PIECES } from './own-palette.js';
 
 /*
  * The React the site shows beside each state, held to the version of the kit the site pins, since
@@ -12,7 +13,7 @@ import { CONTROLS } from '../../design-kit/examples/states.js';
  * to its sources, so a change in the sources before a release fails one of the two.
  */
 
-const shown = [...CONTROLS, ...APP, ...LAYOUTS, ...CHROME]
+const shown = [...CONTROLS, ...APP, ...LAYOUTS, ...CHROME, OWN_PIECES]
     .flatMap((control) => control.states)
     .filter((state) => state.react !== undefined);
 
