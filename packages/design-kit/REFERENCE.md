@@ -2956,7 +2956,10 @@ once whichever it is given, and returns what takes it down again.
 The buttons are `--dk-target` both ways, or `--dk-target-large` in a tall stepper. Where a large
 text size leaves the stepper less room than its buttons take, on a phone, the buttons grow narrower,
 never under the target at the usual text size, and keep their height, so the stepper fits its field,
-in an app's dock too. The value is in the mono face with figures of one width, centered, with room
+in an app's dock too. The field in turn is never narrower than the stepper at that least width, so
+in a row of the page's own, beside a text field, the field keeps its stepper and the row's other
+fields take the room left. Its label, hint and error break their words anywhere they must, so a long
+word in them sets no least width. The value is in the mono face with figures of one width, centered, with room
 for two figures unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG
 asks a page to allow, so the field does not change width as the value changes and no figure is cut
 off, and in a tall stepper it is at the heading size. Its height, edge included, is its buttons', so

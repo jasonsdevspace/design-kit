@@ -3468,14 +3468,32 @@
         max-width: 100%;
     }
 
+    /*
+     * A stepper's field is never narrower than the stepper's least width, in any row a page lays
+     * out. Its words then break anywhere they must, which wraps them where a long word breaks
+     * today, so a long word sets no least width, as in every field.
+     */
+    :where(.dk-field:not(.dk-stepper-inline):has(> .dk-stepper)) {
+        grid-template-columns: minmax(min-content, 1fr);
+        overflow-wrap: anywhere;
+    }
+
     /* A stepper taken down while a button had focus holds focus itself, so it shows the ring. */
     :where(.dk-stepper):focus-visible {
         outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
         outline-offset: var(--dk-ring-offset);
     }
 
+    /*
+     * A button's figure sits in a column as wide as the target, less the button's edge, which can
+     * narrow to nothing, so the button asks for the target where there is room and for no more
+     * than its least width where there is not. The stepper's least width is then its buttons'
+     * least and its value's, which its field keeps.
+     */
     :where(.dk-stepper > .dk-button) {
-        width: var(--dk-target);
+        display: grid;
+        grid-template-columns: minmax(0, calc(var(--dk-target) - 2px));
+        place-items: center;
         min-width: min(var(--dk-target), 44px);
         min-height: var(--dk-target);
         padding-inline: 0;
@@ -3511,7 +3529,7 @@
     }
 
     :where(.dk-stepper-tall > .dk-button) {
-        width: var(--dk-target-large);
+        grid-template-columns: minmax(0, calc(var(--dk-target-large) - 2px));
         min-height: var(--dk-target-large);
     }
 
@@ -4022,7 +4040,7 @@
      * rule for hidden never leans on it.
      */
     :where(.dk-stepper:has(> .dk-button:not([hidden])) > .dk-button[hidden]) {
-        display: inline-flex !important;
+        display: grid !important;
         visibility: hidden;
     }
 }

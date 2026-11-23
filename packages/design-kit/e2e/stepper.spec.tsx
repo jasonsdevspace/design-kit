@@ -15,7 +15,7 @@ import {
     tabKey,
 } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
-import { textSize } from './text-size.js';
+import { doubled, textSize } from './text-size.js';
 
 /*
  * A stepper as a page attaches it: its buttons hidden with no script and once taken away and named
@@ -29,13 +29,13 @@ import { textSize } from './text-size.js';
  * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
  * needed, the value in figures of one width so the field keeps its width, every figure shown under
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
- * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
- * value starting where a read-only field's words start and standing at the field's height, or at
- * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
- * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
- * stepper's error above it and its hint below it, focus handed to a read-only value or to the
- * stepper itself and kept there as it is taken down with a button focused, the keyboard, and no
- * audit findings in either theme.
+ * a stepper that fits a phone at twice the text size, alone and inside its field in a page's own
+ * row, the larger target when asked, a read-only value starting where a read-only field's words
+ * start and standing at the field's height, or at the larger target when tall, centered at an
+ * inline stepper's row's end, and kept in place with a button holding focus, hidden pieces kept
+ * hidden by sheets read without :has(), an inline stepper's error above it and its hint below it,
+ * focus handed to a read-only value or to the stepper itself and kept there as it is taken down
+ * with a button focused, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -461,6 +461,51 @@ test('fits a dialog and a sheet on a phone 320px wide at twice the text size', a
             });
         }
     }
+});
+
+test("keeps a stepper inside its field beside a text field in a page's own row at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        css: '.row { display: flex; align-items: end; gap: var(--dk-space-2); padding-inline: var(--dk-space-4); }',
+        body: `<main><h1>Round 3</h1><div class="row">${renderToStaticMarkup(
+            <StepperField id="bid" label="Bid" min={0} max={10} defaultValue={3} />
+        )}${renderToStaticMarkup(<InputField label="Player" />)}</div></main>`,
+        script: ATTACH,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await doubled(page, browserName);
+    const placed = await page.locator('.row').evaluate((row) => {
+        const field = row.querySelector('.dk-field')?.getBoundingClientRect();
+        const stepper = row.querySelector('.dk-stepper')?.getBoundingClientRect();
+        const buttons = [...row.querySelectorAll('.dk-stepper > .dk-button')].map((button) =>
+            button.getBoundingClientRect()
+        );
+        return {
+            inside:
+                !!field &&
+                !!stepper &&
+                stepper.left >= field.left - 0.5 &&
+                stepper.right <= field.right + 0.5,
+            past: buttons.filter(
+                (button) =>
+                    !field || button.left < field.left - 0.5 || button.right > field.right + 0.5
+            ).length,
+            widths: buttons.map((button) => button.width),
+            heights: buttons.map((button) => button.height),
+        };
+    });
+    // The stepper and both its buttons within the field, the buttons at their targets.
+    expect(placed.inside, 'the stepper inside its field').toBe(true);
+    expect(placed.past, 'buttons past the field').toBe(0);
+    expect(placed.widths).toHaveLength(2);
+    for (const width of placed.widths) expect(width).toBeGreaterThanOrEqual(44 - 0.5);
+    // The target, in rems, at twice the text size.
+    for (const height of placed.heights) expect(height).toBeGreaterThanOrEqual(2.75 * 32 - 1);
+    expect(await sideways(page)).toBe(0);
 });
 
 test('empties its status line once the value is typed over, and once it is taken away', async ({
