@@ -20,17 +20,21 @@ const states = [...CONTROLS, ...APP, ...LAYOUTS, ...CHROME, ...EXPLAINER].flatMa
     (control) => control.states
 );
 
+/** An attribute React writes in the case JSX spells it, by the name HTML gives it. */
+const REACT_CASE: Readonly<Record<string, string>> = { readonly: 'readOnly' };
+
 describe('the states a page shows', () => {
     it('each draw the attribute printed under them', () => {
         expect(states.length).toBeGreaterThan(0);
         for (const state of states) {
             const markup = renderToStaticMarkup(state.draw(kit, asWritten));
             // An attribute with a value is found whole, its closing quote included, and one with
-            // none by its own name, not as the end of another such as aria-disabled, whatever its
-            // case, since React writes readOnly as it is spelled in JSX and HTML reads either.
+            // none by its own name inside a tag, not as the end of another such as aria-disabled
+            // or as a word of the text, in the case HTML writes it or the one React writes.
+            const names = [state.attribute, REACT_CASE[state.attribute]].filter(Boolean);
             const drawn = state.attribute.includes('=')
                 ? markup.includes(` ${state.attribute}`)
-                : new RegExp(`(?<![-\\w])${state.attribute}(=""|[\\s/>])`, 'i').test(markup);
+                : new RegExp(`<[^>]*\\s(${names.join('|')})(=""|[\\s/>])`).test(markup);
             expect(drawn, `${state.name}: ${state.attribute}`).toBe(true);
         }
     });

@@ -56,6 +56,12 @@ export interface State {
     /** The React a page writes for the state, where a component draws it. */
     readonly react?: string;
     /**
+     * The state is a picture in both themes, where its control's other states are live, since a
+     * live copy would act as the page loads, such as an alert read out or a part of the page busy
+     * for good, or would need a script the page does not attach to say what it shows.
+     */
+    readonly pictured?: true;
+    /**
      * Draws the state. `id` turns a name into an id of this copy's own, so a page that draws a
      * state twice, once in each theme, never holds one id twice.
      */
@@ -191,8 +197,9 @@ export const CONTROLS: readonly Control[] = [
                 ),
             },
             {
-                name: 'A button whose press is still being carried out',
+                name: 'A busy button, drawn off once the wait has passed',
                 attribute: 'data-busy="Saving the rule."',
+                pictured: true,
                 react: `<Button accent busy="Saving the rule.">
     Save rule
 </Button>`,
@@ -610,6 +617,7 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'A failure read out as it comes, with Try again',
                 attribute: 'role="alert"',
+                pictured: true,
                 react: `<Callout
     tone="danger"
     live="alert"
@@ -650,6 +658,7 @@ export const CONTROLS: readonly Control[] = [
             {
                 name: 'A part of the page that is loading',
                 attribute: 'class="dk-loading"',
+                pictured: true,
                 draw: (_kit, id) => (
                     <article aria-labelledby={id('product')} aria-busy="true">
                         <h4 id={id('product')}>Product</h4>

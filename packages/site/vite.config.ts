@@ -58,6 +58,13 @@ const ICON_LINKS = [
 const POLICY_META = /<meta http-equiv="Content-Security-Policy" content="<!-- policy -->" \/>/;
 
 /**
+ * Markup without the preload React writes for each image it draws, which is React's hint rather
+ * than the kit's markup, and on the site would fetch a picture far down a page before it is needed.
+ */
+const withoutImageHints = (markup: string) =>
+    markup.replaceAll(/<link rel="preload" as="image"[^>]*\/>/g, '');
+
+/**
  * Each state's markup as the site draws it, by the pinned version's components where one draws it,
  * laid out as the repository lays out HTML: each element on a line of its own where its control is
  * laid out, and otherwise broken only where a space already is. Two states with one key would show
@@ -70,7 +77,9 @@ const markupOf = async (): Promise<Build['markup']> => {
             control.states.map(async (state) => {
                 const key = codeKey(control, state);
                 try {
-                    const markup = renderToStaticMarkup(state.draw(components, (name) => name));
+                    const markup = withoutImageHints(
+                        renderToStaticMarkup(state.draw(components, (name) => name))
+                    );
                     return [key, await laidOut(markup, control.laidOut === true)] as const;
                 } catch (error) {
                     throw new Error(`the markup of ${key} could not be laid out`, { cause: error });
@@ -152,7 +161,7 @@ const pagesPlugin = (): Plugin => ({
                 throw new Error(`${file} needs a place for each part of its page`);
             }
             const made = await build();
-            const body = renderToStaticMarkup(PAGES[file](made));
+            const body = withoutImageHints(renderToStaticMarkup(PAGES[file](made)));
             const policy =
                 context.server === undefined
                     ? `<meta http-equiv="Content-Security-Policy" content="${POLICY}" />`

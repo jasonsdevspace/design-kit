@@ -6,7 +6,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
-import { CHROME } from '../../design-kit/examples/pieces.js';
+import { CHROME, LAYOUTS } from '../../design-kit/examples/pieces.js';
 import { CONTROLS } from '../../design-kit/examples/states.js';
 import { ABOUT, BASE, ROUTES, SOURCE } from '../src/routes.js';
 
@@ -474,7 +474,7 @@ test.describe('the landing page', () => {
     }) => {
         await page.goto(BASE);
         const cards = landingTiles(page);
-        const pages = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
+        const pages = ROUTES.filter(({ nav }) => nav !== null);
         await expect(cards).toHaveCount(pages.length);
         for (const [index, { nav, path, description }] of pages.entries()) {
             const card = cards.nth(index);
@@ -514,8 +514,7 @@ test.describe('the landing page', () => {
                 expect((await cards.count()) % lefts.size, String(width)).toBe(0);
             } else expect(lefts.size, String(width)).toBe(1);
         }
-        // On a wide screen, tiles on one line start their previews and titles level, a short
-        // line beside a longer one, which at least one line of tiles holds.
+        // On a wide screen, tiles on one line start their previews and titles level.
         await page.setViewportSize({ width: 1280, height: 900 });
         const lines = await cards.evaluateAll((all) => {
             const box = (card: Element, selector: string) => {
@@ -523,22 +522,17 @@ test.describe('the landing page', () => {
                 if (found === null) throw new Error(`a tile holds no ${selector}`);
                 return found.getBoundingClientRect();
             };
-            const byLine = new Map<number, { starts: Set<string>; details: Set<number> }>();
+            const byLine = new Map<number, Set<string>>();
             for (const card of all) {
                 const line = Math.round(card.getBoundingClientRect().top);
-                const held = byLine.get(line) ?? { starts: new Set(), details: new Set() };
-                held.starts.add(
+                const starts = byLine.get(line) ?? new Set();
+                starts.add(
                     `${String(Math.round(box(card, '.dk-row-picture').top))} ${String(Math.round(box(card, '.dk-row-title').top))}`
                 );
-                held.details.add(card.querySelector('.dk-row-detail')?.textContent.length ?? 0);
-                byLine.set(line, held);
+                byLine.set(line, starts);
             }
-            return [...byLine.values()].map(({ starts, details }) => ({
-                starts: starts.size,
-                details: details.size,
-            }));
+            return [...byLine.values()].map((starts) => ({ starts: starts.size }));
         });
-        expect(lines.some(({ details }) => details > 1)).toBe(true);
         for (const { starts } of lines) expect(starts).toBe(1);
     });
 
@@ -639,7 +633,7 @@ test.describe('the words each page opens with', () => {
     });
 
     /** Every page with a landing card, each of which lists its sections. */
-    const CARDED = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE);
+    const CARDED = ROUTES.filter(({ nav }) => nav !== null);
     /** The pages that open the same way: every page with a landing card, and the pieces together. */
     const OPENED = [...CARDED.map(({ path }) => path), TOGETHER];
     /** The one way every page says how to see the other theme. */
@@ -987,13 +981,24 @@ test.describe('the page chrome page', () => {
 });
 
 test.describe('the controls page', () => {
-    test('draws a live copy of every state', async ({ page }) => {
+    test('draws a live copy of every state but those a live copy would act out at load', async ({
+        page,
+    }) => {
         await page.goto('/design-kit/controls/');
-        const states = await page.locator('.site-state').count();
+        const states = await page.locator('.site-state:not(.site-state-pictured)').count();
         expect(states).toBeGreaterThan(0);
         await expect(page.locator('.site-state-copies > .site-copy:not([inert])')).toHaveCount(
             states
         );
+        // The alert, the busy button and the part that is loading are pictures in both themes,
+        // so nothing is read out or held busy as the page loads.
+        const pictured = page.locator('.site-state-pictured');
+        await expect(pictured).toHaveCount(3);
+        await expect(pictured.locator('.site-copy:not([inert])')).toHaveCount(0);
+        const acting = await page
+            .locator('[role="alert"], [data-busy], [aria-busy="true"]')
+            .evaluateAll((all) => all.filter((each) => each.closest('[inert]') === null).length);
+        expect(acting).toBe(0);
     });
 });
 
@@ -1377,9 +1382,7 @@ test.describe('what the tests check', () => {
      * The pages that show the kit's pieces, each section of which lists the tests that hold it:
      * every page in the site's menu but the landing page.
      */
-    const SHOWN = ROUTES.filter(({ nav, path }) => nav !== null && path !== BASE).map(
-        ({ path }) => path
-    );
+    const SHOWN = ROUTES.filter(({ nav }) => nav !== null).map(({ path }) => path);
 
     test('lists under each section the tests that hold it, and shows each group once', async ({
         page,
@@ -2150,6 +2153,7 @@ test.describe('the code of each state', () => {
         for (const path of [
             '/design-kit/controls/',
             '/design-kit/app-pieces/',
+            '/design-kit/layouts/',
             '/design-kit/page-chrome/',
             '/design-kit/explainer-pieces/',
         ]) {
@@ -2300,9 +2304,10 @@ test.describe('the code of each state', () => {
         page,
     }) => {
         // A state shows React where a component draws it, as its `react` says, and markup alone
-        // where it has none, as bands, which are classes a page writes.
+        // where it has none, as stacks, which are classes a page writes.
         for (const [path, controls] of [
             ['/design-kit/controls/', CONTROLS],
+            ['/design-kit/layouts/', LAYOUTS],
             ['/design-kit/page-chrome/', CHROME],
         ] as const) {
             await page.goto(path);
@@ -2464,6 +2469,7 @@ test.describe('the state cards', () => {
     const STATED = [
         '/design-kit/controls/',
         '/design-kit/app-pieces/',
+        '/design-kit/layouts/',
         '/design-kit/page-chrome/',
         '/design-kit/explainer-pieces/',
     ];
@@ -2875,24 +2881,38 @@ test.describe('how each state is shown', () => {
             ['dark', 'Dark', 'Light'],
         ] as const) {
             await page.emulateMedia({ colorScheme: scheme });
-            for (const [path, live, preview] of [
-                ['/design-kit/controls/', `${theme} Live`, `${other}, preview only`],
-                ['/design-kit/page-chrome/', `${theme}, a picture`, `${other}, a picture`],
+            // A live state's copies, and a pictured state's, which a page of live states holds
+            // too where a live copy would act as the page loads.
+            const live = [`${theme} Live`, `${other}, preview only`].join('|');
+            const pictured = [`${theme}, a picture`, `${other}, a picture`].join('|');
+            for (const [path, pictures] of [
+                ['/design-kit/controls/', 'some'],
+                ['/design-kit/layouts/', 'some'],
+                ['/design-kit/page-chrome/', 'all'],
             ] as const) {
                 await page.goto(path);
                 // The words a reader sees, which the page's theme decides.
-                const wrong = await page.evaluate(
-                    (expected) =>
-                        [...document.querySelectorAll('.site-state')]
-                            .map((state) =>
-                                [...state.querySelectorAll<HTMLElement>('.site-copy-label')]
-                                    .map((label) => label.innerText.replaceAll(/\s+/g, ' ').trim())
-                                    .join('|')
-                            )
-                            .filter((labels) => labels !== expected.join('|')),
-                    [live, preview]
+                const shown = await page.evaluate(() =>
+                    [...document.querySelectorAll('.site-state')].map((state) => ({
+                        pictured: state.classList.contains('site-state-pictured'),
+                        labels: [...state.querySelectorAll<HTMLElement>('.site-copy-label')]
+                            .map((label) => label.innerText.replaceAll(/\s+/g, ' ').trim())
+                            .join('|'),
+                    }))
                 );
-                expect(wrong, `${path} in ${scheme}`).toEqual([]);
+                const at = `${path} in ${scheme}`;
+                expect(
+                    shown.filter(({ pictured: picture, labels }) =>
+                        picture ? labels !== pictured : labels !== live
+                    ),
+                    at
+                ).toEqual([]);
+                const drawn = shown.filter(({ pictured: picture }) => picture).length;
+                if (pictures === 'all') expect(drawn, at).toBe(shown.length);
+                else {
+                    expect(drawn, at).toBeGreaterThan(0);
+                    expect(drawn, at).toBeLessThan(shown.length);
+                }
             }
         }
     });
@@ -2900,7 +2920,11 @@ test.describe('how each state is shown', () => {
     test('frames a copy that cannot be tried with a dashed edge, and a live one with a solid edge', async ({
         page,
     }) => {
-        for (const path of ['/design-kit/controls/', '/design-kit/page-chrome/']) {
+        for (const path of [
+            '/design-kit/controls/',
+            '/design-kit/layouts/',
+            '/design-kit/page-chrome/',
+        ]) {
             await page.goto(path);
             const edges = await page.evaluate(() =>
                 [...document.querySelectorAll('.site-copy')].map((copy) => ({

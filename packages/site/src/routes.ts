@@ -1,10 +1,11 @@
 /**
  * The site's pages, each the HTML file Vite builds it from, relative to the site, the path a
  * visitor asks for under the base GitHub Pages serves the site from, the page's title, the name the
- * site's navigation gives it, or none for a page the navigation leaves out, such as the explainer,
- * which the strip and the footer lead to as a demo's do, the short line its card on the landing
- * page gives it, for a page that has one, and the description a search result shows for it. The
- * build, the browser tests and the Lighthouse audit all read this one list.
+ * site's navigation gives it, or none for a page the navigation leaves out, such as the landing
+ * page, which the brand leads to, and the explainer, which the strip and the footer lead to as a
+ * demo's do, the short line its card on the landing page gives it, for a page that has one, and the
+ * description a search result shows for it. The build, the browser tests and the Lighthouse audit
+ * all read this one list.
  */
 export const BASE = '/design-kit/';
 
@@ -22,7 +23,7 @@ export const ROUTES = [
         file: 'index.html',
         path: BASE,
         title: 'The design kit · Jason Poteet',
-        nav: 'Home',
+        nav: null,
         description:
             'The design kit: one set of colors, type, buttons, fields and page layouts for the demos on jasonsdevspace.com, shown in the light and dark themes.',
     },

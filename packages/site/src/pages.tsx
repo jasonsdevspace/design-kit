@@ -680,7 +680,7 @@ const Shown = ({
                     <StateShown
                         key={state.name}
                         state={state}
-                        pictured={control.pictured ?? false}
+                        pictured={control.pictured ?? state.pictured ?? false}
                         markup={markupFor(markup, control, state)}
                         id={`${idOf(control.name)}-${idOf(state.name)}`}
                         laidOut={control.laidOut ?? false}
@@ -719,8 +719,10 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         intro={
             <p>
                 Each state is shown twice: live in your theme, marked Live, and as a preview in the
-                other. Under each name is the code behind it. To see the other theme live, choose
-                Light or Dark next to Theme, at the top of the page.
+                other. The busy button, the failure with Try again and the part of the page that is
+                loading are pictures in both themes, since a live copy would act as the page loads.
+                Under each name is the code behind it. To see the other theme live, choose Light or
+                Dark next to Theme, at the top of the page.
             </p>
         }
         sections={listed([...CONTROLS.map(({ name }) => name), TOAST])}
@@ -1103,9 +1105,11 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                 <p>
                     Sizes that should grow when a reader makes their text bigger are in rem. Code
                     inside a sentence is in em, so it matches the words around it. Borders, the
-                    focus ring and shadows are in px, since they should stay the same size. Each
-                    step of the spacing scale is drawn to size.
+                    focus ring and shadows are in px, since they should stay the same size.
                 </p>
+                <Tests group="Scale" commit={build.commit} />
+                <h3 id="spacing">Spacing</h3>
+                <p>Each step of the spacing scale is drawn to size.</p>
                 <Spaces declared={declared} />
                 <ScaleHeading id="type" />
                 <p>
@@ -1140,7 +1144,6 @@ export const Tokens = ({ build }: { readonly build: Build }) => {
                     skip link, and the grounds a container sets for what it holds.
                 </p>
                 <Scale declared={declared} group="layers" />
-                <Tests group="Scale" commit={build.commit} />
             </section>
             <section>
                 <TokenHeading id="theme" />

@@ -230,7 +230,7 @@ const TEXT = /^--dk-text-[a-z]+$/;
  * The steps of the type scale the site's sheet has a class to draw, one for each, as with the
  * spacing scale. A step the pinned sheet adds fails the build here until the sheet draws it too.
  * Code takes its size from the words around it, so it is drawn inside a sentence by the kit's own
- * rule for code, with no class of the site's.
+ * rule for code, and the numeral by the kit's own class for it, with no class of the site's.
  */
 const TEXT_DRAWN = new Set([
     'caption',
@@ -255,7 +255,7 @@ const sampleOf = (name: string) => {
             </span>
         );
     }
-    if (step === 'numeral') return <span className="site-type-sample site-text-numeral">212</span>;
+    if (step === 'numeral') return <span className="site-type-sample dk-numeral">212</span>;
     return <span className={`site-type-sample site-text-${step}`}>Round 3 is saved</span>;
 };
 

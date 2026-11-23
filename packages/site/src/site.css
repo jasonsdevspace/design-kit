@@ -814,11 +814,6 @@ body > .dk-strip {
     font-size: var(--dk-text-display);
 }
 
-.site-text-numeral {
-    font-size: var(--dk-text-numeral);
-    line-height: 1;
-}
-
 /* Each step of the spacing scale, a square the step wide over its name and value. */
 .site-spaces {
     display: flex;
@@ -840,7 +835,7 @@ body > .dk-strip {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    height: var(--dk-space-6);
+    height: var(--dk-space-8);
 }
 
 .site-space-drawn {

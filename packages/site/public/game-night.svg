@@ -4,12 +4,10 @@
     <g transform="translate(250 330) rotate(-18)">
         <rect width="200" height="290" rx="18" fill="#f7f3ea" stroke="#d8cfbd" stroke-width="4" />
         <text x="26" y="66" font-family="Georgia, serif" font-size="54" fill="#b3261e">7</text>
-        <circle cx="100" cy="160" r="34" fill="#b3261e" />
     </g>
     <g transform="translate(360 300) rotate(-4)">
         <rect width="200" height="290" rx="18" fill="#f7f3ea" stroke="#d8cfbd" stroke-width="4" />
         <text x="26" y="66" font-family="Georgia, serif" font-size="54" fill="#1a1a1a">9</text>
-        <rect x="70" y="128" width="60" height="60" rx="8" fill="#1a1a1a" />
     </g>
     <g transform="translate(470 290) rotate(12)">
         <rect width="200" height="290" rx="18" fill="#f7f3ea" stroke="#d8cfbd" stroke-width="4" />

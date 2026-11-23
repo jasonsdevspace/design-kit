@@ -786,7 +786,12 @@ export const LAYOUTS: readonly Control[] = [
                                         Keep score for any card game on one phone.
                                     </p>
                                 </div>
-                                <img src="/game-night.svg" width="880" height="1008" alt="" />
+                                <img
+                                    src="/design-kit/game-night.svg"
+                                    width="880"
+                                    height="1008"
+                                    alt=""
+                                />
                             </div>
                         </section>
                         <section className="dk-band site-ground-band">
@@ -859,20 +864,14 @@ export const LAYOUTS: readonly Control[] = [
         laidOut: true,
         states: [
             {
-                name: 'A name with a note at the end of its line',
+                name: "A player's name, round and score",
                 attribute: 'class="dk-split"',
                 draw: () => (
-                    <div className="dk-split">
-                        <h4>Ana</h4>
-                        <p className="dk-note">Round 4 of 10</p>
-                    </div>
-                ),
-            },
-            {
-                name: 'A score read from across the table',
-                attribute: 'class="dk-numeral"',
-                draw: () => (
                     <div className="dk-stack dk-stack-pair">
+                        <div className="dk-split">
+                            <h4>Ana</h4>
+                            <p className="dk-note">Round 4 of 10</p>
+                        </div>
                         <p className="dk-numeral">
                             212<span className="dk-visually-hidden"> points</span>
                         </p>
