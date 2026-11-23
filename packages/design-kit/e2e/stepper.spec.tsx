@@ -2,8 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { StepperField } from '../src/react.js';
-import { box, servePage, sideways, stillClock, style, tabKey } from './page.js';
+import { InputField, StepperField } from '../src/react.js';
+import { box, KIT, servePage, sideways, stillClock, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -19,7 +19,10 @@ import { textSize } from './text-size.js';
  * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
  * needed, the value in figures of one width so the field keeps its width, every figure shown under
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
- * a stepper that fits a phone at twice the text size, the larger target when asked, an inline
+ * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
+ * value starting where a read-only field's words start and standing at the field's height, or at
+ * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
+ * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
  * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
  * theme.
  */
@@ -584,6 +587,214 @@ test('draws a read-only stepper with no buttons, its value read as a field drawn
     await expect(read).toHaveValue('5');
     await expect(read).toHaveAttribute('readonly', '');
     await expect(page.getByRole('button', { name: /Rounds played/ })).toHaveCount(0);
+});
+
+/**
+ * How far into the element its words are drawn, in CSS pixels: the first column of its picture
+ * holding a pixel as dark as text, so it measures what is drawn rather than the box's sums.
+ */
+const inkStart = async (page: Page, locator: Locator): Promise<number> => {
+    await locator.scrollIntoViewIfNeeded();
+    const drawn = await box(locator, 'the field');
+    const picture = await page.screenshot({ clip: drawn, scale: 'css' });
+    return page.evaluate(async (data) => {
+        const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('expected a canvas to draw on');
+        context.drawImage(bitmap, 0, 0);
+        const {
+            data: pixels,
+            width,
+            height,
+        } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+        for (let x = 0; x < width; x += 1) {
+            for (let y = 0; y < height; y += 1) {
+                const at = (y * width + x) * 4;
+                const light = (pixels[at] ?? 0) + (pixels[at + 1] ?? 0) + (pixels[at + 2] ?? 0);
+                if (light < 3 * 128) return x;
+            }
+        }
+        return -1;
+    }, picture.toString('base64'));
+};
+
+const READ_ONLY = renderToStaticMarkup(
+    <main>
+        <h1>Round 3</h1>
+        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
+        <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} readOnly tall />
+        <StepperField id="deals" label="Deals" min={1} max={10} defaultValue={3} />
+        <StepperField id="held" label="Held" min={1} max={10} defaultValue={3} />
+        <StepperField
+            id="tricks"
+            label="Tricks"
+            min={0}
+            max={10}
+            defaultValue={3}
+            readOnly
+            inline
+        />
+        <StepperField id="bids" label="Bids" min={0} max={10} defaultValue={3} inline />
+    </main>
+);
+
+/** The read-only page, in an app's frame when asked, attached, at the width and text size given. */
+const openReadOnly = async (
+    page: Page,
+    {
+        width,
+        scale = 1,
+        app = false,
+        script = ATTACH,
+    }: { width: number; scale?: number; app?: boolean; script?: string }
+): Promise<void> => {
+    await page.setViewportSize({ width, height: 900 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: app
+            ? `<div class="dk-app"><div class="dk-app-body">${READ_ONLY}</div></div>`
+            : READ_ONLY,
+        script,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await textSize(page, scale);
+};
+
+test("lines a read-only stepper's value up with a read-only field's, at a field's height", async ({
+    page,
+    browserName,
+}) => {
+    const sizes = [
+        { width: 390, scale: 1, app: false },
+        { width: 1280, scale: 1, app: false },
+        // In an app's frame a field stands at the target's height on a wide screen too.
+        { width: 1280, scale: 1, app: true },
+        // Twice the text size, set through Chromium, where a field's inline padding passes the
+        // held one that an editable value keeps.
+        ...(browserName === 'chromium' ? [{ width: 390, scale: 2, app: false }] : []),
+    ];
+    for (const size of sizes) {
+        const at = `${String(size.width)} at ${String(size.scale)}x${size.app ? ' in an app' : ''}`;
+        await openReadOnly(page, size);
+        const field = page.locator('#round');
+        const value = page.locator('#cards');
+        const [fieldBox, valueBox] = [await box(field), await box(value)];
+        expect.soft(valueBox.x, at).toBeCloseTo(fieldBox.x, 0);
+        const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];
+        expect(Math.min(fieldInk, valueInk), `${at}, both drawn`).toBeGreaterThan(0);
+        // The mono face and the body face leave a pixel or so of different room before a first
+        // figure.
+        expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
+        expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
+        // An inline stepper's value sits at its row's end, after its label, with no column of
+        // values to line up with, so a read-only one keeps an editable value's centered figures
+        // and its height.
+        const [inline, editable] = [page.locator('#tricks'), page.locator('#bids')];
+        expect
+            .soft((await box(inline)).width, `${at}, inline`)
+            .toBeCloseTo((await box(editable)).width, 0);
+        expect
+            .soft((await box(inline)).height, `${at}, inline`)
+            .toBeCloseTo((await box(editable)).height, 0);
+        expect
+            .soft(Math.abs((await inkStart(page, inline)) - (await inkStart(page, editable))), at)
+            .toBeLessThanOrEqual(1);
+    }
+});
+
+test("keeps a tall read-only stepper's larger target, its figures at a field's padding", async ({
+    page,
+}) => {
+    for (const width of [390, 1280]) {
+        await openReadOnly(page, { width });
+        const field = page.locator('#round');
+        const value = page.locator('#seats');
+        expect.soft((await box(value)).height, String(width)).toBeCloseTo(56, 0);
+        const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];
+        expect(Math.min(fieldInk, valueInk), `${String(width)}, both drawn`).toBeGreaterThan(0);
+        // The larger figure leaves a little more room before itself than the field's words do.
+        expect.soft(Math.abs(valueInk - fieldInk), String(width)).toBeLessThanOrEqual(3);
+    }
+});
+
+test('keeps the value and a focused button where they stood as the field turns read only', async ({
+    page,
+    browserName,
+}) => {
+    const sizes = [
+        // A laptop's width, in every engine, where a read-only value shown alone is a field's
+        // height but one beside a button keeps the target's.
+        { width: 1280, scale: 1 },
+        // Twice the text size, set through Chromium, where a read-only value shown alone takes a
+        // field's wider padding.
+        ...(browserName === 'chromium' ? [{ width: 390, scale: 2 }] : []),
+    ];
+    for (const size of sizes) {
+        const at = `${String(size.width)} at ${String(size.scale)}x`;
+        await openReadOnly(page, size);
+        const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+        const held = page.locator('#held');
+        await raiseHeld.focus();
+        const [valueBefore, buttonBefore] = [await box(held), await box(raiseHeld)];
+        await held.evaluate((input: HTMLInputElement) => {
+            input.readOnly = true;
+        });
+        await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
+        await expect(raiseHeld).toBeFocused();
+        await expect(page.getByRole('button', { name: 'Lower Held' })).toBeHidden();
+        const [value, button] = [await box(held), await box(raiseHeld)];
+        // Nothing moves under the focused button, and the value keeps an editable one's size.
+        expect.soft(value.x, at).toBeCloseTo(valueBefore.x, 0);
+        expect.soft(button.x, at).toBeCloseTo(buttonBefore.x, 0);
+        const open = await box(page.locator('#deals'));
+        expect.soft(value.width, at).toBeCloseTo(open.width, 0);
+        expect.soft(value.height, at).toBeCloseTo(open.height, 0);
+    }
+});
+
+test('keeps hidden pieces hidden and a value beside a focused button at the target, without :has()', async ({
+    page,
+}) => {
+    await openReadOnly(page, { width: 1280 });
+    // The kit's sheets as a browser without :has() reads them, a selector naming it left unknown,
+    // which drops a rule it is in outside a forgiving list. Only the kit's part of the sheet served
+    // is swapped, so the page's own rules after it stay, and a page that loads the kit some other
+    // way fails here rather than testing nothing.
+    await page.evaluate(
+        async ([kit, withoutHas]) => {
+            const link = document.querySelector('link[href="/kit.css"]');
+            if (!link) throw new Error('expected the kit sheet linked as /kit.css');
+            const served = await (await fetch('/kit.css')).text();
+            if (!served.startsWith(kit))
+                throw new Error('expected the served sheet to open with the kit');
+            const swapped = document.createElement('style');
+            swapped.textContent = withoutHas + served.slice(kit.length);
+            link.replaceWith(swapped);
+        },
+        [KIT, KIT.replaceAll(':has(', ':-dk-unknown(')] as const
+    );
+    // A read-only stepper's buttons, hidden by the stepper, drawn by the button's own display rule
+    // unless the kit's rule for hidden holds.
+    expect
+        .soft(
+            (await style(page.locator('.dk-field:has(#cards) .dk-stepper-up'), 'display'))[
+                'display'
+            ]
+        )
+        .toBe('none');
+    const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+    await raiseHeld.focus();
+    await page.locator('#held').evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
+    // Level with the focused button, as every value is where :has() cannot tell one shown alone.
+    expect
+        .soft((await box(page.locator('#held'))).height)
+        .toBeCloseTo((await box(raiseHeld)).height, 0);
 });
 
 test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({

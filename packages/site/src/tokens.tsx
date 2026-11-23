@@ -36,7 +36,7 @@ interface Column {
 }
 
 /** A table the kit draws, titled, in a frame that scrolls inside itself on a narrow screen. */
-const Table = ({
+export const Table = ({
     id,
     title,
     columns,
@@ -152,11 +152,20 @@ const Bar = ({ ratio, needs }: { readonly ratio: number; readonly needs: number 
     </svg>
 );
 
-/** Every pairing the palette is meant for, the tightest against what it needs first. */
-export const Contrast = ({ declared }: { readonly declared: Declared }) => (
+/**
+ * Every pairing the palette is meant for, the tightest against what it needs first, under the title
+ * given, for a page that measures a palette of its own.
+ */
+export const Contrast = ({
+    declared,
+    title = 'The contrast of every pairing, the tightest first',
+}: {
+    readonly declared: Declared;
+    readonly title?: string;
+}) => (
     <Table
         id="contrast-title"
-        title="The contrast of every pairing, the tightest first"
+        title={title}
         columns={[
             { name: 'Color' },
             { name: 'On' },
