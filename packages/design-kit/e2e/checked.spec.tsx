@@ -405,6 +405,105 @@ test("takes words written on a set's fieldset, and a field's own for its pattern
     await expect(page.locator('#post-error')).toHaveText('Error: Enter two capital letters.');
 });
 
+/** Dated fields with limits, each set below or above them, as a visitor enters a value. */
+const DATED_FORM = `<form>
+<label for="day">Day</label><input id="day" type="date" min="2026-11-22" max="2026-12-24">
+<label for="when">When</label><input id="when" type="datetime-local" min="2026-11-22T09:00" max="2026-11-29T18:30">
+<label for="at">At</label><input id="at" type="time" min="09:00" max="17:30">
+<label for="in">Month</label><input id="in" type="month" min="2026-11" max="2027-02">
+<label for="of">Week</label><input id="of" type="week" min="2026-W01" max="2026-W48">
+<button type="submit">Send</button></form>`;
+
+/** Sets each field's value as a visitor would, then submits. */
+const sendDated = async (page: Page, values: Record<string, string>) => {
+    await page.evaluate((given) => {
+        for (const [id, value] of Object.entries(given)) {
+            const field = document.getElementById(id) as HTMLInputElement;
+            field.value = value;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }, values);
+    await send(page);
+};
+
+/** The text of each dated field's error, its spaces made plain, keyed by the error's id. */
+const datedErrors = (page: Page) =>
+    page
+        .locator('.dk-field-error')
+        .evaluateAll((errors) =>
+            Object.fromEntries(
+                errors.map((error) => [error.id, error.textContent.replace(/\s+/g, ' ')])
+            )
+        );
+
+/**
+ * The errors expected, a month's and a week's only where the engine takes those types, since WebKit
+ * and Firefox draw them as text fields with no limits to fail.
+ */
+const takenBy = async (page: Page, errors: Record<string, unknown>) => {
+    const types = await page.evaluate(() =>
+        ['in', 'of'].map((id) => (document.getElementById(id) as HTMLInputElement).type)
+    );
+    return Object.fromEntries(
+        Object.entries(errors).filter(
+            ([id]) =>
+                (id !== 'in-error' || types[0] === 'month') &&
+                (id !== 'of-error' || types[1] === 'week')
+        )
+    );
+};
+
+test("gives a dated field's limit in words a visitor reads, naming the kind of value", async ({
+    page,
+}) => {
+    await openWith(page, DATED_FORM);
+    await sendDated(page, {
+        day: '2026-11-21',
+        when: '2026-11-22T08:59',
+        at: '08:30',
+        in: '2026-10',
+        of: '2025-W52',
+    });
+    expect(await datedErrors(page)).toEqual(
+        await takenBy(page, {
+            'day-error': 'Error: Enter November 22, 2026 or a later date.',
+            'when-error': expect.stringMatching(
+                /^Error: Enter November 22, 2026(,| at) 9:00 AM or a later date and time\.$/
+            ),
+            'at-error': 'Error: Enter 9:00 AM or a later time.',
+            'in-error': 'Error: Enter November 2026 or a later month.',
+            'of-error': 'Error: Enter the week of December 29, 2025 or a later week.',
+        })
+    );
+    await sendDated(page, {
+        day: '2026-12-25',
+        when: '2026-11-29T18:31',
+        at: '17:31',
+        in: '2027-03',
+        of: '2026-W49',
+    });
+    expect(await datedErrors(page)).toEqual(
+        await takenBy(page, {
+            'day-error': 'Error: Enter December 24, 2026 or an earlier date.',
+            'when-error': expect.stringMatching(
+                /^Error: Enter November 29, 2026(,| at) 6:30 PM or an earlier date and time\.$/
+            ),
+            'at-error': 'Error: Enter 5:30 PM or an earlier time.',
+            'in-error': 'Error: Enter February 2027 or an earlier month.',
+            'of-error': 'Error: Enter the week of November 23, 2026 or an earlier week.',
+        })
+    );
+    // Words in the page's language, as a page in British English writes its dates.
+    await page.evaluate(() => {
+        document.documentElement.lang = 'en-GB';
+    });
+    await send(page);
+    await expect(page.locator('#at-error')).toHaveText(/^Error: Enter 17:30 or an earlier time\.$/);
+    await expect(page.locator('#day-error')).toHaveText(
+        'Error: Enter 24 December 2026 or an earlier date.'
+    );
+});
+
 test('checks the whole form where only a part of it is attached, a field tied to it from outside among them', async ({
     page,
 }) => {

@@ -2277,6 +2277,52 @@ const stepWords = (control: Checked): string => {
         : `Enter a multiple of ${step}.`;
 };
 
+/** A format in the page's language, or the browser's where the page's lang is no language tag. */
+const formatIn = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
+    try {
+        return new Intl.DateTimeFormat(document.documentElement.lang || undefined, options);
+    } catch {
+        return new Intl.DateTimeFormat(undefined, options);
+    }
+};
+
+/**
+ * A dated field's limit as a visitor reads it, in the page's language, or the browser's where the
+ * page names none it knows: "November 2026" for a month, "the week of November 23, 2026" from an
+ * ISO week's Monday. Read as wall time, never through UTC, since the value has no zone.
+ */
+const whenWords = (type: string, limit: string): string => {
+    const time = type === 'time';
+    const week = type === 'week';
+    // A time read as one on a day of its own, so every type's parts fall in the same places.
+    const parts = (time ? `0-1-1T${limit}` : limit).split(/\D+/).map(Number);
+    const [year = 0, month = 1, day = 1, hour = 0, minute = 0, second = 0] = parts;
+    const options: Intl.DateTimeFormatOptions = {
+        ...(!time && { year: 'numeric', month: 'long' }),
+        ...(!time && type !== 'month' && { day: 'numeric' }),
+        ...(parts.length > 3 && { hour: 'numeric', minute: '2-digit' }),
+        ...(parts.length > 5 && { second: '2-digit' }),
+    };
+    // A week's Monday, counted from that of the week holding January 4, which is the ISO week 1.
+    const when = week
+        ? new Date(year, 0, 4 - ((new Date(year, 0, 4).getDay() + 6) % 7) + 7 * (month - 1))
+        : new Date(year, month - 1, day, hour, minute, second);
+    return `${week ? 'the week of ' : ''}${formatIn(options).format(when)}`;
+};
+
+/**
+ * Words for a value past a field's least or most, which for a dated field name the kind of value
+ * and keep the limit off the closing period, so the period never stands alone on a line.
+ */
+const limitWords = (control: Checked, name: 'min' | 'max'): string => {
+    const limit = limitOf(control, name);
+    const least = name === 'min';
+    if (control.type !== 'time' && !DATED.has(control.type))
+        return `Enter ${limit} or ${least ? 'more' : 'less'}.`;
+    const kind = control.type === 'datetime-local' ? 'date and time' : control.type;
+    return `Enter ${whenWords(control.type, limit)} or ${least ? 'a later' : 'an earlier'} ${kind}.`;
+};
+
 /**
  * Whether a fieldset holds one set of choices, as the kit's set of choices draws it or a page
  * writes one, rather than a section of a form with a choice standing alone in it.
@@ -2330,20 +2376,8 @@ const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
     patternMismatch: formatWords,
     tooShort: (control) => `Enter at least ${limitOf(control, 'minlength')} characters.`,
     tooLong: (control) => `Enter ${limitOf(control, 'maxlength')} characters or fewer.`,
-    rangeUnderflow: (control) => {
-        const least = limitOf(control, 'min');
-        if (control.type === 'time') return `Enter a time at or after ${least}.`;
-        return DATED.has(control.type)
-            ? `Enter a date on or after ${least}.`
-            : `Enter ${least} or more.`;
-    },
-    rangeOverflow: (control) => {
-        const most = limitOf(control, 'max');
-        if (control.type === 'time') return `Enter a time at or before ${most}.`;
-        return DATED.has(control.type)
-            ? `Enter a date on or before ${most}.`
-            : `Enter ${most} or less.`;
-    },
+    rangeUnderflow: (control) => limitWords(control, 'min'),
+    rangeOverflow: (control) => limitWords(control, 'max'),
     stepMismatch: stepWords,
     customError: (control) => control.validationMessage,
 };
