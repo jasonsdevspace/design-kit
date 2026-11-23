@@ -151,20 +151,21 @@ layout effect since a form's refusal is made in one.
 A form React still draws refuses only through `useFormRefusal`, never through `attachForm` drawing
 errors of its own, so each node and attribute of a field has one owner. React draws a field's error,
 its id and the control's `aria-describedby` and `aria-invalid` from the field's props, and writes
-them again whenever those props change. Where the kit drew into the same field, React's next render
-threw on the nodes the kit had replaced, or with the kit's error set beside the page's, mounted a
-second error under the kit's id, put a hint between the two, and dropped the kit's marks so its
-error stayed shown but went unheard. Whether a renderer will touch a field again is not something
-the markup can say, since the same `InputField` rendered to static HTML and attached from plain
-script, as the kit's site draws its refused form, is markup nothing draws again, and there the kit
-draws its errors as it does in a page written by hand. So the choice is made where the form is
-attached: `useFormRefusal` requires `invalid` and hands the failures to the page, and `attachForm`
-without it draws them itself. A mark on every React field that turned the kit's drawing off was
-weighed and rejected, since it turned it off for static output too, which left the site's form with
-no errors and focus on its button. So was an observer that put the kit's error back after each React
-render while a refusal stood, since it could not put back a hint React inserts without moving
-React's nodes, and following React as it cleared its error would show a value the browser still
-refuses as valid.
+them again whenever those props change. Where the kit wrote its words into an error React drew,
+React's next render could throw a `NotFoundError` on the children the kit had replaced. Where the
+kit drew an error of its own and the page then set one, React mounted a second error under the same
+id, with the hint between the two, and wrote the control's marks back from its props, so the kit's
+error stayed on the screen but went unheard. The markup cannot say whether a renderer will draw a
+field again, since the same `InputField` rendered to static HTML and attached from plain script, as
+the kit's site draws its refused form, is markup nothing draws again, and there the kit draws its
+errors as it does in a page written by hand. So the choice is made where the form is attached.
+`useFormRefusal` requires `invalid` and hands the failures to the page, and `attachForm` without it
+draws them itself. A mark on every React field that turned the kit's drawing off was weighed and
+rejected, since it turned it off for static output too, which left the site's form with no errors
+and focus on its button. So was an observer that put the kit's error back after each React render
+while a refusal stood, since it could not put back a hint React inserts without moving React's
+nodes, and following React as it cleared its error would leave a value the browser still refuses
+with no error shown.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.
@@ -186,7 +187,9 @@ components still render on a server and draw the same markup a page writes by ha
 - Game Table Tally and ShelfLens delete their own wrappers when they pin the version that carries
   the hooks.
 - A React page that attaches a form it still draws with `attachForm` in an effect moves to
-  `useFormRefusal`. Game Table Tally and the kit's site already refuse that way.
+  `useFormRefusal` and draws each error from its own state. Game Table Tally refuses that way
+  already. The kit's site keeps `attachForm`, since its form is the React components rendered to
+  static HTML and attached from plain script, markup nothing draws again.
 
 ## How it is tested
 
@@ -237,8 +240,8 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
 - `e2e/form.spec.tsx` draws a field's error again with new words, an address among them, while a
   refusal through `useFormRefusal` stands, in Chromium, WebKit and Firefox, and finds no exception,
   one error with the field's id, shown, described and marked, focus on the field and the refusal
-  said once on the screen's status line. The site's `e2e/site.spec.ts` refuses the site's form,
-  drawn by the React components to static HTML and attached from plain script, and finds the kit's
-  errors drawn and focus on its first field.
+  said once on the screen's status line. `packages/site/e2e/site.spec.ts` refuses the site's form,
+  drawn by the React components to static HTML and attached from plain script, and finds both
+  fields marked invalid, focus on its first field and that field's name said on the status line.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.
