@@ -19,10 +19,8 @@ import {
  * the submits the page's handler took. A stepper for a bid, which speaks through the page's line,
  * is drawn with whatever error the page is handed for it, and the failures handed are kept, each
  * as its field's id and its words. The root's `data-bid` names how the bid is drawn: `required`,
- * `blank` for one drawn with no value, `error` for one the page draws an error of its own in,
- * `late` for one attached only once its button is pressed, and `summary` for a form whose refusal
- * moves focus to a summary. A button attaches the bid afresh, and one marked formnovalidate
- * submits unchecked.
+ * `blank` for one drawn with no value, and `summary` for a form whose refusal moves focus to a
+ * summary.
  */
 
 type Handed = { handed?: string[] };
@@ -31,19 +29,15 @@ const root = document.getElementById('root');
 const drawn = root?.dataset['bid'] ?? '';
 
 const Join = () => {
-    const [errors, setErrors] = useState<Record<string, string>>(
-        drawn.includes('error') ? { bid: 'Bids are closed.' } : {}
-    );
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [count, setCount] = useState(0);
-    // The bid is attached afresh each time the round moves, and not at all before the first.
-    const [round, setRound] = useState(drawn.includes('late') ? 0 : 1);
     const say = useStatus();
     const bid = useRef<HTMLDivElement>(null);
     const summary = useRef<HTMLParagraphElement>(null);
     useEffect(() => {
         const stepper = bid.current?.querySelector<HTMLElement>('.dk-stepper');
-        return stepper && round > 0 ? attachStepper(stepper, { say }) : undefined;
-    }, [say, round]);
+        return stepper ? attachStepper(stepper, { say }) : undefined;
+    }, [say]);
     const [form] = useFormRefusal<HTMLFormElement>({
         ...(drawn.includes('summary') ? { summary: () => summary.current } : {}),
         errorWords: {
@@ -75,6 +69,8 @@ const Join = () => {
                 ]}
                 error={errors['size']}
             />
+            {/* Above the bid, so an error drawn as focus leaves the bid never moves the button. */}
+            <Button type="submit">Join</Button>
             <div ref={bid}>
                 <StepperField
                     id="bid"
@@ -87,17 +83,6 @@ const Join = () => {
                     error={errors['bid']}
                 />
             </div>
-            <Button type="submit">Join</Button>
-            <Button type="submit" formNoValidate>
-                Save a draft
-            </Button>
-            <Button
-                onClick={() => {
-                    setRound(round + 1);
-                }}
-            >
-                Attach the bid
-            </Button>
             <p id="count">{count}</p>
         </form>
     );

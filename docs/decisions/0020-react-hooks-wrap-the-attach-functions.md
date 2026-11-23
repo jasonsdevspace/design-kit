@@ -160,9 +160,7 @@ field again, since the same `InputField` rendered to static HTML and attached fr
 the kit's site draws its refused form, is markup nothing draws again, and there the kit draws its
 errors as it does in a page written by hand. So the choice is made where the form is attached.
 `useFormRefusal` requires `invalid` and hands the failures to the page, and `attachForm` without it
-draws them itself. A stepper is the standing exception to React drawing a field's error: its range
-error is markup React draws once and `attachStepper` shows, so it is the one error for a stepper in
-a React form, a required one left blank too, and its failure is not handed to the page, as record 21
+draws them itself. A stepper's range error that shows is the kit's in a React form too, as record 21
 has it. A mark on every React field that turned the kit's drawing off was weighed and rejected,
 since it turned it off for static output too, which left the site's form with no errors and focus on
 its button. So was an observer that put the kit's error back after each React render while a refusal

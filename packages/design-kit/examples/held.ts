@@ -305,8 +305,6 @@ export const HELD = {
                 'leaves a disabled field as it is, with both buttons off',
                 'follows a value a form reset sets, and fires nothing for a press that changes nothing',
                 'reports a typed value outside the limits, or none where one is required, as a field reports an error, says it, and clears it once right',
-                'clears its error as a script makes the field optional or changes its step, with no input event',
-                'reports letters typed into a blank field as focus leaves it, though no change fires',
                 "keeps a page's own hint and error in place through its own error",
                 'asks a phone for a keyboard with a minus only where the least value is below nothing',
                 'keeps its width as the value changes, with figures of one width',
