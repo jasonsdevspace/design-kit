@@ -222,8 +222,9 @@ jobs:
     # browser's own bars, a number field's inner room and what a table's frame scrolls to, drawn in
     # its engine too. On a Mac, where WebKit runs on what the image already has: on Ubuntu it needs
     # system packages from a mirror that has been slow enough to run a job out of time. In shards,
-    # each on a runner of its own, as many as the matrix lists, since the whole run came close to the
-    # time limit.
+    # each on a runner of its own, as many as the matrix lists, one more than Chromium takes, since
+    # a Mac draws slower and two came close to the time limit. They are the only jobs on a Mac, so
+    # they stay within the Mac runners an account may use at once and none waits for another.
     webkit:
         name: Browser tests in WebKit, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
@@ -231,7 +232,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                shard: [1, 2]
+                shard: [1, 2, 3]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -279,17 +280,18 @@ jobs:
 
     # The stepper, the controls and the pieces in Firefox too, since its number field keeps its spin
     # buttons unless `appearance: textfield` takes them away and it rounds lengths its own way, in
-    # the current Firefox Playwright brings rather than the kit's floor. On a Mac, as WebKit is,
-    # where Firefox runs on what the image already has. In shards, each on a runner of its own, as
-    # many as the matrix lists, since the whole run came close to the time limit.
+    # the current Firefox Playwright brings rather than the kit's floor. On Ubuntu, as Chromium is,
+    # where Firefox starts on what the image already has, which leaves the Mac runners to WebKit. In
+    # shards, each on a runner of its own, as many as the matrix lists, one more than Chromium
+    # takes, since Firefox runs the specs slower.
     firefox:
         name: Browser tests in Firefox, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
-        runs-on: macos-26
+        runs-on: ubuntu-26.04
         timeout-minutes: 10
         strategy:
             fail-fast: false
             matrix:
-                shard: [1, 2]
+                shard: [1, 2, 3]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -306,7 +308,8 @@ jobs:
             - name: Install dependencies
               run: npm ci --ignore-scripts
 
-            # Started once, so a browser that cannot start fails this step rather than a test.
+            # Only the browser is downloaded, not the system libraries, and started once, so a
+            # library the runner image lacks fails this step rather than a test.
             - name: Install Firefox
               timeout-minutes: 3
               run: |
