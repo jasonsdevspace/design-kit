@@ -735,10 +735,10 @@
     /*
      * A field anywhere in a page, a band or a stack, a form's included, holds to the measure as the
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
-     * a callout in a form ends where its fields end, as does one written after a field or a row of
-     * fields in what holds them, for a page that draws its fields with no form. A callout with no
-     * field before it there runs the column. A row of fields holds to the measure too, so it ends
-     * where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
+     * a callout in a form ends where its fields end, as does one written before or after a field
+     * or a row of fields in what holds them, for a page that draws its fields with no form. A
+     * callout with no field beside it there runs the column. A row of fields holds to the measure
+     * too, so it ends where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
      * shorter length for a short answer or `none` for the column, and a field in a row of fields
      * narrows by it as well. A dialog and a popover set their own width, which a page may widen, so
      * what they hold takes theirs.
@@ -749,7 +749,8 @@
                 .dk-field,
                 .dk-fields,
                 form .dk-callout,
-                :is(.dk-field, .dk-fields) ~ .dk-callout
+                :is(.dk-field, .dk-fields) ~ .dk-callout,
+                .dk-callout:has(~ :is(.dk-field, .dk-fields))
             ):not(.dk-dialog *, dialog *, [popover] *)
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
@@ -929,20 +930,6 @@
         background-color: var(--dk-bg);
         color: var(--dk-fg);
         font-size: max(var(--dk-text-body), 16px);
-    }
-
-    /*
-     * A field for a date, a month or a week draws a picker's icon after its words in Chromium, and
-     * on a phone at twice the text size the two meet. On a screen under 12rem wide, which only a
-     * large text size makes of a phone, such a field pads its start by the step it keeps above and
-     * below and its end not at all, so the icon stands at the field's end and the words clear of
-     * it. A date with a time is wider than such a screen on its own, and is cut short at any
-     * padding.
-     */
-    @media (width < 12rem) {
-        :where(.dk-input:is([type^='date'], [type='month'], [type='week'])) {
-            padding-inline: var(--dk-space-1) 0;
-        }
     }
 
     /*

@@ -100,11 +100,17 @@ is its CSS transformer, as the package README shows.
   in one column where a page asks for columns, a row with a picture sets the picture in the column
   its words would take, and a footer at the page's end pads its foot by its own step alone rather
   than past what a phone keeps there.
-- In Chromium, which draws a picker's icon at the end of a dated field, a field for a date with a
-  time is wider than a 320 pixel screen at twice the text size on its own, so its words are cut
-  short at the icon there, and a field for a date, a month or a week in a panel on that screen is
-  too. A date's words clear the icon there by a few pixels in the widest typeface the tests draw
-  them in, so a page that sets a wider one, such as Verdana, has them cut short by as little.
+- In Chromium, which draws a picker's icon at the end of a dated field and cuts the field's words
+  short at it, a 320 pixel screen at twice the text size leaves a dated field less room than its
+  words take. A date as typed fits there in the system typeface, and the empty date pattern, a
+  month, a week and a date with a time do not, so a chosen month shows with its year cut short. A
+  dated field in a panel on that screen cuts a typed date short as well, and a wider typeface cuts
+  more. The words and the icon are the browser's own parts, drawn at the text size the visitor set,
+  and no padding the field could give up makes room for a month or a date with a time, so the field
+  stays padded as every other field is. A page that must show a whole month on that screen asks for
+  it with a select or a text field.
+- In Firefox 120, which lacks `:has()`, a callout written before the first field with no form runs
+  the column's width.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
   can still get narrower than its stepper. In a `dk-fields` row there, a stepper wider than the
   row's 10rem runs past its field on a screen 368 pixels wide and up, up to 7 pixels into the gap

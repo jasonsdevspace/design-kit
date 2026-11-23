@@ -603,48 +603,44 @@ column, so a word with no place to break, such as an email address in an error, 
 rather than pushing the field past the column's edge. In a page, a band or a stack, in a form there
 too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
 runs the width of a wide panel, and a callout in its form ends where the fields end. So does a
-callout written after a field or a row of fields in what holds them, for a page that draws its
-fields with no form. A callout with no field before it there, one above the first field among them,
-runs the column's width, so a message over a column of fields with no form goes in the form a page
-gives them or under the field it speaks of. A page sets `--dk-field-measure` on a field or on its
-form, a shorter length for a short answer such as a ZIP code, or `none` for the column's width.
-Fields set side by side go in a `dk-fields` row, as [fields side by side](#fields-side-by-side)
-shows, and a row of the page's own sets `none` on the row, so each field fills its cell. In a page's
-own row, a field shorter than the tallest beside it keeps its control at its own height, with the
-spare room below it, and in a `dk-fields` row the fields line up along their foot instead. In a
-dialog or a popover the property has no effect, since the dialog's own width sizes its fields. An
-inline stepper in a page's row keeps its label and stepper at the top of its cell, its label level
-with the labels beside it. A field given more height than its parts, by a height or a flex grow of
-the page's own, leaves the room below them too, so a control meant to fill its field, such as a
-textarea that fills a panel, takes the room by the page's own `grid-template-rows` on the field,
-which gives the control's row `1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr`
-with a hint. In a form with no class attribute, a field, a row of fields, a row of actions or a
-callout that is not empty stands `--dk-space-4` below what sits above it, once another of those has
-come before it, so a form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain
-form is given room. A form with a class attribute lays out its own parts. An error's words allow a
-break after each "@", by a `<wbr>`, so an address too long for its line breaks there rather than at
-whichever letter or stop the line runs out on, and the kit's own words keep punctuation away from
-the address they show. A page that puts an address in its own label or hint can add `<wbr>` after
-the "@" for the same break.
+callout written before or after a field or a row of fields in what holds them, for a page that draws
+its fields with no form. A page sets `--dk-field-measure` on a field or on its form, a shorter
+length for a short answer such as a ZIP code, or `none` for the column's width. A callout reads
+`--dk-field-measure` from what holds it, so a page that sets the property on one field sets it on
+the container, or on the callout too, for their ends to match. Fields set side by side go in a
+`dk-fields` row, as [fields side by side](#fields-side-by-side) shows, and a row of the page's own
+sets `none` on the row, so each field fills its cell. In a page's own row, a field shorter than the
+tallest beside it keeps its control at its own height, with the spare room below it, and in a
+`dk-fields` row the fields line up along their foot instead. In a dialog or a popover the property
+has no effect, since the dialog's own width sizes its fields. An inline stepper in a page's row
+keeps its label and stepper at the top of its cell, its label level with the labels beside it. A
+field given more height than its parts, by a height or a flex grow of the page's own, leaves the
+room below them too, so a control meant to fill its field, such as a textarea that fills a panel,
+takes the room by the page's own `grid-template-rows` on the field, which gives the control's row
+`1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a form with no
+class attribute, a field, a row of fields, a row of actions or a callout that is not empty stands
+`--dk-space-4` below what sits above it, once another of those has come before it, so a form's
+buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form
+with a class attribute lays out its own parts. An error's words allow a break after each "@", by a
+`<wbr>`, so an address too long for its line breaks there rather than at whichever letter or stop
+the line runs out on, and the kit's own words keep punctuation away from the address they show. A
+page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
 
 A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
 button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
-is tapped. On a screen under 12rem wide, a 320 pixel phone at twice the text size, a field for a
-date, a month or a week pads its start by `--dk-space-1` and its end not at all, so its words stand
-clear of the picker's icon Chromium draws at its end. It sits on the page's own ground, so it reads
-as a well on a card. The hint and the error are in the caption size, the error in the danger color,
-and an invalid control's edge in the danger color too. In forced colors, where that color is gone,
-an invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
-error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
-on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
-background, and in forced colors the browser's own arrow comes back. A select that shows its options
-as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
-takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
-and its text at the top rather than centered, and it resizes in height alone, since a wider one
-would push its column.
+is tapped. It sits on the page's own ground, so it reads as a well on a card. The hint and the error
+are in the caption size, the error in the danger color, and an invalid control's edge in the danger
+color too. In forced colors, where that color is gone, an invalid control gains a dashed line around
+its edge in `CanvasText`, which moves nothing as the error comes and goes, and gives way to the
+focus ring when it has focus. A disabled control is drawn on the surface ground in the muted text.
+The select is a native `<select>`, its caret drawn as a background, and in forced colors the
+browser's own arrow comes back. A select that shows its options as a list, with `multiple` or a
+`size`, is left as the browser draws it, with no caret. A textarea takes the same look but is as
+tall as its rows, three unless given, its lines at the body's leading and its text at the top rather
+than centered, and it resizes in height alone, since a wider one would push its column.
 
 </details>
 

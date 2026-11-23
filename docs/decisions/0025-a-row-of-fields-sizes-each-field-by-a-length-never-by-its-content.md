@@ -67,13 +67,13 @@ it, and each copy would size a stepper's field by its content and meet the fault
 Option F. The row wraps, with a gap of `--dk-space-4` both ways and its fields lined up along their
 foot. A row written straight in what holds a column of pieces, a panel, a dialog or a stack among
 them, stands its lines that column's step apart, `--dk-flow-step`, so a wrapped field sits as far
-below as a field under another there too. Every field starts from `--dk-fields-least`, 10rem until a page sets it, a stepper's width
-rounded up, so a field in the row is never narrower than a stepper of two figures needs and nothing
-rests on `:has()`. An inline stepper and a choice field take a line of their own by a basis of the
-whole line. The row holds to `--dk-field-measure` as a field does, and a field in it narrows by the
-same property, so width by the expected answer, a ZIP code's for one, needs no new property. A rule
-for what the row holds sets only how a field flexes, from a length, and never reaches a field's own
-parts.
+below as a field under another there too. Every field starts from `--dk-fields-least`, 10rem until a
+page sets it, a stepper's width rounded up, so a field in the row is never narrower than a stepper
+of two figures needs and nothing rests on `:has()`. An inline stepper and a choice field take a line
+of their own by a basis of the whole line. The row holds to `--dk-field-measure` as a field does,
+and a field in it narrows by the same property, so width by the expected answer, a ZIP code's for
+one, needs no new property. A rule for what the row holds sets only how a field flexes, from a
+length, and never reaches a field's own parts.
 
 ## Consequences
 

@@ -25,7 +25,7 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * were, and again once those pieces landed heavier than the prototype and left too little room for
  * another, again in 0.9.4, once a busy button's dots left too little room for another, again in
  * the same release, once a field held to the measure left too little room for another, and once
- * more in it, once a date field's words kept clear of its icon left too little room. The app's
+ * more in it, once a callout beside a field held to the measure left too little room. The app's
  * pieces stay in the components sheet, so a page loads one sheet whatever it draws.
  */
 const BUDGET = 13 * 1024;

@@ -17,7 +17,8 @@ import { doubled } from './text-size.js';
  * two text fields sharing a line only where twice the length and the gap fit, three at 1280, a hint
  * leaving the controls level, and a row in a plain form a step from the fields around it, ending
  * where they end, with a field in it narrowed by --dk-field-measure, and a wrapped row's lines as far
- * apart as the fields around it, in a panel, a dialog, a stack and a plain form alike.
+ * apart as the fields around it, in a panel, a dialog, a stack and a plain form alike, and in a
+ * stack nothing holds, where neither has a step.
  */
 
 /** Attaches each stepper, which shows its buttons. */
@@ -26,11 +27,14 @@ for (const stepper of document.querySelectorAll('.dk-stepper')) attachStepper(st
 window.ready = true;`;
 
 /** A page with the body given in its content column, at the width given, its steppers attached. */
-const open = async (page: Page, width: number, body: string): Promise<void> => {
+const open = async (page: Page, width: number, body: string, bare = false): Promise<void> => {
     await page.setViewportSize({ width, height: 900 });
     await servePage(page, {
         title: 'Round 3',
-        body: `<main class="dk-page"><h1>Round 3</h1>${body}</main>`,
+        // A bare body has none of the kit's containers around it.
+        body: bare
+            ? `<main>${body}</main>`
+            : `<main class="dk-page"><h1>Round 3</h1>${body}</main>`,
         script: ATTACH,
     });
     await page.waitForFunction(() => 'ready' in window);
@@ -489,11 +493,13 @@ for (const [where, before, after, step] of [
     ["a pair's stack", '<div class="dk-stack dk-stack-pair">', '</div>', 8],
     ['a plain form', '<form>', '</form>', 16],
     ['a plain form in a panel', '<div class="dk-panel"><form>', '</form></div>', 16],
+    // A stack outside the kit's containers has no step until it names one, and the row follows it.
+    ['a stack nothing holds', '<div class="dk-stack">', '</div>', 0],
 ] as const) {
     test(`stands a wrapped row's lines as far apart as the fields around it in ${where}`, async ({
         page,
     }) => {
-        await open(page, 320, `${before}${COLUMN}${after}`);
+        await open(page, 320, `${before}${COLUMN}${after}`, where === 'a stack nothing holds');
         const fields = await page.locator('.dk-field').evaluateAll((all) =>
             all.map((field) => {
                 const drawn = field.getBoundingClientRect();
