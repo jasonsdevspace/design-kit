@@ -1340,7 +1340,7 @@ const stepperParts = (
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
  * same message, on the page's status line when one is given. It takes the stepper's field or the
  * stepper, attaches each stepper once whichever it is given, runs on the options of its newest
- * holder, and returns what takes it down again.
+ * holder, and returns what takes it down again, which hands focus on a button to the value first.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1558,6 +1558,8 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(resetting);
         quiet();
         report(false);
+        // A button with focus hands it to the value before it goes, so focus is never dropped.
+        if (activeOf() === down || activeOf() === up) input.focus();
         down.hidden = true;
         up.hidden = true;
     });

@@ -21,7 +21,8 @@ import { textSize } from './text-size.js';
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
  * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
  * value starting where a read-only field's words start and standing at the field's height, or at
- * the larger target when tall, and kept in place beside a button holding focus, an inline
+ * the larger target when tall, centered at an inline stepper's row's end, and kept in place with
+ * a button holding focus, focus handed to the value as a stepper is taken down, an inline
  * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
  * theme.
  */
@@ -593,6 +594,7 @@ test('draws a read-only stepper with no buttons, its value read as a field drawn
  * holding a pixel as dark as text, so it measures what is drawn rather than the box's sums.
  */
 const inkStart = async (page: Page, locator: Locator): Promise<number> => {
+    await locator.scrollIntoViewIfNeeded();
     const drawn = await box(locator, 'the field');
     const picture = await page.screenshot({ clip: drawn, scale: 'css' });
     return page.evaluate(async (data) => {
@@ -626,13 +628,28 @@ const READ_ONLY = renderToStaticMarkup(
         <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} readOnly tall />
         <StepperField id="deals" label="Deals" min={1} max={10} defaultValue={3} />
         <StepperField id="held" label="Held" min={1} max={10} defaultValue={3} />
+        <StepperField
+            id="tricks"
+            label="Tricks"
+            min={0}
+            max={10}
+            defaultValue={3}
+            readOnly
+            inline
+        />
+        <StepperField id="bids" label="Bids" min={0} max={10} defaultValue={3} inline />
     </main>
 );
 
 /** The read-only page, in an app's frame when asked, attached, at the width and text size given. */
 const openReadOnly = async (
     page: Page,
-    { width, scale = 1, app = false }: { width: number; scale?: number; app?: boolean }
+    {
+        width,
+        scale = 1,
+        app = false,
+        script = ATTACH,
+    }: { width: number; scale?: number; app?: boolean; script?: string }
 ): Promise<void> => {
     await page.setViewportSize({ width, height: 900 });
     await servePage(page, {
@@ -640,7 +657,7 @@ const openReadOnly = async (
         body: app
             ? `<div class="dk-app"><div class="dk-app-body">${READ_ONLY}</div></div>`
             : READ_ONLY,
-        script: ATTACH,
+        script,
     });
     await page.waitForFunction(() => 'ready' in window);
     await textSize(page, scale);
@@ -672,6 +689,15 @@ test("lines a read-only stepper's value up with a read-only field's, at a field'
         // figure.
         expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
         expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
+        // An inline stepper's value sits at its row's end, after its label, with no column of
+        // values to line up with, so a read-only one keeps an editable value's centered figures.
+        const [inline, editable] = [page.locator('#tricks'), page.locator('#bids')];
+        expect
+            .soft((await box(inline)).width, `${at}, inline`)
+            .toBeCloseTo((await box(editable)).width, 0);
+        expect
+            .soft(Math.abs((await inkStart(page, inline)) - (await inkStart(page, editable))), at)
+            .toBeLessThanOrEqual(1);
     }
 });
 
@@ -690,27 +716,64 @@ test("keeps a tall read-only stepper's larger target, its figures at a field's p
     }
 });
 
-test('keeps the value where it stood beside a focused button as the field turns read only', async ({
+test('keeps the value and a focused button where they stood as the field turns read only', async ({
+    page,
+    browserName,
+}) => {
+    const sizes = [
+        // A laptop's width, in every engine, where a read-only value shown alone is a field's
+        // height but one beside a button keeps the target's.
+        { width: 1280, scale: 1 },
+        // Twice the text size, set through Chromium, where a read-only value shown alone takes a
+        // field's wider padding.
+        ...(browserName === 'chromium' ? [{ width: 390, scale: 2 }] : []),
+    ];
+    for (const size of sizes) {
+        const at = `${String(size.width)} at ${String(size.scale)}x`;
+        await openReadOnly(page, size);
+        const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+        const held = page.locator('#held');
+        await raiseHeld.focus();
+        const [valueBefore, buttonBefore] = [await box(held), await box(raiseHeld)];
+        await held.evaluate((input: HTMLInputElement) => {
+            input.readOnly = true;
+        });
+        await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
+        await expect(raiseHeld).toBeFocused();
+        await expect(page.getByRole('button', { name: 'Lower Held' })).toBeHidden();
+        const [value, button] = [await box(held), await box(raiseHeld)];
+        // Nothing moves under the focused button, and the value keeps an editable one's size.
+        expect.soft(value.x, at).toBeCloseTo(valueBefore.x, 0);
+        expect.soft(button.x, at).toBeCloseTo(buttonBefore.x, 0);
+        const open = await box(page.locator('#deals'));
+        expect.soft(value.width, at).toBeCloseTo(open.width, 0);
+        expect.soft(value.height, at).toBeCloseTo(open.height, 0);
+    }
+});
+
+test('hands focus to the value when a read-only stepper is taken down with a button focused', async ({
     page,
 }) => {
-    // Twice the text size, where a read-only value shown alone takes a field's wider padding.
-    await openReadOnly(page, { width: 390, scale: 2 });
+    await openReadOnly(page, {
+        width: 1280,
+        script: `import { attachStepper } from './controls.js';
+const control = new AbortController();
+attachStepper(document.querySelector('#held').closest('.dk-stepper'), { signal: control.signal });
+window.abortHeld = () => control.abort();
+window.ready = true;`,
+    });
     const raiseHeld = page.getByRole('button', { name: 'Raise Held' });
+    const held = page.locator('#held');
     await raiseHeld.focus();
-    await page.locator('#held').evaluate((input: HTMLInputElement) => {
+    await held.evaluate((input: HTMLInputElement) => {
         input.readOnly = true;
     });
-    await expect(raiseHeld).toHaveAttribute('aria-disabled', 'true');
-    await expect(page.getByRole('button', { name: 'Lower Held' })).toBeHidden();
-    const [value, button] = [await box(page.locator('#held')), await box(raiseHeld)];
-    const [open, openButton] = [
-        await box(page.locator('#deals')),
-        await box(page.getByRole('button', { name: 'Raise Deals' })),
-    ];
-    // Its width, its height and the button's place beside it are an editable stepper's.
-    expect.soft(value.width).toBeCloseTo(open.width, 0);
-    expect.soft(value.height).toBeCloseTo(open.height, 0);
-    expect.soft(button.x - value.x).toBeCloseTo(openButton.x - open.x, 0);
+    await expect(raiseHeld).toBeFocused();
+    await page.evaluate(() => {
+        (window as unknown as { abortHeld: () => void }).abortHeld();
+    });
+    await expect(raiseHeld).toBeHidden();
+    await expect(held).toBeFocused();
 });
 
 test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({
