@@ -1,6 +1,6 @@
 # 16. A page changes how a piece draws only through the properties it names
 
-**Status:** accepted, amended in 0.8.7 to start with `--_dk-` the name of a property the kit declares only for its own sums, once a grid of buttons put its working values in the tokens sheet, where the tokens page listed them as tokens
+**Status:** accepted, amended in 0.8.7 to start with `--_dk-` the name of a property the kit declares only for its own sums, once a grid of buttons put its working values in the tokens sheet, where the tokens page listed them as tokens, and amended in 0.9.4 by record 24, under which the kit never restyles a page's own markup in a form with no class attribute
 
 ## Context
 

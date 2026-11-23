@@ -30,10 +30,10 @@ import { doubled } from './text-size.js';
  * screen, a large button at the target at every width and a text button drawn as a link at the
  * button's height, an off button the keyboard still reaches, the field's label, hint and error
  * read as its name and description, the README's checkout spacing its row of buttons and callout
- * as its fields, a field's long words breaking inside a narrow form at twice the text size, an
- * empty live callout waiting a pixel out of the flow until it is filled, a tap on a touch screen
- * leaving a toggle's edge as it was, no text cut off under the wider spacing a visitor may set, and
- * no audit findings for any state in either theme.
+ * as its fields, a field's long words breaking inside a narrow form and beside a button in a
+ * page's own row at twice the text size, an empty live callout waiting a pixel out of the flow
+ * until it is filled, a tap on a touch screen leaving a toggle's edge as it was, no text cut off
+ * under the wider spacing a visitor may set, and no audit findings for any state in either theme.
  */
 
 /** Every state of each control, on a page of its own. */
@@ -211,6 +211,26 @@ test('keeps a field and its long words inside a narrow form at twice the text si
             .map((part) => part.className || part.tagName.toLowerCase());
     });
     expect(past).toEqual([]);
+    expect(await sideways(page)).toBe(0);
+});
+
+test("keeps a field with long words beside a button in a page's own row at twice the text size", async ({
+    page,
+    browserName,
+}) => {
+    await writePage(page, {
+        title: 'Field',
+        width: 320,
+        css: '.row { display: flex; align-items: end; gap: var(--dk-space-2); padding-inline: var(--dk-space-4); }',
+        body: `<main><h1>Join</h1><form><div class="row">${renderToStaticMarkup(
+            <InputField
+                label="Email, like name@example.com"
+                error="Enter an email address, like name@example.com."
+                type="email"
+            />
+        )}<button class="dk-button" type="submit">Join</button></div></form></main>`,
+    });
+    await doubled(page, browserName);
     expect(await sideways(page)).toBe(0);
 });
 

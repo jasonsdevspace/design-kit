@@ -108,3 +108,8 @@ costs, and the test behind it.
     of them aborts that an attach before then cancels, a detach that still takes it down at once,
     the newest holder's options, the hooks taking their part down at once, and why deferring the
     takedown in the hooks and leaving it to pages were turned down.
+24. [A plain form spaces only the kit's blocks](0024-a-plain-form-spaces-only-the-kits-blocks.md):
+    a field, a row of actions, a callout with words and a fieldset in a form with no class attribute
+    each a step below the one of those before it, a page's own markup there drawn as in a form with
+    a class, buttons in a row of actions, and why spacing every part by tag names and a flex column
+    were turned down.
