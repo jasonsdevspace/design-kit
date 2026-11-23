@@ -285,7 +285,7 @@ test("draws its dots in the system's gray in forced colors", async ({ page }) =>
     expect(drawn.color).toBe(gray);
     // Still, at the system's full gray, since a pulse over the canvas could fall under 3:1.
     await expect.poll(() => moving(page)).toBe(false);
-    expect(drawn.opacity).toBe('1');
+    expect((await dots(page, '#save')).opacity).toBe('1');
 });
 
 test('draws no dots on a busy button not yet drawn off, as on its accent fill', async ({
@@ -320,6 +320,16 @@ test('keeps its dots clear of its words and its icon, every button its resting s
             ['tall', 'dk-button dk-button-large dk-button-tall', '', 'Save the round'],
             ['text', 'dk-button dk-button-text', '', 'Save draft'],
             ['icon', 'dk-button dk-button-icon', '', icon],
+            // Text buttons take the size and leading of the text around them.
+            ['lead', 'dk-button dk-button-text', '', 'Save draft', 'class="dk-lead"'],
+            [
+                'spaced',
+                'dk-button dk-button-text',
+                '',
+                'Save draft',
+                'style="font-size: 1.25rem; line-height: 1.6"',
+            ],
+            ['textwraps', 'dk-button dk-button-text', 'width: 5rem', 'Save the whole draft'],
         ];
         document
             .querySelector('main')
@@ -327,9 +337,10 @@ test('keeps its dots clear of its words and its icon, every button its resting s
                 'beforeend',
                 kinds
                     .map(
-                        ([id, kind, style, face]) =>
-                            `<p><button id="${String(id)}" class="${String(kind)}" ` +
-                            `style="${String(style)}" data-busy="" aria-disabled="true" ` +
+                        ([id, kind, style, face, around = '']) =>
+                            `<p ${String(around)}><button id="${String(id)}" ` +
+                            `class="${String(kind)}" style="${String(style)}" ` +
+                            'data-busy="" aria-disabled="true" ' +
                             `aria-label="${String(id)}">${String(face)}</button></p>`
                     )
                     .join('')
@@ -360,11 +371,22 @@ test('keeps its dots clear of its words and its icon, every button its resting s
         await page.evaluate((root) => {
             document.documentElement.style.fontSize = root;
         }, size);
-        for (const id of ['wraps', 'plain', 'accent', 'large', 'tall', 'text', 'icon']) {
+        for (const id of [
+            'wraps',
+            'plain',
+            'accent',
+            'large',
+            'tall',
+            'text',
+            'icon',
+            'lead',
+            'spaced',
+            'textwraps',
+        ]) {
             const { gap, height, rest } = await clear(`#${id}`);
             expect(gap, `#${id}'s dots past its face at ${size}`).toBeGreaterThanOrEqual(0);
             // A button of one line stands at its least height, no taller for the room kept.
-            if (id !== 'wraps') expect(height, `#${id} at ${size}`).toBeCloseTo(rest, 1);
+            if (!id.endsWith('wraps')) expect(height, `#${id} at ${size}`).toBeCloseTo(rest, 1);
         }
     }
 });
