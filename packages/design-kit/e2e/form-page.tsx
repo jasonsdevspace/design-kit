@@ -1,16 +1,22 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { attachForm } from '../src/controls.js';
 import { Button, InputField, StatusProvider, useFormRefusal } from '../src/react.js';
 
 /*
  * The page form.spec.tsx draws with React: a form that refuses an empty name, drawing its error and
  * then refusing through the screen's status line, and one that refuses it after an await, as a
  * page that asks its store first does, refused twice with the first called off, and refused as the
- * visitor moves focus before the error is drawn.
+ * visitor moves focus before the error is drawn, and a field whose error the page draws while the
+ * kit refuses the form, which the page then draws with new words.
  */
 
-type Page = { refuseTwice?: () => void; refuseAndMove?: () => void };
+type Page = {
+    refuseTwice?: () => void;
+    refuseAndMove?: () => void;
+    seatError?: (words: string) => void;
+};
 const page = window as unknown as Page;
 
 const AddPlayer = () => {
@@ -81,11 +87,33 @@ const SavePlayer = () => {
     );
 };
 
+// A form the kit refuses itself, whose field holds an error the page drew, and words the page can
+// change at any time, as a page whose state changes before the visitor fixes the value does.
+const BookSeat = () => {
+    const [error, setError] = useState('Choose a seat.');
+    const form = useRef<HTMLFormElement>(null);
+    useEffect(() => {
+        page.seatError = setError;
+        const controller = new AbortController();
+        if (form.current) attachForm(form.current, { signal: controller.signal });
+        return () => {
+            controller.abort();
+        };
+    }, []);
+    return (
+        <form id="book" ref={form} onSubmit={(event) => event.preventDefault()}>
+            <InputField id="seat" name="seat" label="Seat" required error={error} />
+            <Button type="submit">Book</Button>
+        </form>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
         <StatusProvider>
             <AddPlayer />
             <SavePlayer />
+            <BookSeat />
         </StatusProvider>
     );

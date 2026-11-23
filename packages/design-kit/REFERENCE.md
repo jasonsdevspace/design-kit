@@ -819,8 +819,9 @@ the `validity` of each of the form's fields, the whole form even where a part of
 fields tied to it from outside by `form` among them, before the page's handler, passing over a field
 marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
 field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
-error the page already drew for the field takes the kit's words until the field passes, and a
-stepper's range error is left as the one error. Where every field passes, the page's handler runs as
+error the page already drew for the field is hidden until the field passes, and the kit's takes its
+place and its id, so the page's own children stay as it drew them, and a page that draws them again,
+as React does, finds each one where it left it. A stepper's range error is left as the one error. Where every field passes, the page's handler runs as
 ever, for the checks the constraints cannot express, such as two fields that must match or a name
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors

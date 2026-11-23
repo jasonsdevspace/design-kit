@@ -237,7 +237,7 @@ test('counts a group of radios with no set around it once, and a box alone in a 
         .toEqual(['I agree: Error: Check the box to go on. 2 fields need attention.']);
 });
 
-test("gives an error the page drew for a field the kit's words, and puts the page's back once it passes", async ({
+test("shows the kit's words in place of an error the page drew for a field, and the page's once it passes", async ({
     page,
 }) => {
     await openWith(
@@ -249,8 +249,11 @@ test("gives an error the page drew for a field the kit's words, and puts the pag
 <button type="submit">Send</button></form>`
     );
     await send(page);
-    await expect(page.locator('.dk-field-error')).toHaveCount(2);
+    // One error shown for each field, the page's own hidden with its words left as it drew them.
+    await expect(page.locator('.dk-field-error:visible')).toHaveCount(2);
     await expect(page.locator('#nick-error')).toHaveText('Error: Enter a value.');
+    await expect(page.locator('#nick')).toHaveAccessibleDescription('Error: Enter a value.');
+    await expect(page.getByText('That name is taken.')).toBeHidden();
     await page.locator('#nick').fill('Ana');
     await send(page);
     await expect(page.locator('#nick-error')).toHaveText('Error: That name is taken.');
