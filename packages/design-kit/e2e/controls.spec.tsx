@@ -197,7 +197,7 @@ test('keeps a field and its long words inside a narrow form at twice the text si
             <InputField
                 label="Email"
                 hint="Where the receipt goes"
-                error="Enter an email address, like name@example.com."
+                error="Enter an email address like name@example.com here."
                 type="email"
             />
         )}</form></main>`,
@@ -225,7 +225,7 @@ test("keeps a field with long words beside a button in a page's own row at twice
         body: `<main><h1>Join</h1><form><div class="row">${renderToStaticMarkup(
             <InputField
                 label="Email, like name@example.com"
-                error="Enter an email address, like name@example.com."
+                error="Enter an email address like name@example.com here."
                 type="email"
             />
         )}<button class="dk-button" type="submit">Join</button></div></form></main>`,
@@ -752,7 +752,7 @@ test('reads a field by its label, and describes it by its hint and then its erro
     await expect(page.getByLabel('Search words')).not.toHaveAttribute('aria-invalid');
     const email = page.getByRole('textbox', { name: 'Email' });
     await expect(email).toHaveAccessibleDescription(
-        'Where the receipt goes Error: Enter an email address, like name@example.com'
+        'Where the receipt goes Error: Enter an email address like name@example.com here.'
     );
     await expect(email).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('');

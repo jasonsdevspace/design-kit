@@ -277,7 +277,7 @@ export const controlStates: ReactElement = (
                 id="state-email"
                 label="Email"
                 hint="Where the receipt goes"
-                error="Enter an email address, like name@example.com"
+                error="Enter an email address like name@example.com here."
             />
             <InputField id="off" label="Store" disabled defaultValue="Closed" />
             <SelectField id="state-sort" label="Sort by">

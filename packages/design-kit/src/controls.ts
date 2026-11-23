@@ -2283,9 +2283,9 @@ const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
             : 'Enter a value.';
     },
     typeMismatch: (control) => {
-        if (control.type === 'email') return 'Enter an email address, like name@example.com.';
+        if (control.type === 'email') return 'Enter an email address like name@example.com here.';
         return control.type === 'url'
-            ? 'Enter a full web address, starting with https://.'
+            ? 'Enter the full web address, with https:// at the start.'
             : formatWords(control);
     },
     patternMismatch: formatWords,
@@ -2383,6 +2383,15 @@ const freeId = (base: string, near: Node): string => {
     return id;
 };
 
+/**
+ * Error words with a break allowed after each "@", so an address too long for its line breaks
+ * there, rather than at whichever letter or stop the line runs out on.
+ */
+const breakable = (words: string): (string | HTMLElement)[] =>
+    words
+        .split('@')
+        .flatMap((part, at) => (at === 0 ? [part] : ['@', document.createElement('wbr'), part]));
+
 /** The words a screen reader starts an error with, so it is told from the hint by more than color. */
 const errorStart = () => {
     const said = document.createElement('span');
@@ -2412,7 +2421,7 @@ const errorFor = (
     if (page instanceof HTMLElement && page.matches('.dk-field-error')) {
         const kept = [...page.childNodes];
         const hidden = page.hidden;
-        page.replaceChildren(errorStart(), words);
+        page.replaceChildren(errorStart(), ...breakable(words));
         page.hidden = false;
         return {
             error: page,
@@ -2425,7 +2434,7 @@ const errorFor = (
     const made = document.createElement('p');
     made.className = 'dk-field-error';
     made.id = freeId(`${field.id || control.id || 'dk-field'}-error`, field);
-    made.append(errorStart(), words);
+    made.append(errorStart(), ...breakable(words));
     const set = field.matches('fieldset');
     const after = set
         ? ([...field.querySelectorAll(':scope > .dk-field-hint')].at(-1) ??

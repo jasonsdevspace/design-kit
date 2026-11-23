@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { InputField, StatusLine, StepperField } from '../src/react.js';
 import { bundle } from './bundle.js';
 import { servePage, stillClock } from './page.js';
+import { doubled } from './text-size.js';
 
 /*
  * A form whose fields the browser's constraints check, refused by the kit rather than the browser:
@@ -12,8 +13,8 @@ import { servePage, stillClock } from './page.js';
  * handler run once every field passes, a button marked formnovalidate submitting unchecked, the
  * words each failure takes from the field, the page's map or the kit, errors taken away once their
  * fields pass, fields not in error marked so before any submit, the error added to bare markup
- * left at its own margins, and the same through React, where the page draws the failures from its
- * own state and the refusal follows.
+ * left at its own margins, an address in an error broken only after its "@", and the same through
+ * React, where the page draws the failures from its own state and the refusal follows.
  */
 
 const BODY = renderToStaticMarkup(
@@ -81,10 +82,10 @@ test("refuses a submit that fails the browser's constraints, before the page's h
     await expect(page.getByLabel('Name')).toHaveAttribute('aria-invalid', 'true');
     await expect(errorOf(page, 'name')).toHaveText('Error: Enter a value.');
     await expect(errorOf(page, 'email')).toHaveText(
-        'Error: Enter an email address, like name@example.com.'
+        'Error: Enter an email address like name@example.com here.'
     );
     await expect(page.getByLabel('Email')).toHaveAccessibleDescription(
-        /Enter an email address, like name@example.com/
+        /Enter an email address like name@example.com here/
     );
     await expect
         .poll(() => heard(page))
@@ -129,9 +130,10 @@ test("takes each failure's words from the field, else the page's map, else the k
 });
 
 /** A page of the page's own markup, with the form attached as it is drawn. */
-const openWith = async (page: Page, form: string, attach = 'form') => {
+const openWith = async (page: Page, form: string, attach = 'form', css = '') => {
     await servePage(page, {
         title: 'Join',
+        css,
         body: `<main><h1>Join</h1>${form}<p class="dk-visually-hidden screen-status" role="status"></p></main>`,
         script: `import { attachForm } from './controls.js';
 const line = document.querySelector('.screen-status');
@@ -245,6 +247,108 @@ test("gives an error the page drew for a field the kit's words, and puts the pag
     await send(page);
     await expect(page.locator('#nick-error')).toHaveText('Error: That name is taken.');
     await expect(page.locator('#nick')).toHaveAttribute('aria-invalid', 'true');
+});
+
+/** The lines an error is drawn on, read from where each character falls, its hidden words left out. */
+const linesOf = (page: Page, selector: string) =>
+    page.locator(selector).evaluate((error) => {
+        const rows: { top: number; text: string }[] = [];
+        const walker = document.createTreeWalker(error, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (node.parentElement?.closest('.dk-visually-hidden')) continue;
+            const text = node.textContent ?? '';
+            for (let at = 0; at < text.length; at += 1) {
+                const range = document.createRange();
+                range.setStart(node, at);
+                range.setEnd(node, at + 1);
+                const rect =
+                    [...range.getClientRects()].find((one) => one.width > 0) ??
+                    range.getBoundingClientRect();
+                const top = Math.round(rect.top);
+                let row = rows.find((one) => Math.abs(one.top - top) < 4);
+                if (!row) {
+                    row = { top, text: '' };
+                    rows.push(row);
+                }
+                row.text += text.charAt(at);
+            }
+        }
+        return rows.sort((one, other) => one.top - other.top).map((row) => row.text.trim());
+    });
+
+/** The breaks inside an address that do not fall right after its "@", and lines led by a stop. */
+const badBreaks = (lines: readonly string[], address: string) => {
+    const whole = lines.join('\n');
+    const start = whole.replaceAll('\n', '').indexOf(address);
+    const wrong: string[] = [];
+    let seen = 0;
+    lines.slice(0, -1).forEach((line) => {
+        seen += line.length;
+        const inside = seen > start && seen < start + address.length;
+        if (inside && !line.endsWith('@')) wrong.push(`breaks after "${line}"`);
+    });
+    for (const line of lines) if (/^[.,;:!?]/.test(line)) wrong.push(`starts "${line}"`);
+    return wrong;
+};
+
+/** A page's own row, which leaves a field beside its button too narrow for an address. */
+const ROW = '.row { display: flex; align-items: end; gap: var(--dk-space-2); }';
+
+const EMAIL_FIELD = `<form><div class="row"><div class="dk-field"><label class="dk-field-label" for="mail">Email</label>
+<p class="dk-field-hint" id="mail-hint">Where the receipt goes</p>
+<input class="dk-input" id="mail" type="email" required aria-describedby="mail-hint"></div>
+<button class="dk-button" type="submit">Send</button></div></form>`;
+
+test('breaks a long address in its error only after the "@", at 320 wide and twice the text size', async ({
+    page,
+    browserName,
+}) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await openWith(page, EMAIL_FIELD, 'form', ROW);
+    await doubled(page, browserName);
+    await page.locator('#mail').fill('abc');
+    await send(page);
+    const error = page.locator('#mail-error');
+    await expect(error).toBeVisible();
+    const lines = await linesOf(page, '#mail-error');
+    expect(badBreaks(lines, 'name@example.com'), lines.join(' / ')).toEqual([]);
+    // The words read and described whole, the address in one piece.
+    await expect(error).toHaveText('Error: Enter an email address like name@example.com here.');
+    await expect(page.locator('#mail')).toHaveAccessibleDescription(
+        'Where the receipt goes Error: Enter an email address like name@example.com here.'
+    );
+    await expect
+        .poll(async () => (await heard(page)).join(' '))
+        .toContain('Email: Error: Enter an email address like name@example.com here.');
+});
+
+test('breaks a long address in the error React draws only after the "@", at 320 and twice the text', async ({
+    page,
+    browserName,
+}) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await servePage(page, {
+        title: 'Join',
+        css: ROW,
+        body: `<main><h1>Join</h1><form><div class="row">${renderToStaticMarkup(
+            <InputField
+                id="mail"
+                label="Email"
+                hint="Where the receipt goes"
+                error="Enter an email address like name@example.com here."
+                type="email"
+            />
+        )}<button class="dk-button" type="submit">Send</button></div></form></main>`,
+    });
+    await doubled(page, browserName);
+    await expect(page.locator('#mail-error')).toHaveText(
+        'Error: Enter an email address like name@example.com here.'
+    );
+    await expect(page.locator('#mail')).toHaveAccessibleDescription(
+        'Where the receipt goes Error: Enter an email address like name@example.com here.'
+    );
+    const lines = await linesOf(page, '#mail-error');
+    expect(badBreaks(lines, 'name@example.com'), lines.join(' / ')).toEqual([]);
 });
 
 test('gives fields with no id errors of their own', async ({ page }) => {
