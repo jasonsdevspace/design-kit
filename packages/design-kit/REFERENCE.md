@@ -840,13 +840,14 @@ address, with https:// at the start." for a malformed web address, "Enter at lea
 for one too short, "Enter 18 or more." for a number under its least, "Enter November 22, 2026 at
 9:00 AM or later." for a date and time before its least, "Enter a whole number." for a fraction, and
 the page's own words from `setCustomValidity`. A dated field's limit is the wall time written, with
-no zone moving it, in the nearest `lang` around the field where that language is English and in US
-English otherwise, since the words around it are English, with "or later" or "or earlier" after it:
-a date as "November 22, 2026", a time as "9:00 AM", a date and time joined by "at", a month as
-"November 2026" and a week as "the week of November 23, 2026", from its Monday. A limit past any
-date a script can hold is shown as written. A time whose least comes after its most is a window
-overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM the next day."
-Safari and Firefox draw a month or week field as a text field, which has no limits to fail. A
+no zone moving it, in the nearest `lang` around the field, past any shadow root it sits in, where
+that language is English and in US English otherwise, since the words around it are English, with
+"or later" or "or earlier" after it: a date as "November 22, 2026", a time as "9:00 AM", a date and
+time joined by "at", a month as "November 2026" and a week as "the week of November 23, 2026", from
+its Monday. A limit past any date a script can hold is shown as written, and a fraction of a second
+is shown to the limit's own digits. A time whose limits both parse with its most before its least is
+a window overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM the next
+day." Safari and Firefox draw a month or week field as a text field, which has no limits to fail. A
 field's own words for a failure come first, as `data-error-value-missing="Enter your name."` on the
 control or on its set's fieldset, then the words a page gives the form as `errorWords`, as a page in
 another language gives them, then the kit's. Each attribute is the failure's `validity` name in

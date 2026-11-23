@@ -2277,12 +2277,23 @@ const stepWords = (control: Checked): string => {
         : `Enter a multiple of ${step}.`;
 };
 
+/** The language nearest a field, past each shadow root it sits in, else the document's. */
+const langOf = (control: Element): string => {
+    for (let at: Element | null = control; at;) {
+        const named = at.closest('[lang]');
+        if (named) return named.getAttribute('lang') ?? '';
+        const root = rootOf(at);
+        at = root instanceof ShadowRoot ? root.host : null;
+    }
+    return document.documentElement.lang;
+};
+
 /**
  * A dated limit's part in the nearest English language around the field, else in US English, since
  * the kit's words are English, read in UTC on both sides so the wall time written is the one shown.
  */
 const formatIn = (control: Checked, options: Intl.DateTimeFormatOptions, when: Date): string => {
-    const lang = control.closest('[lang]')?.getAttribute('lang') ?? '';
+    const lang = langOf(control);
     const zoned = { ...options, timeZone: 'UTC' };
     try {
         return new Intl.DateTimeFormat(/^en(-|$)/i.test(lang) ? lang : 'en-US', zoned).format(when);
@@ -2295,9 +2306,9 @@ const formatIn = (control: Checked, options: Intl.DateTimeFormatOptions, when: D
  * The wall time a dated value's parts write, held in UTC so no zone moves it, with a week at its
  * Monday, counted from that of the week holding January 4, which is the ISO week 1.
  */
-const wallOf = (parts: readonly number[], week: boolean): Date => {
+const wallOf = (parts: readonly number[], week: boolean, ms: number): Date => {
     const [year = 0, month = 1, day = 1, hour = 0, minute = 0, second = 0] = parts;
-    const when = new Date(Date.UTC(2000, 0, 1, hour, minute, second));
+    const when = new Date(Date.UTC(2000, 0, 1, hour, minute, second, ms));
     // Set apart, so a year under 100 stays as written rather than taken for one in the 1900s.
     when.setUTCFullYear(year, week ? 0 : month - 1, week ? 4 : day);
     if (week) when.setUTCDate(4 - ((when.getUTCDay() + 6) % 7) + 7 * (month - 1));
@@ -2314,11 +2325,17 @@ const whenWords = (control: Checked, limit: string): string => {
     const time = type === 'time';
     // A time read as one on a day of its own, so every type's parts fall in the same places.
     const parts = (time ? `2000-1-1T${limit}` : limit).split(/\D+/).map(Number);
-    const when = wallOf(parts, type === 'week');
+    // A fraction of a second shown to its own digits, so the limit shown is one the field takes.
+    const fraction = limit.split('.')[1] ?? '';
+    const when = wallOf(parts, type === 'week', Math.round(Number(`0.${fraction}`) * 1000));
     if (Number.isNaN(when.getTime())) return limit;
     const day = type !== 'month' && { day: 'numeric' as const };
     const date = time ? '' : formatIn(control, { year: 'numeric', month: 'long', ...day }, when);
-    const second = parts.length > 5 && { second: '2-digit' as const };
+    const digits = Math.min(fraction.length, 3) as 0 | 1 | 2 | 3;
+    const second = parts.length > 5 && {
+        second: '2-digit' as const,
+        ...(digits && { fractionalSecondDigits: digits }),
+    };
     const clock =
         parts.length > 3
             ? formatIn(control, { hour: 'numeric', minute: '2-digit', ...second }, when)
@@ -2326,10 +2343,16 @@ const whenWords = (control: Checked, limit: string): string => {
     return `${type === 'week' ? 'the week of ' : ''}${[date, clock].filter(Boolean).join(' at ')}`;
 };
 
+/** A time's seconds past midnight, or NaN for one that does not parse, which compares as neither. */
+const secondsOf = (limit: string): number => {
+    const parts = /^(\d\d):(\d\d)(?::(\d\d(?:\.\d+)?))?$/.exec(limit);
+    return parts ? Number(parts[1]) * 3600 + Number(parts[2]) * 60 + Number(parts[3] ?? 0) : NaN;
+};
+
 /**
  * Words for a value past a field's least or most, which end on "later" or "earlier" so the closing
- * period never touches a value. A time whose least comes after its most is a window overnight,
- * where a value in the gap fails both, and its words give the whole window.
+ * period never touches a value. A time whose limits both parse with its most before its least is
+ * a window overnight, where a value in the gap fails both, and its words give the whole window.
  */
 const limitWords = (control: Checked, name: 'min' | 'max'): string => {
     const limit = limitOf(control, name);
@@ -2337,7 +2360,7 @@ const limitWords = (control: Checked, name: 'min' | 'max'): string => {
     if (control.type !== 'time' && !DATED.has(control.type))
         return `Enter ${limit} or ${least ? 'more' : 'less'}.`;
     const [from, to] = [limitOf(control, 'min'), limitOf(control, 'max')];
-    if (control.type === 'time' && from !== '' && to !== '' && from > to)
+    if (control.type === 'time' && secondsOf(to) < secondsOf(from))
         return `Enter a time between ${whenWords(control, from)} and ${whenWords(control, to)} the next day.`;
     return `Enter ${whenWords(control, limit)} or ${least ? 'later' : 'earlier'}.`;
 };

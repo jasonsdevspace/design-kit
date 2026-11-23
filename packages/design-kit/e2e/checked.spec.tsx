@@ -577,6 +577,56 @@ test.describe("a dated field's limit", () => {
             `Error: Enter a time between 10:00${PM} and 6:00${AM} the next day.`
         );
     });
+
+    test('keeps a window overnight to limits that parse with the most before the least', async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><label for="same">Same</label><input id="same" type="time" min="22:00:00" max="22:00">
+<label for="bad">Bad</label><input id="bad" type="time" min="late" max="06:00">
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { same: '23:00', bad: '07:00' });
+        expect(await datedErrors(page)).toEqual({
+            'same-error': `Error: Enter 10:00${PM} or earlier.`,
+            'bad-error': `Error: Enter 6:00${AM} or earlier.`,
+        });
+    });
+
+    test('shows the fraction of a second a limit holds, so the limit shown is one the field takes', async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><label for="lap">Lap</label><input id="lap" type="time" step="0.1" min="09:00:00.5">
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { lap: '09:00:00.4' });
+        await expect(page.locator('#lap-error')).toHaveText(
+            `Error: Enter 9:00:00.5${AM} or later.`
+        );
+    });
+
+    test('takes the language of the page around a shadow root a field sits in', async ({
+        page,
+    }) => {
+        await servePage(page, {
+            title: 'Join',
+            body: '<main><h1>Join</h1><div id="widget"></div><p class="screen-status" role="status"></p></main>',
+            script: `import { attachForm } from './controls.js';
+document.documentElement.lang = 'en-GB';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = '<form><label for="day">Day</label><input id="day" type="date" min="2026-11-22" value="2026-11-21"><button type="submit">Send</button></form>';
+attachForm(root.querySelector('form'), { status: document.querySelector('.screen-status') });
+window.ready = true;`,
+        });
+        await page.waitForFunction(() => 'ready' in window);
+        await page.getByRole('button', { name: 'Send' }).click();
+        await expect(page.locator('#widget .dk-field-error')).toHaveText(
+            'Error: Enter 22 November 2026 or later.'
+        );
+    });
 });
 
 test('checks the whole form where only a part of it is attached, a field tied to it from outside among them', async ({
