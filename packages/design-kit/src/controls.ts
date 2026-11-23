@@ -1026,6 +1026,12 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * there goes on down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
+    const idle: ShowToast = () => () => undefined;
+    // A toast already attached is handed back as it is, before its parts are looked for, so one
+    // whose markup has since lost a part still returns what shows a message. A signal already
+    // aborted does nothing to it.
+    const already = join(attachedToasts, element, options, idle);
+    if (already) return already;
     const part = <T extends HTMLElement>(name: string) => {
         const found = element.querySelector<T>(`.dk-toast-${name}`);
         if (!found) throw new Error(`a toast needs its ${name}`);
@@ -1035,11 +1041,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const status = part('status');
     const actionButton = part<HTMLButtonElement>('action');
     const close = part<HTMLButtonElement>('close');
-    // Checked after the parts, so markup missing one throws whatever the signal. A signal already
-    // aborted does nothing, even to a toast already attached.
-    if (options?.signal?.aborted) return () => () => undefined;
-    const already = join(attachedToasts, element, options);
-    if (already) return already;
+    // Checked after the parts, so markup missing one throws at its first attach whatever the
+    // signal.
+    if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const { signal } = down;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
@@ -1397,13 +1401,16 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     const stepper = element.matches('.dk-stepper')
         ? element
         : (field.querySelector<HTMLElement>('.dk-stepper') ?? element);
-    // Read before the signal, so markup missing a part throws whatever the signal.
-    const parts = stepperParts(field);
-    // A signal already aborted does nothing, so even new options for a stepper already attached are
-    // not taken.
-    if (options?.signal?.aborted) return () => undefined;
-    const already = join(attachedSteppers, stepper, options);
+    const idle = () => undefined;
+    // A stepper already attached is handed back as it is, before its parts are looked for, so one
+    // whose markup has since lost a part still returns its detach. A signal already aborted does
+    // nothing to it, so even new options are not taken.
+    const already = join(attachedSteppers, stepper, options, idle);
     if (already) return already;
+    // Read before the signal, so markup missing a part throws at its first attach whatever the
+    // signal.
+    const parts = stepperParts(field);
+    if (options?.signal?.aborted) return idle;
     let chosen: StepperOptions = options ?? {};
     // A read-only stepper is drawn with no buttons, so there is nothing for a press to change.
     if (!parts) return () => undefined;
@@ -2107,12 +2114,15 @@ const onPanelKey = (event: KeyboardEvent): void => {
  */
 export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions): PanelControl => {
     const idle: PanelControl = { set: () => undefined, detach: () => undefined };
-    // Checked before the signal, so a button that names no panel throws whatever the signal.
-    if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
-    // A signal already aborted does nothing, even to a button already attached.
-    if (options?.signal?.aborted) return idle;
-    const already = join(attachedPanels, opener, options);
+    // A button already attached is handed back as it is, before its panel's name is read, so one
+    // that has since lost its aria-controls still returns its control. A signal already aborted
+    // does nothing to it.
+    const already = join(attachedPanels, opener, options, idle);
     if (already) return already;
+    // Checked before the signal, so a button that names no panel throws at its first attach
+    // whatever the signal.
+    if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
+    if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const control: PanelControl = {
         set: (open) => {

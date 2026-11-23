@@ -1546,9 +1546,11 @@ returned does nothing after. The others return a function that takes them down. 
 taken down, nothing it started acts, such as a copy the clipboard answers late, and calling that
 function or aborting a signal again does nothing. A signal already aborted does nothing: the control
 stays as the markup drew it, a control already attached keeps the options it had, and what the
-attach returns does nothing. A part a control cannot work without is looked for before the signal is
-read, so markup missing one, such as a stepper with no buttons or a panel's button with no
-`aria-controls`, throws under a signal already aborted as it does under any other.
+attach returns does nothing. A part a control cannot work without is looked for at the first attach,
+before the signal is read, so markup missing one, such as a stepper with no buttons or a panel's
+button with no `aria-controls`, throws under a signal already aborted as it does under any other. A
+control already attached is handed back as it is, so attaching it again after its markup has lost a
+part returns the control and throws nothing.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision
@@ -3201,7 +3203,7 @@ tabindex it added that the page has not changed since and lets its line go. Focu
 dismiss sends it only where it is in the toast, inside a shadow tree within it or on a control
 slotted into it too, or where the page has taken the toast away with focus in it so that focus has
 fallen to the body or to nothing, while focus a visitor has put anywhere else stays. A toast missing
-a part is refused even with a signal already aborted.
+a part is refused at its first attach even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body

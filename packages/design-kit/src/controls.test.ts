@@ -103,15 +103,26 @@ describe('the controls', () => {
         }
     );
 
-    it('names every attach that throws for a missing part among those refused under an aborted signal', async () => {
+    it('throws only errors whose words a case above holds to a signal already aborted', async () => {
         const { readFileSync } = await import('node:fs');
         const source = readFileSync(new URL('./controls.ts', import.meta.url), 'utf8');
-        // Each error a missing part throws, so an attach that gains one is held to the same order.
-        const thrown = [...source.matchAll(/throw new Error\(\s*[`'"](.+?)[`'"]\s*\)/g)].map(
-            ([, words]) => words?.replace(/\$\{.*?\}/g, '') ?? ''
+        // The module's code without its comments, which speak of what throws.
+        const code = source
+            .split('\n')
+            .filter((line) => !/^\s*(\/\/|\/?\*)/.test(line))
+            .join('\n');
+        // Each error thrown, of any kind, by the words it opens with, up to a part it names.
+        const thrown = [...code.matchAll(/\bthrow new \w*Error\(\s*[`'"](.*?)[`'"]\s*\)/g)].map(
+            ([, words]) => (words ?? '').replace(/\$\{.*$/, '')
         );
+        // Every throw is one of those, so none in another form goes unread.
+        expect(thrown).toHaveLength(code.match(/\bthrow\b/g)?.length ?? 0);
         expect(thrown.length).toBeGreaterThan(0);
-        for (const words of thrown)
+        // The cases above find each thrown under a signal already aborted, which holds each to
+        // being told before the signal is read, so an attach that gains a throw gains a case.
+        for (const words of thrown) {
+            expect(words.trim()).not.toBe('');
             expect(missing.some(([, , error]) => error.startsWith(words))).toBe(true);
+        }
     });
 });
