@@ -905,8 +905,7 @@ the `validity` of each of the form's fields, the whole form even where a part of
 fields tied to it from outside by `form` among them, before the page's handler, passing over a field
 marked off. Where any field fails it stops the submit, draws each failing field's error as the kit's
 field draws one, after its hint and marked as the kit's set of choices marks one, and refuses. An
-error the page already drew for the field takes the kit's words until the field passes, and a
-stepper's range error is left as the one error. Where every field passes, the page's handler runs as
+error the page already drew for the field takes the kit's words until the field passes, and a stepper's range error is left as the one error. A stepper in the form that said its own error as its value changed, as one typed past its range and submitted by Enter does, is quieted, on its own line and on a page's, so the refusal is the one message said. Where every field passes, the page's handler runs as
 ever, for the checks the constraints cannot express, such as two fields that must match or a name
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
@@ -949,8 +948,7 @@ kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-e
 field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
 without them it asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`,
 since the markup is the page's: the failures go to it, the page sets its errors from them, keyed by
-each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are
-drawn. `invalid` is called only for a submit that fails, so the page's own submit handler clears the
+each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are drawn. A stepper that shows its own range error is left out of the failures, since that error is the one drawn, as in a form the kit draws, so `invalid` is handed an empty list where only such steppers fail, and the refusal still counts the stepper and names it. `invalid` is called only for a submit that fails, so the page's own submit handler clears the
 errors it set.
 
 ```js
@@ -1904,8 +1902,7 @@ stepper speaks on a line of its own inside its field, and the toast on one of it
 finds its screen's line by a class of its own rather than by its role, which those share.
 
 A screen whose action shows a toast leaves its own line quiet for that action, since the toast says
-what happened on its own line and the two would speak over each other. A field's error is never said
-on the line, since a form that fails in several fields at once would speak over itself. While a
+what happened on its own line and the two would speak over each other. A field's error is not live, since a form that fails in several fields at once would speak over itself, and a refused form says one message on the line, as [A refused form](#a-refused-form) has it. While a
 dialog is open the page behind it is inert, and a line there is not heard, so a screen that speaks
 while a dialog is open puts a line inside the dialog and says its messages there.
 
@@ -3026,7 +3023,7 @@ typed value fires. A button that would pass the least or the greatest value is o
 press of an off button does nothing. Each press reads the value again first, so a value a script or
 a form's reset set is followed. The field still takes a typed value. One outside the limits, none at
 all, or between steps, such as 2.5 with a step of 1, shows the stepper's own error, which waits
-hidden in the markup, once the value is changed, and the status line says it. A refusal the page
+hidden in the markup, once the value is changed, and the status line says it, unless its form refuses a submit in that moment, when the refusal says it in its place. A refusal the page
 sets of its own with `setCustomValidity` is left to the page. A value drawn outside the limits or
 between steps shows the error as the stepper is attached, and again when a form's reset brings it
 back, with nothing said, so a page that draws that state writes no code of its own for it. A field

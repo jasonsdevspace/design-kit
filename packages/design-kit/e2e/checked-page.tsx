@@ -1,23 +1,43 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Button, ChoiceField, InputField, StatusProvider, useFormRefusal } from '../src/react.js';
+import { attachStepper } from '../src/controls.js';
+import {
+    Button,
+    ChoiceField,
+    InputField,
+    StatusProvider,
+    StepperField,
+    useFormRefusal,
+    useStatus,
+} from '../src/react.js';
 
 /*
  * The page checked.spec.tsx draws with React: a form whose required name the browser's constraints
  * check, with a set of choices, the failures drawn from the page's own state, keyed by each field's
  * id, with words of the page's own for an empty name, and a count of
- * the submits the page's handler took.
+ * the submits the page's handler took. A stepper for a bid, which speaks through the page's line,
+ * is drawn with whatever error the page is handed for it, and the failures handed are kept, each
+ * as its field's id and its words.
  */
+
+type Handed = { handed?: string[] };
 
 const Join = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [count, setCount] = useState(0);
+    const say = useStatus();
+    const bid = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const stepper = bid.current?.querySelector<HTMLElement>('.dk-stepper');
+        return stepper ? attachStepper(stepper, { say }) : undefined;
+    }, [say]);
     const [form] = useFormRefusal<HTMLFormElement>({
         errorWords: {
             valueMissing: (control) => (control.id === 'name' ? 'Enter your name.' : ''),
         },
         invalid: (failures) => {
+            (window as Handed).handed = failures.map(({ field, words }) => `${field.id}: ${words}`);
             setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
         },
     });
@@ -39,6 +59,17 @@ const Join = () => {
                 ]}
                 error={errors['size']}
             />
+            <div ref={bid}>
+                <StepperField
+                    id="bid"
+                    name="bid"
+                    label="Bid"
+                    min={0}
+                    max={10}
+                    defaultValue={3}
+                    error={errors['bid']}
+                />
+            </div>
             <Button type="submit">Join</Button>
             <p id="count">{count}</p>
         </form>

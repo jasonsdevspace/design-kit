@@ -1,7 +1,9 @@
 # 21. A refused form checks the browser's constraints itself
 
 **Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, and in 0.9.3 for record
-22's teardown, which gives a form back its own `noValidate` once the last attach in it is taken down
+22's teardown, which gives a form back its own `noValidate` once the last attach in it is taken
+down, and in 0.9.4 for a stepper's own error, which is the one error drawn and is said once, by the
+refusal
 
 ## Context
 
@@ -98,12 +100,15 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   on a later checked submit, or the form is reset, and only what still holds the kit's change, so a
   mark a stepper has since taken away stays away. **In React the failures go to `invalid`,** which
   the hook asks for, since the markup belongs to the page's state, and the hook refuses after the
-  render that draws them.
+  render that draws them. A stepper that shows its own range error is left out of them, so that
+  error is the one error in React as in plain markup.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
   words, and the summary's words where focus was already on it. A device check with VoiceOver on an
   iPhone heard no error where the kit left it to the field's description, which iOS reads only as a
-  hint, and focus moved by script may not land.
+  hint, and focus moved by script may not land. The refusal is the one message said: a stepper in
+  the form that said its own error as its value changed takes its words back, since two lines that
+  change in one moment speak over each other.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
 - **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
@@ -149,9 +154,10 @@ The paths are in `packages/design-kit`.
   once and a box alone in a section as its own field, gives the page's own error the kit's words and
   puts it back, gives fields with no id errors of their own, checks the whole form where a part is
   attached and a field tied to it from outside, takes errors away on a reset, leaves a stepper's
-  range error as the one error, marks fields not in error before any submit, and in React hands the
-  failures, a set's among them, to the page, which draws them, and refuses once they are drawn. It
-  runs in Chromium, WebKit and Firefox.
+  range error as the one error, drawn, described and said once for a value typed past its range and
+  submitted by Enter, in plain markup and in React, marks fields not in error before any submit, and
+  in React hands the failures, a set's among them, to the page, which draws them, and refuses once
+  they are drawn. It runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
   marked off, names a set none of whose controls can take focus, says the name and error of a field
   focus moves to or was already on, a set's where its choice does not read the error, and a field's

@@ -723,6 +723,108 @@ window.ready = true;`,
     await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
 });
 
+/**
+ * Keeps every write to a line a screen reader hears, the stepper's own or the page's, as the page
+ * makes it, so a test reads which lines spoke and what each said.
+ */
+const listen = (page: Page) =>
+    page.evaluate(() => {
+        const said: string[] = [];
+        (window as unknown as { said: string[] }).said = said;
+        new MutationObserver((records) => {
+            for (const { target } of records) {
+                const line = (target instanceof Element ? target : target.parentElement)?.closest(
+                    '[role="status"]'
+                );
+                const words = line?.textContent ?? '';
+                if (!line || words === '') continue;
+                const heard = `${line.matches('.dk-stepper-status') ? 'stepper' : 'page'}: ${words}`;
+                if (said.at(-1) !== heard) said.push(heard);
+            }
+        }).observe(document.body, { childList: true, characterData: true, subtree: true });
+    });
+
+/** What the lines said, read once the refusal has been said and anything said with it has landed. */
+const saidOf = async (page: Page) => {
+    const said = () => page.evaluate(() => (window as unknown as { said: string[] }).said);
+    await expect
+        .poll(async () => (await said()).some((one) => one.startsWith('page: ')))
+        .toBe(true);
+    await page.waitForTimeout(400);
+    return said();
+};
+
+/** The errors shown in the bid's field, and the errors among what describes the bid. */
+const bidErrors = (page: Page) =>
+    page.locator('#bid').evaluate((bid) => ({
+        drawn: [...(bid.closest('.dk-field')?.querySelectorAll('.dk-field-error') ?? [])]
+            .filter((error) => error.checkVisibility())
+            .map((error) => error.textContent.trim()),
+        described: (bid.getAttribute('aria-describedby') ?? '')
+            .split(/\s+/)
+            .map((id) => document.getElementById(id))
+            .filter((part) => part?.matches('.dk-field-error') && part.checkVisibility())
+            .map((part) => part?.textContent.trim()),
+    }));
+
+const RANGE = 'Error: Enter a whole number from 0 to 10.';
+
+const openBid = async (page: Page) => {
+    await servePage(page, {
+        title: 'Bid',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Bid</h1>
+                <form>
+                    <InputField id="name" name="name" label="Name" required />
+                    <StepperField
+                        id="bid"
+                        name="bid"
+                        label="Bid"
+                        min={0}
+                        max={10}
+                        defaultValue={5}
+                    />
+                    <button type="submit">Send</button>
+                </form>
+                <StatusLine className="screen-status" />
+            </main>
+        ),
+        script: `import { attachForm, attachStepper } from './controls.js';
+attachStepper(document.querySelector('.dk-stepper'));
+attachForm(document.querySelector('form'), { status: document.querySelector('.screen-status') });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await listen(page);
+};
+
+test('shows one error for a stepper typed past its range and submitted, and says it once', async ({
+    page,
+}) => {
+    await openBid(page);
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+    expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+    await expect(bid).toBeFocused();
+});
+
+test("says the refusal alone where a stepper's error shows and another field is named", async ({
+    page,
+}) => {
+    await openBid(page);
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([
+        'page: Name: Error: Enter a value. 2 fields need attention.',
+    ]);
+    expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+});
+
 test("counts a page's own set of boxes of different names once", async ({ page }) => {
     await openWith(
         page,
@@ -802,5 +904,42 @@ test.describe('in React', () => {
         await expect(page.locator('#name-error')).toHaveText('Error: Enter your name.');
         await expect(page.locator('#size-error')).toHaveText(/Choose an option/);
         await expect(page.locator('#count')).toHaveText('0');
+    });
+
+    test('shows one error for a stepper typed past its range and submitted, and says it once', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Join', body: '<div id="root"></div>', script: app });
+        await listen(page);
+        await page.getByLabel('Name').fill('Ana');
+        await page.getByLabel('Small').check();
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await bid.fill('99');
+        await bid.press('Enter');
+        expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+        expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+        await expect(bid).toBeFocused();
+        // The stepper shows its own error, so the page is handed none to draw for it.
+        expect(
+            await page.evaluate(() => (window as unknown as { handed: string[] }).handed)
+        ).toEqual([]);
+        await expect(page.locator('#count')).toHaveText('0');
+    });
+
+    test("says the refusal alone where a stepper's error shows and another field is named", async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Join', body: '<div id="root"></div>', script: app });
+        await listen(page);
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await bid.fill('99');
+        await bid.press('Enter');
+        expect(await saidOf(page)).toEqual([
+            'page: Name: Error: Enter your name. 3 fields need attention.',
+        ]);
+        expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+        expect(
+            await page.evaluate(() => (window as unknown as { handed: string[] }).handed)
+        ).toEqual(['name: Enter your name.', 'size: Choose an option.']);
     });
 });
