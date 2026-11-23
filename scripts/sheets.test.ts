@@ -24,9 +24,10 @@ import { SHEET_ORDER, withoutComments } from './summary.mjs';
  * again for 0.9.0, measured with a prototype of the pieces planned for it, as 0.8.0's were, and
  * again once those pieces landed heavier than the prototype and left too little room for another,
  * again in 0.9.4, once a busy button's dots left too little room for another, and again in the same
- * release, once a field held to the measure left too little room for another, and once a frame's
- * room told by a mark on the frame, with a dialog told by the frame it sits beside, did. The app's
- * pieces stay in the components sheet, so a page loads one sheet whatever it draws.
+ * release, once a field held to the measure left too little room for another, and again once a
+ * frame's room told by a mark on the frame, with a dialog told by the frame it sits beside, took
+ * them past 12.75 KB. The app's pieces stay in the components sheet, so a page loads one sheet
+ * whatever it draws.
  */
 const BUDGET = 13 * 1024;
 
