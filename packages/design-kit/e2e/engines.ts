@@ -42,6 +42,7 @@ export const WEBKIT: Engine = {
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: 'Where focus is after a refusal and a reset, which Safari sets its own way.',
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
+    flow: 'One step between pieces, over the margins each engine gives a list, a form and a dialog.',
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
@@ -68,6 +69,10 @@ export const FIREFOX: Engine = {
     panel: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
     form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
+    flow: 'One step between pieces, over the margins each engine gives a list, a form and a dialog.',
+    hero: "A heading broken between words only, by each engine's line breaks.",
+    split: "A long first word broken at a phone's width, by each engine's line breaks.",
+    dock: "Two actions sharing a phone's row, by each engine's widths of the words.",
 };
 
 /**

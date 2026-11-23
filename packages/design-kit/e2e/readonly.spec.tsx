@@ -25,6 +25,9 @@ const BODY = `<main><h1>Round</h1><form id="form">${renderToStaticMarkup(
     </>
 )}</form></main>`;
 
+/** Each field's control: a text field, a read-only select's field, or a stepper's value. */
+const CONTROLS = '.dk-field :is(.dk-input, .dk-stepper-value)';
+
 const draw = (page: Page, theme: 'light' | 'dark' = 'light', css = '') =>
     writePage(page, { title: 'Read only', body: BODY, theme, css });
 
@@ -110,9 +113,20 @@ test('draws a read-only stepper with its value alone, which a keyboard still rea
 test('keeps every field whole at 320px with twice the text size and under wider spacing', async ({
     page,
 }) => {
-    await draw(page, 'light', SPACED);
-    expect(await cutOff(page, '.dk-field-label')).toEqual([]);
+    // The browser's own text size, which holds as the page is written, then the page drawn once
+    // with all three at work, each read back so none can drop out and leave the rest passing.
     await textSize(page, 2);
-    await writePage(page, { title: 'Read only', body: BODY, width: 320, height: 640 });
+    await writePage(page, { title: 'Read only', body: BODY, width: 320, height: 640, css: SPACED });
+    const drawn = await style(page.locator('#round'), 'font-size', 'letter-spacing');
+    expect(drawn['font-size']).toBe('32px');
+    expect(Number.parseFloat(drawn['letter-spacing'] ?? '')).toBeCloseTo(0.12 * 32, 1);
+    expect(await page.evaluate(() => window.innerWidth)).toBe(320);
+    // Every field's label and control is there to measure, so nothing passes by matching nothing.
+    const fields = await page.locator('.dk-field').count();
+    expect(fields).toBe(5);
+    await expect(page.locator('.dk-field-label')).toHaveCount(fields);
+    await expect(page.locator(CONTROLS)).toHaveCount(fields);
+    expect(await cutOff(page, '.dk-field-label')).toEqual([]);
+    expect(await cutOff(page, CONTROLS)).toEqual([]);
     expect(await sideways(page)).toBe(0);
 });
