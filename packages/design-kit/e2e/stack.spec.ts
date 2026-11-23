@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { stacks } from '../examples/examples.js';
-import { box, forceColors, lengthOf, sideways, style, writePage } from './page.js';
+import { box, forceColors, KIT, lengthOf, sideways, style, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { doubled } from './text-size.js';
 
@@ -17,8 +17,9 @@ import { doubled } from './text-size.js';
  * its markers, and the example with a long name whole on a 320px phone at twice the text size and
  * under wider spacing, with no audit findings in either theme or in forced colors. A field in a
  * wide stack, a page or a band holds to the measure, a form's too, its button beside its control,
- * and a callout in the form ends where its fields end, while a callout outside a form, a field a
- * page widens and one in a dialog or a popover a page widens take the width they are given.
+ * and a callout in the form ends where its fields end, as one before or after a field with no form
+ * does, while a callout with no field beside it, a field a page widens and one in a dialog or a
+ * popover a page widens take the width they are given.
  */
 
 const EXAMPLE = renderToStaticMarkup(stacks);
@@ -260,3 +261,66 @@ test('holds a field and a callout in its form to the measure in a wide stack, a 
         expect(Math.round((await box(page.locator(id))).width), id).toBe(Math.round(inside));
     }
 });
+
+for (const has of [true, false]) {
+    test(`ends a callout beside a field with no form where the fields end, and runs one with no field beside it the column${has ? '' : ', without :has()'}`, async ({
+        page,
+    }) => {
+        const callout = (id: string): string =>
+            `<div class="dk-callout dk-callout-danger" id="${id}"><div class="dk-callout-body">` +
+            '<p>Enter a name.</p></div></div>';
+        await page.setViewportSize({ width: 1280, height: 900 });
+        // Without :has(), a selector naming it is left unknown, as an older browser reads it.
+        await page.setContent(
+            '<!doctype html><html lang="en"><head><title>Fields</title>' +
+                `<style>${has ? KIT : KIT.replaceAll(':has(', ':-dk-unknown(')}</style></head><body>` +
+                '<main class="dk-page"><div class="dk-stack" id="stack">' +
+                callout('before') +
+                field('first') +
+                callout('between') +
+                field('second') +
+                '</div><div class="dk-stack">' +
+                `<div class="dk-fields" id="row">${field('left')}${field('right')}</div>` +
+                callout('after-row') +
+                '</div><div class="dk-stack"><p>Round 3</p>' +
+                callout('alone') +
+                '<p>Ann leads.</p></div><div class="dk-stack">' +
+                field('tabled') +
+                '<p id="prose">Scores so far.</p>' +
+                '<table id="table" style="width: 100%"><tbody><tr><td>Ann</td><td>42</td></tr></tbody></table>' +
+                callout('after-table') +
+                '</div><dialog class="dk-dialog" id="dialog" open style="--dk-dialog-width: 48rem">' +
+                field('dialog-field') +
+                callout('in-dialog') +
+                '</dialog></main></body></html>'
+        );
+        const measure = await lengthOf(page, 'var(--dk-measure)');
+        const stack = await box(page.locator('#stack'));
+        expect(stack.width).toBeGreaterThan(measure);
+        const end = async (id: string) => {
+            const drawn = await box(page.locator(id));
+            return Math.round(drawn.x + drawn.width);
+        };
+        // Between two fields, and after a row of them, the callout ends at their right edge.
+        expect(await end('#between')).toBe(await end('#first'));
+        expect(await end('#between')).toBe(await end('#second'));
+        expect(await end('#between')).toBeLessThan(Math.round(stack.x + stack.width) - 100);
+        expect(await end('#after-row')).toBe(await end('#row'));
+        // Before the first field it ends there too, and runs the column without :has().
+        expect(await end('#before')).toBe(
+            has ? await end('#first') : Math.round(stack.x + stack.width)
+        );
+        // With no field beside it, it runs the column.
+        expect(Math.round((await box(page.locator('#alone'))).width)).toBe(Math.round(stack.width));
+        // After a field and a table that takes the column, it ends at the measure, as the prose
+        // there does, which is meant: among fields a callout reads as part of the column of them.
+        expect((await box(page.locator('#table'))).width).toBeGreaterThan(measure);
+        expect(await end('#after-table')).toBe(await end('#prose'));
+        expect(await end('#after-table')).toBe(await end('#tabled'));
+        // A dialog sets its own width, which a field and a callout in it both take.
+        expect(Math.round((await box(page.locator('#in-dialog'))).width)).toBe(
+            Math.round((await box(page.locator('#dialog-field'))).width)
+        );
+        expect((await box(page.locator('#in-dialog'))).width).toBeGreaterThan(measure);
+    });
+}
