@@ -632,16 +632,19 @@ the "@" for the same break.
 
 A control is as tall as a button, at both widths, and padded as one is, so its text starts where a
 button's label does. Its text is never under 16px, so a phone does not zoom the page when the field
-is tapped. It sits on the page's own ground, so it reads as a well on a card. The hint and the error
-are in the caption size, the error in the danger color, and an invalid control's edge in the danger
-color too. In forced colors, where that color is gone, an invalid control gains a dashed line around
-its edge in `CanvasText`, which moves nothing as the error comes and goes, and gives way to the
-focus ring when it has focus. A disabled control is drawn on the surface ground in the muted text.
-The select is a native `<select>`, its caret drawn as a background, and in forced colors the
-browser's own arrow comes back. A select that shows its options as a list, with `multiple` or a
-`size`, is left as the browser draws it, with no caret. A textarea takes the same look but is as
-tall as its rows, three unless given, its lines at the body's leading and its text at the top rather
-than centered, and it resizes in height alone, since a wider one would push its column.
+is tapped. On a screen under 11rem wide, a 320 pixel phone at twice the text size, a field for a
+date, a month or a week pads its sides by `--dk-space-1` instead, so its words stand clear of the
+picker's icon Chromium draws at its end. It sits on the page's own ground, so it reads as a well on
+a card. The hint and the error are in the caption size, the error in the danger color, and an
+invalid control's edge in the danger color too. In forced colors, where that color is gone, an
+invalid control gains a dashed line around its edge in `CanvasText`, which moves nothing as the
+error comes and goes, and gives way to the focus ring when it has focus. A disabled control is drawn
+on the surface ground in the muted text. The select is a native `<select>`, its caret drawn as a
+background, and in forced colors the browser's own arrow comes back. A select that shows its options
+as a list, with `multiple` or a `size`, is left as the browser draws it, with no caret. A textarea
+takes the same look but is as tall as its rows, three unless given, its lines at the body's leading
+and its text at the top rather than centered, and it resizes in height alone, since a wider one
+would push its column.
 
 </details>
 

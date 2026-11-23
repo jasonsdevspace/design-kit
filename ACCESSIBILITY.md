@@ -100,6 +100,10 @@ is its CSS transformer, as the package README shows.
   in one column where a page asks for columns, a row with a picture sets the picture in the column
   its words would take, and a footer at the page's end pads its foot by its own step alone rather
   than past what a phone keeps there.
+- In Chromium, which draws a picker's icon at the end of a dated field, a field for a date with a
+  time is wider than a 320 pixel screen at twice the text size on its own, so its words are cut
+  short at the icon there, and a field for a date, a month or a week in a panel on that screen is
+  too.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
   can still get narrower than its stepper. In a `dk-fields` row there, a stepper wider than the
   row's 10rem runs past its field on a screen 368 pixels wide and up, up to 7 pixels into the gap
