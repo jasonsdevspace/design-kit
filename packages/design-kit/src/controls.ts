@@ -2277,50 +2277,69 @@ const stepWords = (control: Checked): string => {
         : `Enter a multiple of ${step}.`;
 };
 
-/** A format in the page's language, or the browser's where the page's lang is no language tag. */
-const formatIn = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
+/**
+ * A dated limit's part in the nearest English language around the field, else in US English, since
+ * the kit's words are English, read in UTC on both sides so the wall time written is the one shown.
+ */
+const formatIn = (control: Checked, options: Intl.DateTimeFormatOptions, when: Date): string => {
+    const lang = control.closest('[lang]')?.getAttribute('lang') ?? '';
+    const zoned = { ...options, timeZone: 'UTC' };
     try {
-        return new Intl.DateTimeFormat(document.documentElement.lang || undefined, options);
+        return new Intl.DateTimeFormat(/^en(-|$)/i.test(lang) ? lang : 'en-US', zoned).format(when);
     } catch {
-        return new Intl.DateTimeFormat(undefined, options);
+        return new Intl.DateTimeFormat('en-US', zoned).format(when);
     }
 };
 
 /**
- * A dated field's limit as a visitor reads it, in the page's language, or the browser's where the
- * page names none it knows: "November 2026" for a month, "the week of November 23, 2026" from an
- * ISO week's Monday. Read as wall time, never through UTC, since the value has no zone.
+ * The wall time a dated value's parts write, held in UTC so no zone moves it, with a week at its
+ * Monday, counted from that of the week holding January 4, which is the ISO week 1.
  */
-const whenWords = (type: string, limit: string): string => {
-    const time = type === 'time';
-    const week = type === 'week';
-    // A time read as one on a day of its own, so every type's parts fall in the same places.
-    const parts = (time ? `0-1-1T${limit}` : limit).split(/\D+/).map(Number);
+const wallOf = (parts: readonly number[], week: boolean): Date => {
     const [year = 0, month = 1, day = 1, hour = 0, minute = 0, second = 0] = parts;
-    const options: Intl.DateTimeFormatOptions = {
-        ...(!time && { year: 'numeric', month: 'long' }),
-        ...(!time && type !== 'month' && { day: 'numeric' }),
-        ...(parts.length > 3 && { hour: 'numeric', minute: '2-digit' }),
-        ...(parts.length > 5 && { second: '2-digit' }),
-    };
-    // A week's Monday, counted from that of the week holding January 4, which is the ISO week 1.
-    const when = week
-        ? new Date(year, 0, 4 - ((new Date(year, 0, 4).getDay() + 6) % 7) + 7 * (month - 1))
-        : new Date(year, month - 1, day, hour, minute, second);
-    return `${week ? 'the week of ' : ''}${formatIn(options).format(when)}`;
+    const when = new Date(Date.UTC(2000, 0, 1, hour, minute, second));
+    // Set apart, so a year under 100 stays as written rather than taken for one in the 1900s.
+    when.setUTCFullYear(year, week ? 0 : month - 1, week ? 4 : day);
+    if (week) when.setUTCDate(4 - ((when.getUTCDay() + 6) % 7) + 7 * (month - 1));
+    return when;
 };
 
 /**
- * Words for a value past a field's least or most, which for a dated field name the kind of value
- * and keep the limit off the closing period, so the period never stands alone on a line.
+ * A dated field's limit as a visitor reads it: "November 2026" for a month, "the week of November
+ * 23, 2026" for a week, and a date and its time joined by "at" whatever the engine, or the limit as
+ * written where it is past any date a script can hold.
+ */
+const whenWords = (control: Checked, limit: string): string => {
+    const type = control.type;
+    const time = type === 'time';
+    // A time read as one on a day of its own, so every type's parts fall in the same places.
+    const parts = (time ? `2000-1-1T${limit}` : limit).split(/\D+/).map(Number);
+    const when = wallOf(parts, type === 'week');
+    if (Number.isNaN(when.getTime())) return limit;
+    const day = type !== 'month' && { day: 'numeric' as const };
+    const date = time ? '' : formatIn(control, { year: 'numeric', month: 'long', ...day }, when);
+    const second = parts.length > 5 && { second: '2-digit' as const };
+    const clock =
+        parts.length > 3
+            ? formatIn(control, { hour: 'numeric', minute: '2-digit', ...second }, when)
+            : '';
+    return `${type === 'week' ? 'the week of ' : ''}${[date, clock].filter(Boolean).join(' at ')}`;
+};
+
+/**
+ * Words for a value past a field's least or most, which end on "later" or "earlier" so the closing
+ * period never touches a value. A time whose least comes after its most is a window overnight,
+ * where a value in the gap fails both, and its words give the whole window.
  */
 const limitWords = (control: Checked, name: 'min' | 'max'): string => {
     const limit = limitOf(control, name);
     const least = name === 'min';
     if (control.type !== 'time' && !DATED.has(control.type))
         return `Enter ${limit} or ${least ? 'more' : 'less'}.`;
-    const kind = control.type === 'datetime-local' ? 'date and time' : control.type;
-    return `Enter ${whenWords(control.type, limit)} or ${least ? 'a later' : 'an earlier'} ${kind}.`;
+    const [from, to] = [limitOf(control, 'min'), limitOf(control, 'max')];
+    if (control.type === 'time' && from !== '' && to !== '' && from > to)
+        return `Enter a time between ${whenWords(control, from)} and ${whenWords(control, to)} the next day.`;
+    return `Enter ${whenWords(control, limit)} or ${least ? 'later' : 'earlier'}.`;
 };
 
 /**

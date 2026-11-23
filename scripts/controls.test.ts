@@ -33,7 +33,7 @@ import { sentOf } from './parts.mjs';
  * body and followed into a frame did, again once a control kept clear inside a frame did, and again
  * for 0.9.4 once a dated field's limit in words left too little room for another.
  */
-const BUDGET = 20.5 * 1024;
+const BUDGET = 20.75 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

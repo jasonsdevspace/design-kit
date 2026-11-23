@@ -426,21 +426,19 @@ const sendDated = async (page: Page, values: Record<string, string>) => {
     await send(page);
 };
 
-/** The text of each dated field's error, its spaces made plain, keyed by the error's id. */
+/** The text of each dated field's error, keyed by the error's id. */
 const datedErrors = (page: Page) =>
     page
         .locator('.dk-field-error')
         .evaluateAll((errors) =>
-            Object.fromEntries(
-                errors.map((error) => [error.id, error.textContent.replace(/\s+/g, ' ')])
-            )
+            Object.fromEntries(errors.map((one) => [one.id, one.textContent]))
         );
 
 /**
  * The errors expected, a month's and a week's only where the engine takes those types, since WebKit
  * and Firefox draw them as text fields with no limits to fail.
  */
-const takenBy = async (page: Page, errors: Record<string, unknown>) => {
+const takenBy = async (page: Page, errors: Record<string, string>) => {
     const types = await page.evaluate(() =>
         ['in', 'of'].map((id) => (document.getElementById(id) as HTMLInputElement).type)
     );
@@ -453,55 +451,132 @@ const takenBy = async (page: Page, errors: Record<string, unknown>) => {
     );
 };
 
-test("gives a dated field's limit in words a visitor reads, naming the kind of value", async ({
-    page,
-}) => {
-    await openWith(page, DATED_FORM);
-    await sendDated(page, {
-        day: '2026-11-21',
-        when: '2026-11-22T08:59',
-        at: '08:30',
-        in: '2026-10',
-        of: '2025-W52',
+/*
+ * The plain space every engine's Intl puts before AM and PM in US English, written out on purpose:
+ * ICU's newer data has a narrow no-break space there, which the engines put back to a plain one, so
+ * an engine that takes the narrow one fails here and shows the change.
+ */
+const AM = ' AM';
+const PM = ' PM';
+
+test.describe("a dated field's limit", () => {
+    // A zone with a spring-forward gap, and the browser's language pinned for the pages without one.
+    test.use({ timezoneId: 'America/New_York', locale: 'en-US' });
+
+    test('gives the limit in words a visitor reads, ending on later or earlier', async ({
+        page,
+    }) => {
+        await openWith(page, DATED_FORM);
+        await sendDated(page, {
+            day: '2026-11-21',
+            when: '2026-11-22T08:59',
+            at: '08:30',
+            in: '2026-10',
+            of: '2025-W52',
+        });
+        expect(await datedErrors(page)).toEqual(
+            await takenBy(page, {
+                'day-error': 'Error: Enter November 22, 2026 or later.',
+                'when-error': `Error: Enter November 22, 2026 at 9:00${AM} or later.`,
+                'at-error': `Error: Enter 9:00${AM} or later.`,
+                'in-error': 'Error: Enter November 2026 or later.',
+                'of-error': 'Error: Enter the week of December 29, 2025 or later.',
+            })
+        );
+        await sendDated(page, {
+            day: '2026-12-25',
+            when: '2026-11-29T18:31',
+            at: '17:31',
+            in: '2027-03',
+            of: '2026-W49',
+        });
+        expect(await datedErrors(page)).toEqual(
+            await takenBy(page, {
+                'day-error': 'Error: Enter December 24, 2026 or earlier.',
+                'when-error': `Error: Enter November 29, 2026 at 6:30${PM} or earlier.`,
+                'at-error': `Error: Enter 5:30${PM} or earlier.`,
+                'in-error': 'Error: Enter February 2027 or earlier.',
+                'of-error': 'Error: Enter the week of November 23, 2026 or earlier.',
+            })
+        );
+        // Words in the page's language, as a page in British English writes its dates.
+        await page.evaluate(() => {
+            document.documentElement.lang = 'en-GB';
+        });
+        await send(page);
+        await expect(page.locator('#day-error')).toHaveText(
+            'Error: Enter 24 December 2026 or earlier.'
+        );
+        await expect(page.locator('#at-error')).toHaveText('Error: Enter 17:30 or earlier.');
     });
-    expect(await datedErrors(page)).toEqual(
-        await takenBy(page, {
-            'day-error': 'Error: Enter November 22, 2026 or a later date.',
-            'when-error': expect.stringMatching(
-                /^Error: Enter November 22, 2026(,| at) 9:00 AM or a later date and time\.$/
-            ),
-            'at-error': 'Error: Enter 9:00 AM or a later time.',
-            'in-error': 'Error: Enter November 2026 or a later month.',
-            'of-error': 'Error: Enter the week of December 29, 2025 or a later week.',
-        })
-    );
-    await sendDated(page, {
-        day: '2026-12-25',
-        when: '2026-11-29T18:31',
-        at: '17:31',
-        in: '2027-03',
-        of: '2026-W49',
+
+    test('reads a limit in a spring-forward gap as the wall time written', async ({ page }) => {
+        await openWith(
+            page,
+            `<form><label for="when">When</label><input id="when" type="datetime-local" min="2026-03-08T02:30">
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { when: '2026-03-08T01:00' });
+        await expect(page.locator('#when-error')).toHaveText(
+            `Error: Enter March 8, 2026 at 2:30${AM} or later.`
+        );
     });
-    expect(await datedErrors(page)).toEqual(
-        await takenBy(page, {
-            'day-error': 'Error: Enter December 24, 2026 or an earlier date.',
-            'when-error': expect.stringMatching(
-                /^Error: Enter November 29, 2026(,| at) 6:30 PM or an earlier date and time\.$/
-            ),
-            'at-error': 'Error: Enter 5:30 PM or an earlier time.',
-            'in-error': 'Error: Enter February 2027 or an earlier month.',
-            'of-error': 'Error: Enter the week of November 23, 2026 or an earlier week.',
-        })
-    );
-    // Words in the page's language, as a page in British English writes its dates.
-    await page.evaluate(() => {
-        document.documentElement.lang = 'en-GB';
+
+    test('keeps a year under 100 as written, and shows a year past any date as written', async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><label for="old">Old</label><input id="old" type="date" min="0050-01-01">
+<label for="far">Far</label><input id="far" type="datetime-local" max="275760-09-13T12:00">
+<button type="submit">Send</button></form>`
+        );
+        // No engine takes a limit past the last day a script can hold, so the field reports one
+        // as an engine that did would.
+        await page.locator('#far').evaluate((field) => {
+            const over = { valid: false, rangeOverflow: true };
+            Object.defineProperty(field, 'validity', { get: () => over });
+        });
+        await sendDated(page, { old: '0049-12-31' });
+        expect(await datedErrors(page)).toEqual({
+            'old-error': 'Error: Enter January 1, 50 or later.',
+            'far-error': 'Error: Enter 275760-09-13T12:00 or earlier.',
+        });
     });
-    await send(page);
-    await expect(page.locator('#at-error')).toHaveText(/^Error: Enter 17:30 or an earlier time\.$/);
-    await expect(page.locator('#day-error')).toHaveText(
-        'Error: Enter 24 December 2026 or an earlier date.'
-    );
+
+    test("gives a page in another language a date in US English, as the kit's words are", async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><label for="day">Day</label><input id="day" type="date" min="2026-11-22">
+<div lang="en-GB"><label for="near">Near</label><input id="near" type="date" min="2026-11-22"></div>
+<button type="submit">Send</button></form>`
+        );
+        await page.evaluate(() => {
+            document.documentElement.lang = 'fr';
+        });
+        await sendDated(page, { day: '2026-11-21', near: '2026-11-21' });
+        await expect(page.locator('#day-error')).toHaveText(
+            'Error: Enter November 22, 2026 or later.'
+        );
+        // The nearest language, an English part of the page, over the page's own.
+        await expect(page.locator('#near-error')).toHaveText(
+            'Error: Enter 22 November 2026 or later.'
+        );
+    });
+
+    test('gives an overnight window for a time its limits wrap around', async ({ page }) => {
+        await openWith(
+            page,
+            `<form><label for="shift">Shift</label><input id="shift" type="time" min="22:00" max="06:00">
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { shift: '12:00' });
+        await expect(page.locator('#shift-error')).toHaveText(
+            `Error: Enter a time between 10:00${PM} and 6:00${AM} the next day.`
+        );
+    });
 });
 
 test('checks the whole form where only a part of it is attached, a field tied to it from outside among them', async ({
