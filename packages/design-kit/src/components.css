@@ -3408,7 +3408,6 @@
         width: calc(
             var(--dk-stepper-digits, 2) * (1ch + 0.12em) + 2 * var(--dk-field-inline-held) + 4px
         );
-        min-height: var(--dk-target);
         padding-block: 0;
         /* A field's inline padding, held to its usual size so the figures keep room. */
         padding-inline: var(--dk-field-inline-held);
@@ -3431,6 +3430,25 @@
     :where(.dk-stepper-tall > .dk-button) {
         width: var(--dk-target-large);
         min-height: var(--dk-target-large);
+    }
+
+    /*
+     * A read-only value shows no buttons to stand level with, so it takes a field's height at each
+     * width, from the field's own rules, unless the stepper is tall. Its figures start where a
+     * read-only field's words start, at the field's inline padding, and it widens by what that
+     * padding adds past the held one, so a column of read-only values keeps one edge.
+     */
+    :where(.dk-stepper-value:not([readonly]:not(:disabled))) {
+        min-height: var(--dk-target);
+    }
+
+    :where(.dk-stepper-value[readonly]:not(:disabled)) {
+        width: calc(
+            var(--dk-stepper-digits, 2) * (1ch + 0.12em) + var(--dk-field-inline) +
+                var(--dk-field-inline-held) + 4px
+        );
+        padding-inline-start: var(--dk-field-inline);
+        text-align: start;
     }
 
     :where(.dk-stepper-tall > .dk-stepper-value) {

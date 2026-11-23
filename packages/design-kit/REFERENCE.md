@@ -686,7 +686,9 @@ colors its edge takes the ground's color. A select has no read-only state, so a 
 `SelectField` draws a read-only field with the chosen option's words, and a hidden field carries
 its value, so the form still sends it, and it is read only for the page rather than for a moment,
 since turning it on or off draws a new control. A read-only stepper shows its value alone, its
-buttons hidden while the field is read only.
+buttons hidden while the field is read only, and its figures start where a read-only field's words
+start, at a field's height, so it keeps the edge of a column of read-only values. A tall one keeps
+the larger target.
 
 A button that can do nothing for now is off, `aria-disabled`, kept in the tab order with the reason
 beside it. `aria-disabled` does not stop typing in a field, so a field held for a moment is read

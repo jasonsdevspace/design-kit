@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { StepperField } from '../src/react.js';
+import { InputField, StepperField } from '../src/react.js';
 import { box, servePage, sideways, stillClock, style, tabKey } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
@@ -19,7 +19,8 @@ import { textSize } from './text-size.js';
  * the page sets or beside the page's own error, a phone's keyboard with a minus only where it is
  * needed, the value in figures of one width so the field keeps its width, every figure shown under
  * the wider spacing a reader may set, the label beside it on one line at a phone's narrowest width,
- * a stepper that fits a phone at twice the text size, the larger target when asked, an inline
+ * a stepper that fits a phone at twice the text size, the larger target when asked, a read-only
+ * value starting where a read-only field's words start and standing at its height, an inline
  * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
  * theme.
  */
@@ -584,6 +585,72 @@ test('draws a read-only stepper with no buttons, its value read as a field drawn
     await expect(read).toHaveValue('5');
     await expect(read).toHaveAttribute('readonly', '');
     await expect(page.getByRole('button', { name: /Rounds played/ })).toHaveCount(0);
+});
+
+/**
+ * How far into the element its words are drawn, in CSS pixels: the first column of its picture
+ * holding a pixel as dark as text, so it measures what is drawn rather than the box's sums.
+ */
+const inkStart = async (page: Page, locator: Locator): Promise<number> => {
+    const drawn = await box(locator, 'the field');
+    const picture = await page.screenshot({ clip: drawn, scale: 'css' });
+    return page.evaluate(async (data) => {
+        const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('expected a canvas to draw on');
+        context.drawImage(bitmap, 0, 0);
+        const {
+            data: pixels,
+            width,
+            height,
+        } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+        for (let x = 0; x < width; x += 1) {
+            for (let y = 0; y < height; y += 1) {
+                const at = (y * width + x) * 4;
+                const light = (pixels[at] ?? 0) + (pixels[at + 1] ?? 0) + (pixels[at + 2] ?? 0);
+                if (light < 3 * 128) return x;
+            }
+        }
+        return -1;
+    }, picture.toString('base64'));
+};
+
+const READ_ONLY = renderToStaticMarkup(
+    <main>
+        <h1>Round 3</h1>
+        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
+    </main>
+);
+
+test("lines a read-only stepper's value up with a read-only field's, at a field's height", async ({
+    page,
+    browserName,
+}) => {
+    const sizes = [
+        [390, 1],
+        [1280, 1],
+        // The figures start at the field's own inline padding as the text grows past its usual size.
+        ...(browserName === 'chromium' ? [[390, 2] as const] : []),
+    ] as const;
+    for (const [width, scale] of sizes) {
+        const at = `${String(width)} at ${String(scale)}x`;
+        await page.setViewportSize({ width, height: 700 });
+        await servePage(page, { title: 'Round 3', body: READ_ONLY, script: ATTACH });
+        await page.waitForFunction(() => 'ready' in window);
+        await textSize(page, scale);
+        const field = page.locator('#round');
+        const value = page.locator('#cards');
+        const [fieldBox, valueBox] = [await box(field), await box(value)];
+        expect.soft(valueBox.x, at).toBeCloseTo(fieldBox.x, 0);
+        const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];
+        expect(Math.min(fieldInk, valueInk), `${at}, both drawn`).toBeGreaterThan(0);
+        // The two faces' figures sit a pixel or so apart within their own widths.
+        expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
+        expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
+    }
 });
 
 test('keeps a focused button, marked off, when its field turns read only, and brings both back after', async ({
