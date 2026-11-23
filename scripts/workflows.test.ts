@@ -631,14 +631,28 @@ describe('the workflows', () => {
         expect(gateProblems(workflows.get('.github/workflows/ci.yml') ?? '')).toEqual([]);
     });
 
-    // A Mac draws slower than Ubuntu, so the engines that run on one take a shard more than
-    // Chromium to end well inside a job's time limit. Each job reads how many from the strategy's
-    // total, so the matrix's list is the one place the number is set.
-    it('run WebKit and Firefox in three shards each, counted from the matrix alone', () => {
+    // A Mac draws slower than Ubuntu, so the engines that run on one take more shards than Chromium
+    // to end well inside a job's time limit. Each job reads how many from the strategy's total, for
+    // its name as for what it runs, so the matrix's list is the one place the number is set.
+    it('run WebKit and Firefox in more shards than Chromium, each counted from its matrix alone', () => {
         const jobs = jobsOf(workflows.get('.github/workflows/ci.yml') ?? '');
-        for (const engine of ['webkit', 'firefox']) {
-            const body = jobs.find(({ id }) => id === engine)?.body ?? '';
-            expect(/^ {16}shard: \[([^\]]*)\]\s*$/m.exec(body)?.[1], engine).toBe('1, 2, 3');
+        const bodyOf = (engine: string) => jobs.find(({ id }) => id === engine)?.body ?? '';
+        const shardsOf = (engine: string) =>
+            /^ {16}shard: \[([^\]]*)\]\s*$/m
+                .exec(bodyOf(engine))?.[1]
+                ?.split(',')
+                .map((shard) => Number(shard)) ?? [];
+        const chromium = shardsOf('chromium');
+        expect(chromium.length).toBeGreaterThan(0);
+        for (const engine of ['chromium', 'webkit', 'firefox']) {
+            const body = bodyOf(engine);
+            const shards = shardsOf(engine);
+            expect(shards, engine).toEqual(shards.map((_, index) => index + 1));
+            if (engine !== 'chromium')
+                expect(shards.length, engine).toBeGreaterThan(chromium.length);
+            expect(body, engine).toMatch(
+                /^ {8}name: .*shard \$\{\{ matrix\.shard \}\} of \$\{\{ strategy\.job-total \}\}\s*$/m
+            );
             expect(body, engine).toContain('SHARDS: ${{ strategy.job-total }}');
             expect(body, engine).toContain(`--project ${engine} --shard "$SHARD/$SHARDS"`);
         }
