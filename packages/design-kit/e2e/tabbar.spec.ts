@@ -15,8 +15,8 @@ import {
 import { doubled } from './text-size.js';
 
 /*
- * A tab bar as a browser draws it, in Chromium and in WebKit, since a bar stuck to the bottom of
- * the screen is where Safari differs: at the bottom while the page scrolls and on a page shorter
+ * A tab bar as a browser draws it, in Chromium, WebKit and Firefox, since a bar stuck to the bottom
+ * of the screen is where Safari differs: at the bottom while the page scrolls and on a page shorter
  * than the screen, clear of the home indicator, the page's last line scrolled clear of it, the
  * current link told apart by more than its color, forced colors included, from two to five links
  * sharing a phone's narrowest width, a long label wrapping at a doubled text size with the bar
