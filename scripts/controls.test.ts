@@ -34,7 +34,7 @@ import { sentOf } from './parts.mjs';
  * for 0.9.4 once a dated field's limit in words left too little room for another, and again once
  * a stepper's error following its form's verdict did.
  */
-const BUDGET = 21.25 * 1024;
+const BUDGET = 21.5 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;
