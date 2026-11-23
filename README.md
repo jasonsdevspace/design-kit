@@ -127,6 +127,7 @@ follow by area.
 | A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `packages/design-kit/e2e/links.spec.ts`           |
 | Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts`          |
 | Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | `packages/design-kit/src/tokens.resolver.test.ts` |
+| A rule on the root reads its lengths in em, since Safari draws a root's own rem from 16px at any size     | `packages/design-kit/src/scope.test.ts`           |
 
 </details>
 
@@ -278,7 +279,7 @@ follow by area.
 ## What was measured
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
-  test to 12.75 KB, and the theme script goes inline in the page's head. A page that attaches a
+  test to 13 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to
   21 KB gzipped without their comments, and the theme script to 1 KB of its own. The package npm
   publishes is 132 KB packed, the sheets and modules a page loads together with the README, the

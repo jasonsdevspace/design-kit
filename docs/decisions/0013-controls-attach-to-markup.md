@@ -168,6 +168,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
 | 0.9.4   | A busy button's dots, with too little room left                                 | 12,523 bytes    | 154 bytes    | 12.5 KB    |
 | 0.9.4   | A field held to the measure, with too little room left                          | 12,661 bytes    | 155 bytes    | 12.75 KB   |
+| 0.9.4   | The root's room written in em, with too little room left                        | 12,909 bytes    | 181 bytes    | 13 KB      |
 
 | Release | What raised it                                                                           | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |

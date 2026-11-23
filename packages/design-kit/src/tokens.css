@@ -141,6 +141,20 @@
          * phone passed around a table is. The target above stays the floor for every control.
          */
         --dk-target-large: 3.5rem;
+        /*
+         * The lengths above that the root's own rules read, each its token's number in em. Safari
+         * draws a rem in a property of the root itself from 16px, whatever text size a page sets
+         * there, where an em on the root is that size. Only a rule whose subject is the root reads
+         * these, since an em on any other element is that element's own text size. They hold the
+         * kit's own numbers, so a page that sets one of these tokens on its root sets the root's
+         * scroll padding itself where it wants that room to follow. Each name starts with
+         * `--_dk-`, a working value of the kit's own, as record 16 sets out.
+         */
+        --_dk-root-space-1: 0.25em;
+        --_dk-root-space-4: 1em;
+        --_dk-root-text-caption: 0.85em;
+        --_dk-root-target: 2.75em;
+        --_dk-root-target-large: 3.5em;
         /* The height of the portfolio strip's row, and of each link in it. */
         --dk-strip: 2.5rem;
         /*

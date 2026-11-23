@@ -2789,12 +2789,13 @@
     /*
      * What the keyboard or a link within the page scrolls into view stops short of the bar, by
      * the bar's height with a label on two lines, as a long one wraps on a phone at a large text
-     * size, so the bar never covers where focus is.
+     * size, so the bar never covers where focus is. The lengths are the tokens' twins in em, since
+     * Safari draws a rem on the root itself from 16px at any text size a page sets there.
      */
     :where(:root:has(.dk-tabbar-page:not(.dk-picture, .dk-picture *))) {
         scroll-padding-bottom: calc(
-            var(--dk-target-large) + var(--dk-text-caption) * var(--dk-leading-tight) + 1px +
-                var(--dk-safe-bottom)
+            var(--_dk-root-target-large) + var(--_dk-root-text-caption) * var(--dk-leading-tight) +
+                1px + var(--dk-safe-bottom)
         );
     }
 
@@ -2929,7 +2930,9 @@
      * On a page with no frame, while a toast is shown, what the keyboard reaches or a link leads
      * to stops short of it, and the page's end scrolls clear of it. The room is as many rows as
      * the toast's attach function marked in its rows attribute, from two to five, or two, a line
-     * of message over its buttons, where none is marked.
+     * of message over its buttons, where none is marked. The root's own lengths are the tokens'
+     * twins in em, since Safari draws a rem on the root itself from 16px at any text size a page
+     * sets there, and the body's keep the tokens.
      */
     :where(
         :root:has(.dk-toast[data-shown]:not(.dk-picture, .dk-picture *)):not(
@@ -2937,8 +2940,8 @@
             )
     ) {
         scroll-padding-bottom: calc(
-            2 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
+            2 * var(--_dk-root-target) + 2 * var(--_dk-root-space-1) + 2px + var(--dk-safe-bottom) +
+                var(--_dk-root-space-4)
         );
     }
 
@@ -2960,8 +2963,8 @@
             )
     ) {
         scroll-padding-bottom: calc(
-            3 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
+            3 * var(--_dk-root-target) + 2 * var(--_dk-root-space-1) + 2px + var(--dk-safe-bottom) +
+                var(--_dk-root-space-4)
         );
     }
 
@@ -2983,8 +2986,8 @@
             )
     ) {
         scroll-padding-bottom: calc(
-            4 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
+            4 * var(--_dk-root-target) + 2 * var(--_dk-root-space-1) + 2px + var(--dk-safe-bottom) +
+                var(--_dk-root-space-4)
         );
     }
 
@@ -3006,8 +3009,8 @@
             )
     ) {
         scroll-padding-bottom: calc(
-            5 * var(--dk-target) + 2 * var(--dk-space-1) + 2px + var(--dk-safe-bottom) +
-                var(--dk-space-4)
+            5 * var(--_dk-root-target) + 2 * var(--_dk-root-space-1) + 2px + var(--dk-safe-bottom) +
+                var(--_dk-root-space-4)
         );
     }
 

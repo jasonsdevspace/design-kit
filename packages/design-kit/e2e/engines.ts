@@ -72,6 +72,7 @@ export const FIREFOX: Engine = {
     form: "Where focus is after a refusal, and a field's error drawn again while it stands.",
     fields: "A row of fields holding each engine's stepper and labels inside the length it wraps by.",
     dated: "A date or a time field's ring, drawn once where the field is focused two ways.",
+    tabbar: 'What the keyboard reaches kept clear of the bar at a root size the page sets.',
 };
 
 /**
