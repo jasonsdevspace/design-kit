@@ -334,8 +334,8 @@ for (const path of PAGES) {
         await page.goto(path, { waitUntil: 'networkidle' });
         const code = (await Promise.all(scripts)).join('\n');
         expect(code).not.toBe('');
-        // Words only the examples say, and the attribute only the kit's busy button reads.
-        for (const mark of ['The rule was saved.', 'data-busy']) {
+        // Words only the examples say, each from a different example.
+        for (const mark of ['The rule was saved.', 'The players are back.', 'Product loaded.']) {
             expect(code.includes(mark), mark).toBe(path === `${BASE}behavior/`);
         }
     });

@@ -1,6 +1,10 @@
-import { attachRoving, attachStatus } from 'design-kit-release/controls';
-
-import { attachBusy, attachForm, moveFocus } from './behavior-controls.js';
+import {
+    attachBusy,
+    attachForm,
+    attachRoving,
+    attachStatus,
+    moveFocus,
+} from 'design-kit-release/controls';
 
 /*
  * The behavior page's examples, each attached as a page attaches it and speaking on a status line

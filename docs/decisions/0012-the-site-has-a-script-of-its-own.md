@@ -78,15 +78,15 @@ preview by where it starts and ends. Each copy's label names its theme with no s
 the page's theme picks the label as it picks the colors.
 
 The behavior page's examples are a script of their own, `src/behavior-script.ts`, which that page
-alone loads beside the site's script, so no other page downloads their code. The kit ships its
-controls as one module, and a bundler keeps a module whole in one file, so with one copy every
-page's script would still hold the form, the busy button and the focus request. The build gives the
-examples a copy of the controls of their own, shaken down to those three functions and written into
-the behavior page's file. The arrow keys and the status line the examples use come from the site's
-script, and the kit's status line and teardown are modules of their own that both copies share, so
-its status lines still take turns. The helpers both sets of functions call are in both files, so
-the behavior page downloads them twice, and every other page once. The build writes the file under
-the assets folder, so the policy allows it as it allows the site's script.
+alone loads beside the site's script, so no other page downloads the examples' own code. The kit's
+form, busy button and focus request, which only the examples use, stay in the script every page
+loads. The kit ships its controls as one module, and a bundler keeps a module whole in one file,
+the one every page shares. A second copy of the controls for the behavior page alone would move
+them, and was rejected, since it would double the state the module keeps, its record of what is
+attached and its listeners for focus requests, so a request made through one copy would not be
+seen by the other. Those functions leave the other pages' script once the kit ships its controls in
+parts a bundler can split. The build writes the examples' file under the assets folder, so the
+policy allows it as it allows the site's script.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
@@ -157,8 +157,8 @@ The paths are in `packages/site`.
   that ends on a preview taken for no tap, and nothing added to the keyboard's path until a tap
   brings the note.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
-- `e2e/site.spec.ts` also finds the words the behavior page's examples say, and the attribute the
-  kit's busy button reads, in the scripts the behavior page downloads and in no other page's.
+- `e2e/site.spec.ts` also finds the words the behavior page's examples say in the scripts the
+  behavior page downloads and in no other page's.
 - `bench/lighthouse.ts` also holds each page's script and its sheets, gzipped, to the budgets in
   `src/budgets.ts`, measured over the files the build wrote. `src/budgets.test.ts` finds the scripts
   a page loads or preloads and the sheets it links counted, a file from outside the build refused,
